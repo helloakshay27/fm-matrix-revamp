@@ -39,6 +39,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { AmcBulkUploadModal } from '@/components/water-asset-details/AmcBulkUploadModal';
+
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -308,6 +310,594 @@ export const AMCDashboard = () => {
     setFilter('flagged');
     setCurrentPage(1);
     fetchFilteredAMCs('flagged', 1);
+  };
+  const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="cursor-move"
+    >
+      {children}
+    </div>
+  );
+};
+
+interface AMCRecord {
+  id: number;
+  asset_name: string;
+  amc_type: string;
+  vendor_name: string;
+  amc_start_date: string;
+  amc_end_date: string;
+  amc_first_service: string;
+  created_at: string;
+  active: boolean;
+  is_flagged?: boolean;
+}
+
+const initialAmcData: AMCRecord[] = [];
+
+const columns: ColumnConfig[] = [
+  { key: 'actions', label: 'Actions', sortable: false, defaultVisible: true },
+  { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
+  { key: 'asset_name', label: 'Asset Name', sortable: true, defaultVisible: true },
+  { key: 'amc_type', label: 'AMC Type', sortable: true, defaultVisible: true },
+  { key: 'vendor_name', label: 'Vendor Name', sortable: true, defaultVisible: true },
+  { key: 'amc_start_date', label: 'Start Date', sortable: true, defaultVisible: true },
+  { key: 'amc_end_date', label: 'End Date', sortable: true, defaultVisible: true },
+  { key: 'amc_first_service', label: 'First Service', sortable: true, defaultVisible: true },
+  { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
+  { key: 'active', label: 'Status', sortable: true, defaultVisible: true },
+];
+
+export const AMCDashboard = () => {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+  const siteId = localStorage.getItem('selectedSiteId');
+  const { data: apiData, loading: reduxLoading, error } = useAppSelector((state) => state.amc);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [visibleSections, setVisibleSections] = useState<string[]>([
+    'statusChart', 'typeChart', 'resourceChart', 'agingMatrix'
+  ]);
+  const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'typeChart', 'resourceChart', 'agingMatrix']);
+  const [filter, setFilter] = useState<string | null>(null); // For active/inactive/flagged
+  const [amcTypeFilter, setAmcTypeFilter] = useState<string | null>(null); // For AMC Type filter
+  const [startDateFilter, setStartDateFilter] = useState<string | null>(null); // For Start Date filter
+  const [endDateFilter, setEndDateFilter] = useState<string | null>(null); // For End Date filter
+  const [tempAmcTypeFilter, setTempAmcTypeFilter] = useState<string | null>(null); // Temporary state for modal
+  const [tempStartDateFilter, setTempStartDateFilter] = useState<string | null>(null); // Temporary state for modal
+  const [tempEndDateFilter, setTempEndDateFilter] = useState<string | null>(null); // Temporary state for modal
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false); // For filter modal
+  const [loading, setLoading] = useState(false); // Local loading state
+  const [activeTab, setActiveTab] = useState<string>("amclist");
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
+
+
+  // Analytics states
+  const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [amcAnalyticsData, setAmcAnalyticsData] = useState<AMCStatusData | null>(null);
+
+  // Set default dates: last year to today for analytics
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const lastYear = new Date();
+    lastYear.setFullYear(today.getFullYear() - 1);
+
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+
+    return {
+      startDate: formatDate(lastYear),
+      endDate: formatDate(today)
+    };
+  };
+
+  const [analyticsDateRange, setAnalyticsDateRange] = useState<{ startDate: string; endDate: string }>(getDefaultDateRange());
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Initialize temporary filters when modal opens
+  useEffect(() => {
+    if (isFilterModalOpen) {
+      setTempAmcTypeFilter(amcTypeFilter);
+      setTempStartDateFilter(startDateFilter);
+      setTempEndDateFilter(endDateFilter);
+    }
+  }, [isFilterModalOpen, amcTypeFilter, startDateFilter, endDateFilter]);
+
+  // Fetch AMC analytics data
+  const fetchAMCAnalyticsData = async (startDate: Date, endDate: Date) => {
+    setAnalyticsLoading(true);
+    try {
+      const analyticsData = await amcAnalyticsAPI.getAMCStatusData(startDate, endDate);
+      setAmcAnalyticsData(analyticsData);
+      toast.success('AMC analytics data updated successfully');
+    } catch (error) {
+      console.error('Error fetching AMC analytics data:', error);
+      toast.error('Failed to fetch AMC analytics data');
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  // Handle analytics filter apply
+  const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
+    setAnalyticsDateRange(filters);
+
+    // Convert date strings to Date objects
+    const startDate = new Date(filters.startDate.split('/').reverse().join('-')); // Convert DD/MM/YYYY to YYYY-MM-DD
+    const endDate = new Date(filters.endDate.split('/').reverse().join('-'));
+
+    fetchAMCAnalyticsData(startDate, endDate);
+  };
+
+  // Use API data if available, otherwise fallback to initial data
+  const amcData = apiData && typeof apiData === 'object' && 'asset_amcs' in apiData && Array.isArray((apiData as any).asset_amcs) ? (apiData as any).asset_amcs : initialAmcData;
+  const pagination = (apiData && typeof apiData === 'object' && 'pagination' in apiData) ? (apiData as any).pagination : { current_page: 1, total_count: 0, total_pages: 1 };
+
+  // Extract counts from API response - use analytics data if available
+  const totalAMCs = amcAnalyticsData ? (amcAnalyticsData.active_amc + amcAnalyticsData.inactive_amc) :
+    ((apiData && typeof apiData === 'object' && 'total_amcs_count' in apiData) ? (apiData as any).total_amcs_count : pagination.total_count || 0);
+  const activeAMCs = amcAnalyticsData?.active_amc ||
+    ((apiData && typeof apiData === 'object' && 'active_amcs_count' in apiData) ? (apiData as any).active_amcs_count : 0);
+  const inactiveAMCs = amcAnalyticsData?.inactive_amc ||
+    ((apiData && typeof apiData === 'object' && 'inactive_amcs_count' in apiData) ? (apiData as any).inactive_amcs_count : 0);
+  const flaggedAMCs = (apiData && typeof apiData === 'object' && 'flagged_amcs_count' in apiData) ? (apiData as any).flagged_amcs_count : 0;
+
+  // Service and Asset totals from analytics
+  const serviceTotalAMCs = amcAnalyticsData?.service_total || 0;
+  const assetTotalAMCs = amcAnalyticsData?.assets_total || 0;
+
+  // Filter function to fetch AMC data based on filters
+  const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1) => {
+    if (!baseUrl || !token || !siteId) {
+      toast.error('Missing base URL, token, or site ID');
+      return;
+    }
+
+    setLoading(true);
+    let url = `https://${baseUrl}/pms/asset_amcs.json?site_id=${siteId}&page=${page}`;
+    const queryParams: string[] = [];
+
+    if (amcTypeFilter) {
+      queryParams.push(`q[amc_type_eq]=${encodeURIComponent(amcTypeFilter)}`);
+    }
+
+    if (startDateFilter) {
+      queryParams.push(`q[amc_start_date_eq]=${startDateFilter}`);
+    }
+
+    if (endDateFilter) {
+      queryParams.push(`q[amc_end_date_eq]=${endDateFilter}`);
+    }
+
+    if (queryParams.length > 0) {
+      url += `&${queryParams.join('&')}`;
+    }
+
+    console.log('Request URL:', url); // Debug the URL
+    try {
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const fetchedData = response.data;
+      // Dispatch to Redux store
+      dispatch(fetchAMCData.fulfilled(fetchedData, 'fetchAMCData', undefined));
+      setCurrentPage(fetchedData.pagination.current_page);
+    } catch (error) {
+      console.error('Error fetching AMC data:', error);
+      dispatch(fetchAMCData.rejected(error as any, 'fetchAMCData', undefined));
+      toast.error('Failed to fetch AMC data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch data on mount and when dependencies change
+  useEffect(() => {
+    if (baseUrl && token && siteId) {
+      fetchFilteredAMCs(filter, currentPage);
+    }
+  }, [baseUrl, token, siteId, filter, amcTypeFilter, startDateFilter, endDateFilter, currentPage]);
+
+  // Load analytics data with default date range on component mount
+  useEffect(() => {
+    const defaultRange = getDefaultDateRange();
+    const startDate = new Date(defaultRange.startDate.split('/').reverse().join('-'));
+    const endDate = new Date(defaultRange.endDate.split('/').reverse().join('-'));
+    fetchAMCAnalyticsData(startDate, endDate);
+  }, []);
+
+  const handleAddClick = () => {
+    navigate('/maintenance/amc/add');
+  };
+
+  const handleViewDetails = (id: number) => {
+    navigate(`/maintenance/amc/details/${id}`);
+  };
+
+  const handleStatusToggle = async (id: number) => {
+    try {
+      if (!baseUrl || !token || !siteId) {
+        toast.error('Missing base URL, token, or site ID');
+        return;
+      }
+
+      const amcRecord = amcData.find((item) => item.id === id);
+      if (!amcRecord) {
+        toast.error('AMC record not found');
+        return;
+      }
+
+      const updatedStatus = !amcRecord.active;
+      const url = `https://${baseUrl}/pms/asset_amcs/${id}.json`;
+      const response = await axios.put(
+        url,
+        {
+          pms_asset_amc: {
+            active: updatedStatus
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.status === 200) {
+        fetchFilteredAMCs(filter, currentPage);
+        toast.success(`AMC ID ${id} status updated`);
+      } else {
+        toast.error('Failed to update AMC status');
+      }
+    } catch (error) {
+      console.error('Error updating AMC status:', error);
+      toast.error('Failed to update AMC status');
+    }
+  };
+
+  const handleImportClick = () => {
+    setShowBulkUploadModal(true);
+    setShowActionPanel(false);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(amcData.map(item => item.id.toString()));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
+  const handleBulkDelete = (selectedItems: AMCRecord[]) => {
+    const selectedIds = selectedItems.map(item => item.id);
+    setSelectedItems([]);
+    toast.success(`Selected AMCs (${selectedIds.length}) deleted`);
+    fetchFilteredAMCs(filter, currentPage);
+  };
+
+  const handleSelectionChange = (selectedSections: string[]) => {
+    setVisibleSections(selectedSections);
+  };
+
+  const handleExport = async () => {
+    try {
+      if (!baseUrl || !token || !siteId) {
+        toast.error('Missing base URL, token, or site ID');
+        return;
+      }
+
+      let url = `https://${baseUrl}/pms/asset_amcs/export.xlsx?site_id=${siteId}`;
+      if (selectedItems.length > 0) {
+        const ids = selectedItems.join(',');
+        url += `&ids=${ids}`;
+      }
+
+      const response = await axios.get(url, {
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.data || response.data.size === 0) {
+        toast.error('Empty file received from server');
+        return;
+      }
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'amc_export.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      toast.success('AMC data exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export AMC data');
+    }
+  };
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      setChartOrder((items) => {
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const renderCell = (item: AMCRecord, columnKey: string) => {
+    switch (columnKey) {
+      case 'actions':
+        return (
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleViewDetails(item.id)}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+            <div title="Flag AMC">
+              <Flag
+                className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSingleAmcFlag(item);
+                }}
+              />
+            </div>
+          </div>
+        );
+      case 'id':
+        return <span className="font-medium">{item.id}</span>;
+      case 'asset_name':
+        return item.asset_name || '-';
+      case 'amc_type':
+        return item.amc_type || '-';
+      case 'vendor_name':
+        return item.vendor_name || '-';
+      case 'amc_start_date':
+        return item.amc_start_date ? new Date(item.amc_start_date).toLocaleDateString() : '-';
+      case 'amc_end_date':
+        return item.amc_end_date ? new Date(item.amc_end_date).toLocaleDateString() : '-';
+      case 'amc_first_service':
+        return item.amc_first_service ? new Date(item.amc_first_service).toLocaleDateString() : '-';
+      case 'active':
+        return (
+          <div className="flex items-center">
+            <div
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-300'}`}
+              onClick={() => handleStatusToggle(item.id)}
+            >
+              <span
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'}`}
+              />
+            </div>
+          </div>
+        );
+      case 'created_at':
+        return item.created_at
+          ? new Date(item.created_at).toLocaleString('en-IN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+          })
+          : '-';
+      default:
+        return '-';
+    }
+  };
+
+  const bulkActions = [
+    {
+      label: 'Delete Selected',
+      icon: Trash2,
+      variant: 'destructive' as const,
+      onClick: handleBulkDelete,
+    },
+  ];
+
+  const handleSingleAmcFlag = async (amcItem: AMCRecord) => {
+    try {
+      if (!baseUrl || !token) {
+        toast.error('Missing base URL or token');
+        return;
+      }
+
+      const updatedFlag = !amcItem.is_flagged;
+      const response = await axios.put(
+        `https://${baseUrl}/pms/asset_amcs/${amcItem.id}.json`,
+        {
+          pms_asset_amc: {
+            is_flagged: updatedFlag,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        fetchFilteredAMCs(filter, currentPage);
+        toast.success(`AMC ID ${amcItem.id} flag updated`);
+      } else {
+        toast.error('Failed to update AMC flag');
+      }
+    } catch (error) {
+      console.error('Flag update error:', error);
+      toast.error('Failed to update AMC flag');
+    }
+  };
+
+  const renderPaginationItems = () => {
+    const items = [];
+    const totalPages = pagination.total_pages;
+    const currentPage = pagination.current_page;
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find(item => item.key === i.toString())) {
+            items.push(
+              <PaginationItem key={i}>
+                <PaginationLink
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchFilteredAMCs(filter, page);
   };
 
     return (
