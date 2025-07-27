@@ -201,8 +201,13 @@ export const InventoryDashboard = () => {
       count_of_active_items: 0,
       count_of_inactive_items: 0,
       count_of_critical_items: 0,
-      count_of_non_critical_items: 0
-    }
+      count_of_non_critical_items: 0,
+      activeItems: 0,
+      inactiveItems: 0,
+      criticalItems: 0,
+      nonCriticalItems: 0
+    },
+    categoryData: []
   });
   const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>([
     'items_status.json',
@@ -671,11 +676,11 @@ export const InventoryDashboard = () => {
     { name: "Non-Critical", value: analyticsData.statusData.nonCriticalItems, fill: "#d8dcdd" },
   ];
 
-  // Group data from API
-  const groupChartData = analyticsData.categoryData.map(({ group_name, item_count }) => ({
+  // Group data from API - with safety check
+  const groupChartData = analyticsData.categoryData?.map(({ group_name, item_count }) => ({
     name: group_name,
     value: item_count
-  }));
+  })) || [];
 
   return (
     <div className="p-2 sm:p-4 lg:p-6">
