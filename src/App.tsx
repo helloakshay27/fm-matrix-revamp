@@ -472,6 +472,8 @@ import { TicketManagementSetupPage } from './pages/maintenance/TicketManagementS
 import { MobileTicketsPage } from './pages/mobile/MobileTicketsPage';
 import { MobileRestaurantPage } from './pages/mobile/MobileRestaurantPage';
 import { MobileOrdersPage } from './components/mobile/MobileOrdersPage';
+import { MobileOrderPlaced } from './components/mobile/MobileOrderPlaced';
+import { ExternalFlowTester } from './components/mobile/ExternalFlowTester';
 import { QRTestPage } from './pages/QRTestPage';
 
 import { EscalationMatrixPage } from './pages/maintenance/EscalationMatrixPage';
@@ -946,8 +948,10 @@ function App() {
                 {/* Mobile Routes */}
                 <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
                 <Route path="/mobile/orders" element={<MobileOrdersPage />} />
+                {/* External Flow Tester */}
+                <Route path="/test-external" element={<ExternalFlowTester />} />
                 {/* Mobile Restaurant Routes */}
-                <Route path="/mobile/restaurant" element={<MobileRestaurantPage />} />
+                <Route path="/mr/:restaurant/:orgId" element={<MobileRestaurantPage />} />
                 <Route path="/mobile/restaurant/:action" element={<MobileRestaurantPage />} />
                 <Route path="/mobile/restaurant/:restaurantId/:action" element={<MobileRestaurantPage />} />
                 {/* QR Test Route */}
