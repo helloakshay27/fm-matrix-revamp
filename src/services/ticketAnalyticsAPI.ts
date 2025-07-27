@@ -230,7 +230,7 @@ export const ticketAnalyticsAPI = {
 
   // Get recent tickets
   async getRecentTickets(): Promise<RecentTicketsResponse> {
-    const url = `/pms/admin/complaints/recent_tickets`;
+    const url = `/pms/admin/complaints/recent_tickets.json`;
     
     const response = await apiClient.get(url);
     return response.data;
