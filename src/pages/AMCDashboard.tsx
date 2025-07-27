@@ -813,49 +813,49 @@ export const AMCDashboard = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {selectedAnalyticsOptions.includes('status_overview') && amcAnalyticsData && (
+                  {selectedAnalyticsOptions?.includes('status_overview') && amcAnalyticsData && (
                     <AMCAnalyticsCard
                       title="Status Overview"
                       data={amcAnalyticsData}
                       type="statusOverview"
                     />
                   )}
-                  {selectedAnalyticsOptions.includes('type_distribution') && amcAnalyticsData && (
+                  {selectedAnalyticsOptions?.includes('type_distribution') && amcAnalyticsData && (
                     <AMCAnalyticsCard
                       title="Type Distribution"
                       data={amcAnalyticsData}
                       type="typeDistribution"
                     />
                   )}
-                  {selectedAnalyticsOptions.includes('vendor_performance') && amcAnalyticsData && (
+                  {selectedAnalyticsOptions?.includes('vendor_performance') && amcAnalyticsData && (
                     <AMCAnalyticsCard
                       title="Vendor Performance"
                       data={amcAnalyticsData}
                       type="vendorPerformance"
                     />
                   )}
-                  {selectedAnalyticsOptions.includes('expiry_analysis') && amcAnalyticsData && (
+                  {selectedAnalyticsOptions?.includes('expiry_analysis') && amcAnalyticsData && (
                     <AMCAnalyticsCard
                       title="Expiry Analysis"
                       data={amcAnalyticsData}
                       type="expiryAnalysis"
                     />
                   )}
-                  {selectedAnalyticsOptions.includes('cost_analysis') && amcAnalyticsData && (
+                  {selectedAnalyticsOptions?.includes('cost_analysis') && amcAnalyticsData && (
                     <AMCAnalyticsCard
                       title="Cost Analysis"
                       data={amcAnalyticsData}
                       type="costAnalysis"
                     />
                   )}
-                  {selectedAnalyticsOptions.includes('service_tracking') && amcAnalyticsData && (
+                  {selectedAnalyticsOptions?.includes('service_tracking') && amcAnalyticsData && (
                     <AMCAnalyticsCard
                       title="Service Tracking"
                       data={amcAnalyticsData}
                       type="serviceTracking"
                     />
                   )}
-                  {selectedAnalyticsOptions.includes('compliance_report') && amcAnalyticsData && (
+                  {selectedAnalyticsOptions?.includes('compliance_report') && amcAnalyticsData && (
                     <AMCAnalyticsCard
                       title="Compliance Report"
                       data={amcAnalyticsData}
