@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { 
   ticketManagementAPI, 
   TicketFilters, 
@@ -34,6 +35,7 @@ const priorityOptions = [
 
 export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: TicketsFilterDialogProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   // Filter state
   const [dateFrom, setDateFrom] = useState('');
@@ -47,6 +49,9 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
   const [priority, setPriority] = useState('');
   const [assignedUser, setAssignedUser] = useState('');
   const [userSearch, setUserSearch] = useState('');
+  
+  // State to track if filters are already cleared (for double-click behavior)
+  const [filtersCleared, setFiltersCleared] = useState(false);
 
   // Data state
   const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -64,8 +69,22 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
   useEffect(() => {
     if (isOpen) {
       loadFilterData();
+      setFiltersCleared(false); // Reset the cleared state when dialog opens
     }
   }, [isOpen]);
+
+  // Check if all filters are empty to determine cleared state
+  useEffect(() => {
+    const allFiltersEmpty = !dateFrom && !dateTo && !category && !subCategory && 
+                           !department && !site && !unit && !status && 
+                           !priority && !assignedUser && !userSearch;
+    
+    if (allFiltersEmpty) {
+      setFiltersCleared(true);
+    } else {
+      setFiltersCleared(false);
+    }
+  }, [dateFrom, dateTo, category, subCategory, department, site, unit, status, priority, assignedUser, userSearch]);
 
   // Add effect to load subcategories when category changes
   useEffect(() => {
@@ -220,6 +239,19 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
   };
 
   const handleReset = () => {
+    // Check if filters are already cleared
+    if (filtersCleared) {
+      // Second click - redirect to list page
+      toast({
+        title: "Redirecting",
+        description: "Navigating to tickets list page...",
+      });
+      onClose(); // Close the dialog first
+      navigate('/maintenance/ticket'); // Redirect to list page
+      return;
+    }
+
+    // First click - clear all filters and show all records
     setDateFrom('');
     setDateTo('');
     setCategory('');
@@ -231,6 +263,14 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
     setPriority('');
     setAssignedUser('');
     setUserSearch('');
+    
+    // Apply empty filters to show all records
+    onApplyFilters({});
+    
+    toast({
+      title: "Filters Cleared",
+      description: "All filters have been cleared.",
+    });
   };
 
   return (
@@ -454,7 +494,7 @@ export const TicketsFilterDialog = ({ isOpen, onClose, onApplyFilters }: Tickets
               onClick={handleReset}
               className="text-[hsl(var(--analytics-text))] border-[hsl(var(--analytics-border))]"
             >
-              Reset
+              {filtersCleared ? 'Go to List' : 'Reset'}
             </Button>
             <Button 
               onClick={handleSubmit}

@@ -305,7 +305,7 @@ const AssignTicketsPage: React.FC = () => {
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-xl font-semibold text-gray-900">ASSIGN TO</h1>
+          <h1 className="text-xl font-semibold text-gray-900">UPDATE ASSIGN TO</h1>
         </div>
 
         {/* Selected Tickets Table */}

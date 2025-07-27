@@ -830,7 +830,7 @@ export const TicketDashboard = () => {
               }}
             />
           </div>
-          <div title="Update ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
+          {/* <div title="Update ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Edit
               className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
               onClick={(e) => {
@@ -838,7 +838,7 @@ export const TicketDashboard = () => {
                 navigate(`/maintenance/ticket/update/${item.id}`);
               }}
             />
-          </div>
+          </div> */}
           <div title="Flag ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Flag
               className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged
