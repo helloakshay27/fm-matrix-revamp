@@ -84,6 +84,7 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({ assets }) => {
             key={asset.id} 
             className="cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => handleAssetClick(asset.id)}
+            style={{ backgroundColor: '#F6F4EE' }}
           >
             <CardContent className="p-4">
               <div className="space-y-3">
