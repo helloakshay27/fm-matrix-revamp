@@ -492,29 +492,6 @@ export const AddTicketDashboard = () => {
               </div>
             </RadioGroup>
 
-            {/* Additional options */}
-            <div className="flex gap-8">
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="golden-ticket" 
-                  checked={formData.isGoldenTicket}
-                  onChange={(e) => setFormData({ ...formData, isGoldenTicket: e.target.checked })}
-                  className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
-                />
-                <label htmlFor="golden-ticket" className="text-sm font-medium">Golden Ticket</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="is-flagged" 
-                  checked={formData.isFlagged}
-                  onChange={(e) => setFormData({ ...formData, isFlagged: e.target.checked })}
-                  className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
-                />
-                <label htmlFor="is-flagged" className="text-sm font-medium">Is Flagged</label>
-              </div>
-            </div>
 
             {/* Form fields in exact layout as per image */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
