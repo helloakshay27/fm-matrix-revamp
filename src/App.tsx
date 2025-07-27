@@ -473,6 +473,7 @@ import { TaskEscalationPage } from './pages/maintenance/TaskEscalationPage';
 import { TicketManagementSetupPage } from './pages/maintenance/TicketManagementSetupPage';
 import { MobileTicketsPage } from './pages/mobile/MobileTicketsPage';
 import { MobileRestaurantPage } from './pages/mobile/MobileRestaurantPage';
+import { MobileAssetPage } from './pages/mobile/MobileAssetPage';
 import { MobileOrdersPage } from './components/mobile/MobileOrdersPage';
 import { QRTestPage } from './pages/QRTestPage';
 
@@ -948,6 +949,9 @@ function App() {
                 <Route path="/mobile/restaurant" element={<MobileRestaurantPage />} />
                 <Route path="/mobile/restaurant/:action" element={<MobileRestaurantPage />} />
                 <Route path="/mobile/restaurant/:restaurantId/:action" element={<MobileRestaurantPage />} />
+                {/* Mobile Asset Routes */}
+                <Route path="/mobile/assets" element={<MobileAssetPage />} />
+                <Route path="/mobile/assets/:assetId" element={<MobileAssetPage />} />
                 {/* QR Test Route */}
                 <Route path="/qr-test" element={<QRTestPage />} />
               </Routes>
