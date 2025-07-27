@@ -3534,7 +3534,7 @@ export const AddSchedulePage = () => {
                 <TextField
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                  label={`Grace Time (${formData.graceTime})`}
+                  label={`Grace Time (${formData.graceTime}) *`}
                   type="number"
                   fullWidth
                   value={formData.graceTimeValue}
@@ -3567,7 +3567,7 @@ export const AddSchedulePage = () => {
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                       {...params}
-                      label="Supplier"
+                      label="Supplier *"
                       placeholder="Select Supplier"
                       fullWidth
                     />
@@ -3585,7 +3585,7 @@ export const AddSchedulePage = () => {
                 <DatePicker
                   label={
                     <span>
-                      Start From
+                      Start From *
                     </span>
                   }
                   slotProps={{
@@ -3616,7 +3616,7 @@ export const AddSchedulePage = () => {
 
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
-                  label="End At"
+                  label="End At *"
                   slotProps={{
                     textField: {
                       fullWidth: true,
