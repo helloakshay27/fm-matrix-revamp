@@ -1061,9 +1061,9 @@ export const InventoryDashboard = () => {
                                               key={index}
                                               className="bg-white"
                                             >
-                                              <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">
-                                                {row.priority}
-                                              </td>
+                                               <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">
+                                                 {row.category_name}
+                                               </td>
                                               <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
                                                 {row["0-10"]}
                                               </td>
@@ -1442,7 +1442,7 @@ export const InventoryDashboard = () => {
         open={showDateFilter}
         onOpenChange={setShowDateFilter}
         onApply={(range) => {
-          setDateRange(range);
+          // Date range handled by analytics filter dialog(range);
           dispatch(fetchInventoryData({ filters: { startDate: range.startDate, endDate: range.endDate } }));
         }}
       />
