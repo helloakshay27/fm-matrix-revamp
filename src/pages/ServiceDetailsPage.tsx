@@ -323,46 +323,20 @@ export const ServiceDetailsPage = () => {
                   <>
                     <div className="w-48 h-48 bg-gray-200 mx-auto mb-4 flex items-center justify-center">
                       <img
+                        id="qrImage"
                         src={details.qr_code}
                         alt="QR Code"
                         className="w-40 h-40 object-contain"
                       />
                     </div>
                     <Button
-                      onClick={async () => {
-                        const token = localStorage.getItem('token');
-                        const baseUrl = localStorage.getItem('baseUrl');
-                        if (!token) return alert('User is not authenticated.');
-                        try {
-                          const response = await fetch(
-                            `https://${baseUrl}/pms/services/qr_codes.pdf?service_ids=[${details.id}]`,
-                            {
-                              headers: {
-                                Authorization: `Bearer ${token}`,
-                                Accept: 'application/pdf',
-                              },
-                            }
-                          );
-                          if (!response.ok) throw new Error('Failed to fetch QR code');
-                          const contentType = response.headers.get('Content-Type') || '';
-                          const blob = await response.blob();
-                          const url = window.URL.createObjectURL(blob);
-                          const extension = contentType.includes('pdf')
-                            ? 'pdf'
-                            : contentType.includes('jpeg')
-                              ? 'jpg'
-                              : 'png';
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = `qr_code_service_${details.id}.${extension}`;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          window.URL.revokeObjectURL(url);
-                        } catch (err) {
-                          console.error('QR Code download failed:', err);
-                          alert('Failed to download QR code');
-                        }
+                      onClick={() => {
+                        const imgElement = document.getElementById('qrImage') as HTMLImageElement;
+                        if (!imgElement) return alert('QR image not found.');
+
+                        const imageURL = imgElement.src;
+
+                        window.open(imageURL, '_blank');
                       }}
                       className="bg-[#C72030] mb-4 text-white hover:bg-[#C72030]/90"
                     >
@@ -374,6 +348,7 @@ export const ServiceDetailsPage = () => {
                   <div className="text-sm text-gray-600">No QR code available</div>
                 )}
               </div>
+
             </div>
           </TabsContent>
 
@@ -410,6 +385,6 @@ export const ServiceDetailsPage = () => {
         isOpen={showAssociateModal}
         onClose={() => setShowAssociateModal(false)}
       />
-    </div>
+    </div >
   );
 };
