@@ -467,8 +467,208 @@ export const ResolutionEscalationTab: React.FC = () => {
   const escalationLevels = ['e1', 'e2', 'e3', 'e4', 'e5'] as const;
   const priorities = ['p1', 'p2', 'p3', 'p4', 'p5'] as const;
 
+  // Helper function to get user names display
+  const getUserNames = (escalateToUsers: any): string => {
+    if (!escalateToUsers) return '';
+    
+    let userIds: number[] = [];
+    try {
+      if (typeof escalateToUsers === 'string') {
+        userIds = JSON.parse(escalateToUsers);
+      } else if (Array.isArray(escalateToUsers)) {
+        userIds = escalateToUsers;
+      }
+    } catch (error) {
+      console.error('Error parsing escalate_to_users:', error);
+      return '';
+    }
+    
+    if (!Array.isArray(userIds) || userIds.length === 0) return '';
+    
+    return userIds.map((userId: number) => {
+      const user = fmUsers?.fm_users?.find(u => u.id === userId);
+      return user ? `${user.firstname} ${user.lastname}` : `User ${userId}`;
+    }).join(', ');
+  };
+
+  // Helper function to format time display 
+  const formatTimeDisplay = (totalMinutes: number): string => {
+    if (!totalMinutes || totalMinutes === 0) return '';
+    
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+    
+    const parts = [];
+    if (days > 0) parts.push(`${days} day${days !== 1 ? 's' : ''}`);
+    if (hours > 0) parts.push(`${hours} hour${hours !== 1 ? 's' : ''}`);
+    if (minutes > 0) parts.push(`${minutes} minute${minutes !== 1 ? 's' : ''}`);
+    
+    return parts.join(', ') || '';
+  };
+
   return (
     <div className="space-y-6">
+      {/* Filter Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filter</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-end space-x-4">
+            <div className="flex-1">
+              <Label className="text-sm font-medium">Category Type</Label>
+              <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select Category Type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white z-50">
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories?.helpdesk_categories?.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex space-x-2">
+              <Button 
+                onClick={handleFilter} 
+                className="bg-[#C72030] hover:bg-[#A11B2B] text-white"
+              >
+                Apply
+              </Button>
+              <Button onClick={handleResetFilter} variant="outline">
+                Reset
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Rules Display */}
+      <div className="space-y-4">
+        {fetchLoading ? (
+          <Card>
+            <CardContent className="p-8">
+              <div className="text-center">Loading rules...</div>
+            </CardContent>
+          </Card>
+        ) : filteredRules.length === 0 ? (
+          <Card>
+            <CardContent className="p-8">
+              <div className="text-center text-gray-500">No resolution escalation rules found</div>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredRules.map((rule, index) => {
+            const categoryName = categories?.helpdesk_categories?.find(cat => cat.id === rule.category_id)?.name || 'Unknown';
+            
+            return (
+              <Card key={rule.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <CardTitle className="text-base flex items-center space-x-2">
+                        <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm font-medium">
+                          📋
+                        </span>
+                        <span>Rule {index + 1}</span>
+                      </CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(rule)}
+                        disabled={updateLoading}
+                        className="p-1 hover:bg-yellow-100"
+                      >
+                        <Edit className="h-4 w-4 text-yellow-600" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            disabled={deleteLoading} 
+                            className="p-1 hover:bg-red-100"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this resolution escalation rule? This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(rule.id)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <Table className="border">
+                    <TableHeader>
+                      <TableRow className="bg-gray-50">
+                        <TableHead className="font-semibold border-r">Category Type</TableHead>
+                        <TableHead className="font-semibold text-center border-r">Levels</TableHead>
+                        <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
+                        <TableHead className="font-semibold text-center border-r">P1</TableHead>
+                        <TableHead className="font-semibold text-center border-r">P2</TableHead>
+                        <TableHead className="font-semibold text-center border-r">P3</TableHead>
+                        <TableHead className="font-semibold text-center border-r">P4</TableHead>
+                        <TableHead className="font-semibold text-center">P5</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rule.escalations.map((escalation, escIndex) => (
+                        <TableRow key={escalation.id} className="border-b">
+                          {escIndex === 0 && (
+                            <TableCell 
+                              className="font-medium border-r bg-gray-50" 
+                              rowSpan={rule.escalations.length}
+                            >
+                              {categoryName}
+                            </TableCell>
+                          )}
+                          <TableCell className="font-medium text-center border-r">{escalation.name}</TableCell>
+                          <TableCell className="text-center border-r">
+                            {getUserNames(escalation.escalate_to_users)}
+                          </TableCell>
+                          <TableCell className="text-center text-sm border-r">
+                            {formatTimeDisplay(escalation.p1 || 0)}
+                          </TableCell>
+                          <TableCell className="text-center text-sm border-r">
+                            {formatTimeDisplay(escalation.p2 || 0)}
+                          </TableCell>
+                          <TableCell className="text-center text-sm border-r">
+                            {formatTimeDisplay(escalation.p3 || 0)}
+                          </TableCell>
+                          <TableCell className="text-center text-sm border-r">
+                            {formatTimeDisplay(escalation.p4 || 0)}
+                          </TableCell>
+                          <TableCell className="text-center text-sm">
+                            {formatTimeDisplay(escalation.p5 || 0)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
+      </div>
+
       {/* Create Form */}
       <Card>
         <CardHeader>
@@ -485,8 +685,25 @@ export const ResolutionEscalationTab: React.FC = () => {
                   setValue('categoryIds', selected ? selected.map(s => s.value) : []);
                 }}
                 className="mt-1"
-                placeholder="Select categories..."
+                placeholder="Select up to 15 Options..."
                 isLoading={categoriesLoading}
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    backgroundColor: 'white',
+                    zIndex: 10
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    backgroundColor: 'white',
+                    zIndex: 50
+                  }),
+                  menuPortal: (base) => ({
+                    ...base,
+                    zIndex: 50
+                  })
+                }}
+                menuPortalTarget={document.body}
               />
               {errors.categoryIds && (
                 <p className="text-sm text-red-500 mt-1">{errors.categoryIds.message}</p>
@@ -538,13 +755,25 @@ export const ResolutionEscalationTab: React.FC = () => {
                               minHeight: '32px',
                               fontSize: '14px',
                               border: 'none',
-                              boxShadow: 'none'
+                              boxShadow: 'none',
+                              backgroundColor: 'white',
+                              zIndex: 10
+                            }),
+                            menu: (base) => ({
+                              ...base,
+                              backgroundColor: 'white',
+                              zIndex: 50
                             }),
                             multiValue: (base) => ({
                               ...base,
                               fontSize: '12px'
+                            }),
+                            menuPortal: (base) => ({
+                              ...base,
+                              zIndex: 50
                             })
                           }}
+                          menuPortalTarget={document.body}
                         />
                       </TableCell>
                       {priorities.map((priority) => (
@@ -587,188 +816,15 @@ export const ResolutionEscalationTab: React.FC = () => {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white px-8">
+              <Button 
+                type="submit" 
+                disabled={loading} 
+                className="bg-[#C72030] hover:bg-[#A11B2B] text-white px-8"
+              >
                 {loading ? 'Creating...' : 'Submit'}
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
-
-      {/* Filter Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filter</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-end space-x-4">
-            <div className="flex-1">
-              <Label className="text-sm font-medium">Category Type</Label>
-              <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select Category Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories?.helpdesk_categories?.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex space-x-2">
-              <Button onClick={handleFilter} variant="default" className="bg-purple-600 hover:bg-purple-700 text-white">
-                Apply
-              </Button>
-              <Button onClick={handleResetFilter} variant="outline">
-                Reset
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Rules Display */}
-      <Card>
-        <CardContent className="p-0">
-          {fetchLoading ? (
-            <div className="text-center py-8">Loading rules...</div>
-          ) : filteredRules.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">No resolution escalation rules found</div>
-          ) : (
-            <div className="space-y-0">
-              {filteredRules.map((rule, index) => {
-                const isExpanded = expandedRules.has(rule.id);
-                const categoryName = categories?.helpdesk_categories?.find(cat => cat.id === rule.category_id)?.name || 'Unknown';
-                
-                return (
-                  <div key={rule.id} className="border-b last:border-b-0">
-                    <div className="flex items-center justify-between p-4 hover:bg-gray-50">
-                      <div className="flex items-center space-x-4">
-                        <span className="font-semibold text-purple-600">Rule {index + 1}</span>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleRuleExpansion(rule.id)}
-                            className="p-1"
-                          >
-                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(rule)}
-                            disabled={updateLoading}
-                            className="p-1"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" disabled={deleteLoading} className="p-1 text-red-600">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete this resolution escalation rule? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(rule.id)}>
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Collapsible open={isExpanded}>
-                      <CollapsibleContent>
-                        <div className="p-4 bg-gray-50 border-t">
-                          <div className="mb-4">
-                            <div className="flex items-center space-x-4 text-sm">
-                              <span><strong>Category Type:</strong> {categoryName}</span>
-                            </div>
-                          </div>
-                          
-                          <Table className="bg-white border">
-                            <TableHeader>
-                              <TableRow className="bg-gray-100">
-                                <TableHead className="font-semibold text-center w-20 border-r">Levels</TableHead>
-                                <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
-                                <TableHead className="font-semibold text-center w-32 border-r">P1</TableHead>
-                                <TableHead className="font-semibold text-center w-32 border-r">P2</TableHead>
-                                <TableHead className="font-semibold text-center w-32 border-r">P3</TableHead>
-                                <TableHead className="font-semibold text-center w-32 border-r">P4</TableHead>
-                                <TableHead className="font-semibold text-center w-32">P5</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {rule.escalations.map((escalation) => {
-                                // Safely parse escalate_to_users with error handling
-                                let escalateToUsers: number[] = [];
-                                if (escalation.escalate_to_users) {
-                                  try {
-                                    if (typeof escalation.escalate_to_users === 'string') {
-                                      escalateToUsers = JSON.parse(escalation.escalate_to_users);
-                                    } else if (Array.isArray(escalation.escalate_to_users)) {
-                                      escalateToUsers = escalation.escalate_to_users;
-                                    }
-                                  } catch (error) {
-                                    console.error('Error parsing escalate_to_users:', error);
-                                    escalateToUsers = [];
-                                  }
-                                }
-                                
-                                // Ensure escalateToUsers is an array before mapping
-                                const userNames = Array.isArray(escalateToUsers) 
-                                  ? escalateToUsers.map((userId: number) => {
-                                      const user = fmUsers?.fm_users?.find(u => u.id === userId);
-                                      return user ? `${user.firstname} ${user.lastname}` : `User ${userId}`;
-                                    }).join(', ')
-                                  : '';
-
-                                return (
-                                  <TableRow key={escalation.id} className="border-b">
-                                    <TableCell className="font-medium text-center border-r">{escalation.name}</TableCell>
-                                    <TableCell className="text-center border-r">{userNames || '-'}</TableCell>
-                                    <TableCell className="text-center text-sm border-r">
-                                      {escalation.p1 ? `${escalation.p1} min` : '-'}
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm border-r">
-                                      {escalation.p2 ? `${escalation.p2} min` : '-'}
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm border-r">
-                                      {escalation.p3 ? `${escalation.p3} min` : '-'}
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm border-r">
-                                      {escalation.p4 ? `${escalation.p4} min` : '-'}
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm">
-                                      {escalation.p5 ? `${escalation.p5} min` : '-'}
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </CardContent>
       </Card>
 
