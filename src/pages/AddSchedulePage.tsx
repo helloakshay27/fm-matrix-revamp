@@ -504,40 +504,110 @@ export const AddSchedulePage = () => {
 
   // Initialize component with localStorage data or clear current step if refreshed on that step
   useEffect(() => {
-    // Load saved data from localStorage
-    const savedFormData = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
-    const savedQuestionSections = loadFromLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS);
-    const savedTimeSetupData = loadFromLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA);
-    const savedActiveStep = loadFromLocalStorage(STORAGE_KEYS.ACTIVE_STEP);
-    const savedCompletedSteps = loadFromLocalStorage(STORAGE_KEYS.COMPLETED_STEPS);
-    const savedAttachments = loadFromLocalStorage(STORAGE_KEYS.ATTACHMENTS);
+    // Always clear local storage and reset to basic configuration if page is refreshed or browser back button is clicked
+    const resetState = () => {
+      clearAllFromLocalStorage();
+      setActiveStep(0);
+      setCompletedSteps([]);
+      setFormData({
+        type: 'PPM',
+        scheduleFor: 'Asset',
+        activityName: '',
+        description: '',
+        checklistType: 'Individual',
+        asset: [],
+        service: [],
+        assetGroup: '',
+        assetSubGroup: [],
+        assignTo: '',
+        assignToType: 'user',
+        selectedUsers: [],
+        selectedGroups: [],
+        backupAssignee: '',
+        planDuration: '',
+        planDurationValue: '',
+        emailTriggerRule: '',
+        scanType: '',
+        category: '',
+        submissionTime: '',
+        submissionTimeValue: '',
+        supervisors: '',
+        lockOverdueTask: '',
+        frequency: '',
+        graceTime: '',
+        graceTimeValue: '',
+        endAt: '',
+        supplier: '',
+        startFrom: '',
+        mappings: [],
+        selectedTemplate: '',
+        ticketLevel: 'checklist',
+        ticketAssignedTo: '',
+        ticketCategory: '',
+      });
+      setQuestionSections([
+        {
+          id: '1',
+          title: 'Questions',
+          autoTicket: false,
+          ticketLevel: 'checklist',
+          ticketAssignedTo: '',
+          ticketCategory: '',
+          tasks: [
+            {
+              id: '1',
+              group: '',
+              subGroup: '',
+              task: '',
+              inputType: '',
+              mandatory: false,
+              helpText: false,
+              helpTextValue: '',
+              autoTicket: false,
+              weightage: '',
+              rating: false,
+              reading: false,
+              dropdownValues: [{ label: '', type: 'positive' }],
+              radioValues: [{ label: '', type: 'positive' }],
+              checkboxValues: [''],
+              checkboxSelectedStates: [false],
+              optionsInputsValues: ['']
+            }
+          ]
+        }
+      ]);
+      setTimeSetupData({
+        hourMode: 'specific',
+        minuteMode: 'specific',
+        dayMode: 'weekdays',
+        monthMode: 'all',
+        selectedHours: ['12'],
+        selectedMinutes: ['00'],
+        selectedWeekdays: [],
+        selectedDays: [],
+        selectedMonths: [],
+        betweenMinuteStart: '00',
+        betweenMinuteEnd: '59',
+        betweenMonthStart: 'January',
+        betweenMonthEnd: 'December'
+      });
+      setAttachments([]);
+    };
 
-    // If page is refreshed, clear only the current step's data
-    if (savedActiveStep !== null) {
-      clearStepFromLocalStorage(savedActiveStep);
-    }
+    // Reset state on mount
+    resetState();
 
-    // Restore all data except for the current step (which was just cleared)
-    if (savedFormData && savedActiveStep !== 0 && savedActiveStep !== 1) {
-      setFormData(savedFormData);
-    }
-    if (savedQuestionSections && savedActiveStep !== 2) {
-      setQuestionSections(savedQuestionSections);
-    }
-    if (savedTimeSetupData && savedActiveStep !== 3) {
-      setTimeSetupData(savedTimeSetupData);
-    }
-    if (savedAttachments && savedActiveStep !== 4) {
-      setAttachments(savedAttachments);
-    }
+    // Listen for browser back/forward navigation
+    window.addEventListener('popstate', resetState);
 
-    // Always restore step navigation data
-    if (savedActiveStep !== null) {
-      setActiveStep(savedActiveStep);
-    }
-    if (savedCompletedSteps) {
-      setCompletedSteps(savedCompletedSteps);
-    }
+    // Optionally, listen for page reload (F5, Ctrl+R)
+    window.addEventListener('beforeunload', resetState);
+
+    // Cleanup listeners on unmount
+    return () => {
+      window.removeEventListener('popstate', resetState);
+      window.removeEventListener('beforeunload', resetState);
+    };
   }, []);
 
   // Save form data to localStorage whenever it changes

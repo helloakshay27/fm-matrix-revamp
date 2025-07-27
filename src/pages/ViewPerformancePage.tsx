@@ -1,172 +1,71 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+
+// Dummy data for demonstration
+const dates = [
+  '16 Jul 2025', '17 Jul 2025', '18 Jul 2025', '19 Jul 2025', '20 Jul 2025', '21 Jul 2025', '22 Jul 2025', '23 Jul 2025', '24 Jul 2025', '25 Jul 2025'
+];
+const activities = [
+  'Has the exposed terrace slab been checked for waterproofing?',
+  'Have the utility shaft space slab waterproofing checks been completed?',
+  'Have the louvers been installed on the terrace shaft space openings?',
+  'Have the window/facade glass been inspected for panes, cracks, locks, gaps, and sealing?',
+  'Please assess the potential for water infiltration / ingress along ventilation ducts, both internally and externally.',
+  'Has the building elevation joint in the shaft spaces been checked for leaks?',
+  'Have leaks, loose tiles, or damaged shingles been inspected to prevent water seepage?',
+  'Have drains and stormwater systems been inspected to confirm they are clear and functioning properly?',
+  'Has the STP drainage line and overflow been checked?'
+];
 
 export const ViewPerformancePage = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-
-  // Calendar data - June 2025
-  const daysInMonth = 30;
-  const startDay = 0; // Sunday (June 1, 2025 starts on Sunday)
-  const today = new Date().getDate();
-
-  const calendarDays = [];
-  
-  // Add empty cells for days before the month starts
-  for (let i = 0; i < startDay; i++) {
-    calendarDays.push(null);
-  }
-  
-  // Add days of the month
-  for (let day = 1; day <= daysInMonth; day++) {
-    calendarDays.push(day);
-  }
-
-  const weekDays = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'];
-  const months = ['Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun', 'Jun'];
-  const years = ['2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025', '2025'];
-
-  const handleApply = () => {
-    console.log('Apply clicked');
-  };
-
-  const handleReset = () => {
-    console.log('Reset clicked');
-  };
-
-  const handleExport = () => {
-    console.log('Export clicked');
-  };
-
-  const handleVerify = () => {
-    console.log('Verify clicked');
-  };
-
-  const handleDownloadPdf = () => {
-    console.log('Download PDF clicked');
-  };
-
   return (
     <div className="p-6 mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a]">meter reading</h1>
-          <div className="flex gap-3">
-            <Button 
-              variant="secondary"
-              onClick={handleApply}
-            >
-              Apply
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={handleReset}
-            >
-              Reset
-            </Button>
-            <Button 
-              onClick={handleExport}
-              style={{ backgroundColor: '#3B82F6' }}
-              className="text-white hover:bg-blue-600"
-            >
-              Export
-            </Button>
-            <Button 
-              onClick={handleVerify}
-              style={{ backgroundColor: '#10B981' }}
-              className="text-white hover:bg-green-600"
-            >
-              Verify
-            </Button>
-            <Button 
-              onClick={handleDownloadPdf}
-              style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-              className="hover:bg-[#F2EEE9]/90"
-            >
-              Download Pdf
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-sm text-gray-600">
-            01/06/2025 - 30/06/2025
-          </div>
-          <div className="text-sm">
-            <span className="bg-green-100 text-green-800 px-2 py-1 rounded">Energy Meter 1</span>
-          </div>
-        </div>
+      <div className="flex gap-4 mb-4">
+        <Input type="date" className="w-48 border border-gray-300 rounded" defaultValue="2025-07-16" />
+        <Input type="date" className="w-48 border border-gray-300 rounded" defaultValue="2025-07-25" />
+        <Input type="text" className="w-64 border border-gray-300 rounded" placeholder="Pre Monsoon" />
+        <Button className="bg-green-600 text-white px-6">Apply</Button>
+        <Button className="bg-yellow-500 text-white px-6">Reset</Button>
+        <Button className="bg-[#3B82F6] text-white px-6">Export</Button>
+        <Button className="bg-[#2563EB] text-white px-6">Verify</Button>
+        <Button className="bg-[#2563EB] text-white px-6">Download</Button>
       </div>
-
-      {/* Calendar Grid */}
-      <Card>
-        <CardContent className="p-0">
-          {/* Calendar Header Row with all 30 days */}
-          <div className="grid grid-cols-30 gap-0 border-b">
-            {weekDays.map((day, index) => (
-              <div key={index} className="text-center font-medium text-xs text-gray-600 p-2 border-r border-gray-200 bg-gray-50 min-w-[40px]">
-                <div>{day}</div>
-                <div className="text-xs">{months[index]}</div>
-                <div className="text-xs">{years[index]}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Asset Activity Row */}
-          <div className="grid grid-cols-30 gap-0">
-            {/* Asset Name and Activity headers */}
-            <div className="col-span-30 grid grid-cols-30 gap-0">
-              {weekDays.map((day, index) => (
-                <div key={index} className="border-r border-gray-200 p-2 min-h-[60px] text-center text-xs bg-white">
-                  {/* Empty cells for activity data */}
-                </div>
+      <h2 className="text-xl font-bold mb-2 text-black">Pre Monsoon Checklist</h2>
+      <div className="overflow-x-auto">
+        <Table className="min-w-full border border-gray-300">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="bg-[#334155] text-center border-r border-gray-300">Asset Name</TableHead>
+              <TableHead className="bg-[#334155] text-center border-r border-gray-300">Activity</TableHead>
+              {dates.map((date, idx) => (
+                <TableHead key={idx} className="bg-[#F3F4F6] text-gray-900 text-center border-r border-gray-300">{date}</TableHead>
               ))}
-            </div>
-          </div>
-
-          {/* Asset Info Table */}
-          <div className="mt-4 mx-4 pb-4">
-            <div className="grid grid-cols-2 gap-4 text-sm border">
-              <div className="border-r">
-                <div className="font-medium bg-gray-100 p-3 border-b">Asset Name</div>
-                <div className="p-3">Energy Meter 1</div>
-              </div>
-              <div>
-                <div className="font-medium bg-gray-100 p-3 border-b">Activity</div>
-                <div className="p-3">Kwah</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer Info */}
-          <div className="mx-4 pb-4 flex justify-between text-sm text-gray-600 border-t pt-4">
-            <div>Performed By:- Function 2</div>
-            <div>Approved By:-</div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Action Buttons */}
-      <div className="flex gap-3 pt-6">
-        <Button 
-          onClick={() => navigate('/maintenance/schedule')}
-          variant="outline"
-          className="px-8 border-gray-300 text-gray-700 hover:bg-gray-50"
-        >
-          Back to List
-        </Button>
-        <Button 
-          onClick={() => navigate(`/maintenance/schedule/view/${id}`)}
-          style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
-          className="hover:bg-[#F2EEE9]/90 px-8"
-        >
-          Back to View
-        </Button>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell className="border-r border-gray-300 text-center font-semibold">Pre Monsoon</TableCell>
+              <TableCell className="border-r border-gray-300"></TableCell>
+              {dates.map((_, idx) => (
+                <TableCell key={idx} className="border-r border-gray-300"></TableCell>
+              ))}
+            </TableRow>
+            {activities.map((activity, idx) => (
+              <TableRow key={idx}>
+                <TableCell className="border-r border-gray-300"></TableCell>
+                <TableCell className="border-r border-gray-300 text-left">{activity}</TableCell>
+                {dates.map((_, dIdx) => (
+                  <TableCell key={dIdx} className="border-r border-gray-300"></TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
 };
+
+export default ViewPerformancePage;
