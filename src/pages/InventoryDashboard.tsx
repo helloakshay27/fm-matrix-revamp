@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchInventoryData } from "@/store/slices/inventorySlice";
+import { fetchInventoryData, setCurrentPage } from "@/store/slices/inventorySlice";
 import axios from 'axios';
 import { Button } from "@/components/ui/button";
 import { DateFilterModal } from "@/components/DateFilterModal";
@@ -13,19 +13,9 @@ import {
   Eye,
   Plus,
   Package,
-  AlertTriangle,
-  CheckCircle,
-  TrendingUp,
-  DollarSign,
-  BarChart3,
-  Download,
-  ChevronDown,
-  RotateCcw,
-  ChevronRight,
   Settings,
-  AlertCircle,
-  Trash2,
-  Leaf,
+  Download,
+  BarChart3,
 } from "lucide-react";
 import { BulkUploadDialog } from "@/components/BulkUploadDialog";
 import { InventoryFilterDialog } from "@/components/InventoryFilterDialog";
@@ -86,7 +76,7 @@ const mapInventoryData = (apiData: any[]) => {
     const itemId =
       typeof item.id === "string"
         ? item.id
-        : item.id?.value || String(item.id || ""); // Handle nested ID or fallback
+        : item.id?.value || String(item.id || "");
     return {
       id: itemId,
       name: item.name || "",
@@ -107,7 +97,7 @@ const mapInventoryData = (apiData: any[]) => {
       maxStockLevel: item.max_stock_level?.toString() || "",
       minStockLevel: item.min_stock_level?.toString() || "",
       minOrderLevel: item.min_order_level?.toString() || "",
-      greenProduct: item.green_product || false, // Add group_product field
+      greenProduct: item.green_product || false,
     };
   });
 };
@@ -159,19 +149,20 @@ export const InventoryDashboard = () => {
     error,
     totalPages: reduxTotalPages,
     totalCount,
+    currentPage: reduxCurrentPage,
+    activeCount,
+    inactiveCount,
+    greenInventories,
+    totalInventories,
   } = useSelector((state: RootState) => state.inventory);
 
-  // Calculate derived data from inventory items
-  const totalInventories = totalCount;
-  const activeCount = inventoryItems.filter(item => item.active).length;
-  const inactiveCount = inventoryItems.filter(item => !item.active).length;
-  const greenInventories = inventoryItems.filter(item => item.green_product).length;
+  console.log("📦 Redux inventoryItems:", inventoryItems);
 
   // Local state
+  const [currentPage, setLocalCurrentPage] = useState(reduxCurrentPage || 1);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [visibleSections, setVisibleSections] = useState<string[]>([
     "statusChart",
     "criticalityChart",
@@ -189,14 +180,14 @@ export const InventoryDashboard = () => {
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [dateRange, setDateRange] = useState({
     startDate: new Date('2020-01-01'),
-    endDate: new Date('2025-01-01')
+    endDate: new Date('2025-01-01'),
   });
-  
+
   // Analytics state
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsDateRange, setAnalyticsDateRange] = useState({
     startDate: '01/01/2020',
-    endDate: '01/01/2025'
+    endDate: '01/01/2025',
   });
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<any>({
@@ -208,29 +199,30 @@ export const InventoryDashboard = () => {
       activeItems: 0,
       inactiveItems: 0,
       criticalItems: 0,
-      nonCriticalItems: 0
+      nonCriticalItems: 0,
     },
-    categoryData: []
+    categoryData: [],
   });
   const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>([
     'items_status',
-    'category_wise', 
-    'green_consumption'
+    'category_wise',
+    'green_consumption',
   ]);
   const [visibleAnalyticsSections, setVisibleAnalyticsSections] = useState<string[]>([
     'itemsStatus',
     'categoryWise',
-    'greenConsumption'
+    'greenConsumption',
   ]);
 
-  const pageSize = 15; // Use larger page size for API data
+  const pageSize = 15; // Must match backend or be passed in API request
 
   // Map API data to display format
   const inventoryData = mapInventoryData(inventoryItems);
+  console.log("📦 Mapped inventoryData:", inventoryData);
 
-  // Fetch inventory data on component mount
+  // Fetch inventory data on component mount or page change
   useEffect(() => {
-    dispatch(fetchInventoryData({ page: currentPage }));
+    dispatch(fetchInventoryData({ page: currentPage, pageSize }));
   }, [dispatch, currentPage]);
 
   // Drag and drop sensors
@@ -241,16 +233,12 @@ export const InventoryDashboard = () => {
     })
   );
 
-  // Use Redux pagination data or calculate from current data
-  const totalPages =
-    reduxTotalPages || Math.ceil(inventoryData.length / pageSize);
-  const startIndex = 0; 
-  const paginatedData = inventoryData.slice(startIndex, pageSize); // Show current page data
+  // Pagination calculations
+  const totalPages = reduxTotalPages || 1;
+  const paginatedData = inventoryData; // Use inventoryData directly, no slicing needed
 
   // Analytics calculations
   const totalItems = inventoryData.length;
-  
-
 
   // Aging matrix data - simulated based on groups and priorities
   const agingMatrixData = [
@@ -340,7 +328,6 @@ export const InventoryDashboard = () => {
       setChartOrder((items) => {
         const oldIndex = items.indexOf(active.id);
         const newIndex = items.indexOf(over.id);
-
         return arrayMove(items, oldIndex, newIndex);
       });
     }
@@ -373,7 +360,7 @@ export const InventoryDashboard = () => {
     {
       label: "Print QR Codes",
       icon: FileText,
-      onClick: (selectedItems) => {
+      onClick: (selectedItems: string[]) => {
         alert(`Printing QR codes for ${selectedItems.length} items`);
       },
     },
@@ -402,7 +389,6 @@ export const InventoryDashboard = () => {
                   "invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)",
               }}
             />
-            // <Leaf className="w-4 h-4 text-green-600" />
           )}
         </div>
       );
@@ -410,10 +396,11 @@ export const InventoryDashboard = () => {
     if (columnKey === "criticality") {
       return (
         <span
-          className={`px-2 py-1 rounded text-xs ${item.criticality === "Critical"
-            ? "bg-red-100 text-red-700"
-            : "bg-gray-100 text-gray-700"
-            }`}
+          className={`px-2 py-1 rounded text-xs ${
+            item.criticality === "Critical"
+              ? "bg-red-100 text-red-700"
+              : "bg-gray-100 text-gray-700"
+          }`}
         >
           {item.criticality}
         </span>
@@ -429,112 +416,56 @@ export const InventoryDashboard = () => {
     return item[columnKey];
   };
 
+  const handlePageChange = (page: number) => {
+    setLocalCurrentPage(page);
+    dispatch(setCurrentPage(page));
+    setSelectedItems([]); // Clear selections on page change
+  };
+
   const renderPaginationItems = () => {
     const items = [];
-    const showEllipsis = totalPages > 7;
+    const maxPagesToShow = 7;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
 
-    if (showEllipsis) {
-      // Show first page
+    if (endPage - startPage < maxPagesToShow - 1) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+
+    if (startPage > 1) {
       items.push(
         <PaginationItem key={1}>
-          <PaginationLink
-            onClick={() => setCurrentPage(1)}
-            isActive={currentPage === 1}
-          >
+          <PaginationLink onClick={() => handlePageChange(1)} isActive={currentPage === 1}>
             1
           </PaginationLink>
         </PaginationItem>
       );
+      if (startPage > 2) {
+        items.push(<PaginationItem key="ellipsis1"><PaginationEllipsis /></PaginationItem>);
+      }
+    }
 
-      // Show ellipsis or pages 2-3
-      if (currentPage > 4) {
-        items.push(
-          <PaginationItem key="ellipsis1">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      } else {
-        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink
-                onClick={() => setCurrentPage(i)}
-                isActive={currentPage === i}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
+    for (let i = startPage; i <= endPage; i++) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink onClick={() => handlePageChange(i)} isActive={currentPage === i}>
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
 
-      // Show current page area
-      if (currentPage > 3 && currentPage < totalPages - 2) {
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink
-                onClick={() => setCurrentPage(i)}
-                isActive={currentPage === i}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        items.push(<PaginationItem key="ellipsis2"><PaginationEllipsis /></PaginationItem>);
       }
-
-      // Show ellipsis or pages before last
-      if (currentPage < totalPages - 3) {
-        items.push(
-          <PaginationItem key="ellipsis2">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      } else {
-        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-          if (!items.find((item) => item.key === i)) {
-            items.push(
-              <PaginationItem key={i}>
-                <PaginationLink
-                  onClick={() => setCurrentPage(i)}
-                  isActive={currentPage === i}
-                >
-                  {i}
-                </PaginationLink>
-              </PaginationItem>
-            );
-          }
-        }
-      }
-
-      // Show last page
-      if (totalPages > 1) {
-        items.push(
-          <PaginationItem key={totalPages}>
-            <PaginationLink
-              onClick={() => setCurrentPage(totalPages)}
-              isActive={currentPage === totalPages}
-            >
-              {totalPages}
-            </PaginationLink>
-          </PaginationItem>
-        );
-      }
-    } else {
-      // Show all pages if total is 7 or less
-      for (let i = 1; i <= totalPages; i++) {
-        items.push(
-          <PaginationItem key={i}>
-            <PaginationLink
-              onClick={() => setCurrentPage(i)}
-              isActive={currentPage === i}
-            >
-              {i}
-            </PaginationLink>
-          </PaginationItem>
-        );
-      }
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink onClick={() => handlePageChange(totalPages)} isActive={currentPage === totalPages}>
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
     }
 
     return items;
@@ -552,7 +483,6 @@ export const InventoryDashboard = () => {
     setShowBulkUpload(true);
   };
 
-  console.log(inventoryData);
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-3">
       <Button
@@ -563,6 +493,7 @@ export const InventoryDashboard = () => {
       </Button>
     </div>
   );
+
   const handleExport = async () => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
@@ -615,42 +546,40 @@ export const InventoryDashboard = () => {
     try {
       const fromDate = new Date(dateRange.startDate);
       const toDate = new Date(dateRange.endDate);
-      
+
       const results: any = {};
 
-      // Fetch selected analytics data
       if (selectedAnalyticsOptions.includes('items_status')) {
         const statusResponse = await inventoryAnalyticsAPI.getItemsStatus(fromDate, toDate);
-        // Map API response to expected format
         results.statusData = {
           activeItems: statusResponse.count_of_active_items || 0,
           inactiveItems: statusResponse.count_of_inactive_items || 0,
           criticalItems: statusResponse.count_of_critical_items || 0,
-          nonCriticalItems: statusResponse.count_of_non_critical_items || 0
+          nonCriticalItems: statusResponse.count_of_non_critical_items || 0,
         };
       }
-      
+
       if (selectedAnalyticsOptions.includes('category_wise')) {
         const categoryResponse = await inventoryAnalyticsAPI.getCategoryWise(fromDate, toDate);
         results.categoryData = categoryResponse.category_counts || [];
       }
-      
+
       if (selectedAnalyticsOptions.includes('green_consumption')) {
         results.greenConsumption = await inventoryAnalyticsAPI.getGreenConsumption(fromDate, toDate);
       }
-      
+
       if (selectedAnalyticsOptions.includes('consumption_report_green')) {
         results.consumptionReportGreen = await inventoryAnalyticsAPI.getConsumptionReportGreen(fromDate, toDate);
       }
-      
+
       if (selectedAnalyticsOptions.includes('consumption_report_non_green')) {
         results.consumptionReportNonGreen = await inventoryAnalyticsAPI.getConsumptionReportNonGreen(fromDate, toDate);
       }
-      
+
       if (selectedAnalyticsOptions.includes('current_minimum_stock_green')) {
         results.minimumStockGreen = await inventoryAnalyticsAPI.getCurrentMinimumStockGreen(fromDate, toDate);
       }
-      
+
       if (selectedAnalyticsOptions.includes('current_minimum_stock_non_green')) {
         results.minimumStockNonGreen = await inventoryAnalyticsAPI.getCurrentMinimumStockNonGreen(fromDate, toDate);
       }
@@ -672,12 +601,11 @@ export const InventoryDashboard = () => {
     if (dates.startDate && dates.endDate) {
       setDateRange({
         startDate: dates.startDate,
-        endDate: dates.endDate
+        endDate: dates.endDate,
       });
     }
   };
 
-  // Update the analytics section to use dynamic data with safety checks
   const itemStatusData = [
     { name: "Active", value: analyticsData.statusData?.activeItems || 0, fill: "#c6b692" },
     { name: "Inactive", value: analyticsData.statusData?.inactiveItems || 0, fill: "#d8dcdd" },
@@ -688,24 +616,22 @@ export const InventoryDashboard = () => {
     { name: "Non-Critical", value: analyticsData.statusData?.nonCriticalItems || 0, fill: "#d8dcdd" },
   ];
 
-  // Group data from API - with safety check
-  const groupChartData = (analyticsData.categoryData && Array.isArray(analyticsData.categoryData)) 
+  const groupChartData = (analyticsData?.categoryData && Array.isArray(analyticsData.categoryData))
     ? analyticsData.categoryData.map(({ group_name, item_count }) => ({
         name: group_name,
-        value: item_count
-      })) 
+        value: item_count,
+      }))
     : [];
 
-
-    const resetFilters = () => {
-      setDateRange({
-        startDate: new Date('2020-01-01'), // Reset to default or broad range
-        endDate: new Date('2025-01-01'),
-      });
-      setSelectedItems([]); // Clear selected items
-      setShowFilter(false); // Close filter dialog if open
-      setShowDateFilter(false); // Close date filter modal if open
-    };
+  const resetFilters = () => {
+    setDateRange({
+      startDate: new Date('2020-01-01'),
+      endDate: new Date('2025-01-01'),
+    });
+    setSelectedItems([]);
+    setShowFilter(false);
+    setShowDateFilter(false);
+  };
 
   return (
     <div className="p-2 sm:p-4 lg:p-6">
@@ -806,7 +732,6 @@ export const InventoryDashboard = () => {
           )}
         </TabsContent>
         <TabsContent value="list" className="space-y-4 sm:space-y-6">
-          {/* Error handling */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
               Error loading inventory data: {error}
@@ -814,57 +739,48 @@ export const InventoryDashboard = () => {
           )}
           <div className="overflow-x-auto">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 my-6">
-              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer" onClick={() =>
-                dispatch(fetchInventoryData({}))
-              }
+              <div
+                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+                onClick={() => dispatch(fetchInventoryData({}))}
               >
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: "#C72030" }} />
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {totalInventories}
+                    {totalInventories || 0}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
                     Total Inventories
                   </div>
                 </div>
               </div>
-              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer" onClick={() =>
-                dispatch(fetchInventoryData({ filters: { 'q[active_eq]': true } }))
-              }
+              <div
+                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+                onClick={() => dispatch(fetchInventoryData({ filters: { 'q[active_eq]': true } }))}
               >
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: "#C72030" }} />
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {activeCount}
+                    {activeCount || 0}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
                     Active Inventory
                   </div>
                 </div>
               </div>
-              <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer" onClick={() =>
-                dispatch(fetchInventoryData({ filters: { 'q[active_eq]': false } }))
-              }
+              <div
+                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+                onClick={() => dispatch(fetchInventoryData({ filters: { 'q[active_eq]': false } }))}
               >
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: "#C72030" }} />
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {inactiveCount}
+                    {inactiveCount || 0}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
                     Inactive
@@ -873,40 +789,20 @@ export const InventoryDashboard = () => {
               </div>
               <div
                 className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
-                onClick={() =>
-                  dispatch(
-                    fetchInventoryData({
-                      filters: { "q[green_product_eq]": true },
-                    })
-                  )
-                }
+                onClick={() => dispatch(fetchInventoryData({ filters: { 'q[green_product_eq]': true } }))}
               >
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
-                  />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: "#C72030" }} />
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
                     {greenInventories || 0}
                   </div>
-                  <div className="text-xs text-green-600 sm:text-sm text-muted-foreground font-medium leading-tight">
+                  <div className="text-xs sm:text-sm text-green-600 font-medium leading-tight">
                     Ecofriendly
                   </div>
                 </div>
               </div>
-              {/* <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                    {2}
-                  </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Closed</div>
-                </div>
-              </div> */}
             </div>
             {showActionPanel && (
               <SelectionPanel
@@ -932,49 +828,30 @@ export const InventoryDashboard = () => {
               onRowClick={handleViewItem}
               storageKey="inventory-table"
               loading={loading}
-              emptyMessage={
-                loading
-                  ? "Loading inventory data..."
-                  : "No inventory items found"
-              }
+              emptyMessage={loading ? "Loading inventory data..." : "No inventory items found"}
               leftActions={renderCustomActions()}
               onFilterClick={handleFiltersClick}
             />
           </div>
-          {/* Custom Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-6">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() =>
-                        setCurrentPage(Math.max(1, currentPage - 1))
-                      }
-                      className={
-                        currentPage === 1
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-                  {renderPaginationItems()}
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() =>
-                        setCurrentPage(Math.min(totalPages, currentPage + 1))
-                      }
-                      className={
-                        currentPage === totalPages
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
+          <div className="flex justify-center mt-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+                {renderPaginationItems()}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
         </TabsContent>
       </Tabs>
       <BulkUploadDialog
