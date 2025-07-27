@@ -29,6 +29,17 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
     scheduleType: ''
   });
 
+  // Calculate 52 weeks date range
+  const get52WeeksRange = () => {
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - (52 * 7)); // 52 weeks ago
+    return {
+      start: startDate,
+      end: today
+    };
+  };
+
   // Convert API events to calendar events
   const calendarEvents = useMemo(() => {
     return events.map(event => ({
@@ -47,6 +58,27 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   };
   const handleViewChange = (newView: any) => {
     setView(newView);
+    
+    // When switching to 52-week view, automatically set the date range
+    if (newView === 'work_week') {
+      const { start, end } = get52WeeksRange();
+      const startFormatted = moment(start).format('DD/MM/YYYY');
+      const endFormatted = moment(end).format('DD/MM/YYYY');
+      
+      const filters = {
+        ...activeFilters,
+        dateFrom: startFormatted,
+        dateTo: endFormatted
+      };
+      
+      setActiveFilters(filters);
+      if (onDateRangeChange) {
+        onDateRangeChange(startFormatted, endFormatted);
+      }
+      if (onFiltersChange) {
+        onFiltersChange(filters);
+      }
+    }
   };
   const handleApplyFilters = async (filters: CalendarFilters) => {
     setActiveFilters(filters);
