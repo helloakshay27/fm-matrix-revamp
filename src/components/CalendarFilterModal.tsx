@@ -15,16 +15,8 @@ interface CalendarFilterModalProps {
 export interface CalendarFilters {
   dateFrom: string;
   dateTo: string;
-  amc: string;
-  service: string;
-  status: string;
+  type: string;
   scheduleType: string;
-  priority: string;
-  building: string;
-  wing: string;
-  floor: string;
-  area: string;
-  room: string;
 }
 export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   isOpen,
@@ -34,16 +26,8 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   const [filters, setFilters] = useState<CalendarFilters>({
     dateFrom: '01/07/2025',
     dateTo: '31/07/2025',
-    amc: '',
-    service: '',
-    status: '',
-    scheduleType: '',
-    priority: '',
-    building: '',
-    wing: '',
-    floor: '',
-    area: '',
-    room: ''
+    type: '',
+    scheduleType: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const handleFilterChange = (key: keyof CalendarFilters, value: string) => {
@@ -68,24 +52,18 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
     const clearedFilters: CalendarFilters = {
       dateFrom: '01/07/2025',
       dateTo: '31/07/2025',
-      amc: '',
-      service: '',
-      status: '',
-      scheduleType: '',
-      priority: '',
-      building: '',
-      wing: '',
-      floor: '',
-      area: '',
-      room: ''
+      type: '',
+      scheduleType: ''
     };
     setFilters(clearedFilters);
     onApplyFilters(clearedFilters);
     onClose();
     toast.success('Filters cleared successfully');
   };
-  return <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Filter Calendar Tasks</DialogTitle>
         </DialogHeader>
@@ -96,71 +74,43 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
             <h3 className="text-lg font-medium mb-4 text-gray-800">Date Range</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">From Date</Label>
+                <Label className="text-sm font-medium text-gray-700">Start Date</Label>
                 <MaterialDatePicker 
                   value={filters.dateFrom} 
                   onChange={(value) => handleFilterChange('dateFrom', value)} 
                   placeholder="Select start date"
-                  className="h-10"
+                  className="h-10 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">To Date</Label>
+                <Label className="text-sm font-medium text-gray-700">End Date</Label>
                 <MaterialDatePicker 
                   value={filters.dateTo} 
                   onChange={(value) => handleFilterChange('dateTo', value)} 
                   placeholder="Select end date"
-                  className="h-10"
+                  className="h-10 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
           </div>
 
-          {/* Task Details Section */}
+          {/* Filter Options */}
           <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium mb-4 text-gray-800">Task Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <h3 className="text-lg font-medium mb-4 text-gray-800">Filter Options</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">AMC</Label>
-                <Select value={filters.amc} onValueChange={value => handleFilterChange('amc', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select AMC" />
+                <Label className="text-sm font-medium text-gray-700">Type</Label>
+                <Select value={filters.type} onValueChange={value => handleFilterChange('type', value)}>
+                  <SelectTrigger className="h-10 bg-white border border-gray-300 hover:border-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <SelectValue placeholder="Select Type" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="amc1">AMC Contract 1</SelectItem>
-                    <SelectItem value="amc2">AMC Contract 2</SelectItem>
-                    <SelectItem value="amc3">AMC Contract 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Service</Label>
-                <Select value={filters.service} onValueChange={value => handleFilterChange('service', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Service" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                    <SelectItem value="cleaning">Cleaning</SelectItem>
-                    <SelectItem value="security">Security</SelectItem>
-                    <SelectItem value="hvac">HVAC</SelectItem>
-                    <SelectItem value="electrical">Electrical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Status</Label>
-                <Select value={filters.status} onValueChange={value => handleFilterChange('status', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md z-50">
+                    <SelectItem value="maintenance" className="hover:bg-gray-100 focus:bg-gray-100">Maintenance</SelectItem>
+                    <SelectItem value="cleaning" className="hover:bg-gray-100 focus:bg-gray-100">Cleaning</SelectItem>
+                    <SelectItem value="security" className="hover:bg-gray-100 focus:bg-gray-100">Security</SelectItem>
+                    <SelectItem value="hvac" className="hover:bg-gray-100 focus:bg-gray-100">HVAC</SelectItem>
+                    <SelectItem value="electrical" className="hover:bg-gray-100 focus:bg-gray-100">Electrical</SelectItem>
+                    <SelectItem value="plumbing" className="hover:bg-gray-100 focus:bg-gray-100">Plumbing</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -168,123 +118,42 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Schedule Type</Label>
                 <Select value={filters.scheduleType} onValueChange={value => handleFilterChange('scheduleType', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Type" />
+                  <SelectTrigger className="h-10 bg-white border border-gray-300 hover:border-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <SelectValue placeholder="Select Schedule Type" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="quarterly">Quarterly</SelectItem>
-                    <SelectItem value="annual">Annual</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Priority</Label>
-                <Select value={filters.priority} onValueChange={value => handleFilterChange('priority', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
+                  <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md z-50">
+                    <SelectItem value="daily" className="hover:bg-gray-100 focus:bg-gray-100">Daily</SelectItem>
+                    <SelectItem value="weekly" className="hover:bg-gray-100 focus:bg-gray-100">Weekly</SelectItem>
+                    <SelectItem value="monthly" className="hover:bg-gray-100 focus:bg-gray-100">Monthly</SelectItem>
+                    <SelectItem value="quarterly" className="hover:bg-gray-100 focus:bg-gray-100">Quarterly</SelectItem>
+                    <SelectItem value="annual" className="hover:bg-gray-100 focus:bg-gray-100">Annual</SelectItem>
+                    <SelectItem value="one-time" className="hover:bg-gray-100 focus:bg-gray-100">One-time</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </div>
-
-          {/* Location Details Section */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-medium mb-4 text-gray-800">Location Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Building</Label>
-                <Select value={filters.building} onValueChange={value => handleFilterChange('building', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="building-a">Building A</SelectItem>
-                    <SelectItem value="building-b">Building B</SelectItem>
-                    <SelectItem value="building-c">Building C</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Wing</Label>
-                <Select value={filters.wing} onValueChange={value => handleFilterChange('wing', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Wing" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="north">North Wing</SelectItem>
-                    <SelectItem value="south">South Wing</SelectItem>
-                    <SelectItem value="east">East Wing</SelectItem>
-                    <SelectItem value="west">West Wing</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Floor</Label>
-                <Select value={filters.floor} onValueChange={value => handleFilterChange('floor', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Floor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ground">Ground Floor</SelectItem>
-                    <SelectItem value="1">1st Floor</SelectItem>
-                    <SelectItem value="2">2nd Floor</SelectItem>
-                    <SelectItem value="3">3rd Floor</SelectItem>
-                    <SelectItem value="4">4th Floor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Area</Label>
-                <Select value={filters.area} onValueChange={value => handleFilterChange('area', value)}>
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Area" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="lobby">Lobby</SelectItem>
-                    <SelectItem value="office">Office Space</SelectItem>
-                    <SelectItem value="cafeteria">Cafeteria</SelectItem>
-                    <SelectItem value="parking">Parking</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Room</Label>
-                <Input 
-                  placeholder="Enter room number" 
-                  value={filters.room} 
-                  onChange={e => handleFilterChange('room', e.target.value)} 
-                  className="h-10" 
-                />
-              </div>
-            </div>
-          </div>
-          
         </div>
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-3 pt-6 border-t">
-          <Button variant="outline" onClick={handleClear} disabled={isLoading} className="px-6">
+          <Button 
+            variant="outline" 
+            onClick={handleClear} 
+            disabled={isLoading} 
+            className="px-6 border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
             Clear All
           </Button>
-          <Button onClick={handleApply} disabled={isLoading} className="bg-purple-600 hover:bg-purple-700 text-white px-6">
+          <Button 
+            onClick={handleApply} 
+            disabled={isLoading} 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 focus:ring-2 focus:ring-blue-500"
+          >
             {isLoading ? 'Applying...' : 'Apply Filter'}
           </Button>
         </div>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
