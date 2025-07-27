@@ -201,10 +201,10 @@ export const MobileOrderReview: React.FC = () => {
     isExternalScan?: boolean;
     sourceParam?: string;
     contactDetails?: {
-      customer_number: string;
+      customer_mobile: string;
       customer_name: string;
       customer_email: string;
-      delivery_location: string;
+      delivery_address: string;
     };
   };
 
@@ -277,9 +277,9 @@ export const MobileOrderReview: React.FC = () => {
     if (contactDetails) {
       return {
         customer_name: contactDetails.customer_name,
-        customer_number: contactDetails.customer_number,
+        customer_number: contactDetails.customer_mobile,
         customer_email: contactDetails.customer_email,
-        delivery_location: contactDetails.delivery_location,
+        delivery_location: contactDetails.delivery_address,
       };
     }
 

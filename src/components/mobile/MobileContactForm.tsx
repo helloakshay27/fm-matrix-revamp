@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { restaurantApi } from "@/services/restaurantApi";
 
 interface ContactFormData {
-  customer_number: string;
+  customer_mobile: string;
   customer_name: string;
   customer_email: string;
   delivery_address: string;
@@ -38,9 +38,15 @@ export const MobileContactForm: React.FC = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const siteID = localStorage.getItem('site_id');
-  const orgID = localStorage.getItem('org_id')
-  console.log("idssss", siteID, orgID);
+  const siteID = localStorage.getItem("site_id");
+  const orgID = localStorage.getItem("org_id");
+  const facilitySetupData = localStorage.getItem("facility_setup");
+  const facilityData = facilitySetupData ? JSON.parse(facilitySetupData) : null;
+  
+  console.log("📋 STORED DATA:");
+  console.log("  - siteID:", siteID);
+  console.log("  - orgID:", orgID);
+  console.log("  - facilityData:", facilityData);
 
   const {
     selectedItems: items,
@@ -64,8 +70,9 @@ export const MobileContactForm: React.FC = () => {
     siteId?: number;
   };
 
-  // Get facility ID from URL params or passed state
-  const finalFacilityId = searchParams.get('facilityId') || facilityId;
+  // Get facility ID from URL params or passed state or localStorage
+  const storedFacilityId = localStorage.getItem("facility_id");
+  const finalFacilityId = searchParams.get("facilityId") || facilityId || storedFacilityId;
   // Get source parameter from URL or passed state
   const finalSourceParam = searchParams.get("source") || sourceParam;
   const finalIsExternalScan = isExternalScan || finalSourceParam === "external";
@@ -76,16 +83,18 @@ export const MobileContactForm: React.FC = () => {
   console.log("  - Passed sourceParam:", sourceParam);
   console.log("  - Final sourceParam:", finalSourceParam);
   console.log("  - Final isExternalScan:", finalIsExternalScan);
-  console.log("  - URL facilityId:", searchParams.get('facilityId'));
+  console.log("  - URL facilityId:", searchParams.get("facilityId"));
   console.log("  - Passed facilityId:", facilityId);
+  console.log("  - Stored facilityId:", storedFacilityId);
   console.log("  - Final facilityId:", finalFacilityId);
   console.log("  - Passed siteId:", siteId);
+  console.log("  - Stored siteID:", siteID);
 
   const [formData, setFormData] = useState<ContactFormData>({
-    customer_number: "",
+    customer_mobile: "",
     customer_name: "",
     customer_email: "",
-    delivery_address: "",
+    delivery_address: facilityData?.fac_name || "",
   });
 
   console.log("formData", formData);
@@ -103,21 +112,52 @@ export const MobileContactForm: React.FC = () => {
     }));
   };
 
+  // Validation functions
+  const validateMobile = (mobile: string) => {
+    const mobileRegex = /^[6-9]\d{9}$/; // Indian mobile number format
+    return mobileRegex.test(mobile);
+  };
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const isFormValid = () => {
-    return (
-      formData.customer_number.trim() !== "" &&
-      formData.customer_name.trim() !== "" &&
-      formData.customer_email.trim() !== "" &&
-      formData.delivery_address.trim() !== ""
-    );
+    const errors = [];
+    
+    // Check required fields
+    if (!formData.customer_name.trim()) {
+      errors.push("Name is required");
+    }
+    
+    if (!formData.customer_mobile.trim()) {
+      errors.push("Mobile number is required");
+    } else if (!validateMobile(formData.customer_mobile)) {
+      errors.push("Please enter a valid 10-digit mobile number");
+    }
+    
+    if (!formData.customer_email.trim()) {
+      errors.push("Email is required");
+    } else if (!validateEmail(formData.customer_email)) {
+      errors.push("Please enter a valid email address");
+    }
+    
+    if (!formData.delivery_address.trim()) {
+      errors.push("Delivery address is required");
+    }
+    
+    return { isValid: errors.length === 0, errors };
   };
 
   const handleSubmit = async () => {
-    if (!isFormValid()) {
+    const validation = isFormValid();
+    
+    if (!validation.isValid) {
       toast({
         variant: "destructive",
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
+        title: "Validation Error",
+        description: validation.errors.join(", "),
       });
       return;
     }
@@ -127,15 +167,18 @@ export const MobileContactForm: React.FC = () => {
     try {
       console.log("🚀 EXTERNAL USER: Placing order with contact details");
 
-      if (finalIsExternalScan && finalFacilityId && siteId) {
+      if (finalIsExternalScan && finalFacilityId && (siteId || siteID)) {
         // Use new QR order API for external users
+        const deliveryLocation = facilityData?.fac_name || formData.delivery_address;
+        const finalSiteId = siteId || parseInt(siteID || "0");
+        
         const qrOrderData = {
           customer_name: formData.customer_name,
-          customer_mobile: formData.customer_number,
+          customer_mobile: formData.customer_mobile, // API expects customer_number field
           customer_email: formData.customer_email,
-          delivery_address: formData.delivery_address,
+          delivery_address: deliveryLocation,
           facility_id: parseInt(finalFacilityId),
-          site_id: siteId,
+          site_id: finalSiteId,
           food_order: {
             restaurant_id: parseInt(restaurant.id),
             preferred_time: undefined, // Can be added later if needed
@@ -159,9 +202,9 @@ export const MobileContactForm: React.FC = () => {
           navigate(`/mobile/restaurant/${restaurant.id}/order-review`, {
             state: {
               orderData: {
-                id: result.data.order_id,
-                restaurant_name: result.data.restaurant_name,
-                customer_name: result.data.customer_name,
+                id: result.data.order_id, // Use actual order ID from API response
+                restaurant_name: result.data.restaurant_name || restaurant.name,
+                customer_name: result.data.customer_name || formData.customer_name,
                 total_amount: result.data.total_amount,
                 message: result.data.message,
               },
@@ -188,17 +231,19 @@ export const MobileContactForm: React.FC = () => {
       } else {
         // Fallback to regular order API for internal users or missing data
         console.log("📱 FALLBACK: Using regular order API");
-        
+
         // Get user from localStorage
         const storedUser = localStorage.getItem("user");
         const user = storedUser ? JSON.parse(storedUser) : null;
         const userId = user?.id || null; // Use a default user ID for fallback
 
+        const deliveryLocation = facilityData?.fac_name || formData.delivery_address;
+
         const orderData = {
           customer_name: formData.customer_name,
-          customer_mobile: formData.customer_number,
+          customer_mobile: formData.customer_mobile, // API expects customer_number field
           customer_email: formData.customer_email,
-          delivery_address: formData.delivery_address,
+          delivery_address: deliveryLocation,
           facility_id: parseInt(finalFacilityId || "0"),
           site_id: parseInt(siteID || "0"),
           food_order: {
@@ -224,9 +269,15 @@ export const MobileContactForm: React.FC = () => {
           // Navigate to order review with success state
           navigate(`/mobile/restaurant/${restaurant.id}/order-review`, {
             state: {
-              orderData: result.data,
+              orderData: {
+                id: result.data.order_id, // Use actual order ID from API response
+                restaurant_name: result.data.restaurant_name || restaurant.name,
+                customer_name: result.data.customer_name || formData.customer_name,
+                total_amount: result.data.total_amount || totalPrice,
+                message: result.data.message,
+              },
               restaurant,
-              totalPrice: totalPrice,
+              totalPrice: result.data.total_amount || totalPrice,
               totalItems: totalItems,
               items,
               note,
@@ -286,16 +337,19 @@ export const MobileContactForm: React.FC = () => {
                 htmlFor="customer_mobile"
                 className="text-sm font-medium text-gray-700 mb-2 block"
               >
-                Contact Number
+                Contact Number <span className="text-red-500">*</span>
               </Label>
               <Input
-                id="customer_number"
+                id="customer_mobile"
                 type="tel"
-                placeholder="Enter Your Number"
-                value={formData.customer_number}
-                onChange={(e) =>
-                  handleInputChange("customer_number", e.target.value)
-                }
+                placeholder="Enter Your 10-digit Mobile Number"
+                value={formData.customer_mobile}
+                onChange={(e) => {
+                  // Only allow digits and limit to 10 characters
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  handleInputChange("customer_mobile", value);
+                }}
+                maxLength={10}
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
               />
             </div>
@@ -306,14 +360,16 @@ export const MobileContactForm: React.FC = () => {
                 htmlFor="customer_name"
                 className="text-sm font-medium text-gray-700 mb-2 block"
               >
-                Name
+                Name <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="customer_name"
                 type="text"
-                placeholder="Enter Your Name"
+                placeholder="Enter Your Full Name"
                 value={formData.customer_name}
-                onChange={(e) => handleInputChange("customer_name", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("customer_name", e.target.value)
+                }
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
               />
             </div>
@@ -324,14 +380,16 @@ export const MobileContactForm: React.FC = () => {
                 htmlFor="customer_email"
                 className="text-sm font-medium text-gray-700 mb-2 block"
               >
-                Email
+                Email <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="customer_email"
                 type="email"
-                placeholder="Enter Your Mail ID"
+                placeholder="Enter Your Email Address"
                 value={formData.customer_email}
-                onChange={(e) => handleInputChange("customer_email", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("customer_email", e.target.value.toLowerCase())
+                }
                 className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
               />
             </div>
@@ -352,7 +410,8 @@ export const MobileContactForm: React.FC = () => {
                 onChange={(e) =>
                   handleInputChange("delivery_address", e.target.value)
                 }
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                readOnly={true}
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-gray-50 cursor-not-allowed"
               />
             </div>
           </div>
