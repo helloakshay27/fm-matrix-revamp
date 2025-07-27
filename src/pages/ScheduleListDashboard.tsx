@@ -563,26 +563,6 @@ export const ScheduleListDashboard = () => {
     </div>;
   // Define selectionActions for SelectionPanel
   const selectionActions = [
-    {
-      label: 'Add Schedule',
-      onClick: handleAddSchedule,
-      icon: Plus
-    },
-    {
-      label: 'Import',
-      onClick: () => setShowImportModal(true),
-      icon: Upload
-    },
-    {
-      label: 'Download Sample Format',
-      onClick: handleDownloadSampleFormat,
-      icon: Download
-    },
-    {
-      label: 'Export',
-      onClick: handleExport,
-      icon: Download
-    }
   ];
 
   const renderListTab = () => (
