@@ -238,7 +238,7 @@ export const BookingSetupDetailPage = () => {
         complimentary: response.complementary,
         gstPercentage: response.gst,
         sgstPercentage: response.sgst,
-        perSlotCharge: response.facility_charge.per_slot_charge,
+        perSlotCharge: response?.facility_charge?.per_slot_charge,
         bookingAllowedBefore: {
           day: response.bb_dhm.d,
           hour: response.bb_dhm.h,
@@ -268,30 +268,41 @@ export const BookingSetupDetailPage = () => {
           wirelessCharging: false,
           meetingRoomInventory: false,
         },
-        seaterInfo: "Select a seater",
-        floorInfo: "Select a floor",
+        seaterInfo: response.seater_info,
+        floorInfo: response.location_info,
         sharedContentInfo: response.shared_content,
-        slots: [
-          {
-            startTime: { hour: "00", minute: "00" },
-            breakTimeStart: { hour: "00", minute: "00" },
-            breakTimeEnd: { hour: "00", minute: "00" },
-            endTime: { hour: "00", minute: "00" },
-            concurrentSlots: "",
-            slotBy: 15,
-            wrapTime: "",
-          },
-        ],
+        // slots: [
+        //   {
+        //     startTime: { hour: "00", minute: "00" },
+        //     breakTimeStart: { hour: "00", minute: "00" },
+        //     breakTimeEnd: { hour: "00", minute: "00" },
+        //     endTime: { hour: "00", minute: "00" },
+        //     concurrentSlots: "",
+        //     slotBy: 15,
+        //     wrapTime: "",
+        //   },
+        // ],
+        slots: response.facility_slots.map((slot: any) => ({
+          startTime: { hour: slot.facility_slot.start_hour, minute: slot.facility_slot.start_min },
+          breakTimeStart: { hour: slot.facility_slot.break_start_hour, minute: slot.facility_slot.break_start_min },
+          breakTimeEnd: { hour: slot.facility_slot.break_end_hour, minute: slot.facility_slot.break_end_min },
+          endTime: { hour: slot.facility_slot.end_hour, minute: slot.facility_slot.end_min },
+          concurrentSlots: "",
+          slotBy: slot.facility_slot.breakminutes_label,
+          wrapTime: slot.facility_slot.wrap_time,
+        }))
       });
-      setSelectedFile(response.cover_image.document);
+      setSelectedFile(response?.cover_image?.document);
       setSelectedBookingFiles(
-        response.documents.map((doc: any) => doc.document.document)
+        response?.documents.map((doc: any) => doc.document.document)
       );
-      setQrUrl(response.qr_code.document);
+      setQrUrl(response?.qr_code.document);
     } catch (error) {
       console.log(error);
     }
   };
+
+  console.log(formData)
 
   useEffect(() => {
     fetchDepartments();
@@ -364,7 +375,7 @@ export const BookingSetupDetailPage = () => {
                       variant="outlined"
                     />
                     <FormControl>
-                      <InputLabel>Active*</InputLabel>
+                      <InputLabel className="bg-[#F6F7F7]">Active*</InputLabel>
                       <Select
                         value={formData.active}
                         onChange={(e) =>
@@ -378,7 +389,7 @@ export const BookingSetupDetailPage = () => {
                       </Select>
                     </FormControl>
                     <FormControl>
-                      <InputLabel>Department</InputLabel>
+                      <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
                       <Select
                         value={formData.department}
                         onChange={(e) =>
@@ -496,7 +507,7 @@ export const BookingSetupDetailPage = () => {
                             {Array.from({ length: 24 }, (_, i) => (
                               <MenuItem
                                 key={i}
-                                value={i.toString().padStart(2, "0")}
+                                value={i.toString()}
                               >
                                 {i.toString().padStart(2, "0")}
                               </MenuItem>
@@ -515,7 +526,7 @@ export const BookingSetupDetailPage = () => {
                             {Array.from({ length: 60 }, (_, i) => (
                               <MenuItem
                                 key={i}
-                                value={i.toString().padStart(2, "0")}
+                                value={i.toString()}
                               >
                                 {i.toString().padStart(2, "0")}
                               </MenuItem>
@@ -539,7 +550,7 @@ export const BookingSetupDetailPage = () => {
                             {Array.from({ length: 24 }, (_, i) => (
                               <MenuItem
                                 key={i}
-                                value={i.toString().padStart(2, "0")}
+                                value={i.toString()}
                               >
                                 {i.toString().padStart(2, "0")}
                               </MenuItem>
@@ -559,7 +570,7 @@ export const BookingSetupDetailPage = () => {
                             {Array.from({ length: 60 }, (_, i) => (
                               <MenuItem
                                 key={i}
-                                value={i.toString().padStart(2, "0")}
+                                value={i.toString()}
                               >
                                 {i.toString().padStart(2, "0")}
                               </MenuItem>
@@ -583,7 +594,7 @@ export const BookingSetupDetailPage = () => {
                             {Array.from({ length: 24 }, (_, i) => (
                               <MenuItem
                                 key={i}
-                                value={i.toString().padStart(2, "0")}
+                                value={i.toString()}
                               >
                                 {i.toString().padStart(2, "0")}
                               </MenuItem>
@@ -603,7 +614,7 @@ export const BookingSetupDetailPage = () => {
                             {Array.from({ length: 60 }, (_, i) => (
                               <MenuItem
                                 key={i}
-                                value={i.toString().padStart(2, "0")}
+                                value={i.toString()}
                               >
                                 {i.toString().padStart(2, "0")}
                               </MenuItem>
@@ -626,7 +637,7 @@ export const BookingSetupDetailPage = () => {
                             {Array.from({ length: 24 }, (_, i) => (
                               <MenuItem
                                 key={i}
-                                value={i.toString().padStart(2, "0")}
+                                value={i.toString()}
                               >
                                 {i.toString().padStart(2, "0")}
                               </MenuItem>
@@ -645,7 +656,7 @@ export const BookingSetupDetailPage = () => {
                             {Array.from({ length: 60 }, (_, i) => (
                               <MenuItem
                                 key={i}
-                                value={i.toString().padStart(2, "0")}
+                                value={i.toString()}
                               >
                                 {i.toString().padStart(2, "0")}
                               </MenuItem>
@@ -672,15 +683,15 @@ export const BookingSetupDetailPage = () => {
                           value={slot.slotBy}
                           onChange={(e) => {
                             const newSlots = [...formData.slots];
-                            newSlots[index].slotBy = e.target.value;
+                            newSlots[index].slotBy = e.target.value.split(" ")[0];
                             setFormData({ ...formData, slots: newSlots });
                           }}
                         >
-                          <MenuItem value={15}>15 Minutes</MenuItem>
-                          <MenuItem value={30}>Half hour</MenuItem>
-                          <MenuItem value={45}>45 Minutes</MenuItem>
-                          <MenuItem value={60}>1 hour</MenuItem>
-                          <MenuItem value={90}>1 and a half hours</MenuItem>
+                          <MenuItem value={"15 Minutes"}>15 Minutes</MenuItem>
+                          <MenuItem value={"30 Minutes"}>Half hour</MenuItem>
+                          <MenuItem value={"45 Minutes"}>45 Minutes</MenuItem>
+                          <MenuItem value={"60 Minutes"}>1 hour</MenuItem>
+                          <MenuItem value={"90 Minutes"}>1 and a half hours</MenuItem>
                         </Select>
                       </FormControl>
 

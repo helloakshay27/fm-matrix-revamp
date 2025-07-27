@@ -251,7 +251,7 @@ export const AddBookingSetupPage = () => {
       formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
       formDataToSend.append(
         "facility_setup[active]",
-        formData.active === "1" ? "1" : "0"
+        formData.active
       );
 
       // Find department ID from selected department name
