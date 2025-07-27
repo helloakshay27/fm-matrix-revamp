@@ -79,6 +79,9 @@ import { toast } from "sonner";
 
 // Map API field names to display field names for backward compatibility
 const mapInventoryData = (apiData: any[]) => {
+  if (!apiData || !Array.isArray(apiData)) {
+    return [];
+  }
   return apiData.map((item) => {
     const itemId =
       typeof item.id === "string"
@@ -285,8 +288,8 @@ export const InventoryDashboard = () => {
     },
   ];
 
-  // Recent inventory items for sidebar
-  const recentItems = inventoryData.slice(0, 3).map((item, index) => ({
+  // Recent inventory items for sidebar - with safety check
+  const recentItems = (inventoryData || []).slice(0, 3).map((item, index) => ({
     id: item.id,
     title: item.name,
     subtitle: "Category: " + (item.group || "Unassigned"),
@@ -312,7 +315,7 @@ export const InventoryDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(paginatedData.map((item) => item.id));
+      setSelectedItems((paginatedData || []).map((item) => item.id));
     } else {
       setSelectedItems([]);
     }
