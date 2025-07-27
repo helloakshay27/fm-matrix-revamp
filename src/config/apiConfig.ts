@@ -122,6 +122,7 @@ export const API_CONFIG = {
     ASSETS_DATA_EXPORT: '/pms/assets/assets_data_report.xlsx',
     // Recent assets endpoint
     RECENT_ASSETS: '/pms/assets/recent_assets.json',
+    UPDATE_TICKET: '/complaint_logs.json',
   },
 } as const
 

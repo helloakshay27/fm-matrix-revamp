@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { X, User, Edit, Download, QrCode, Loader2, HandCoins } from 'lucide-react';
 import { CostApprovalModal } from './CostApprovalModal';
+import { getFullUrl, getAuthHeader, ENDPOINTS } from '@/config/apiConfig';
+import { useToast } from '@/hooks/use-toast';
 
 interface TicketSelectionPanelProps {
   selectedTickets: number[];
@@ -26,6 +28,8 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
   const [isGoldenLoading, setIsGoldenLoading] = useState(false);
   const [isFlagLoading, setIsFlagLoading] = useState(false);
   const [isCostApprovalOpen, setIsCostApprovalOpen] = useState(false);
+  const [isExportLoading, setIsExportLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleGoldenTicket = () => {
     console.log('TicketSelectionPanel - Assign To clicked for tickets:', selectedTickets);
@@ -41,9 +45,79 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
     });
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     console.log('TicketSelectionPanel - Export clicked for tickets:', selectedTickets);
-    onExport();
+    
+    if (selectedTickets.length === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select tickets to export.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsExportLoading(true);
+    
+    try {
+      // Create the ticket IDs string for the API (comma-separated without brackets)
+      const ticketIds = selectedTickets.join(',');
+      console.log(' Exporting tickets with IDs:', ticketIds);
+      
+      // Build the export URL with selected ticket IDs using the correct format
+      const exportEndpoint = `${ENDPOINTS.TICKETS_EXPORT_EXCEL}?q[id_in]=${ticketIds}`;
+      const exportUrl = getFullUrl(exportEndpoint);
+      
+      console.log('Export URL:', exportUrl);
+
+      // Make the API call to get the Excel file
+      const response = await fetch(exportUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+      }
+
+      // Get the file blob
+      const blob = await response.blob();
+      
+      // Create download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().slice(0, 10);
+      link.download = `selected_tickets_${selectedTickets.length}_${timestamp}.xlsx`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      console.log('Export completed successfully');
+      toast({
+        title: "Export Successful",
+        description: `Successfully exported ${selectedTickets.length} ticket(s).`
+      });
+      
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        title: "Export Failed",
+        description: `Failed to export tickets: ${error.message || 'Unknown error'}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsExportLoading(false);
+    }
   };
 
   const handleClearSelection = () => {
@@ -109,11 +183,16 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
           
           <Button
             onClick={handleExport}
+            disabled={isExportLoading}
             variant="ghost"
             size="sm"
             className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
           >
-            <Download className="w-6 h-6 text-black" />
+            {isExportLoading ? (
+              <Loader2 className="w-6 h-6 animate-spin text-black" />
+            ) : (
+              <Download className="w-6 h-6 text-black" />
+            )}
             <span className="text-xs text-gray-600">Export</span>
           </Button>
         </div>

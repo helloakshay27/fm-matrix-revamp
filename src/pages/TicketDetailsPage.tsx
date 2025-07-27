@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Plus, FileText, Paperclip, Download, Eye, ChevronDown, ChevronUp, User, MapPin, FileSearch, PlusCircle, ClipboardList, DollarSign, History, FileSpreadsheet, X } from 'lucide-react';
+import { ArrowLeft, Plus, FileText, Paperclip, Download, Eye, ChevronDown, ChevronUp, User, MapPin, FileSearch, PlusCircle, ClipboardList, DollarSign, History, FileSpreadsheet, X, Edit } from 'lucide-react';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 
@@ -119,6 +119,16 @@ export const TicketDetailsPage = () => {
     }
   };
 
+  const handleUpdate = () => {
+    // Navigate to update page with the ticket ID and pass source information
+    navigate(`/maintenance/ticket/update/${id}`, {
+      state: { 
+        from: 'details',
+        returnTo: `/maintenance/ticket/${id}` 
+      }
+    });
+  };
+
   if (loading) {
     return (
       <div className="p-6 bg-white min-h-screen">
@@ -199,6 +209,7 @@ export const TicketDetailsPage = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">Ticket Summary</h1>
           <div className="flex gap-3">
+            
             <Button onClick={handleFeeds} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
               Logs
             </Button>
@@ -207,6 +218,9 @@ export const TicketDetailsPage = () => {
             </Button> */}
             <Button onClick={handleCreateTask} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
               Create Task
+            </Button>
+            <Button onClick={handleUpdate} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
+              <Edit className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -450,7 +464,7 @@ export const TicketDetailsPage = () => {
       </ExpandableSection>
 
       {/* Section 4: Survey Information */}
-      <ExpandableSection
+      {/* <ExpandableSection
         title="SURVEY INFORMATION"
         icon={FileSearch}
         number="4"
@@ -485,7 +499,7 @@ export const TicketDetailsPage = () => {
             )}
           </div>
         </div>
-      </ExpandableSection>
+      </ExpandableSection> */}
 
       {/* Section 5: Additional Information */}
       <ExpandableSection
@@ -975,7 +989,27 @@ export const TicketDetailsPage = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          // Check if request has attachments
+                          if (request.attachments && request.attachments.length > 0) {
+                            const attachment = request.attachments[0]; // Take first attachment
+                            const imageUrl = attachment.url;
+                            if (imageUrl) {
+                              setPreviewImage({
+                                url: imageUrl,
+                                name: `Cost Approval Request ${request.id || index + 1}`,
+                                document: attachment
+                              });
+                              setShowImagePreview(true);
+                            }
+                          } else {
+                            toast.error('No attachments found for this request');
+                          }
+                        }}
+                      >
                         <Eye className="w-4 h-4 mr-1" />
                         View
                       </Button>
