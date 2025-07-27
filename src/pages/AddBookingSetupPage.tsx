@@ -224,10 +224,6 @@ export const AddBookingSetupPage = () => {
     } else if (!formData.active) {
       toast.error("Please select Active");
       return false;
-    }
-    else if (!formData.department) {
-      toast.error("Please select a department");
-      return false;
     } else if (!formData.description) {
       toast.error("Please enter Description");
       return false;
@@ -569,7 +565,7 @@ export const AddBookingSetupPage = () => {
                     </Select>
                   </FormControl>
                   <FormControl>
-                    <InputLabel>Department*</InputLabel>
+                    <InputLabel>Department</InputLabel>
                     <Select
                       value={formData.department}
                       onChange={(e) =>
