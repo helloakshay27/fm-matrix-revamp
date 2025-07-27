@@ -214,6 +214,8 @@ export const AMCDashboard = () => {
   const assetTotalAMCs = amcAnalyticsData?.assets_total || 0;
 
   // Filter function to fetch AMC data based on filters
+  // Inside AMCDashboard component
+
   const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1) => {
     if (!baseUrl || !token || !siteId) {
       toast.error('Missing base URL, token, or site ID');
@@ -224,6 +226,16 @@ export const AMCDashboard = () => {
     let url = `https://${baseUrl}/pms/asset_amcs.json?site_id=${siteId}&page=${page}`;
     const queryParams: string[] = [];
 
+    // Add filter for active/inactive/flagged
+    if (filterValue === 'active') {
+      queryParams.push('q[active_eq]=true');
+    } else if (filterValue === 'inactive') {
+      queryParams.push('q[active_eq]=false');
+    } else if (filterValue === 'flagged') {
+      queryParams.push('q[is_flagged_eq]=true');
+    }
+
+    // Add other filters (AMC Type, Start Date, End Date)
     if (amcTypeFilter) {
       queryParams.push(`q[amc_type_eq]=${encodeURIComponent(amcTypeFilter)}`);
     }

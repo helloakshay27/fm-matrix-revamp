@@ -1167,22 +1167,27 @@ const UpdateTicketsPage: React.FC = () => {
         console.log(key, value);
       }
 
-      // Get token from API config
+      // Get authentication token with fallback
+      const authToken = TOKEN || getToken();
       console.log("Using TOKEN from API config:", TOKEN ? 'Token present' : 'Token missing');
+      console.log("Using fallback getToken():", getToken() ? 'Token present' : 'Token missing');
+      console.log("Final authToken:", authToken ? 'Token present' : 'Token missing');
       console.log("Using BASE_URL from API config:", BASE_URL);
 
-      if (!TOKEN) {
-        throw new Error("No authentication token found in API config");
+      if (!authToken) {
+        console.error("No authentication token found in API config or auth utils");
+        throw new Error("No authentication token found. Please login again.");
       }
 
       const apiUrl = `${BASE_URL}${ENDPOINTS.UPDATE_TICKET}`;
       console.log("Making API call to:", apiUrl);
 
-      // Make API call using BASE_URL and TOKEN from API config
+      // Make API call using BASE_URL and TOKEN from API config with fallback
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${TOKEN}`,
+          Authorization: `Bearer ${authToken}`,
+          // Note: Don't set Content-Type for FormData - browser sets it automatically with boundary
         },
         body: formDataToSend,
       });
@@ -1196,7 +1201,13 @@ const UpdateTicketsPage: React.FC = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("API Error Response:", errorText);
-        // throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        
+        if (response.status === 401) {
+          console.error("401 Authentication failed - invalid or expired token");
+          throw new Error("Authentication failed. Please login again.");
+        }
+        
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
 
       const result = await response.json();
@@ -1211,6 +1222,19 @@ const UpdateTicketsPage: React.FC = () => {
       navigate("/maintenance/ticket");
     } catch (error) {
       console.error("Error updating tickets:", error);
+      
+      // Handle authentication errors specifically
+      if (error instanceof Error && error.message.includes("Authentication failed")) {
+        toast({
+          title: "Authentication Error",
+          description: "Your session has expired. Please login again.",
+          variant: "destructive",
+        });
+        // Optionally redirect to login page
+        // navigate("/login");
+        return;
+      }
+      
       toast({
         title: "Error",
         description: `Failed to update tickets: ${
