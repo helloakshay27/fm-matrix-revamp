@@ -33,6 +33,7 @@ import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Search, Download, Loader2, Grid3x3, Plus, X, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAuthHeader, API_CONFIG } from '@/config/apiConfig';
 
 // Excel export utility function
 const exportToExcel = <T extends Record<string, any>>(
@@ -72,6 +73,41 @@ const exportToExcel = <T extends Record<string, any>>(
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+};
+
+// Ticket export function for API integration
+const exportTicketRecords = async () => {
+  try {
+    const url = `${API_CONFIG.BASE_URL}/pms/admin/complaints.xlsx`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: getAuthHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Get the blob from the response
+    const blob = await response.blob();
+    
+    // Create download link
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = 'ticket_records.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+    
+  } catch (error) {
+    console.error('Error exporting tickets:', error);
+    alert('Failed to export ticket records');
+  }
 };
 
 interface BulkAction<T> {
@@ -425,7 +461,7 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Button
               variant="outline"
               size="sm"
-              onClick={handleExport || (() => exportToExcel(filteredData, visibleColumns, exportFileName))}
+              onClick={handleExport || (() => exportTicketRecords())}
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />

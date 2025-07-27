@@ -28,13 +28,12 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   const renderContent = () => {
     switch (type) {
       case 'itemsStatus':
-      case 'categoryWise':
         // Convert status data to chart format
         const statusChartData = [
-          { name: 'Active Items', value: data.count_of_active_items, color: '#22C55E' },
-          { name: 'Inactive Items', value: data.count_of_inactive_items, color: '#EF4444' },
-          { name: 'Critical Items', value: data.count_of_critical_items, color: '#F97316' },
-          { name: 'Non-Critical Items', value: data.count_of_non_critical_items, color: '#3B82F6' }
+          { name: 'Active Items', value: data.count_of_active_items || 0, color: '#22C55E' },
+          { name: 'Inactive Items', value: data.count_of_inactive_items || 0, color: '#EF4444' },
+          { name: 'Critical Items', value: data.count_of_critical_items || 0, color: '#F97316' },
+          { name: 'Non-Critical Items', value: data.count_of_non_critical_items || 0, color: '#3B82F6' }
         ];
 
         return (
@@ -61,6 +60,47 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
             {/* Legend */}
             <div className="flex justify-center gap-6 mt-4 flex-wrap">
               {statusChartData.map((item, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                  <span className="text-sm font-medium text-gray-700">{item.name}: {item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'categoryWise':
+        // Handle category_counts array from the API response
+        if (!data.category_counts || !Array.isArray(data.category_counts)) {
+          return <div>No category data available</div>;
+        }
+
+        const categoryChartData = data.category_counts.map((item: any, index: number) => ({
+          name: item.group_name,
+          value: item.item_count,
+          color: `hsl(${(index * 360) / data.category_counts.length}, 70%, 50%)`
+        }));
+
+        return (
+          <div className="space-y-4">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={categoryChartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="name" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#3B82F6" />
+              </BarChart>
+            </ResponsiveContainer>
+            
+            {/* Legend */}
+            <div className="flex justify-center gap-6 mt-4 flex-wrap">
+              {categoryChartData.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
                   <span className="text-sm font-medium text-gray-700">{item.name}: {item.value}</span>
