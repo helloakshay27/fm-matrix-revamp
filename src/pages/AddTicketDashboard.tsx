@@ -87,9 +87,7 @@ export const AddTicketDashboard = () => {
     proactiveReactive: '',
     adminPriority: '',
     referenceNumber: '',
-    mode: '',
-    isGoldenTicket: false,
-    isFlagged: false
+    mode: ''
   });
 
   // Load initial data
@@ -299,8 +297,6 @@ export const AddTicketDashboard = () => {
         wing_id: 1,
         area_id: 1,
         floor_id: 1,
-        is_golden_ticket: formData.isGoldenTicket,
-        is_flagged: formData.isFlagged,
         // Add user parameters based on selection type
         ...(onBehalfOf === 'self' && userAccount?.id && { id_user: userAccount.id }),
         ...(onBehalfOf !== 'self' && selectedUserId && { 
@@ -491,30 +487,6 @@ export const AddTicketDashboard = () => {
                 <label htmlFor="suggestion" className="text-sm font-medium">Suggestion</label>
               </div>
             </RadioGroup>
-
-            {/* Additional options */}
-            <div className="flex gap-8">
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="golden-ticket" 
-                  checked={formData.isGoldenTicket}
-                  onChange={(e) => setFormData({ ...formData, isGoldenTicket: e.target.checked })}
-                  className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
-                />
-                <label htmlFor="golden-ticket" className="text-sm font-medium">Golden Ticket</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="is-flagged" 
-                  checked={formData.isFlagged}
-                  onChange={(e) => setFormData({ ...formData, isFlagged: e.target.checked })}
-                  className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
-                />
-                <label htmlFor="is-flagged" className="text-sm font-medium">Is Flagged</label>
-              </div>
-            </div>
 
             {/* Form fields in exact layout as per image */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
