@@ -18,31 +18,32 @@ export function RecentTicketsSidebar() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchRecentTickets = async () => {
-      try {
-        const response = await ticketAnalyticsAPI.getRecentTickets();
-        const mappedTickets = response.complaints.map((ticket: any) => ({
-          id: ticket.ticket_number,
-          title: ticket.heading,
-          category: ticket.category_type,
-          subCategory: ticket.sub_category_type,
-          assigneeName: ticket.assigned_to || 'Unassigned',
-          site: ticket.site_name,
-          priority: ticket.priority,
-          tat: ticket.response_escalation,
-          status: ticket.issue_status,
-          nextStatus: ticket.status.name,
-          handledBy: ticket.updated_by
-        }));
-        setRecentTickets(mappedTickets);
-      } catch (error) {
-        console.error('Error fetching recent tickets:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchRecentTickets = async () => {
+    try {
+      setLoading(true);
+      const response = await ticketAnalyticsAPI.getRecentTickets();
+      const mappedTickets = response.complaints.map((ticket: any) => ({
+        id: ticket.ticket_number,
+        title: ticket.heading,
+        category: ticket.category_type,
+        subCategory: ticket.sub_category_type,
+        assigneeName: ticket.assigned_to || 'Unassigned',
+        site: ticket.site_name,
+        priority: ticket.priority,
+        tat: ticket.response_escalation,
+        status: ticket.issue_status,
+        nextStatus: ticket.status.name,
+        handledBy: ticket.updated_by
+      }));
+      setRecentTickets(mappedTickets);
+    } catch (error) {
+      console.error('Error fetching recent tickets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchRecentTickets();
   }, []);
   const handleAddComment = (ticketId: string) => {
@@ -65,8 +66,8 @@ export function RecentTicketsSidebar() {
         return newSet;
       });
       
-      // Refresh the page after successful API call
-      window.location.reload();
+      // Refresh only the tickets data instead of whole page
+      await fetchRecentTickets();
     } catch (error) {
       console.error('Error flagging ticket:', error);
     }
