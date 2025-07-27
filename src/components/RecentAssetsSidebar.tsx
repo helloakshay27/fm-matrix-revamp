@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Flag, Eye, Star, Hash, Timer, Activity } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AddCommentModal } from '@/components/AddCommentModal';
+import { recentAssetsService, RecentAsset } from '@/services/recentAssetsAPI';
+import { useQuery } from '@tanstack/react-query';
 
 interface Asset {
   id: string;
@@ -13,54 +15,79 @@ interface Asset {
   tatStatus: 'normal' | 'warning' | 'critical';
 }
 
-const recentAssets: Asset[] = [
-  {
-    id: '1',
-    name: 'Dell Laptop Pro',
-    assetNo: 'DL-001',
-    status: 'In Use',
-    tat: '2d 14h',
-    tatStatus: 'normal'
-  },
-  {
-    id: '2',
-    name: 'HP Printer Scanner',
-    assetNo: 'HP-002',
-    status: 'Breakdown',
-    tat: '5d 8h',
-    tatStatus: 'critical'
-  },
-  {
-    id: '3',
-    name: 'Air Conditioning Unit',
-    assetNo: 'AC-003',
-    status: 'Maintenance',
-    tat: '3d 12h',
-    tatStatus: 'warning'
-  },
-  {
-    id: '4',
-    name: 'Security Camera System',
-    assetNo: 'SC-004',
-    status: 'In Use',
-    tat: '1d 6h',
-    tatStatus: 'normal'
-  },
-  {
-    id: '5',
-    name: 'Conference Room Projector',
-    assetNo: 'PR-005',
-    status: 'Maintenance',
-    tat: '4d 2h',
-    tatStatus: 'warning'
-  }
-];
-
 export const RecentAssetsSidebar = () => {
   const navigate = useNavigate();
   const [flaggedAssets, setFlaggedAssets] = useState<Set<string>>(new Set());
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState<string>('');
+
+  // Fetch recent assets from API
+  const {
+    data: recentAssetsData,
+    isLoading,
+    error,
+    isError
+  } = useQuery({
+    queryKey: ['recent-assets'],
+    queryFn: recentAssetsService.getRecentAssets,
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
+
+  // Log API data for debugging
+  useEffect(() => {
+    if (recentAssetsData) {
+      console.log('Recent assets API data:', recentAssetsData);
+    }
+    if (error) {
+      console.error('Recent assets API error:', error);
+    }
+  }, [recentAssetsData, error]);
+
+  // Transform API data to match local interface
+  const transformAsset = (apiAsset: RecentAsset): Asset => {
+    // Calculate TAT display string
+    let tatDisplay = 'N/A';
+    let tatStatus: 'normal' | 'warning' | 'critical' = 'normal';
+
+    if (apiAsset.tat) {
+      const { tat_status, average_tat_days, current_breakdown_tat_days, last_breakdown_tat_days } = apiAsset.tat;
+      
+      // Use appropriate TAT value - prioritize current breakdown, then last breakdown, then average
+      const tatDays = current_breakdown_tat_days !== null ? current_breakdown_tat_days :
+                      last_breakdown_tat_days !== null ? last_breakdown_tat_days :
+                      average_tat_days;
+      
+      if (tatDays !== null && tatDays > 0) {
+        // Convert days to days and hours format
+        const days = Math.floor(tatDays);
+        const hours = Math.floor((tatDays - days) * 24);
+        tatDisplay = `${days}d ${hours}h`;
+      }
+
+      // Map TAT status from API to component status
+      if (tat_status === 'critical') {
+        tatStatus = 'critical';
+      } else if (tat_status === 'warning') {
+        tatStatus = 'warning';
+      } else {
+        tatStatus = 'normal';
+      }
+    }
+
+    return {
+      id: apiAsset.id.toString(),
+      name: apiAsset.name,
+      assetNo: apiAsset.id.toString(), // Show asset ID instead of asset_code
+      status: apiAsset.status,
+      tat: tatDisplay,
+      tatStatus
+    };
+  };
+
+  // Get recent assets, fallback to empty array if loading or error
+  const recentAssets = recentAssetsData?.recent_assets?.map(transformAsset) || [];
 
   const handleAddComment = (assetId: string) => {
     setSelectedAssetId(assetId);
@@ -119,7 +146,25 @@ export const RecentAssetsSidebar = () => {
       </div>
       
       <div className="max-h-[600px] overflow-y-auto space-y-4">
-        {recentAssets.map((asset) => (
+        {isLoading && (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-sm text-gray-600">Loading recent assets...</div>
+          </div>
+        )}
+        
+        {isError && (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-sm text-red-600">Failed to load recent assets</div>
+          </div>
+        )}
+        
+        {!isLoading && !isError && recentAssets.length === 0 && (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-sm text-gray-600">No recent assets found</div>
+          </div>
+        )}
+        
+        {!isLoading && !isError && recentAssets.map((asset) => (
           <div key={asset.id} className="bg-[#C4B89D]/20 border border-[#C4B89D]/40 rounded-lg p-4">
             {/* Header with Asset No and Star */}
             <div className="flex items-center justify-between mb-3">

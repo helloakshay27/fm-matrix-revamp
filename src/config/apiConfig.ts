@@ -118,8 +118,10 @@ export const API_CONFIG = {
     // Restaurant endpoints
     RESTAURANTS: '/pms/admin/restaurants',
     RESTAURANT_MENU: '/pms/admin/restaurants',
-    COST_APPROVALS_CREATE: '/pms/create_muliple_cost_Approvals',
-    EXPORT_TICKETS_MULTIPLE: '/pms/admin/complaints.xlsx?q[id_in]=1,2,3',
+    // Assets data report export endpoint
+    ASSETS_DATA_EXPORT: '/pms/assets/assets_data_report.xlsx',
+    // Recent assets endpoint
+    RECENT_ASSETS: '/pms/assets/recent_assets.json',
   },
 } as const
 
