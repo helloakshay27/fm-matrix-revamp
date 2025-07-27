@@ -9,6 +9,8 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAMCData } from '@/store/slices/amcSlice';
+import { AMCAnalyticsSelector } from '@/components/AMCAnalyticsSelector';
+import { AMCAnalyticsCard } from '@/components/AMCAnalyticsCard';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
@@ -128,6 +130,7 @@ export const AMCDashboard = () => {
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [amcAnalyticsData, setAmcAnalyticsData] = useState<AMCStatusData | null>(null);
+  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview']);
 
   // Set default dates: last year to today for analytics
   const getDefaultDateRange = () => {
