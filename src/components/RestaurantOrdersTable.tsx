@@ -316,7 +316,7 @@ export const RestaurantOrdersTable = () => {
           <span className="text-xs text-gray-500">-</span>
         );
       case 'total_amount':
-        return `${localStorage.getItem('currency')}${item.total_amount}` || '';
+        return `${localStorage.getItem('currency')} ${item.total_amount}` || '';
       default:
         return item[columnKey as keyof RestaurantOrder]?.toString() || '';
     }
