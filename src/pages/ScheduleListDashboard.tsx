@@ -225,12 +225,28 @@ export const ScheduleListDashboard = () => {
   };
 
   const columns = [{
-    key: 'formName',
-    label: 'Schedule Name',
+    key: 'actions',
+    label: 'Actions',
+    sortable: false
+  }, {
+    key: 'id',
+    label: 'ID',
+    sortable: true
+  }, {
+    key: 'activityName',
+    label: 'Activity Name',
     sortable: true
   }, {
     key: 'type',
     label: 'Type',
+    sortable: true
+  }, {
+    key: 'scheduleType',
+    label: 'Schedule Type',
+    sortable: true
+  }, {
+    key: 'noOfAssociation',
+    label: 'No. Of Association',
     sortable: true
   }, {
     key: 'validFrom',
@@ -253,6 +269,7 @@ export const ScheduleListDashboard = () => {
     label: 'Created On',
     sortable: true
   }];
+  
   const handleActionClick = () => {
     setShowActionPanel((prev) => !prev);
   };
@@ -556,33 +573,13 @@ export const ScheduleListDashboard = () => {
         </div>
 
         {/* Right Section - Sidebar (1 column) */}
-        <div className="xl:col-span-1 order-first xl:order-last">
+        {/* <div className="xl:col-span-1 order-first xl:order-last">
           <RecentSchedulesSidebar />
-        </div>
+        </div> */}
       </div>
     </div>;
   // Define selectionActions for SelectionPanel
   const selectionActions = [
-    {
-      label: 'Add Schedule',
-      onClick: handleAddSchedule,
-      icon: Plus
-    },
-    {
-      label: 'Import',
-      onClick: () => setShowImportModal(true),
-      icon: Upload
-    },
-    {
-      label: 'Download Sample Format',
-      onClick: handleDownloadSampleFormat,
-      icon: Download
-    },
-    {
-      label: 'Export',
-      onClick: handleExport,
-      icon: Download
-    }
   ];
 
   const renderListTab = () => (

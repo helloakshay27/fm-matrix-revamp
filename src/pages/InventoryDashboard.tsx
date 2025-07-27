@@ -166,6 +166,13 @@ export const InventoryDashboard = () => {
   const activeCount = inventoryItems.filter(item => item.active).length;
   const inactiveCount = inventoryItems.filter(item => !item.active).length;
   const greenInventories = inventoryItems.filter(item => item.green_product).length;
+  const [inventory, setInventory] = useState([])
+
+  useEffect(() => {
+    if (inventoryItems) {
+      setInventory(inventoryItems)
+    }
+  }, [inventoryItems])
 
   // Local state
   const [showBulkUpload, setShowBulkUpload] = useState(false);
@@ -191,7 +198,7 @@ export const InventoryDashboard = () => {
     startDate: new Date('2020-01-01'),
     endDate: new Date('2025-01-01')
   });
-  
+
   // Analytics state
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsDateRange, setAnalyticsDateRange] = useState({
@@ -214,7 +221,7 @@ export const InventoryDashboard = () => {
   });
   const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>([
     'items_status',
-    'category_wise', 
+    'category_wise',
     'green_consumption'
   ]);
   const [visibleAnalyticsSections, setVisibleAnalyticsSections] = useState<string[]>([
@@ -226,7 +233,7 @@ export const InventoryDashboard = () => {
   const pageSize = 15; // Use larger page size for API data
 
   // Map API data to display format
-  const inventoryData = mapInventoryData(inventoryItems);
+  const inventoryData = mapInventoryData(inventory);
 
   // Fetch inventory data on component mount
   useEffect(() => {
@@ -249,8 +256,23 @@ export const InventoryDashboard = () => {
 
   // Analytics calculations
   const totalItems = inventoryData.length;
-  
 
+  const handleFilter = async (filter: any) => {
+    const name = filter.name
+    const code = filter.code
+    const category = filter.category
+    const criticality = filter.criticality
+    try {
+      const response = await axios.get(`https://${localStorage.getItem('baseUrl')}/pms/inventories.json?q[name_cont]=${name}&q[code_cont]=${code}&q[category_cont]=${category}&q[criticality_eq]=${criticality}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      setInventory(response.data.inventories)
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   // Aging matrix data - simulated based on groups and priorities
   const agingMatrixData = [
@@ -615,7 +637,7 @@ export const InventoryDashboard = () => {
     try {
       const fromDate = new Date(dateRange.startDate);
       const toDate = new Date(dateRange.endDate);
-      
+
       const results: any = {};
 
       // Fetch selected analytics data
@@ -629,28 +651,28 @@ export const InventoryDashboard = () => {
           nonCriticalItems: statusResponse.count_of_non_critical_items || 0
         };
       }
-      
+
       if (selectedAnalyticsOptions.includes('category_wise')) {
         const categoryResponse = await inventoryAnalyticsAPI.getCategoryWise(fromDate, toDate);
         results.categoryData = categoryResponse.category_counts || [];
       }
-      
+
       if (selectedAnalyticsOptions.includes('green_consumption')) {
         results.greenConsumption = await inventoryAnalyticsAPI.getGreenConsumption(fromDate, toDate);
       }
-      
+
       if (selectedAnalyticsOptions.includes('consumption_report_green')) {
         results.consumptionReportGreen = await inventoryAnalyticsAPI.getConsumptionReportGreen(fromDate, toDate);
       }
-      
+
       if (selectedAnalyticsOptions.includes('consumption_report_non_green')) {
         results.consumptionReportNonGreen = await inventoryAnalyticsAPI.getConsumptionReportNonGreen(fromDate, toDate);
       }
-      
+
       if (selectedAnalyticsOptions.includes('current_minimum_stock_green')) {
         results.minimumStockGreen = await inventoryAnalyticsAPI.getCurrentMinimumStockGreen(fromDate, toDate);
       }
-      
+
       if (selectedAnalyticsOptions.includes('current_minimum_stock_non_green')) {
         results.minimumStockNonGreen = await inventoryAnalyticsAPI.getCurrentMinimumStockNonGreen(fromDate, toDate);
       }
@@ -689,11 +711,11 @@ export const InventoryDashboard = () => {
   ];
 
   // Group data from API - with safety check
-  const groupChartData = (analyticsData.categoryData && Array.isArray(analyticsData.categoryData)) 
+  const groupChartData = (analyticsData.categoryData && Array.isArray(analyticsData.categoryData))
     ? analyticsData.categoryData.map(({ group_name, item_count }) => ({
-        name: group_name,
-        value: item_count
-      })) 
+      name: group_name,
+      value: item_count
+    }))
     : [];
 
   return (
@@ -794,7 +816,7 @@ export const InventoryDashboard = () => {
             </div>
           )}
         </TabsContent>
-     \
+        \
         <TabsContent value="list" className="space-y-4 sm:space-y-6">
           {/* Error handling */}
           {error && (
@@ -975,7 +997,7 @@ export const InventoryDashboard = () => {
       <InventoryFilterDialog
         open={showFilter}
         onOpenChange={setShowFilter}
-        onApply={(filters) => console.log("Applied filters:", filters)}
+        onApply={handleFilter}
       />
       <DateFilterModal
         open={showDateFilter}

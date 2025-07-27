@@ -123,6 +123,16 @@ interface GroupWiseAssets {
   }[];
 }
 
+// Interface for category-wise assets API response
+interface CategoryWiseAssets {
+  asset_type_category_counts: {
+    [key: string]: number;
+  };
+  info: {
+    description: string;
+  };
+}
+
 // Sortable Chart Item Component
 const SortableChartItem = ({
   id,
@@ -211,6 +221,13 @@ export const AssetDashboard = () => {
     useState<GroupWiseAssets | null>(null);
   const [groupWiseLoading, setGroupWiseLoading] = useState(false);
   const [groupWiseError, setGroupWiseError] = useState<string | null>(null);
+  // Category-wise assets state
+  const [categoryWiseAssets, setCategoryWiseAssets] =
+    useState<CategoryWiseAssets | null>(null);
+  const [categoryWiseLoading, setCategoryWiseLoading] = useState(false);
+  const [categoryWiseError, setCategoryWiseError] = useState<string | null>(
+    null
+  );
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
     serialNumber: true,
@@ -231,6 +248,7 @@ export const AssetDashboard = () => {
   const [chartOrder, setChartOrder] = useState<string[]>([
     "donutCharts",
     "categoryChart",
+    "groupChart",
     "agingMatrix",
     "performanceMetrics",
   ]);
@@ -437,6 +455,52 @@ export const AssetDashboard = () => {
       setGroupWiseLoading(false);
     }
   };
+
+  // Function to fetch category-wise assets from API
+  const fetchCategoryWiseAssets = async () => {
+    setCategoryWiseLoading(true);
+    setCategoryWiseError(null);
+
+    try {
+      const siteId = getSelectedSiteId();
+
+      // Build the API URL with parameters
+      const url = `${BASE_URL}${
+        ENDPOINTS.CATEGORY_WISE_ASSETS
+      }?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace(
+        "Bearer ",
+        ""
+      )}`;
+
+      console.log("Fetching category-wise assets from:", url);
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Category-wise assets response:", data);
+
+      setCategoryWiseAssets(data);
+    } catch (error) {
+      console.error("Error fetching category-wise assets:", error);
+      setCategoryWiseError(
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch category-wise assets"
+      );
+    } finally {
+      setCategoryWiseLoading(false);
+    }
+  };
   const pagination = {
     currentPage,
     totalPages: totalPages || 1,
@@ -456,9 +520,9 @@ export const AssetDashboard = () => {
     fetchAssetStatus();
     fetchAssetDistributions();
     fetchGroupWiseAssets();
+    fetchCategoryWiseAssets();
   }, []);
 
-  
   // Transform Redux assets to match the expected Asset interface
   const transformedAssets = assets.map((asset, index) => ({
     id: asset.id?.toString() || "",
@@ -476,7 +540,7 @@ export const AssetDashboard = () => {
     assetType: asset.asset_type,
   }));
 
-  const transformedSearchedAssets = searchAssets.map((asset,index) => ({
+  const transformedSearchedAssets = searchAssets.map((asset, index) => ({
     id: asset.id?.toString() || "",
     name: asset.name || "",
     serialNumber: (pagination.currentPage - 1) * 15 + index + 1,
@@ -656,6 +720,7 @@ export const AssetDashboard = () => {
     fetchAssetStatus();
     fetchAssetDistributions();
     fetchGroupWiseAssets();
+    fetchCategoryWiseAssets();
   };
 
   // Handle pagination
@@ -833,8 +898,18 @@ export const AssetDashboard = () => {
 
   const { chartStatusData, chartTypeData } = processAssetStatusForCharts();
 
-  // Process group-wise assets data for category chart
-  const categoryData = groupWiseAssets?.group_wise_assets?.map((item) => ({
+  // Process category-wise assets data for category chart
+  const categoryData = categoryWiseAssets?.asset_type_category_counts
+    ? Object.entries(categoryWiseAssets.asset_type_category_counts).map(
+        ([name, value]) => ({
+          name,
+          value,
+        })
+      )
+    : [{ name: "Loading...", value: 0 }];
+
+  // Process group-wise assets data for group chart
+  const groupData = groupWiseAssets?.group_wise_assets?.map((item) => ({
     name: item.group_name,
     value: item.asset_count,
   })) || [{ name: "Loading...", value: 0 }];
@@ -900,7 +975,7 @@ export const AssetDashboard = () => {
 
         <TabsContent value="analytics" className="space-y-6 mt-6">
           {/* Analytics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-6">
+          <div className="grid grid-cols-5 gap-4 mb-6 min-w-[1000px]">
             {/* Total Assets Available */}
             <div
               className="p-6 rounded-lg flex items-center gap-4"
@@ -1001,7 +1076,7 @@ export const AssetDashboard = () => {
             </div>
 
             {/* Customer Average */}
-            <div
+            {/* <div
               className="p-6 rounded-lg flex items-center gap-4"
               style={{ backgroundColor: "#f6f4ee" }}
             >
@@ -1016,7 +1091,7 @@ export const AssetDashboard = () => {
                 </div>
                 <div className="text-sm text-gray-600">Customer Average</div>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Error message for statistics */}
@@ -1079,6 +1154,21 @@ export const AssetDashboard = () => {
             </div>
           )}
 
+          {/* Error message for category-wise assets */}
+          {categoryWiseError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+              <p className="text-sm">
+                Failed to load category-wise assets: {categoryWiseError}
+              </p>
+              <button
+                onClick={fetchCategoryWiseAssets}
+                className="text-red-800 underline text-sm mt-1 hover:text-red-900"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           {/* Header with Asset Selector */}
           <div className="flex justify-end">
             <AssetSelector
@@ -1113,7 +1203,8 @@ export const AssetDashboard = () => {
                                 statisticsLoading ||
                                 statusLoading ||
                                 distributionsLoading ||
-                                groupWiseLoading
+                                groupWiseLoading ||
+                                categoryWiseLoading
                               }
                             />
                           </SortableChartItem>
@@ -1130,7 +1221,7 @@ export const AssetDashboard = () => {
                                   style={{ color: "black" }}
                                 >
                                   Category-wise Assets
-                                  {groupWiseLoading && (
+                                  {categoryWiseLoading && (
                                     <span className="ml-2 text-sm text-gray-500">
                                       (Loading...)
                                     </span>
@@ -1138,14 +1229,14 @@ export const AssetDashboard = () => {
                                 </h3>
                                 <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
                               </div>
-                              {groupWiseError ? (
+                              {categoryWiseError ? (
                                 <div className="flex items-center justify-center h-64 text-red-500">
                                   <div className="text-center">
                                     <p className="mb-2">
                                       Failed to load category data
                                     </p>
                                     <button
-                                      onClick={fetchGroupWiseAssets}
+                                      onClick={fetchCategoryWiseAssets}
                                       className="text-red-600 underline hover:text-red-800"
                                     >
                                       Retry
@@ -1181,6 +1272,72 @@ export const AssetDashboard = () => {
                                       dataKey="value"
                                       fill="hsl(var(--chart-tan))"
                                     />
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              )}
+                            </div>
+                          </SortableChartItem>
+                        );
+                      }
+
+                      if (chartId === "groupChart") {
+                        return (
+                          <SortableChartItem key={chartId} id={chartId}>
+                            <div className="bg-white border border-[hsl(var(--analytics-border))] p-6">
+                              <div className="flex items-center justify-between mb-4">
+                                <h3
+                                  className="text-lg font-semibold"
+                                  style={{ color: "black" }}
+                                >
+                                  Group-wise Assets
+                                  {groupWiseLoading && (
+                                    <span className="ml-2 text-sm text-gray-500">
+                                      (Loading...)
+                                    </span>
+                                  )}
+                                </h3>
+                                <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
+                              </div>
+                              {groupWiseError ? (
+                                <div className="flex items-center justify-center h-64 text-red-500">
+                                  <div className="text-center">
+                                    <p className="mb-2">
+                                      Failed to load group data
+                                    </p>
+                                    <button
+                                      onClick={fetchGroupWiseAssets}
+                                      className="text-red-600 underline hover:text-red-800"
+                                    >
+                                      Retry
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <ResponsiveContainer width="100%" height={300}>
+                                  <BarChart data={groupData}>
+                                    <CartesianGrid
+                                      strokeDasharray="3 3"
+                                      stroke="hsl(var(--analytics-border))"
+                                    />
+                                    <XAxis
+                                      dataKey="name"
+                                      tick={{
+                                        fill: "hsl(var(--analytics-text))",
+                                        fontSize: 10,
+                                      }}
+                                      interval={0}
+                                      angle={-45}
+                                      textAnchor="end"
+                                      height={100}
+                                    />
+                                    <YAxis
+                                      tick={{
+                                        fill: "hsl(var(--analytics-text))",
+                                        fontSize: 12,
+                                      }}
+                                    />
+                                    <Tooltip />
+                                    <Bar dataKey="value" fill="#c6b692" />
                                   </BarChart>
                                 </ResponsiveContainer>
                               )}

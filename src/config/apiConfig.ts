@@ -101,6 +101,8 @@ export const API_CONFIG = {
     ASSET_STATUS: '/pms/assets/assets_status.json',
     // Asset distributions endpoint
     ASSET_DISTRIBUTIONS: '/pms/assets/assets_distributions.json',
+    // Category-wise assets endpoint
+    CATEGORY_WISE_ASSETS: '/pms/assets/category_wise_assets_count.json',
     // Custom forms endpoint
     CUSTOM_FORMS: '/pms/custom_forms.json',
     // Custom form details endpoint
