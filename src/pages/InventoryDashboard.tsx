@@ -620,7 +620,14 @@ export const InventoryDashboard = () => {
 
       // Fetch selected analytics data
       if (selectedAnalyticsOptions.includes('items_status')) {
-        results.statusData = await inventoryAnalyticsAPI.getItemsStatus(fromDate, toDate);
+        const statusResponse = await inventoryAnalyticsAPI.getItemsStatus(fromDate, toDate);
+        // Map API response to expected format
+        results.statusData = {
+          activeItems: statusResponse.count_of_active_items || 0,
+          inactiveItems: statusResponse.count_of_inactive_items || 0,
+          criticalItems: statusResponse.count_of_critical_items || 0,
+          nonCriticalItems: statusResponse.count_of_non_critical_items || 0
+        };
       }
       
       if (selectedAnalyticsOptions.includes('category_wise')) {
@@ -670,15 +677,15 @@ export const InventoryDashboard = () => {
     }
   };
 
-  // Update the analytics section to use dynamic data
+  // Update the analytics section to use dynamic data with safety checks
   const itemStatusData = [
-    { name: "Active", value: analyticsData.statusData.activeItems, fill: "#c6b692" },
-    { name: "Inactive", value: analyticsData.statusData.inactiveItems, fill: "#d8dcdd" },
+    { name: "Active", value: analyticsData.statusData?.activeItems || 0, fill: "#c6b692" },
+    { name: "Inactive", value: analyticsData.statusData?.inactiveItems || 0, fill: "#d8dcdd" },
   ];
 
   const criticalityData = [
-    { name: "Critical", value: analyticsData.statusData.criticalItems, fill: "#c6b692" },
-    { name: "Non-Critical", value: analyticsData.statusData.nonCriticalItems, fill: "#d8dcdd" },
+    { name: "Critical", value: analyticsData.statusData?.criticalItems || 0, fill: "#c6b692" },
+    { name: "Non-Critical", value: analyticsData.statusData?.nonCriticalItems || 0, fill: "#d8dcdd" },
   ];
 
   // Group data from API - with safety check
