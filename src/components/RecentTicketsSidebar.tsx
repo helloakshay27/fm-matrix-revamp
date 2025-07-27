@@ -66,8 +66,8 @@ export function RecentTicketsSidebar() {
         return newSet;
       });
       
-      // Refresh only the tickets data instead of whole page
-      await fetchRecentTickets();
+      // Refresh the entire page like other list pages
+      window.location.reload();
     } catch (error) {
       console.error('Error flagging ticket:', error);
     }
