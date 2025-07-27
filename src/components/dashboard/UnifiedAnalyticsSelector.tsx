@@ -1,3 +1,4 @@
+// new comment //
 import React, { useState } from 'react';
 import { ChevronDown, BarChart3, Activity, Calendar, Package, Settings, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
