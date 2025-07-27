@@ -213,9 +213,9 @@ export const InventoryDashboard = () => {
     categoryData: []
   });
   const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>([
-    'items_status.json',
-    'category_wise_items.json', 
-    'inventory_consumption_green.json'
+    'items_status',
+    'category_wise', 
+    'green_consumption'
   ]);
   const [visibleAnalyticsSections, setVisibleAnalyticsSections] = useState<string[]>([
     'itemsStatus',
@@ -611,53 +611,54 @@ export const InventoryDashboard = () => {
   };
 
   const fetchAnalyticsData = async () => {
-    const baseUrl = localStorage.getItem('baseUrl');
-    const token = localStorage.getItem('token');
-    const siteId = localStorage.getItem('selectedSiteId');
-
-    if (!baseUrl || !token || !siteId) {
-      toast.error('Missing base URL, token, or site ID');
-      return;
-    }
-
+    setAnalyticsLoading(true);
     try {
-      const fromDate = dateRange.startDate.toISOString().split('T')[0];
-      const toDate = dateRange.endDate.toISOString().split('T')[0];
+      const fromDate = new Date(dateRange.startDate);
+      const toDate = new Date(dateRange.endDate);
+      
+      const results: any = {};
 
-      // Fetch category wise items
-      const categoryResponse = await axios.get(
-        `https://${baseUrl}/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      // Fetch selected analytics data
+      if (selectedAnalyticsOptions.includes('items_status')) {
+        results.statusData = await inventoryAnalyticsAPI.getItemsStatus(fromDate, toDate);
+      }
+      
+      if (selectedAnalyticsOptions.includes('category_wise')) {
+        results.categoryData = await inventoryAnalyticsAPI.getCategoryWise(fromDate, toDate);
+      }
+      
+      if (selectedAnalyticsOptions.includes('green_consumption')) {
+        results.greenConsumption = await inventoryAnalyticsAPI.getGreenConsumption(fromDate, toDate);
+      }
+      
+      if (selectedAnalyticsOptions.includes('consumption_report_green')) {
+        results.consumptionReportGreen = await inventoryAnalyticsAPI.getConsumptionReportGreen(fromDate, toDate);
+      }
+      
+      if (selectedAnalyticsOptions.includes('consumption_report_non_green')) {
+        results.consumptionReportNonGreen = await inventoryAnalyticsAPI.getConsumptionReportNonGreen(fromDate, toDate);
+      }
+      
+      if (selectedAnalyticsOptions.includes('current_minimum_stock_green')) {
+        results.minimumStockGreen = await inventoryAnalyticsAPI.getCurrentMinimumStockGreen(fromDate, toDate);
+      }
+      
+      if (selectedAnalyticsOptions.includes('current_minimum_stock_non_green')) {
+        results.minimumStockNonGreen = await inventoryAnalyticsAPI.getCurrentMinimumStockNonGreen(fromDate, toDate);
+      }
 
-      // Fetch items status
-      const statusResponse = await axios.get(
-        `https://${baseUrl}/pms/inventories/items_status.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      setAnalyticsData({
-        categoryData: categoryResponse.data.category_counts || [],
-        statusData: {
-          activeItems: statusResponse.data.count_of_active_items || 0,
-          inactiveItems: statusResponse.data.count_of_inactive_items || 0,
-          criticalItems: statusResponse.data.count_of_critical_items || 0,
-          nonCriticalItems: statusResponse.data.count_of_non_critical_items || 0
-        }
-      });
+      setAnalyticsData(results);
     } catch (error) {
       console.error('Failed to fetch analytics data:', error);
       toast.error('Failed to fetch analytics data');
+    } finally {
+      setAnalyticsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, [dateRange]);
+  }, [dateRange, selectedAnalyticsOptions]);
 
   const handleDateFilter = (dates: { startDate: Date | undefined; endDate: Date | undefined }) => {
     if (dates.startDate && dates.endDate) {
@@ -725,22 +726,63 @@ export const InventoryDashboard = () => {
             <InventoryAnalyticsSelector onSelectionChange={(options) => setSelectedAnalyticsOptions(options)} />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {analyticsData.statusData && (
-              <InventoryAnalyticsCard
-                title="Items Status"
-                data={analyticsData.statusData}
-                type="itemsStatus"
-              />
-            )}
-            {analyticsData.statusData && (
-              <InventoryAnalyticsCard
-                title="Category Wise Items"
-                data={analyticsData.statusData}
-                type="categoryWise"
-              />
-            )}
-          </div>
+          {analyticsLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="text-gray-600">Loading analytics data...</div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {selectedAnalyticsOptions.includes('items_status') && analyticsData.statusData && (
+                <InventoryAnalyticsCard
+                  title="Items Status"
+                  data={analyticsData.statusData}
+                  type="itemsStatus"
+                />
+              )}
+              {selectedAnalyticsOptions.includes('category_wise') && analyticsData.categoryData && (
+                <InventoryAnalyticsCard
+                  title="Category Wise Items"
+                  data={analyticsData.categoryData}
+                  type="categoryWise"
+                />
+              )}
+              {selectedAnalyticsOptions.includes('green_consumption') && analyticsData.greenConsumption && (
+                <InventoryAnalyticsCard
+                  title="Green Consumption"
+                  data={analyticsData.greenConsumption}
+                  type="greenConsumption"
+                />
+              )}
+              {selectedAnalyticsOptions.includes('consumption_report_green') && analyticsData.consumptionReportGreen && (
+                <InventoryAnalyticsCard
+                  title="Consumption Report Green"
+                  data={analyticsData.consumptionReportGreen}
+                  type="consumptionReportGreen"
+                />
+              )}
+              {selectedAnalyticsOptions.includes('consumption_report_non_green') && analyticsData.consumptionReportNonGreen && (
+                <InventoryAnalyticsCard
+                  title="Consumption Report Non-Green"
+                  data={analyticsData.consumptionReportNonGreen}
+                  type="consumptionReportNonGreen"
+                />
+              )}
+              {selectedAnalyticsOptions.includes('current_minimum_stock_green') && analyticsData.minimumStockGreen && (
+                <InventoryAnalyticsCard
+                  title="Current Minimum Stock Green"
+                  data={analyticsData.minimumStockGreen}
+                  type="currentMinimumStockGreen"
+                />
+              )}
+              {selectedAnalyticsOptions.includes('current_minimum_stock_non_green') && analyticsData.minimumStockNonGreen && (
+                <InventoryAnalyticsCard
+                  title="Current Minimum Stock Non-Green"
+                  data={analyticsData.minimumStockNonGreen}
+                  type="currentMinimumStockNonGreen"
+                />
+              )}
+            </div>
+          )}
         </TabsContent>
      \
         <TabsContent value="list" className="space-y-4 sm:space-y-6">

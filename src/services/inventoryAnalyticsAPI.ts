@@ -256,42 +256,66 @@ export const inventoryAnalyticsAPI = {
   },
 
   // Get consumption report green data
-  async getConsumptionReportGreen(fromDate: Date, toDate: Date): Promise<ConsumptionReportGreenData> {
+  async getConsumptionReportGreen(fromDate: Date, toDate: Date): Promise<any> {
     const siteId = getCurrentSiteId();
-    const response = await fetch(
-      `/analytics/inventory/consumption_report_green.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
-    );
-    if (!response.ok) throw new Error('Failed to fetch consumption report green data');
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+    
+    const url = `https://fm-uat-api.lockated.com/pms/inventories/consumption_report_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return response.json();
   },
 
   // Get consumption report non-green data
-  async getConsumptionReportNonGreen(fromDate: Date, toDate: Date): Promise<ConsumptionReportNonGreenData> {
+  async getConsumptionReportNonGreen(fromDate: Date, toDate: Date): Promise<any> {
     const siteId = getCurrentSiteId();
-    const response = await fetch(
-      `/analytics/inventory/consumption_report_non_green.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
-    );
-    if (!response.ok) throw new Error('Failed to fetch consumption report non-green data');
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+    
+    const url = `https://fm-uat-api.lockated.com/pms/inventories/consumption_report_non_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return response.json();
   },
 
   // Get minimum stock non-green data
-  async getMinimumStockNonGreen(fromDate: Date, toDate: Date): Promise<MinimumStockData> {
+  async getCurrentMinimumStockNonGreen(fromDate: Date, toDate: Date): Promise<any> {
     const siteId = getCurrentSiteId();
-    const response = await fetch(
-      `/analytics/inventory/current_minimum_stock_non_green.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
-    );
-    if (!response.ok) throw new Error('Failed to fetch minimum stock non-green data');
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+    
+    const url = `https://fm-uat-api.lockated.com/pms/inventories/current_minimum_stock_non_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return response.json();
   },
 
   // Get minimum stock green data
-  async getMinimumStockGreen(fromDate: Date, toDate: Date): Promise<MinimumStockData> {
+  async getCurrentMinimumStockGreen(fromDate: Date, toDate: Date): Promise<any> {
     const siteId = getCurrentSiteId();
-    const response = await fetch(
-      `/analytics/inventory/current_minimum_stock_green.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
-    );
-    if (!response.ok) throw new Error('Failed to fetch minimum stock green data');
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+    
+    const url = `https://fm-uat-api.lockated.com/pms/inventories/current_minimum_stock_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return response.json();
   },
 

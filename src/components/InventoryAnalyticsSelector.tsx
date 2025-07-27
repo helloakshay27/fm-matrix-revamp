@@ -5,49 +5,49 @@ import { CheckSquare, Square, ChevronDown, Package, Leaf, Activity, FileText, Al
 
 const inventoryAnalyticsOptions = [
   { 
-    id: 'items-status', 
+    id: 'items_status', 
     label: 'Items Status', 
     checked: true, 
     endpoint: 'items_status.json',
     icon: Package 
   },
   { 
-    id: 'category-wise', 
+    id: 'category_wise', 
     label: 'Category Wise Items', 
     checked: true, 
     endpoint: 'category_wise_items.json',
     icon: BarChart 
   },
   { 
-    id: 'green-consumption', 
+    id: 'green_consumption', 
     label: 'Green Consumption', 
     checked: true, 
     endpoint: 'inventory_consumption_green.json',
     icon: Leaf 
   },
   { 
-    id: 'consumption-report-green', 
+    id: 'consumption_report_green', 
     label: 'Consumption Report Green', 
     checked: false, 
     endpoint: 'consumption_report_green.json',
     icon: Activity 
   },
   { 
-    id: 'consumption-report-non-green', 
+    id: 'consumption_report_non_green', 
     label: 'Consumption Report Non-Green', 
     checked: false, 
     endpoint: 'consumption_report_non_green.json',
     icon: FileText 
   },
   { 
-    id: 'current-minimum-non-green', 
+    id: 'current_minimum_stock_non_green', 
     label: 'Current Minimum Stock Non-Green', 
     checked: false, 
     endpoint: 'current_minimum_stock_non_green.json',
     icon: AlertTriangle 
   },
   { 
-    id: 'current-minimum-green', 
+    id: 'current_minimum_stock_green', 
     label: 'Current Minimum Stock Green', 
     checked: false, 
     endpoint: 'current_minimum_stock_green.json',
@@ -70,13 +70,13 @@ export function InventoryAnalyticsSelector({ onSelectionChange, dateRange }: Inv
         option.id === id ? { ...option, checked: !option.checked } : option
       );
       
-      // Get selected endpoints
-      const selectedEndpoints = newOptions
+      // Get selected IDs
+      const selectedIds = newOptions
         .filter(option => option.checked)
-        .map(option => option.endpoint);
+        .map(option => option.id);
       
       // Notify parent component
-      onSelectionChange?.(selectedEndpoints);
+      onSelectionChange?.(selectedIds);
       
       return newOptions;
     });
