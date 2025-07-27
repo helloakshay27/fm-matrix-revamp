@@ -209,7 +209,6 @@ export const StatusSetupTable = () => {
         renderRow={renderRow}
         enableSearch={true}
         enableSelection={true}
-        enableExport={true}
         storageKey="status-table"
         pagination={true}
         pageSize={5}

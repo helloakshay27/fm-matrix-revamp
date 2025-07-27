@@ -680,6 +680,10 @@ export const AddFacilityBookingPage = () => {
         toast.error('Please select a date');
         return;
       }
+      if (comment && comment.length > 255) {
+        toast.error('Comment should not exceed 255 characters');
+        return;
+      }
       if (!paymentMethod) {
         toast.error('Please select a payment method');
         return;
@@ -688,6 +692,7 @@ export const AddFacilityBookingPage = () => {
         toast.error('Please select at least one slot');
         return;
       }
+
 
       const selectedSiteId = localStorage.getItem('selectedSiteId') || '7';
       const userString = localStorage.getItem('user');
