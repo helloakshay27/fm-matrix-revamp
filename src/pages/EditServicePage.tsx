@@ -19,6 +19,7 @@ export const EditServicePage = () => {
   const [formData, setFormData] = useState({
     serviceName: '',
     executionType: '',
+    umo: '', // Added UMO field
     serviceDescription: '',
     siteId: null as number | null,
     buildingId: null as number | null,
@@ -40,6 +41,20 @@ export const EditServicePage = () => {
   const [existingFiles, setExistingFiles] = useState<
     { id: number; document: string; doctype: string }[]
   >([]);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Added to prevent multiple submissions
+
+  const [errors, setErrors] = useState({
+    serviceName: false,
+    executionType: false,
+    umo: false, // Added UMO error field
+    siteId: false,
+    buildingId: false,
+    wingId: false,
+    areaId: false,
+    floorId: false,
+    groupId: false,
+    subGroupId: false,
+  });
 
   useEffect(() => {
     if (id) {
@@ -55,6 +70,7 @@ export const EditServicePage = () => {
       setFormData({
         serviceName: fetchedService.service_name || '',
         executionType: fetchedService.execution_type || '',
+        umo: fetchedService.base_umo || '', // Added UMO initialization
         serviceDescription: fetchedService.description || '',
         siteId: fetchedService.site_id || null,
         buildingId: fetchedService.building_id || null,
@@ -72,7 +88,6 @@ export const EditServicePage = () => {
         rateContractVendorCode: fetchedService.rate_contract_vendor_code || '',
       });
 
-
       if (Array.isArray(fetchedService.documents)) {
         setExistingFiles(
           fetchedService.documents.map((doc: any) => ({
@@ -83,8 +98,6 @@ export const EditServicePage = () => {
         );
       }
     }
-
-
   }, [fetchedService]);
 
   useEffect(() => {
@@ -110,6 +123,17 @@ export const EditServicePage = () => {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+
+    // Clear errors for the field being updated
+    if (field === 'serviceName' && value.trim() !== '') {
+      setErrors(prev => ({ ...prev, serviceName: false }));
+    }
+    if (field === 'executionType' && value !== '') {
+      setErrors(prev => ({ ...prev, executionType: false }));
+    }
+    if (field === 'umo' && value.trim() !== '') { // Added UMO error clearing
+      setErrors(prev => ({ ...prev, umo: false }));
+    }
   };
 
   const handleLocationChange = useCallback((location: {
@@ -133,22 +157,114 @@ export const EditServicePage = () => {
       groupId: location.groupId,
       subGroupId: location.subGroupId,
     }));
+    // Clear errors for location fields when valid values are provided
+    setErrors(prev => ({
+      ...prev,
+      siteId: location.siteId !== null ? false : prev.siteId,
+      buildingId: location.buildingId !== null ? false : prev.buildingId,
+      wingId: location.wingId !== null ? false : prev.wingId,
+      areaId: location.areaId !== null ? false : prev.areaId,
+      floorId: location.floorId !== null ? false : prev.floorId,
+      groupId: location.groupId !== null ? false : prev.groupId,
+      subGroupId: location.subGroupId !== null ? false : prev.subGroupId,
+    }));
   }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      setSelectedFile(Array.from(files));
+      const newFiles = Array.from(files);
+      setSelectedFile(prevFiles => {
+        const existingNames = new Set(prevFiles.map(f => f.name));
+        const filteredNewFiles = newFiles.filter(f => !existingNames.has(f.name));
+        return [...prevFiles, ...filteredNewFiles];
+      });
+      event.target.value = '';
     }
   };
 
   const handleSubmit = async (action: string) => {
-    if (!id) return;
-    const sendData = new FormData();
+    if (!id || isSubmitting) return;
+    setIsSubmitting(true);
 
+    // Validation
+    const hasServiceNameError = formData.serviceName.trim() === '';
+    const hasExecutionTypeError = formData.executionType === '';
+    const hasUmoError = formData.umo.trim() === ''; // Added UMO validation
+    const hasSiteIdError = formData.siteId === null;
+    const hasBuildingIdError = formData.buildingId === null;
+    const hasWingIdError = formData.wingId === null;
+    const hasAreaIdError = formData.areaId === null;
+    const hasFloorIdError = formData.floorId === null;
+    const hasGroupIdError = formData.groupId === null;
+    const hasSubGroupIdError = formData.subGroupId === null;
+
+    if (
+      hasServiceNameError ||
+      hasExecutionTypeError ||
+      hasUmoError ||
+      hasSiteIdError ||
+      hasBuildingIdError ||
+      hasWingIdError ||
+      hasAreaIdError ||
+      hasFloorIdError ||
+      hasGroupIdError ||
+      hasSubGroupIdError
+    ) {
+      setErrors({
+        serviceName: hasServiceNameError,
+        executionType: hasExecutionTypeError,
+        umo: hasUmoError, // Added UMO error setting
+        siteId: hasSiteIdError,
+        buildingId: hasBuildingIdError,
+        wingId: hasWingIdError,
+        areaId: hasAreaIdError,
+        floorId: hasFloorIdError,
+        groupId: hasGroupIdError,
+        subGroupId: hasSubGroupIdError,
+      });
+
+      const errorFields = [];
+      if (hasServiceNameError) errorFields.push('Service Name');
+      if (hasExecutionTypeError) errorFields.push('Execution Type');
+      if (hasUmoError) errorFields.push('UMO'); // Added UMO error field
+      if (hasSiteIdError) errorFields.push('Site');
+      if (hasBuildingIdError) errorFields.push('Building');
+      if (hasWingIdError) errorFields.push('Wing');
+      if (hasAreaIdError) errorFields.push('Area');
+      if (hasFloorIdError) errorFields.push('Floor');
+      if (hasGroupIdError) errorFields.push('Group');
+      if (hasSubGroupIdError) errorFields.push('Sub-Group');
+
+      toast({
+        title: "Validation Error",
+        description: `Please fill in the following required fields: ${errorFields.join(', ')}`,
+        variant: "destructive",
+        duration: 5000,
+      });
+
+      setIsSubmitting(false);
+      return;
+    }
+
+    setErrors({
+      serviceName: false,
+      executionType: false,
+      umo: false, // Added UMO error reset
+      siteId: false,
+      buildingId: false,
+      wingId: false,
+      areaId: false,
+      floorId: false,
+      groupId: false,
+      subGroupId: false,
+    });
+
+    const sendData = new FormData();
     try {
       sendData.append('pms_service[service_name]', formData.serviceName);
       sendData.append('pms_service[execution_type]', formData.executionType);
+      sendData.append('pms_service[base_uom]', formData.umo || ''); // Added UMO to FormData
       sendData.append('pms_service[site_id]', formData.siteId?.toString() || '');
       sendData.append('pms_service[building_id]', formData.buildingId?.toString() || '');
       sendData.append('pms_service[wing_id]', formData.wingId?.toString() || '');
@@ -170,14 +286,16 @@ export const EditServicePage = () => {
         sendData.append('attachments[]', file);
       });
 
-      dispatch(updateService({ id, serviceData: sendData }));
+      await dispatch(updateService({ id, serviceData: sendData })).unwrap();
     } catch (error) {
-      console.error('Error preparing service data:', error);
+      console.error('Error updating service:', error);
       toast({
         title: "Error",
-        description: "Failed to prepare service data for submission.",
+        description: "Failed to update service.",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -207,10 +325,10 @@ export const EditServicePage = () => {
             size="sm"
             onClick={() => navigate('/maintenance/service')}
             className="p-1 hover:bg-gray-100 mr-2"
+            disabled={isSubmitting}
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          
         </div>
         <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT SERVICE - ID: {id}</h1>
       </div>
@@ -231,10 +349,13 @@ export const EditServicePage = () => {
               onChange={(e) => handleInputChange('serviceName', e.target.value)}
               fullWidth
               variant="outlined"
+              error={errors.serviceName}
+              helperText={errors.serviceName ? 'Service Name is required' : ''}
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
+              disabled={isSubmitting}
             />
-            <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+            <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }} error={errors.executionType}>
               <InputLabel shrink>Execution Type</InputLabel>
               <MuiSelect
                 value={formData.executionType}
@@ -242,15 +363,55 @@ export const EditServicePage = () => {
                 label="Execution Type"
                 notched
                 displayEmpty
+                disabled={isSubmitting}
               >
                 <MenuItem value="">Select Execution Type</MenuItem>
                 <MenuItem value="internal">Internal</MenuItem>
                 <MenuItem value="external">External</MenuItem>
                 <MenuItem value="both">Both</MenuItem>
               </MuiSelect>
+              {errors.executionType && (
+                <p className="text-red-600 text-xs mt-1">Execution Type is required</p>
+              )}
             </FormControl>
+            <TextField
+              required
+              label="UMO"
+              placeholder="Enter UMO"
+              value={formData.umo}
+              onChange={(e) => handleInputChange('umo', e.target.value)}
+              fullWidth
+              variant="outlined"
+              error={errors.umo}
+              helperText={errors.umo ? 'UMO is required' : ''}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              disabled={isSubmitting}
+            />
           </div>
-          <LocationSelector fieldStyles={fieldStyles} onLocationChange={handleLocationChange} />
+          <LocationSelector
+            fieldStyles={fieldStyles}
+            onLocationChange={handleLocationChange}
+            errors={{
+              siteId: errors.siteId,
+              buildingId: errors.buildingId,
+              wingId: errors.wingId,
+              areaId: errors.areaId,
+              floorId: errors.floorId,
+              groupId: errors.groupId,
+              subGroupId: errors.subGroupId,
+            }}
+            helperTexts={{
+              siteId: errors.siteId ? 'Site is required' : '',
+              buildingId: errors.buildingId ? 'Building is required' : '',
+              wingId: errors.wingId ? 'Wing is required' : '',
+              areaId: errors.areaId ? 'Area is required' : '',
+              floorId: errors.floorId ? 'Floor is required' : '',
+              groupId: errors.groupId ? 'Group is required' : '',
+              subGroupId: errors.subGroupId ? 'Sub-Group is required' : '',
+            }}
+            disabled={isSubmitting}
+          />
         </CardContent>
       </Card>
 
@@ -274,6 +435,7 @@ export const EditServicePage = () => {
             InputProps={{
               sx: { '& .MuiInputBase-input': { padding: '12px' } }
             }}
+            disabled={isSubmitting}
           />
         </CardContent>
       </Card>
@@ -294,17 +456,20 @@ export const EditServicePage = () => {
               onChange={handleFileUpload}
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
               multiple
+              disabled={isSubmitting}
             />
             <Button
               type="button"
               variant="outline"
               onClick={() => document.getElementById('file-upload')?.click()}
-              className="text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10"
+              className={`text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isSubmitting}
             >
               Choose Files
             </Button>
-
-
+            <span className="ml-2 text-gray-500">
+              {selectedFile.length > 0 ? `${selectedFile.length} file(s) selected` : 'No new file chosen'}
+            </span>
           </div>
           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
             {/* Existing files */}
@@ -328,10 +493,9 @@ export const EditServicePage = () => {
                 )}
               </div>
             ))}
-
             {/* Selected files */}
             {selectedFile.map((file, index) => (
-              <div key={index}>
+              <div key={`${file.name}-${file.lastModified}`}>
                 {file.type.startsWith('image') ? (
                   <img
                     src={URL.createObjectURL(file)}
@@ -352,6 +516,7 @@ export const EditServicePage = () => {
           onClick={() => handleSubmit('updated with details')}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
+          disabled={isSubmitting}
         >
           Update Save & Show Details
         </Button>
@@ -359,6 +524,7 @@ export const EditServicePage = () => {
           onClick={() => handleSubmit('updated new service')}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
+          disabled={isSubmitting}
         >
           Update Save & Create New Service
         </Button>

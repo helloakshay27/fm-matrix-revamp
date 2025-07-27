@@ -16,6 +16,7 @@ export const AddServicePage = () => {
   const [formData, setFormData] = useState({
     serviceName: '',
     executionType: '',
+    umo: '', // Added UMO field
     serviceDescription: '',
     siteId: null as number | null,
     buildingId: null as number | null,
@@ -29,11 +30,12 @@ export const AddServicePage = () => {
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [resetLocationFields, setResetLocationFields] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Added to prevent multiple submissions
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [errors, setErrors] = useState({
     serviceName: false,
     executionType: false,
+    umo: false, // Added UMO error field
     siteId: false,
     buildingId: false,
     wingId: false,
@@ -52,6 +54,9 @@ export const AddServicePage = () => {
     }
     if (field === 'executionType' && value !== '') {
       setErrors(prev => ({ ...prev, executionType: false }));
+    }
+    if (field === 'umo' && value.toString().trim() !== '') { // Added UMO error clearing
+      setErrors(prev => ({ ...prev, umo: false }));
     }
     if (field === 'siteId' && value !== null) {
       setErrors(prev => ({ ...prev, siteId: false }));
@@ -81,7 +86,6 @@ export const AddServicePage = () => {
       ...prev,
       ...location
     }));
-    // Clear errors for location fields when valid values are provided
     setErrors(prev => ({
       ...prev,
       siteId: location.siteId !== null ? false : prev.siteId,
@@ -106,6 +110,7 @@ export const AddServicePage = () => {
       event.target.value = '';
     }
   };
+
   const handleSubmit = async (action: 'show' | 'new') => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -113,6 +118,7 @@ export const AddServicePage = () => {
     // Validation
     const hasServiceNameError = formData.serviceName.trim() === '';
     const hasExecutionTypeError = formData.executionType === '';
+    const hasUmoError = formData.umo.trim() === ''; // Added UMO validation
     const hasSiteIdError = formData.siteId === null;
     const hasBuildingIdError = formData.buildingId === null;
     const hasWingIdError = formData.wingId === null;
@@ -124,6 +130,7 @@ export const AddServicePage = () => {
     if (
       hasServiceNameError ||
       hasExecutionTypeError ||
+      hasUmoError || // Added UMO error check
       hasSiteIdError ||
       hasBuildingIdError ||
       hasWingIdError ||
@@ -135,6 +142,7 @@ export const AddServicePage = () => {
       setErrors({
         serviceName: hasServiceNameError,
         executionType: hasExecutionTypeError,
+        umo: hasUmoError, // Added UMO error setting
         siteId: hasSiteIdError,
         buildingId: hasBuildingIdError,
         wingId: hasWingIdError,
@@ -147,6 +155,7 @@ export const AddServicePage = () => {
       const errorFields = [];
       if (hasServiceNameError) errorFields.push('Service Name');
       if (hasExecutionTypeError) errorFields.push('Execution Type');
+      if (hasUmoError) errorFields.push('UMO'); // Added UMO error field
       if (hasSiteIdError) errorFields.push('Site');
       if (hasBuildingIdError) errorFields.push('Building');
       if (hasWingIdError) errorFields.push('Wing');
@@ -166,6 +175,7 @@ export const AddServicePage = () => {
     setErrors({
       serviceName: false,
       executionType: false,
+      umo: false, // Added UMO error reset
       siteId: false,
       buildingId: false,
       wingId: false,
@@ -189,6 +199,7 @@ export const AddServicePage = () => {
       sendData.append('pms_service[active]', 'true');
       sendData.append('pms_service[description]', formData.serviceDescription || '');
       sendData.append('pms_service[execution_type]', formData.executionType || '');
+      sendData.append('pms_service[base_uom]', formData.umo || ''); 
       sendData.append('pms_service[service_category]', '');
       sendData.append('pms_service[service_group]', '');
       sendData.append('pms_service[service_code]', '');
@@ -203,16 +214,14 @@ export const AddServicePage = () => {
       const response = await dispatch(createService(sendData)).unwrap();
       console.log('Service creation response:', response);
 
-      // ✅ Show toast first
       if (action === 'show') {
         toast.success('Service has been created and saved with details.', {
           duration: 3000,
           style: { background: '#4caf50', color: '#fff' },
         });
 
-        // ✅ Delay redirect so toast can be seen
         setTimeout(() => {
-          window.location.href = `/maintenance/service/details/${response.id}`;
+          // window.location.href = `/maintenance/service/details/${response.id}`;
         }, 1500);
       } else if (action === 'new') {
         toast.success('Service created successfully! Ready to add a new service.', {
@@ -220,11 +229,11 @@ export const AddServicePage = () => {
           style: { background: '#4caf50', color: '#fff' },
         });
 
-        // ✅ Reset form after short delay
         setTimeout(() => {
           setFormData({
             serviceName: '',
             executionType: '',
+            umo: '', // Reset UMO field
             serviceDescription: '',
             siteId: null,
             buildingId: null,
@@ -252,7 +261,6 @@ export const AddServicePage = () => {
     }
   };
 
-
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
@@ -269,7 +277,7 @@ export const AddServicePage = () => {
             size="sm"
             onClick={() => navigate('/maintenance/service')}
             className="p-1 hover:bg-gray-100 mr-2"
-            disabled={isSubmitting} // Disable during submission
+            disabled={isSubmitting}
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -304,7 +312,7 @@ export const AddServicePage = () => {
               InputProps={{
                 sx: fieldStyles,
               }}
-              disabled={isSubmitting} // Disable during submission
+              disabled={isSubmitting}
             />
             <FormControl
               fullWidth
@@ -320,7 +328,7 @@ export const AddServicePage = () => {
                 label="Execution Type"
                 notched
                 displayEmpty
-                disabled={isSubmitting} // Disable during submission
+                disabled={isSubmitting}
               >
                 <MenuItem value="">Select Execution Type</MenuItem>
                 <MenuItem value="internal">Internal</MenuItem>
@@ -331,6 +339,26 @@ export const AddServicePage = () => {
                 <p className="text-red-600 text-xs mt-1">Execution Type is required</p>
               )}
             </FormControl>
+            <TextField
+              required
+              label="UMO"
+              placeholder="Enter UMO"
+              value={formData.umo}
+              onChange={(e) => handleInputChange('umo', e.target.value)}
+              fullWidth
+              variant="outlined"
+              error={errors.umo}
+              helperText={errors.umo ? 'UMO is required' : ''}
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+              disabled={isSubmitting}
+            />
           </div>
           <LocationSelector
             fieldStyles={fieldStyles}
@@ -354,7 +382,7 @@ export const AddServicePage = () => {
               groupId: errors.groupId ? 'Group is required' : '',
               subGroupId: errors.subGroupId ? 'Sub-Group is required' : '',
             }}
-            disabled={isSubmitting} 
+            disabled={isSubmitting}
           />
         </CardContent>
       </Card>
@@ -383,7 +411,7 @@ export const AddServicePage = () => {
                 },
               }
             }}
-            disabled={isSubmitting} // Disable during submission
+            disabled={isSubmitting}
           />
         </CardContent>
       </Card>
@@ -405,7 +433,7 @@ export const AddServicePage = () => {
                 id="file-upload"
                 onChange={handleFileUpload}
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
-                disabled={isSubmitting} // Disable during submission
+                disabled={isSubmitting}
               />
               <label
                 htmlFor="file-upload"
@@ -461,7 +489,7 @@ export const AddServicePage = () => {
           onClick={() => handleSubmit('show')}
           style={{ backgroundColor: '#C72030' }}
           className="text-white hover:bg-[#C72030]/90"
-          disabled={isSubmitting} // Disable during submission
+          disabled={isSubmitting}
         >
           Save & show details
         </Button>

@@ -4,7 +4,7 @@
 // import { Download, Eye, Loader2 } from "lucide-react";
 // import { toast } from 'sonner';
 // import { useAppDispatch } from '@/store/hooks';
-// import { exportOrders, fetchRestaurantOrders, fetchRestaurants } from '@/store/slices/f&bSlice';
+// import { exportOrders, fetchRestaurantOrders, fetchRestaurants, fetchRestaurantStatuses } from '@/store/slices/f&bSlice';
 // import { ColumnConfig } from '@/hooks/useEnhancedTable';
 // import { EnhancedTable } from './enhanced-table/EnhancedTable';
 // import { Badge } from '@/components/ui/badge';
@@ -68,6 +68,8 @@
 //     fetchRestaurant();
 //   }, [dispatch, baseUrl, token]);
 
+
+
 //   useEffect(() => {
 //     const fetchOrders = async () => {
 //       if (restoId) {
@@ -83,22 +85,11 @@
 
 //     fetchOrders();
 //   }, [dispatch, restoId, baseUrl, token]);
+//   console.log(orders)
 
 //   const handleStatusUpdate = async (orderId: number, newStatus: string) => {
 //     setStatusUpdating(orderId);
 //     try {
-//       // Update order status
-//       await axios.patch(
-//         `https://${baseUrl}/pms/admin/restaurant-orders/${orderId}`,
-//         { status: newStatus.toLowerCase() },
-//         {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         }
-//       );
-
-//       // Log status change
 //       await axios.post(
 //         `https://${baseUrl}/crm/create_osr_log.json`,
 //         {
@@ -115,7 +106,6 @@
 //         }
 //       );
 
-//       // Update local state
 //       setOrders((prevOrders) =>
 //         prevOrders.map((order) =>
 //           order.id === orderId ? { ...order, status_name: newStatus } : order
@@ -225,7 +215,6 @@
 //     },
 //   ];
 
-//   // Reset localStorage if it doesn't include the 'items' column
 //   useEffect(() => {
 //     const storageKey = 'restaurant-orders-table-columns';
 //     const savedVisibility = JSON.parse(localStorage.getItem(storageKey) || '{}');
@@ -243,7 +232,6 @@
 //       case 'items':
 //         if (!item.items || item.items.length === 0) return '-';
 //         const fullItemsText = item.items.map((i) => `${i.menu_name} (${i.quantity})`).join(', ');
-//         // Limit to first 2 items or 50 characters, whichever is shorter
 //         const maxItems = 2;
 //         const maxLength = 50;
 //         let truncatedItems = item.items
@@ -283,7 +271,10 @@
 //                   variant={getStatusBadgeVariant(item.status_name)}
 //                   className={cn(
 //                     'cursor-pointer',
-//                     item.status_name === 'Completed' && 'bg-green-500 hover:bg-green-600 text-white'
+//                     item.status_name === 'Completed' && 'bg-[#A4F4E7] hover:bg-[#A4F4E7] text-black',
+//                     item.status_name === 'Pending' && 'bg-[#F4C790] hover:bg-[#F4C790] text-black',
+//                     item.status_name === 'Confirmed' && 'bg-[#A3E4DB] hover:bg-[#8CDAD1] text-black',
+//                     item.status_name === 'Cancelled' && 'bg-[#E4626F] hover:bg-[#E4626F] text-white'
 //                   )}
 //                 >
 //                   {item.status_name}
@@ -296,7 +287,10 @@
 //                   <Badge
 //                     variant={getStatusBadgeVariant(status)}
 //                     className={cn(
-//                       status === 'Completed' && 'bg-green-500 hover:bg-green-600 text-white'
+//                       status === 'Completed' && 'bg-[#A4F4E7] hover:bg-[#A4F4E7] text-black',
+//                       status === 'Pending' && 'bg-[#F4C790] hover:bg-[#F4C790] text-black',
+//                       status === 'Confirmed' && 'bg-[#A3E4DB] hover:bg-[#8CDAD1] text-black',
+//                       status === 'Cancelled' && 'bg-[#E4626F] hover:bg-[#E4626F] text-white'
 //                     )}
 //                   >
 //                     {status}
@@ -304,6 +298,7 @@
 //                 </SelectItem>
 //               ))}
 //             </SelectContent>
+
 //           </Select>
 //         );
 //       case 'payment_status':
@@ -376,6 +371,7 @@
 
 
 
+
 import { useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
@@ -405,6 +401,7 @@ interface RestaurantOrder {
   status_name: string;
   total_amount: number;
   items: { id: number; menu_name: string; quantity: number; price: number }[];
+  statuses: string[]; // Added statuses array
 }
 
 const getStatusBadgeVariant = (status: string) => {
@@ -465,23 +462,13 @@ export const RestaurantOrdersTable = () => {
   const handleStatusUpdate = async (orderId: number, newStatus: string) => {
     setStatusUpdating(orderId);
     try {
-      await axios.patch(
-        `https://${baseUrl}/pms/admin/restaurant-orders/${orderId}`,
-        { status: newStatus.toLowerCase() },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
       await axios.post(
         `https://${baseUrl}/crm/create_osr_log.json`,
         {
           osr_log: {
             about: 'FoodOrder',
             about_id: orderId,
-            osr_status_id: newStatus.toLowerCase(),
+            osr_status_id: newStatus.id,
           },
         },
         {
@@ -493,7 +480,7 @@ export const RestaurantOrdersTable = () => {
 
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
-          order.id === orderId ? { ...order, status_name: newStatus } : order
+          order.id === orderId ? { ...order, status_name: newStatus.name } : order
         )
       );
 
@@ -667,10 +654,10 @@ export const RestaurantOrdersTable = () => {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {['Pending', 'Confirmed', 'Cancelled', 'Completed'].map((status) => (
-                <SelectItem key={status} value={status}>
+              {item.statuses.map((status) => (
+                <SelectItem key={status.id} value={status}>
                   <Badge
-                    variant={getStatusBadgeVariant(status)}
+                    variant={getStatusBadgeVariant(status.name)}
                     className={cn(
                       status === 'Completed' && 'bg-[#A4F4E7] hover:bg-[#A4F4E7] text-black',
                       status === 'Pending' && 'bg-[#F4C790] hover:bg-[#F4C790] text-black',
@@ -678,12 +665,11 @@ export const RestaurantOrdersTable = () => {
                       status === 'Cancelled' && 'bg-[#E4626F] hover:bg-[#E4626F] text-white'
                     )}
                   >
-                    {status}
+                    {status.name}
                   </Badge>
                 </SelectItem>
               ))}
             </SelectContent>
-
           </Select>
         );
       case 'payment_status':

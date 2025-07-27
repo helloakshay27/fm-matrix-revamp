@@ -107,7 +107,7 @@ export const BookingDetailsPage = () => {
 
                   <div className="flex">
                     <span className="text-[#1A1A1A80] w-32 text-14">GST</span>
-                    <span className="font-medium text-16"> {bookings.gst}</span>
+                    <span className="font-medium text-16"> {bookings.gst || "-"}</span>
                   </div>
 
                   <div className="flex">
@@ -129,7 +129,7 @@ export const BookingDetailsPage = () => {
                   </div>
                   <div className="flex">
                     <span className="text-[#1A1A1A80] w-32 text-14">SGST</span>
-                    <span className="font-medium text-16"> {bookings.sgst}</span>
+                    <span className="font-medium text-16"> {bookings.sgst || "-"}</span>
                   </div>
 
                   <div className="flex">
