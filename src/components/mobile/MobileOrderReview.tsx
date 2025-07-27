@@ -613,7 +613,7 @@ export const MobileOrderReview: React.FC = () => {
           <h3 className="font-semibold text-gray-900 mb-3">Details</h3>
           <div className="border-t border-gray-400 border-dashed pt-3 space-y-2">
             <div className="flex justify-between">
-              <span className="text-gray-900">Customer Name</span>
+              <span className="text-gray-900">Name</span>
               <span className="text-gray-900">{userDetails.customer_name}</span>
             </div>
             <div className="flex justify-between">

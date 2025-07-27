@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
-import { useAssets } from '@/hooks/useAssets';
-import { MobileAssetList } from '@/components/mobile/MobileAssetList';
-import { MobileAssetDetails } from '@/components/mobile/MobileAssetDetails';
-import { MobileAssetBreakdown } from '@/components/mobile/MobileAssetBreakdown';
+import React, { useState, useEffect } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
+import { useAssets } from "@/hooks/useAssets";
+import { MobileAssetList } from "@/components/mobile/MobileAssetList";
+import { MobileAssetDetails } from "@/components/mobile/MobileAssetDetails";
+import { MobileAssetBreakdown } from "@/components/mobile/MobileAssetBreakdown";
 
 export const MobileAssetPage = () => {
   const { assetId } = useParams();
   const [searchParams] = useSearchParams();
-  const action = searchParams.get('action');
+  const action = searchParams.get("action");
   const { assets, loading, error } = useAssets(1);
-  
+
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
 
   useEffect(() => {
     if (assetId && assets.length > 0) {
-      const asset = assets.find(a => a.id.toString() === assetId);
+      const asset = assets.find((a) => a.id.toString() === assetId);
       setSelectedAsset(asset);
     }
   }, [assetId, assets]);
@@ -29,12 +29,12 @@ export const MobileAssetPage = () => {
   }
 
   if (error) {
-    console.error('Error loading assets:', error);
+    console.error("Error loading assets:", error);
   }
 
   // Route based on action parameter
   switch (action) {
-    case 'details':
+    case "details":
       return selectedAsset ? (
         <MobileAssetDetails asset={selectedAsset} />
       ) : (
@@ -42,8 +42,8 @@ export const MobileAssetPage = () => {
           <p className="text-muted-foreground">Asset not found</p>
         </div>
       );
-      
-    case 'breakdown':
+
+    case "breakdown":
       return selectedAsset ? (
         <MobileAssetBreakdown asset={selectedAsset} />
       ) : (
