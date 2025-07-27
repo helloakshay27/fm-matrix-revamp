@@ -139,10 +139,10 @@ export const TicketDashboard = () => {
       setResponseTATData(responseTATData);
       setResolutionTATReportData(resolutionTATData);
       
-      toast({
-        title: "Success",
-        description: "Analytics data updated successfully"
-      });
+      // toast({
+      //   title: "Success",
+      //   description: "Analytics data updated successfully"
+      // });
     } catch (error) {
       console.error('Error fetching analytics data:', error);
       toast({
