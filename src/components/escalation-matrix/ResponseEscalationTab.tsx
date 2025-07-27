@@ -117,20 +117,20 @@ export const ResponseEscalationTab: React.FC = () => {
   }
 
   const getUserNames = (userIds: string | number[] | null): string => {
-    if (!userIds) return 'None'
+    if (!userIds) return ''
     
     let ids: number[] = []
     if (typeof userIds === 'string') {
       try {
         ids = JSON.parse(userIds)
       } catch {
-        return 'None'
+        return ''
       }
     } else {
       ids = userIds
     }
     
-    if (!Array.isArray(ids) || ids.length === 0) return 'None'
+    if (!Array.isArray(ids) || ids.length === 0) return ''
     
     return ids.map(id => {
       const user = fmUsers.find(u => u.id === id)
