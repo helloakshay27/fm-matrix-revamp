@@ -301,21 +301,21 @@ export const AMCDashboard = () => {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
-
+  
       const amcRecord = amcData.find((item) => item.id === id);
       if (!amcRecord) {
         toast.error('AMC record not found');
         return;
       }
-
+  
       const updatedStatus = !amcRecord.active;
       const url = `https://${baseUrl}/pms/asset_amcs/${id}.json`;
       const response = await axios.put(
         url,
         {
           pms_asset_amc: {
-            active: updatedStatus
-          }
+            active: updatedStatus,
+          },
         },
         {
           headers: {
@@ -323,8 +323,17 @@ export const AMCDashboard = () => {
           },
         }
       );
+  
       if (response.status === 200) {
-        fetchFilteredAMCs(filter, currentPage);
+        // Refresh table data
+        await fetchFilteredAMCs(filter, currentPage);
+  
+        // Refresh analytics data
+        const { startDate, endDate } = analyticsDateRange;
+        const startDateObj = new Date(startDate.split('/').reverse().join('-'));
+        const endDateObj = new Date(endDate.split('/').reverse().join('-'));
+        await fetchAMCAnalyticsData(startDateObj, endDateObj);
+  
         toast.success(`AMC ID ${id} status updated`);
       } else {
         toast.error('Failed to update AMC status');
@@ -521,7 +530,7 @@ export const AMCDashboard = () => {
       );
 
       if (response.status === 200) {
-        fetchFilteredAMCs(filter, currentPage);
+        dispatch(fetchAMCData())
         toast.success(`AMC ID ${amcItem.id} flag updated`);
       } else {
         toast.error('Failed to update AMC flag');

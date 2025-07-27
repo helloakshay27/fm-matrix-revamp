@@ -849,7 +849,7 @@ export const AddAMCPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <TextField
-                  label="Cost"
+                  label="Cost*"
                   placeholder="Enter Cost"
                   name="cost"
                   type="number"
@@ -867,7 +867,7 @@ export const AddAMCPage = () => {
               <div>
                 <TextField
                   fullWidth
-                  label="Start Date"
+                  label="Start Date*"
                   type="date"
                   value={formData.startDate || ''}
                   onChange={(e) => handleInputChange('startDate', e.target.value)}
@@ -887,7 +887,7 @@ export const AddAMCPage = () => {
               <div>
                 <TextField
                   fullWidth
-                  label="First Service Date"
+                  label="First Service Date*"
                   type="date"
                   value={formData.firstService || ''}
                   onChange={(e) => handleInputChange('firstService', e.target.value)}
@@ -909,7 +909,7 @@ export const AddAMCPage = () => {
                   <InputLabel id="payment-terms-select-label" shrink>Payment Terms</InputLabel>
                   <MuiSelect
                     labelId="payment-terms-select-label"
-                    label="Payment Terms"
+                    label="Payment Terms*"
                     displayEmpty
                     value={formData.paymentTerms}
                     onChange={e => handleInputChange('paymentTerms', e.target.value)}
@@ -928,7 +928,7 @@ export const AddAMCPage = () => {
               <div>
                 <TextField
                   fullWidth
-                  label="End Date"
+                  label="End Date*"
                   type="date"
                   value={formData.endDate || ''}
                   onChange={(e) => handleInputChange('endDate', e.target.value)}
@@ -950,7 +950,7 @@ export const AddAMCPage = () => {
 
               <div>
                 <TextField
-                  label="No. of Visits"
+                  label="No. of Visits*"
                   placeholder="Enter No. of Visit"
                   name="noOfVisits"
                   type="number"
@@ -975,7 +975,7 @@ export const AddAMCPage = () => {
                 <TextField
                   id="remarks"
                   name="remarks"
-                  label="Remarks"
+                  label="Remarks*"
                   placeholder="Enter Remarks"
                   value={formData.remarks}
                   onChange={(e) => handleInputChange('remarks', e.target.value)}
