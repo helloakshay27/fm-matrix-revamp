@@ -1,69 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star, MessageSquare, Flag, ChevronRight, Building2, User, Globe, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AddCommentModal } from './AddCommentModal';
 import { useNavigate } from 'react-router-dom';
-const recentTickets = [{
-  id: '234-87654',
-  title: 'Floor not clean',
-  category: 'Housekeeping',
-  subCategory: 'Common Area',
-  assigneeName: 'Arman',
-  site: 'GoPhygital',
-  priority: 'P1',
-  tat: 'A',
-  status: 'In Progress',
-  nextStatus: 'Closed',
-  handledBy: 'Arman'
-}, {
-  id: '234-87654',
-  title: 'Floor not clean',
-  category: 'Housekeeping',
-  subCategory: 'Common Area',
-  assigneeName: 'Arman',
-  site: 'GoPhygital',
-  priority: 'P1',
-  tat: 'A',
-  status: 'In Progress',
-  nextStatus: 'Closed',
-  handledBy: 'Arman'
-}, {
-  id: '234-87654',
-  title: 'Floor not clean',
-  category: 'Housekeeping',
-  subCategory: 'Common Area',
-  assigneeName: 'Arman',
-  site: 'GoPhygital',
-  priority: 'P1',
-  tat: 'A',
-  status: 'In Progress',
-  nextStatus: 'Closed',
-  handledBy: 'Arman'
-}, {
-  id: '234-87655',
-  title: 'AC not working',
-  category: 'HVAC',
-  subCategory: 'Air Conditioning',
-  assigneeName: 'John',
-  site: 'GoPhygital',
-  priority: 'P2',
-  tat: 'B',
-  status: 'Open',
-  nextStatus: 'In Progress',
-  handledBy: 'John'
-}, {
-  id: '234-87656',
-  title: 'Elevator maintenance',
-  category: 'Mechanical',
-  subCategory: 'Elevator',
-  assigneeName: 'Sarah',
-  site: 'GoPhygital',
-  priority: 'P3',
-  tat: 'C',
-  status: 'Scheduled',
-  nextStatus: 'In Progress',
-  handledBy: 'Sarah'
-}];
+import { ticketAnalyticsAPI } from '@/services/ticketAnalyticsAPI';
 export function RecentTicketsSidebar() {
   const [commentModal, setCommentModal] = useState<{
     isOpen: boolean;
@@ -73,7 +13,37 @@ export function RecentTicketsSidebar() {
     ticketId: ''
   });
   const [flaggedTickets, setFlaggedTickets] = useState<Set<string>>(new Set());
+  const [recentTickets, setRecentTickets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchRecentTickets = async () => {
+      try {
+        const response = await ticketAnalyticsAPI.getRecentTickets();
+        const mappedTickets = response.complaints.map((ticket: any) => ({
+          id: ticket.ticket_number,
+          title: ticket.heading,
+          category: ticket.category_type,
+          subCategory: ticket.sub_category_type,
+          assigneeName: ticket.assigned_to || 'Unassigned',
+          site: ticket.site_name,
+          priority: ticket.priority,
+          tat: ticket.response_escalation,
+          status: ticket.issue_status,
+          nextStatus: ticket.status.name,
+          handledBy: ticket.updated_by
+        }));
+        setRecentTickets(mappedTickets);
+      } catch (error) {
+        console.error('Error fetching recent tickets:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecentTickets();
+  }, []);
   const handleAddComment = (ticketId: string) => {
     setCommentModal({
       isOpen: true,

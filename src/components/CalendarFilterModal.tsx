@@ -99,18 +99,16 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
             <h3 className="text-lg font-medium mb-4 text-gray-800">Filter Options</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Type</Label>
-                <Select value={filters.type} onValueChange={value => handleFilterChange('type', value)}>
+                <Label className="text-sm font-medium text-gray-700">Select Type</Label>
+                <Select value={filters.formName} onValueChange={value => handleFilterChange('formName', value)}>
                   <SelectTrigger className="h-10 bg-white border border-gray-300 hover:border-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <SelectValue placeholder="Select Type" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md z-50">
-                    <SelectItem value="maintenance" className="hover:bg-gray-100 focus:bg-gray-100">Maintenance</SelectItem>
-                    <SelectItem value="cleaning" className="hover:bg-gray-100 focus:bg-gray-100">Cleaning</SelectItem>
-                    <SelectItem value="security" className="hover:bg-gray-100 focus:bg-gray-100">Security</SelectItem>
-                    <SelectItem value="hvac" className="hover:bg-gray-100 focus:bg-gray-100">HVAC</SelectItem>
-                    <SelectItem value="electrical" className="hover:bg-gray-100 focus:bg-gray-100">Electrical</SelectItem>
-                    <SelectItem value="plumbing" className="hover:bg-gray-100 focus:bg-gray-100">Plumbing</SelectItem>
+                    <SelectItem value="PPM" className="hover:bg-gray-100 focus:bg-gray-100">PPM</SelectItem>
+                    <SelectItem value="AMC" className="hover:bg-gray-100 focus:bg-gray-100">AMC</SelectItem>
+                    <SelectItem value="Preparedness" className="hover:bg-gray-100 focus:bg-gray-100">Preparedness</SelectItem>
+                   
                   </SelectContent>
                 </Select>
               </div>
@@ -122,12 +120,9 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
                     <SelectValue placeholder="Select Schedule Type" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md z-50">
-                    <SelectItem value="daily" className="hover:bg-gray-100 focus:bg-gray-100">Daily</SelectItem>
-                    <SelectItem value="weekly" className="hover:bg-gray-100 focus:bg-gray-100">Weekly</SelectItem>
-                    <SelectItem value="monthly" className="hover:bg-gray-100 focus:bg-gray-100">Monthly</SelectItem>
-                    <SelectItem value="quarterly" className="hover:bg-gray-100 focus:bg-gray-100">Quarterly</SelectItem>
-                    <SelectItem value="annual" className="hover:bg-gray-100 focus:bg-gray-100">Annual</SelectItem>
-                    <SelectItem value="one-time" className="hover:bg-gray-100 focus:bg-gray-100">One-time</SelectItem>
+                    <SelectItem value="asset" className="hover:bg-gray-100 focus:bg-gray-100">Asset</SelectItem>
+                    <SelectItem value="service" className="hover:bg-gray-100 focus:bg-gray-100">Service</SelectItem>
+                   
                   </SelectContent>
                 </Select>
               </div>
