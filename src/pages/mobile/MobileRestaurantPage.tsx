@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { MobileRestaurantWelcome } from '@/components/mobile/MobileRestaurantWelcome';
 import { MobileRestaurantDashboard } from '@/components/mobile/MobileRestaurantDashboard';
 import { MobileRestaurantDetails } from '@/components/mobile/MobileRestaurantDetails';
@@ -60,10 +60,21 @@ export const MobileRestaurantPage: React.FC = () => {
     restaurantId: string;
     action: string;
   }>();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  // Auto-add source=external for QR scan URLs (mr/facilityId/orgId format)
+  useEffect(() => {
+    if (facilityId && orgId && !action && !searchParams.get('source')) {
+      console.log("🔗 AUTO-ADDING SOURCE=EXTERNAL for QR scan URL");
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('source', 'external');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [facilityId, orgId, action, searchParams, setSearchParams]);
 
   useEffect(() => {
     console.log("🚀 MOBILE RESTAURANT PAGE PARAMS:");
