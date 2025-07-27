@@ -231,7 +231,7 @@ export const ScheduleListDashboard = () => {
     // Get the form_code from the original custom forms data
     const customForm = customFormsData?.custom_forms.find(form => form.id.toString() === item.id);
     const formCode = customForm?.custom_form_code;
-    navigate(`/maintenance/schedule/view/${item.id}`);
+    navigate(`/maintenance/schedule/view/${item.id}`, { state: { formCode } });
   };
 
   const columns = [{

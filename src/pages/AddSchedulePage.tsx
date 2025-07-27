@@ -2598,7 +2598,7 @@ export const AddSchedulePage = () => {
                   }
                   label="Preparedness"
                 />
-                <FormControlLabel
+                {/* <FormControlLabel
                   value="Hoto"
                   control={
                     <Radio
@@ -2607,7 +2607,7 @@ export const AddSchedulePage = () => {
                     />
                   }
                   label="Hoto"
-                />
+                /> */}
                 <FormControlLabel
                   value="Routine"
                   control={
@@ -2618,7 +2618,7 @@ export const AddSchedulePage = () => {
                   }
                   label="Routine"
                 />
-                <FormControlLabel
+                {/* <FormControlLabel
                   value="Audit"
                   control={
                     <Radio
@@ -2627,7 +2627,7 @@ export const AddSchedulePage = () => {
                     />
                   }
                   label="Audit"
-                />
+                /> */}
               </RadioGroup>
             </Box>
 
