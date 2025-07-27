@@ -137,6 +137,11 @@ export interface TaskListItem {
 export interface TaskListResponse {
   current_page: string;
   pages: number;
+  scheduled_count: number;
+  open_count: number;
+  wip_count: number;
+  closed_count: number;
+  overdue_count: number;
   asset_task_occurrences: TaskListItem[];
 }
 
@@ -154,14 +159,24 @@ export const taskService = {
   async getTaskList(params?: {
     show_all?: boolean;
     page?: number;
+    status?: string;
+    [key: string]: any;
   }): Promise<TaskListResponse> {
     try {
+      const queryParams: any = {
+        show_all: true,
+        page: 1,
+        ...params
+      };
+
+      // Handle status filtering
+      if (params?.status) {
+        queryParams['q[task_status_eq]'] = params.status;
+        delete queryParams.status; // Remove the status key to avoid duplication
+      }
+
       const response = await apiClient.get<TaskListResponse>('/all_tasks_listing.json', {
-        params: {
-          show_all: true,
-          page: 1,
-          ...params
-        }
+        params: queryParams
       });
       return response.data;
     } catch (error) {
