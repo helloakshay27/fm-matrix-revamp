@@ -14,6 +14,7 @@ export function RecentTicketsSidebar() {
     ticketId: ''
   });
   const [flaggedTickets, setFlaggedTickets] = useState<Set<string>>(new Set());
+  const [goldenTickets, setGoldenTickets] = useState<Set<string>>(new Set());
   const [recentTickets, setRecentTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -72,6 +73,26 @@ export function RecentTicketsSidebar() {
       console.error('Error flagging ticket:', error);
     }
   };
+  const handleGoldenTicket = async (ticketId: string) => {
+    try {
+      await apiClient.post(`/pms/admin/complaints/mark_as_golden_ticket.json?ids=[${ticketId}]`);
+      
+      setGoldenTickets(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(ticketId)) {
+          newSet.delete(ticketId);
+        } else {
+          newSet.add(ticketId);
+        }
+        return newSet;
+      });
+      
+      // Refresh the entire page like other list pages
+      window.location.reload();
+    } catch (error) {
+      console.error('Error marking as golden ticket:', error);
+    }
+  };
   const handleViewDetails = (ticketId: string) => {
     navigate(`/maintenance/ticket-details/${ticketId}`);
   };
@@ -94,7 +115,9 @@ export function RecentTicketsSidebar() {
               <div className="flex items-center justify-between mb-3">
                 <span className="font-semibold text-gray-800 text-sm">{ticket.id}</span>
                 <div className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                  <button onClick={() => handleGoldenTicket(ticket.id)}>
+                    <Star className={`h-5 w-5 ${goldenTickets.has(ticket.id) ? 'text-yellow-600 fill-yellow-600' : 'text-yellow-500 fill-yellow-500'} cursor-pointer hover:opacity-80`} />
+                  </button>
                   <span className="bg-pink-300 text-pink-800 px-2 py-1 rounded text-xs font-medium">
                     {ticket.priority}
                   </span>
