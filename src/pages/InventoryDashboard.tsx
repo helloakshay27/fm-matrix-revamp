@@ -32,6 +32,10 @@ import { InventoryFilterDialog } from "@/components/InventoryFilterDialog";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InventorySelector } from "@/components/InventorySelector";
+import { InventoryAnalyticsSelector } from "@/components/InventoryAnalyticsSelector";
+import { InventoryAnalyticsFilterDialog } from "@/components/InventoryAnalyticsFilterDialog";
+import { InventoryAnalyticsCard } from "@/components/InventoryAnalyticsCard";
+import { inventoryAnalyticsAPI } from "@/services/inventoryAnalyticsAPI";
 import {
   DndContext,
   closestCenter,
@@ -75,6 +79,9 @@ import { toast } from "sonner";
 
 // Map API field names to display field names for backward compatibility
 const mapInventoryData = (apiData: any[]) => {
+  if (!apiData || !Array.isArray(apiData)) {
+    return [];
+  }
   return apiData.map((item) => {
     const itemId =
       typeof item.id === "string"
@@ -184,15 +191,37 @@ export const InventoryDashboard = () => {
     startDate: new Date('2020-01-01'),
     endDate: new Date('2025-01-01')
   });
-  const [analyticsData, setAnalyticsData] = useState({
-    categoryData: [],
+  
+  // Analytics state
+  const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
+  const [analyticsDateRange, setAnalyticsDateRange] = useState({
+    startDate: '01/01/2020',
+    endDate: '01/01/2025'
+  });
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<any>({
     statusData: {
+      count_of_active_items: 0,
+      count_of_inactive_items: 0,
+      count_of_critical_items: 0,
+      count_of_non_critical_items: 0,
       activeItems: 0,
       inactiveItems: 0,
       criticalItems: 0,
       nonCriticalItems: 0
-    }
+    },
+    categoryData: []
   });
+  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>([
+    'items_status',
+    'category_wise', 
+    'green_consumption'
+  ]);
+  const [visibleAnalyticsSections, setVisibleAnalyticsSections] = useState<string[]>([
+    'itemsStatus',
+    'categoryWise',
+    'greenConsumption'
+  ]);
 
   const pageSize = 15; // Use larger page size for API data
 
@@ -259,8 +288,8 @@ export const InventoryDashboard = () => {
     },
   ];
 
-  // Recent inventory items for sidebar
-  const recentItems = inventoryData.slice(0, 3).map((item, index) => ({
+  // Recent inventory items for sidebar - with safety check
+  const recentItems = (inventoryData || []).slice(0, 3).map((item, index) => ({
     id: item.id,
     title: item.name,
     subtitle: "Category: " + (item.group || "Unassigned"),
@@ -286,7 +315,7 @@ export const InventoryDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(paginatedData.map((item) => item.id));
+      setSelectedItems((paginatedData || []).map((item) => item.id));
     } else {
       setSelectedItems([]);
     }
@@ -582,53 +611,62 @@ export const InventoryDashboard = () => {
   };
 
   const fetchAnalyticsData = async () => {
-    const baseUrl = localStorage.getItem('baseUrl');
-    const token = localStorage.getItem('token');
-    const siteId = localStorage.getItem('selectedSiteId');
-
-    if (!baseUrl || !token || !siteId) {
-      toast.error('Missing base URL, token, or site ID');
-      return;
-    }
-
+    setAnalyticsLoading(true);
     try {
-      const fromDate = dateRange.startDate.toISOString().split('T')[0];
-      const toDate = dateRange.endDate.toISOString().split('T')[0];
+      const fromDate = new Date(dateRange.startDate);
+      const toDate = new Date(dateRange.endDate);
+      
+      const results: any = {};
 
-      // Fetch category wise items
-      const categoryResponse = await axios.get(
-        `https://${baseUrl}/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      // Fetch selected analytics data
+      if (selectedAnalyticsOptions.includes('items_status')) {
+        const statusResponse = await inventoryAnalyticsAPI.getItemsStatus(fromDate, toDate);
+        // Map API response to expected format
+        results.statusData = {
+          activeItems: statusResponse.count_of_active_items || 0,
+          inactiveItems: statusResponse.count_of_inactive_items || 0,
+          criticalItems: statusResponse.count_of_critical_items || 0,
+          nonCriticalItems: statusResponse.count_of_non_critical_items || 0
+        };
+      }
+      
+      if (selectedAnalyticsOptions.includes('category_wise')) {
+        const categoryResponse = await inventoryAnalyticsAPI.getCategoryWise(fromDate, toDate);
+        results.categoryData = categoryResponse.category_counts || [];
+      }
+      
+      if (selectedAnalyticsOptions.includes('green_consumption')) {
+        results.greenConsumption = await inventoryAnalyticsAPI.getGreenConsumption(fromDate, toDate);
+      }
+      
+      if (selectedAnalyticsOptions.includes('consumption_report_green')) {
+        results.consumptionReportGreen = await inventoryAnalyticsAPI.getConsumptionReportGreen(fromDate, toDate);
+      }
+      
+      if (selectedAnalyticsOptions.includes('consumption_report_non_green')) {
+        results.consumptionReportNonGreen = await inventoryAnalyticsAPI.getConsumptionReportNonGreen(fromDate, toDate);
+      }
+      
+      if (selectedAnalyticsOptions.includes('current_minimum_stock_green')) {
+        results.minimumStockGreen = await inventoryAnalyticsAPI.getCurrentMinimumStockGreen(fromDate, toDate);
+      }
+      
+      if (selectedAnalyticsOptions.includes('current_minimum_stock_non_green')) {
+        results.minimumStockNonGreen = await inventoryAnalyticsAPI.getCurrentMinimumStockNonGreen(fromDate, toDate);
+      }
 
-      // Fetch items status
-      const statusResponse = await axios.get(
-        `https://${baseUrl}/pms/inventories/items_status.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      setAnalyticsData({
-        categoryData: categoryResponse.data.category_counts || [],
-        statusData: {
-          activeItems: statusResponse.data.count_of_active_items || 0,
-          inactiveItems: statusResponse.data.count_of_inactive_items || 0,
-          criticalItems: statusResponse.data.count_of_critical_items || 0,
-          nonCriticalItems: statusResponse.data.count_of_non_critical_items || 0
-        }
-      });
+      setAnalyticsData(results);
     } catch (error) {
       console.error('Failed to fetch analytics data:', error);
       toast.error('Failed to fetch analytics data');
+    } finally {
+      setAnalyticsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, [dateRange]);
+  }, [dateRange, selectedAnalyticsOptions]);
 
   const handleDateFilter = (dates: { startDate: Date | undefined; endDate: Date | undefined }) => {
     if (dates.startDate && dates.endDate) {
@@ -639,22 +677,24 @@ export const InventoryDashboard = () => {
     }
   };
 
-  // Update the analytics section to use dynamic data
+  // Update the analytics section to use dynamic data with safety checks
   const itemStatusData = [
-    { name: "Active", value: analyticsData.statusData.activeItems, fill: "#c6b692" },
-    { name: "Inactive", value: analyticsData.statusData.inactiveItems, fill: "#d8dcdd" },
+    { name: "Active", value: analyticsData.statusData?.activeItems || 0, fill: "#c6b692" },
+    { name: "Inactive", value: analyticsData.statusData?.inactiveItems || 0, fill: "#d8dcdd" },
   ];
 
   const criticalityData = [
-    { name: "Critical", value: analyticsData.statusData.criticalItems, fill: "#c6b692" },
-    { name: "Non-Critical", value: analyticsData.statusData.nonCriticalItems, fill: "#d8dcdd" },
+    { name: "Critical", value: analyticsData.statusData?.criticalItems || 0, fill: "#c6b692" },
+    { name: "Non-Critical", value: analyticsData.statusData?.nonCriticalItems || 0, fill: "#d8dcdd" },
   ];
 
-  // Group data from API
-  const groupChartData = analyticsData.categoryData.map(({ group_name, item_count }) => ({
-    name: group_name,
-    value: item_count
-  }));
+  // Group data from API - with safety check
+  const groupChartData = (analyticsData.categoryData && Array.isArray(analyticsData.categoryData)) 
+    ? analyticsData.categoryData.map(({ group_name, item_count }) => ({
+        name: group_name,
+        value: item_count
+      })) 
+    : [];
 
   return (
     <div className="p-2 sm:p-4 lg:p-6">
@@ -669,625 +709,92 @@ export const InventoryDashboard = () => {
             value="list"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
           >
-            <svg
-              width="18"
-              height="19"
-              viewBox="0 0 18 19"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="stroke-current"
-            >
-              <path
-                d="M1.875 4.25L3 5.375L5.25 3.125M1.875 9.5L3 10.625L5.25 8.375M1.875 14.75L3 15.875L5.25 13.625M7.875 9.5H16.125M7.875 14.75H16.125M7.875 4.25H16.125"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Package className="w-4 h-4" />
             <span className="hidden sm:inline">Inventory List</span>
           </TabsTrigger>
           <TabsTrigger
             value="analytics"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
           >
-            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+            <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">Analytics</span>
-            <span className="sm:hidden">Charts</span>
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowDateFilter(true)}
-              className="mb-2 sm:mb-0"
-            >
-              Filter by Date
-            </Button>
-            <InventorySelector onSelectionChange={handleSelectionChange} />
-          </div>
-          <div className="flex flex-col xl:flex-row gap-4 lg:gap-6">
-            {/* Main Content */}
-            <div className="flex-1 order-2 xl:order-1">
-              {/* All Charts with Drag and Drop */}
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
+
+        <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setIsAnalyticsFilterOpen(true)}
+                variant="outline"
+                className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
               >
-                <SortableContext
-                  items={chartOrder}
-                  strategy={rectSortingStrategy}
-                >
-                  <div className="space-y-4 sm:space-y-6">
-                    {/* Top Row - Two Donut Charts */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                      {chartOrder
-                        .filter((id) =>
-                          ["statusChart", "criticalityChart"].includes(id)
-                        )
-                        .map((chartId) => {
-                          if (
-                            chartId === "statusChart" &&
-                            visibleSections.includes("statusChart")
-                          ) {
-                            return (
-                              <SortableChartItem key={chartId} id={chartId}>
-                                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
-                                  <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                    <h3 className="text-base sm:text-lg font-bold text-[#C72030]">
-                                      Items
-                                    </h3>
-                                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
-                                  </div>
-                                  <div className="relative flex items-center justify-center">
-                                    <ResponsiveContainer
-                                      width="100%"
-                                      height={200}
-                                      className="sm:h-[250px]"
-                                    >
-                                      <PieChart>
-                                        <Pie
-                                          data={itemStatusData}
-                                          cx="50%"
-                                          cy="50%"
-                                          innerRadius={40}
-                                          outerRadius={80}
-                                          paddingAngle={2}
-                                          dataKey="value"
-                                          label={({
-                                            value,
-                                            name,
-                                            cx,
-                                            cy,
-                                            midAngle,
-                                            innerRadius,
-                                            outerRadius,
-                                          }) => {
-                                            return (
-                                              <text
-                                                x={
-                                                  cx +
-                                                  ((innerRadius + outerRadius) /
-                                                    2) *
-                                                  Math.cos(
-                                                    (-midAngle * Math.PI) /
-                                                    180
-                                                  )
-                                                }
-                                                y={
-                                                  cy +
-                                                  ((innerRadius + outerRadius) /
-                                                    2) *
-                                                  Math.sin(
-                                                    (-midAngle * Math.PI) /
-                                                    180
-                                                  )
-                                                }
-                                                fill="black"
-                                                textAnchor="middle"
-                                                dominantBaseline="middle"
-                                                fontSize="14"
-                                                fontWeight="bold"
-                                              >
-                                                {value}
-                                              </text>
-                                            );
-                                          }}
-                                          labelLine={false}
-                                        >
-                                          {itemStatusData.map(
-                                            (entry, index) => (
-                                              <Cell
-                                                key={`cell-${index}`}
-                                                fill={entry.fill}
-                                              />
-                                            )
-                                          )}
-                                        </Pie>
-                                        <Tooltip />
-                                      </PieChart>
-                                    </ResponsiveContainer>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                      <div className="text-center">
-                                        <div className="text-sm sm:text-lg font-semibold text-gray-700">
-                                          Total : {totalItems}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                    {itemStatusData.map((item, index) => (
-                                      <div
-                                        key={index}
-                                        className="flex items-center gap-2"
-                                      >
-                                        <div
-                                          className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm"
-                                          style={{ backgroundColor: item.fill }}
-                                        ></div>
-                                        <span className="text-xs sm:text-sm font-medium text-gray-700">
-                                          {item.name}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              </SortableChartItem>
-                            );
-                          }
-                          if (
-                            chartId === "criticalityChart" &&
-                            visibleSections.includes("criticalityChart")
-                          ) {
-                            return (
-                              <SortableChartItem key={chartId} id={chartId}>
-                                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
-                                  <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                    <h3 className="text-base sm:text-lg font-bold text-[#C72030]">
-                                      Critical Non-Critical Items
-                                    </h3>
-                                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
-                                  </div>
-                                  <div className="relative flex items-center justify-center">
-                                    <ResponsiveContainer
-                                      width="100%"
-                                      height={200}
-                                      className="sm:h-[250px]"
-                                    >
-                                      <PieChart>
-                                        <Pie
-                                          data={criticalityData}
-                                          cx="50%"
-                                          cy="50%"
-                                          innerRadius={40}
-                                          outerRadius={80}
-                                          paddingAngle={2}
-                                          dataKey="value"
-                                          label={({
-                                            value,
-                                            name,
-                                            cx,
-                                            cy,
-                                            midAngle,
-                                            innerRadius,
-                                            outerRadius,
-                                          }) => {
-                                            return (
-                                              <text
-                                                x={
-                                                  cx +
-                                                  ((innerRadius + outerRadius) /
-                                                    2) *
-                                                  Math.cos(
-                                                    (-midAngle * Math.PI) /
-                                                    180
-                                                  )
-                                                }
-                                                y={
-                                                  cy +
-                                                  ((innerRadius + outerRadius) /
-                                                    2) *
-                                                  Math.sin(
-                                                    (-midAngle * Math.PI) /
-                                                    180
-                                                  )
-                                                }
-                                                fill="black"
-                                                textAnchor="middle"
-                                                dominantBaseline="middle"
-                                                fontSize="14"
-                                                fontWeight="bold"
-                                              >
-                                                {value}
-                                              </text>
-                                            );
-                                          }}
-                                          labelLine={false}
-                                        >
-                                          {criticalityData.map(
-                                            (entry, index) => (
-                                              <Cell
-                                                key={`cell-${index}`}
-                                                fill={entry.fill}
-                                              />
-                                            )
-                                          )}
-                                        </Pie>
-                                        <Tooltip />
-                                      </PieChart>
-                                    </ResponsiveContainer>
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                      <div className="text-center">
-                                        <div className="text-sm sm:text-lg font-semibold text-gray-700">
-                                          Total : {totalItems}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                    {criticalityData.map((item, index) => (
-                                      <div
-                                        key={index}
-                                        className="flex items-center gap-2"
-                                      >
-                                        <div
-                                          className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm"
-                                          style={{ backgroundColor: item.fill }}
-                                        ></div>
-                                        <span className="text-xs sm:text-sm font-medium text-gray-700">
-                                          {item.name}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              </SortableChartItem>
-                            );
-                          }
-                          return null;
-                        })}
-                    </div>
-                    {/* Bottom Charts - Category and Aging Matrix */}
-                    {chartOrder
-                      .filter((id) =>
-                        ["categoryChart", "agingMatrix"].includes(id)
-                      )
-                      .map((chartId) => {
-                        if (
-                          chartId === "categoryChart" &&
-                          visibleSections.includes("categoryChart")
-                        ) {
-                          return (
-                            <SortableChartItem key={chartId} id={chartId}>
-                              <div className="bg-white rounded-lg border p-3 sm:p-6 mb-4 sm:mb-6">
-                                <div className="flex items-center justify-between mb-4">
-                                  <h3 className="text-sm sm:text-base font-semibold text-[#C72030]">
-                                    Unit Category-wise Items
-                                  </h3>
-                                  <Download className="w-3 h-3 sm:w-4 sm:h-4 text-[#C72030]" />
-                                </div>
-                                <div className="h-48 sm:h-64">
-                                  <ResponsiveContainer
-                                    width="100%"
-                                    height="100%"
-                                  >
-                                    <BarChart
-                                      data={groupChartData}
-                                      margin={{
-                                        top: 20,
-                                        right: 10,
-                                        left: 10,
-                                        bottom: 60,
-                                      }}
-                                    >
-                                      <CartesianGrid
-                                        strokeDasharray="3 3"
-                                        stroke="#f0f0f0"
-                                      />
-                                      <XAxis
-                                        dataKey="name"
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tick={{ fontSize: 10, fill: "#666" }}
-                                        angle={-45}
-                                        textAnchor="end"
-                                        height={60}
-                                        className="sm:text-xs"
-                                      />
-                                      <YAxis
-                                        axisLine={false}
-                                        tickLine={false}
-                                        tick={{ fontSize: 10, fill: "#666" }}
-                                        domain={[0, "dataMax + 1"]}
-                                        className="sm:text-xs"
-                                      />
-                                      <Tooltip
-                                        contentStyle={{
-                                          backgroundColor: "#fff",
-                                          border: "1px solid #ccc",
-                                          borderRadius: "4px",
-                                          fontSize: "11px",
-                                        }}
-                                        labelStyle={{ color: "#333" }}
-                                      />
-                                      <Bar
-                                        dataKey="value"
-                                        fill="#C7B894"
-                                        radius={[4, 4, 0, 0]}
-                                        name="Items Count"
-                                      />
-                                    </BarChart>
-                                  </ResponsiveContainer>
-                                </div>
-                              </div>
-                            </SortableChartItem>
-                          );
-                        }
-                        if (
-                          chartId === "agingMatrix" &&
-                          visibleSections.includes("agingMatrix")
-                        ) {
-                          return (
-                            <SortableChartItem key={chartId} id={chartId}>
-                              <div className="bg-white rounded-lg border p-3 sm:p-6 mb-4 sm:mb-6">
-                                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                  <h3
-                                    className="text-base sm:text-lg font-bold"
-                                    style={{ color: "#C72030" }}
-                                  >
-                                    Items Ageing Matrix
-                                  </h3>
-                                  <Download
-                                    className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer"
-                                    style={{ color: "#C72030" }}
-                                  />
-                                </div>
-                                <div className="space-y-4 sm:space-y-6">
-                                  {/* Table - Horizontally scrollable on mobile */}
-                                  <div className="overflow-x-auto -mx-3 sm:mx-0">
-                                    <div className="min-w-[500px] px-3 sm:px-0">
-                                      <table className="w-full border-collapse border border-gray-300">
-                                        <thead>
-                                          <tr
-                                            style={{
-                                              backgroundColor: "#EDE4D8",
-                                            }}
-                                          >
-                                            <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">
-                                              Priority
-                                            </th>
-                                            <th
-                                              colSpan={5}
-                                              className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black"
-                                            >
-                                              No. of Days
-                                            </th>
-                                          </tr>
-                                          <tr
-                                            style={{
-                                              backgroundColor: "#EDE4D8",
-                                            }}
-                                          >
-                                            <th className="border border-gray-300 p-2 sm:p-3"></th>
-                                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
-                                              0-10
-                                            </th>
-                                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
-                                              11-20
-                                            </th>
-                                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
-                                              21-30
-                                            </th>
-                                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
-                                              31-40
-                                            </th>
-                                            <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">
-                                              41-50
-                                            </th>
-                                          </tr>
-                                        </thead>
-                                        <tbody>
-                                          {agingMatrixData.map((row, index) => (
-                                            <tr
-                                              key={index}
-                                              className="bg-white"
-                                            >
-                                              <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">
-                                                {row.priority}
-                                              </td>
-                                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                                                {row["0-10"]}
-                                              </td>
-                                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                                                {row["11-20"]}
-                                              </td>
-                                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                                                {row["21-30"]}
-                                              </td>
-                                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                                                {row["31-40"]}
-                                              </td>
-                                              <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">
-                                                {row["41-50"]}
-                                              </td>
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  </div>
-                                  {/* Summary Box - Full Width Below Table */}
-                                  <div className="w-full">
-                                    <div
-                                      className="rounded-lg p-4 sm:p-8 text-center"
-                                      style={{ backgroundColor: "#EDE4D8" }}
-                                    >
-                                      <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">
-                                        42 Days
-                                      </div>
-                                      <div className="text-sm sm:text-base text-black">
-                                        Average Time Taken To Process An Item
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </SortableChartItem>
-                          );
-                        }
-                        return null;
-                      })}
-                  </div>
-                </SortableContext>
-              </DndContext>
+                <Filter className="w-4 h-4" />
+                Filter Analytics
+              </Button>
             </div>
-            {/* Right Sidebar */}
-            <div className="w-full xl:w-80 order-1 xl:order-2">
-              <div className="w-full bg-[#C4B89D]/25 border xl:border-l border-gray-200 rounded-lg xl:rounded-none p-3 sm:p-4 h-auto xl:h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
-                {/* Header */}
-                <div className="mb-4 sm:mb-6">
-                  <h2 className="text-base sm:text-lg font-semibold text-red-600 mb-2">
-                    Recent Items
-                  </h2>
-                  <div className="text-xs sm:text-sm font-medium text-gray-800">
-                    16/07/2025
-                  </div>
-                </div>
-                {/* Items List */}
-                <div className="flex-1 overflow-y-auto space-y-3 sm:space-y-4 max-h-96 xl:max-h-none">
-                  {recentItems.map((item, index) => (
-                    <div
-                      key={`${item.id}-${index}`}
-                      className="bg-[#C4B89D]/20 rounded-lg p-3 sm:p-4 shadow-sm border border-[#C4B89D] border-opacity-60"
-                      style={{ borderWidth: "0.6px" }}
-                    >
-                      {/* Header with ID, Star, and Priority */}
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="font-semibold text-gray-800 text-xs sm:text-sm">
-                          {item.id}
-                        </span>
-                        <div className="flex items-center gap-1 sm:gap-2">
-                          <div className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500">
-                            ★
-                          </div>
-                          <span className="bg-pink-300 text-pink-800 px-1 sm:px-2 py-1 rounded text-xs font-medium">
-                            {item.priority}
-                          </span>
-                        </div>
-                      </div>
-                      {/* Title and TAT */}
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-                        <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                          {item.title}
-                        </h3>
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs sm:text-sm font-medium text-gray-700">
-                            TAT :
-                          </span>
-                          <span className="text-xs sm:text-sm font-bold text-blue-600">
-                            {item.tat}
-                          </span>
-                        </div>
-                      </div>
-                      {/* Details */}
-                      <div className="space-y-2 sm:space-y-3 mb-4">
-                        <div className="flex items-start sm:items-center gap-2 sm:gap-3">
-                          <Package className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 mt-0.5 sm:mt-0" />
-                          <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">
-                            Category
-                          </span>
-                          <span className="text-xs sm:text-sm text-gray-700">
-                            :
-                          </span>
-                          <span className="text-xs sm:text-sm text-gray-900 break-words">
-                            {item.subtitle.replace("Category: ", "")}
-                          </span>
-                        </div>
-                        <div className="flex items-start sm:items-center gap-2 sm:gap-3">
-                          <Package className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 mt-0.5 sm:mt-0" />
-                          <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">
-                            Sub-Category
-                          </span>
-                          <span className="text-xs sm:text-sm text-gray-700">
-                            :
-                          </span>
-                          <span className="text-xs sm:text-sm text-gray-900 break-words">
-                            {item.subcategory.replace("Sub-Category: ", "")}
-                          </span>
-                        </div>
-                        <div className="flex items-start sm:items-center gap-2 sm:gap-3">
-                          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-orange-400 mt-0.5 sm:mt-0"></div>
-                          <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">
-                            Assignee Name
-                          </span>
-                          <span className="text-xs sm:text-sm text-gray-700">
-                            :
-                          </span>
-                          <span className="text-xs sm:text-sm text-gray-900 break-words">
-                            {item.assignee.replace("Manager: ", "")}
-                          </span>
-                        </div>
-                        <div className="flex items-start sm:items-center gap-2 sm:gap-3">
-                          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-red-400 mt-0.5 sm:mt-0"></div>
-                          <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">
-                            Site
-                          </span>
-                          <span className="text-xs sm:text-sm text-gray-700">
-                            :
-                          </span>
-                          <span className="text-xs sm:text-sm text-gray-900 break-words">
-                            {item.site.replace("Site: ", "")}
-                          </span>
-                        </div>
-                        <div className="flex items-start sm:items-center gap-2 sm:gap-3">
-                          <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4 text-red-500 mt-0.5 sm:mt-0" />
-                          <span className="text-xs sm:text-sm font-medium text-gray-700 min-w-[80px] sm:min-w-[100px]">
-                            Update
-                          </span>
-                          <span className="text-xs sm:text-sm text-gray-700">
-                            :
-                          </span>
-                          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                            <span className="italic text-gray-600">
-                              In Progress
-                            </span>
-                            <ChevronRight className="h-2 w-2 sm:h-3 sm:w-3 text-gray-600" />
-                            <span className="italic text-gray-600">
-                              Processed
-                            </span>
-                          </div>
-                        </div>
-                        <div className="text-xs sm:text-sm text-gray-600 ml-5 sm:ml-7">
-                          (Handled By Manager)
-                        </div>
-                      </div>
-                      {/* Action Buttons */}
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-                          <button className="flex items-center gap-1 sm:gap-2 text-black text-xs sm:text-sm font-medium hover:opacity-80">
-                            <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
-                            Add Comment
-                          </button>
-                          <button className="flex items-center gap-1 sm:gap-2 text-black text-xs sm:text-sm font-medium hover:opacity-80">
-                            <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
-                            Flag Issue
-                          </button>
-                        </div>
-                        <button
-                          className="text-blue-600 text-xs sm:text-sm font-medium underline hover:text-blue-800 self-start sm:self-auto"
-                          onClick={() => handleViewItem(item.id)}
-                        >
-                          View Detail
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <InventoryAnalyticsSelector onSelectionChange={(options) => setSelectedAnalyticsOptions(options)} />
           </div>
+
+          {analyticsLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="text-gray-600">Loading analytics data...</div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {selectedAnalyticsOptions.includes('items_status') && analyticsData.statusData && (
+                <InventoryAnalyticsCard
+                  title="Items Status"
+                  data={analyticsData.statusData}
+                  type="itemsStatus"
+                />
+              )}
+              {selectedAnalyticsOptions.includes('category_wise') && analyticsData.categoryData && (
+                <InventoryAnalyticsCard
+                  title="Category Wise Items"
+                  data={analyticsData.categoryData}
+                  type="categoryWise"
+                />
+              )}
+              {selectedAnalyticsOptions.includes('green_consumption') && analyticsData.greenConsumption && (
+                <InventoryAnalyticsCard
+                  title="Green Consumption"
+                  data={analyticsData.greenConsumption}
+                  type="greenConsumption"
+                />
+              )}
+              {selectedAnalyticsOptions.includes('consumption_report_green') && analyticsData.consumptionReportGreen && (
+                <InventoryAnalyticsCard
+                  title="Consumption Report Green"
+                  data={analyticsData.consumptionReportGreen}
+                  type="consumptionReportGreen"
+                />
+              )}
+              {selectedAnalyticsOptions.includes('consumption_report_non_green') && analyticsData.consumptionReportNonGreen && (
+                <InventoryAnalyticsCard
+                  title="Consumption Report Non-Green"
+                  data={analyticsData.consumptionReportNonGreen}
+                  type="consumptionReportNonGreen"
+                />
+              )}
+              {selectedAnalyticsOptions.includes('current_minimum_stock_green') && analyticsData.minimumStockGreen && (
+                <InventoryAnalyticsCard
+                  title="Current Minimum Stock Green"
+                  data={analyticsData.minimumStockGreen}
+                  type="currentMinimumStockGreen"
+                />
+              )}
+              {selectedAnalyticsOptions.includes('current_minimum_stock_non_green') && analyticsData.minimumStockNonGreen && (
+                <InventoryAnalyticsCard
+                  title="Current Minimum Stock Non-Green"
+                  data={analyticsData.minimumStockNonGreen}
+                  type="currentMinimumStockNonGreen"
+                />
+              )}
+            </div>
+          )}
         </TabsContent>
+     \
         <TabsContent value="list" className="space-y-4 sm:space-y-6">
           {/* Error handling */}
           {error && (
@@ -1477,6 +984,11 @@ export const InventoryDashboard = () => {
           setDateRange(range);
           dispatch(fetchInventoryData({ filters: { startDate: range.startDate, endDate: range.endDate } }));
         }}
+      />
+      <InventoryAnalyticsFilterDialog
+        isOpen={isAnalyticsFilterOpen}
+        onClose={() => setIsAnalyticsFilterOpen(false)}
+        onApplyFilters={(filters) => setAnalyticsDateRange(filters)}
       />
     </div>
   );

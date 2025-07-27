@@ -1,67 +1,67 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CheckSquare, Square, ChevronDown, Package, Leaf, Activity, FileText, AlertTriangle, BarChart, Database } from 'lucide-react';
+import { CheckSquare, Square, ChevronDown, Package, BarChart, Activity, FileText, AlertTriangle, Database, Settings } from 'lucide-react';
 
-const inventoryAnalyticsOptions = [
+const amcAnalyticsOptions = [
   { 
-    id: 'items_status', 
-    label: 'Items Status', 
+    id: 'status_overview', 
+    label: 'Status Overview', 
     checked: true, 
-    endpoint: 'items_status.json',
+    endpoint: 'status_overview',
     icon: Package 
   },
   { 
-    id: 'category_wise', 
-    label: 'Category Wise Items', 
+    id: 'type_distribution', 
+    label: 'Type Distribution', 
     checked: true, 
-    endpoint: 'category_wise_items.json',
+    endpoint: 'type_distribution',
     icon: BarChart 
   },
   { 
-    id: 'green_consumption', 
-    label: 'Green Consumption', 
+    id: 'vendor_performance', 
+    label: 'Vendor Performance', 
     checked: true, 
-    endpoint: 'inventory_consumption_green.json',
-    icon: Leaf 
-  },
-  { 
-    id: 'consumption_report_green', 
-    label: 'Consumption Report Green', 
-    checked: false, 
-    endpoint: 'consumption_report_green.json',
+    endpoint: 'vendor_performance',
     icon: Activity 
   },
   { 
-    id: 'consumption_report_non_green', 
-    label: 'Consumption Report Non-Green', 
+    id: 'expiry_analysis', 
+    label: 'Expiry Analysis', 
     checked: false, 
-    endpoint: 'consumption_report_non_green.json',
-    icon: FileText 
-  },
-  { 
-    id: 'current_minimum_stock_non_green', 
-    label: 'Current Minimum Stock Non-Green', 
-    checked: false, 
-    endpoint: 'current_minimum_stock_non_green.json',
+    endpoint: 'expiry_analysis',
     icon: AlertTriangle 
   },
   { 
-    id: 'current_minimum_stock_green', 
-    label: 'Current Minimum Stock Green', 
+    id: 'cost_analysis', 
+    label: 'Cost Analysis', 
     checked: false, 
-    endpoint: 'current_minimum_stock_green.json',
+    endpoint: 'cost_analysis',
+    icon: FileText 
+  },
+  { 
+    id: 'service_tracking', 
+    label: 'Service Tracking', 
+    checked: false, 
+    endpoint: 'service_tracking',
+    icon: Settings 
+  },
+  { 
+    id: 'compliance_report', 
+    label: 'Compliance Report', 
+    checked: false, 
+    endpoint: 'compliance_report',
     icon: Database 
   },
 ];
 
-interface InventoryAnalyticsSelectorProps {
+interface AMCAnalyticsSelectorProps {
   onSelectionChange?: (selectedOptions: string[]) => void;
   dateRange?: { startDate: Date | undefined; endDate: Date | undefined };
 }
 
-export function InventoryAnalyticsSelector({ onSelectionChange, dateRange }: InventoryAnalyticsSelectorProps) {
-  const [options, setOptions] = useState(inventoryAnalyticsOptions);
+export function AMCAnalyticsSelector({ onSelectionChange, dateRange }: AMCAnalyticsSelectorProps) {
+  const [options, setOptions] = useState(amcAnalyticsOptions);
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleOption = (id: string) => {
@@ -98,7 +98,7 @@ export function InventoryAnalyticsSelector({ onSelectionChange, dateRange }: Inv
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0 bg-white border border-gray-200 shadow-lg z-50" align="end">
         <div className="p-4 border-b border-gray-200">
-          <h4 className="font-semibold text-gray-900">Inventory Analytics Reports</h4>
+          <h4 className="font-semibold text-gray-900">AMC Analytics Reports</h4>
           <p className="text-sm text-gray-600 mt-1">Choose reports to display</p>
         </div>
         <div className="max-h-72 overflow-y-auto">
