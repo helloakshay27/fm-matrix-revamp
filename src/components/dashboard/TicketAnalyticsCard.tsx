@@ -160,10 +160,17 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({ title,
       case 'response_tat':
       case 'resolution_tat':
         if (data && typeof data === 'object') {
-          const tatData = Object.entries(data).map(([key, value]) => ({
-            category: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            time: value as number
-          }));
+          // Filter out non-numeric values and extract only valid TAT data
+          const tatData = Object.entries(data)
+            .filter(([key, value]) => typeof value === 'number')
+            .map(([key, value]) => ({
+              category: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+              time: value as number
+            }));
+
+          if (tatData.length === 0) {
+            return <div className="text-center text-analytics-muted py-8">No TAT data available</div>;
+          }
 
           return (
             <div className="space-y-4">
