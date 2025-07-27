@@ -314,8 +314,8 @@ export const ScheduledTaskDashboard = () => {
     const loadCalendarEvents = async () => {
       try {
         const events = await calendarService.fetchCalendarEvents({
-          'q[start_date_gteq]': dateFrom,
-          'q[start_date_lteq]': dateTo
+          start_date: dateFrom,
+          end_date: dateTo
         });
         setCalendarEvents(events);
       } catch (error) {
@@ -508,17 +508,17 @@ export const ScheduledTaskDashboard = () => {
                   key={index} 
                   className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer transition-all duration-200 ${
                     selectedStatus === card.status 
-                      ? 'bg-[#C72030] text-white' 
+                      ? 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
                       : 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
                   }`}
                   onClick={() => handleStatusCardClick(card.status)}
                 >
                   <div className={`w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 ${
-                    selectedStatus === card.status ? 'bg-white/20' : 'bg-[#C4B89D54]'
+                    selectedStatus === card.status ? 'bg-[#C4B89D54]' : 'bg-[#C4B89D54]'
                   }`}>
                     <card.icon 
                       className="w-4 h-4 sm:w-6 sm:h-6" 
-                      style={{ color: selectedStatus === card.status ? 'white' : '#C72030' }} 
+                      style={{ color: selectedStatus === card.status ?  '#C72030': '#C72030' }} 
                     />
                   </div>
                   <div className="flex flex-col min-w-0">
@@ -526,7 +526,7 @@ export const ScheduledTaskDashboard = () => {
                       {getStatusCount(card.status)}
                     </div>
                     <div className={`text-xs sm:text-sm font-medium leading-tight ${
-                      selectedStatus === card.status ? 'text-white/90' : 'text-muted-foreground'
+                      selectedStatus === card.status ? 'text-muted-foreground': 'text-muted-foreground'
                     }`}>
                       {card.title}
                     </div>
@@ -722,28 +722,8 @@ export const ScheduledTaskDashboard = () => {
               setDateFrom(start);
               setDateTo(end);
             }}
-            onFiltersChange={async (filters) => {
+            onFiltersChange={(filters) => {
               console.log('Filters changed:', filters);
-              // Fetch calendar events with new filters
-              try {
-                const apiParams: any = {
-                  'q[start_date_gteq]': filters.dateFrom,
-                  'q[start_date_lteq]': filters.dateTo
-                };
-                
-                if (filters.formName) {
-                  apiParams['q[custom_form_form_name_cont]'] = filters.formName;
-                }
-                
-                if (filters.scheduleType) {
-                  apiParams['q[custom_form_schedule_type_eq]'] = filters.scheduleType;
-                }
-                
-                const events = await calendarService.fetchCalendarEvents(apiParams);
-                setCalendarEvents(events);
-              } catch (error) {
-                console.error('Failed to load filtered calendar events:', error);
-              }
             }}
           />
         </TabsContent>
