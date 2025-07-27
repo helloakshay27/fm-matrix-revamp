@@ -244,6 +244,7 @@ export const RestaurantOrderDetailPage = () => {
               <h3 className="text-lg font-semibold mb-4">Delivery Address:</h3>
               <div className="space-y-2">
                 <div className="font-medium">{order.delivery_address.name}</div>
+                <div className="text-gray-600">{order.delivery_address.facility_name}</div>
                 <div className="text-gray-600">{order.delivery_address.site_name}</div>
                 <div className="text-gray-600">{order.delivery_address.phone}</div>
               </div>
