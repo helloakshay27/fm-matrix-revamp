@@ -15,7 +15,7 @@ interface CalendarFilterModalProps {
 export interface CalendarFilters {
   dateFrom: string;
   dateTo: string;
-  type: string;
+  formName: string;
   scheduleType: string;
 }
 export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
@@ -26,7 +26,7 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   const [filters, setFilters] = useState<CalendarFilters>({
     dateFrom: '01/07/2025',
     dateTo: '31/07/2025',
-    type: '',
+    formName: '',
     scheduleType: ''
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +52,7 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
     const clearedFilters: CalendarFilters = {
       dateFrom: '01/07/2025',
       dateTo: '31/07/2025',
-      type: '',
+      formName: '',
       scheduleType: ''
     };
     setFilters(clearedFilters);
@@ -99,10 +99,10 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
             <h3 className="text-lg font-medium mb-4 text-gray-800">Filter Options</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Type</Label>
-                <Select value={filters.type} onValueChange={value => handleFilterChange('type', value)}>
+                <Label className="text-sm font-medium text-gray-700">Form Name</Label>
+                <Select value={filters.formName} onValueChange={value => handleFilterChange('formName', value)}>
                   <SelectTrigger className="h-10 bg-white border border-gray-300 hover:border-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue placeholder="Select Type" />
+                    <SelectValue placeholder="Select Form Name" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md z-50">
                     <SelectItem value="maintenance" className="hover:bg-gray-100 focus:bg-gray-100">Maintenance</SelectItem>
