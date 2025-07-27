@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { AddCommentModal } from './AddCommentModal';
 import { useNavigate } from 'react-router-dom';
 import { ticketAnalyticsAPI } from '@/services/ticketAnalyticsAPI';
+import { apiClient } from '@/utils/apiClient';
 export function RecentTicketsSidebar() {
   const [commentModal, setCommentModal] = useState<{
     isOpen: boolean;
@@ -50,16 +51,22 @@ export function RecentTicketsSidebar() {
       ticketId
     });
   };
-  const handleFlag = (ticketId: string) => {
-    setFlaggedTickets(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(ticketId)) {
-        newSet.delete(ticketId);
-      } else {
-        newSet.add(ticketId);
-      }
-      return newSet;
-    });
+  const handleFlag = async (ticketId: string) => {
+    try {
+      await apiClient.post(`/pms/admin/complaints/mark_as_flagged.json?ids=[${ticketId}]`);
+      
+      setFlaggedTickets(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(ticketId)) {
+          newSet.delete(ticketId);
+        } else {
+          newSet.add(ticketId);
+        }
+        return newSet;
+      });
+    } catch (error) {
+      console.error('Error flagging ticket:', error);
+    }
   };
   const handleViewDetails = (ticketId: string) => {
     navigate(`/maintenance/ticket-details/${ticketId}`);
