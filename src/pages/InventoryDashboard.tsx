@@ -6,6 +6,9 @@ import { fetchInventoryData } from "@/store/slices/inventorySlice";
 import axios from 'axios';
 import { Button } from "@/components/ui/button";
 import { DateFilterModal } from "@/components/DateFilterModal";
+import { InventoryAnalyticsFilterDialog } from "@/components/InventoryAnalyticsFilterDialog";
+import { InventoryAnalyticsCard } from "@/components/InventoryAnalyticsCard";
+import { inventoryAnalyticsAPI, ItemsStatusData, CategoryWiseData, InventoryAgingMatrix, LowStockData, HighValueData, ConsumableData, NonConsumableData, CriticalPriorityData, MaintenanceDueData } from "@/services/inventoryAnalyticsAPI";
 import {
   Upload,
   FileText,
@@ -180,19 +183,23 @@ export const InventoryDashboard = () => {
   ]);
   const [activeTab, setActiveTab] = useState<string>("list");
   const [showDateFilter, setShowDateFilter] = useState(false);
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date('2020-01-01'),
-    endDate: new Date('2025-01-01')
+  const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsDateRange, setAnalyticsDateRange] = useState({
+    startDate: '01/01/2023',
+    endDate: '31/12/2024'
   });
-  const [analyticsData, setAnalyticsData] = useState({
-    categoryData: [],
-    statusData: {
-      activeItems: 0,
-      inactiveItems: 0,
-      criticalItems: 0,
-      nonCriticalItems: 0
-    }
-  });
+  
+  // Analytics data states
+  const [itemsStatusData, setItemsStatusData] = useState<ItemsStatusData | null>(null);
+  const [categoryWiseData, setCategoryWiseData] = useState<CategoryWiseData[]>([]);
+  const [agingMatrixData, setAgingMatrixData] = useState<InventoryAgingMatrix | null>(null);
+  const [lowStockData, setLowStockData] = useState<LowStockData | null>(null);
+  const [highValueData, setHighValueData] = useState<HighValueData | null>(null);
+  const [consumableData, setConsumableData] = useState<ConsumableData | null>(null);
+  const [nonConsumableData, setNonConsumableData] = useState<NonConsumableData | null>(null);
+  const [criticalPriorityData, setCriticalPriorityData] = useState<CriticalPriorityData | null>(null);
+  const [maintenanceDueData, setMaintenanceDueData] = useState<MaintenanceDueData | null>(null);
 
   const pageSize = 15; // Use larger page size for API data
 
@@ -223,41 +230,61 @@ export const InventoryDashboard = () => {
   
 
 
-  // Aging matrix data - simulated based on groups and priorities
-  const agingMatrixData = [
-    {
-      priority: "P1",
-      "0-10": 20,
-      "11-20": 3,
-      "21-30": 4,
-      "31-40": 0,
-      "41-50": 203,
-    },
-    {
-      priority: "P2",
-      "0-10": 2,
-      "11-20": 0,
-      "21-30": 0,
-      "31-40": 0,
-      "41-50": 4,
-    },
-    {
-      priority: "P3",
-      "0-10": 1,
-      "11-20": 0,
-      "21-30": 1,
-      "31-40": 0,
-      "41-50": 7,
-    },
-    {
-      priority: "P4",
-      "0-10": 1,
-      "11-20": 0,
-      "21-30": 0,
-      "31-40": 0,
-      "41-50": 5,
-    },
-  ];
+  // Fetch analytics data from API
+  const fetchAnalyticsData = async (startDate: Date, endDate: Date) => {
+    setAnalyticsLoading(true);
+    try {
+      const [
+        statusData,
+        categoryData,
+        agingData,
+        lowStock,
+        highValue,
+        consumable,
+        nonConsumable,
+        criticalPriority,
+        maintenanceDue
+      ] = await Promise.all([
+        inventoryAnalyticsAPI.getItemsStatus(startDate, endDate),
+        inventoryAnalyticsAPI.getCategoryWise(startDate, endDate),
+        inventoryAnalyticsAPI.getAgingMatrix(startDate, endDate),
+        inventoryAnalyticsAPI.getLowStockItems(startDate, endDate),
+        inventoryAnalyticsAPI.getHighValueItems(startDate, endDate),
+        inventoryAnalyticsAPI.getConsumableItems(startDate, endDate),
+        inventoryAnalyticsAPI.getNonConsumableItems(startDate, endDate),
+        inventoryAnalyticsAPI.getCriticalPriorityItems(startDate, endDate),
+        inventoryAnalyticsAPI.getMaintenanceDueItems(startDate, endDate)
+      ]);
+      
+      setItemsStatusData(statusData);
+      setCategoryWiseData(categoryData);
+      setAgingMatrixData(agingData);
+      setLowStockData(lowStock);
+      setHighValueData(highValue);
+      setConsumableData(consumable);
+      setNonConsumableData(nonConsumable);
+      setCriticalPriorityData(criticalPriority);
+      setMaintenanceDueData(maintenanceDue);
+      
+      toast.success("Analytics data updated successfully");
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+      toast.error("Failed to fetch analytics data. Please try again.");
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  // Handle analytics filter apply
+  const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
+    setAnalyticsDateRange(filters);
+    
+    // Convert date strings to Date objects
+    const startDate = new Date(filters.startDate.split('/').reverse().join('-'));
+    const endDate = new Date(filters.endDate.split('/').reverse().join('-'));
+    
+    fetchAnalyticsData(startDate, endDate);
+  };
 
   // Recent inventory items for sidebar
   const recentItems = inventoryData.slice(0, 3).map((item, index) => ({
@@ -581,78 +608,19 @@ export const InventoryDashboard = () => {
     }
   };
 
-  const fetchAnalyticsData = async () => {
-    const baseUrl = localStorage.getItem('baseUrl');
-    const token = localStorage.getItem('token');
-    const siteId = localStorage.getItem('selectedSiteId');
+  // Chart data based on analytics API
+  const itemStatusData = itemsStatusData ? [
+    { name: "Active", value: itemsStatusData.active_items, fill: "#c6b692" },
+    { name: "Inactive", value: itemsStatusData.inactive_items, fill: "#d8dcdd" },
+  ] : [];
 
-    if (!baseUrl || !token || !siteId) {
-      toast.error('Missing base URL, token, or site ID');
-      return;
-    }
+  const criticalityData = itemsStatusData ? [
+    { name: "Critical", value: itemsStatusData.critical_items, fill: "#c6b692" },
+    { name: "Non-Critical", value: itemsStatusData.non_critical_items, fill: "#d8dcdd" },
+  ] : [];
 
-    try {
-      const fromDate = dateRange.startDate.toISOString().split('T')[0];
-      const toDate = dateRange.endDate.toISOString().split('T')[0];
-
-      // Fetch category wise items
-      const categoryResponse = await axios.get(
-        `https://${baseUrl}/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      // Fetch items status
-      const statusResponse = await axios.get(
-        `https://${baseUrl}/pms/inventories/items_status.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      setAnalyticsData({
-        categoryData: categoryResponse.data.category_counts || [],
-        statusData: {
-          activeItems: statusResponse.data.count_of_active_items || 0,
-          inactiveItems: statusResponse.data.count_of_inactive_items || 0,
-          criticalItems: statusResponse.data.count_of_critical_items || 0,
-          nonCriticalItems: statusResponse.data.count_of_non_critical_items || 0
-        }
-      });
-    } catch (error) {
-      console.error('Failed to fetch analytics data:', error);
-      toast.error('Failed to fetch analytics data');
-    }
-  };
-
-  useEffect(() => {
-    fetchAnalyticsData();
-  }, [dateRange]);
-
-  const handleDateFilter = (dates: { startDate: Date | undefined; endDate: Date | undefined }) => {
-    if (dates.startDate && dates.endDate) {
-      setDateRange({
-        startDate: dates.startDate,
-        endDate: dates.endDate
-      });
-    }
-  };
-
-  // Update the analytics section to use dynamic data
-  const itemStatusData = [
-    { name: "Active", value: analyticsData.statusData.activeItems, fill: "#c6b692" },
-    { name: "Inactive", value: analyticsData.statusData.inactiveItems, fill: "#d8dcdd" },
-  ];
-
-  const criticalityData = [
-    { name: "Critical", value: analyticsData.statusData.criticalItems, fill: "#c6b692" },
-    { name: "Non-Critical", value: analyticsData.statusData.nonCriticalItems, fill: "#d8dcdd" },
-  ];
-
-  // Group data from API
-  const groupChartData = analyticsData.categoryData.map(({ group_name, item_count }) => ({
-    name: group_name,
+  const groupChartData = categoryWiseData.map(({ category_name, item_count }) => ({
+    name: category_name,
     value: item_count
   }));
 
@@ -699,7 +667,7 @@ export const InventoryDashboard = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
             <Button 
               variant="outline" 
-              onClick={() => setShowDateFilter(true)}
+              onClick={() => setIsAnalyticsFilterOpen(true)}
               className="mb-2 sm:mb-0"
             >
               Filter by Date
@@ -1088,7 +1056,7 @@ export const InventoryDashboard = () => {
                                           </tr>
                                         </thead>
                                         <tbody>
-                                          {agingMatrixData.map((row, index) => (
+                                          {agingMatrixData?.categories?.map((row, index) => (
                                             <tr
                                               key={index}
                                               className="bg-white"
