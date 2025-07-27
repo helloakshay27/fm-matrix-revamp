@@ -105,9 +105,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
         <Button variant="outline" size="sm" onClick={() => onNavigate('NEXT')} className="h-8 w-8 p-0">
           <ChevronRight className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm" onClick={() => onNavigate('TODAY')} className="px-3 py-1 h-8">
-          today
-        </Button>
+      
       </div>
       
       <h2 className="text-xl font-semibold">{label}</h2>
@@ -123,11 +121,9 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
           52-week
         </Button>
         <Button variant={view === 'day' ? 'default' : 'outline'} size="sm" onClick={() => onView('day')} className="px-3 py-1 h-8">
-          day
+          Today
         </Button>
-        <Button variant={view === 'year' ? 'default' : 'outline'} size="sm" onClick={() => onView('year')} className="px-3 py-1 h-8">
-          year
-        </Button>
+       
         <Button variant={view === 'agenda' ? 'default' : 'outline'} size="sm" onClick={() => onView('agenda')} className="px-3 py-1 h-8">
           list
         </Button>
