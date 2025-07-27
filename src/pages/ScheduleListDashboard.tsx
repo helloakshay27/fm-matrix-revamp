@@ -185,9 +185,10 @@ export const ScheduleListDashboard = () => {
       const newActiveStatus = !currentSchedule.active;
 
       // Make PUT API call to update the active status with .json extension
-      const response = await apiClient.put(`${ENDPOINTS.UPDATE_CUSTOM_FORM}/${scheduleId}.json`, {
+      const response = await apiClient.put(`${ENDPOINTS.UPDATE_CUSTOM_FORM}/${scheduleId}.json`, 
+      {  pms_custom_form:{
         active: newActiveStatus ? 1 : 0
-      });
+      }});
 
       console.log('Schedule active status updated:', response.data);
       toast.success(`Schedule ${newActiveStatus ? 'activated' : 'deactivated'} successfully.`, {
@@ -220,53 +221,16 @@ export const ScheduleListDashboard = () => {
     // Get the form_code from the original custom forms data
     const customForm = customFormsData?.custom_forms.find(form => form.id.toString() === item.id);
     const formCode = customForm?.custom_form_code;
-    navigate(`/maintenance/schedule/view/${item.id}`, { 
-      state: { formCode } 
-    });
+    navigate(`/maintenance/schedule/view/${item.id}`);
   };
 
-  const handleActionClick = () => {
-    setShowActionPanel(true);
-  };
-  
-  // Selection actions for the action panel
-  const selectionActions = [
-    // {
-    //   label: 'Filter',
-    //   icon: Filter,
-    //   onClick: () => setShowFilterDialog(true),
-    //   variant: 'outline' as const,
-    // },
-    // {
-    //   label: 'Export',
-    //   icon: Download,
-    //   onClick: handleExport,
-    //   variant: 'outline' as const,
-    // },
-  ];
   const columns = [{
-    key: 'actions',
-    label: 'Actions',
-    sortable: false
-  }, {
-    key: 'id',
-    label: 'ID',
-    sortable: true
-  }, {
-    key: 'activityName',
-    label: 'Activity Name',
+    key: 'formName',
+    label: 'Schedule Name',
     sortable: true
   }, {
     key: 'type',
     label: 'Type',
-    sortable: true
-  }, {
-    key: 'scheduleType',
-    label: 'Schedule Type',
-    sortable: true
-  }, {
-    key: 'noOfAssociation',
-    label: 'No. Of Association',
     sortable: true
   }, {
     key: 'validFrom',
@@ -289,6 +253,10 @@ export const ScheduleListDashboard = () => {
     label: 'Created On',
     sortable: true
   }];
+  const handleActionClick = () => {
+    setShowActionPanel((prev) => !prev);
+  };
+
   const renderCustomActions = () => (
     <div className="flex flex-wrap gap-2 sm:gap-3">
       <Button 
@@ -593,6 +561,30 @@ export const ScheduleListDashboard = () => {
         </div>
       </div>
     </div>;
+  // Define selectionActions for SelectionPanel
+  const selectionActions = [
+    {
+      label: 'Add Schedule',
+      onClick: handleAddSchedule,
+      icon: Plus
+    },
+    {
+      label: 'Import',
+      onClick: () => setShowImportModal(true),
+      icon: Upload
+    },
+    {
+      label: 'Download Sample Format',
+      onClick: handleDownloadSampleFormat,
+      icon: Download
+    },
+    {
+      label: 'Export',
+      onClick: handleExport,
+      icon: Download
+    }
+  ];
+
   const renderListTab = () => (
     <div className="space-y-4">
       {showActionPanel && (

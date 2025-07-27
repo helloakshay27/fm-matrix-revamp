@@ -980,8 +980,8 @@ export const TicketDetailsPage = () => {
                   <TableRow key={index}>
                     <TableCell className="font-medium">{request.id || `REQ-${index + 1}`}</TableCell>
                     <TableCell>{request.amount || 'Not Provided'}</TableCell>
-                    <TableCell>{request.comment || 'No comments'}</TableCell>
-                    <TableCell>{request.created_on || 'Not Provided'}</TableCell>
+                    <TableCell>{request.comments || 'No comments'}</TableCell>
+                    <TableCell>{request.created_at || 'Not Provided'}</TableCell>
                     <TableCell>{request.created_by || 'Not Provided'}</TableCell>
                     <TableCell>
                       <Badge className="bg-yellow-100 text-yellow-700">

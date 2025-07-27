@@ -25,7 +25,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   const [activeFilters, setActiveFilters] = useState<CalendarFilters>({
     dateFrom: '01/07/2025',
     dateTo: '31/07/2025',
-    formName: '',
+    type: '',
     scheduleType: ''
   });
 
@@ -48,7 +48,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   const handleViewChange = (newView: any) => {
     setView(newView);
   };
-  const handleApplyFilters = async (filters: CalendarFilters) => {
+  const handleApplyFilters = (filters: CalendarFilters) => {
     setActiveFilters(filters);
     if (onDateRangeChange) {
       onDateRangeChange(filters.dateFrom, filters.dateTo);

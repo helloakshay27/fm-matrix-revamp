@@ -123,10 +123,6 @@ export const API_CONFIG = {
     // Recent assets endpoint
     RECENT_ASSETS: '/pms/assets/recent_assets.json',
     UPDATE_TICKET: '/complaint_logs.json',
-    BULK_ASSIGN_TICKETS: '/pms/admin/complaints/bulk_assign_tickets.json',
-    BULK_UPDATE_STATUS: '/pms/admin/complaints/bulk_update_status.json',
-    COST_APPROVALS_CREATE: '/pms/create_muliple_cost_Approvals.json',
-   
   },
 } as const
 

@@ -58,7 +58,11 @@ import { AddIncidentPage } from './pages/AddIncidentPage';
 import { IncidentDetailsPage } from './pages/IncidentDetailsPage';
 import { EditIncidentDetailsPage } from './pages/EditIncidentDetailsPage';
 
-
+// Import new dashboard pages
+import { IncidentDashboard } from './pages/IncidentDashboard';
+import { PermitToWorkDashboard } from './pages/PermitToWorkDashboard';
+import { LeadDashboard } from './pages/LeadDashboard';
+import { EnergyDashboard } from './pages/EnergyDashboard';
 
 // Import Inventory pages
 import { InventoryDashboard } from './pages/InventoryDashboard';
@@ -109,15 +113,6 @@ import { VisitorsDashboard } from './pages/VisitorsDashboard';
 import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
 import { PatrollingDashboard } from './pages/PatrollingDashboard';
 import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
-
-// Import new dashboard pages
-import { IncidentDashboard } from './pages/IncidentDashboard';
-import { PermitToWorkDashboard } from './pages/PermitToWorkDashboard';
-import { LeadDashboard } from './pages/LeadDashboard';
-import { EnergyDashboard } from './pages/EnergyDashboard';
-
-// Import Main Analytics Dashboard
-import { Dashboard } from './pages/Dashboard';
 
 // Import Staff pages
 import { StaffsDashboard } from './pages/StaffsDashboard';
@@ -522,7 +517,6 @@ function App() {
 
               <Route path="/" element={<ProtectedRoute><Layout><div /></Layout></ProtectedRoute>}>
                 <Route index element={<Index />} />
-                <Route path="dashboard" element={<Dashboard />} />
 
                 {/* Rule Engine Routes */}
                 <Route path="/rule-engine/rule-list" element={<RuleListPage />} />

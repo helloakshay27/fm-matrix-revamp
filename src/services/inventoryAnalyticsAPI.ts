@@ -199,7 +199,7 @@ const getCurrentSiteId = (): string => {
 };
 
 const getAccessToken = (): string => {
-  return localStorage.getItem('token');
+  return localStorage.getItem('access_token') || 'WzsvAV9ZPDWxXK-e0sJK0Sda6HDnQ1aTLaYnjXuWthU';
 };
 
 // Inventory Analytics API
@@ -319,13 +319,9 @@ export const inventoryAnalyticsAPI = {
   // Get inventory aging matrix
   async getAgingMatrix(fromDate: Date, toDate: Date): Promise<InventoryAgingMatrix> {
     const siteId = getCurrentSiteId();
-    const fromDateStr = formatDateForAPI(fromDate);
-    const toDateStr = formatDateForAPI(toDate);
-    const accessToken = getAccessToken();
-    
-    const url = `https://fm-uat-api.lockated.com/pms/inventories/aging_matrix.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
-    
-    const response = await fetch(url);
+    const response = await fetch(
+      `/analytics/inventory/aging_matrix.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
+    );
     if (!response.ok) throw new Error('Failed to fetch aging matrix data');
     return response.json();
   },
@@ -333,13 +329,9 @@ export const inventoryAnalyticsAPI = {
   // Get low stock items
   async getLowStockItems(fromDate: Date, toDate: Date): Promise<LowStockData> {
     const siteId = getCurrentSiteId();
-    const fromDateStr = formatDateForAPI(fromDate);
-    const toDateStr = formatDateForAPI(toDate);
-    const accessToken = getAccessToken();
-    
-    const url = `https://fm-uat-api.lockated.com/pms/inventories/low_stock_items.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
-    
-    const response = await fetch(url);
+    const response = await fetch(
+      `/analytics/inventory/low_stock_items.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
+    );
     if (!response.ok) throw new Error('Failed to fetch low stock items data');
     return response.json();
   },

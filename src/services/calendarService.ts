@@ -31,10 +31,10 @@ export interface CalendarResponse {
 export const calendarService = {
   // Fetch calendar events
   async fetchCalendarEvents(params?: {
-    'q[start_date_gteq]'?: string;
-    'q[start_date_lteq]'?: string;
-    'q[custom_form_form_name_cont]'?: string;
-    'q[custom_form_schedule_type_eq]'?: string;
+    start_date?: string;
+    end_date?: string;
+    amc?: string;
+    service?: string;
   }): Promise<CalendarEvent[]> {
     try {
       const response = await apiClient.get<CalendarResponse>('/pms/users/tasks_calender.json', {

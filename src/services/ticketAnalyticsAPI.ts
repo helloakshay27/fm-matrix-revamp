@@ -198,17 +198,10 @@ export const ticketAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `https://fm-uat-api.lockated.com/pms/admin/complaints/tickets_categorywise_proactive_reactive.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/admin/complaints/tickets_categorywise_proactive_reactive.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) throw new Error('Failed to fetch categorywise data');
-    const data = await response.json();
-    return data.tickets || [];
+    const response = await apiClient.get(url);
+    return response.data.tickets || [];
   },
 
   // Get ticket status data
@@ -217,16 +210,10 @@ export const ticketAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `https://fm-uat-api.lockated.com/pms/admin/complaints/ticket_status.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/admin/complaints/ticket_status.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) throw new Error('Failed to fetch ticket status data');
-    return response.json();
+    const response = await apiClient.get(url);
+    return response.data;
   },
 
   // Get ticket aging matrix data
@@ -235,30 +222,18 @@ export const ticketAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `https://fm-uat-api.lockated.com/pms/admin/complaints/ticket_ageing_matrix.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/admin/complaints/ticket_ageing_matrix.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) throw new Error('Failed to fetch aging matrix data');
-    return response.json();
+    const response = await apiClient.get(url);
+    return response.data;
   },
 
   // Get recent tickets
   async getRecentTickets(): Promise<RecentTicketsResponse> {
-    const url = `https://fm-uat-api.lockated.com/pms/admin/complaints/recent_tickets`;
+    const url = `/pms/admin/complaints/recent_tickets`;
     
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) throw new Error('Failed to fetch recent tickets');
-    return response.json();
+    const response = await apiClient.get(url);
+    return response.data;
   },
 
   // Get unit categorywise data
@@ -267,16 +242,10 @@ export const ticketAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `https://fm-uat-api.lockated.com/pms/admin/complaints/chart_unit_categorywise.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/admin/complaints/chart_unit_categorywise.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) throw new Error('Failed to fetch unit categorywise data');
-    return response.json();
+    const response = await apiClient.get(url);
+    return response.data;
   },
 
   // Get response TAT data
@@ -285,16 +254,10 @@ export const ticketAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `https://fm-uat-api.lockated.com/pms/admin/complaints/chart_response_tat.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/admin/complaints/chart_response_tat.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) throw new Error('Failed to fetch response TAT data');
-    return response.json();
+    const response = await apiClient.get(url);
+    return response.data;
   },
 
   // Get resolution TAT report data
@@ -303,15 +266,9 @@ export const ticketAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     
-    const url = `https://fm-uat-api.lockated.com/pms/admin/complaints/chart_resolution_tat_report.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    const url = `/pms/admin/complaints/chart_resolution_tat_report.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
     
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) throw new Error('Failed to fetch resolution TAT data');
-    return response.json();
+    const response = await apiClient.get(url);
+    return response.data;
   }
 };

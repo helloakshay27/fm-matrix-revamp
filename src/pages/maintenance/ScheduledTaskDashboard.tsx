@@ -277,8 +277,8 @@ export const ScheduledTaskDashboard = () => {
     const loadCalendarEvents = async () => {
       try {
         const events = await calendarService.fetchCalendarEvents({
-          'q[start_date_gteq]': dateFrom,
-          'q[start_date_lteq]': dateTo
+          start_date: dateFrom,
+          end_date: dateTo
         });
         setCalendarEvents(events);
       } catch (error) {
@@ -642,28 +642,8 @@ export const ScheduledTaskDashboard = () => {
               setDateFrom(start);
               setDateTo(end);
             }}
-            onFiltersChange={async (filters) => {
+            onFiltersChange={(filters) => {
               console.log('Filters changed:', filters);
-              // Fetch calendar events with new filters
-              try {
-                const apiParams: any = {
-                  'q[start_date_gteq]': filters.dateFrom,
-                  'q[start_date_lteq]': filters.dateTo
-                };
-                
-                if (filters.formName) {
-                  apiParams['q[custom_form_form_name_cont]'] = filters.formName;
-                }
-                
-                if (filters.scheduleType) {
-                  apiParams['q[custom_form_schedule_type_eq]'] = filters.scheduleType;
-                }
-                
-                const events = await calendarService.fetchCalendarEvents(apiParams);
-                setCalendarEvents(events);
-              } catch (error) {
-                console.error('Failed to load filtered calendar events:', error);
-              }
             }}
           />
         </TabsContent>
