@@ -17,11 +17,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { StatusBadge } from '@/components/StatusBadge';
 
 interface Asset{
   area: string|null;
   assetGroup:string;
   assetNumber:string;
+  asset_code?: string;
   assetSubGroup:string;
   assetType:string|null;
   building: string|null;
@@ -33,6 +35,10 @@ interface Asset{
   status:string;
   wing:string|null;
   purchase_cost?: string | number;
+  current_book_value?: string | number;
+ commisioning_date?: string;
+  asset_number?: string;
+  site_name?: string;
 }
 
 interface DisposalAssetTableProps {
@@ -78,9 +84,15 @@ export const DisposalAssetTable: React.FC<DisposalAssetTableProps> = ({
             <TableRow key={index}>
               <TableCell className="font-medium">{typeof asset.name === 'string' ? asset.name : ''}</TableCell>
               <TableCell>{typeof asset.assetNumber === 'string' || typeof asset.assetNumber === 'number' ? asset.assetNumber : ''}</TableCell>
-              <TableCell>{typeof asset.status === 'string' ? asset.status : ''}</TableCell>
+              <TableCell>
+                <StatusBadge 
+                  status={asset.status || ''} 
+                  assetId={asset.id}
+                />
+              </TableCell>
               <TableCell>{typeof asset.siteName === 'string' ? asset.siteName : ''}</TableCell>
               <TableCell>{typeof asset.purchase_cost === 'string' || typeof asset.purchase_cost === 'number' ? asset.purchase_cost : 'NA'}</TableCell>
+              <TableCell>{asset.current_book_value }</TableCell>
               <TableCell>
                 <TextField
                   size="small"

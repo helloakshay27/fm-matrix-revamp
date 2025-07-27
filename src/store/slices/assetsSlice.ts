@@ -17,6 +17,8 @@ export interface Asset {
   area?: { id: number; name: string }
   pms_room?: { id: number; name: string } | null
   asset_type?: boolean
+  asset_group?: string; // Ensure this is included
+  asset_sub_group?: string;
   // Add other asset properties as needed
 }
 

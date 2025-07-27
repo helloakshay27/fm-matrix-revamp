@@ -95,7 +95,21 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         throw new Error('Failed to update asset status');
       }
 
-      setCurrentStatus(newStatus);
+      // Fetch the updated asset data
+      const updatedAssetResponse = await fetch(`${API_CONFIG.BASE_URL}/pms/assets/${assetId}.json`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader(),
+        },
+      });
+
+      if (updatedAssetResponse.ok) {
+        const updatedAssetData = await updatedAssetResponse.json();
+        setCurrentStatus(updatedAssetData.status || newStatus);
+      } else {
+        setCurrentStatus(newStatus);
+      }
       
       // Call the callback to refresh table data
       if (onStatusUpdate) {

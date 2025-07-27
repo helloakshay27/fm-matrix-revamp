@@ -127,7 +127,7 @@ export const RecentAssetsSidebar = () => {
                 <Hash className="w-4 h-4" style={{ color: '#C72030' }} />
                 <span className="font-medium text-sm">{asset.assetNo}</span>
               </div>
-              <Star className="w-4 h-4 text-gray-400 hover:text-yellow-500 cursor-pointer" />
+              
             </div>
 
             {/* Asset Name */}
@@ -148,35 +148,12 @@ export const RecentAssetsSidebar = () => {
                 </span>
               </div>
               
-              <div className="flex items-center gap-2">
-                <Timer className="w-4 h-4" style={{ color: '#C72030' }} />
-                <span className="text-sm font-medium">TAT Status:</span>
-                <span className={`text-xs font-medium ${getTatColor(asset.tatStatus)}`}>
-                  {asset.tatStatus}
-                </span>
-              </div>
+              
             </div>
 
             {/* Action Buttons */}
             <div className="flex items-center justify-between">
-              <div className="flex gap-3">
-                <button
-                  className="text-sm text-gray-700 hover:text-gray-900 font-medium"
-                  onClick={() => handleAddComment(asset.id)}
-                >
-                  Add Comment
-                </button>
-                <button
-                  className={`text-sm font-medium ${
-                    flaggedAssets.has(asset.id) 
-                      ? 'text-red-600' 
-                      : 'text-gray-700 hover:text-gray-900'
-                  }`}
-                  onClick={() => handleFlag(asset.id)}
-                >
-                  Flag Issue
-                </button>
-              </div>
+              
               
               <button
                 className="text-sm text-blue-600 hover:text-blue-800 font-medium underline"

@@ -150,7 +150,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                     <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
                       <FileText className="w-4 h-4 "style={{ color: "#C72030" }} />
                     </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A">Logs</h3>
+                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A">AMC History</h3>
                   </div>
 
                   <Table>

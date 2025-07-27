@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { AssetTableDisplay } from '@/components/AssetTableDisplay';
 import { MovementToSection } from '@/components/MovementToSection';
 import { AllocateToSection } from '@/components/AllocateToSection';
+import { useToast } from '@/hooks/use-toast';
 export const MoveAssetPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const selectedAssets = location.state?.selectedAssets || [];
   const [allocateTo, setAllocateTo] = useState('department');
   const [siteId, setSiteId] = useState<number | null>(null);
@@ -20,8 +22,41 @@ export const MoveAssetPage: React.FC = () => {
   const [attachment, setAttachment] = useState<File | null>(null);
   const [comments, setComments] = useState('');
   const handleSubmit = async () => {
+    // Validation for required fields
     if (!selectedAssets.length) {
-      alert('No assets selected');
+      toast({
+        title: "Validation Error",
+        description: "No assets selected for movement.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!siteId) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a site.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!buildingId) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a building.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Optional validation for allocation
+    if (allocateTo && !allocatedToId) {
+      toast({
+        title: "Validation Error",
+        description: `Please select a ${allocateTo} for allocation.`,
+        variant: "destructive",
+      });
       return;
     }
 
@@ -52,14 +87,26 @@ export const MoveAssetPage: React.FC = () => {
       });
 
       if (response.ok) {
-        alert('Assets moved successfully!');
+        toast({
+          title: "Asset Movement Successful",
+          description: "Assets moved successfully!",
+          variant: "default",
+        });
         navigate('/maintenance/asset');
       } else {
-        alert('Failed to move assets. Please try again.');
+        toast({
+          title: "Asset Movement Failed",
+          description: "Failed to move assets. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Error moving assets:', error);
-      alert('An error occurred. Please try again.');
+      toast({
+        title: "Asset Movement Error",
+        description: "An error occurred. Please try again.",
+        variant: "destructive",
+      });
     }
   };
   const handleBack = () => {
