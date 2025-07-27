@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { X, User, Edit, Download, QrCode, Loader2, HandCoins } from 'lucide-react';
 import { CostApprovalModal } from './CostApprovalModal';
-import { getFullUrl, getAuthHeader, ENDPOINTS } from '@/config/apiConfig';
+import { getFullUrl, getAuthHeader, ENDPOINTS, BASE_URL, TOKEN } from '@/config/apiConfig';
 import { useToast } from '@/hooks/use-toast';
 
 interface TicketSelectionPanelProps {
@@ -47,6 +47,8 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
 
   const handleExport = async () => {
     console.log('TicketSelectionPanel - Export clicked for tickets:', selectedTickets);
+    console.log('📥 Using BASE_URL from API config:', BASE_URL);
+    console.log('📥 Using TOKEN from API config:', TOKEN ? 'Present' : 'Missing');
     
     if (selectedTickets.length === 0) {
       toast({
@@ -62,28 +64,47 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
     try {
       // Create the ticket IDs string for the API (comma-separated without brackets)
       const ticketIds = selectedTickets.join(',');
-      console.log(' Exporting tickets with IDs:', ticketIds);
+      console.log('📥 Exporting tickets with IDs:', ticketIds);
+      console.log('📥 Selected ticket count:', selectedTickets.length);
+      console.log('📥 Selected ticket objects:', selectedTicketObjects);
       
-      // Build the export URL with selected ticket IDs using the correct format
+      // Build the export URL with selected ticket IDs using BASE_URL from API config
       const exportEndpoint = `${ENDPOINTS.TICKETS_EXPORT_EXCEL}?q[id_in]=${ticketIds}`;
-      const exportUrl = getFullUrl(exportEndpoint);
+      const exportUrl = `${BASE_URL}${exportEndpoint}`;
       
-      console.log('Export URL:', exportUrl);
+      console.log('📥 Export endpoint:', exportEndpoint);
+      console.log('📥 Full export URL:', exportUrl);
+      console.log('📥 Auth header:', `Bearer ${TOKEN ? TOKEN.substring(0, 20) + '...' : 'Missing'}`);
 
-      // Make the API call to get the Excel file
+      // Make the API call to get the Excel file using centralized config
       const response = await fetch(exportUrl, {
         method: 'GET',
         headers: {
-          'Authorization': getAuthHeader(),
+          'Authorization': `Bearer ${TOKEN}`,
+          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         },
       });
 
+      console.log('📥 Export response status:', response.status);
+      console.log('📥 Export response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('❌ Export API error response:', errorText);
+        throw new Error(`Export failed: ${response.status} ${response.statusText} - ${errorText}`);
       }
+
+      // Check if the response is actually an Excel file
+      const contentType = response.headers.get('content-type');
+      console.log('📥 Response content type:', contentType);
 
       // Get the file blob
       const blob = await response.blob();
+      console.log('📥 Blob size:', blob.size, 'bytes');
+      
+      if (blob.size === 0) {
+        throw new Error('Received empty file from server');
+      }
       
       // Create download link
       const downloadUrl = window.URL.createObjectURL(blob);
@@ -91,8 +112,11 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
       link.href = downloadUrl;
       
       // Generate filename with timestamp
-      const timestamp = new Date().toISOString().slice(0, 10);
-      link.download = `selected_tickets_${selectedTickets.length}_${timestamp}.xlsx`;
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const filename = `selected_tickets_${selectedTickets.length}_${timestamp}.xlsx`;
+      link.download = filename;
+      
+      console.log('📥 Downloading file:', filename);
       
       // Trigger download
       document.body.appendChild(link);
@@ -102,17 +126,18 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
       // Clean up the blob URL
       window.URL.revokeObjectURL(downloadUrl);
       
-      console.log('Export completed successfully');
+      console.log('✅ Export completed successfully');
       toast({
         title: "Export Successful",
-        description: `Successfully exported ${selectedTickets.length} ticket(s).`
+        description: `Successfully exported ${selectedTickets.length} ticket(s) to ${filename}`
       });
       
     } catch (error) {
-      console.error('Export failed:', error);
+      console.error('❌ Export failed:', error);
+      console.error('❌ Error stack:', error.stack);
       toast({
         title: "Export Failed",
-        description: `Failed to export tickets: ${error.message || 'Unknown error'}`,
+        description: `Failed to export ${selectedTickets.length} ticket(s): ${error.message || 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
