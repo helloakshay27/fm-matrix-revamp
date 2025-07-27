@@ -11,14 +11,11 @@ export interface ItemsStatusData {
 }
 
 export interface CategoryWiseData {
-  info_active_items: string;
-  count_of_active_items: number;
-  info_inactive_items: string;
-  count_of_inactive_items: number;
-  info_critical_items: string;
-  count_of_critical_items: number;
-  info_non_critical_items: string;
-  count_of_non_critical_items: number;
+  info: string;
+  category_counts: Array<{
+    group_name: string;
+    item_count: number;
+  }>;
 }
 
 export interface GreenConsumptionData {

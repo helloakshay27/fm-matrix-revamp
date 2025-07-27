@@ -624,7 +624,8 @@ export const InventoryDashboard = () => {
       }
       
       if (selectedAnalyticsOptions.includes('category_wise')) {
-        results.categoryData = await inventoryAnalyticsAPI.getCategoryWise(fromDate, toDate);
+        const categoryResponse = await inventoryAnalyticsAPI.getCategoryWise(fromDate, toDate);
+        results.categoryData = categoryResponse.category_counts || [];
       }
       
       if (selectedAnalyticsOptions.includes('green_consumption')) {
@@ -681,10 +682,12 @@ export const InventoryDashboard = () => {
   ];
 
   // Group data from API - with safety check
-  const groupChartData = analyticsData.categoryData?.map(({ group_name, item_count }) => ({
-    name: group_name,
-    value: item_count
-  })) || [];
+  const groupChartData = (analyticsData.categoryData && Array.isArray(analyticsData.categoryData)) 
+    ? analyticsData.categoryData.map(({ group_name, item_count }) => ({
+        name: group_name,
+        value: item_count
+      })) 
+    : [];
 
   return (
     <div className="p-2 sm:p-4 lg:p-6">
