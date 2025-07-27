@@ -244,7 +244,7 @@ export const InventoryDashboard = () => {
   // Use Redux pagination data or calculate from current data
   const totalPages =
     reduxTotalPages || Math.ceil(inventoryData.length / pageSize);
-  const startIndex = 0; // API handles pagination, so start from 0
+  const startIndex = 0; 
   const paginatedData = inventoryData.slice(startIndex, pageSize); // Show current page data
 
   // Analytics calculations
@@ -696,6 +696,17 @@ export const InventoryDashboard = () => {
       })) 
     : [];
 
+
+    const resetFilters = () => {
+      setDateRange({
+        startDate: new Date('2020-01-01'), // Reset to default or broad range
+        endDate: new Date('2025-01-01'),
+      });
+      setSelectedItems([]); // Clear selected items
+      setShowFilter(false); // Close filter dialog if open
+      setShowDateFilter(false); // Close date filter modal if open
+    };
+
   return (
     <div className="p-2 sm:p-4 lg:p-6">
       <Tabs
@@ -794,7 +805,6 @@ export const InventoryDashboard = () => {
             </div>
           )}
         </TabsContent>
-     \
         <TabsContent value="list" className="space-y-4 sm:space-y-6">
           {/* Error handling */}
           {error && (

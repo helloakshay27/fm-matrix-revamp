@@ -199,7 +199,7 @@ const getCurrentSiteId = (): string => {
 };
 
 const getAccessToken = (): string => {
-  return localStorage.getItem('access_token') || 'WzsvAV9ZPDWxXK-e0sJK0Sda6HDnQ1aTLaYnjXuWthU';
+  return localStorage.getItem('token');
 };
 
 // Inventory Analytics API
