@@ -11,7 +11,7 @@ import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import { AsyncSearchableDropdown } from '@/components/AsyncSearchableDropdown';
 import { userService, User } from '@/services/userService';
-import { assetService } from '@/services/assetService';
+import { taskServiceFilter } from '@/services/taskServiceFilter';
 
 interface TaskFilterDialogProps {
   isOpen: boolean;
@@ -20,6 +20,8 @@ interface TaskFilterDialogProps {
   showAll?: boolean;
   onShowAllChange?: (showAll: boolean) => void;
 }
+
+
 
 export interface TaskFilters {
   taskId?: string;
@@ -81,8 +83,8 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
       try {
         const [fetchedUsers, fetchedAssetGroups, fetchedSuppliers] = await Promise.all([
           userService.searchUsers(''),
-          assetService.getAssetGroups(),
-          assetService.getSuppliers()
+          taskServiceFilter.getAssetGroups(),
+          taskServiceFilter.getSuppliers()
         ]);
         setUsers(fetchedUsers);
         setAssetGroups(fetchedAssetGroups);
@@ -100,7 +102,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
     const fetchSubGroups = async () => {
       if (assetGroupId) {
         try {
-          const fetchedSubGroups = await assetService.getAssetSubGroups(assetGroupId);
+          const fetchedSubGroups = await taskServiceFilter.getAssetSubGroups(assetGroupId);
           setAssetSubGroups(fetchedSubGroups);
         } catch (error) {
           console.error('Error fetching sub groups:', error);
