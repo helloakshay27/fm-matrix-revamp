@@ -29,6 +29,17 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
     scheduleType: ''
   });
 
+  // Calculate 52 weeks date range
+  const get52WeeksRange = () => {
+    const today = new Date();
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - (52 * 7)); // 52 weeks ago
+    return {
+      start: startDate,
+      end: today
+    };
+  };
+
   // Convert API events to calendar events
   const calendarEvents = useMemo(() => {
     return events.map(event => ({
@@ -47,6 +58,27 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   };
   const handleViewChange = (newView: any) => {
     setView(newView);
+    
+    // When switching to 52-week view, automatically set the date range
+    if (newView === 'work_week') {
+      const { start, end } = get52WeeksRange();
+      const startFormatted = moment(start).format('DD/MM/YYYY');
+      const endFormatted = moment(end).format('DD/MM/YYYY');
+      
+      const filters = {
+        ...activeFilters,
+        dateFrom: startFormatted,
+        dateTo: endFormatted
+      };
+      
+      setActiveFilters(filters);
+      if (onDateRangeChange) {
+        onDateRangeChange(startFormatted, endFormatted);
+      }
+      if (onFiltersChange) {
+        onFiltersChange(filters);
+      }
+    }
   };
   const handleApplyFilters = (filters: CalendarFilters) => {
     setActiveFilters(filters);
@@ -105,9 +137,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
         <Button variant="outline" size="sm" onClick={() => onNavigate('NEXT')} className="h-8 w-8 p-0">
           <ChevronRight className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm" onClick={() => onNavigate('TODAY')} className="px-3 py-1 h-8">
-          today
-        </Button>
+      
       </div>
       
       <h2 className="text-xl font-semibold">{label}</h2>
@@ -123,11 +153,9 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
           52-week
         </Button>
         <Button variant={view === 'day' ? 'default' : 'outline'} size="sm" onClick={() => onView('day')} className="px-3 py-1 h-8">
-          day
+          Today
         </Button>
-        <Button variant={view === 'year' ? 'default' : 'outline'} size="sm" onClick={() => onView('year')} className="px-3 py-1 h-8">
-          year
-        </Button>
+       
         <Button variant={view === 'agenda' ? 'default' : 'outline'} size="sm" onClick={() => onView('agenda')} className="px-3 py-1 h-8">
           list
         </Button>

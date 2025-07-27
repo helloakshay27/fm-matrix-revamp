@@ -53,6 +53,11 @@ interface TaskRecord {
 interface ApiTaskResponse {
   current_page: number;
   pages: number;
+  scheduled_count: number;
+  open_count: number;
+  wip_count: number;
+  closed_count: number;
+  overdue_count: number;
   asset_task_occurrences: ApiTaskOccurrence[];
 }
 
@@ -97,27 +102,32 @@ const statusCards = [
   {
     title: 'Scheduled Tasks',
     count: 1555,
-    icon: Settings
+    icon: Settings,
+    status: 'Scheduled'
   },
   {
     title: 'Open Tasks',
     count: 174,
-    icon: AlertCircle
+    icon: AlertCircle,
+    status: 'Open'
   },
   {
     title: 'In Progress',
     count: 0,
-    icon: Play
+    icon: Play,
+    status: 'Work In Progress'
   },
   {
     title: 'Closed Tasks',
     count: 0,
-    icon: CheckCircle
+    icon: CheckCircle,
+    status: 'Closed'
   },
   {
     title: 'Overdue Tasks',
     count: 907,
-    icon: XCircle
+    icon: XCircle,
+    status: 'Overdue'
   }
 ];
 
@@ -159,6 +169,14 @@ export const ScheduledTaskDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [showAll, setShowAll] = useState(true);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [statusCounts, setStatusCounts] = useState({
+    scheduled_count: 0,
+    open_count: 0,
+    wip_count: 0,
+    closed_count: 0,
+    overdue_count: 0
+  });
 
   // Transform API data to TaskRecord format
   const transformApiDataToTaskRecord = (apiData: ApiTaskOccurrence[]): TaskRecord[] => {
@@ -182,7 +200,7 @@ export const ScheduledTaskDashboard = () => {
   };
 
   // Fetch tasks with filters, pagination, and search
-  const fetchTasks = async (filters: TaskFilters = {}, page: number = 1, searchTerm: string = '') => {
+  const fetchTasks = async (filters: TaskFilters = {}, page: number = 1, searchTerm: string = '', status: string | null = null) => {
     setLoading(true);
     setError(null);
 
@@ -191,7 +209,6 @@ export const ScheduledTaskDashboard = () => {
 
       // Build query parameters from filters and pagination
       const queryParams = new URLSearchParams();
-      // queryParams.append('show_all', showAll.toString());
       queryParams.append('page', page.toString());
 
       if (filters.dateFrom) queryParams.append('q[start_date_gteq]', filters.dateFrom);
@@ -204,6 +221,11 @@ export const ScheduledTaskDashboard = () => {
       if (filters.assignedTo) queryParams.append('q[pms_task_assignments_assigned_to_id_eq]', filters.assignedTo);
       if (filters.supplierId) queryParams.append('q[custom_form_supplier_id_eq]', filters.supplierId);
       if (filters.taskId) queryParams.append('q[id_eq]', filters.taskId);
+
+      // Add status filter
+      if (status) {
+        queryParams.append('q[task_status_eq]', status);
+      }
 
       // Add general search functionality for checklist and asset
       if (searchTerm) {
@@ -227,6 +249,15 @@ export const ScheduledTaskDashboard = () => {
       const transformedData = transformApiDataToTaskRecord(data.asset_task_occurrences);
       setTaskData(transformedData);
 
+      // Update status counts
+      setStatusCounts({
+        scheduled_count: data.scheduled_count || 0,
+        open_count: data.open_count || 0,
+        wip_count: data.wip_count || 0,
+        closed_count: data.closed_count || 0,
+        overdue_count: data.overdue_count || 0
+      });
+
       // Update pagination state
       setCurrentPage(data.current_page || 1);
       setTotalPages(data.pages || 1);
@@ -242,10 +273,10 @@ export const ScheduledTaskDashboard = () => {
     }
   };
 
-  // Load tasks on component mount and when showAll changes
+  // Load tasks on component mount and when filters change
   useEffect(() => {
-    fetchTasks(currentFilters, currentPage, debouncedSearchQuery);
-  }, [currentFilters, showAll, debouncedSearchQuery]);
+    fetchTasks(currentFilters, currentPage, debouncedSearchQuery, selectedStatus);
+  }, [currentFilters, showAll, debouncedSearchQuery, selectedStatus]);
 
   // Handle filter application
   const handleApplyFilters = (filters: TaskFilters) => {
@@ -257,7 +288,7 @@ export const ScheduledTaskDashboard = () => {
   // Handle pagination
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    fetchTasks(currentFilters, page, debouncedSearchQuery);
+    fetchTasks(currentFilters, page, debouncedSearchQuery, selectedStatus);
   };
 
   // Handle show all toggle
@@ -270,6 +301,12 @@ export const ScheduledTaskDashboard = () => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Handle status card click
+  const handleStatusCardClick = (status: string) => {
+    setSelectedStatus(status);
+    setCurrentPage(1); // Reset to first page when filtering by status
   };
 
   // Load calendar events
@@ -454,20 +491,63 @@ export const ScheduledTaskDashboard = () => {
         <TabsContent value="list" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Quick Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {statusCards.map((card, index) => (
-              <div key={index} className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <card.icon className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {card.count}
+            {statusCards.map((card, index) => {
+              const getStatusCount = (status: string) => {
+                switch (status) {
+                  case 'Scheduled': return statusCounts.scheduled_count;
+                  case 'Open': return statusCounts.open_count;
+                  case 'Work In Progress': return statusCounts.wip_count;
+                  case 'Closed': return statusCounts.closed_count;
+                  case 'Overdue': return statusCounts.overdue_count;
+                  default: return 0;
+                }
+              };
+
+              return (
+                <div 
+                  key={index} 
+                  className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer transition-all duration-200 ${
+                    selectedStatus === card.status 
+                      ? 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
+                      : 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
+                  }`}
+                  onClick={() => handleStatusCardClick(card.status)}
+                >
+                  <div className={`w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 ${
+                    selectedStatus === card.status ? 'bg-[#C4B89D54]' : 'bg-[#C4B89D54]'
+                  }`}>
+                    <card.icon 
+                      className="w-4 h-4 sm:w-6 sm:h-6" 
+                      style={{ color: selectedStatus === card.status ?  '#C72030': '#C72030' }} 
+                    />
                   </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">{card.title}</div>
+                  <div className="flex flex-col min-w-0">
+                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                      {getStatusCount(card.status)}
+                    </div>
+                    <div className={`text-xs sm:text-sm font-medium leading-tight ${
+                      selectedStatus === card.status ? 'text-muted-foreground': 'text-muted-foreground'
+                    }`}>
+                      {card.title}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
+
+          {/* Clear Filter Button */}
+          {selectedStatus && (
+            <div className="flex justify-start">
+              <Button 
+                variant="outline" 
+                onClick={() => setSelectedStatus(null)}
+                className="bg-white border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+              >
+                Clear Filter
+              </Button>
+            </div>
+          )}
 
           {/* Task Table */}
           <div className="bg-white rounded-lg">

@@ -309,12 +309,12 @@ export const AddRestaurantPage = () => {
         <div className="flex items-center gap-2 mb-2">
           <button
             onClick={handleGoBack}
-            className="text-gray-600 hover:text-gray-800 transition-colors"
+            className="text-gray-600 hover:text-gray-800 transition-colors flex items-center gap-2"
             aria-label="Go back"
           >
             <ArrowLeft className="w-4 h-4" />
+            <p className="text-gray-600 text-sm">Back</p>
           </button>
-          <p className="text-gray-600 text-sm">F&B List &gt; Create New F&B</p>
         </div>
         <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">NEW F&B</h1>
       </div>
@@ -640,7 +640,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.startTime.split(':')[0]}
                             onChange={(e) => updateSchedule(index, 'startTime', `${e.target.value}:${item.startTime.split(':')[1]}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 24 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -651,7 +651,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.startTime.split(':')[1]}
                             onChange={(e) => updateSchedule(index, 'startTime', `${item.startTime.split(':')[0]}:${e.target.value}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 60 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -666,7 +666,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.endTime.split(':')[0]}
                             onChange={(e) => updateSchedule(index, 'endTime', `${e.target.value}:${item.endTime.split(':')[1]}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 24 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -677,7 +677,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.endTime.split(':')[1]}
                             onChange={(e) => updateSchedule(index, 'endTime', `${item.endTime.split(':')[0]}:${e.target.value}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 60 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -692,7 +692,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.breakStartTime.split(':')[0]}
                             onChange={(e) => updateSchedule(index, 'breakStartTime', `${e.target.value}:${item.breakStartTime.split(':')[1]}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 24 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -703,7 +703,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.breakStartTime.split(':')[1]}
                             onChange={(e) => updateSchedule(index, 'breakStartTime', `${item.breakStartTime.split(':')[0]}:${e.target.value}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 60 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -718,7 +718,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.breakEndTime.split(':')[0]}
                             onChange={(e) => updateSchedule(index, 'breakEndTime', `${e.target.value}:${item.breakEndTime.split(':')[1]}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 24 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -729,7 +729,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.breakEndTime.split(':')[1]}
                             onChange={(e) => updateSchedule(index, 'breakEndTime', `${item.breakEndTime.split(':')[0]}:${e.target.value}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 60 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -760,7 +760,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.lastBookingTime.split(':')[0]}
                             onChange={(e) => updateSchedule(index, 'lastBookingTime', `${e.target.value}:${item.lastBookingTime.split(':')[1]}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 24 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -771,7 +771,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.lastBookingTime.split(':')[1]}
                             onChange={(e) => updateSchedule(index, 'lastBookingTime', `${item.lastBookingTime.split(':')[0]}:${e.target.value}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 60 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>

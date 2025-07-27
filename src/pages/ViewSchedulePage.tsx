@@ -163,7 +163,7 @@ export const ViewSchedulePage = () => {
   };
 
   const handleViewPerformance = () => {
-    navigate(`/maintenance/schedule/performance/${id}`);
+    navigate(`/maintenance/schedule/performance/${id}`, { state: { formCode } });
   };
 
   return (
@@ -702,24 +702,6 @@ export const ViewSchedulePage = () => {
               </div>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
-                  <InputLabel shrink>Lock Overdue Task</InputLabel>
-                  <Select
-                    value={assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}
-                    label="Lock Overdue Task"
-                    disabled
-                    sx={muiFieldStyles}
-                  >
-                    <MenuItem value={assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}>
-                      {assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}
-                    </MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Grace Time</InputLabel>
                   <Select
                     value={assetTask?.grace_time_type || 'Hour'}
@@ -729,6 +711,25 @@ export const ViewSchedulePage = () => {
                   >
                     <MenuItem value={assetTask?.grace_time_type || 'Hour'}>
                       {assetTask?.grace_time_type || 'Hour'}
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+              </div>
+              
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <FormControl fullWidth variant="outlined" disabled>
+                  <InputLabel shrink>Lock Overdue Task</InputLabel>
+                  <Select
+                    value={assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}
+                    label="Lock Overdue Task"
+                    disabled
+                    sx={muiFieldStyles}
+                  >
+                    <MenuItem value={assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}>
+                      {assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}
                     </MenuItem>
                   </Select>
                 </FormControl>
@@ -749,31 +750,6 @@ export const ViewSchedulePage = () => {
                 </FormControl>
               </div>
               <div className="space-y-2">
-                <TextField
-                  label="Start Time"
-                  value={formatDate(assetTask?.start_date)}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <TextField
-                  label="End At"
-                  value={formatDate(assetTask?.end_date)}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>
-              <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Select Supplier</InputLabel>
                   <Select
@@ -788,6 +764,33 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div>
+              
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <TextField
+                  label="Start Date"
+                  value={formatDate(assetTask?.start_date)}
+                  InputProps={{ readOnly: true, disabled: true }}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={muiFieldStyles}
+                />
+              </div>
+              <div className="space-y-2">
+                <TextField
+                  label="End Date"
+                  value={formatDate(assetTask?.end_date)}
+                  InputProps={{ readOnly: true, disabled: true }}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={muiFieldStyles}
+                />
+              </div>
+              
             </div>
           </CardContent>
         </Card>
