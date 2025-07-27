@@ -238,21 +238,30 @@ export const Dashboard = () => {
     let activeAMCs = 0;
     let lowStockItems = 0;
 
-    if (dashboardData.tickets?.ticket_status) {
-      const ticketValues = Object.values(dashboardData.tickets.ticket_status) as number[];
-      totalTickets = ticketValues.reduce((sum: number, val: number) => sum + (val || 0), 0);
+    // Calculate total tickets from ticket status data
+    if (dashboardData.tickets?.ticket_status?.overall) {
+      const overall = dashboardData.tickets.ticket_status.overall;
+      totalTickets = (overall.total_open || 0) + (overall.total_closed || 0) + (overall.total_wip || 0);
     }
 
-    if (dashboardData.tasks?.technical_checklist?.completed_count) {
-      completedTasks = dashboardData.tasks.technical_checklist.completed_count;
+    // Calculate completed tasks from technical checklist
+    if (dashboardData.tasks?.technical_checklist?.response) {
+      const response = dashboardData.tasks.technical_checklist.response;
+      const responseData = response as Record<string, any>;
+      completedTasks = Object.values(responseData).reduce((sum: number, item: any) => sum + Number(item?.closed || 0), 0);
     }
 
+    // Get active AMCs
     if (dashboardData.amc?.active_amc) {
       activeAMCs = dashboardData.amc.active_amc;
     }
 
-    if (dashboardData.inventory?.low_stock?.items?.length) {
+    // Get low stock items count
+    if (dashboardData.inventory?.low_stock?.items) {
       lowStockItems = dashboardData.inventory.low_stock.items.length;
+    } else if (dashboardData.inventory?.items_status) {
+      // Fallback to items status data
+      lowStockItems = dashboardData.inventory.items_status.count_of_critical_items || 0;
     }
 
     return { totalTickets, completedTasks, activeAMCs, lowStockItems };
