@@ -314,8 +314,8 @@ export const ScheduledTaskDashboard = () => {
     const loadCalendarEvents = async () => {
       try {
         const events = await calendarService.fetchCalendarEvents({
-          start_date: dateFrom,
-          end_date: dateTo
+          'q[start_date_gteq]': dateFrom,
+          'q[start_date_lteq]': dateTo
         });
         setCalendarEvents(events);
       } catch (error) {
