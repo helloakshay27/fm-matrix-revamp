@@ -442,151 +442,148 @@ export const ResponseEscalationTab: React.FC = () => {
       </form>
 
       {/* Rules List Section */}
-      <Card>
-        <CardHeader>
+      <Card className="border border-gray-200">
+        <CardHeader className="border-b border-gray-200 bg-white">
           <div className="flex items-center justify-between">
-            <CardTitle>Response Escalation Rules</CardTitle>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filter by category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categoriesData?.helpdesk_categories?.map((category) => (
-                    <SelectItem key={category.id} value={category.name}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <CardTitle className="text-lg font-semibold text-gray-900">Filter</CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="category-filter" className="text-sm font-medium text-gray-700">
+                  Category Type
+                </Label>
+                <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+                  <SelectTrigger className="w-48 border-gray-200 focus:border-[#C72030] focus:ring-[#C72030]">
+                    <SelectValue placeholder="Select Category Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categoriesData?.helpdesk_categories?.map((category) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                variant="default"
+                size="sm" 
+                className="bg-[#C72030] hover:bg-[#A61B29] text-white border-none font-semibold px-4"
+                onClick={() => setSelectedCategoryFilter('all')}
+              >
+                Apply
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold px-4"
+                onClick={() => setSelectedCategoryFilter('all')}
+              >
+                Reset
+              </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {fetchLoading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="ml-2">Loading rules...</span>
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-[#C72030]" />
+              <span className="ml-2 text-gray-600">Loading escalation rules...</span>
             </div>
           ) : filteredRules.length === 0 ? (
-            <div className="text-center p-8 text-muted-foreground">
-              No response escalation rules found.
+            <div className="text-center py-8 text-gray-500">
+              <p>No escalation rules found.</p>
+              <p className="text-sm mt-1">Create your first rule using the form above.</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Category Type</TableHead>
-                  <TableHead>Levels</TableHead>
-                  <TableHead>Escalation To</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredRules.map((rule) => (
-                  <React.Fragment key={rule.id}>
-                    <TableRow>
-                      <TableCell>{getCategoryName(rule.category_id)}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {['E1', 'E2', 'E3', 'E4', 'E5'].map((level) => {
-                            const escalation = rule.escalations.find(e => e.name === level)
-                            const hasUsers = escalation?.escalate_to_users && 
-                              (typeof escalation.escalate_to_users === 'string' ? 
-                               JSON.parse(escalation.escalate_to_users).length > 0 :
-                               escalation.escalate_to_users.length > 0)
-                            return (
-                              <Badge 
-                                key={level} 
-                                variant={hasUsers ? "default" : "secondary"}
-                                className="text-xs"
-                              >
-                                {level}
-                              </Badge>
-                            )
-                          })}
-                        </div>
-                      </TableCell>
-                      <TableCell>
+            <div className="space-y-6 p-6">
+              {filteredRules.map((rule, index) => (
+                <div key={rule.id} className="border border-gray-200 rounded-lg bg-white shadow-sm">
+                  <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-base font-semibold text-gray-900">Rule {index + 1}</h3>
+                      <div className="flex gap-2">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => toggleRuleExpansion(rule.id)}
-                          className="p-0 h-auto"
+                          onClick={() => handleEditRule(rule)}
+                          className="h-8 w-8 p-0 text-gray-600 hover:text-[#C72030] hover:bg-[#EDEAE3]"
+                          disabled={updateLoading}
                         >
-                          {expandedRules.has(rule.id) ? (
-                            <>
-                              Hide Details <EyeOff className="ml-1 h-3 w-3" />
-                            </>
-                          ) : (
-                            <>
-                              View Details <Eye className="ml-1 h-3 w-3" />
-                            </>
-                          )}
+                          <Edit className="h-4 w-4" />
                         </Button>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditRule(rule)}
-                            disabled={updateLoading}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={deleteLoading}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-gray-600 hover:text-red-600 hover:bg-red-50"
+                              disabled={deleteLoading}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Rule</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete this response escalation rule for {getCategoryName(rule.category_id)}? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel className="border-gray-300">Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteRule(rule.id)}
+                                className="bg-red-600 hover:bg-red-700"
                               >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Rule</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete this response escalation rule for {getCategoryName(rule.category_id)}? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteRule(rule.id)}>
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    {expandedRules.has(rule.id) && (
-                      <TableRow>
-                        <TableCell colSpan={4}>
-                          <div className="p-4 bg-muted/50 rounded-lg">
-                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50 border-b border-gray-200 hover:bg-gray-50">
+                          <TableHead className="font-semibold text-gray-900 text-left py-3 px-4 w-1/3">Category Type</TableHead>
+                          <TableHead className="font-semibold text-gray-900 text-left py-3 px-4 w-1/6">Levels</TableHead>
+                          <TableHead className="font-semibold text-gray-900 text-left py-3 px-4">Escalation To</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow className="border-b border-gray-100 hover:bg-gray-50/50">
+                          <TableCell className="py-4 px-4 align-top font-medium text-gray-900">
+                            {getCategoryName(rule.category_id)}
+                          </TableCell>
+                          <TableCell className="py-4 px-4 align-top">
+                            <div className="space-y-2">
                               {rule.escalations.map((escalation) => (
-                                <div key={escalation.id} className="space-y-2">
-                                  <div className="font-semibold text-sm">{escalation.name}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {getUserNames(escalation.escalate_to_users)}
-                                  </div>
+                                <div key={escalation.name} className="text-sm text-gray-700 font-medium">
+                                  {escalation.name}
                                 </div>
                               ))}
                             </div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </React.Fragment>
-                ))}
-              </TableBody>
-            </Table>
+                          </TableCell>
+                          <TableCell className="py-4 px-4 align-top">
+                            <div className="space-y-2">
+                              {rule.escalations.map((escalation) => (
+                                <div key={escalation.name} className="text-sm text-gray-700">
+                                  {getUserNames(escalation.escalate_to_users)}
+                                </div>
+                              ))}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
