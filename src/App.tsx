@@ -496,10 +496,31 @@ import { PasswordResetSuccessPage } from '@/pages/PasswordResetSuccessPage';
 import { isAuthenticated } from '@/utils/auth';
 import { BookingDetailsPage } from './pages/BookingDetailsPage';
 import { RestaurantOrdersTable } from './components/RestaurantOrdersTable';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import { useEffect } from 'react';
+import { getCurrency } from './store/slices/currencySlice';
+// import CurrencyDashboard from './pages/setup/CurrencyDashboard';
 
 const queryClient = new QueryClient();
 
 function App() {
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    const fetchCurrency = async () => {
+      try {
+        const response = await dispatch(getCurrency({ baseUrl, token })).unwrap();
+        localStorage.setItem('currency', response[0].value)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    fetchCurrency();
+  }, [])
+
   return (
     <Provider store={store}>
       <Router>
@@ -940,6 +961,7 @@ function App() {
                 <Route path="/settings/vas/booking/setup/add" element={<AddBookingSetupPage />} />
                 <Route path="/settings/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
                 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
+                {/* <Route path="/settings/currency" element={<CurrencyDashboard />} /> */}
               </Route>
 
               {/* Setup Routes - Outside of settings parent route */}
@@ -956,12 +978,6 @@ function App() {
                 {/* Mobile Routes */}
                 <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
                 <Route path="/mobile/orders" element={<MobileOrdersPage />} />
-                {/* External Flow Tester */}
-                <Route path="/test-external" element={<ExternalFlowTester />} />
-                {/* Mobile Restaurant Routes */}
-                <Route path="/mr/:restaurant/:orgId" element={<MobileRestaurantPage />} />
-                <Route path="/mobile/restaurant/:action" element={<MobileRestaurantPage />} />
-                <Route path="/mobile/restaurant/:restaurantId/:action" element={<MobileRestaurantPage />} />
                 {/* Mobile Restaurant Routes */}
                 <Route path="/mobile/restaurant" element={<MobileRestaurantPage />} />
                 <Route path="/mobile/restaurant/:action" element={<MobileRestaurantPage />} />
