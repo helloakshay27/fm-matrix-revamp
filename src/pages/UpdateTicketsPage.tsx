@@ -1218,8 +1218,8 @@ const UpdateTicketsPage: React.FC = () => {
         description: `Successfully updated ticket ${ticketId}.`,
       });
 
-      // Redirect to ticket list page
-      navigate("/maintenance/ticket");
+      // Redirect to ticket details page
+      navigate(`/maintenance/ticket/details/${ticketId}`);
     } catch (error) {
       console.error("Error updating tickets:", error);
       
@@ -1282,6 +1282,7 @@ const UpdateTicketsPage: React.FC = () => {
                 <Textarea
                   value={formData.title}
                   onChange={(e) => handleInputChange("title", e.target.value)}
+                     disabled
                   placeholder="Enter title"
                   className="h-10 min-h-[2.5rem] w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
                 />

@@ -458,6 +458,7 @@ export const FnBRestaurantDetailsPage = () => {
                         <th className="text-left p-3 font-medium">Last Booking & Order Time</th>
                       </tr>
                     </thead>
+
                     <tbody>
                       {scheduleData.map((dayData, index) => (
                         <tr key={dayData.dayofweek} className="border-b">
@@ -470,75 +471,109 @@ export const FnBRestaurantDetailsPage = () => {
                               <span>{dayData.day_name}</span>
                             </div>
                           </td>
-
                           <td className="p-3">
-                            <Select
-                              value={dayData.start_time}
-                              onValueChange={(value) => handleScheduleChange(index, 'start_time', value)}
-                            >
-                              <SelectTrigger className="w-24 bg-transparent">
-                                <SelectValue placeholder="Select time" />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-64 overflow-auto">
-                                {timeOptions.map((time) => (
-                                  <SelectItem key={time} value={time}>
-                                    {time}
-                                  </SelectItem>
+                            <div className="flex gap-1">
+                              <select
+                                value={dayData.start_time.split(':')[0]}
+                                onChange={(e) => handleScheduleChange(index, 'start_time', `${e.target.value}:${dayData.start_time.split(':')[1] || '00'}`)}
+                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                              >
+                                {Array.from({ length: 24 }, (_, i) => (
+                                  <option key={i} value={i.toString().padStart(2, '0')}>
+                                    {i.toString().padStart(2, '0')}
+                                  </option>
                                 ))}
-                              </SelectContent>
-                            </Select>
-                          </td>
-
-                          <td className="p-3">
-                            <Select
-                              value={dayData.end_time}
-                              onValueChange={(value) => handleScheduleChange(index, 'end_time', value)}
-                            >
-                              <SelectTrigger className="w-20 bg-transparent">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {timeOptions.map((time) => (
-                                  <SelectItem key={time} value={time}>
-                                    {time}
-                                  </SelectItem>
+                              </select>
+                              <select
+                                value={dayData.start_time.split(':')[1] || '00'}
+                                onChange={(e) => handleScheduleChange(index, 'start_time', `${dayData.start_time.split(':')[0]}:${e.target.value}`)}
+                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                              >
+                                {Array.from({ length: 60 }, (_, i) => (
+                                  <option key={i} value={i.toString().padStart(2, '0')}>
+                                    {i.toString().padStart(2, '0')}
+                                  </option>
                                 ))}
-                              </SelectContent>
-                            </Select>
+                              </select>
+                            </div>
                           </td>
                           <td className="p-3">
-                            <Select
-                              value={dayData.break_start_time}
-                              onValueChange={(value) => handleScheduleChange(index, 'break_start_time', value)}
-                            >
-                              <SelectTrigger className="w-20 bg-transparent">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {timeOptions.map((time) => (
-                                  <SelectItem key={time} value={time}>
-                                    {time}
-                                  </SelectItem>
+                            <div className="flex gap-1">
+                              <select
+                                value={dayData.end_time.split(':')[0]}
+                                onChange={(e) => handleScheduleChange(index, 'end_time', `${e.target.value}:${dayData.end_time.split(':')[1] || '00'}`)}
+                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                              >
+                                {Array.from({ length: 24 }, (_, i) => (
+                                  <option key={i} value={i.toString().padStart(2, '0')}>
+                                    {i.toString().padStart(2, '0')}
+                                  </option>
                                 ))}
-                              </SelectContent>
-                            </Select>
+                              </select>
+                              <select
+                                value={dayData.end_time.split(':')[1] || '00'}
+                                onChange={(e) => handleScheduleChange(index, 'end_time', `${dayData.end_time.split(':')[0]}:${e.target.value}`)}
+                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                              >
+                                {Array.from({ length: 60 }, (_, i) => (
+                                  <option key={i} value={i.toString().padStart(2, '0')}>
+                                    {i.toString().padStart(2, '0')}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
                           </td>
                           <td className="p-3">
-                            <Select
-                              value={dayData.break_end_time}
-                              onValueChange={(value) => handleScheduleChange(index, 'break_end_time', value)}
-                            >
-                              <SelectTrigger className="w-20 bg-transparent">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {timeOptions.map((time) => (
-                                  <SelectItem key={time} value={time}>
-                                    {time}
-                                  </SelectItem>
+                            <div className="flex gap-1">
+                              <select
+                                value={dayData.break_start_time.split(':')[0]}
+                                onChange={(e) => handleScheduleChange(index, 'break_start_time', `${e.target.value}:${dayData.break_start_time.split(':')[1] || '00'}`)}
+                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                              >
+                                {Array.from({ length: 24 }, (_, i) => (
+                                  <option key={i} value={i.toString().padStart(2, '0')}>
+                                    {i.toString().padStart(2, '0')}
+                                  </option>
                                 ))}
-                              </SelectContent>
-                            </Select>
+                              </select>
+                              <select
+                                value={dayData.break_start_time.split(':')[1] || '00'}
+                                onChange={(e) => handleScheduleChange(index, 'break_start_time', `${dayData.break_start_time.split(':')[0]}:${e.target.value}`)}
+                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                              >
+                                {Array.from({ length: 60 }, (_, i) => (
+                                  <option key={i} value={i.toString().padStart(2, '0')}>
+                                    {i.toString().padStart(2, '0')}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </td>
+                          <td className="p-3">
+                            <div className="flex gap-1">
+                              <select
+                                value={dayData.break_end_time.split(':')[0]}
+                                onChange={(e) => handleScheduleChange(index, 'break_end_time', `${e.target.value}:${dayData.break_end_time.split(':')[1] || '00'}`)}
+                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                              >
+                                {Array.from({ length: 24 }, (_, i) => (
+                                  <option key={i} value={i.toString().padStart(2, '0')}>
+                                    {i.toString().padStart(2, '0')}
+                                  </option>
+                                ))}
+                              </select>
+                              <select
+                                value={dayData.break_end_time.split(':')[1] || '00'}
+                                onChange={(e) => handleScheduleChange(index, 'break_end_time', `${dayData.break_end_time.split(':')[0]}:${e.target.value}`)}
+                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                              >
+                                {Array.from({ length: 60 }, (_, i) => (
+                                  <option key={i} value={i.toString().padStart(2, '0')}>
+                                    {i.toString().padStart(2, '0')}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
                           </td>
                           <td className="p-3">
                             <Checkbox
@@ -553,21 +588,30 @@ export const FnBRestaurantDetailsPage = () => {
                             />
                           </td>
                           <td className="p-3">
-                            <Select
-                              value={dayData.last_order_time}
-                              onValueChange={(value) => handleScheduleChange(index, 'last_order_time', value)}
-                            >
-                              <SelectTrigger className="w-20 bg-transparent">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {timeOptions.map((time) => (
-                                  <SelectItem key={time} value={time}>
-                                    {time}
-                                  </SelectItem>
+                            <div className="flex gap-1">
+                              <select
+                                value={dayData.last_order_time.split(':')[0]}
+                                onChange={(e) => handleScheduleChange(index, 'last_order_time', `${e.target.value}:${dayData.last_order_time.split(':')[1] || '00'}`)}
+                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                              >
+                                {Array.from({ length: 24 }, (_, i) => (
+                                  <option key={i} value={i.toString().padStart(2, '0')}>
+                                    {i.toString().padStart(2, '0')}
+                                  </option>
                                 ))}
-                              </SelectContent>
-                            </Select>
+                              </select>
+                              <select
+                                value={dayData.last_order_time.split(':')[1] || '00'}
+                                onChange={(e) => handleScheduleChange(index, 'last_order_time', `${dayData.last_order_time.split(':')[0]}:${e.target.value}`)}
+                                className="border border-gray-300 rounded px-2 py-1 text-xs w-14 bg-transparent"
+                              >
+                                {Array.from({ length: 60 }, (_, i) => (
+                                  <option key={i} value={i.toString().padStart(2, '0')}>
+                                    {i.toString().padStart(2, '0')}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
                           </td>
                         </tr>
                       ))}

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
+import { API_CONFIG, BASE_URL, TOKEN } from '@/config/apiConfig';
 import { getToken } from '@/utils/auth';
 
 interface SelectedTicket {
@@ -137,16 +138,16 @@ const AssignTicketsPage: React.FC = () => {
       return;
     }
 
-    // Check if all selected tickets have category and subcategory
+    // Check if all selected tickets have category (only category validation)
     const ticketsWithoutCategory = selectedTickets.filter(ticket => 
-      !ticket.category_type || !ticket.sub_category_type
+      !ticket.category_type
     );
 
     if (ticketsWithoutCategory.length > 0) {
       const ticketNumbers = ticketsWithoutCategory.map(ticket => ticket.ticket_number).join(', ');
       toast({
         title: "Validation Error",
-        description: `The following tickets are missing category or subcategory information and cannot be updated: ${ticketNumbers}. Please add category and subcategory to these tickets before bulk updating.`,
+        description: `The following tickets are missing category information and cannot be updated: ${ticketNumbers}. Please add category to these tickets before bulk updating.`,
         variant: "destructive"
       });
       return;
@@ -159,11 +160,17 @@ const AssignTicketsPage: React.FC = () => {
       console.log('👤 Selected user ID:', selectedUser);
       console.log('📊 Selected status ID:', selectedStatus);
       
+      // Get authentication token and base URL from API config
+      const authToken = TOKEN || getToken();
+      const baseUrl = BASE_URL;
+      
+      console.log('🔐 Using auth token from API config:', authToken ? 'Token present' : 'Token missing');
+      console.log('🌐 Using base URL from API config:', baseUrl);
+      
       const apiCalls = [];
 
       // If user is selected, call assign API
       if (selectedUser) {
-        // Try with FormData approach first
         const formData = new FormData();
         complaint_ids.forEach(id => {
           formData.append('complaint_ids[]', id.toString());
@@ -176,11 +183,14 @@ const AssignTicketsPage: React.FC = () => {
           console.log(key, value);
         }
         
+        const assignUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.BULK_ASSIGN_TICKETS}`;
+        console.log('🎯 Assign API URL:', assignUrl);
+        
         apiCalls.push(
-          fetch('https://fm-uat-api.lockated.com/pms/admin/complaints/bulk_assign_tickets.json', {
+          fetch(assignUrl, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${getToken()}`,
+              'Authorization': `Bearer ${authToken}`,
             },
             body: formData
           })
@@ -203,7 +213,6 @@ const AssignTicketsPage: React.FC = () => {
 
       // If status is selected, call status update API
       if (selectedStatus) {
-        // Try with FormData approach first
         const formData = new FormData();
         complaint_ids.forEach(id => {
           formData.append('complaint_ids[]', id.toString());
@@ -215,11 +224,14 @@ const AssignTicketsPage: React.FC = () => {
           console.log(key, value);
         }
         
+        const statusUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.BULK_UPDATE_STATUS}`;
+        console.log('🎯 Status API URL:', statusUrl);
+        
         apiCalls.push(
-          fetch('https://fm-uat-api.lockated.com/pms/admin/complaints/bulk_update_status.json', {
+          fetch(statusUrl, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${getToken()}`,
+              'Authorization': `Bearer ${authToken}`,
             },
             body: formData
           })
@@ -252,11 +264,29 @@ const AssignTicketsPage: React.FC = () => {
       navigate(-1);
     } catch (error) {
       console.error('❌ Error updating tickets:', error);
-      toast({
-        title: "Error",
-        description: `Failed to update tickets: ${error.response?.data?.message || error.message || 'Unknown error'}`,
-        variant: "destructive"
-      });
+      
+      // Handle API validation errors
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      // Check if error is related to missing category/subcategory from API
+      if (errorMessage.toLowerCase().includes('category') || errorMessage.toLowerCase().includes('subcategory')) {
+        toast({
+          title: "Validation Error",
+          description: "Some tickets are missing required category information. Please ensure all tickets have proper category assigned.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: `Failed to update tickets: ${errorMessage}`,
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -275,7 +305,7 @@ const AssignTicketsPage: React.FC = () => {
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-xl font-semibold text-gray-900">ASSIGN TO</h1>
+          <h1 className="text-xl font-semibold text-gray-900">UPDATE ASSIGN TO</h1>
         </div>
 
         {/* Selected Tickets Table */}
