@@ -16,7 +16,7 @@ const muiFieldStyles = {
   width: '100%',
   '& .MuiOutlinedInput-root': {
     height: { xs: '36px', md: '45px' },
-    borderRadius: '8px',
+    borderRadius: '2px',
     backgroundColor: '#FFFFFF',
     '& fieldset': {
       borderColor: '#E0E0E0',
@@ -27,6 +27,15 @@ const muiFieldStyles = {
     '&.Mui-focused fieldset': {
       borderColor: '#C72030',
       borderWidth: 2,
+    },
+    // Disabled state styling
+    '&.Mui-disabled': {
+      backgroundColor: '#F5F5F5',
+      color: '#A0A0A0',
+      borderRadius: '2px',
+    },
+    '&.Mui-disabled fieldset': {
+      borderColor: '#D1D5DB',
     },
   },
   '& .MuiInputLabel-root': {
@@ -40,6 +49,9 @@ const muiFieldStyles = {
       backgroundColor: '#FFFFFF',
       padding: '0 4px',
     },
+    '&.Mui-disabled': {
+      color: '#A0A0A0',
+    },
   },
   '& .MuiOutlinedInput-input, & .MuiSelect-select': {
     color: '#1A1A1A',
@@ -50,6 +62,9 @@ const muiFieldStyles = {
       color: '#999999',
       opacity: 1,
     },
+    '&.Mui-disabled': {
+      color: '#A0A0A0',
+    },
   },
 };
 
@@ -59,6 +74,7 @@ const multilineFieldStyles = {
     ...muiFieldStyles['& .MuiOutlinedInput-root'],
     height: 'auto',
     alignItems: 'flex-start',
+    borderRadius: '0',
   },
 };
 
@@ -194,91 +210,79 @@ export const ViewSchedulePage = () => {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Basic Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-[#C72030] flex items-center gap-2">
-              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
-              Basic Info
+        <Card className="shadow-lg rounded-xl border border-[#e5e7eb]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-[#C72030] flex items-center gap-2 text-lg font-semibold">
+              <span className="bg-[#C72030] text-white rounded-full w-7 h-7 flex items-center justify-center text-base">1</span>
+              Basic Configuration
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <RadioGroup value={customForm?.schedule_type || 'PPM'} className="grid grid-cols-2 gap-4">
+          <CardContent className="space-y-6 pt-2">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Type</Label>
+                <RadioGroup value={customForm?.schedule_type || 'PPM'} className="flex gap-4" disabled>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="PPM" id="type-ppm" />
-                    <Label htmlFor="type-ppm">PPM</Label>
+                    <RadioGroupItem value="PPM" id="type-ppm" disabled />
+                    <Label htmlFor="type-ppm" className="text-sm">PPM</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="AMC" id="type-amc" />
-                    <Label htmlFor="type-amc">AMC</Label>
+                    <RadioGroupItem value="AMC" id="type-amc" disabled />
+                    <Label htmlFor="type-amc" className="text-sm">AMC</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Preparedness" id="type-preparedness" />
-                    <Label htmlFor="type-preparedness">Preparedness</Label>
+                    <RadioGroupItem value="Preparedness" id="type-preparedness" disabled />
+                    <Label htmlFor="type-preparedness" className="text-sm">Preparedness</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Hoto" id="type-hoto" />
-                    <Label htmlFor="type-hoto">Hoto</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Routine" id="type-routine" />
-                    <Label htmlFor="type-routine">Routine</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Audit" id="type-audit" />
-                    <Label htmlFor="type-audit">Audit</Label>
+                    <RadioGroupItem value="Routine" id="type-routine" disabled />
+                    <Label htmlFor="type-routine" className="text-sm">Routine</Label>
                   </div>
                 </RadioGroup>
               </div>
-              <div className="space-y-2">
-                <Label>Schedule for</Label>
-                <RadioGroup value={customForm?.sch_type || 'Asset'} className="flex gap-4">
+              <div className="space-y-3 ml-5">
+                <Label className="text-base font-medium">Schedule For</Label>
+                <RadioGroup value={customForm?.sch_type || 'Asset'} className="flex gap-6" disabled>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Asset" id="schedule-asset" />
-                    <Label htmlFor="schedule-asset">Asset</Label>
+                    <RadioGroupItem value="Asset" id="schedule-asset" disabled />
+                    <Label htmlFor="schedule-asset" className="text-sm">Asset</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Service" id="schedule-service" />
-                    <Label htmlFor="schedule-service">Service</Label>
+                    <RadioGroupItem value="Service" id="schedule-service" disabled />
+                    <Label htmlFor="schedule-service" className="text-sm">Service</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="Vendor" id="schedule-vendor" />
-                    <Label htmlFor="schedule-vendor">Vendor</Label>
+                    <RadioGroupItem value="Vendor" id="schedule-vendor" disabled />
+                    <Label htmlFor="schedule-vendor" className="text-sm">Vendor</Label>
                   </div>
                 </RadioGroup>
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <TextField
                 label="Activity Name"
                 value={customForm?.form_name || ''}
-                InputProps={{ readOnly: true }}
+                InputProps={{ readOnly: true, disabled: true }}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                sx={muiFieldStyles}
+                InputLabelProps={{ shrink: true }}
+                sx={{ ...muiFieldStyles, fontSize: '1rem', borderRadius: '8px' }}
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <TextField
                 label="Description"
                 value={customForm?.description || ''}
-                InputProps={{ readOnly: true }}
+                InputProps={{ readOnly: true, disabled: true }}
                 fullWidth
                 multiline
                 rows={4}
                 variant="outlined"
                 placeholder="Enter description"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                sx={multilineFieldStyles}
+                InputLabelProps={{ shrink: true }}
+                sx={{ ...multilineFieldStyles, fontSize: '1rem', borderRadius: '8px' }}
               />
             </div>
           </CardContent>
@@ -295,12 +299,12 @@ export const ViewSchedulePage = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Checklist Group</InputLabel>
                   <Select
                     value="Select Group"
                     label="Checklist Group"
-                    readOnly
+                    disabled
                     sx={muiFieldStyles}
                   >
                     <MenuItem value="Select Group">Select Group</MenuItem>
@@ -308,12 +312,12 @@ export const ViewSchedulePage = () => {
                 </FormControl>
               </div>
               <div className="space-y-2">
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Checklist Sub Group</InputLabel>
                   <Select
                     value="Select Sub Group"
                     label="Checklist Sub Group"
-                    readOnly
+                    disabled
                     sx={muiFieldStyles}
                   >
                     <MenuItem value="Select Sub Group">Select Sub Group</MenuItem>
@@ -332,22 +336,20 @@ export const ViewSchedulePage = () => {
                       <TextField
                         label={`Task ${index + 1}`}
                         value={task.label}
-                        InputProps={{ readOnly: true }}
+                        InputProps={{ readOnly: true, disabled: true }}
                         fullWidth
                         variant="outlined"
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
+                        InputLabelProps={{ shrink: true }}
                         sx={muiFieldStyles}
                       />
                     </div>
                     <div className="space-y-2">
-                      <FormControl fullWidth variant="outlined">
+                      <FormControl fullWidth variant="outlined" disabled>
                         <InputLabel shrink>Input Type</InputLabel>
                         <Select
                           value={task.type === 'text' ? 'Text' : task.type === 'radio-group' ? 'Radio' : task.type}
                           label="Input Type"
-                          readOnly
+                          disabled
                           sx={muiFieldStyles}
                         >
                           <MenuItem value={task.type === 'text' ? 'Text' : task.type === 'radio-group' ? 'Radio' : task.type}>
@@ -361,17 +363,17 @@ export const ViewSchedulePage = () => {
                         <Checkbox 
                           checked={task.required === 'true'} 
                           disabled 
-                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white"
+                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
                         />
-                        <Label>Mandatory</Label>
+                        <Label className="text-gray-400">Mandatory</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Checkbox 
                           checked={task.is_reading === 'true'} 
                           disabled 
-                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white"
+                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
                         />
-                        <Label>Reading</Label>
+                        <Label className="text-gray-400">Reading</Label>
                       </div>
                     </div>
                   </div>
@@ -392,14 +394,14 @@ export const ViewSchedulePage = () => {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Checklist Type</Label>
-              <RadioGroup value={assetTask?.assignment_type === 'people' ? 'Individual' : 'Asset Group'} className="flex gap-4">
+              <RadioGroup value={assetTask?.assignment_type === 'people' ? 'Individual' : 'Asset Group'} className="flex gap-4" disabled>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Individual" id="checklist-individual" />
-                  <Label htmlFor="checklist-individual">Individual</Label>
+                  <RadioGroupItem value="Individual" id="checklist-individual" disabled />
+                  <Label htmlFor="checklist-individual" className="text-gray-400">Individual</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="Asset Group" id="checklist-asset-group" />
-                  <Label htmlFor="checklist-asset-group">Asset Group</Label>
+                  <RadioGroupItem value="Asset Group" id="checklist-asset-group" disabled />
+                  <Label htmlFor="checklist-asset-group" className="text-gray-400">Asset Group</Label>
                 </div>
               </RadioGroup>
             </div>
@@ -417,8 +419,7 @@ export const ViewSchedulePage = () => {
                 ) : (
                   assetTask?.assets?.map((asset, index) => (
                     <div key={index} className="text-red-600 text-sm mb-2">
-                      {asset.asset_name}[{asset.asset_code}]
-                    </div>
+                      {asset.name}                    </div>
                   ))
                 )}
                 {(!assetTask?.services || assetTask.services.length === 0) && 
@@ -433,22 +434,20 @@ export const ViewSchedulePage = () => {
                 <TextField
                   label="Assign to"
                   value={customForm?.supervisors?.[0] || 'Not assigned'}
-                  InputProps={{ readOnly: true }}
+                  InputProps={{ readOnly: true, disabled: true }}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
+                  InputLabelProps={{ shrink: true }}
                   sx={muiFieldStyles}
                 />
               </div>
               <div className="space-y-2">
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Scan Type</InputLabel>
                   <Select
                     value={assetTask?.scan_type || 'Select Scan Type'}
                     label="Scan Type"
-                    readOnly
+                    disabled
                     sx={muiFieldStyles}
                   >
                     <MenuItem value={assetTask?.scan_type || 'Select Scan Type'}>
@@ -458,12 +457,12 @@ export const ViewSchedulePage = () => {
                 </FormControl>
               </div>
               <div className="space-y-2">
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Plan Duration Type</InputLabel>
                   <Select
                     value={assetTask?.plan_type || 'Day'}
                     label="Plan Duration Type"
-                    readOnly
+                    disabled
                     sx={muiFieldStyles}
                   >
                     <MenuItem value={assetTask?.plan_type || 'Day'}>
@@ -479,12 +478,10 @@ export const ViewSchedulePage = () => {
                 <TextField
                   label="Plan value"
                   value={assetTask?.plan_value || '1'}
-                  InputProps={{ readOnly: true }}
+                  InputProps={{ readOnly: true, disabled: true }}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
+                  InputLabelProps={{ shrink: true }}
                   sx={muiFieldStyles}
                 />
               </div>
@@ -492,22 +489,20 @@ export const ViewSchedulePage = () => {
                 <TextField
                   label="Email Trigger Rule"
                   value={customForm?.rule_ids?.[0] || 'No rules'}
-                  InputProps={{ readOnly: true }}
+                  InputProps={{ readOnly: true, disabled: true }}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
+                  InputLabelProps={{ shrink: true }}
                   sx={muiFieldStyles}
                 />
               </div>
               <div className="space-y-2">
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Supervisors</InputLabel>
                   <Select
                     value={customForm?.supervisors?.join(', ') || 'Select Supervisors'}
                     label="Supervisors"
-                    readOnly
+                    disabled
                     sx={muiFieldStyles}
                   >
                     <MenuItem value={customForm?.supervisors?.join(', ') || 'Select Supervisors'}>
@@ -520,12 +515,12 @@ export const ViewSchedulePage = () => {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Priority</InputLabel>
                   <Select
                     value={assetTask?.priority || 'Select Priority'}
                     label="Priority"
-                    readOnly
+                    disabled
                     sx={muiFieldStyles}
                   >
                     <MenuItem value={assetTask?.priority || 'Select Priority'}>
@@ -538,12 +533,10 @@ export const ViewSchedulePage = () => {
                 <TextField
                   label="Submission Type"
                   value={customForm?.submission_time_type || ''}
-                  InputProps={{ readOnly: true }}
+                  InputProps={{ readOnly: true, disabled: true }}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
+                  InputLabelProps={{ shrink: true }}
                   sx={muiFieldStyles}
                 />
               </div>
@@ -551,12 +544,10 @@ export const ViewSchedulePage = () => {
                 <TextField
                   label="Submission Time Value"
                   value={customForm?.submission_time_value?.toString() || ''}
-                  InputProps={{ readOnly: true }}
+                  InputProps={{ readOnly: true, disabled: true }}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
+                  InputLabelProps={{ shrink: true }}
                   sx={muiFieldStyles}
                 />
               </div>
@@ -564,12 +555,12 @@ export const ViewSchedulePage = () => {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Category</InputLabel>
                   <Select
                     value={assetTask?.category || 'Technical'}
                     label="Category"
-                    readOnly
+                    disabled
                     sx={muiFieldStyles}
                   >
                     <MenuItem value={assetTask?.category || 'Technical'}>
@@ -582,22 +573,20 @@ export const ViewSchedulePage = () => {
                 <TextField
                   label="Grace Time Value"
                   value={assetTask?.grace_time_value || '3'}
-                  InputProps={{ readOnly: true }}
+                  InputProps={{ readOnly: true, disabled: true }}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
+                  InputLabelProps={{ shrink: true }}
                   sx={muiFieldStyles}
                 />
               </div>
               <div className="space-y-2">
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Lock Overdue Task</InputLabel>
                   <Select
                     value={assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}
                     label="Lock Overdue Task"
-                    readOnly
+                    disabled
                     sx={muiFieldStyles}
                   >
                     <MenuItem value={assetTask?.overdue_task_start_status ? 'Enabled' : 'Disabled'}>
@@ -610,12 +599,12 @@ export const ViewSchedulePage = () => {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Grace Time</InputLabel>
                   <Select
                     value={assetTask?.grace_time_type || 'Hour'}
                     label="Grace Time"
-                    readOnly
+                    disabled
                     sx={muiFieldStyles}
                   >
                     <MenuItem value={assetTask?.grace_time_type || 'Hour'}>
@@ -625,12 +614,12 @@ export const ViewSchedulePage = () => {
                 </FormControl>
               </div>
               <div className="space-y-2">
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Frequency</InputLabel>
                   <Select
                     value={assetTask?.frequency || 'Select Frequency'}
                     label="Frequency"
-                    readOnly
+                    disabled
                     sx={muiFieldStyles}
                   >
                     <MenuItem value={assetTask?.frequency || 'Select Frequency'}>
@@ -643,12 +632,10 @@ export const ViewSchedulePage = () => {
                 <TextField
                   label="Start Time"
                   value={formatDate(assetTask?.start_date)}
-                  InputProps={{ readOnly: true }}
+                  InputProps={{ readOnly: true, disabled: true }}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
+                  InputLabelProps={{ shrink: true }}
                   sx={muiFieldStyles}
                 />
               </div>
@@ -659,22 +646,20 @@ export const ViewSchedulePage = () => {
                 <TextField
                   label="End At"
                   value={formatDate(assetTask?.end_date)}
-                  InputProps={{ readOnly: true }}
+                  InputProps={{ readOnly: true, disabled: true }}
                   fullWidth
                   variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
+                  InputLabelProps={{ shrink: true }}
                   sx={muiFieldStyles}
                 />
               </div>
               <div className="space-y-2">
-                <FormControl fullWidth variant="outlined">
+                <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Select Supplier</InputLabel>
                   <Select
                     value={customForm?.supplier_id ? `Supplier ID: ${customForm.supplier_id}` : 'Select Supplier'}
                     label="Select Supplier"
-                    readOnly
+                    disabled
                     sx={muiFieldStyles}
                   >
                     <MenuItem value={customForm?.supplier_id ? `Supplier ID: ${customForm.supplier_id}` : 'Select Supplier'}>
