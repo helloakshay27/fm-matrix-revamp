@@ -200,15 +200,11 @@ export const AssetDashboard = () => {
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
   // Asset distributions state
-  const [assetDistributions, setAssetDistributions] =
-    useState<AssetDistributions | null>(null);
+  const [assetDistributions, setAssetDistributions] = useState<AssetDistributions | null>(null);
   const [distributionsLoading, setDistributionsLoading] = useState(false);
-  const [distributionsError, setDistributionsError] = useState<string | null>(
-    null
-  );
+  const [distributionsError, setDistributionsError] = useState<string | null>(null);
   // Group-wise assets state
-  const [groupWiseAssets, setGroupWiseAssets] =
-    useState<GroupWiseAssets | null>(null);
+  const [groupWiseAssets, setGroupWiseAssets] = useState<GroupWiseAssets | null>(null);
   const [groupWiseLoading, setGroupWiseLoading] = useState(false);
   const [groupWiseError, setGroupWiseError] = useState<string | null>(null);
   const [visibleColumns, setVisibleColumns] = useState({
@@ -247,12 +243,12 @@ export const AssetDashboard = () => {
 
   // Function to get current date in YYYY-MM-DD format
   const getCurrentDate = () => {
-    return new Date().toISOString().split("T")[0];
+    return new Date().toISOString().split('T')[0];
   };
 
   // Function to get selected site ID from localStorage
   const getSelectedSiteId = () => {
-    return localStorage.getItem("selectedSiteId") || "2189"; // Default to 2189 if not found
+    return localStorage.getItem('selectedSiteId') || '2189'; // Default to 2189 if not found
   };
 
   // Function to fetch asset statistics from API
@@ -263,22 +259,17 @@ export const AssetDashboard = () => {
     try {
       const siteId = getSelectedSiteId();
       const currentDate = getCurrentDate();
-
+      
       // Build the API URL with parameters
-      const url = `${BASE_URL}${
-        ENDPOINTS.ASSET_STATISTICS
-      }?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace(
-        "Bearer ",
-        ""
-      )}`;
-
-      console.log("Fetching asset statistics from:", url);
+      const url = `${BASE_URL}${ENDPOINTS.ASSET_STATISTICS}?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace('Bearer ', '')}`;
+      
+      console.log('Fetching asset statistics from:', url);
 
       const response = await fetch(url, {
-        method: "GET",
+        method: 'GET',
         headers: {
-          Authorization: getAuthHeader(),
-          "Content-Type": "application/json",
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
         },
       });
 
@@ -287,16 +278,12 @@ export const AssetDashboard = () => {
       }
 
       const data = await response.json();
-      console.log("Asset statistics response:", data);
-
+      console.log('Asset statistics response:', data);
+      
       setAssetStatistics(data);
     } catch (error) {
-      console.error("Error fetching asset statistics:", error);
-      setStatisticsError(
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch asset statistics"
-      );
+      console.error('Error fetching asset statistics:', error);
+      setStatisticsError(error instanceof Error ? error.message : 'Failed to fetch asset statistics');
     } finally {
       setStatisticsLoading(false);
     }
@@ -310,22 +297,17 @@ export const AssetDashboard = () => {
     try {
       const siteId = getSelectedSiteId();
       const currentDate = getCurrentDate();
-
+      
       // Build the API URL with parameters
-      const url = `${BASE_URL}${
-        ENDPOINTS.ASSET_STATUS
-      }?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace(
-        "Bearer ",
-        ""
-      )}`;
-
-      console.log("Fetching asset status from:", url);
+      const url = `${BASE_URL}${ENDPOINTS.ASSET_STATUS}?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace('Bearer ', '')}`;
+      
+      console.log('Fetching asset status from:', url);
 
       const response = await fetch(url, {
-        method: "GET",
+        method: 'GET',
         headers: {
-          Authorization: getAuthHeader(),
-          "Content-Type": "application/json",
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
         },
       });
 
@@ -334,14 +316,12 @@ export const AssetDashboard = () => {
       }
 
       const data = await response.json();
-      console.log("Asset status response:", data);
-
+      console.log('Asset status response:', data);
+      
       setAssetStatus(data);
     } catch (error) {
-      console.error("Error fetching asset status:", error);
-      setStatusError(
-        error instanceof Error ? error.message : "Failed to fetch asset status"
-      );
+      console.error('Error fetching asset status:', error);
+      setStatusError(error instanceof Error ? error.message : 'Failed to fetch asset status');
     } finally {
       setStatusLoading(false);
     }
@@ -355,22 +335,17 @@ export const AssetDashboard = () => {
     try {
       const siteId = getSelectedSiteId();
       const currentDate = getCurrentDate();
-
+      
       // Build the API URL with parameters
-      const url = `${BASE_URL}${
-        ENDPOINTS.ASSET_DISTRIBUTIONS
-      }?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace(
-        "Bearer ",
-        ""
-      )}`;
-
-      console.log("Fetching asset distributions from:", url);
+      const url = `${BASE_URL}${ENDPOINTS.ASSET_DISTRIBUTIONS}?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace('Bearer ', '')}`;
+      
+      console.log('Fetching asset distributions from:', url);
 
       const response = await fetch(url, {
-        method: "GET",
+        method: 'GET',
         headers: {
-          Authorization: getAuthHeader(),
-          "Content-Type": "application/json",
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
         },
       });
 
@@ -379,16 +354,12 @@ export const AssetDashboard = () => {
       }
 
       const data = await response.json();
-      console.log("Asset distributions response:", data);
-
+      console.log('Asset distributions response:', data);
+      
       setAssetDistributions(data);
     } catch (error) {
-      console.error("Error fetching asset distributions:", error);
-      setDistributionsError(
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch asset distributions"
-      );
+      console.error('Error fetching asset distributions:', error);
+      setDistributionsError(error instanceof Error ? error.message : 'Failed to fetch asset distributions');
     } finally {
       setDistributionsLoading(false);
     }
@@ -401,20 +372,17 @@ export const AssetDashboard = () => {
 
     try {
       const siteId = getSelectedSiteId();
-
+      
       // Build the API URL with parameters
-      const url = `${BASE_URL}/pms/assets/group_wise_assets.json?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace(
-        "Bearer ",
-        ""
-      )}`;
-
-      console.log("Fetching group-wise assets from:", url);
+      const url = `${BASE_URL}/pms/assets/group_wise_assets.json?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace('Bearer ', '')}`;
+      
+      console.log('Fetching group-wise assets from:', url);
 
       const response = await fetch(url, {
-        method: "GET",
+        method: 'GET',
         headers: {
-          Authorization: getAuthHeader(),
-          "Content-Type": "application/json",
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
         },
       });
 
@@ -423,24 +391,15 @@ export const AssetDashboard = () => {
       }
 
       const data = await response.json();
-      console.log("Group-wise assets response:", data);
-
+      console.log('Group-wise assets response:', data);
+      
       setGroupWiseAssets(data);
     } catch (error) {
-      console.error("Error fetching group-wise assets:", error);
-      setGroupWiseError(
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch group-wise assets"
-      );
+      console.error('Error fetching group-wise assets:', error);
+      setGroupWiseError(error instanceof Error ? error.message : 'Failed to fetch group-wise assets');
     } finally {
       setGroupWiseLoading(false);
     }
-  };
-  const pagination = {
-    currentPage,
-    totalPages: totalPages || 1,
-    totalCount: totalCount || 0,
   };
 
   // Fetch initial assets data
@@ -458,12 +417,11 @@ export const AssetDashboard = () => {
     fetchGroupWiseAssets();
   }, []);
 
-  
   // Transform Redux assets to match the expected Asset interface
-  const transformedAssets = assets.map((asset, index) => ({
+  const transformedAssets = assets.map((asset) => ({
     id: asset.id?.toString() || "",
     name: asset.name || "",
-    serialNumber: ((pagination.currentPage - 1) * 15 + index + 1).toString(),
+    serialNumber: asset.serial_number || "",
     assetNumber: asset.asset_number || "",
     status: asset.status as "in_use" | "in_storage" | "breakdown" | "disposed",
     siteName: asset.site_name || "",
@@ -476,10 +434,10 @@ export const AssetDashboard = () => {
     assetType: asset.asset_type,
   }));
 
-  const transformedSearchedAssets = searchAssets.map((asset,index) => ({
+  const transformedSearchedAssets = searchAssets.map((asset) => ({
     id: asset.id?.toString() || "",
     name: asset.name || "",
-    serialNumber: ((pagination.currentPage - 1) * 15 + index + 1).toString(),
+    serialNumber: asset.serialNumber || "",
     assetNumber: asset.assetNumber || "",
     status: asset.status as "in_use" | "in_storage" | "breakdown" | "disposed",
     siteName: asset.siteName || "",
@@ -504,6 +462,11 @@ export const AssetDashboard = () => {
   const allFilteredAssets = displayAssets; // This represents all filtered results
 
   // Create pagination object for compatibility
+  const pagination = {
+    currentPage,
+    totalPages: totalPages || 1,
+    totalCount: totalCount || 0,
+  };
 
   // Create stats object based on current displayed assets (filtered or unfiltered)
   const calculateStats = (assetList: any[]) => {
@@ -786,47 +749,42 @@ export const AssetDashboard = () => {
   const processAssetStatusForCharts = () => {
     // If we have asset status data from API, use it, otherwise use stats
     const chartStatusData = [
-      {
-        name: "In Use",
-        value:
-          assetStatistics.assets_in_use?.total_assets_in_use || stats.inUse,
-        color: "#c6b692",
+      { 
+        name: "In Use", 
+        value: assetStatistics.assets_in_use?.total_assets_in_use || stats.inUse, 
+        color: "#c6b692" 
       },
-      {
-        name: "Breakdown",
-        value:
-          assetStatistics.assets_in_breakdown?.total_assets_in_breakdown ||
-          stats.breakdown,
-        color: "#d8dcdd",
-      },
+      { 
+        name: "Breakdown", 
+        value: assetStatistics.assets_in_breakdown?.total_assets_in_breakdown || stats.breakdown, 
+        color: "#d8dcdd" 
+      }
     ];
 
     // Use API data for asset type distribution if available
-    const chartTypeData = assetDistributions
-      ? [
-          {
-            name: "IT Equipment",
-            value: assetDistributions.info.total_it_assets,
-            color: "#d8dcdd",
-          },
-          {
-            name: "Non-IT Equipment",
-            value: assetDistributions.info.total_non_it_assets,
-            color: "#c6b692",
-          },
-        ]
-      : [
-          {
-            name: "IT Equipment",
-            value: stats.itAssets,
-            color: "#d8dcdd",
-          },
-          {
-            name: "Non-IT Equipment",
-            value: stats.nonItAssets,
-            color: "#c6b692",
-          },
-        ];
+    const chartTypeData = assetDistributions ? [
+      { 
+        name: "IT Equipment", 
+        value: assetDistributions.info.total_it_assets, 
+        color: "#d8dcdd" 
+      },
+      { 
+        name: "Non-IT Equipment", 
+        value: assetDistributions.info.total_non_it_assets, 
+        color: "#c6b692" 
+      }
+    ] : [
+      { 
+        name: "IT Equipment", 
+        value: stats.itAssets, 
+        color: "#d8dcdd" 
+      },
+      { 
+        name: "Non-IT Equipment", 
+        value: stats.nonItAssets, 
+        color: "#c6b692" 
+      }
+    ];
 
     return { chartStatusData, chartTypeData };
   };
@@ -834,10 +792,12 @@ export const AssetDashboard = () => {
   const { chartStatusData, chartTypeData } = processAssetStatusForCharts();
 
   // Process group-wise assets data for category chart
-  const categoryData = groupWiseAssets?.group_wise_assets?.map((item) => ({
+  const categoryData = groupWiseAssets?.group_wise_assets?.map(item => ({
     name: item.group_name,
-    value: item.asset_count,
-  })) || [{ name: "Loading...", value: 0 }];
+    value: item.asset_count
+  })) || [
+    { name: "Loading...", value: 0 }
+  ];
 
   const agingMatrixData = [
     { priority: "P1", "0-1Y": 15, "1-2Y": 8, "2-3Y": 5, "3-4Y": 3, "4-5Y": 2 },
@@ -911,10 +871,7 @@ export const AssetDashboard = () => {
               </div>
               <div>
                 <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  {statisticsLoading
-                    ? "..."
-                    : assetStatistics.total_assets_count?.total_assets_count ||
-                      stats.total}
+                  {statisticsLoading ? "..." : (assetStatistics.total_assets_count?.total_assets_count || stats.total)}
                 </div>
                 <div className="text-sm text-gray-600">Total Assets</div>
               </div>
@@ -933,10 +890,7 @@ export const AssetDashboard = () => {
               </div>
               <div>
                 <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  {statisticsLoading
-                    ? "..."
-                    : assetStatistics.assets_in_use?.total_assets_in_use ||
-                      stats.inUse}
+                  {statisticsLoading ? "..." : (assetStatistics.assets_in_use?.total_assets_in_use || stats.inUse)}
                 </div>
                 <div className="text-sm text-gray-600">Asset In Use</div>
               </div>
@@ -952,10 +906,7 @@ export const AssetDashboard = () => {
               </div>
               <div>
                 <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  {statisticsLoading
-                    ? "..."
-                    : assetStatistics.assets_in_breakdown
-                        ?.total_assets_in_breakdown || stats.breakdown}
+                  {statisticsLoading ? "..." : (assetStatistics.assets_in_breakdown?.total_assets_in_breakdown || stats.breakdown)}
                 </div>
                 <div className="text-sm text-gray-600">Asset In Breakdown</div>
               </div>
@@ -971,10 +922,7 @@ export const AssetDashboard = () => {
               </div>
               <div>
                 <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  {statisticsLoading
-                    ? "..."
-                    : assetStatistics.critical_assets_in_breakdown
-                        ?.total_assets_in_breakdown || 0}
+                  {statisticsLoading ? "..." : (assetStatistics.critical_assets_in_breakdown?.total_assets_in_breakdown || 0)}
                 </div>
                 <div className="text-sm text-gray-600">
                   Critical Assets In Breakdown
@@ -992,9 +940,7 @@ export const AssetDashboard = () => {
               </div>
               <div>
                 <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  {statisticsLoading
-                    ? "..."
-                    : assetStatistics.ppm_conduct_assets_count?.total || 0}
+                  {statisticsLoading ? "..." : (assetStatistics.ppm_conduct_assets_count?.total || 0)}
                 </div>
                 <div className="text-sm text-gray-600">PPM Overdue</div>
               </div>
@@ -1010,9 +956,7 @@ export const AssetDashboard = () => {
               </div>
               <div>
                 <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  {statisticsLoading
-                    ? "..."
-                    : assetStatistics.average_customer_rating?.avg_rating || 0}
+                  {statisticsLoading ? "..." : (assetStatistics.average_customer_rating?.avg_rating || 0)}
                 </div>
                 <div className="text-sm text-gray-600">Customer Average</div>
               </div>
@@ -1022,10 +966,8 @@ export const AssetDashboard = () => {
           {/* Error message for statistics */}
           {statisticsError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              <p className="text-sm">
-                Failed to load asset statistics: {statisticsError}
-              </p>
-              <button
+              <p className="text-sm">Failed to load asset statistics: {statisticsError}</p>
+              <button 
                 onClick={fetchAssetStatistics}
                 className="text-red-800 underline text-sm mt-1 hover:text-red-900"
               >
@@ -1037,10 +979,8 @@ export const AssetDashboard = () => {
           {/* Error message for status */}
           {statusError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              <p className="text-sm">
-                Failed to load asset status: {statusError}
-              </p>
-              <button
+              <p className="text-sm">Failed to load asset status: {statusError}</p>
+              <button 
                 onClick={fetchAssetStatus}
                 className="text-red-800 underline text-sm mt-1 hover:text-red-900"
               >
@@ -1052,10 +992,8 @@ export const AssetDashboard = () => {
           {/* Error message for distributions */}
           {distributionsError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              <p className="text-sm">
-                Failed to load asset distributions: {distributionsError}
-              </p>
-              <button
+              <p className="text-sm">Failed to load asset distributions: {distributionsError}</p>
+              <button 
                 onClick={fetchAssetDistributions}
                 className="text-red-800 underline text-sm mt-1 hover:text-red-900"
               >
@@ -1067,10 +1005,8 @@ export const AssetDashboard = () => {
           {/* Error message for group-wise assets */}
           {groupWiseError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              <p className="text-sm">
-                Failed to load group-wise assets: {groupWiseError}
-              </p>
-              <button
+              <p className="text-sm">Failed to load group-wise assets: {groupWiseError}</p>
+              <button 
                 onClick={fetchGroupWiseAssets}
                 className="text-red-800 underline text-sm mt-1 hover:text-red-900"
               >
@@ -1106,15 +1042,10 @@ export const AssetDashboard = () => {
                       if (chartId === "donutCharts") {
                         return (
                           <SortableChartItem key={chartId} id={chartId}>
-                            <DonutChartGrid
+                            <DonutChartGrid 
                               assetStatusData={chartStatusData}
                               assetTypeData={chartTypeData}
-                              loading={
-                                statisticsLoading ||
-                                statusLoading ||
-                                distributionsLoading ||
-                                groupWiseLoading
-                              }
+                              loading={statisticsLoading || statusLoading || distributionsLoading || groupWiseLoading}
                             />
                           </SortableChartItem>
                         );
@@ -1131,9 +1062,7 @@ export const AssetDashboard = () => {
                                 >
                                   Category-wise Assets
                                   {groupWiseLoading && (
-                                    <span className="ml-2 text-sm text-gray-500">
-                                      (Loading...)
-                                    </span>
+                                    <span className="ml-2 text-sm text-gray-500">(Loading...)</span>
                                   )}
                                 </h3>
                                 <Download className="w-4 h-4 text-[hsl(var(--analytics-muted))] cursor-pointer" />
@@ -1141,10 +1070,8 @@ export const AssetDashboard = () => {
                               {groupWiseError ? (
                                 <div className="flex items-center justify-center h-64 text-red-500">
                                   <div className="text-center">
-                                    <p className="mb-2">
-                                      Failed to load category data
-                                    </p>
-                                    <button
+                                    <p className="mb-2">Failed to load category data</p>
+                                    <button 
                                       onClick={fetchGroupWiseAssets}
                                       className="text-red-600 underline hover:text-red-800"
                                     >
@@ -1335,14 +1262,14 @@ export const AssetDashboard = () => {
           ) : (
             <>
               <AssetStats stats={{
-                total: totalCount || 0,
-                total_value: totalValue ? `₹${totalValue.toLocaleString()}` : '₹0.00',
-                nonItAssets: assetDistributions?.info?.total_non_it_assets || 0,
-                itAssets: assetDistributions?.info?.total_it_assets || 0,
-                inUse: assetStatistics?.assets_in_use?.total_assets_in_use || 0,
-                breakdown: assetStatistics?.assets_in_breakdown?.total_assets_in_breakdown || 0,
-                in_store: 0, // Add if available in API
-                dispose: 0, // Add if available in API
+                total: data.length,
+                total_value: totalValue?.toString() || '0',
+                nonItAssets: data.filter(asset => !asset.asset_type).length,
+                itAssets: data.filter(asset => asset.asset_type).length,
+                inUse: data.filter(asset => asset.status === 'in_use').length,
+                breakdown: data.filter(asset => asset.status === 'breakdown').length,
+                in_store: data.filter(asset => asset.status === 'in_storage').length,
+                dispose: data.filter(asset => asset.status === 'disposed').length,
               }} onCardClick={handleStatCardClick} />
 
               {/* <AssetActions
