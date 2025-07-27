@@ -26,9 +26,10 @@ interface Asset {
 interface AssociateServiceModalProps {
   isOpen: boolean;
   onClose: () => void;
+  serviceId: string;
 }
 
-export const AssociateServiceModal = ({ isOpen, onClose }: AssociateServiceModalProps) => {
+export const AssociateServiceModal = ({ isOpen, onClose, serviceId }: AssociateServiceModalProps) => {
   const { toast } = useToast();
   const [selectedAsset, setSelectedAsset] = useState('');
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -39,7 +40,11 @@ export const AssociateServiceModal = ({ isOpen, onClose }: AssociateServiceModal
     const token = localStorage.getItem('token');
 
     if (!baseUrl || !token) {
-      alert('Missing base URL or token');
+      toast({
+        title: "Error",
+        description: "Missing base URL or token",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -64,13 +69,7 @@ export const AssociateServiceModal = ({ isOpen, onClose }: AssociateServiceModal
     }
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchAssetData();
-    }
-  }, [isOpen]);
-
-  const handleAssociate = () => {
+  const handleAssociate = async () => {
     if (!selectedAsset) {
       toast({
         title: "Error",
@@ -79,13 +78,59 @@ export const AssociateServiceModal = ({ isOpen, onClose }: AssociateServiceModal
       });
       return;
     }
-    console.log('Associating service with asset:', selectedAsset);
-    toast({
-      title: "Success",
-      description: "Service associated successfully!",
-    });
-    onClose();
+
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+
+    if (!baseUrl || !token) {
+      toast({
+        title: "Error",
+        description: "Missing base URL or token",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await axios.post(
+        `https://${baseUrl}/pms/services/${serviceId}/associate_services.json`,
+        {
+          associate: {
+            asset_id: parseInt(selectedAsset),
+            service_id: parseInt(serviceId),
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      toast({
+        title: "Success",
+        description: "Service associated successfully!",
+      });
+      onClose();
+    } catch (error) {
+      console.error('Failed to associate service:', error);
+      toast({
+        title: "Error",
+        description: "Failed to associate service",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchAssetData();
+    }
+  }, [isOpen]);
 
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
@@ -144,6 +189,7 @@ export const AssociateServiceModal = ({ isOpen, onClose }: AssociateServiceModal
           <Button 
             onClick={handleAssociate}
             className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8"
+            disabled={loading}
           >
             Associate Service
           </Button>
