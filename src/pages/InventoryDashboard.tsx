@@ -32,6 +32,10 @@ import { InventoryFilterDialog } from "@/components/InventoryFilterDialog";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InventorySelector } from "@/components/InventorySelector";
+import { InventoryAnalyticsSelector } from "@/components/InventoryAnalyticsSelector";
+import { InventoryAnalyticsFilterDialog } from "@/components/InventoryAnalyticsFilterDialog";
+import { InventoryAnalyticsCard } from "@/components/InventoryAnalyticsCard";
+import { inventoryAnalyticsAPI } from "@/services/inventoryAnalyticsAPI";
 import {
   DndContext,
   closestCenter,
@@ -184,15 +188,25 @@ export const InventoryDashboard = () => {
     startDate: new Date('2020-01-01'),
     endDate: new Date('2025-01-01')
   });
-  const [analyticsData, setAnalyticsData] = useState({
-    categoryData: [],
-    statusData: {
-      activeItems: 0,
-      inactiveItems: 0,
-      criticalItems: 0,
-      nonCriticalItems: 0
-    }
+  
+  // Analytics state
+  const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
+  const [analyticsDateRange, setAnalyticsDateRange] = useState({
+    startDate: '01/01/2020',
+    endDate: '01/01/2025'
   });
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<any>({});
+  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>([
+    'items_status.json',
+    'category_wise_items.json', 
+    'inventory_consumption_green.json'
+  ]);
+  const [visibleAnalyticsSections, setVisibleAnalyticsSections] = useState<string[]>([
+    'itemsStatus',
+    'categoryWise',
+    'greenConsumption'
+  ]);
 
   const pageSize = 15; // Use larger page size for API data
 
@@ -669,32 +683,46 @@ export const InventoryDashboard = () => {
             value="list"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
           >
-            <svg
-              width="18"
-              height="19"
-              viewBox="0 0 18 19"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="stroke-current"
-            >
-              <path
-                d="M1.875 4.25L3 5.375L5.25 3.125M1.875 9.5L3 10.625L5.25 8.375M1.875 14.75L3 15.875L5.25 13.625M7.875 9.5H16.125M7.875 14.75H16.125M7.875 4.25H16.125"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Package className="w-4 h-4" />
             <span className="hidden sm:inline">Inventory List</span>
           </TabsTrigger>
           <TabsTrigger
             value="analytics"
             className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
           >
-            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+            <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">Analytics</span>
-            <span className="sm:hidden">Charts</span>
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setIsAnalyticsFilterOpen(true)}
+                variant="outline"
+                className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
+              >
+                <Filter className="w-4 h-4" />
+                Filter Analytics
+              </Button>
+            </div>
+            <InventoryAnalyticsSelector onSelectionChange={(options) => setSelectedAnalyticsOptions(options)} />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <InventoryAnalyticsCard
+              title="Items Status"
+              data={analyticsData.statusData}
+              type="itemsStatus"
+            />
+            <InventoryAnalyticsCard
+              title="Category Wise Items"
+              data={analyticsData.statusData}
+              type="categoryWise"
+            />
+          </div>
+        </TabsContent>
      \
         <TabsContent value="list" className="space-y-4 sm:space-y-6">
           {/* Error handling */}
@@ -885,6 +913,11 @@ export const InventoryDashboard = () => {
           setDateRange(range);
           dispatch(fetchInventoryData({ filters: { startDate: range.startDate, endDate: range.endDate } }));
         }}
+      />
+      <InventoryAnalyticsFilterDialog
+        isOpen={isAnalyticsFilterOpen}
+        onClose={() => setIsAnalyticsFilterOpen(false)}
+        onApplyFilters={(filters) => setAnalyticsDateRange(filters)}
       />
     </div>
   );

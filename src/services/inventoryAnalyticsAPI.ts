@@ -1,27 +1,44 @@
 // Types for inventory analytics API responses
 export interface ItemsStatusData {
-  active_items: number;
-  inactive_items: number;
-  critical_items: number;
-  non_critical_items: number;
+  info_active_items: string;
+  count_of_active_items: number;
+  info_inactive_items: string;
+  count_of_inactive_items: number;
+  info_critical_items: string;
+  count_of_critical_items: number;
+  info_non_critical_items: string;
+  count_of_non_critical_items: number;
 }
 
 export interface CategoryWiseData {
-  category_name: string;
-  item_count: number;
-}
-
-export interface GreenConsumptionItem {
-  product_name: string;
-  consumption_quantity: number;
-  unit: string;
-  last_consumed_date: string;
+  info_active_items: string;
+  count_of_active_items: number;
+  info_inactive_items: string;
+  count_of_inactive_items: number;
+  info_critical_items: string;
+  count_of_critical_items: number;
+  info_non_critical_items: string;
+  count_of_non_critical_items: number;
 }
 
 export interface GreenConsumptionData {
-  total_green_products: number;
-  total_consumption: number;
-  recent_consumption: GreenConsumptionItem[];
+  success: number;
+  message: string;
+  response: Array<{
+    date: string;
+    product: string;
+    unit: string;
+    opening: number;
+    addition: number;
+    consumption: number;
+    current_stock: number;
+    cost_per_unit: number;
+    cost: number;
+  }>;
+  info: {
+    formula: string;
+    info: string;
+  };
 }
 
 export interface ConsumptionReportGreenData {
@@ -160,15 +177,32 @@ export interface MaintenanceDueData {
 
 // Utility functions
 const formatDateForAPI = (date: Date): string => {
-  return date.toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 const getCurrentSiteId = (): string => {
-  // Try to get site ID from localStorage or URL params
-  const siteId = localStorage.getItem('current_site_id') || 
-                 new URLSearchParams(window.location.search).get('site_id') ||
-                 '1'; // fallback
+  const siteId = localStorage.getItem('currentSiteId') || 
+                localStorage.getItem('site_id') || 
+                localStorage.getItem('siteId') ||
+                localStorage.getItem('selectedSiteId');
+  
+  if (!siteId) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSiteId = urlParams.get('site_id');
+    if (urlSiteId) return urlSiteId;
+    
+    console.warn('Site ID not found, using default: 7');
+    return '7';
+  }
+  
   return siteId;
+};
+
+const getAccessToken = (): string => {
+  return localStorage.getItem('access_token') || 'WzsvAV9ZPDWxXK-e0sJK0Sda6HDnQ1aTLaYnjXuWthU';
 };
 
 // Inventory Analytics API
@@ -176,30 +210,48 @@ export const inventoryAnalyticsAPI = {
   // Get items status data (active/inactive/critical)
   async getItemsStatus(fromDate: Date, toDate: Date): Promise<ItemsStatusData> {
     const siteId = getCurrentSiteId();
-    const response = await fetch(
-      `/analytics/inventory/items_status.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
-    );
-    if (!response.ok) throw new Error('Failed to fetch items status data');
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+    
+    const url = `https://fm-uat-api.lockated.com/pms/inventories/items_status.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return response.json();
   },
 
   // Get category-wise items data
-  async getCategoryWise(fromDate: Date, toDate: Date): Promise<CategoryWiseData[]> {
+  async getCategoryWise(fromDate: Date, toDate: Date): Promise<CategoryWiseData> {
     const siteId = getCurrentSiteId();
-    const response = await fetch(
-      `/analytics/inventory/category_wise_items.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
-    );
-    if (!response.ok) throw new Error('Failed to fetch category-wise data');
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+    
+    const url = `https://fm-uat-api.lockated.com/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return response.json();
   },
 
   // Get green consumption data
   async getGreenConsumption(fromDate: Date, toDate: Date): Promise<GreenConsumptionData> {
     const siteId = getCurrentSiteId();
-    const response = await fetch(
-      `/analytics/inventory/inventory_consumption_green.json?site_id=${siteId}&from_date=${formatDateForAPI(fromDate)}&to_date=${formatDateForAPI(toDate)}`
-    );
-    if (!response.ok) throw new Error('Failed to fetch green consumption data');
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+    
+    const url = `https://fm-uat-api.lockated.com/pms/inventories/inventory_consumption_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     return response.json();
   },
 

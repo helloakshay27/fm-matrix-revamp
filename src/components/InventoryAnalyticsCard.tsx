@@ -4,19 +4,19 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 interface InventoryAnalyticsCardProps {
   title: string;
   data: any;
-  type?: 'bar' | 'pie' | 'table';
-  config?: any;
+  type?: 'itemsStatus' | 'categoryWise' | 'greenConsumption' | 'consumptionReportGreen' | 'consumptionReportNonGreen' | 'currentMinimumStockNonGreen' | 'currentMinimumStockGreen';
+  className?: string;
 }
 
 export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   title,
   data,
-  type = 'bar',
-  config = {}
+  type = 'itemsStatus',
+  className = ''
 }) => {
   if (!data) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+      <div className={`bg-white rounded-lg border border-gray-200 p-6 shadow-sm ${className}`}>
         <h3 className="text-lg font-bold text-[#C72030] mb-4">{title}</h3>
         <div className="flex items-center justify-center h-32 text-gray-500">
           No data available
@@ -25,59 +25,83 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
     );
   }
 
-  const renderChart = () => {
+  const renderContent = () => {
     switch (type) {
-      case 'pie':
-        const pieData = Array.isArray(data) ? data : [data];
-        const colors = ['#C72030', '#F97316', '#EAB308', '#22C55E', '#3B82F6', '#8B5CF6', '#EC4899'];
-        
+      case 'itemsStatus':
+      case 'categoryWise':
+        // Convert status data to chart format
+        const statusChartData = [
+          { name: 'Active Items', value: data.count_of_active_items, color: '#22C55E' },
+          { name: 'Inactive Items', value: data.count_of_inactive_items, color: '#EF4444' },
+          { name: 'Critical Items', value: data.count_of_critical_items, color: '#F97316' },
+          { name: 'Non-Critical Items', value: data.count_of_non_critical_items, color: '#3B82F6' }
+        ];
+
         return (
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-                label={({ name, value }) => `${name}: ${value}`}
-              >
-                {pieData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="space-y-4">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={statusChartData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, value }) => value > 0 ? `${value}` : ''}
+                >
+                  {statusChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            
+            {/* Legend */}
+            <div className="flex justify-center gap-6 mt-4 flex-wrap">
+              {statusChartData.map((item, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
+                  <span className="text-sm font-medium text-gray-700">{item.name}: {item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         );
 
-      case 'table':
-        const tableData = Array.isArray(data) ? data : [data];
-        if (tableData.length === 0) return <div>No data available</div>;
-        
-        const headers = Object.keys(tableData[0] || {});
-        
+      case 'greenConsumption':
+      case 'consumptionReportNonGreen':
+        if (!data.response || !Array.isArray(data.response)) {
+          return <div>No consumption data available</div>;
+        }
+
         return (
           <div className="overflow-x-auto">
             <table className="min-w-full table-auto">
               <thead>
                 <tr className="bg-gray-50">
-                  {headers.map((header) => (
-                    <th key={header} className="px-4 py-2 text-left text-sm font-medium text-gray-700 capitalize">
-                      {header.replace(/_/g, ' ')}
-                    </th>
-                  ))}
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Product</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Unit</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Opening</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Addition</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Consumption</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Current Stock</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Cost</th>
                 </tr>
               </thead>
               <tbody>
-                {tableData.map((row, index) => (
+                {data.response.map((row: any, index: number) => (
                   <tr key={index} className="border-t">
-                    {headers.map((header) => (
-                      <td key={header} className="px-4 py-2 text-sm text-gray-600">
-                        {row[header]}
-                      </td>
-                    ))}
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.date}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.unit}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.opening}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.addition}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.consumption}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.current_stock}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">${row.cost}</td>
                   </tr>
                 ))}
               </tbody>
@@ -85,34 +109,89 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
           </div>
         );
 
-      default: // bar chart
-        const barData = Array.isArray(data) ? data : [data];
-        
+      case 'consumptionReportGreen':
+        if (!data.response) {
+          return <div>No consumption report data available</div>;
+        }
+
+        const consumptionData = Object.entries(data.response).map(([product, value]) => ({
+          name: product,
+          value: value
+        }));
+
         return (
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={barData}>
+            <BarChart data={consumptionData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
                 dataKey="name" 
                 angle={-45}
                 textAnchor="end"
-                height={80}
+                height={100}
               />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="value" fill="#C72030" />
+              <Bar dataKey="value" fill="#22C55E" />
             </BarChart>
           </ResponsiveContainer>
         );
+
+      case 'currentMinimumStockNonGreen':
+      case 'currentMinimumStockGreen':
+        if (!data.response || !Array.isArray(data.response)) {
+          return <div>No stock data available</div>;
+        }
+
+        return (
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Product</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Current Stock</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Minimum Stock</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.response.map((item: any, index: number) => {
+                  const productName = Object.keys(item)[0];
+                  const productData = item[productName];
+                  const isLowStock = productData.Current_Stock < parseInt(productData.Minimum_Stock);
+                  
+                  return (
+                    <tr key={index} className="border-t">
+                      <td className="px-4 py-2 text-sm text-gray-600">{productName}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{productData.Current_Stock}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{productData.Minimum_Stock}</td>
+                      <td className="px-4 py-2 text-sm">
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          isLowStock 
+                            ? 'bg-red-100 text-red-700' 
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {isLowStock ? 'Low Stock' : 'Normal'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+
+      default:
+        return <div>Chart type not supported</div>;
     }
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+    <div className={`bg-white rounded-lg border border-gray-200 p-6 shadow-sm ${className}`}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
       </div>
-      {renderChart()}
+      {renderContent()}
     </div>
   );
 };

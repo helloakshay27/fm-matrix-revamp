@@ -1,61 +1,57 @@
 import React, { useState } from 'react';
-import { ChevronDown, Check, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CheckSquare, Square, ChevronDown, Package, Leaf, Activity, FileText, AlertTriangle, BarChart, Database } from 'lucide-react';
 
 const inventoryAnalyticsOptions = [
   { 
     id: 'items-status', 
-    label: 'Items Status (Active/Inactive/Critical)', 
+    label: 'Items Status', 
     checked: true, 
     endpoint: 'items_status.json',
-    icon: '📊' 
+    icon: Package 
   },
   { 
     id: 'category-wise', 
-    label: 'Category-wise Items', 
-    checked: false, 
+    label: 'Category Wise Items', 
+    checked: true, 
     endpoint: 'category_wise_items.json',
-    icon: '📈' 
+    icon: BarChart 
   },
   { 
     id: 'green-consumption', 
     label: 'Green Consumption', 
-    checked: false, 
+    checked: true, 
     endpoint: 'inventory_consumption_green.json',
-    icon: '🌱' 
+    icon: Leaf 
   },
   { 
-    id: 'consumption-green-report', 
-    label: 'Consumption Green Report', 
+    id: 'consumption-report-green', 
+    label: 'Consumption Report Green', 
     checked: false, 
     endpoint: 'consumption_report_green.json',
-    icon: '📋' 
+    icon: Activity 
   },
   { 
-    id: 'consumption-non-green-report', 
-    label: 'Consumption Report Non Green', 
+    id: 'consumption-report-non-green', 
+    label: 'Consumption Report Non-Green', 
     checked: false, 
     endpoint: 'consumption_report_non_green.json',
-    icon: '📄' 
+    icon: FileText 
   },
   { 
     id: 'current-minimum-non-green', 
-    label: 'Current Minimum Stock Non Green', 
+    label: 'Current Minimum Stock Non-Green', 
     checked: false, 
     endpoint: 'current_minimum_stock_non_green.json',
-    icon: '⚠️' 
+    icon: AlertTriangle 
   },
   { 
     id: 'current-minimum-green', 
     label: 'Current Minimum Stock Green', 
     checked: false, 
     endpoint: 'current_minimum_stock_green.json',
-    icon: '✅' 
+    icon: Database 
   },
 ];
 
@@ -76,8 +72,8 @@ export function InventoryAnalyticsSelector({ onSelectionChange, dateRange }: Inv
       
       // Get selected endpoints
       const selectedEndpoints = newOptions
-        .filter(opt => opt.checked)
-        .map(opt => opt.endpoint);
+        .filter(option => option.checked)
+        .map(option => option.endpoint);
       
       // Notify parent component
       onSelectionChange?.(selectedEndpoints);
@@ -86,62 +82,50 @@ export function InventoryAnalyticsSelector({ onSelectionChange, dateRange }: Inv
     });
   };
 
-  const selectedCount = options.filter(opt => opt.checked).length;
+  const selectedCount = options.filter(option => option.checked).length;
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button 
           variant="outline" 
-          className="bg-white border-[hsl(var(--analytics-border))] text-[hsl(var(--analytics-text))] hover:bg-[hsl(var(--analytics-background))] min-w-[200px] justify-between"
+          className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
         >
-          <div className="flex items-center gap-2">
-            <Leaf className="h-4 w-4 text-green-600" />
-            Inventory Analytics ({selectedCount})
-          </div>
-          <ChevronDown className="h-4 w-4" />
+          <Package className="w-4 h-4" />
+          Select Reports ({selectedCount})
+          <ChevronDown className="w-4 h-4" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80 p-0" align="end">
-        <div className="bg-white border border-[hsl(var(--analytics-border))] rounded-lg overflow-hidden">
-          <div className="p-4 border-b border-[hsl(var(--analytics-border))] bg-[hsl(var(--analytics-background))]">
-            <h3 className="font-semibold text-[hsl(var(--analytics-text))] flex items-center gap-2">
-              <Leaf className="h-4 w-4 text-green-600" />
-              Select Inventory Reports
-            </h3>
-            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-              Choose which inventory analytics to display
-            </p>
-          </div>
-          <div className="max-h-80 overflow-y-auto">
-            {options.map((option) => (
-              <div 
+      <PopoverContent className="w-80 p-0 bg-white border border-gray-200 shadow-lg z-50" align="end">
+        <div className="p-4 border-b border-gray-200">
+          <h4 className="font-semibold text-gray-900">Inventory Analytics Reports</h4>
+          <p className="text-sm text-gray-600 mt-1">Choose reports to display</p>
+        </div>
+        <div className="max-h-72 overflow-y-auto">
+          {options.map((option) => {
+            const IconComponent = option.icon;
+            return (
+              <div
                 key={option.id}
-                className="flex items-start p-3 hover:bg-[hsl(var(--analytics-background))] cursor-pointer transition-colors border-b border-[hsl(var(--analytics-border))]/30 last:border-b-0"
+                className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
                 onClick={() => toggleOption(option.id)}
               >
-                <div className="flex items-center justify-center w-4 h-4 mr-3 mt-0.5 border border-[hsl(var(--analytics-border))] bg-white rounded">
-                  {option.checked && <Check className="h-3 w-3 text-green-600" />}
+                <div className="flex items-center gap-3">
+                  <IconComponent className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-medium text-gray-700">{option.label}</span>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{option.icon}</span>
-                    <span className="text-sm font-medium text-[hsl(var(--analytics-text))]">
-                      {option.label}
-                    </span>
-                  </div>
-                  <div className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-                    API: {option.endpoint}
-                  </div>
-                </div>
+                {option.checked ? (
+                  <CheckSquare className="w-4 h-4 text-[#C72030]" />
+                ) : (
+                  <Square className="w-4 h-4 text-gray-400" />
+                )}
               </div>
-            ))}
-          </div>
-          <div className="p-3 bg-[hsl(var(--analytics-background))] border-t border-[hsl(var(--analytics-border))]">
-            <div className="text-xs text-[hsl(var(--muted-foreground))] flex items-center gap-1">
-              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-              {selectedCount} report{selectedCount !== 1 ? 's' : ''} selected
-            </div>
+            );
+          })}
+        </div>
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
+          <div className="text-xs text-gray-600">
+            {selectedCount} of {options.length} reports selected
           </div>
         </div>
       </PopoverContent>
