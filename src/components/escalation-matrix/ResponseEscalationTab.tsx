@@ -314,25 +314,26 @@ export const ResponseEscalationTab: React.FC = () => {
     <div className="space-y-6">
       {/* Form Section */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Categories Selection */}
         <Card>
           <CardHeader>
-            <CardTitle>Category Selection</CardTitle>
+            <CardTitle>Response Escalation Configuration</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
+          <CardContent className="space-y-6">
+            {/* Category Selection Dropdown */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">Category Type</Label>
               <Select
                 disabled={categoriesLoading || selectedCategories.length >= 15}
                 onValueChange={(value) => handleCategorySelect(parseInt(value))}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder={
                     categoriesLoading ? "Loading categories..." : 
                     selectedCategories.length >= 15 ? "Maximum categories selected" :
-                    "Select a category"
+                    "Select up to 15 Options..."
                   } />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white z-50">
                   {availableCategories.map((category) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
@@ -340,105 +341,111 @@ export const ResponseEscalationTab: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
 
-            {/* Selected Categories */}
-            <div className="flex flex-wrap gap-2">
-              {selectedCategories.map((categoryId) => (
-                <Badge key={categoryId} variant="secondary" className="flex items-center gap-1">
-                  {getCategoryName(categoryId)}
-                  <X
-                    className="h-3 w-3 cursor-pointer"
-                    onClick={() => handleCategoryRemove(categoryId)}
-                  />
-                </Badge>
-              ))}
-            </div>
-
-            <div className="text-sm text-muted-foreground">
-              {selectedCategories.length}/15 categories selected
-            </div>
-
-            {form.formState.errors.categoryIds && (
-              <p className="text-sm text-destructive">{form.formState.errors.categoryIds.message}</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Escalation Levels */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Escalation Matrix</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {(['e1', 'e2', 'e3', 'e4', 'e5'] as const).map((level) => (
-              <div key={level} className="space-y-3">
-                <Label className="text-base font-semibold">
-                  {level.toUpperCase()} - Escalation Level {level.slice(1)}
-                </Label>
-                
-                <div className="flex items-center space-x-2">
-                  <Select
-                    disabled={fmUsersLoading || selectedUsers[level].length >= 15}
-                    onValueChange={(value) => handleUserSelect(level, parseInt(value))}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={
-                        fmUsersLoading ? "Loading users..." :
-                        selectedUsers[level].length >= 15 ? "Maximum users selected" :
-                        "Select a user"
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getAvailableUsers(level).map((user) => (
-                        <SelectItem key={user.id} value={user.id.toString()}>
-                          {user.displayName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Selected Users */}
+              {/* Selected Categories */}
+              {selectedCategories.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {selectedUsers[level].map((userId) => (
-                    <Badge key={userId} variant="outline" className="flex items-center gap-1">
-                      {getUserName(userId)}
+                  {selectedCategories.map((categoryId) => (
+                    <Badge key={categoryId} variant="secondary" className="flex items-center gap-1">
+                      {getCategoryName(categoryId)}
                       <X
                         className="h-3 w-3 cursor-pointer"
-                        onClick={() => handleUserRemove(level, userId)}
+                        onClick={() => handleCategoryRemove(categoryId)}
                       />
                     </Badge>
                   ))}
                 </div>
+              )}
 
-                <div className="text-sm text-muted-foreground">
-                  {selectedUsers[level].length}/15 users selected
-                </div>
+              {form.formState.errors.categoryIds && (
+                <p className="text-sm text-destructive">{form.formState.errors.categoryIds.message}</p>
+              )}
+            </div>
 
-                {form.formState.errors.escalationLevels?.[level] && (
-                  <p className="text-sm text-destructive">{form.formState.errors.escalationLevels[level]?.message}</p>
-                )}
+            {/* Escalation Matrix Table */}
+            <div className="space-y-3">
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="font-semibold">Levels</TableHead>
+                      <TableHead className="font-semibold">Escalation To</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(['e1', 'e2', 'e3', 'e4', 'e5'] as const).map((level) => (
+                      <TableRow key={level}>
+                        <TableCell className="font-medium">
+                          {level.toUpperCase()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-2">
+                            <Select
+                              disabled={fmUsersLoading || selectedUsers[level].length >= 15}
+                              onValueChange={(value) => handleUserSelect(level, parseInt(value))}
+                            >
+                              <SelectTrigger className="w-full bg-white">
+                                <SelectValue placeholder={
+                                  fmUsersLoading ? "Loading users..." :
+                                  selectedUsers[level].length >= 15 ? "Maximum users selected" :
+                                  "Select up to 15 Options..."
+                                } />
+                              </SelectTrigger>
+                              <SelectContent className="bg-white z-50">
+                                {getAvailableUsers(level).map((user) => (
+                                  <SelectItem key={user.id} value={user.id.toString()}>
+                                    {user.displayName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+
+                            {/* Selected Users */}
+                            {selectedUsers[level].length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {selectedUsers[level].map((userId) => (
+                                  <Badge key={userId} variant="outline" className="flex items-center gap-1 text-xs">
+                                    {getUserName(userId)}
+                                    <X
+                                      className="h-3 w-3 cursor-pointer"
+                                      onClick={() => handleUserRemove(level, userId)}
+                                    />
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+
+                            {form.formState.errors.escalationLevels?.[level] && (
+                              <p className="text-xs text-destructive">{form.formState.errors.escalationLevels[level]?.message}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-            ))}
+            </div>
           </CardContent>
         </Card>
 
         {/* Submit Button */}
-        <Button 
-          type="submit" 
-          className="w-full" 
-          disabled={submissionLoading || categoriesLoading || fmUsersLoading}
-        >
-          {submissionLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating Rule...
-            </>
-          ) : (
-            'Create Response Escalation Rule'
-          )}
-        </Button>
+        <div className="flex justify-center">
+          <Button 
+            type="submit" 
+            className="bg-[#C72030] hover:bg-[#A61B29] text-white border-none font-semibold px-8 py-2" 
+            disabled={submissionLoading || categoriesLoading || fmUsersLoading}
+          >
+            {submissionLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating Rule...
+              </>
+            ) : (
+              'Submit'
+            )}
+          </Button>
+        </div>
       </form>
 
       {/* Rules List Section */}
