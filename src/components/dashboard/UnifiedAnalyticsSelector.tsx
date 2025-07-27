@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets';
   endpoint: string;
   title: string;
 }
@@ -76,6 +76,19 @@ const analyticsOptions = {
     color: '#8B5CF6',
     options: [
       { id: 'amc_status_overview', endpoint: 'status_overview', label: 'AMC Status Overview' },
+    ]
+  },
+  assets: {
+    icon: Package,
+    label: 'Assets',
+    color: '#06B6D4',
+    options: [
+      { id: 'assets_group_wise', endpoint: 'group_wise', label: 'Assets Group-Wise' },
+      { id: 'assets_status', endpoint: 'asset_status', label: 'Assets Status' },
+      { id: 'assets_statistics', endpoint: 'asset_statistics', label: 'Assets Statistics' },
+      { id: 'assets_breakdown', endpoint: 'asset_breakdown', label: 'Assets Breakdown' },
+      { id: 'assets_category_wise', endpoint: 'category_wise', label: 'Category Wise Assets' },
+      { id: 'assets_overall_analytics', endpoint: 'overall_analytics', label: 'Assets Overall Analytics' },
     ]
   }
 };

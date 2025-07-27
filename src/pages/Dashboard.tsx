@@ -15,16 +15,18 @@ import { TaskAnalyticsCard } from '@/components/TaskAnalyticsCard';
 import { AMCAnalyticsCard } from '@/components/AMCAnalyticsCard';
 import { InventoryAnalyticsCard } from '@/components/dashboard/InventoryAnalyticsCard';
 import { ScheduleAnalyticsCard } from '@/components/dashboard/ScheduleAnalyticsCard';
+import { AssetAnalyticsCard } from '@/components/dashboard/AssetAnalyticsCard';
 import { ticketAnalyticsAPI } from '@/services/ticketAnalyticsAPI';
 import { taskAnalyticsAPI } from '@/services/taskAnalyticsAPI';
 import { amcAnalyticsAPI } from '@/services/amcAnalyticsAPI';
 import { inventoryAnalyticsAPI } from '@/services/inventoryAnalyticsAPI';
 import { scheduleAnalyticsAPI } from '@/services/scheduleAnalyticsAPI';
+import { assetAnalyticsAPI } from '@/services/assetAnalyticsAPI';
 import { toast } from 'sonner';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets';
   endpoint: string;
   title: string;
 }
@@ -35,6 +37,7 @@ interface DashboardData {
   schedule: any;
   inventory: any;
   amc: any;
+  assets: any;
 }
 
 export const Dashboard = () => {
@@ -49,6 +52,7 @@ export const Dashboard = () => {
     schedule: null,
     inventory: null,
     amc: null,
+    assets: null,
   });
   const [loading, setLoading] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([]);
@@ -173,6 +177,31 @@ export const Dashboard = () => {
               }
             }
             break;
+
+          case 'assets':
+            for (const analytic of analytics) {
+              switch (analytic.endpoint) {
+                case 'group_wise':
+                  promises.push(assetAnalyticsAPI.getGroupWiseAssets(dateRange.from, dateRange.to));
+                  break;
+                case 'asset_status':
+                  promises.push(assetAnalyticsAPI.getAssetStatus(dateRange.from, dateRange.to));
+                  break;
+                case 'asset_statistics':
+                  promises.push(assetAnalyticsAPI.getAssetStatistics(dateRange.from, dateRange.to));
+                  break;
+                case 'asset_breakdown':
+                  promises.push(assetAnalyticsAPI.getAssetBreakdown(dateRange.from, dateRange.to));
+                  break;
+                case 'category_wise':
+                  promises.push(assetAnalyticsAPI.getCategoryWiseAssets(dateRange.from, dateRange.to));
+                  break;
+                case 'overall_analytics':
+                  promises.push(assetAnalyticsAPI.getOverallAssetAnalytics(dateRange.from, dateRange.to));
+                  break;
+              }
+            }
+            break;
         }
       }
 
@@ -264,7 +293,15 @@ export const Dashboard = () => {
       lowStockItems = dashboardData.inventory.items_status.count_of_critical_items || 0;
     }
 
-    return { totalTickets, completedTasks, activeAMCs, lowStockItems };
+    // Add asset stats if available
+    let totalAssets = 0;
+    if (dashboardData.assets?.asset_statistics) {
+      totalAssets = dashboardData.assets.asset_statistics.total_assets || 0;
+    } else if (dashboardData.assets?.overall_analytics) {
+      totalAssets = dashboardData.assets.overall_analytics.summary?.total_assets || 0;
+    }
+
+    return { totalTickets, completedTasks, activeAMCs, lowStockItems, totalAssets };
   };
 
   const summaryStats = getSummaryStats();
@@ -312,6 +349,15 @@ export const Dashboard = () => {
       case 'schedule':
         return (
           <ScheduleAnalyticsCard
+            key={analytic.id}
+            title={analytic.title}
+            data={data}
+            type={analytic.endpoint as any}
+          />
+        );
+      case 'assets':
+        return (
+          <AssetAnalyticsCard
             key={analytic.id}
             title={analytic.title}
             data={data}
@@ -375,6 +421,17 @@ export const Dashboard = () => {
             icon={<Package className="w-6 h-6" />}
           />
         </div>
+
+        {/* Asset Summary Stats Row */}
+        {summaryStats.totalAssets > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <StatsCard
+              title="Total Assets"
+              value={summaryStats.totalAssets}
+              icon={<Package className="w-6 h-6" />}
+            />
+          </div>
+        )}
 
         {/* Analytics Grid */}
         {selectedAnalytics.length > 0 ? (
