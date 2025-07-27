@@ -710,7 +710,7 @@ export const AMCDashboard = () => {
     setEndDateFilter(tempEndDateFilter);
     setIsFilterModalOpen(false);
     setCurrentPage(1);
-    fetchFilteredAMCs(filter, 1);
+    // fetchFilteredAMCs(filter, 1);
     toast.success('Filters applied');
   };
 

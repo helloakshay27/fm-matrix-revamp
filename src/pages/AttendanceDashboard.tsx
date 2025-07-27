@@ -16,6 +16,8 @@ import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, Pagi
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAttendanceData, AttendanceRecord } from '@/store/slices/attendanceSlice';
 import { AttendanceExportModal } from '@/components/AttendanceExportModal';
+import { toast } from 'sonner';
+import axios from 'axios';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -100,6 +102,54 @@ export const AttendanceDashboard = () => {
   const handleViewDetails = (id: number) => {
     navigate(`/maintenance/attendance/details/${id}`);
   };
+
+    const handleExport = async () => {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const siteId = localStorage.getItem('selectedSiteId');
+
+      try {
+        if (!baseUrl || !token || !siteId) {
+          toast.error('Missing base URL, token, or site ID');
+          return;
+        }
+  
+        let url = `https://${baseUrl}/attendances/export.xlsx?site_id=${siteId}`;
+        if (selectedItems.length > 0) {
+          const ids = selectedItems.join(',');
+          url += `&ids=${ids}`;
+        }
+  
+        const response = await axios.get(url, {
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        if (!response.data || response.data.size === 0) {
+          toast.error('Empty file received from server');
+          return;
+        }
+  
+        const blob = new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+  
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = 'attendance_export.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
+        toast.success('Attendance data exported successfully');
+      } catch (error) {
+        console.error('Export failed:', error);
+        toast.error('Failed to export AMC data');
+      }
+    };
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedItems(attendance.map(item => String(item.id)));
@@ -177,9 +227,7 @@ export const AttendanceDashboard = () => {
   ];
 
   // Custom export handler for attendance page
-  const handleExport = () => {
-    setExportModalOpen(true);
-  };
+
   const renderCell = (item: AttendanceRecord, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
@@ -570,7 +618,8 @@ export const AttendanceDashboard = () => {
                 showBulkActions={true}
                 pagination={false}
                 loading={loading}
-                onExport={handleExport}
+                // onExport={handleExport}
+                handleExport={handleExport}
                 onFilterClick={handleFilterClick}
               />
 
