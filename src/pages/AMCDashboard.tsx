@@ -1042,7 +1042,7 @@ export const AMCDashboard = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Types</SelectItem>
-                      {uniqueAmcTypes.map((type) => (
+                      {["Asset", "Service"].map((type) => (
                         <SelectItem key={String(type)} value={String(type)}>
                           {String(type)}
                         </SelectItem>
