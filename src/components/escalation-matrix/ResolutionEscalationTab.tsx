@@ -509,6 +509,161 @@ export const ResolutionEscalationTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Create Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Select up to 15 Categories</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Category Selection */}
+            <div>
+              <ReactSelect
+                isMulti
+                options={categoryOptions}
+                onChange={(selected) => {
+                  setValue('categoryIds', selected ? selected.map(s => s.value) : []);
+                }}
+                className="mt-1"
+                placeholder="Select up to 15 Options..."
+                isLoading={categoriesLoading}
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    backgroundColor: 'white',
+                    zIndex: 10
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    backgroundColor: 'white',
+                    zIndex: 50
+                  }),
+                  menuPortal: (base) => ({
+                    ...base,
+                    zIndex: 50
+                  })
+                }}
+                menuPortalTarget={document.body}
+              />
+              {errors.categoryIds && (
+                <p className="text-sm text-red-500 mt-1">{errors.categoryIds.message}</p>
+              )}
+            </div>
+
+            {/* Escalation Matrix Table */}
+            <div>
+              <Table className="border">
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-center border-r">Levels</TableHead>
+                    <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
+                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P1</TableHead>
+                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P2</TableHead>
+                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P3</TableHead>
+                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P4</TableHead>
+                    <TableHead className="font-semibold text-center" colSpan={3}>P5</TableHead>
+                  </TableRow>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="border-r"></TableHead>
+                    <TableHead className="border-r"></TableHead>
+                    {priorities.map((priority) => (
+                      <React.Fragment key={priority}>
+                        <TableHead className="text-center text-xs border-r">Day</TableHead>
+                        <TableHead className="text-center text-xs border-r">Hrs</TableHead>
+                        <TableHead className="text-center text-xs border-r">Min</TableHead>
+                      </React.Fragment>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {escalationLevels.map((level) => (
+                    <TableRow key={level} className="border-b">
+                      <TableCell className="font-medium text-center border-r">{level.toUpperCase()}</TableCell>
+                      <TableCell className="p-2 border-r">
+                        <ReactSelect
+                          isMulti
+                          options={userOptions}
+                          onChange={(selected) => {
+                            setValue(`escalationLevels.${level}.users`, selected ? selected.map(s => s.value) : []);
+                          }}
+                          placeholder="Select up to 15 Options..."
+                          isLoading={fmUsersLoading}
+                          className="min-w-[250px]"
+                          styles={{
+                            control: (base) => ({
+                              ...base,
+                              minHeight: '32px',
+                              fontSize: '14px',
+                              border: 'none',
+                              boxShadow: 'none',
+                              backgroundColor: 'white',
+                              zIndex: 10
+                            }),
+                            menu: (base) => ({
+                              ...base,
+                              backgroundColor: 'white',
+                              zIndex: 50
+                            }),
+                            multiValue: (base) => ({
+                              ...base,
+                              fontSize: '12px'
+                            }),
+                            menuPortal: (base) => ({
+                              ...base,
+                              zIndex: 50
+                            })
+                          }}
+                          menuPortalTarget={document.body}
+                        />
+                      </TableCell>
+                      {priorities.map((priority) => (
+                        <React.Fragment key={priority}>
+                          <TableCell className="p-1 border-r">
+                            <Input
+                              type="number"
+                              min="0"
+                              {...register(`escalationLevels.${level}.priorities.${priority}.days` as const, { valueAsNumber: true })}
+                              className="w-16 h-8 text-center"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1 border-r">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="23"
+                              {...register(`escalationLevels.${level}.priorities.${priority}.hours` as const, { valueAsNumber: true })}
+                              className="w-16 h-8 text-center"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1 border-r">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="59"
+                              {...register(`escalationLevels.${level}.priorities.${priority}.minutes` as const, { valueAsNumber: true })}
+                              className="w-16 h-8 text-center"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                        </React.Fragment>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="flex justify-end">
+              <Button type="submit" disabled={loading} className="bg-[#C72030] hover:bg-[#A11B2B] text-white">
+                {loading ? 'Creating...' : 'Create'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
       {/* Filter Section */}
       <Card>
         <CardHeader>
@@ -668,165 +823,6 @@ export const ResolutionEscalationTab: React.FC = () => {
           })
         )}
       </div>
-
-      {/* Create Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Select up to 15 Categories</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Category Selection */}
-            <div>
-              <ReactSelect
-                isMulti
-                options={categoryOptions}
-                onChange={(selected) => {
-                  setValue('categoryIds', selected ? selected.map(s => s.value) : []);
-                }}
-                className="mt-1"
-                placeholder="Select up to 15 Options..."
-                isLoading={categoriesLoading}
-                styles={{
-                  control: (base) => ({
-                    ...base,
-                    backgroundColor: 'white',
-                    zIndex: 10
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    backgroundColor: 'white',
-                    zIndex: 50
-                  }),
-                  menuPortal: (base) => ({
-                    ...base,
-                    zIndex: 50
-                  })
-                }}
-                menuPortalTarget={document.body}
-              />
-              {errors.categoryIds && (
-                <p className="text-sm text-red-500 mt-1">{errors.categoryIds.message}</p>
-              )}
-            </div>
-
-            {/* Escalation Matrix Table */}
-            <div>
-              <Table className="border">
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-center border-r">Levels</TableHead>
-                    <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P1</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P2</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P3</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P4</TableHead>
-                    <TableHead className="font-semibold text-center" colSpan={3}>P5</TableHead>
-                  </TableRow>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="border-r"></TableHead>
-                    <TableHead className="border-r"></TableHead>
-                    {priorities.map((priority) => (
-                      <React.Fragment key={priority}>
-                        <TableHead className="text-center text-xs border-r">Day</TableHead>
-                        <TableHead className="text-center text-xs border-r">Hrs</TableHead>
-                        <TableHead className="text-center text-xs border-r">Min</TableHead>
-                      </React.Fragment>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {escalationLevels.map((level) => (
-                    <TableRow key={level} className="border-b">
-                      <TableCell className="font-medium text-center border-r">{level.toUpperCase()}</TableCell>
-                      <TableCell className="p-2 border-r">
-                        <ReactSelect
-                          isMulti
-                          options={userOptions}
-                          onChange={(selected) => {
-                            setValue(`escalationLevels.${level}.users`, selected ? selected.map(s => s.value) : []);
-                          }}
-                          placeholder="Select up to 15 Options..."
-                          isLoading={fmUsersLoading}
-                          className="min-w-[250px]"
-                          styles={{
-                            control: (base) => ({
-                              ...base,
-                              minHeight: '32px',
-                              fontSize: '14px',
-                              border: 'none',
-                              boxShadow: 'none',
-                              backgroundColor: 'white',
-                              zIndex: 10
-                            }),
-                            menu: (base) => ({
-                              ...base,
-                              backgroundColor: 'white',
-                              zIndex: 50
-                            }),
-                            multiValue: (base) => ({
-                              ...base,
-                              fontSize: '12px'
-                            }),
-                            menuPortal: (base) => ({
-                              ...base,
-                              zIndex: 50
-                            })
-                          }}
-                          menuPortalTarget={document.body}
-                        />
-                      </TableCell>
-                      {priorities.map((priority) => (
-                        <React.Fragment key={priority}>
-                          <TableCell className="p-1 text-center border-r">
-                            <Input
-                              type="number"
-                              min="0"
-                              {...register(`escalationLevels.${level}.priorities.${priority}.days`, { valueAsNumber: true })}
-                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
-                              placeholder="0"
-                            />
-                          </TableCell>
-                          <TableCell className="p-1 text-center border-r">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="23"
-                              {...register(`escalationLevels.${level}.priorities.${priority}.hours`, { valueAsNumber: true })}
-                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
-                              placeholder="0"
-                            />
-                          </TableCell>
-                          <TableCell className="p-1 text-center border-r last:border-r-0">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="59"
-                              {...register(`escalationLevels.${level}.priorities.${priority}.minutes`, { valueAsNumber: true })}
-                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
-                              placeholder="0"
-                            />
-                          </TableCell>
-                        </React.Fragment>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-
-            <div className="flex justify-end">
-              <Button 
-                type="submit" 
-                disabled={loading} 
-                className="bg-[#C72030] hover:bg-[#A11B2B] text-white px-8"
-              >
-                {loading ? 'Creating...' : 'Submit'}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
