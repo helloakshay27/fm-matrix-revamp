@@ -352,7 +352,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                             alt={
                               asset.asset_image?.document_name || "Asset Image"
                             }
-                            className="w-full h-full object-cover rounded-lg"
+                            className="max-w-full max-h-full object-contain rounded-lg"
                             onError={(e) => {
                               e.currentTarget.style.display = "none";
                               const fallback = e.currentTarget
