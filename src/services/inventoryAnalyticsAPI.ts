@@ -181,25 +181,25 @@ const formatDateForAPI = (date: Date): string => {
 };
 
 const getCurrentSiteId = (): string => {
-  const siteId = localStorage.getItem('currentSiteId') || 
-                localStorage.getItem('site_id') || 
-                localStorage.getItem('siteId') ||
-                localStorage.getItem('selectedSiteId');
-  
+  const siteId = localStorage.getItem('currentSiteId') ||
+    localStorage.getItem('site_id') ||
+    localStorage.getItem('siteId') ||
+    localStorage.getItem('selectedSiteId');
+
   if (!siteId) {
     const urlParams = new URLSearchParams(window.location.search);
     const urlSiteId = urlParams.get('site_id');
     if (urlSiteId) return urlSiteId;
-    
+
     console.warn('Site ID not found, using default: 7');
     return '7';
   }
-  
+
   return siteId;
 };
 
 const getAccessToken = (): string => {
-  return localStorage.getItem('access_token') || 'WzsvAV9ZPDWxXK-e0sJK0Sda6HDnQ1aTLaYnjXuWthU';
+  return localStorage.getItem('token')
 };
 
 // Inventory Analytics API
@@ -210,9 +210,9 @@ export const inventoryAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
-    
+
     const url = `https://fm-uat-api.lockated.com/pms/inventories/items_status.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -226,9 +226,9 @@ export const inventoryAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
-    
+
     const url = `https://fm-uat-api.lockated.com/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -242,9 +242,9 @@ export const inventoryAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
-    
+
     const url = `https://fm-uat-api.lockated.com/pms/inventories/inventory_consumption_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -258,9 +258,9 @@ export const inventoryAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
-    
+
     const url = `https://fm-uat-api.lockated.com/pms/inventories/consumption_report_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -274,9 +274,9 @@ export const inventoryAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
-    
+
     const url = `https://fm-uat-api.lockated.com/pms/inventories/consumption_report_non_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -290,9 +290,9 @@ export const inventoryAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
-    
+
     const url = `https://fm-uat-api.lockated.com/pms/inventories/current_minimum_stock_non_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -306,9 +306,9 @@ export const inventoryAnalyticsAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
-    
+
     const url = `https://fm-uat-api.lockated.com/pms/inventories/current_minimum_stock_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
-    
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
