@@ -196,7 +196,14 @@ export const InventoryDashboard = () => {
     endDate: '01/01/2025'
   });
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  const [analyticsData, setAnalyticsData] = useState<any>({});
+  const [analyticsData, setAnalyticsData] = useState<any>({
+    statusData: {
+      count_of_active_items: 0,
+      count_of_inactive_items: 0,
+      count_of_critical_items: 0,
+      count_of_non_critical_items: 0
+    }
+  });
   const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>([
     'items_status.json',
     'category_wise_items.json', 
@@ -711,16 +718,20 @@ export const InventoryDashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <InventoryAnalyticsCard
-              title="Items Status"
-              data={analyticsData.statusData}
-              type="itemsStatus"
-            />
-            <InventoryAnalyticsCard
-              title="Category Wise Items"
-              data={analyticsData.statusData}
-              type="categoryWise"
-            />
+            {analyticsData.statusData && (
+              <InventoryAnalyticsCard
+                title="Items Status"
+                data={analyticsData.statusData}
+                type="itemsStatus"
+              />
+            )}
+            {analyticsData.statusData && (
+              <InventoryAnalyticsCard
+                title="Category Wise Items"
+                data={analyticsData.statusData}
+                type="categoryWise"
+              />
+            )}
           </div>
         </TabsContent>
      \
