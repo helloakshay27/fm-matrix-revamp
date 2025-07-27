@@ -113,6 +113,9 @@ import { PermitToWorkDashboard } from './pages/PermitToWorkDashboard';
 import { LeadDashboard } from './pages/LeadDashboard';
 import { EnergyDashboard } from './pages/EnergyDashboard';
 
+// Import Main Analytics Dashboard
+import { Dashboard } from './pages/Dashboard';
+
 // Import Staff pages
 import { StaffsDashboard } from './pages/StaffsDashboard';
 
