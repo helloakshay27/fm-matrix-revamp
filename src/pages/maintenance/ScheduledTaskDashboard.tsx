@@ -28,6 +28,7 @@ import { taskService } from '@/services/taskService';
 import { taskAnalyticsAPI, TechnicalChecklistResponse, NonTechnicalChecklistResponse, TopTenChecklistResponse, SiteWiseChecklistResponse } from '@/services/taskAnalyticsAPI';
 import { TaskAnalyticsCard } from '@/components/TaskAnalyticsCard';
 import { TaskAnalyticsFilterDialog } from '@/components/TaskAnalyticsFilterDialog';
+import { TaskAnalyticsSelector } from '@/components/TaskAnalyticsSelector';
 import { BarChart3 } from 'lucide-react';
 
 
@@ -151,6 +152,7 @@ export const ScheduledTaskDashboard = () => {
   const [topTenData, setTopTenData] = useState<TopTenChecklistResponse | null>(null);
   const [siteWiseData, setSiteWiseData] = useState<SiteWiseChecklistResponse | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [selectedAnalytics, setSelectedAnalytics] = useState<string[]>(['technical', 'nonTechnical', 'topTen', 'siteWise']);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -349,15 +351,36 @@ export const ScheduledTaskDashboard = () => {
   };
 
   // Analytics functions
-  const fetchAnalyticsData = async (startDate: Date, endDate: Date) => {
+  const fetchAnalyticsData = async (startDate: Date, endDate: Date, selectedTypes: string[] = selectedAnalytics) => {
     setAnalyticsLoading(true);
     try {
-      const [technical, nonTechnical, topTen, siteWise] = await Promise.all([
-        taskAnalyticsAPI.getTechnicalChecklistData(startDate, endDate),
-        taskAnalyticsAPI.getNonTechnicalChecklistData(startDate, endDate),
-        taskAnalyticsAPI.getTopTenChecklistData(startDate, endDate),
-        taskAnalyticsAPI.getSiteWiseChecklistData(startDate, endDate)
-      ]);
+      const promises: Promise<any>[] = [];
+      
+      if (selectedTypes.includes('technical')) {
+        promises.push(taskAnalyticsAPI.getTechnicalChecklistData(startDate, endDate));
+      } else {
+        promises.push(Promise.resolve(null));
+      }
+      
+      if (selectedTypes.includes('nonTechnical')) {
+        promises.push(taskAnalyticsAPI.getNonTechnicalChecklistData(startDate, endDate));
+      } else {
+        promises.push(Promise.resolve(null));
+      }
+      
+      if (selectedTypes.includes('topTen')) {
+        promises.push(taskAnalyticsAPI.getTopTenChecklistData(startDate, endDate));
+      } else {
+        promises.push(Promise.resolve(null));
+      }
+      
+      if (selectedTypes.includes('siteWise')) {
+        promises.push(taskAnalyticsAPI.getSiteWiseChecklistData(startDate, endDate));
+      } else {
+        promises.push(Promise.resolve(null));
+      }
+
+      const [technical, nonTechnical, topTen, siteWise] = await Promise.all(promises);
 
       setTechnicalData(technical);
       setNonTechnicalData(nonTechnical);
@@ -370,17 +393,22 @@ export const ScheduledTaskDashboard = () => {
     }
   };
 
+  const handleAnalyticsSelectionChange = (selectedOptions: string[]) => {
+    setSelectedAnalytics(selectedOptions);
+    fetchAnalyticsData(analyticsDateRange.startDate, analyticsDateRange.endDate, selectedOptions);
+  };
+
   const handleAnalyticsFilterApply = (startDateStr: string, endDateStr: string) => {
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
     setAnalyticsDateRange({ startDate, endDate });
-    fetchAnalyticsData(startDate, endDate);
+    fetchAnalyticsData(startDate, endDate, selectedAnalytics);
   };
 
   // Load analytics data when tab is selected
   useEffect(() => {
     if (activeTab === 'analytics') {
-      fetchAnalyticsData(analyticsDateRange.startDate, analyticsDateRange.endDate);
+      fetchAnalyticsData(analyticsDateRange.startDate, analyticsDateRange.endDate, selectedAnalytics);
     }
   }, [activeTab]);
 
@@ -621,17 +649,28 @@ export const ScheduledTaskDashboard = () => {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-          {/* Filter Section */}
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Task Analytics</h2>
-            <Button
-              variant="outline"
-              onClick={() => setShowAnalyticsFilter(true)}
-              className="flex items-center gap-2"
-            >
-              <FilterIcon className="w-4 h-4" />
-              Filter
-            </Button>
+          {/* Header Section with Filter and Selector */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-xl font-semibold">Task Analytics</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Analyze task performance and checklist completion across different categories
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <TaskAnalyticsSelector
+                onSelectionChange={handleAnalyticsSelectionChange}
+                dateRange={analyticsDateRange}
+              />
+              <Button
+                variant="outline"
+                onClick={() => setShowAnalyticsFilter(true)}
+                className="flex items-center gap-2"
+              >
+                <FilterIcon className="w-4 h-4" />
+                Filter
+              </Button>
+            </div>
           </div>
 
           {analyticsLoading ? (
@@ -641,7 +680,7 @@ export const ScheduledTaskDashboard = () => {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Technical Checklist */}
-              {technicalData && (
+              {selectedAnalytics.includes('technical') && technicalData && (
                 <TaskAnalyticsCard
                   title="Technical Checklist"
                   data={technicalData.response}
@@ -650,7 +689,7 @@ export const ScheduledTaskDashboard = () => {
               )}
 
               {/* Non-Technical Checklist */}
-              {nonTechnicalData && (
+              {selectedAnalytics.includes('nonTechnical') && nonTechnicalData && (
                 <TaskAnalyticsCard
                   title="Non-Technical Checklist"
                   data={nonTechnicalData.response}
@@ -659,7 +698,7 @@ export const ScheduledTaskDashboard = () => {
               )}
 
               {/* Top Ten Checklist */}
-              {topTenData && (
+              {selectedAnalytics.includes('topTen') && topTenData && (
                 <TaskAnalyticsCard
                   title="Top 10 Checklist Types"
                   data={topTenData.response}
@@ -668,12 +707,22 @@ export const ScheduledTaskDashboard = () => {
               )}
 
               {/* Site Wise Checklist */}
-              {siteWiseData && (
+              {selectedAnalytics.includes('siteWise') && siteWiseData && (
                 <TaskAnalyticsCard
                   title="Site-wise Checklist Status"
                   data={siteWiseData.response}
                   type="siteWise"
                 />
+              )}
+              
+              {/* No selection message */}
+              {selectedAnalytics.length === 0 && (
+                <div className="col-span-2 flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No analytics selected. Please select at least one report to view.</p>
+                  </div>
+                </div>
               )}
             </div>
           )}
