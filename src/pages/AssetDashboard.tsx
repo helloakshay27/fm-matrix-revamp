@@ -47,7 +47,6 @@ import { AssetDataTable } from "@/components/AssetDataTable";
 import { AssetSelectionPanel } from "@/components/AssetSelectionPanel";
 // Removed MoveAssetDialog and DisposeAssetDialog imports - now using respective pages
 import { AssetSelector } from "@/components/AssetSelector";
-import { AssetAnalyticsFilterDialog } from "@/components/AssetAnalyticsFilterDialog";
 import { RecentAssetsSidebar } from "@/components/RecentAssetsSidebar";
 import { DonutChartGrid } from "@/components/DonutChartGrid";
 import { useAssetSearch } from "@/hooks/useAssetSearch";
@@ -192,7 +191,6 @@ export const AssetDashboard = () => {
     "asset-breakdown",
     "critical-breakdown",
   ]);
-  const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   // Asset statistics state
   const [assetStatistics, setAssetStatistics] = useState<AssetStatistics>({});
   const [statisticsLoading, setStatisticsLoading] = useState(false);
@@ -1017,17 +1015,8 @@ export const AssetDashboard = () => {
             </div>
           )}
 
-          {/* Header with Asset Selector and Filter */}
-          <div className="flex justify-end gap-3">
-            <Button
-              onClick={() => setIsAnalyticsFilterOpen(true)}
-              className="bg-[#C72030] hover:bg-[#B71C2C] text-white flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
-              </svg>
-              Filter
-            </Button>
+          {/* Header with Asset Selector */}
+          <div className="flex justify-end">
             <AssetSelector
               selectedItems={selectedAnalyticsItems}
               onSelectionChange={setSelectedAnalyticsItems}
@@ -1413,16 +1402,6 @@ export const AssetDashboard = () => {
       <AssetFilterDialog
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
-      />
-
-      <AssetAnalyticsFilterDialog
-        isOpen={isAnalyticsFilterOpen}
-        onClose={() => setIsAnalyticsFilterOpen(false)}
-        onApplyFilters={(filters) => {
-          console.log('Asset Analytics Filters Applied:', filters);
-          // TODO: Implement filter logic here
-          setIsAnalyticsFilterOpen(false);
-        }}
       />
 
       {/* Removed MoveAssetDialog and DisposeAssetDialog - now using respective pages */}
