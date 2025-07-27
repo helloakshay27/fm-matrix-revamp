@@ -374,6 +374,10 @@ export const ResolutionEscalationTab: React.FC = () => {
         id: editingRule.id,
         complaint_worker: {
           category_id: data.categoryIds[0],
+          society_id: 3584,
+          esc_type: 'resolution',
+          of_phase: 'pms',
+          of_atype: 'Pms::Site',
         },
         escalation_matrix: {
           e1: {
@@ -427,7 +431,6 @@ export const ResolutionEscalationTab: React.FC = () => {
       await dispatch(updateResolutionEscalation(payload));
       setIsEditDialogOpen(false);
       setEditingRule(null);
-      dispatch(fetchResolutionEscalations());
     } catch (err) {
       console.error('Error updating resolution escalation:', err);
     }
@@ -436,14 +439,13 @@ export const ResolutionEscalationTab: React.FC = () => {
   const handleDelete = async (id: number) => {
     try {
       await dispatch(deleteResolutionEscalation(id));
-      toast({ title: 'Success', description: 'Resolution escalation deleted successfully' });
     } catch (err) {
       console.error('Error deleting resolution escalation:', err);
     }
   };
 
   const handleFilter = () => {
-    // Filter is applied automatically through useEffect
+    // The filtering is already handled by the useEffect hook
   };
 
   const handleResetFilter = () => {
@@ -451,16 +453,17 @@ export const ResolutionEscalationTab: React.FC = () => {
   };
 
   const toggleRuleExpansion = (ruleId: number) => {
-    const newExpanded = new Set(expandedRules);
-    if (newExpanded.has(ruleId)) {
-      newExpanded.delete(ruleId);
-    } else {
-      newExpanded.add(ruleId);
-    }
-    setExpandedRules(newExpanded);
+    setExpandedRules(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(ruleId)) {
+        newSet.delete(ruleId);
+      } else {
+        newSet.add(ruleId);
+      }
+      return newSet;
+    });
   };
 
-  // Options for react-select
   const categoryOptions = categories?.helpdesk_categories?.map(cat => ({ value: cat.id, label: cat.name })) || [];
   const userOptions = fmUsers?.fm_users?.map(user => ({ value: user.id, label: `${user.firstname} ${user.lastname}` })) || [];
 
@@ -469,168 +472,45 @@ export const ResolutionEscalationTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Create Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Select up to 15 Categories</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Category Selection */}
-            <div>
-              <ReactSelect
-                isMulti
-                options={categoryOptions}
-                onChange={(selected) => {
-                  setValue('categoryIds', selected ? selected.map(s => s.value) : []);
-                }}
-                className="mt-1"
-                placeholder="Select categories..."
-                isLoading={categoriesLoading}
-              />
-              {errors.categoryIds && (
-                <p className="text-sm text-red-500 mt-1">{errors.categoryIds.message}</p>
-              )}
-            </div>
-
-            {/* Escalation Matrix Table */}
-            <div>
-              <Table className="border">
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-center border-r">Levels</TableHead>
-                    <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P1</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P2</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P3</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P4</TableHead>
-                    <TableHead className="font-semibold text-center" colSpan={3}>P5</TableHead>
-                  </TableRow>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="border-r"></TableHead>
-                    <TableHead className="border-r"></TableHead>
-                    {priorities.map((priority) => (
-                      <React.Fragment key={priority}>
-                        <TableHead className="text-center text-xs border-r">Day</TableHead>
-                        <TableHead className="text-center text-xs border-r">Hrs</TableHead>
-                        <TableHead className="text-center text-xs border-r">Min</TableHead>
-                      </React.Fragment>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {escalationLevels.map((level) => (
-                    <TableRow key={level} className="border-b">
-                      <TableCell className="font-medium text-center border-r">{level.toUpperCase()}</TableCell>
-                      <TableCell className="p-2 border-r">
-                        <ReactSelect
-                          isMulti
-                          options={userOptions}
-                          onChange={(selected) => {
-                            setValue(`escalationLevels.${level}.users`, selected ? selected.map(s => s.value) : []);
-                          }}
-                          placeholder="Select up to 15 Options..."
-                          isLoading={fmUsersLoading}
-                          className="min-w-[250px]"
-                          styles={{
-                            control: (base) => ({
-                              ...base,
-                              minHeight: '32px',
-                              fontSize: '14px',
-                              border: 'none',
-                              boxShadow: 'none'
-                            }),
-                            multiValue: (base) => ({
-                              ...base,
-                              fontSize: '12px'
-                            })
-                          }}
-                        />
-                      </TableCell>
-                      {priorities.map((priority) => (
-                        <React.Fragment key={priority}>
-                          <TableCell className="p-1 text-center border-r">
-                            <Input
-                              type="number"
-                              min="0"
-                              {...register(`escalationLevels.${level}.priorities.${priority}.days`, { valueAsNumber: true })}
-                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
-                              placeholder="0"
-                            />
-                          </TableCell>
-                          <TableCell className="p-1 text-center border-r">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="23"
-                              {...register(`escalationLevels.${level}.priorities.${priority}.hours`, { valueAsNumber: true })}
-                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
-                              placeholder="0"
-                            />
-                          </TableCell>
-                          <TableCell className="p-1 text-center border-r last:border-r-0">
-                            <Input
-                              type="number"
-                              min="0"
-                              max="59"
-                              {...register(`escalationLevels.${level}.priorities.${priority}.minutes`, { valueAsNumber: true })}
-                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
-                              placeholder="0"
-                            />
-                          </TableCell>
-                        </React.Fragment>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-
-            <div className="flex justify-end">
-              <Button type="submit" disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white px-8">
-                {loading ? 'Creating...' : 'Submit'}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
       {/* Filter Section */}
       <Card>
-        <CardHeader>
-          <CardTitle>Filter</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-end space-x-4">
-            <div className="flex-1">
-              <Label className="text-sm font-medium">Category Type</Label>
-              <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select Category Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories?.helpdesk_categories?.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex space-x-2">
-              <Button onClick={handleFilter} variant="default" className="bg-purple-600 hover:bg-purple-700 text-white">
-                Apply
-              </Button>
-              <Button onClick={handleResetFilter} variant="outline">
-                Reset
-              </Button>
+        <CardContent className="p-4">
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-gray-900">Filter</h3>
+            <div className="flex items-end space-x-4">
+              <div className="flex-1">
+                <Label className="text-sm font-medium">Category Type</Label>
+                <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select Category Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories?.helpdesk_categories?.map((category) => (
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex space-x-2">
+                <Button 
+                  onClick={handleFilter} 
+                  className="bg-[#C72030] hover:bg-[#B01E2A] text-white border-none"
+                >
+                  Apply
+                </Button>
+                <Button onClick={handleResetFilter} variant="outline">
+                  Reset
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Rules Display */}
+      {/* Main Content Card */}
       <Card>
         <CardContent className="p-0">
           {fetchLoading ? (
@@ -640,35 +520,59 @@ export const ResolutionEscalationTab: React.FC = () => {
           ) : (
             <div className="space-y-0">
               {filteredRules.map((rule, index) => {
-                const isExpanded = expandedRules.has(rule.id);
                 const categoryName = categories?.helpdesk_categories?.find(cat => cat.id === rule.category_id)?.name || 'Unknown';
+                
+                const getUserNames = (userIds: string | number[] | null): string => {
+                  if (!userIds) return ''
+                  
+                  let ids: number[] = []
+                  if (typeof userIds === 'string') {
+                    try {
+                      ids = JSON.parse(userIds)
+                    } catch {
+                      return ''
+                    }
+                  } else {
+                    ids = userIds
+                  }
+                  
+                  if (!Array.isArray(ids) || ids.length === 0) return ''
+                  
+                  return ids.map(id => {
+                    const user = fmUsers?.fm_users?.find(u => u.id === id)
+                    return user ? `${user.firstname} ${user.lastname}` : `User ${id}`
+                  }).join(', ')
+                }
+
+                const formatTiming = (totalMinutes: number): string => {
+                  if (!totalMinutes) return ''
+                  const { days, hours, minutes } = convertFromMinutes(totalMinutes)
+                  const parts = []
+                  if (days > 0) parts.push(`${days} day${days !== 1 ? 's' : ''}`)
+                  if (hours > 0) parts.push(`${hours} hour${hours !== 1 ? 's' : ''}`)
+                  if (minutes > 0) parts.push(`${minutes} minute${minutes !== 1 ? 's' : ''}`)
+                  return parts.join(', ')
+                }
                 
                 return (
                   <div key={rule.id} className="border-b last:border-b-0">
-                    <div className="flex items-center justify-between p-4 hover:bg-gray-50">
+                    {/* Rule Header */}
+                    <div className="flex items-center justify-between p-4 bg-white">
                       <div className="flex items-center space-x-4">
-                        <span className="font-semibold text-purple-600">Rule {index + 1}</span>
+                        <span className="font-semibold text-[#C72030]">Rule {index + 1}</span>
                         <div className="flex items-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleRuleExpansion(rule.id)}
-                            className="p-1"
-                          >
-                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(rule)}
                             disabled={updateLoading}
-                            className="p-1"
+                            className="p-1 text-orange-500 hover:text-orange-700"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" disabled={deleteLoading} className="p-1 text-red-600">
+                              <Button variant="ghost" size="sm" disabled={deleteLoading} className="p-1 text-red-500 hover:text-red-700">
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
@@ -691,79 +595,64 @@ export const ResolutionEscalationTab: React.FC = () => {
                       </div>
                     </div>
 
-                    <Collapsible open={isExpanded}>
-                      <CollapsibleContent>
-                        <div className="p-4 bg-gray-50 border-t">
-                          <div className="mb-4">
-                            <div className="flex items-center space-x-4 text-sm">
-                              <span><strong>Category Type:</strong> {categoryName}</span>
-                            </div>
+                    {/* Rule Content */}
+                    <div className="p-4 bg-white">
+                      {/* Category Type and Levels Header */}
+                      <div className="mb-4">
+                        <div className="flex items-center space-x-4">
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">Category Type</span>
+                            <div className="text-base font-medium">{categoryName}</div>
                           </div>
-                          
-                          <Table className="bg-white border">
-                            <TableHeader>
-                              <TableRow className="bg-gray-100">
-                                <TableHead className="font-semibold text-center w-20 border-r">Levels</TableHead>
-                                <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
-                                <TableHead className="font-semibold text-center w-32 border-r">P1</TableHead>
-                                <TableHead className="font-semibold text-center w-32 border-r">P2</TableHead>
-                                <TableHead className="font-semibold text-center w-32 border-r">P3</TableHead>
-                                <TableHead className="font-semibold text-center w-32 border-r">P4</TableHead>
-                                <TableHead className="font-semibold text-center w-32">P5</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {rule.escalations.map((escalation) => {
-                                // Safely parse escalate_to_users with error handling
-                                let escalateToUsers: number[] = [];
-                                if (escalation.escalate_to_users) {
-                                  try {
-                                    if (typeof escalation.escalate_to_users === 'string') {
-                                      escalateToUsers = JSON.parse(escalation.escalate_to_users);
-                                    } else if (Array.isArray(escalation.escalate_to_users)) {
-                                      escalateToUsers = escalation.escalate_to_users;
-                                    }
-                                  } catch (error) {
-                                    console.error('Error parsing escalate_to_users:', error);
-                                    escalateToUsers = [];
-                                  }
-                                }
-                                
-                                // Ensure escalateToUsers is an array before mapping
-                                const userNames = Array.isArray(escalateToUsers) 
-                                  ? escalateToUsers.map((userId: number) => {
-                                      const user = fmUsers?.fm_users?.find(u => u.id === userId);
-                                      return user ? `${user.firstname} ${user.lastname}` : `User ${userId}`;
-                                    }).join(', ')
-                                  : '';
-
-                                return (
-                                  <TableRow key={escalation.id} className="border-b">
-                                    <TableCell className="font-medium text-center border-r">{escalation.name}</TableCell>
-                                    <TableCell className="text-center border-r">{userNames || '-'}</TableCell>
-                                    <TableCell className="text-center text-sm border-r">
-                                      {escalation.p1 ? `${escalation.p1} min` : '-'}
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm border-r">
-                                      {escalation.p2 ? `${escalation.p2} min` : '-'}
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm border-r">
-                                      {escalation.p3 ? `${escalation.p3} min` : '-'}
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm border-r">
-                                      {escalation.p4 ? `${escalation.p4} min` : '-'}
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm">
-                                      {escalation.p5 ? `${escalation.p5} min` : '-'}
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
+                          <div>
+                            <span className="text-sm font-medium text-gray-700">Levels</span>
+                            <div className="text-base font-medium">Escalation To</div>
+                          </div>
                         </div>
-                      </CollapsibleContent>
-                    </Collapsible>
+                      </div>
+                      
+                      {/* Escalation Table */}
+                      <Table className="border border-gray-200">
+                        <TableHeader style={{ backgroundColor: "#f6f4ee" }}>
+                          <TableRow>
+                            <TableHead className="font-semibold text-center border-r border-gray-200">Levels</TableHead>
+                            <TableHead className="font-semibold text-center border-r border-gray-200">Escalation To</TableHead>
+                            <TableHead className="font-semibold text-center border-r border-gray-200">P1</TableHead>
+                            <TableHead className="font-semibold text-center border-r border-gray-200">P2</TableHead>
+                            <TableHead className="font-semibold text-center border-r border-gray-200">P3</TableHead>
+                            <TableHead className="font-semibold text-center border-r border-gray-200">P4</TableHead>
+                            <TableHead className="font-semibold text-center">P5</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {rule.escalations.map((escalation) => (
+                            <TableRow key={escalation.id} className="border-b border-gray-200">
+                              <TableCell className="font-medium text-center border-r border-gray-200 text-blue-600">
+                                {escalation.name}
+                              </TableCell>
+                              <TableCell className="text-center border-r border-gray-200">
+                                {getUserNames(escalation.escalate_to_users)}
+                              </TableCell>
+                              <TableCell className="text-center text-sm border-r border-gray-200">
+                                {formatTiming(escalation.p1)}
+                              </TableCell>
+                              <TableCell className="text-center text-sm border-r border-gray-200">
+                                {formatTiming(escalation.p2)}
+                              </TableCell>
+                              <TableCell className="text-center text-sm border-r border-gray-200">
+                                {formatTiming(escalation.p3)}
+                              </TableCell>
+                              <TableCell className="text-center text-sm border-r border-gray-200">
+                                {formatTiming(escalation.p4)}
+                              </TableCell>
+                              <TableCell className="text-center text-sm">
+                                {formatTiming(escalation.p5)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 );
               })}
@@ -772,13 +661,13 @@ export const ResolutionEscalationTab: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(handleUpdate)} className="space-y-6">
+      {/* Create Form Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Create Resolution Escalation Rule</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Category Selection */}
             <div>
               <Label className="text-sm font-medium">Category Type</Label>
@@ -789,41 +678,46 @@ export const ResolutionEscalationTab: React.FC = () => {
                   setValue('categoryIds', selected ? [selected.value] : []);
                 }}
                 className="mt-1"
-                placeholder="Select category..."
+                placeholder="Select up to 15 Options..."
                 isLoading={categoriesLoading}
               />
+              {errors.categoryIds && (
+                <p className="text-red-500 text-sm mt-1">{errors.categoryIds.message}</p>
+              )}
             </div>
 
             {/* Escalation Matrix Table */}
             <div>
-              <Table className="border">
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-center border-r">Levels</TableHead>
-                    <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P1</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P2</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P3</TableHead>
-                    <TableHead className="font-semibold text-center border-r" colSpan={3}>P4</TableHead>
+              <Table className="border border-gray-200">
+                <TableHeader style={{ backgroundColor: "#f6f4ee" }}>
+                  <TableRow>
+                    <TableHead className="font-semibold text-center border-r border-gray-200">Levels</TableHead>
+                    <TableHead className="font-semibold text-center border-r border-gray-200">Escalation To</TableHead>
+                    <TableHead className="font-semibold text-center border-r border-gray-200" colSpan={3}>P1</TableHead>
+                    <TableHead className="font-semibold text-center border-r border-gray-200" colSpan={3}>P2</TableHead>
+                    <TableHead className="font-semibold text-center border-r border-gray-200" colSpan={3}>P3</TableHead>
+                    <TableHead className="font-semibold text-center border-r border-gray-200" colSpan={3}>P4</TableHead>
                     <TableHead className="font-semibold text-center" colSpan={3}>P5</TableHead>
                   </TableRow>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="border-r"></TableHead>
-                    <TableHead className="border-r"></TableHead>
+                  <TableRow style={{ backgroundColor: "#f6f4ee" }}>
+                    <TableHead className="border-r border-gray-200"></TableHead>
+                    <TableHead className="border-r border-gray-200"></TableHead>
                     {priorities.map((priority) => (
                       <React.Fragment key={priority}>
-                        <TableHead className="text-center text-xs border-r">Day</TableHead>
-                        <TableHead className="text-center text-xs border-r">Hrs</TableHead>
-                        <TableHead className="text-center text-xs border-r">Min</TableHead>
+                        <TableHead className="text-center text-xs border-r border-gray-200">Day</TableHead>
+                        <TableHead className="text-center text-xs border-r border-gray-200">Hrs</TableHead>
+                        <TableHead className="text-center text-xs border-r border-gray-200">Min</TableHead>
                       </React.Fragment>
                     ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {escalationLevels.map((level) => (
-                    <TableRow key={level} className="border-b">
-                      <TableCell className="font-medium text-center border-r">{level.toUpperCase()}</TableCell>
-                      <TableCell className="p-2 border-r">
+                    <TableRow key={level} className="border-b border-gray-200">
+                      <TableCell className="font-medium text-center border-r border-gray-200 text-blue-600">
+                        {level.toUpperCase()}
+                      </TableCell>
+                      <TableCell className="p-2 border-r border-gray-200">
                         <ReactSelect
                           isMulti
                           options={userOptions}
@@ -851,7 +745,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                       </TableCell>
                       {priorities.map((priority) => (
                         <React.Fragment key={priority}>
-                          <TableCell className="p-1 text-center border-r">
+                          <TableCell className="p-1 text-center border-r border-gray-200">
                             <Input
                               type="number"
                               min="0"
@@ -860,7 +754,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                               placeholder="0"
                             />
                           </TableCell>
-                          <TableCell className="p-1 text-center border-r">
+                          <TableCell className="p-1 text-center border-r border-gray-200">
                             <Input
                               type="number"
                               min="0"
@@ -870,7 +764,138 @@ export const ResolutionEscalationTab: React.FC = () => {
                               placeholder="0"
                             />
                           </TableCell>
-                          <TableCell className="p-1 text-center border-r last:border-r-0">
+                          <TableCell className="p-1 text-center border-r border-gray-200 last:border-r-0">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="59"
+                              {...register(`escalationLevels.${level}.priorities.${priority}.minutes`, { valueAsNumber: true })}
+                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                        </React.Fragment>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="flex justify-end">
+              <Button 
+                type="submit" 
+                disabled={loading} 
+                className="bg-[#C72030] hover:bg-[#B01E2A] text-white border-none"
+              >
+                {loading ? 'Creating...' : 'Submit'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Resolution Escalation Rule</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(handleUpdate)} className="space-y-6">
+            {/* Category Selection */}
+            <div>
+              <Label className="text-sm font-medium">Category Type</Label>
+              <ReactSelect
+                options={categoryOptions}
+                value={categoryOptions.filter(option => watch('categoryIds')?.includes(option.value))}
+                onChange={(selected) => {
+                  setValue('categoryIds', selected ? [selected.value] : []);
+                }}
+                className="mt-1"
+                placeholder="Select category..."
+                isLoading={categoriesLoading}
+              />
+            </div>
+
+            {/* Escalation Matrix Table */}
+            <div>
+              <Table className="border border-gray-200">
+                <TableHeader style={{ backgroundColor: "#f6f4ee" }}>
+                  <TableRow>
+                    <TableHead className="font-semibold text-center border-r border-gray-200">Levels</TableHead>
+                    <TableHead className="font-semibold text-center border-r border-gray-200">Escalation To</TableHead>
+                    <TableHead className="font-semibold text-center border-r border-gray-200" colSpan={3}>P1</TableHead>
+                    <TableHead className="font-semibold text-center border-r border-gray-200" colSpan={3}>P2</TableHead>
+                    <TableHead className="font-semibold text-center border-r border-gray-200" colSpan={3}>P3</TableHead>
+                    <TableHead className="font-semibold text-center border-r border-gray-200" colSpan={3}>P4</TableHead>
+                    <TableHead className="font-semibold text-center" colSpan={3}>P5</TableHead>
+                  </TableRow>
+                  <TableRow style={{ backgroundColor: "#f6f4ee" }}>
+                    <TableHead className="border-r border-gray-200"></TableHead>
+                    <TableHead className="border-r border-gray-200"></TableHead>
+                    {priorities.map((priority) => (
+                      <React.Fragment key={priority}>
+                        <TableHead className="text-center text-xs border-r border-gray-200">Day</TableHead>
+                        <TableHead className="text-center text-xs border-r border-gray-200">Hrs</TableHead>
+                        <TableHead className="text-center text-xs border-r border-gray-200">Min</TableHead>
+                      </React.Fragment>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {escalationLevels.map((level) => (
+                    <TableRow key={level} className="border-b border-gray-200">
+                      <TableCell className="font-medium text-center border-r border-gray-200 text-blue-600">
+                        {level.toUpperCase()}
+                      </TableCell>
+                      <TableCell className="p-2 border-r border-gray-200">
+                        <ReactSelect
+                          isMulti
+                          options={userOptions}
+                          value={userOptions.filter(option => watch(`escalationLevels.${level}.users`)?.includes(option.value))}
+                          onChange={(selected) => {
+                            setValue(`escalationLevels.${level}.users`, selected ? selected.map(s => s.value) : []);
+                          }}
+                          placeholder="Select up to 15 Options..."
+                          isLoading={fmUsersLoading}
+                          className="min-w-[250px]"
+                          styles={{
+                            control: (base) => ({
+                              ...base,
+                              minHeight: '32px',
+                              fontSize: '14px',
+                              border: 'none',
+                              boxShadow: 'none'
+                            }),
+                            multiValue: (base) => ({
+                              ...base,
+                              fontSize: '12px'
+                            })
+                          }}
+                        />
+                      </TableCell>
+                      {priorities.map((priority) => (
+                        <React.Fragment key={priority}>
+                          <TableCell className="p-1 text-center border-r border-gray-200">
+                            <Input
+                              type="number"
+                              min="0"
+                              {...register(`escalationLevels.${level}.priorities.${priority}.days`, { valueAsNumber: true })}
+                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1 text-center border-r border-gray-200">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="23"
+                              {...register(`escalationLevels.${level}.priorities.${priority}.hours`, { valueAsNumber: true })}
+                              className="w-12 h-8 text-center text-xs border-none focus-visible:ring-0"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell className="p-1 text-center border-r border-gray-200 last:border-r-0">
                             <Input
                               type="number"
                               min="0"
@@ -892,7 +917,11 @@ export const ResolutionEscalationTab: React.FC = () => {
               <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={updateLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button 
+                type="submit" 
+                disabled={updateLoading} 
+                className="bg-[#C72030] hover:bg-[#B01E2A] text-white border-none"
+              >
                 {updateLoading ? 'Updating...' : 'Update'}
               </Button>
             </div>
