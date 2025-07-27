@@ -8,6 +8,8 @@ import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { Dashboard } from './pages/Dashboard';
+
 
 // Import existing pages
 import Index from './pages/Index';
@@ -520,6 +522,9 @@ function App() {
               <Route path="/" element={<ProtectedRoute><Layout><div /></Layout></ProtectedRoute>}>
                 <Route index element={<Index />} />
 
+                <Route path="/dashboard" element={<Dashboard />} />
+
+
                 {/* Rule Engine Routes */}
                 <Route path="/rule-engine/rule-list" element={<RuleListPage />} />
                 <Route path="/loyalty-rule-engine" element={<LoyaltyRuleEngineDashboard />} />
@@ -958,7 +963,7 @@ function App() {
                 <Route path="/qr-test" element={<QRTestPage />} />
               </Routes>
             <Toaster />
-            <SonnerToaster 
+            <SonnerToaster
               position="top-right"
               richColors
               closeButton
