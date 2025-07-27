@@ -6,15 +6,15 @@ import { fetchInventoryData } from "@/store/slices/inventorySlice";
 import { Button } from "@/components/ui/button";
 import { DateFilterModal } from "@/components/DateFilterModal";
 import {
-  Upload,
-  FileText,
-  Filter,
-  Eye,
-  Plus,
-  Package,
-  AlertTriangle,
-  CheckCircle,
-  Leaf,
+    Upload,
+    FileText,
+    Filter,
+    Eye,
+    Plus,
+    Package,
+    AlertTriangle,
+    CheckCircle,
+    Leaf,
 } from "lucide-react";
 import { BulkUploadDialog } from "@/components/BulkUploadDialog";
 import { InventoryFilterDialog } from "@/components/InventoryFilterDialog";
@@ -23,245 +23,256 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { InventoryItem } from "@/store/slices/inventorySlice";
 
 export const InventoryDashboard = () => {
-  const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
+    const dispatch = useDispatch < AppDispatch > ();
 
-  // Redux state
-  const {
-    items: inventoryItems,
-    loading,
-    error,
-    totalPages: reduxTotalPages,
-    totalCount,
-  } = useSelector((state: RootState) => state.inventory);
+    // Redux state
+    const {
+        items: inventoryItems,
+        loading,
+        error,
+        totalPages: reduxTotalPages,
+        totalCount,
+    } = useSelector((state: RootState) => state.inventory);
 
-  // Calculate derived data from inventory items
-  const totalInventories = totalCount;
-  const activeCount = inventoryItems.filter(item => item.active).length;
-  const inactiveCount = inventoryItems.filter(item => !item.active).length;
-  const greenInventories = inventoryItems.filter(item => item.green_product).length;
+    // Calculate derived data from inventory items
+    const totalInventories = totalCount;
+    const activeCount = inventoryItems.filter(item => item.active).length;
+    const inactiveCount = inventoryItems.filter(item => !item.active).length;
+    const greenInventories = inventoryItems.filter(item => item.green_product).length;
 
-  // Local state
-  const [showBulkUpload, setShowBulkUpload] = useState(false);
-  const [showFilter, setShowFilter] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("list");
-  const [showDateFilter, setShowDateFilter] = useState(false);
+    // Local state
+    const [showBulkUpload, setShowBulkUpload] = useState(false);
+    const [showFilter, setShowFilter] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedItems, setSelectedItems] = useState < string[] > ([]);
+    const [activeTab, setActiveTab] = useState < string > ("list");
+    const [showDateFilter, setShowDateFilter] = useState(false);
 
-  // Pagination
-  const pageSize = 50;
-  const totalPages = Math.ceil(totalInventories / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedData = inventoryItems.slice(startIndex, pageSize); // Show current page data
+    // Pagination
+    const pageSize = 50;
+    const totalPages = Math.ceil(totalInventories / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const paginatedData = inventoryItems.slice(startIndex, pageSize); // Show current page data
 
-  // Load inventory data on component mount
-  useEffect(() => {
-    dispatch(fetchInventoryData({}));
-  }, [dispatch]);
+    // Load inventory data on component mount
+    useEffect(() => {
+        dispatch(fetchInventoryData({}));
+    }, [dispatch]);
 
-  const handleCreateItem = () => {
-    navigate("/maintenance/inventory/add");
-  };
+    const handleCreateItem = () => {
+        navigate("/maintenance/inventory/add");
+    };
 
-  return (
-    <div className="p-2 sm:p-4 lg:p-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-1 bg-white border border-gray-200">
-          <TabsTrigger
-            value="list"
-            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-          >
-            <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Inventory List</span>
-            <span className="sm:hidden">List</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="list" className="space-y-4 sm:space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold">Inventory Dashboard</h1>
-              <p className="text-sm text-muted-foreground">
-                Manage your inventory items, track stock levels, and monitor item status
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowFilter(true)}
-                className="h-10"
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowBulkUpload(true)}
-                className="h-10"
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Bulk Upload
-              </Button>
-              <Button onClick={handleCreateItem} className="h-10">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Item
-              </Button>
-            </div>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-[#f6f4ee] p-4 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#C4B89D54] rounded-lg flex items-center justify-center">
-                  <Package className="w-5 h-5 text-[#C72030]" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Items</p>
-                  <p className="text-2xl font-bold">{totalInventories}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-[#f6f4ee] p-4 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#C4B89D54] rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-[#C72030]" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Active Items</p>
-                  <p className="text-2xl font-bold">{activeCount}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-[#f6f4ee] p-4 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#C4B89D54] rounded-lg flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 text-[#C72030]" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Inactive Items</p>
-                  <p className="text-2xl font-bold">{inactiveCount}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-[#f6f4ee] p-4 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#C4B89D54] rounded-lg flex items-center justify-center">
-                  <Leaf className="w-5 h-5 text-[#C72030]" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Green Products</p>
-                  <p className="text-2xl font-bold">{greenInventories}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Inventory Table */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <EnhancedTable
-              data={inventoryItems}
-              columns={[
-                { key: "actions", label: "Actions", sortable: false, hideable: false, draggable: false },
-                { key: "itemCode", label: "Item Code", sortable: true, hideable: true, draggable: true },
-                { key: "itemName", label: "Item Name", sortable: true, hideable: true, draggable: true },
-                { key: "category", label: "Category", sortable: true, hideable: true, draggable: true },
-                { key: "subCategory", label: "Sub Category", sortable: true, hideable: true, draggable: true },
-                { key: "brand", label: "Brand", sortable: true, hideable: true, draggable: true },
-                { key: "model", label: "Model", sortable: true, hideable: true, draggable: true },
-                { key: "supplier", label: "Supplier", sortable: true, hideable: true, draggable: true },
-                { key: "unit", label: "Unit", sortable: true, hideable: true, draggable: true },
-                { key: "unitCost", label: "Unit Cost", sortable: true, hideable: true, draggable: true },
-                { key: "totalStock", label: "Total Stock", sortable: true, hideable: true, draggable: true },
-                { key: "consumedStock", label: "Consumed Stock", sortable: true, hideable: true, draggable: true },
-                { key: "availableStock", label: "Available Stock", sortable: true, hideable: true, draggable: true },
-                { key: "minimumStock", label: "Minimum Stock", sortable: true, hideable: true, draggable: true },
-                { key: "greenProduct", label: "Green Product", sortable: true, hideable: true, draggable: true },
-                { key: "active", label: "Status", sortable: true, hideable: true, draggable: true }
-              ]}
-              renderRow={(item) => ({
-                actions: (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => navigate(`/maintenance/inventory/${item.id}`)}
-                      className="p-2"
+    return (
+        <div className="p-2 sm:p-4 lg:p-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-1 bg-white border border-gray-200">
+                    <TabsTrigger
+                        value="list"
+                        className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
                     >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ),
-                itemCode: item.code || item.reference_number || "-",
-                itemName: item.name,
-                category: item.category || "-",
-                subCategory: item.sub_group || "-",
-                brand: item.manufacturer || "-",
-                model: "-",
-                supplier: "-",
-                unit: item.unit || "-",
-                unitCost: item.cost ? `₹${parseFloat(item.cost.toString()).toFixed(2)}` : "-",
-                totalStock: item.quantity || 0,
-                consumedStock: 0,
-                availableStock: item.quantity || 0,
-                minimumStock: item.min_stock_level || 0,
-                greenProduct: item.green_product ? (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                    <Leaf className="w-3 h-3 mr-1" />
-                    Yes
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
-                    No
-                  </span>
-                ),
-                active: item.active ? (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
-                    Active
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
-                    Inactive
-                  </span>
-                )
-              })}
-              enableSearch={true}
-              enableSelection={true}
-              enableExport={true}
-              storageKey="inventory-table"
-              searchPlaceholder="Search inventory items..."
+                        <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">Inventory List</span>
+                        <span className="sm:hidden">List</span>
+                    </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="list" className="space-y-4 sm:space-y-6">
+                    {/* Error handling */}
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+                            Error loading inventory data: {error}
+                        </div>
+                    )}
+                    <div className="overflow-x-auto">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 my-6">
+                            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer" onClick={() =>
+                                dispatch(fetchInventoryData({}))
+                            }
+                            >
+                                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                                    <Settings
+                                        className="w-4 h-4 sm:w-6 sm:h-6"
+                                        style={{ color: "#C72030" }}
+                                    />
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                                        {totalInventories}
+                                    </div>
+                                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                                        Total Inventories
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer" onClick={() =>
+                                dispatch(fetchInventoryData({ filters: { 'q[active_eq]': true } }))
+                            }
+                            >
+                                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                                    <Settings
+                                        className="w-4 h-4 sm:w-6 sm:h-6"
+                                        style={{ color: "#C72030" }}
+                                    />
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                                        {activeCount}
+                                    </div>
+                                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                                        Active Inventory
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer" onClick={() =>
+                                dispatch(fetchInventoryData({ filters: { 'q[active_eq]': false } }))
+                            }
+                            >
+                                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                                    <Settings
+                                        className="w-4 h-4 sm:w-6 sm:h-6"
+                                        style={{ color: "#C72030" }}
+                                    />
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                                        {inactiveCount}
+                                    </div>
+                                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                                        Inactive
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+                                onClick={() =>
+                                    dispatch(
+                                        fetchInventoryData({
+                                            filters: { "q[green_product_eq]": true },
+                                        })
+                                    )
+                                }
+                            >
+                                <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                                    <Settings
+                                        className="w-4 h-4 sm:w-6 sm:h-6"
+                                        style={{ color: "#C72030" }}
+                                    />
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                                        {greenInventories || 0}
+                                    </div>
+                                    <div className="text-xs text-green-600 sm:text-sm text-muted-foreground font-medium leading-tight">
+                                        Ecofriendly
+                                    </div>
+                                </div>
+                            </div>
+                            {/* <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
+                       <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                         <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                       </div>
+                       <div className="flex flex-col min-w-0">
+                         <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
+                           {2}
+                         </div>
+                         <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Closed</div>
+                       </div>
+                     </div> */}
+                        </div>
+                        {showActionPanel && (
+                            <SelectionPanel
+                                onAdd={handleAddInventory}
+                                onImport={handleImportClick}
+                                onClearSelection={() => setShowActionPanel(false)}
+                            />
+                        )}
+                        <EnhancedTable
+                            handleExport={handleExport}
+                            data={paginatedData}
+                            columns={columns}
+                            renderCell={renderCell}
+                            bulkActions={bulkActions}
+                            showBulkActions={true}
+                            selectable={true}
+                            selectedItems={selectedItems}
+                            onSelectItem={handleSelectItem}
+                            onSelectAll={handleSelectAll}
+                            pagination={false}
+                            enableExport={true}
+                            exportFileName="inventory"
+                            onRowClick={handleViewItem}
+                            storageKey="inventory-table"
+                            loading={loading}
+                            emptyMessage={
+                                loading
+                                    ? "Loading inventory data..."
+                                    : "No inventory items found"
+                            }
+                            leftActions={renderCustomActions()}
+                            onFilterClick={handleFiltersClick}
+                        />
+                    </div>
+                    {/* Custom Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex justify-center mt-6">
+                            <Pagination>
+                                <PaginationContent>
+                                    <PaginationItem>
+                                        <PaginationPrevious
+                                            onClick={() =>
+                                                setCurrentPage(Math.max(1, currentPage - 1))
+                                            }
+                                            className={
+                                                currentPage === 1
+                                                    ? "pointer-events-none opacity-50"
+                                                    : ""
+                                            }
+                                        />
+                                    </PaginationItem>
+                                    {renderPaginationItems()}
+                                    <PaginationItem>
+                                        <PaginationNext
+                                            onClick={() =>
+                                                setCurrentPage(Math.min(totalPages, currentPage + 1))
+                                            }
+                                            className={
+                                                currentPage === totalPages
+                                                    ? "pointer-events-none opacity-50"
+                                                    : ""
+                                            }
+                                        />
+                                    </PaginationItem>
+                                </PaginationContent>
+                            </Pagination>
+                        </div>
+                    )}
+                </TabsContent>
+            </Tabs>
+
+            {/* Dialogs */}
+            <BulkUploadDialog
+                open={showBulkUpload}
+                onOpenChange={setShowBulkUpload}
+                title="Upload Inventory Items"
             />
-          </div>
-        </TabsContent>
-      </Tabs>
 
-      {/* Dialogs */}
-      <BulkUploadDialog
-        open={showBulkUpload}
-        onOpenChange={setShowBulkUpload}
-        title="Upload Inventory Items"
-      />
+            <InventoryFilterDialog
+                open={showFilter}
+                onOpenChange={setShowFilter}
+                onApply={(filters) => {
+                    dispatch(fetchInventoryData({ filters }));
+                }}
+            />
 
-      <InventoryFilterDialog
-        open={showFilter}
-        onOpenChange={setShowFilter}
-        onApply={(filters) => {
-          dispatch(fetchInventoryData({ filters }));
-        }}
-      />
-
-      <DateFilterModal
-        open={showDateFilter}
-        onOpenChange={setShowDateFilter}
-        onApply={(range) => {
-          dispatch(fetchInventoryData({ filters: { startDate: range.startDate, endDate: range.endDate } }));
-        }}
-      />
-    </div>
-  );
+            <DateFilterModal
+                open={showDateFilter}
+                onOpenChange={setShowDateFilter}
+                onApply={(range) => {
+                    dispatch(fetchInventoryData({ filters: { startDate: range.startDate, endDate: range.endDate } }));
+                }}
+            />
+        </div>
+    );
 };
