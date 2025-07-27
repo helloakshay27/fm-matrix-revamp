@@ -463,7 +463,7 @@ export const AssetDashboard = () => {
   const transformedAssets = assets.map((asset, index) => ({
     id: asset.id?.toString() || "",
     name: asset.name || "",
-    serialNumber: (pagination.currentPage - 1) * 15 + index + 1,
+    serialNumber: ((pagination.currentPage - 1) * 15 + index + 1).toString(),
     assetNumber: asset.asset_number || "",
     status: asset.status as "in_use" | "in_storage" | "breakdown" | "disposed",
     siteName: asset.site_name || "",
@@ -471,15 +471,15 @@ export const AssetDashboard = () => {
     wing: asset.wing || null,
     area: asset.area || null,
     pmsRoom: asset.pms_room || null,
-    assetGroup: asset.pms_asset_group || asset.asset_group || "",
-    assetSubGroup: asset.sub_group || asset.asset_sub_group || "",
+    assetGroup: asset.pms_asset_group || "",
+    assetSubGroup: asset.sub_group || "",
     assetType: asset.asset_type,
   }));
 
   const transformedSearchedAssets = searchAssets.map((asset,index) => ({
     id: asset.id?.toString() || "",
     name: asset.name || "",
-    serialNumber: (pagination.currentPage - 1) * 15 + index + 1,
+    serialNumber: ((pagination.currentPage - 1) * 15 + index + 1).toString(),
     assetNumber: asset.assetNumber || "",
     status: asset.status as "in_use" | "in_storage" | "breakdown" | "disposed",
     siteName: asset.siteName || "",
@@ -1334,7 +1334,16 @@ export const AssetDashboard = () => {
             </div>
           ) : (
             <>
-              <AssetStats stats={data} onCardClick={handleStatCardClick} />
+              <AssetStats stats={{
+                total: totalCount || 0,
+                total_value: totalValue ? `₹${totalValue.toLocaleString()}` : '₹0.00',
+                nonItAssets: assetDistributions?.info?.total_non_it_assets || 0,
+                itAssets: assetDistributions?.info?.total_it_assets || 0,
+                inUse: assetStatistics?.assets_in_use?.total_assets_in_use || 0,
+                breakdown: assetStatistics?.assets_in_breakdown?.total_assets_in_breakdown || 0,
+                in_store: 0, // Add if available in API
+                dispose: 0, // Add if available in API
+              }} onCardClick={handleStatCardClick} />
 
               {/* <AssetActions
                 searchTerm={searchTerm}
