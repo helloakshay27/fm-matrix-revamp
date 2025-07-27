@@ -9,6 +9,8 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAMCData } from '@/store/slices/amcSlice';
+import { AMCAnalyticsSelector } from '@/components/AMCAnalyticsSelector';
+import { AMCAnalyticsCard } from '@/components/AMCAnalyticsCard';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
@@ -121,34 +123,35 @@ export const AMCDashboard = () => {
   const [loading, setLoading] = useState(false); // Local loading state
   const [activeTab, setActiveTab] = useState<string>("amclist");
   const [showActionPanel, setShowActionPanel] = useState(false);
-    const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
-  
-  
+  const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
+
+
   // Analytics states
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [amcAnalyticsData, setAmcAnalyticsData] = useState<AMCStatusData | null>(null);
-  
+  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview']);
+
   // Set default dates: last year to today for analytics
   const getDefaultDateRange = () => {
     const today = new Date();
     const lastYear = new Date();
     lastYear.setFullYear(today.getFullYear() - 1);
-    
+
     const formatDate = (date: Date) => {
       const day = date.getDate().toString().padStart(2, '0');
       const month = (date.getMonth() + 1).toString().padStart(2, '0');
       const year = date.getFullYear();
       return `${day}/${month}/${year}`;
     };
-    
+
     return {
       startDate: formatDate(lastYear),
       endDate: formatDate(today)
     };
   };
-  
-  const [analyticsDateRange, setAnalyticsDateRange] = useState<{startDate: string; endDate: string}>(getDefaultDateRange());
+
+  const [analyticsDateRange, setAnalyticsDateRange] = useState<{ startDate: string; endDate: string }>(getDefaultDateRange());
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -185,27 +188,27 @@ export const AMCDashboard = () => {
   // Handle analytics filter apply
   const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
     setAnalyticsDateRange(filters);
-    
+
     // Convert date strings to Date objects
     const startDate = new Date(filters.startDate.split('/').reverse().join('-')); // Convert DD/MM/YYYY to YYYY-MM-DD
     const endDate = new Date(filters.endDate.split('/').reverse().join('-'));
-    
+
     fetchAMCAnalyticsData(startDate, endDate);
   };
 
   // Use API data if available, otherwise fallback to initial data
   const amcData = apiData && typeof apiData === 'object' && 'asset_amcs' in apiData && Array.isArray((apiData as any).asset_amcs) ? (apiData as any).asset_amcs : initialAmcData;
   const pagination = (apiData && typeof apiData === 'object' && 'pagination' in apiData) ? (apiData as any).pagination : { current_page: 1, total_count: 0, total_pages: 1 };
-  
+
   // Extract counts from API response - use analytics data if available
-  const totalAMCs = amcAnalyticsData ? (amcAnalyticsData.active_amc + amcAnalyticsData.inactive_amc) : 
+  const totalAMCs = amcAnalyticsData ? (amcAnalyticsData.active_amc + amcAnalyticsData.inactive_amc) :
     ((apiData && typeof apiData === 'object' && 'total_amcs_count' in apiData) ? (apiData as any).total_amcs_count : pagination.total_count || 0);
-  const activeAMCs = amcAnalyticsData?.active_amc || 
+  const activeAMCs = amcAnalyticsData?.active_amc ||
     ((apiData && typeof apiData === 'object' && 'active_amcs_count' in apiData) ? (apiData as any).active_amcs_count : 0);
-  const inactiveAMCs = amcAnalyticsData?.inactive_amc || 
+  const inactiveAMCs = amcAnalyticsData?.inactive_amc ||
     ((apiData && typeof apiData === 'object' && 'inactive_amcs_count' in apiData) ? (apiData as any).inactive_amcs_count : 0);
   const flaggedAMCs = (apiData && typeof apiData === 'object' && 'flagged_amcs_count' in apiData) ? (apiData as any).flagged_amcs_count : 0;
-  
+
   // Service and Asset totals from analytics
   const serviceTotalAMCs = amcAnalyticsData?.service_total || 0;
   const assetTotalAMCs = amcAnalyticsData?.assets_total || 0;
@@ -790,247 +793,77 @@ export const AMCDashboard = () => {
 
             <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
               <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-600">
-                  Analytics Data Range: {analyticsDateRange.startDate} to {analyticsDateRange.endDate}
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsAnalyticsFilterOpen(true)}
-                  className="flex items-center gap-2"
-                  disabled={analyticsLoading}
-                >
-                  <Filter className="w-4 h-4" />
-                  Filter Analytics
-                </Button>
-              </div>
-              <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
-                <div className="xl:col-span-8 space-y-4 sm:space-y-6">
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsAnalyticsFilterOpen(true)}
+                    className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
+                    disabled={analyticsLoading}
                   >
-                    <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
-                      <div className="space-y-4 sm:space-y-6">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                          {chartOrder.filter(id => ['statusChart', 'typeChart'].includes(id)).map((chartId) => {
-                            if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
-                              return (
-                                <SortableChartItem key={chartId} id={chartId}>
-                                  <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
-                                    <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                      <h3 className="text-base sm:text-lg font-bold text-[#C72030]">AMCs</h3>
-                                      <Download className="w-4 h-4 sm:w-5 sm:h-5 text-black cursor-pointer" />
-                                    </div>
-                                    <div className="relative flex items-center justify-center">
-                                      <ResponsiveContainer width="100%" height={200} className="sm:h-[200px]">
-                                        <PieChart>
-                                          <Pie
-                                            data={statusData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={40}
-                                            outerRadius={80}
-                                            paddingAngle={2}
-                                            dataKey="value"
-                                            label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                                              return (
-                                                <text
-                                                  x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
-                                                  y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                                  fill="black"
-                                                  textAnchor="middle"
-                                                  dominantBaseline="middle"
-                                                  fontSize="14"
-                                                  fontWeight="bold"
-                                                >
-                                                  {value}
-                                                </text>
-                                              );
-                                            }}
-                                            labelLine={false}
-                                          >
-                                            {statusData.map((entry, index) => (
-                                              <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                          </Pie>
-                                          <Tooltip />
-                                        </PieChart>
-                                      </ResponsiveContainer>
-                                      <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="text-center">
-                                          <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {totalAMCs}</div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                      {statusData.map((item, index) => (
-                                        <div key={index} className="flex items-center gap-2">
-                                          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
-                                          <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </SortableChartItem>
-                              );
-                            }
-
-                            if (chartId === 'typeChart' && visibleSections.includes('typeChart')) {
-                              return (
-                                <SortableChartItem key={chartId} id={chartId}>
-                                  <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
-                                    <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                      <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Services & Assets AMCs</h3>
-                                      <Download className="w-4 h-4 sm:w-5 sm:h-5 text-black cursor-pointer" />
-                                    </div>
-                                    <div className="relative flex items-center justify-center">
-                                      <ResponsiveContainer width="100%" height={200} className="sm:h-[200px]">
-                                        <PieChart>
-                                           <Pie
-                                             data={resourceTypeData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={40}
-                                            outerRadius={80}
-                                            paddingAngle={2}
-                                            dataKey="value"
-                                            label={({ value, name, cx, cy, midAngle, innerRadius, outerRadius }) => {
-                                              return (
-                                                <text
-                                                  x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)}
-                                                  y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)}
-                                                  fill="black"
-                                                  textAnchor="middle"
-                                                  dominantBaseline="middle"
-                                                  fontSize="14"
-                                                  fontWeight="bold"
-                                                >
-                                                  {value}
-                                                </text>
-                                              );
-                                            }}
-                                            labelLine={false}
-                                          >
-                                            {resourceTypeData.map((entry, index) => (
-                                              <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                          </Pie>
-                                          <Tooltip />
-                                        </PieChart>
-                                      </ResponsiveContainer>
-                                      <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="text-center">
-                                          <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {totalAMCs}</div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                      {resourceTypeData.map((item, index) => (
-                                        <div key={index} className="flex items-center gap-2">
-                                          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{ backgroundColor: item.color }}></div>
-                                          <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </SortableChartItem>
-                              );
-                            }
-
-                            return null;
-                          })}
-                        </div>
-
-                        {chartOrder.filter(id => ['resourceChart', 'agingMatrix'].includes(id)).map((chartId) => {
-                          if (chartId === 'resourceChart' && visibleSections.includes('resourceChart')) {
-                            return (
-                              <SortableChartItem key={chartId} id={chartId}>
-                                <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
-                                  <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Unit Resource-wise AMCs</h3>
-                                    <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{ color: '#C72030' }} />
-                                  </div>
-                                  <div className="w-full overflow-x-auto">
-                                    <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
-                                      <BarChart data={resourceChartData}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                                        <XAxis
-                                          dataKey="name"
-                                          angle={-45}
-                                          textAnchor="end"
-                                          height={80}
-                                          tick={{ fill: '#6b7280', fontSize: 10 }}
-                                          className="text-xs"
-                                        />
-                                        <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} />
-                                        <Tooltip />
-                                        <Bar dataKey="value" fill="#c6b692" />
-                                      </BarChart>
-                                    </ResponsiveContainer>
-                                  </div>
-                                </div>
-                              </SortableChartItem>
-                            );
-                          }
-
-                          if (chartId === 'agingMatrix' && visibleSections.includes('agingMatrix')) {
-                            return (
-                              <SortableChartItem key={chartId} id={chartId}>
-                                <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
-                                  <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                    <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>AMCs Ageing Matrix</h3>
-                                    <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
-                                  </div>
-                                  <div className="space-y-4 sm:space-y-6">
-                                    <div className="overflow-x-auto -mx-3 sm:mx-0">
-                                      <div className="min-w-[500px] px-3 sm:px-0">
-                                        <table className="w-full border-collapse border border-gray-300">
-                                          <thead>
-                                            <tr style={{ backgroundColor: '#EDE4D8' }}>
-                                              <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Priority</th>
-                                              <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">No. of Days Since Last Service</th>
-                                            </tr>
-                                            <tr style={{ backgroundColor: '#EDE4D8' }}>
-                                              <th className="border border-gray-300 p-2 sm:p-3"></th>
-                                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">0-30</th>
-                                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">31-60</th>
-                                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">61-90</th>
-                                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">91-180</th>
-                                              <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">180+</th>
-                                            </tr>
-                                          </thead>
-                                          <tbody>
-                                            {agingMatrixData.map((row, index) => (
-                                              <tr key={index} className="bg-white">
-                                                <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
-                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['0-30']}</td>
-                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['31-60']}</td>
-                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['61-90']}</td>
-                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['91-180']}</td>
-                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['180+']}</td>
-                                              </tr>
-                                            ))}
-                                          </tbody>
-                                        </table>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </SortableChartItem>
-                            );
-                          }
-
-                          return null;
-                        })}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
+                    <Filter className="w-4 h-4" />
+                    Filter Analytics
+                  </Button>
                 </div>
-                <div className="xl:col-span-4 order-first xl:order-last">
-                  {/* <RecentAMCSidebar /> */}
-                </div>
+                <AMCAnalyticsSelector onSelectionChange={(options) => setSelectedAnalyticsOptions(options)} />
               </div>
+
+              {analyticsLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="text-gray-600">Loading analytics data...</div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {selectedAnalyticsOptions?.includes('status_overview') && amcAnalyticsData && (
+                    <AMCAnalyticsCard
+                      title="Status Overview"
+                      data={amcAnalyticsData}
+                      type="statusOverview"
+                    />
+                  )}
+                  {selectedAnalyticsOptions?.includes('type_distribution') && amcAnalyticsData && (
+                    <AMCAnalyticsCard
+                      title="Type Distribution"
+                      data={amcAnalyticsData}
+                      type="typeDistribution"
+                    />
+                  )}
+                  {selectedAnalyticsOptions?.includes('vendor_performance') && amcAnalyticsData && (
+                    <AMCAnalyticsCard
+                      title="Vendor Performance"
+                      data={amcAnalyticsData}
+                      type="vendorPerformance"
+                    />
+                  )}
+                  {selectedAnalyticsOptions?.includes('expiry_analysis') && amcAnalyticsData && (
+                    <AMCAnalyticsCard
+                      title="Expiry Analysis"
+                      data={amcAnalyticsData}
+                      type="expiryAnalysis"
+                    />
+                  )}
+                  {selectedAnalyticsOptions?.includes('cost_analysis') && amcAnalyticsData && (
+                    <AMCAnalyticsCard
+                      title="Cost Analysis"
+                      data={amcAnalyticsData}
+                      type="costAnalysis"
+                    />
+                  )}
+                  {selectedAnalyticsOptions?.includes('service_tracking') && amcAnalyticsData && (
+                    <AMCAnalyticsCard
+                      title="Service Tracking"
+                      data={amcAnalyticsData}
+                      type="serviceTracking"
+                    />
+                  )}
+                  {selectedAnalyticsOptions?.includes('compliance_report') && amcAnalyticsData && (
+                    <AMCAnalyticsCard
+                      title="Compliance Report"
+                      data={amcAnalyticsData}
+                      type="complianceReport"
+                    />
+                  )}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
@@ -1096,8 +929,8 @@ export const AMCDashboard = () => {
                 </div>
               </div>
 
-                    <AmcBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
-              
+              <AmcBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
+
 
               {showActionPanel && (
                 <SelectionPanel

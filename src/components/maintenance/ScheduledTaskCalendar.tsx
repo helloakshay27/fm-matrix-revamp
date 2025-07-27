@@ -25,16 +25,8 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   const [activeFilters, setActiveFilters] = useState<CalendarFilters>({
     dateFrom: '01/07/2025',
     dateTo: '31/07/2025',
-    amc: '',
-    service: '',
-    status: '',
-    scheduleType: '',
-    priority: '',
-    building: '',
-    wing: '',
-    floor: '',
-    area: '',
-    room: ''
+    type: '',
+    scheduleType: ''
   });
 
   // Convert API events to calendar events
