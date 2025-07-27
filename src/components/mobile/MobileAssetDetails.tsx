@@ -44,6 +44,12 @@ const assetOptions = [
   { key: 'asset-tickets', label: 'Asset Tickets', icon: Ticket },
   { key: 'amc-details', label: 'AMC Details', icon: FileText },
   { key: 'depreciation', label: 'Depreciation', icon: DollarSign },
+  { key: 'ppm', label: 'PPM', icon: Wrench },
+  { key: 'ebom', label: 'EBOM', icon: ClipboardCheck },
+  { key: 'attachments', label: 'Attachments', icon: FileText },
+  { key: 'history-card', label: 'History Card', icon: Calendar },
+  { key: 'association', label: 'Association', icon: ArrowRightLeft },
+  { key: 'owner-cost', label: 'Owner Cost', icon: DollarSign },
 ];
 
 export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({ asset }) => {
@@ -201,13 +207,118 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({ asset })
             </div>
           </div>
         );
+      case 'ppm':
+        return (
+          <div className="space-y-2 text-sm">
+            <div className="p-2 border rounded">
+              <p className="font-medium">Preventive Maintenance Task 1</p>
+              <p className="text-gray-500 text-xs">Status: Scheduled | Due: 2025-02-01</p>
+            </div>
+            <div className="p-2 border rounded">
+              <p className="font-medium">Preventive Maintenance Task 2</p>
+              <p className="text-gray-500 text-xs">Status: Completed | Date: 2025-01-20</p>
+            </div>
+          </div>
+        );
+      case 'ebom':
+        return (
+          <div className="space-y-2 text-sm">
+            <div className="p-2 border rounded">
+              <p className="font-medium">Component A</p>
+              <p className="text-gray-500 text-xs">Quantity: 2 | Unit Cost: ₹500</p>
+            </div>
+            <div className="p-2 border rounded">
+              <p className="font-medium">Component B</p>
+              <p className="text-gray-500 text-xs">Quantity: 1 | Unit Cost: ₹1,200</p>
+            </div>
+          </div>
+        );
+      case 'attachments':
+        return (
+          <div className="space-y-3 text-sm">
+            <div className="space-y-2">
+              <div className="p-2 border rounded">
+                <p className="font-medium">Manual_Document.pdf</p>
+                <p className="text-gray-500 text-xs">Size: 2.5 MB | Uploaded: 2025-01-20</p>
+              </div>
+              <div className="p-2 border rounded">
+                <p className="font-medium">Warranty_Certificate.pdf</p>
+                <p className="text-gray-500 text-xs">Size: 1.2 MB | Uploaded: 2025-01-15</p>
+              </div>
+              <div className="p-2 border rounded">
+                <p className="font-medium">Installation_Photos.zip</p>
+                <p className="text-gray-500 text-xs">Size: 5.8 MB | Uploaded: 2025-01-10</p>
+              </div>
+            </div>
+            <div className="pt-2 border-t">
+              <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg font-medium">
+                Download All Attachments
+              </button>
+            </div>
+          </div>
+        );
+      case 'history-card':
+        return (
+          <div className="space-y-2 text-sm">
+            <div className="p-2 border rounded">
+              <p className="font-medium">Asset Installation</p>
+              <p className="text-gray-500 text-xs">Date: 2024-01-01 | By: Installation Team</p>
+            </div>
+            <div className="p-2 border rounded">
+              <p className="font-medium">First Maintenance</p>
+              <p className="text-gray-500 text-xs">Date: 2024-06-01 | By: Maintenance Team</p>
+            </div>
+            <div className="p-2 border rounded">
+              <p className="font-medium">Status Update</p>
+              <p className="text-gray-500 text-xs">Date: 2025-01-20 | By: Operations Team</p>
+            </div>
+          </div>
+        );
+      case 'association':
+        return (
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-500">Parent Asset:</span>
+              <span>Main Generator System</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Child Assets:</span>
+              <span>Control Panel, Fuel Tank</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Related Equipment:</span>
+              <span>Power Distribution Unit</span>
+            </div>
+          </div>
+        );
+      case 'owner-cost':
+        return (
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-500">Purchase Cost:</span>
+              <span>₹1,50,000</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Installation Cost:</span>
+              <span>₹25,000</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Total Maintenance:</span>
+              <span>₹45,000</span>
+            </div>
+            <div className="flex justify-between font-semibold pt-2 border-t">
+              <span className="text-gray-700">Total Cost of Ownership:</span>
+              <span>₹2,20,000</span>
+            </div>
+          </div>
+        );
       default:
         return <p className="text-sm text-gray-500">No data available</p>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-100">
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="flex items-center gap-4 p-4">
@@ -223,105 +334,101 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({ asset })
 
       <div className="p-4 space-y-4">
         {/* Asset Info Card */}
-        <Card style={{ backgroundColor: '#E8E2D3' }}>
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-sm text-red-600 font-medium">
-                  Asset ID : #{asset.assetNumber || asset.id}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                {asset.status?.toLowerCase() === 'breakdown' && (
-                  <button
-                    onClick={handleBreakdownClick}
-                    className="text-red-600 text-xs underline"
-                  >
-                    Breakdown
-                  </button>
-                )}
-                <Badge className={`${getStatusColor(asset.status)} flex items-center gap-1`}>
-                  {getStatusIcon(asset.status)}
-                  {asset.status || 'In Use'}
-                </Badge>
+        <div className="bg-white rounded-lg p-4">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <p className="text-sm text-red-600 font-medium">
+                Asset ID : #{asset.assetNumber || asset.id}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {asset.status?.toLowerCase() === 'breakdown' && (
+                <button
+                  onClick={handleBreakdownClick}
+                  className="bg-red-500 text-white px-3 py-1 rounded-full text-xs"
+                >
+                  Breakdown
+                </button>
+              )}
+              <div className="bg-green-500 text-white px-3 py-1 rounded-full text-xs flex items-center gap-1">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+                {asset.status || 'In Use'}
               </div>
             </div>
+          </div>
 
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-gray-900">Asset Info</h2>
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-gray-900">Asset Info</h2>
+            
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Asset Name</span>
+                <span className="text-gray-900 font-medium">: {asset.name}</span>
+              </div>
               
-              <div className="space-y-2 text-sm">
+              {asset.assetGroup && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Asset Name</span>
-                  <span className="text-gray-900 font-medium">{asset.name}</span>
+                  <span className="text-gray-500">Group/Subgroup</span>
+                  <span className="text-gray-900">
+                    : {asset.assetGroup}
+                    {asset.assetSubGroup && ` / ${asset.assetSubGroup}`}
+                  </span>
                 </div>
-                
-                {asset.assetGroup && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Group/Subgroup</span>
-                    <span className="text-gray-900">
-                      {asset.assetGroup}
-                      {asset.assetSubGroup && ` / ${asset.assetSubGroup}`}
-                    </span>
-                  </div>
-                )}
-                
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Equipment ID</span>
-                  <span className="text-gray-900">{asset.assetNumber || asset.id}</span>
-                </div>
+              )}
+              
+              <div className="flex justify-between">
+                <span className="text-gray-500">Equipment ID</span>
+                <span className="text-gray-900">: {asset.assetNumber || asset.id}</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Options Section */}
-        <Card style={{ backgroundColor: '#E8E2D3' }}>
-          <CardContent className="p-4">
-            <h3 className="text-base font-semibold text-gray-900 mb-4">
-              Please select below options
-            </h3>
-            
-            <div className="space-y-2">
-              {assetOptions.map((option) => {
-                const Icon = option.icon;
-                const isOpen = openSections[option.key];
-                
-                return (
-                  <Collapsible
-                    key={option.key}
-                    open={isOpen}
-                    onOpenChange={() => toggleSection(option.key)}
-                  >
-                    <CollapsibleTrigger className="w-full">
-                      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-                            <Icon className="h-4 w-4 text-orange-600" />
-                          </div>
-                          <span className="text-sm font-medium text-gray-900">
-                            {option.label}
-                          </span>
+        <div className="bg-white rounded-lg p-4">
+          <h3 className="text-base font-semibold text-gray-900 mb-4">
+            Please select below options
+          </h3>
+          
+          <div className="space-y-3">
+            {assetOptions.map((option) => {
+              const Icon = option.icon;
+              const isOpen = openSections[option.key];
+              
+              return (
+                <Collapsible
+                  key={option.key}
+                  open={isOpen}
+                  onOpenChange={() => toggleSection(option.key)}
+                >
+                  <CollapsibleTrigger className="w-full">
+                    <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors bg-white">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                          <Icon className="h-5 w-5 text-orange-600" />
                         </div>
-                        {isOpen ? (
-                          <ChevronDown className="h-4 w-4 text-gray-400" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-gray-400" />
-                        )}
+                        <span className="text-sm font-medium text-gray-900">
+                          {option.label}
+                        </span>
                       </div>
-                    </CollapsibleTrigger>
-                    
-                    <CollapsibleContent>
-                      <div className="mt-2 p-3 bg-gray-50 rounded-lg">
-                        {renderSectionContent(option.key)}
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                      {isOpen ? (
+                        <ChevronDown className="h-4 w-4 text-gray-400" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      )}
+                    </div>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      {renderSectionContent(option.key)}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
