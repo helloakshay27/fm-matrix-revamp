@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { AddCommentModal } from './AddCommentModal';
 import { useNavigate } from 'react-router-dom';
 import { ticketAnalyticsAPI } from '@/services/ticketAnalyticsAPI';
+import { apiClient } from '@/utils/apiClient';
 export function RecentTicketsSidebar() {
   const [commentModal, setCommentModal] = useState<{
     isOpen: boolean;
@@ -13,35 +14,37 @@ export function RecentTicketsSidebar() {
     ticketId: ''
   });
   const [flaggedTickets, setFlaggedTickets] = useState<Set<string>>(new Set());
+  const [goldenTickets, setGoldenTickets] = useState<Set<string>>(new Set());
   const [recentTickets, setRecentTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchRecentTickets = async () => {
-      try {
-        const response = await ticketAnalyticsAPI.getRecentTickets();
-        const mappedTickets = response.complaints.map((ticket: any) => ({
-          id: ticket.ticket_number,
-          title: ticket.heading,
-          category: ticket.category_type,
-          subCategory: ticket.sub_category_type,
-          assigneeName: ticket.assigned_to || 'Unassigned',
-          site: ticket.site_name,
-          priority: ticket.priority,
-          tat: ticket.response_escalation,
-          status: ticket.issue_status,
-          nextStatus: ticket.status.name,
-          handledBy: ticket.updated_by
-        }));
-        setRecentTickets(mappedTickets);
-      } catch (error) {
-        console.error('Error fetching recent tickets:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchRecentTickets = async () => {
+    try {
+      setLoading(true);
+      const response = await ticketAnalyticsAPI.getRecentTickets();
+      const mappedTickets = response.complaints.map((ticket: any) => ({
+        id: ticket.ticket_number,
+        title: ticket.heading,
+        category: ticket.category_type,
+        subCategory: ticket.sub_category_type,
+        assigneeName: ticket.assigned_to || 'Unassigned',
+        site: ticket.site_name,
+        priority: ticket.priority,
+        tat: ticket.response_escalation,
+        status: ticket.issue_status,
+        nextStatus: ticket.status.name,
+        handledBy: ticket.updated_by
+      }));
+      setRecentTickets(mappedTickets);
+    } catch (error) {
+      console.error('Error fetching recent tickets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchRecentTickets();
   }, []);
   const handleAddComment = (ticketId: string) => {
@@ -50,16 +53,45 @@ export function RecentTicketsSidebar() {
       ticketId
     });
   };
-  const handleFlag = (ticketId: string) => {
-    setFlaggedTickets(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(ticketId)) {
-        newSet.delete(ticketId);
-      } else {
-        newSet.add(ticketId);
-      }
-      return newSet;
-    });
+  const handleFlag = async (ticketId: string) => {
+    try {
+      await apiClient.post(`/pms/admin/complaints/mark_as_flagged.json?ids=[${ticketId}]`);
+      
+      setFlaggedTickets(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(ticketId)) {
+          newSet.delete(ticketId);
+        } else {
+          newSet.add(ticketId);
+        }
+        return newSet;
+      });
+      
+      // Refresh the entire page like other list pages
+      window.location.reload();
+    } catch (error) {
+      console.error('Error flagging ticket:', error);
+    }
+  };
+  const handleGoldenTicket = async (ticketId: string) => {
+    try {
+      await apiClient.post(`/pms/admin/complaints/mark_as_golden_ticket.json?ids=[${ticketId}]`);
+      
+      setGoldenTickets(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(ticketId)) {
+          newSet.delete(ticketId);
+        } else {
+          newSet.add(ticketId);
+        }
+        return newSet;
+      });
+      
+      // Refresh the entire page like other list pages
+      window.location.reload();
+    } catch (error) {
+      console.error('Error marking as golden ticket:', error);
+    }
   };
   const handleViewDetails = (ticketId: string) => {
     navigate(`/maintenance/ticket-details/${ticketId}`);
@@ -83,7 +115,9 @@ export function RecentTicketsSidebar() {
               <div className="flex items-center justify-between mb-3">
                 <span className="font-semibold text-gray-800 text-sm">{ticket.id}</span>
                 <div className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                  <button onClick={() => handleGoldenTicket(ticket.id)}>
+                    <Star className={`h-5 w-5 ${goldenTickets.has(ticket.id) ? 'text-yellow-600 fill-yellow-600' : 'text-yellow-500 fill-yellow-500'} cursor-pointer hover:opacity-80`} />
+                  </button>
                   <span className="bg-pink-300 text-pink-800 px-2 py-1 rounded text-xs font-medium">
                     {ticket.priority}
                   </span>
@@ -160,7 +194,7 @@ export function RecentTicketsSidebar() {
                     className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 ${flaggedTickets.has(ticket.id) ? 'opacity-60' : ''}`} 
                     onClick={() => handleFlag(ticket.id)}
                   >
-                    <Flag className="h-4 w-4 text-red-500" />
+                    <Flag className={`h-4 w-4 ${flaggedTickets.has(ticket.id) ? 'text-red-600 fill-red-600' : 'text-red-500'}`} />
                     Flag Issue
                   </button>
                 </div>

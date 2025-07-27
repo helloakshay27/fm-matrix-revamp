@@ -1,23 +1,33 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   ArrowLeft, 
   ChevronRight, 
   ChevronDown, 
-  Gauge, 
-  Calendar, 
-  ArrowRightLeft, 
+  Info,
+  BarChart3,
   FileText, 
-  Ticket, 
-  ClipboardCheck, 
-  DollarSign,
-  AlertTriangle,
+  Wrench,
+  Package,
+  Paperclip,
+  Gauge,
+  History,
+  TrendingDown,
+  Ticket,
   CheckCircle,
-  Wrench
+  AlertTriangle
 } from 'lucide-react';
+import { AssetInfoTab } from '@/components/asset-details/AssetInfoTab';
+import { AssetAnalyticsTab } from '@/components/asset-details/AssetAnalyticsTab';
+import { AMCDetailsTab } from '@/components/asset-details/AMCDetailsTab';
+import { PPMTab } from '@/components/asset-details/PPMTab';
+import { EBOMTab } from '@/components/asset-details/EBOMTab';
+import { AttachmentsTab } from '@/components/asset-details/AttachmentsTab';
+import { ReadingsTab } from '@/components/asset-details/ReadingsTab';
+import { HistoryCardTab } from '@/components/asset-details/HistoryCardTab';
+import { DepreciationTab } from '@/components/asset-details/DepreciationTab';
+import { TicketTab } from '@/components/asset-details/TicketTab';
 
 interface Asset {
   id: string;
@@ -36,20 +46,17 @@ interface MobileAssetDetailsProps {
   asset: Asset;
 }
 
-const assetOptions = [
-  { key: 'meter', label: 'Meter', icon: Gauge },
-  { key: 'scheduled-tasks', label: 'Scheduled Tasks', icon: Calendar },
-  { key: 'asset-movement', label: 'Asset Movement', icon: ArrowRightLeft },
-  { key: 'audit', label: 'Audit', icon: ClipboardCheck },
-  { key: 'asset-tickets', label: 'Asset Tickets', icon: Ticket },
-  { key: 'amc-details', label: 'AMC Details', icon: FileText },
-  { key: 'depreciation', label: 'Depreciation', icon: DollarSign },
-  { key: 'ppm', label: 'PPM', icon: Wrench },
-  { key: 'ebom', label: 'EBOM', icon: ClipboardCheck },
-  { key: 'attachments', label: 'Attachments', icon: FileText },
-  { key: 'history-card', label: 'History Card', icon: Calendar },
-  { key: 'association', label: 'Association', icon: ArrowRightLeft },
-  { key: 'owner-cost', label: 'Owner Cost', icon: DollarSign },
+const assetTabs = [
+  { key: 'asset-info', label: 'Asset Info', icon: Info, component: AssetInfoTab },
+  { key: 'asset-analytics', label: 'Analytics', icon: BarChart3, component: AssetAnalyticsTab },
+  { key: 'amc-details', label: 'AMC Details', icon: FileText, component: AMCDetailsTab },
+  { key: 'ppm', label: 'PPM', icon: Wrench, component: PPMTab },
+  { key: 'e-bom', label: 'E-BOM', icon: Package, component: EBOMTab },
+  { key: 'attachments', label: 'Attachments', icon: Paperclip, component: AttachmentsTab },
+  { key: 'readings', label: 'Readings', icon: Gauge, component: ReadingsTab },
+  { key: 'history-card', label: 'History Card', icon: History, component: HistoryCardTab },
+  { key: 'depreciation', label: 'Depreciation', icon: TrendingDown, component: DepreciationTab },
+  { key: 'ticket', label: 'Ticket', icon: Ticket, component: TicketTab },
 ];
 
 export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({ asset }) => {
@@ -71,250 +78,9 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({ asset })
     }));
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'in use':
-      case 'active':
-        return 'bg-green-100 text-green-800';
-      case 'breakdown':
-      case 'under repair':
-        return 'bg-red-100 text-red-800';
-      case 'maintenance':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'in use':
-      case 'active':
-        return <CheckCircle className="h-4 w-4" />;
-      case 'breakdown':
-      case 'under repair':
-        return <AlertTriangle className="h-4 w-4" />;
-      case 'maintenance':
-        return <Wrench className="h-4 w-4" />;
-      default:
-        return <CheckCircle className="h-4 w-4" />;
-    }
-  };
-
-  const renderSectionContent = (key: string) => {
-    // Mock data for demonstration
-    switch (key) {
-      case 'meter':
-        return (
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Current Reading:</span>
-              <span>1,250 hrs</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Last Reading:</span>
-              <span>1,200 hrs</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Reading Date:</span>
-              <span>2025-01-25</span>
-            </div>
-          </div>
-        );
-      case 'scheduled-tasks':
-        return (
-          <div className="space-y-2 text-sm">
-            <div className="p-2 border rounded">
-              <p className="font-medium">Weekly Maintenance</p>
-              <p className="text-gray-500 text-xs">Status: Scheduled | Due: 2025-01-30</p>
-            </div>
-            <div className="p-2 border rounded">
-              <p className="font-medium">Monthly Inspection</p>
-              <p className="text-gray-500 text-xs">Status: Completed | Due: 2025-02-01</p>
-            </div>
-          </div>
-        );
-      case 'asset-movement':
-        return (
-          <div className="space-y-2 text-sm">
-            <div className="p-2 border rounded">
-              <p className="font-medium">Movement to Building A</p>
-              <p className="text-gray-500 text-xs">Date: 2025-01-20 | By: John Doe</p>
-            </div>
-            <div className="p-2 border rounded">
-              <p className="font-medium">Location Update</p>
-              <p className="text-gray-500 text-xs">Date: 2025-01-15 | By: Jane Smith</p>
-            </div>
-          </div>
-        );
-      case 'audit':
-        return (
-          <div className="space-y-2 text-sm">
-            <div className="p-2 border rounded">
-              <p className="font-medium">Annual Audit</p>
-              <p className="text-gray-500 text-xs">Status: Completed | Date: 2024-12-15</p>
-            </div>
-            <div className="p-2 border rounded">
-              <p className="font-medium">Quarterly Review</p>
-              <p className="text-gray-500 text-xs">Status: Pending | Due: 2025-03-31</p>
-            </div>
-          </div>
-        );
-      case 'asset-tickets':
-        return (
-          <div className="space-y-2 text-sm">
-            <div className="p-2 border rounded">
-              <p className="font-medium">Maintenance Request #001</p>
-              <p className="text-gray-500 text-xs">Status: Open | Priority: High</p>
-            </div>
-            <div className="p-2 border rounded">
-              <p className="font-medium">Repair Ticket #002</p>
-              <p className="text-gray-500 text-xs">Status: Closed | Priority: Medium</p>
-            </div>
-          </div>
-        );
-      case 'amc-details':
-        return (
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Contract Start:</span>
-              <span>2024-01-01</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Contract End:</span>
-              <span>2024-12-31</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Vendor:</span>
-              <span>ABC Services</span>
-            </div>
-          </div>
-        );
-      case 'depreciation':
-        return (
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Original Value:</span>
-              <span>₹50,000</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Current Value:</span>
-              <span>₹35,000</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Depreciation Rate:</span>
-              <span>10% per year</span>
-            </div>
-          </div>
-        );
-      case 'ppm':
-        return (
-          <div className="space-y-2 text-sm">
-            <div className="p-2 border rounded">
-              <p className="font-medium">Preventive Maintenance Task 1</p>
-              <p className="text-gray-500 text-xs">Status: Scheduled | Due: 2025-02-01</p>
-            </div>
-            <div className="p-2 border rounded">
-              <p className="font-medium">Preventive Maintenance Task 2</p>
-              <p className="text-gray-500 text-xs">Status: Completed | Date: 2025-01-20</p>
-            </div>
-          </div>
-        );
-      case 'ebom':
-        return (
-          <div className="space-y-2 text-sm">
-            <div className="p-2 border rounded">
-              <p className="font-medium">Component A</p>
-              <p className="text-gray-500 text-xs">Quantity: 2 | Unit Cost: ₹500</p>
-            </div>
-            <div className="p-2 border rounded">
-              <p className="font-medium">Component B</p>
-              <p className="text-gray-500 text-xs">Quantity: 1 | Unit Cost: ₹1,200</p>
-            </div>
-          </div>
-        );
-      case 'attachments':
-        return (
-          <div className="space-y-3 text-sm">
-            <div className="space-y-2">
-              <div className="p-2 border rounded">
-                <p className="font-medium">Manual_Document.pdf</p>
-                <p className="text-gray-500 text-xs">Size: 2.5 MB | Uploaded: 2025-01-20</p>
-              </div>
-              <div className="p-2 border rounded">
-                <p className="font-medium">Warranty_Certificate.pdf</p>
-                <p className="text-gray-500 text-xs">Size: 1.2 MB | Uploaded: 2025-01-15</p>
-              </div>
-              <div className="p-2 border rounded">
-                <p className="font-medium">Installation_Photos.zip</p>
-                <p className="text-gray-500 text-xs">Size: 5.8 MB | Uploaded: 2025-01-10</p>
-              </div>
-            </div>
-            <div className="pt-2 border-t">
-              <button className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg font-medium">
-                Download All Attachments
-              </button>
-            </div>
-          </div>
-        );
-      case 'history-card':
-        return (
-          <div className="space-y-2 text-sm">
-            <div className="p-2 border rounded">
-              <p className="font-medium">Asset Installation</p>
-              <p className="text-gray-500 text-xs">Date: 2024-01-01 | By: Installation Team</p>
-            </div>
-            <div className="p-2 border rounded">
-              <p className="font-medium">First Maintenance</p>
-              <p className="text-gray-500 text-xs">Date: 2024-06-01 | By: Maintenance Team</p>
-            </div>
-            <div className="p-2 border rounded">
-              <p className="font-medium">Status Update</p>
-              <p className="text-gray-500 text-xs">Date: 2025-01-20 | By: Operations Team</p>
-            </div>
-          </div>
-        );
-      case 'association':
-        return (
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Parent Asset:</span>
-              <span>Main Generator System</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Child Assets:</span>
-              <span>Control Panel, Fuel Tank</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Related Equipment:</span>
-              <span>Power Distribution Unit</span>
-            </div>
-          </div>
-        );
-      case 'owner-cost':
-        return (
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Purchase Cost:</span>
-              <span>₹1,50,000</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Installation Cost:</span>
-              <span>₹25,000</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Total Maintenance:</span>
-              <span>₹45,000</span>
-            </div>
-            <div className="flex justify-between font-semibold pt-2 border-t">
-              <span className="text-gray-700">Total Cost of Ownership:</span>
-              <span>₹2,20,000</span>
-            </div>
-          </div>
-        );
-      default:
-        return <p className="text-sm text-gray-500">No data available</p>;
-    }
+  const renderTabContent = (tab: any) => {
+    const TabComponent = tab.component;
+    return <TabComponent assetId={asset.id} />;
   };
 
   return (
@@ -391,15 +157,15 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({ asset })
           </h3>
           
           <div className="space-y-3">
-            {assetOptions.map((option) => {
-              const Icon = option.icon;
-              const isOpen = openSections[option.key];
+            {assetTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isOpen = openSections[tab.key];
               
               return (
                 <Collapsible
-                  key={option.key}
+                  key={tab.key}
                   open={isOpen}
-                  onOpenChange={() => toggleSection(option.key)}
+                  onOpenChange={() => toggleSection(tab.key)}
                 >
                   <CollapsibleTrigger className="w-full">
                     <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors bg-white">
@@ -408,7 +174,7 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({ asset })
                           <Icon className="h-5 w-5 text-orange-600" />
                         </div>
                         <span className="text-sm font-medium text-gray-900">
-                          {option.label}
+                          {tab.label}
                         </span>
                       </div>
                       {isOpen ? (
@@ -420,8 +186,8 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({ asset })
                   </CollapsibleTrigger>
                   
                   <CollapsibleContent>
-                    <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                      {renderSectionContent(option.key)}
+                    <div className="mt-2 p-3 bg-white rounded-lg border border-gray-200">
+                      {renderTabContent(tab)}
                     </div>
                   </CollapsibleContent>
                 </Collapsible>

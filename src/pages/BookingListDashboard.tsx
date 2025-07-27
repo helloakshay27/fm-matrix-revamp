@@ -9,8 +9,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { TextField, MenuItem, createTheme, ThemeProvider } from '@mui/material';
+// import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { TextField, MenuItem, createTheme, ThemeProvider, Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { ExportByCentreModal } from '@/components/ExportByCentreModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import type { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -475,12 +475,12 @@ const BookingListDashboard = () => {
         }
       />
 
-      <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
+      <Dialog open={isFilterModalOpen} onClose={setIsFilterModalOpen}>
         <DialogContent className="sm:max-w-md [&>button]:hidden">
           <ThemeProvider theme={muiTheme}>
             <div>
-              <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+              <div className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <h3 className="text-lg font-semibold">FILTER BY</h3>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -489,7 +489,7 @@ const BookingListDashboard = () => {
                 >
                   <X className="h-4 w-4" />
                 </Button>
-              </DialogHeader>
+              </div>
 
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -548,7 +548,7 @@ const BookingListDashboard = () => {
                           />
                         </div>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto top-[50%] p-0 bg-white border shadow-lg z-50" align="start">
+                      <PopoverContent className="w-auto top-[50%] p-0 bg-white border shadow-lg z-[1500]" align="start">
                         <div className="p-4">
                           <Calendar
                             mode="range"
@@ -614,7 +614,7 @@ const BookingListDashboard = () => {
                           />
                         </div>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-white border shadow-lg z-50" align="start" sideOffset={4}>
+                      <PopoverContent className="w-auto p-0 bg-white border shadow-lg z-[1500]" align="start" sideOffset={4}>
                         <div className="p-4">
                           <Calendar
                             mode="range"

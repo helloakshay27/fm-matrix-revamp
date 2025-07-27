@@ -33,7 +33,7 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   const get52WeeksRange = () => {
     const today = new Date();
     const startDate = new Date(today);
-    startDate.setDate(today.getDate() - (52 * 7)); // 52 weeks ago
+    startDate.setDate(today.getDate() - 52 * 7); // 52 weeks ago
     return {
       start: startDate,
       end: today
@@ -58,19 +58,20 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   };
   const handleViewChange = (newView: any) => {
     setView(newView);
-    
+
     // When switching to 52-week view, automatically set the date range
     if (newView === 'work_week') {
-      const { start, end } = get52WeeksRange();
+      const {
+        start,
+        end
+      } = get52WeeksRange();
       const startFormatted = moment(start).format('DD/MM/YYYY');
       const endFormatted = moment(end).format('DD/MM/YYYY');
-      
       const filters = {
         ...activeFilters,
         dateFrom: startFormatted,
         dateTo: endFormatted
       };
-      
       setActiveFilters(filters);
       if (onDateRangeChange) {
         onDateRangeChange(startFormatted, endFormatted);
@@ -89,15 +90,12 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       onFiltersChange(filters);
     }
   };
-
   const handleExport = () => {
     console.log('Export calendar data');
   };
 
   // Count active filters
-  const activeFilterCount = Object.values(activeFilters).filter(value => 
-    value !== '' && value !== '01/07/2025' && value !== '31/07/2025'
-  ).length;
+  const activeFilterCount = Object.values(activeFilters).filter(value => value !== '' && value !== '01/07/2025' && value !== '31/07/2025').length;
 
   // Handle event click to navigate to task detail
   const handleSelectEvent = (event: any) => {
@@ -173,27 +171,15 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
 
       {/* Filter Button */}
       <div className="flex items-center justify-between">
-        <Button
-          onClick={() => setIsFilterModalOpen(true)}
-          variant="outline"
-          className="flex items-center gap-2 px-4 py-2 h-10"
-        >
+        <Button onClick={() => setIsFilterModalOpen(true)} variant="outline" className="flex items-center gap-2 px-4 py-2 h-10">
           <Filter className="h-4 w-4" />
           Filter
-          {activeFilterCount > 0 && (
-            <span className="ml-1 px-2 py-1 text-xs bg-purple-600 text-white rounded-full">
+          {activeFilterCount > 0 && <span className="ml-1 px-2 py-1 text-xs bg-purple-600 text-white rounded-full">
               {activeFilterCount}
-            </span>
-          )}
+            </span>}
         </Button>
         
-        <Button 
-          onClick={handleExport} 
-          variant="outline" 
-          className="px-4 py-2 h-10"
-        >
-          Export
-        </Button>
+        
       </div>
 
       {/* Legends */}
@@ -225,38 +211,25 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       <div className="bg-white border rounded-lg p-4" style={{
       height: '600px'
     }}>
-        <Calendar 
-          localizer={localizer} 
-          events={calendarEvents} 
-          startAccessor="start" 
-          endAccessor="end" 
-          style={{ height: '100%' }} 
-          view={view} 
-          onView={handleViewChange} 
-          date={date} 
-          onNavigate={handleNavigate} 
-          onSelectEvent={handleSelectEvent}
-          eventPropGetter={eventStyleGetter} 
-          components={{ toolbar: CustomToolbar }}
-          views={[Views.MONTH, Views.WEEK, Views.WORK_WEEK, Views.DAY, Views.AGENDA]}
-          step={60} 
-          showMultiDayTimes 
-          formats={{
-            timeGutterFormat: 'HH:mm',
-            eventTimeRangeFormat: ({ start, end }: any) => 
-              `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`,
-            agendaTimeFormat: 'HH:mm',
-            agendaTimeRangeFormat: ({ start, end }: any) => 
-              `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`
-          }} 
-        />
+        <Calendar localizer={localizer} events={calendarEvents} startAccessor="start" endAccessor="end" style={{
+        height: '100%'
+      }} view={view} onView={handleViewChange} date={date} onNavigate={handleNavigate} onSelectEvent={handleSelectEvent} eventPropGetter={eventStyleGetter} components={{
+        toolbar: CustomToolbar
+      }} views={[Views.MONTH, Views.WEEK, Views.WORK_WEEK, Views.DAY, Views.AGENDA]} step={60} showMultiDayTimes formats={{
+        timeGutterFormat: 'HH:mm',
+        eventTimeRangeFormat: ({
+          start,
+          end
+        }: any) => `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`,
+        agendaTimeFormat: 'HH:mm',
+        agendaTimeRangeFormat: ({
+          start,
+          end
+        }: any) => `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`
+      }} />
       </div>
 
       {/* Filter Modal */}
-      <CalendarFilterModal
-        isOpen={isFilterModalOpen}
-        onClose={() => setIsFilterModalOpen(false)}
-        onApplyFilters={handleApplyFilters}
-      />
+      <CalendarFilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
     </div>;
 };

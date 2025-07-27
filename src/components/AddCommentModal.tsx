@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { MessageSquare } from 'lucide-react';
+import { getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import { toast } from 'sonner';
 
 interface AddCommentModalProps {
   open?: boolean;
@@ -26,13 +28,44 @@ export const AddCommentModal: React.FC<AddCommentModalProps> = ({
   const modalOpen = open !== undefined ? open : isOpen || false;
   const handleOpenChange = onOpenChange || ((open: boolean) => !open && onClose?.());
   const [comment, setComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    if (comment.trim()) {
-      console.log(`Adding comment to ${itemType} ${itemId}:`, comment);
-      // Here you would typically call an API to save the comment
+  const handleSubmit = async () => {
+    if (!comment.trim() || !itemId) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      const url = getFullUrl('/complaint_logs.json');
+      const requestBody = {
+        complaint_log: {
+          complaint_id: itemId,
+          comment: comment.trim()
+        }
+      };
+
+      const response = await fetch(url, getAuthenticatedFetchOptions('POST', requestBody));
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      toast.success('Comment added successfully');
       setComment('');
       handleOpenChange(false);
+      
+      // Refresh the page to show the updated comment
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error('Failed to add comment. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -71,10 +104,10 @@ export const AddCommentModal: React.FC<AddCommentModalProps> = ({
             </Button>
             <Button 
               onClick={handleSubmit}
-              disabled={!comment.trim()}
+              disabled={!comment.trim() || isSubmitting}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              Add Comment
+              {isSubmitting ? 'Adding...' : 'Add Comment'}
             </Button>
           </div>
         </div>
