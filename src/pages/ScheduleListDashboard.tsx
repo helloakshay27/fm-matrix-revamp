@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import Switch from '@mui/material/Switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Upload, Filter, Download, Eye, Edit, Copy, Calendar, BarChart3, Clock, Settings, Wrench, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +23,7 @@ export const ScheduleListDashboard = () => {
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>(['checklist', 'technical-checklist', 'non-technical-checklist']);
+  const [optimisticActive, setOptimisticActive] = useState<{[id: string]: boolean}>({});
   
   // Add filter state
   const [filters, setFilters] = useState({
@@ -164,6 +166,10 @@ export const ScheduleListDashboard = () => {
   const handleExport = () => navigate('/maintenance/schedule/export');
   
   const handleToggleActive = async (scheduleId: string) => {
+    setOptimisticActive(prev => ({
+    ...prev,
+    [scheduleId]: !schedules.find(s => s.id === scheduleId)?.active
+  }));
     try {
       // Find the current schedule to get its current active status
       const currentSchedule = schedules.find(schedule => schedule.id === scheduleId);
@@ -204,6 +210,10 @@ export const ScheduleListDashboard = () => {
       refetch();
     } catch (error) {
       console.error('Error updating schedule active status:', error);
+      setOptimisticActive(prev => ({
+      ...prev,
+      [scheduleId]: schedules.find(s => s.id === scheduleId)?.active
+    }));
       toast.error('Failed to update schedule status. Please try again.', {
         position: 'top-right',
         duration: 4000,
@@ -307,11 +317,20 @@ export const ScheduleListDashboard = () => {
         </span>;
     }
     if (columnKey === 'active') {
-      return <div className="flex items-center">
-          <div className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-300'}`} onClick={() => handleToggleActive(item.id)}>
-            <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'}`} />
+      // Use custom toggle UI as requested
+      return (
+        <div className="flex items-center justify-center">
+          <div
+            className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${optimisticActive[item.id] ?? item.active ? 'bg-green-500' : 'bg-gray-300'}`}
+            onClick={() => handleToggleActive(item.id)}
+            aria-label={item.active ? 'Deactivate schedule' : 'Activate schedule'}
+          >
+            <span
+              className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${optimisticActive[item.id] ?? item.active ? 'translate-x-6' : 'translate-x-1'}`}
+            />
           </div>
-        </div>;
+        </div>
+      );
     }
     return item[columnKey as keyof TransformedScheduleData];
   };
