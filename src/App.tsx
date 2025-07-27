@@ -518,6 +518,7 @@ function App() {
 
               <Route path="/" element={<ProtectedRoute><Layout><div /></Layout></ProtectedRoute>}>
                 <Route index element={<Index />} />
+                <Route path="dashboard" element={<Dashboard />} />
 
                 {/* Rule Engine Routes */}
                 <Route path="/rule-engine/rule-list" element={<RuleListPage />} />
