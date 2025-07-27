@@ -64,9 +64,6 @@ export const AddSurveyPage = () => {
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
-            <Plus className="w-6 h-6 text-white" />
-          </div>
           <h1 className="text-2xl font-semibold text-gray-900">Add survey</h1>
         </div>
         

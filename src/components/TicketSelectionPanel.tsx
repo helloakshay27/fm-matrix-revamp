@@ -40,7 +40,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
 
   const handleFlag = () => {
     console.log('TicketSelectionPanel - Update clicked for tickets:', selectedTickets);
-    navigate('/maintenance/ticket/update', {
+    navigate('/maintenance/ticket/assign', {
       state: { selectedTickets: selectedTicketObjects }
     });
   };
@@ -177,7 +177,7 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
         </div>
         
         <div className="flex items-center gap-2">
-          <Button
+          {/* <Button
             onClick={handleGoldenTicket}
             disabled={isGoldenLoading}
             variant="ghost"
@@ -190,6 +190,21 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
               <User className="w-6 h-6 text-black" />
             )}
             <span className="text-xs text-gray-600">Assign To</span>
+          </Button> */}
+          
+          <Button
+            onClick={handleFlag}
+            disabled={isFlagLoading}
+            variant="ghost"
+            size="sm"
+            className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+          >
+            {isFlagLoading ? (
+              <Loader2 className="w-6 h-6 animate-spin text-black" />
+            ) : (
+              <Edit className="w-6 h-6 text-black" />
+            )}
+            <span className="text-xs text-gray-600">Update</span>
           </Button>
           
           <Button
