@@ -171,15 +171,27 @@ export const InventoryDashboard = () => {
   const [visibleSections, setVisibleSections] = useState<string[]>([
     "statusChart",
     "criticalityChart",
-    "categoryChart",
+    "categoryChart", 
     "agingMatrix",
+    "lowStockChart",
+    "highValueChart",
+    "consumableChart",
+    "nonConsumableChart",
+    "criticalPriorityChart",
+    "maintenanceDueChart",
   ]);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([
     "statusChart",
-    "criticalityChart",
+    "criticalityChart", 
     "categoryChart",
     "agingMatrix",
+    "lowStockChart",
+    "highValueChart",
+    "consumableChart",
+    "nonConsumableChart",
+    "criticalPriorityChart",
+    "maintenanceDueChart",
   ]);
   const [activeTab, setActiveTab] = useState<string>("list");
   const [showDateFilter, setShowDateFilter] = useState(false);
