@@ -176,6 +176,8 @@ import { DisposalFormFields } from '@/components/DisposalFormFields';
 import { DisposalAssetTable } from '@/components/DisposalAssetTable';
 import { HandedOverToSection } from '@/components/HandedOverToSection';
 import { CommentsAttachmentsSection } from '@/components/CommentsAttachmentsSection';
+import { useToast } from '@/hooks/use-toast';
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import axios from 'axios';
 
 const muiTheme = createTheme({
@@ -246,7 +248,8 @@ const muiTheme = createTheme({
 export const DisposeAssetPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const selectedAssets = location.state?.selectedAssets || [];
+  const { toast } = useToast();
+  const [selectedAssets, setSelectedAssets] = useState(location.state?.selectedAssets || []);
 
   // Per-asset breakdown and sold value states
   const [breakdowns, setBreakdowns] = useState<{ [key: string]: string }>({});
@@ -262,7 +265,73 @@ export const DisposeAssetPage: React.FC = () => {
 const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '' }]);
   const [attachments, setAttachments] = useState<string[]>([]);
 
+  // Function to refresh a specific asset's data
+  const handleAssetUpdate = async (assetId: number) => {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/assets/${assetId}.json`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader(),
+        },
+      });
+
+      if (response.ok) {
+        const updatedAssetData = await response.json();
+        
+        // Update the asset in selectedAssets state
+        setSelectedAssets(prevAssets => 
+          prevAssets.map(asset => 
+            asset.id === assetId 
+              ? { ...asset, status: updatedAssetData.status || asset.status }
+              : asset
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error refreshing asset data:', error);
+    }
+  };
+
   const handleSubmit = async () => {
+    // Validation for required fields
+    if (!disposeDate) {
+      toast({
+        title: "Validation Error",
+        description: "Dispose date is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!disposeReason.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Dispose reason is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate vendor or user selection based on handedOverTo
+    if (handedOverTo === 'vendor' && !vendor.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a vendor.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (handedOverTo === 'user' && !user.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a user.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     let handedOverToId = '';
     let handedOverToType = '';
     if (handedOverTo === 'vendor') {
@@ -306,9 +375,24 @@ const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '
           'Content-Type': 'application/json'
         }
       });
+      
+      // Show success message
+      toast({
+        title: "Asset Disposal Successful",
+        description: 'Asset is marked as "Disposed" and recorded successfully',
+        variant: "default",
+      });
+      
       navigate('/maintenance/asset');
     } catch (error) {
       console.error('Dispose Asset API error:', error);
+      
+      // Show error message
+      toast({
+        title: "Asset Disposal Failed",
+        description: "Failed to dispose asset. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -360,6 +444,7 @@ const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '
                   onBreakdownChange={handleBreakdownChange}
                   soldValues={soldValues}
                   onSoldValueChange={handleSoldValueChange}
+                  onAssetUpdate={handleAssetUpdate}
                 />
               </div>
 

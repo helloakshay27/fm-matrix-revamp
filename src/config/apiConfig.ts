@@ -118,6 +118,11 @@ export const API_CONFIG = {
     // Restaurant endpoints
     RESTAURANTS: '/pms/admin/restaurants',
     RESTAURANT_MENU: '/pms/admin/restaurants',
+    // Assets data report export endpoint
+    ASSETS_DATA_EXPORT: '/pms/assets/assets_data_report.xlsx',
+    // Recent assets endpoint
+    RECENT_ASSETS: '/pms/assets/recent_assets.json',
+    UPDATE_TICKET: '/complaint_logs.json',
   },
 } as const
 

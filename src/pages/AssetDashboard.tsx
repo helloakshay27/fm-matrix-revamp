@@ -471,8 +471,8 @@ export const AssetDashboard = () => {
     wing: asset.wing || null,
     area: asset.area || null,
     pmsRoom: asset.pms_room || null,
-    assetGroup: asset.pms_asset_group || "",
-    assetSubGroup: asset.sub_group || "",
+    assetGroup: asset.pms_asset_group || asset.asset_group || "",
+    assetSubGroup: asset.sub_group || asset.asset_sub_group || "",
     assetType: asset.asset_type,
   }));
 

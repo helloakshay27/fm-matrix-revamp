@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { getToken } from '@/utils/auth';
+import { getFullUrl, getAuthHeader, ENDPOINTS } from '@/config/apiConfig';
 
 interface CostApprovalModalProps {
   isOpen: boolean;
@@ -19,6 +23,9 @@ export const CostApprovalModal: React.FC<CostApprovalModalProps> = ({
   const [cost, setCost] = useState('');
   const [description, setDescription] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -31,27 +38,110 @@ export const CostApprovalModal: React.FC<CostApprovalModalProps> = ({
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
-    // Handle form submission logic here
-    console.log('Cost approval submitted:', {
-      cost,
-      description,
-      attachedFiles,
-      selectedTickets
-    });
+  const handleSubmit = async () => {
+    if (!cost || !description) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (selectedTickets.length === 0) {
+      toast({
+        title: "Validation Error", 
+        description: "No tickets selected for cost approval.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
     
-    // Reset form and close modal
-    setCost('');
-    setDescription('');
-    setAttachedFiles([]);
-    onClose();
+    try {
+      console.log('💰 Creating cost approval for tickets:', selectedTickets);
+      console.log('💰 Cost data:', { cost, description, attachments: attachedFiles.length });
+
+      // Prepare FormData for API submission
+      const formData = new FormData();
+      
+      // Add complaint_ids[] for each selected ticket
+      selectedTickets.forEach(ticketId => {
+        formData.append('complaint_ids[]', ticketId.toString());
+      });
+      
+      // Add cost and comment
+      formData.append('cost', cost);
+      formData.append('comment', description);
+      
+      // Add attachments[] if any
+      attachedFiles.forEach(file => {
+        formData.append('attachments[]', file);
+      });
+
+      // Log FormData contents for debugging
+      console.log('📤 Cost Approval API FormData:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+
+      // Make API call using the configured endpoint
+      const response = await fetch(getFullUrl(ENDPOINTS.COST_APPROVALS_CREATE), {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+        body: formData
+      });
+
+      console.log('📊 API Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Cost Approval API error response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ Cost Approval API response:', result);
+
+      // Show success message
+      toast({
+        title: "Success",
+        description: `Cost approval created successfully for ${selectedTickets.length} ticket(s).`
+      });
+      
+      // Reset form 
+      setCost('');
+      setDescription('');
+      setAttachedFiles([]);
+      
+      // Close modal first
+      onClose();
+      
+      // Navigate after a small delay to ensure modal is closed
+      setTimeout(() => {
+        navigate('/maintenance/ticket');
+      }, 100);
+      
+    } catch (error) {
+      console.error('❌ Error creating cost approval:', error);
+      toast({
+        title: "Error",
+        description: `Failed to create cost approval: ${error.message || 'Unknown error'}`,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-medium">Popup Name</DialogTitle>
+          <DialogTitle className="text-lg font-medium">Cost Approval</DialogTitle>
           <Button
             variant="ghost"
             size="sm"
@@ -139,9 +229,9 @@ export const CostApprovalModal: React.FC<CostApprovalModalProps> = ({
             <Button
               onClick={handleSubmit}
               className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
-              disabled={!cost || !description}
+              disabled={!cost || !description || isSubmitting}
             >
-              Submit
+              {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
             </Button>
           </div>
         </div>

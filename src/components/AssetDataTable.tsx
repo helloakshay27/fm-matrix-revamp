@@ -36,6 +36,9 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   onSearch,
   onRefreshData
 }) => {
+
+  console.log("AssetDataTable rendered with assets:", assets);
+  console.log("Selected assets:", visibleColumns);
   // Status color logic moved to StatusBadge component
 
   const [showActionPanel, setShowActionPanel] = useState(false);
@@ -187,7 +190,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       label: "Group",
       sortable: true,
       hideable: true,
-      defaultVisible: visibleColumns.group,
+      defaultVisible: visibleColumns.asset_group,
     },
     {
       key: "subGroup",

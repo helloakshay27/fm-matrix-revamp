@@ -651,7 +651,8 @@ const removeFile = (category, index) => {
     // General sections
     locationDetails: [],
     purchaseDetails: [],
-    depreciationRule: []
+    depreciationRule: [],
+    assetDetails: []
   });
 
 
@@ -905,6 +906,34 @@ const [attachments, setAttachments] = useState({
           !(field === 'model_number' && error.includes('Model No')) &&
           !(field === 'manufacturer' && error.includes('Manufacturer'))
         ));
+      }
+    }
+
+    // Warranty date validation - ensure warranty expiry is not before purchase date
+    if (field === 'warranty_expiry' && value) {
+      const purchaseDate = new Date(formData.purchased_on);
+      const warrantyDate = new Date(value);
+      
+      if (formData.purchased_on && warrantyDate < purchaseDate) {
+        toast.error('Invalid Warranty Date', {
+          description: 'Warranty expiry date cannot be before the purchase date.',
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
+      }
+    }
+
+    // Purchase date validation - ensure warranty expiry is not before purchase date
+    if (field === 'purchased_on' && value) {
+      const purchaseDate = new Date(value);
+      const warrantyDate = new Date(formData.warranty_expiry);
+      
+      if (formData.warranty_expiry && warrantyDate < purchaseDate) {
+        toast.error('Invalid Purchase Date', {
+          description: 'Purchase date cannot be after the warranty expiry date.',
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
       }
     }
 
@@ -1981,6 +2010,20 @@ const [attachments, setAttachments] = useState({
       }
     }
 
+    // Warranty date validation - ensure warranty expiry is not before purchase date
+    if (formData.warranty_expiry && formData.purchased_on) {
+      const purchaseDate = new Date(formData.purchased_on);
+      const warrantyDate = new Date(formData.warranty_expiry);
+      
+      if (warrantyDate < purchaseDate) {
+        toast.error('Invalid Warranty Date', {
+          description: 'Warranty expiry date cannot be before the purchase date.',
+          duration: 4000,
+        });
+        return ['Warranty expiry date cannot be before purchase date'];
+      }
+    }
+
     // If we reach here, all validations passed
     return [];
   };
@@ -2402,7 +2445,7 @@ const hasFiles = () => {
             </span>
             ASSET CATEGORY
           </div>
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+          <div className="w-full">
             <RadioGroup
               value={selectedAssetCategory}
               onValueChange={(category) => {
@@ -2423,7 +2466,7 @@ const hasFiles = () => {
                   asset_number: '',
                 }));
               }}
-              className="contents"
+              className="flex flex-wrap gap-2 lg:gap-3"
             >
               {[
                 'Land',
@@ -2436,7 +2479,7 @@ const hasFiles = () => {
                 'Tools & Instruments',
                 'Meter'
               ].map((category) => (
-                <div key={category} className="flex flex-col items-center space-y-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer min-w-[80px]">
+                <div key={category} className="flex flex-col items-center space-y-1 p-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer min-w-[90px] flex-1">
                   <RadioGroupItem
                     value={category}
                     id={category}
@@ -2444,9 +2487,9 @@ const hasFiles = () => {
                   />
                   <label
                     htmlFor={category}
-                    className="text-xs sm:text-sm font-medium cursor-pointer text-center leading-tight whitespace-pre-line"
+                    className="text-xs font-medium cursor-pointer text-center leading-tight"
                   >
-                    {category.split(' & ').join('\n').split(' ').join('\n')}
+                    {category}
                   </label>
                 </div>
               ))}
@@ -6139,7 +6182,235 @@ const hasFiles = () => {
             
 
             {/* Location Details */}
+          
+
+            {/* Asset Details */}
             <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+              <div onClick={() => toggleSection('asset')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+                <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+                  <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+                    <Package className="w-3 h-3 sm:w-4 sm:h-4" />
+                  </span>
+                  ASSET DETAILS
+                </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openCustomFieldModal('assetDetails');
+                    }} 
+                    className="px-3 py-1 rounded text-sm flex items-center gap-1" 
+                    style={{
+                      backgroundColor: '#F6F4EE',
+                      color: '#C72030'
+                    }}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Custom Field
+                  </button>
+                  {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </div>
+              </div>
+              {expandedSections.asset && <div className="p-4 sm:p-6">
+                {/* First row: Asset Name, Model No., Manufacturer */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                  <TextField 
+                    required 
+                    label="Asset Name" 
+                    placeholder="Enter Asset Name" 
+                    name="assetName" 
+                    fullWidth 
+                    variant="outlined" 
+                    value={formData.name || ''}
+                    error={hasValidationError('Asset Name')}
+                    helperText={hasValidationError('Asset Name') ? 'Asset Name is required' : ''}
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                    onChange={e => handleFieldChange('name', e.target.value)}
+                  />
+                  <TextField 
+                    required 
+                    label="Model No." 
+                    placeholder="Enter Model No" 
+                    name="modelNo" 
+                    fullWidth 
+                    variant="outlined" 
+                    value={formData.model_number || ''}
+                    error={hasValidationError('Model No')}
+                    helperText={hasValidationError('Model No') ? 'Model No. is required' : ''}
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                    onChange={e => handleFieldChange('model_number', e.target.value)}
+                  />
+                  <TextField 
+                    required 
+                    label="Manufacturer" 
+                    placeholder="Enter Manufacturer" 
+                    name="manufacturer" 
+                    fullWidth 
+                    variant="outlined" 
+                    value={formData.manufacturer || ''}
+                    error={hasValidationError('Manufacturer')}
+                    helperText={hasValidationError('Manufacturer') ? 'Manufacturer is required' : ''}
+                    InputLabelProps={{
+                      shrink: true
+                    }} 
+                    InputProps={{
+                      sx: fieldStyles
+                    }}
+                    onChange={e => handleFieldChange('manufacturer', e.target.value)}
+                  />
+                  {/* }}
+                    onChange={e => handleFieldChange('manufacturer', e.target.value)}
+
+                  /> */}
+                </div>
+
+                {/* Second row: Group, Subgroup */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  <FormControl fullWidth variant="outlined" sx={{
+                    minWidth: 120
+                  }}>
+                    <InputLabel id="group-select-label" shrink>Group</InputLabel>
+                    <MuiSelect
+                      labelId="group-select-label"
+                      label="Group"
+                      displayEmpty
+                      value={selectedGroup}
+                      onChange={(e) => {
+                        handleGroupChange(e.target.value);
+                        handleFieldChange('pms_asset_group_id', e.target.value);
+                      }}
+                      sx={fieldStyles}
+                      required
+                      disabled={groupsLoading}
+                    >
+                      <MenuItem value=""><em>{groupsLoading ? 'Loading...' : 'Select Group'}</em></MenuItem>
+                      {groups.map((group) => (
+                        <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                  <FormControl fullWidth variant="outlined" sx={{
+                    minWidth: 120
+                  }}>
+                    <InputLabel id="subgroup-select-label" shrink>Subgroup</InputLabel>
+                    <MuiSelect
+                      labelId="subgroup-select-label"
+                      label="Subgroup"
+                      displayEmpty
+                      value={formData.pms_asset_sub_group_id}
+                      // onChange={(e) => setSelectedSubgroup(e.target.value)}
+                      onChange={e => handleFieldChange('pms_asset_sub_group_id', e.target.value)}
+                      sx={fieldStyles}
+                      required
+                      disabled={subgroupsLoading || !selectedGroup}
+                    >
+                      <MenuItem value=""><em>{subgroupsLoading ? 'Loading...' : 'Select Sub-Group'}</em></MenuItem>
+                      {subgroups.map((subgroup) => (
+                        <MenuItem key={subgroup.id} value={subgroup.id}>{subgroup.name}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+
+                {/* Custom Fields are now handled per section */}
+
+                {/* Third row: Status */}
+                <div className="mb-4">
+                  <div>
+                    <label className="text-sm font-medium text-[#C72030] mb-2 block">Status</label>
+                    <div className="flex gap-6">
+                      <div className="flex items-center space-x-2">
+                        <input type="radio" id="status-inuse" name="status" value="false" defaultChecked className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                          accentColor: '#C72030'
+                        }}
+                          onChange={e => handleFieldChange('breakdown', e.target.value)}
+                        />
+                        <label htmlFor="status-inuse" className="text-sm">In Use</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="radio" id="status-breakdown" name="status" value="true" className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                          accentColor: '#C72030'
+                        }}
+                          onChange={e => handleFieldChange('breakdown', e.target.value)}
+                        />
+                        <label htmlFor="status-breakdown" className="text-sm">Breakdown</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Critical - Moved from Meter Details */}
+                <div className="mb-4">
+                  <div>
+                    <label className="text-sm font-medium text-[#C72030] mb-2 block">Critical</label>
+                    <div className="flex gap-6">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="critical-yes"
+                          name="critical"
+                          value="yes"
+                          checked={criticalStatus === 'yes'}
+                          onChange={e => {
+                            setCriticalStatus(e.target.value);
+                            handleFieldChange('critical', e.target.value);
+                          }}
+                          className="w-4 h-4 text-[#C72030] border-gray-300"
+                          style={{
+                            accentColor: '#C72030'
+                          }}
+                        />
+                        <label htmlFor="critical-yes" className="text-sm">Yes</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="radio" id="critical-no" name="critical" value="no" checked={criticalStatus === 'no'} onChange={e => {
+                          setCriticalStatus(e.target.value);
+                          handleFieldChange('critical', e.target.value);
+                        }} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
+                          accentColor: '#C72030'
+                        }} />
+                        <label htmlFor="critical-no" className="text-sm">No</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Custom Fields for Asset Details */}
+                {(customFields.assetDetails || []).map((field) => (
+                  <div key={field.id} className="flex items-center gap-2 mb-2">
+                    <TextField
+                      label={field.name}
+                      value={field.value}
+                      onChange={(e) => { handleCustomFieldChange('assetDetails', field.id, e.target.value); }}
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => removeCustomField('assetDetails', field.id)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>}
+            </div>
+              <div className="bg-white shadow-sm rounded-lg overflow-hidden">
               <div onClick={() => toggleSection('location')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
                 <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
                   <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
@@ -6324,202 +6595,6 @@ const hasFiles = () => {
                     </button>
                   </div>
                 ))}
-              </div>}
-            </div>
-
-            {/* Asset Details */}
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-              <div onClick={() => toggleSection('asset')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-                <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                  <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                    <Package className="w-3 h-3 sm:w-4 sm:h-4" />
-                  </span>
-                  ASSET DETAILS
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* <button onClick={() => openCustomFieldModal('assetDetails')} className="px-3 py-1 rounded text-sm flex items-center gap-1" style={{
-                    backgroundColor: '#F6F4EE',
-                    color: '#C72030'
-                  }}>
-                    <Plus className="w-4 h-4" />
-                    Custom Field
-                  </button> */}
-                  {expandedSections.asset ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                </div>
-              </div>
-              {expandedSections.asset && <div className="p-4 sm:p-6">
-                {/* First row: Asset Name, Model No., Manufacturer */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                  <TextField 
-                    required 
-                    label="Asset Name" 
-                    placeholder="Enter Asset Name" 
-                    name="assetName" 
-                    fullWidth 
-                    variant="outlined" 
-                    value={formData.name || ''}
-                    error={hasValidationError('Asset Name')}
-                    helperText={hasValidationError('Asset Name') ? 'Asset Name is required' : ''}
-                    InputLabelProps={{
-                      shrink: true
-                    }} 
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                    onChange={e => handleFieldChange('name', e.target.value)}
-                  />
-                  <TextField 
-                    required 
-                    label="Model No." 
-                    placeholder="Enter Model No" 
-                    name="modelNo" 
-                    fullWidth 
-                    variant="outlined" 
-                    value={formData.model_number || ''}
-                    error={hasValidationError('Model No')}
-                    helperText={hasValidationError('Model No') ? 'Model No. is required' : ''}
-                    InputLabelProps={{
-                      shrink: true
-                    }} 
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                    onChange={e => handleFieldChange('model_number', e.target.value)}
-                  />
-                  <TextField 
-                    required 
-                    label="Manufacturer" 
-                    placeholder="Enter Manufacturer" 
-                    name="manufacturer" 
-                    fullWidth 
-                    variant="outlined" 
-                    value={formData.manufacturer || ''}
-                    error={hasValidationError('Manufacturer')}
-                    helperText={hasValidationError('Manufacturer') ? 'Manufacturer is required' : ''}
-                    InputLabelProps={{
-                      shrink: true
-                    }} 
-                    InputProps={{
-                      sx: fieldStyles
-                    }}
-                    onChange={e => handleFieldChange('manufacturer', e.target.value)}
-                  />
-                  {/* }}
-                    onChange={e => handleFieldChange('manufacturer', e.target.value)}
-
-                  /> */}
-                </div>
-
-                {/* Second row: Group, Subgroup */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                  <FormControl fullWidth variant="outlined" sx={{
-                    minWidth: 120
-                  }}>
-                    <InputLabel id="group-select-label" shrink>Group</InputLabel>
-                    <MuiSelect
-                      labelId="group-select-label"
-                      label="Group"
-                      displayEmpty
-                      value={selectedGroup}
-                      onChange={(e) => {
-                        handleGroupChange(e.target.value);
-                        handleFieldChange('pms_asset_group_id', e.target.value);
-                      }}
-                      sx={fieldStyles}
-                      required
-                      disabled={groupsLoading}
-                    >
-                      <MenuItem value=""><em>{groupsLoading ? 'Loading...' : 'Select Group'}</em></MenuItem>
-                      {groups.map((group) => (
-                        <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                  <FormControl fullWidth variant="outlined" sx={{
-                    minWidth: 120
-                  }}>
-                    <InputLabel id="subgroup-select-label" shrink>Subgroup</InputLabel>
-                    <MuiSelect
-                      labelId="subgroup-select-label"
-                      label="Subgroup"
-                      displayEmpty
-                      value={formData.pms_asset_sub_group_id}
-                      // onChange={(e) => setSelectedSubgroup(e.target.value)}
-                      onChange={e => handleFieldChange('pms_asset_sub_group_id', e.target.value)}
-                      sx={fieldStyles}
-                      required
-                      disabled={subgroupsLoading || !selectedGroup}
-                    >
-                      <MenuItem value=""><em>{subgroupsLoading ? 'Loading...' : 'Select Sub-Group'}</em></MenuItem>
-                      {subgroups.map((subgroup) => (
-                        <MenuItem key={subgroup.id} value={subgroup.id}>{subgroup.name}</MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-
-                {/* Custom Fields are now handled per section */}
-
-                {/* Third row: Status */}
-                <div className="mb-4">
-                  <div>
-                    <label className="text-sm font-medium text-[#C72030] mb-2 block">Status</label>
-                    <div className="flex gap-6">
-                      <div className="flex items-center space-x-2">
-                        <input type="radio" id="status-inuse" name="status" value="false" defaultChecked className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                          accentColor: '#C72030'
-                        }}
-                          onChange={e => handleFieldChange('breakdown', e.target.value)}
-                        />
-                        <label htmlFor="status-inuse" className="text-sm">In Use</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="radio" id="status-breakdown" name="status" value="true" className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                          accentColor: '#C72030'
-                        }}
-                          onChange={e => handleFieldChange('breakdown', e.target.value)}
-                        />
-                        <label htmlFor="status-breakdown" className="text-sm">Breakdown</label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Critical - Moved from Meter Details */}
-                <div className="mb-4">
-                  <div>
-                    <label className="text-sm font-medium text-[#C72030] mb-2 block">Critical</label>
-                    <div className="flex gap-6">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          id="critical-yes"
-                          name="critical"
-                          value="yes"
-                          checked={criticalStatus === 'yes'}
-                          onChange={e => {
-                            setCriticalStatus(e.target.value);
-                            handleFieldChange('critical', e.target.value);
-                          }}
-                          className="w-4 h-4 text-[#C72030] border-gray-300"
-                          style={{
-                            accentColor: '#C72030'
-                          }}
-                        />
-                        <label htmlFor="critical-yes" className="text-sm">Yes</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="radio" id="critical-no" name="critical" value="no" checked={criticalStatus === 'no'} onChange={e => {
-                          setCriticalStatus(e.target.value);
-                          handleFieldChange('critical', e.target.value);
-                        }} className="w-4 h-4 text-[#C72030] border-gray-300" style={{
-                          accentColor: '#C72030'
-                        }} />
-                        <label htmlFor="critical-no" className="text-sm">No</label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>}
             </div>
 

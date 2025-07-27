@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
+import { getToken } from '@/utils/auth';
 
 interface SelectedTicket {
   id: number;
@@ -136,36 +137,112 @@ const AssignTicketsPage: React.FC = () => {
       return;
     }
 
+    // Check if all selected tickets have category and subcategory
+    const ticketsWithoutCategory = selectedTickets.filter(ticket => 
+      !ticket.category_type || !ticket.sub_category_type
+    );
+
+    if (ticketsWithoutCategory.length > 0) {
+      const ticketNumbers = ticketsWithoutCategory.map(ticket => ticket.ticket_number).join(', ');
+      toast({
+        title: "Validation Error",
+        description: `The following tickets are missing category or subcategory information and cannot be updated: ${ticketNumbers}. Please add category and subcategory to these tickets before bulk updating.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const complaint_ids = selectedTickets.map(t => t.id);
+      console.log('🎯 Selected ticket IDs for bulk update:', complaint_ids);
+      console.log('👤 Selected user ID:', selectedUser);
+      console.log('📊 Selected status ID:', selectedStatus);
+      
       const apiCalls = [];
 
       // If user is selected, call assign API
       if (selectedUser) {
-        const assignPayload = {
-          complaint_ids,
-          assigned_to_ids: [parseInt(selectedUser)],
-          comment: "Assigned from bulk assignment"
-        };
+        // Try with FormData approach first
+        const formData = new FormData();
+        complaint_ids.forEach(id => {
+          formData.append('complaint_ids[]', id.toString());
+        });
+        formData.append('assigned_to_ids[]', selectedUser);
+        formData.append('comment', 'Assigned from bulk assignment');
+        
+        console.log('📤 Assign API FormData:');
+        for (let [key, value] of formData.entries()) {
+          console.log(key, value);
+        }
+        
         apiCalls.push(
-          apiClient.post('/pms/admin/complaints/bulk_assign_tickets.json', assignPayload)
+          fetch('https://fm-uat-api.lockated.com/pms/admin/complaints/bulk_assign_tickets.json', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${getToken()}`,
+            },
+            body: formData
+          })
+            .then(async response => {
+              if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Assign API error response:', errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+              }
+              const data = await response.json();
+              console.log('✅ Assign API response:', data);
+              return data;
+            })
+            .catch(error => {
+              console.error('❌ Assign API error:', error);
+              throw error;
+            })
         );
       }
 
       // If status is selected, call status update API
       if (selectedStatus) {
-        const statusPayload = {
-          complaint_ids,
-          issue_status: parseInt(selectedStatus)
-        };
+        // Try with FormData approach first
+        const formData = new FormData();
+        complaint_ids.forEach(id => {
+          formData.append('complaint_ids[]', id.toString());
+        });
+        formData.append('issue_status', selectedStatus);
+        
+        console.log('📤 Status API FormData:');
+        for (let [key, value] of formData.entries()) {
+          console.log(key, value);
+        }
+        
         apiCalls.push(
-          apiClient.post('/pms/admin/complaints/bulk_update_status.json', statusPayload)
+          fetch('https://fm-uat-api.lockated.com/pms/admin/complaints/bulk_update_status.json', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${getToken()}`,
+            },
+            body: formData
+          })
+            .then(async response => {
+              if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Status API error response:', errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+              }
+              const data = await response.json();
+              console.log('✅ Status API response:', data);
+              return data;
+            })
+            .catch(error => {
+              console.error('❌ Status API error:', error);
+              throw error;
+            })
         );
       }
 
       // Execute all API calls
-      await Promise.all(apiCalls);
+      const results = await Promise.all(apiCalls);
+      console.log('🎉 All API calls completed:', results);
       
       toast({
         title: "Success",
@@ -174,10 +251,10 @@ const AssignTicketsPage: React.FC = () => {
       
       navigate(-1);
     } catch (error) {
-      console.error('Error updating tickets:', error);
+      console.error('❌ Error updating tickets:', error);
       toast({
         title: "Error",
-        description: "Failed to update tickets. Please try again.",
+        description: `Failed to update tickets: ${error.response?.data?.message || error.message || 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
