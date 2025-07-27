@@ -33,7 +33,7 @@ import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Search, Download, Loader2, Grid3x3, Plus, X, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getAuthHeader } from '@/config/apiConfig';
+import { getAuthHeader, API_CONFIG } from '@/config/apiConfig';
 
 // Excel export utility function
 const exportToExcel = <T extends Record<string, any>>(
@@ -78,13 +78,7 @@ const exportToExcel = <T extends Record<string, any>>(
 // Ticket export function for API integration
 const exportTicketRecords = async () => {
   try {
-    const baseUrl = localStorage.getItem('baseUrl');
-    if (!baseUrl) {
-      alert('Base URL is missing');
-      return;
-    }
-
-    const url = `https://${baseUrl}/pms/admin/complaints.xlsx`;
+    const url = `${API_CONFIG.BASE_URL}/pms/admin/complaints.xlsx`;
     
     const response = await fetch(url, {
       method: 'GET',
