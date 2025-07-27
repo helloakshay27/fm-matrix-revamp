@@ -64,6 +64,9 @@ export function RecentTicketsSidebar() {
         }
         return newSet;
       });
+      
+      // Refresh the page after successful API call
+      window.location.reload();
     } catch (error) {
       console.error('Error flagging ticket:', error);
     }
@@ -167,7 +170,7 @@ export function RecentTicketsSidebar() {
                     className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 ${flaggedTickets.has(ticket.id) ? 'opacity-60' : ''}`} 
                     onClick={() => handleFlag(ticket.id)}
                   >
-                    <Flag className="h-4 w-4 text-red-500" />
+                    <Flag className={`h-4 w-4 ${flaggedTickets.has(ticket.id) ? 'text-red-600 fill-red-600' : 'text-red-500'}`} />
                     Flag Issue
                   </button>
                 </div>
