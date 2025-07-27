@@ -686,39 +686,18 @@ export const ScheduleListDashboard = () => {
     setShowFilterDialog(false);
   }
 
-  return <div className="p-2 sm:p-4 lg:p-6">
+  return (
+    <div className="p-2 sm:p-4 lg:p-6">
       {/* Sonner Toaster for notifications */}
       <Toaster position="top-right" richColors closeButton />
       {/* <div className="mb-4 sm:mb-6">
         <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Schedule Dashboard</h1>
       </div> */}
 
-      <Tabs defaultValue="list" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger 
-            value="list" 
-            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-          >
-            <Calendar className="w-4 h-4" />
-            Schedule List
-          </TabsTrigger>
-          <TabsTrigger 
-            value="analytics" 
-            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-          >
-            <BarChart3 className="w-4 h-4" />
-            Analytics
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="analytics" className="mt-4 sm:mt-6">
-          {renderAnalyticsTab()}
-        </TabsContent>
-        
-        <TabsContent value="list" className="mt-4 sm:mt-6">
-          {renderListTab()}
-        </TabsContent>
-      </Tabs>
+      {/* Only Schedule List tab, no analytics */}
+      <div className="w-full">
+        {renderListTab()}
+      </div>
 
       <BulkUploadDialog 
         open={showImportModal} 
@@ -733,5 +712,6 @@ export const ScheduleListDashboard = () => {
         onApplyFilters={handleApplyFilters}
         onResetFilters={handleResetFilters}
       />
-    </div>;
+    </div>
+  );
 };

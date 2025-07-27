@@ -109,6 +109,7 @@ import { ScheduleExportPage } from './pages/ScheduleExportPage';
 import { EditSchedulePage } from './pages/EditSchedulePage';
 import { CopySchedulePage } from './pages/CopySchedulePage';
 import { ViewSchedulePage } from './pages/ViewSchedulePage';
+import { ViewPerformancePage } from './pages/ViewPerformancePage';
 
 // Import Visitors pages
 import { VisitorsDashboard } from './pages/VisitorsDashboard';
@@ -765,6 +766,7 @@ function App() {
                 <Route path="/maintenance/schedule/edit/:id" element={<EditSchedulePage />} />
                 <Route path="/maintenance/schedule/copy/:id" element={<CopySchedulePage />} />
                 <Route path="/maintenance/schedule/view/:id" element={<ViewSchedulePage />} />
+                <Route path="/maintenance/schedule/performance/:id" element={<ViewPerformancePage />} />
 
                 {/* Utility Routes */}
                 <Route path="/utility/energy" element={<UtilityDashboard />} />
