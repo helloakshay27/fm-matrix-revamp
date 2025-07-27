@@ -867,6 +867,36 @@ export const InventoryDashboard = () => {
             </div>
           )}
         </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+          <div className="bg-white rounded-lg p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Inventory Analytics</h2>
+                <p className="text-sm text-gray-600 mt-1">Comprehensive insights into your inventory performance</p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Analytics Selector */}
+                {/* Filter Button */}
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDateFilter(true)}
+                  className="bg-white border-gray-300 hover:bg-gray-50"
+                >
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filter
+                </Button>
+              </div>
+            </div>
+
+            <div className="text-center py-12">
+              <BarChart3 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Analytics Coming Soon</h3>
+              <p className="text-gray-600">Comprehensive inventory analytics will be available here.</p>
+            </div>
+          </div>
+        </TabsContent>
       </Tabs>
       <BulkUploadDialog
         open={showBulkUpload}
