@@ -60,15 +60,17 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
     setIsExportLoading(true);
     
     try {
-      // Create the ticket IDs string for the API (comma-separated without brackets)
-      const ticketIds = selectedTickets.join(',');
-      console.log(' Exporting tickets with IDs:', ticketIds);
+      // Create the ticket IDs query parameters in the correct format: q[id_in][]=1&q[id_in][]=2
+      const ticketParams = selectedTickets.map(id => `q[id_in][]=${id}`).join('&');
+      console.log('📥 Exporting tickets with IDs:', selectedTickets);
+      console.log('📥 Generated ticket parameters:', ticketParams);
       
       // Build the export URL with selected ticket IDs using the correct format
-      const exportEndpoint = `${ENDPOINTS.TICKETS_EXPORT_EXCEL}?q[id_in]=${ticketIds}`;
+      const exportEndpoint = `${ENDPOINTS.TICKETS_EXPORT_EXCEL}?${ticketParams}`;
       const exportUrl = getFullUrl(exportEndpoint);
       
-      console.log('Export URL:', exportUrl);
+      console.log('📥 Export endpoint:', exportEndpoint);
+      console.log('📥 Full export URL:', exportUrl);
 
       // Make the API call to get the Excel file
       const response = await fetch(exportUrl, {
@@ -79,7 +81,15 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('❌ Export API error response:', errorText);
+        
+        if (response.status === 401) {
+          console.error('401 Authentication failed during export - invalid or expired token');
+          throw new Error('Authentication failed. Please login again.');
+        }
+        
+        throw new Error(`Export failed: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
       // Get the file blob
@@ -109,7 +119,18 @@ export const TicketSelectionPanel: React.FC<TicketSelectionPanelProps> = ({
       });
       
     } catch (error) {
-      console.error('Export failed:', error);
+      console.error('❌ Export failed:', error);
+      
+      // Handle authentication errors specifically
+      if (error instanceof Error && error.message.includes('Authentication failed')) {
+        toast({
+          title: "Authentication Error",
+          description: "Your session has expired. Please login again.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       toast({
         title: "Export Failed",
         description: `Failed to export tickets: ${error.message || 'Unknown error'}`,
