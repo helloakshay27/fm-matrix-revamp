@@ -368,6 +368,51 @@ export function EnhancedTable<T extends Record<string, any>>({
     return pages;
   };
 
+  // Custom export handler for schedules table
+  const handleSchedulesExport = async () => {
+    // Dynamically import toast to avoid circular dependency
+    const { toast } = await import('sonner');
+    try {
+      const { API_CONFIG } = await import('@/config/apiConfig');
+      const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/checklist.xlsx`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': API_CONFIG.TOKEN ? `Bearer ${API_CONFIG.TOKEN}` : '',
+        },
+      });
+      if (!response.ok) throw new Error('Failed to download checklist export');
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = 'checklist.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(a);
+      toast.success('Checklist export downloaded successfully.', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
+        },
+      });
+    } catch (error) {
+      toast.error('Failed to download checklist export. Please try again.', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+      });
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
@@ -421,11 +466,12 @@ export function EnhancedTable<T extends Record<string, any>>({
             />
           )}
 
+          {/* Schedules export button: use API if exportFileName === 'schedules' */}
           {!hideTableExport && enableExport && (
             <Button
               variant="outline"
               size="sm"
-              onClick={handleExport || (() => exportToExcel(filteredData, visibleColumns, exportFileName))}
+              onClick={exportFileName === 'schedules' ? handleSchedulesExport : (handleExport || (() => exportToExcel(filteredData, visibleColumns, exportFileName)))}
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
