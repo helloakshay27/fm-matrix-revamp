@@ -345,27 +345,16 @@ const BookingListDashboard = () => {
                   variant={getStatusBadgeVariant(item.bookingStatus)}
                   className={cn(
                     'cursor-pointer',
-                    item.bookingStatus === 'Completed' && 'bg-blue-500 hover:bg-blue-600 text-white'
+                    item.bookingStatus === 'Pending' && 'bg-[#F4C790] hover:bg-[#F4C790] text-black',
+                    item.bookingStatus === 'Confirmed' && 'bg-[#A3E4DB] hover:bg-[#8CDAD1] text-black',
+                    item.bookingStatus === 'Cancelled' && 'bg-[#E4626F] hover:bg-[#E4626F] text-white'
                   )}
                 >
                   {item.bookingStatus}
                 </Badge>
               </SelectValue>
             </SelectTrigger>
-            <SelectContent>
-              {['Pending', 'Confirmed', 'Cancelled', 'Completed'].map((status) => (
-                <SelectItem key={status} value={status}>
-                  <Badge
-                    variant={getStatusBadgeVariant(status)}
-                    className={cn(
-                      status === 'Completed' && 'bg-blue-500 hover:bg-blue-600 text-white'
-                    )}
-                  >
-                    {status}
-                  </Badge>
-                </SelectItem>
-              ))}
-            </SelectContent>
+
           </Select>
         );
       default:

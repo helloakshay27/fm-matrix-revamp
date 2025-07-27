@@ -179,7 +179,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset }) => {
           {/* Footer */}
           <div className="bg-gray-50 p-4 border-t text-right">
             <span className="text-lg font-semibold text-[#1A1A1A]">
-              Total Cost: ₹{totalCost.toLocaleString()}
+              Total Cost: OMR{totalCost.toLocaleString()}
             </span>
           </div>
         </div>
@@ -223,11 +223,11 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset }) => {
 
             <div>
               <Label htmlFor="cost" className="text-sm font-medium">
-                Cost (in Rupees):
+                Cost (in OMR):
               </Label>
               <div className="relative mt-1">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                  ₹
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 ">
+                  OMR
                 </span>
                 <Input
                   id="cost"
@@ -236,7 +236,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset }) => {
                   value={formData.cost}
                   onChange={handleInputChange}
                   placeholder="Enter cost"
-                  className="pl-8"
+                  className="pl-20"
                 />
               </div>
             </div>
