@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
 import { getToken } from '@/utils/auth';
+import { ENDPOINTS, BASE_URL, TOKEN } from '@/config/apiConfig';
 
 interface SelectedTicket {
   id: number;
@@ -158,12 +159,21 @@ const AssignTicketsPage: React.FC = () => {
       console.log('🎯 Selected ticket IDs for bulk update:', complaint_ids);
       console.log('👤 Selected user ID:', selectedUser);
       console.log('📊 Selected status ID:', selectedStatus);
+      console.log('🌐 Using BASE_URL from API config:', BASE_URL);
+      console.log('🔑 Using TOKEN from API config:', TOKEN ? 'Present' : 'Missing');
+      
+      // Use TOKEN from API config with getToken() as fallback
+      const authToken = TOKEN || getToken();
+      console.log('🔑 Final auth token being used:', authToken ? 'Present' : 'Missing');
+      
+      if (!authToken) {
+        throw new Error('No authentication token available. Please log in again.');
+      }
       
       const apiCalls = [];
 
-      // If user is selected, call assign API
+      // If user is selected, call assign API using centralized config
       if (selectedUser) {
-        // Try with FormData approach first
         const formData = new FormData();
         complaint_ids.forEach(id => {
           formData.append('complaint_ids[]', id.toString());
@@ -176,18 +186,25 @@ const AssignTicketsPage: React.FC = () => {
           console.log(key, value);
         }
         
+        const assignUrl = `${BASE_URL}${ENDPOINTS.BULK_ASSIGN_TICKETS}`;
+        console.log('📤 Assign API URL:', assignUrl);
+        
         apiCalls.push(
-          fetch('https://fm-uat-api.lockated.com/pms/admin/complaints/bulk_assign_tickets.json', {
+          fetch(assignUrl, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${getToken()}`,
+              'Authorization': `Bearer ${authToken}`,
             },
             body: formData
           })
             .then(async response => {
+              console.log('📤 Assign API Response Status:', response.status);
               if (!response.ok) {
                 const errorText = await response.text();
                 console.error('❌ Assign API error response:', errorText);
+                if (response.status === 401) {
+                  throw new Error('Authentication failed (401): Please log in again.');
+                }
                 throw new Error(`HTTP ${response.status}: ${errorText}`);
               }
               const data = await response.json();
@@ -201,9 +218,8 @@ const AssignTicketsPage: React.FC = () => {
         );
       }
 
-      // If status is selected, call status update API
+      // If status is selected, call status update API using centralized config
       if (selectedStatus) {
-        // Try with FormData approach first
         const formData = new FormData();
         complaint_ids.forEach(id => {
           formData.append('complaint_ids[]', id.toString());
@@ -215,18 +231,25 @@ const AssignTicketsPage: React.FC = () => {
           console.log(key, value);
         }
         
+        const statusUrl = `${BASE_URL}${ENDPOINTS.BULK_UPDATE_STATUS}`;
+        console.log('📤 Status API URL:', statusUrl);
+        
         apiCalls.push(
-          fetch('https://fm-uat-api.lockated.com/pms/admin/complaints/bulk_update_status.json', {
+          fetch(statusUrl, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${getToken()}`,
+              'Authorization': `Bearer ${authToken}`,
             },
             body: formData
           })
             .then(async response => {
+              console.log('📤 Status API Response Status:', response.status);
               if (!response.ok) {
                 const errorText = await response.text();
                 console.error('❌ Status API error response:', errorText);
+                if (response.status === 401) {
+                  throw new Error('Authentication failed (401): Please log in again.');
+                }
                 throw new Error(`HTTP ${response.status}: ${errorText}`);
               }
               const data = await response.json();
