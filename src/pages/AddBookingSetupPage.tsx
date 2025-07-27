@@ -550,7 +550,7 @@ export const AddBookingSetupPage = () => {
                     variant="outlined"
                   />
                   <FormControl>
-                    <InputLabel>Active*</InputLabel>
+                    <InputLabel className="bg-[#F6F7F7]">Active*</InputLabel>
                     <Select
                       value={formData.active}
                       onChange={(e) =>
@@ -565,7 +565,7 @@ export const AddBookingSetupPage = () => {
                     </Select>
                   </FormControl>
                   <FormControl>
-                    <InputLabel>Department</InputLabel>
+                    <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
                     <Select
                       value={formData.department}
                       onChange={(e) =>
