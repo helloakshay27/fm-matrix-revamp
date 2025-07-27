@@ -81,14 +81,18 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({ assets }) => {
       {/* Assets List */}
       <div className="p-4 space-y-4">
         {assets.map((asset) => (
-          <div key={asset.id} className="bg-[#E8E2D3] rounded-lg p-4">
+          <div 
+            key={asset.id} 
+            className="bg-card border rounded-lg p-4 hover:bg-accent/50 transition-colors cursor-pointer"
+            onClick={() => handleAssetClick(asset.id)}
+          >
             {/* Header Row */}
             <div className="flex items-start justify-between mb-3">
               <div className="bg-gray-200 px-2 py-1 rounded text-xs text-gray-700">
                 {asset.assetGroup || 'Technical'}
               </div>
               <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadgeColor(asset.status)}`}>
-                {asset.status || 'Breakdown'}
+                {(asset.status || 'Breakdown').replace(/\b\w/g, l => l.toUpperCase())}
               </div>
             </div>
 
@@ -122,16 +126,10 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({ assets }) => {
             </div>
 
             {/* Footer Row */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-end">
               <span className="text-sm text-gray-600">
                 Updated at: {formatDate(asset.updatedAt) || '24 Jul 2025'}
               </span>
-              <button
-                onClick={() => handleAssetClick(asset.id)}
-                className="text-sm text-red-600 hover:text-red-700 font-medium"
-              >
-                View Details
-              </button>
             </div>
           </div>
         ))}
