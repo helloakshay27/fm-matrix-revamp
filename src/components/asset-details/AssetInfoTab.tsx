@@ -364,11 +364,10 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
 
                         {/* Fallback when image is not available */}
                         <div
-                          className={`absolute inset-0 ${
-                            asset.asset_image?.document || asset.image_url
-                              ? "hidden"
-                              : "flex"
-                          } flex-col items-center justify-center text-gray-400 text-sm`}
+                          className={`absolute inset-0 ${asset.asset_image?.document || asset.image_url
+                            ? "hidden"
+                            : "flex"
+                            } flex-col items-center justify-center text-gray-400 text-sm`}
                         >
                           <Box className="w-12 h-12 mb-2" />
                           <span>No Image Available</span>
@@ -728,7 +727,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                       <span className="text-gray-500 w-32">Purchase Cost</span>
                       <span className="mx-2 text-gray-500">:</span>
                       <span className="font-medium">
-                        ₹ {asset.purchase_cost?.toLocaleString() || "-"}
+                        {localStorage.getItem("currency")} {asset.purchase_cost?.toLocaleString() || "-"}
                       </span>
                     </div>
 
@@ -738,7 +737,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                       </span>
                       <span className="mx-2 text-gray-500">:</span>
                       <span className="font-medium">
-                        ₹ {asset.current_book_value?.toLocaleString() || "-"} (
+                        {localStorage.getItem("currency")} {asset.current_book_value?.toLocaleString() || "-"} (
                         {asset.depreciation_method || "-"})
                       </span>
                     </div>

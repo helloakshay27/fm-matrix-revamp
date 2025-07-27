@@ -56,11 +56,11 @@ export const HotelBookingPage = () => {
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold mb-4">Who's checking in?</h2>
                 <p className="text-gray-600 mb-6">Room 1: 2 Adults 2 Double Beds Non-smoking</p>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <Label htmlFor="firstName">First name*</Label>
-                    <Input 
+                    <Input
                       id="firstName"
                       value={formData.firstName}
                       onChange={(e) => handleInputChange('firstName', e.target.value)}
@@ -69,7 +69,7 @@ export const HotelBookingPage = () => {
                   </div>
                   <div>
                     <Label htmlFor="lastName">Last name*</Label>
-                    <Input 
+                    <Input
                       id="lastName"
                       value={formData.lastName}
                       onChange={(e) => handleInputChange('lastName', e.target.value)}
@@ -80,7 +80,7 @@ export const HotelBookingPage = () => {
 
                 <div className="mb-4">
                   <Label htmlFor="email">Email address*</Label>
-                  <Input 
+                  <Input
                     id="email"
                     type="email"
                     value={formData.email}
@@ -92,7 +92,7 @@ export const HotelBookingPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="country">Country/Region*</Label>
-                    <Input 
+                    <Input
                       id="country"
                       value={formData.country}
                       onChange={(e) => handleInputChange('country', e.target.value)}
@@ -101,7 +101,7 @@ export const HotelBookingPage = () => {
                   </div>
                   <div>
                     <Label htmlFor="phone">Phone number*</Label>
-                    <Input 
+                    <Input
                       id="phone"
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
@@ -116,11 +116,11 @@ export const HotelBookingPage = () => {
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-xl font-semibold mb-4">Payment method</h2>
-                
+
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="cardName">Name on Card*</Label>
-                    <Input 
+                    <Input
                       id="cardName"
                       value={formData.cardName}
                       onChange={(e) => handleInputChange('cardName', e.target.value)}
@@ -130,7 +130,7 @@ export const HotelBookingPage = () => {
 
                   <div>
                     <Label htmlFor="cardNumber">Debit/Credit card number*</Label>
-                    <Input 
+                    <Input
                       id="cardNumber"
                       value={formData.cardNumber}
                       onChange={(e) => handleInputChange('cardNumber', e.target.value)}
@@ -171,7 +171,7 @@ export const HotelBookingPage = () => {
                     </div>
                     <div>
                       <Label htmlFor="securityCode">Security code*</Label>
-                      <Input 
+                      <Input
                         id="securityCode"
                         value={formData.securityCode}
                         onChange={(e) => handleInputChange('securityCode', e.target.value)}
@@ -190,7 +190,7 @@ export const HotelBookingPage = () => {
               {/* Hotel Summary */}
               <Card>
                 <CardContent className="p-0">
-                  <img 
+                  <img
                     src="https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
                     alt="Hotel"
                     className="w-full h-48 object-cover rounded-t-lg"
@@ -218,22 +218,22 @@ export const HotelBookingPage = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span>1 room x 1 night</span>
-                      <span>₹10,000.00</span>
+                      <span>{localStorage.getItem('currency')}10,000.00</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Taxes</span>
-                      <span>₹810.00</span>
+                      <span>{localStorage.getItem('currency')}810.00</span>
                     </div>
                     <hr />
                     <div className="flex justify-between font-semibold text-lg">
                       <span>Total</span>
-                      <span>₹10810.00</span>
+                      <span>{localStorage.getItem('currency')}10810.00</span>
                     </div>
                   </div>
                   <Button variant="link" className="text-orange-500 p-0 mt-2">
                     Use a coupon credit or promotion code
                   </Button>
-                  <Button 
+                  <Button
                     onClick={handleConfirmBooking}
                     className="w-full bg-gray-900 hover:bg-gray-800 text-white mt-4 py-3"
                   >

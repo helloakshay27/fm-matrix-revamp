@@ -47,21 +47,21 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({ asse
       id: 1,
       date: "2025-01-20",
       aging: "5 days",
-      costSpent: "₹15,000",
+      costSpent: `${localStorage.getItem('currency')}15,000`,
       attendeeName: "John Doe"
     },
     {
       id: 2,
       date: "2025-01-10",
       aging: "15 days",
-      costSpent: "₹8,500",
+      costSpent: `${localStorage.getItem('currency')}8,500`,
       attendeeName: "Jane Smith"
     },
     {
       id: 3,
       date: "2024-12-25",
       aging: "31 days",
-      costSpent: "₹12,000",
+      costSpent: `${localStorage.getItem('currency')}12,000`,
       attendeeName: "Mike Johnson"
     }
   ];
@@ -159,9 +159,9 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({ asse
         </Card>
 
         {/* View Asset Button */}
-        <Button 
+        <Button
           onClick={handleViewAsset}
-          variant="outline" 
+          variant="outline"
           className="w-full border-red-300 text-red-600 hover:bg-red-50"
         >
           View Asset
@@ -170,7 +170,7 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({ asse
         {/* Previous Breakdown History */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-gray-900">Previous breakdown</h2>
-          
+
           {breakdownHistory.map((breakdown) => (
             <Card key={breakdown.id} className="bg-gray-50">
               <CardContent className="p-4">

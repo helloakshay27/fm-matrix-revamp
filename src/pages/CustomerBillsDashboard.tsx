@@ -13,9 +13,9 @@ export const CustomerBillsDashboard = () => {
 
   const statsCards = [
     { label: "Total Invoices", value: "0", color: "bg-purple-500", icon: "📊" },
-    { label: "Total Amount", value: "₹ 0", color: "bg-purple-600", icon: "💰" },
-    { label: "Pending Amount", value: "₹ 0", color: "bg-orange-500", icon: "⏳" },
-    { label: "Paid Amount", value: "₹ 0", color: "bg-red-500", icon: "✅" }
+    { label: "Total Amount", value: `${localStorage.getItem('currency')} 0`, color: "bg-purple-600", icon: "💰" },
+    { label: "Pending Amount", value: `${localStorage.getItem('currency')} 0`, color: "bg-orange-500", icon: "⏳" },
+    { label: "Paid Amount", value: `${localStorage.getItem('currency')} 0`, color: "bg-red-500", icon: "✅" }
   ];
 
   const handleFilterApply = (filters: {
@@ -48,7 +48,7 @@ export const CustomerBillsDashboard = () => {
 
       {/* Filter Button */}
       <div className="mb-6">
-        <Button 
+        <Button
           variant="outline"
           onClick={() => setIsFilterDialogOpen(true)}
           className="border-blue-600 text-blue-600 hover:bg-blue-50"
@@ -102,7 +102,7 @@ export const CustomerBillsDashboard = () => {
         </Table>
       </div>
 
-      <CustomerBillsFilterDialog 
+      <CustomerBillsFilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
         onApply={handleFilterApply}

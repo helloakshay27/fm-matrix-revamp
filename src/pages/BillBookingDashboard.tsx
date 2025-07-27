@@ -20,58 +20,58 @@ export const BillBookingDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">BILL LIST</h1>
-        
+
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-  {/* Card 1 */}
-  <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
-    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
-      <Settings className="w-5 h-5 text-[#D92818]" />
-    </div>
-    <div>
-      <p className="text-[#D92818] font-bold text-lg">0</p>
-      <p className="text-sm text-gray-500">Total Bills</p>
-    </div>
-  </div>
+          {/* Card 1 */}
+          <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
+            <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
+              <Settings className="w-5 h-5 text-[#D92818]" />
+            </div>
+            <div>
+              <p className="text-[#D92818] font-bold text-lg">0</p>
+              <p className="text-sm text-gray-500">Total Bills</p>
+            </div>
+          </div>
 
-  {/* Card 2 */}
-  <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
-    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
-      <Banknote className="w-5 h-5 text-[#D92818]" />
-    </div>
-    <div>
-      <p className="text-[#D92818] font-bold text-lg">₹ 0</p>
-      <p className="text-sm text-gray-500">Total Amount</p>
-    </div>
-  </div>
+          {/* Card 2 */}
+          <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
+            <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
+              <Banknote className="w-5 h-5 text-[#D92818]" />
+            </div>
+            <div>
+              <p className="text-[#D92818] font-bold text-lg">{localStorage.getItem('currency')} 0</p>
+              <p className="text-sm text-gray-500">Total Amount</p>
+            </div>
+          </div>
 
-  {/* Card 3 */}
-  <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
-    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
-      <CreditCard className="w-5 h-5 text-[#D92818]" />
-    </div>
-    <div>
-      <p className="text-[#D92818] font-bold text-lg">₹ 0</p>
-      <p className="text-sm text-gray-500">Total Paid Amount</p>
-    </div>
-  </div>
+          {/* Card 3 */}
+          <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
+            <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
+              <CreditCard className="w-5 h-5 text-[#D92818]" />
+            </div>
+            <div>
+              <p className="text-[#D92818] font-bold text-lg">{localStorage.getItem('currency')} 0</p>
+              <p className="text-sm text-gray-500">Total Paid Amount</p>
+            </div>
+          </div>
 
-  {/* Card 4 */}
-  <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
-    <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
-      <Clock className="w-5 h-5 text-[#D92818]" />
-    </div>
-    <div>
-      <p className="text-[#D92818] font-bold text-lg">₹ 0</p>
-      <p className="text-sm text-gray-500">Total Pending Amount</p>
-    </div>
-  </div>
-</div>
+          {/* Card 4 */}
+          <div className="bg-[#f6f4ee] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4 md:h-[132px]">
+            <div className="w-12 h-12 rounded-full bg-[rgba(199,32,48,0.08)] flex items-center justify-center">
+              <Clock className="w-5 h-5 text-[#D92818]" />
+            </div>
+            <div>
+              <p className="text-[#D92818] font-bold text-lg">{localStorage.getItem('currency')} 0</p>
+              <p className="text-sm text-gray-500">Total Pending Amount</p>
+            </div>
+          </div>
+        </div>
 
 
         {/* Add Button */}
         <div className="mb-6">
-          <Button 
+          <Button
             onClick={handleAddClick}
             className="bg-[#C72030] hover:bg-[#A01020] text-white"
           >

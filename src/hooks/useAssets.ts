@@ -63,7 +63,7 @@ export const useAssets = (page: number = 1) => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [stats, setStats] = useState<AssetStats>({
     total: 0,
-    totalValue: '₹0.00',
+    totalValue: `${localStorage.getItem('currency')}0.00`,
     nonItAssets: 0,
     itAssets: 0,
     inUse: 0,
@@ -114,7 +114,7 @@ export const useAssets = (page: number = 1) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch(
         `${API_CONFIG.BASE_URL}/pms/assets.json?page=${page}`,
         {
@@ -130,7 +130,7 @@ export const useAssets = (page: number = 1) => {
       }
 
       const data: AssetResponse = await response.json();
-      
+
       // Map assets data
       const mappedAssets = data.assets?.map(mapAssetData) || [];
       setAssets(mappedAssets);
@@ -145,7 +145,7 @@ export const useAssets = (page: number = 1) => {
       // Set stats
       setStats({
         total: data.total_count || 0,
-        totalValue: data.total_value || '₹0.00',
+        totalValue: data.total_value || `${localStorage.getItem('currency')}0.00`,
         nonItAssets: data.non_it_assets || 0,
         itAssets: data.it_assets || 0,
         inUse: data.in_use_count || 0,

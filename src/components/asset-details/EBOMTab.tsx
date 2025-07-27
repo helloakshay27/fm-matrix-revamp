@@ -108,7 +108,7 @@ export const EBOMTab: React.FC<EBOMTabProps> = ({ asset }) => {
                   <td className="px-4 py-3 text-sm text-gray-800">{item.criticality}</td>
                   <td className="px-4 py-3 text-sm text-gray-800">{item.quantity}</td>
                   <td className="px-4 py-3 text-sm text-gray-800">{item.unit}</td>
-                  <td className="px-4 py-3 text-sm text-gray-800">₹{item.cost.toFixed(2)}</td>
+                  <td className="px-4 py-3 text-sm text-gray-800">{localStorage.getItem('currency')}{item.cost.toFixed(2)}</td>
                   <td className="px-4 py-3 text-sm text-gray-800">{item.hsn || '-'}</td>
                   <td className="px-4 py-3 text-sm text-gray-800">{item.min_stock_level}</td>
                   <td className="px-4 py-3 text-sm text-gray-800">{item.min_order_level || '-'}</td>

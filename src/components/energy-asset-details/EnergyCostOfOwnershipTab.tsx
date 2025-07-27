@@ -27,7 +27,7 @@ export const EnergyCostOfOwnershipTab = () => {
               <td className="px-4 py-3"></td>
               <td className="px-4 py-3"></td>
               <td className="px-4 py-3 font-semibold">Total</td>
-              <td className="px-4 py-3 font-semibold">₹</td>
+              <td className="px-4 py-3 font-semibold">{localStorage.getItem('currency')}</td>
               <td className="px-4 py-3"></td>
             </tr>
           </tbody>
