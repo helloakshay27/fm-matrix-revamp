@@ -199,13 +199,13 @@ export const ViewSchedulePage = () => {
           >
             Set Approval
           </Button> */}
-          <Button 
+          {/* <Button 
             onClick={handleViewPerformance}
             variant="outline" 
             className="border-[#C72030] text-[#C72030]"
           >
             View Performance
-          </Button>
+          </Button> */}
         </div>
       </div>
 
