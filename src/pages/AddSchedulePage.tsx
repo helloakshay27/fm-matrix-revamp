@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { MappingStep } from '@/components/schedule/MappingStep';
 import { TimeSetupStep } from '@/components/schedule/TimeSetupStep'
+import { format } from 'date-fns';
 import {
   TextField,
   FormControl,
@@ -3322,8 +3323,16 @@ export const AddSchedulePage = () => {
                   type="number"
                   fullWidth
                   value={formData.planDurationValue}
-                  onChange={(e) => setFormData({ ...formData, planDurationValue: e.target.value })}
+                  onChange={(e) => {
+                      const value = e.target.value;
+                      if (Number(value) < 0) return;
+                      setFormData({ ...formData, planDurationValue: value });
+                    }}
                   placeholder={`Enter number of ${formData.planDuration}`}
+                  inputProps={{
+    min: 0,
+    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+  }}
                 />
               )}
 
@@ -3472,7 +3481,15 @@ export const AddSchedulePage = () => {
                   type="number"
                   fullWidth
                   value={formData.submissionTimeValue}
-                  onChange={(e) => setFormData({ ...formData, submissionTimeValue: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (Number(value) < 0) return;
+                    setFormData({ ...formData, submissionTimeValue: value });
+                  }}
+                  inputProps={{
+                    min: 0,
+                    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                  }}
                   placeholder={`Enter number of ${formData.submissionTime}`}
                 />
               )}
@@ -3634,7 +3651,15 @@ export const AddSchedulePage = () => {
                   type="number"
                   fullWidth
                   value={formData.graceTimeValue}
-                  onChange={(e) => setFormData({ ...formData, graceTimeValue: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (Number(value) < 0) return;
+                    setFormData({ ...formData, graceTimeValue: value });
+                  }}
+                  inputProps={{
+                    min: 0,
+                    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                  }}
                   placeholder={`Enter number of ${formData.graceTime}`}
                 />
               )}
@@ -3697,14 +3722,14 @@ export const AddSchedulePage = () => {
                   }}
                   value={formData.startFrom ? new Date(formData.startFrom) : null}
                   onChange={(date) => {
-                    const newStartDate = date ? date.toISOString().split('T')[0] : '';
-                    // If end date exists and new start date is after end date, clear end date
-                    if (formData.endAt && newStartDate > formData.endAt) {
-                      setFormData({ ...formData, startFrom: newStartDate, endAt: '' });
-                    } else {
-                      setFormData({ ...formData, startFrom: newStartDate });
-                    }
-                  }}
+  const newStartDate = date ? format(date, 'yyyy-MM-dd') : '';
+  if (formData.endAt && newStartDate > formData.endAt) {
+    setFormData({ ...formData, startFrom: newStartDate, endAt: '' });
+  } else {
+    setFormData({ ...formData, startFrom: newStartDate });
+  }
+}}
+
                   maxDate={formData.endAt ? new Date(formData.endAt) : undefined}
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
                 />
@@ -3730,14 +3755,14 @@ export const AddSchedulePage = () => {
                   }}
                   value={formData.endAt ? new Date(formData.endAt) : null}
                   onChange={(date) => {
-                    const newEndDate = date ? date.toISOString().split('T')[0] : '';
-                    // If start date exists and new end date is before start date, clear start date
-                    if (formData.startFrom && newEndDate < formData.startFrom) {
-                      setFormData({ ...formData, endAt: newEndDate, startFrom: '' });
-                    } else {
-                      setFormData({ ...formData, endAt: newEndDate });
-                    }
-                  }}
+  const newEndDate = date ? format(date, 'yyyy-MM-dd') : '';
+  if (formData.startFrom && newEndDate < formData.startFrom) {
+    setFormData({ ...formData, endAt: newEndDate, startFrom: '' });
+  } else {
+    setFormData({ ...formData, endAt: newEndDate });
+  }
+}}
+
                   minDate={formData.startFrom ? new Date(formData.startFrom) : undefined}
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
                 />
@@ -4702,7 +4727,15 @@ export const AddSchedulePage = () => {
                               type="number"
                               fullWidth
                               value={task.weightage}
-                              onChange={(e) => updateTaskInSection(section.id, task.id, 'weightage', e.target.value)}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (Number(value) < 0) return;
+                                updateTaskInSection(section.id, task.id, 'weightage', value);
+                              }}
+                              inputProps={{
+                                min: 0,
+                                onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                              }}
                               placeholder="Enter weightage"
                             />
                           )}
