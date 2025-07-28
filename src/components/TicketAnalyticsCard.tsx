@@ -1,20 +1,57 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 
 interface TicketAnalyticsCardProps {
   title: string;
   data: any;
-  type: 'categoryWise' | 'tatResponse' | 'tatResolution' | 'unitCategoryWise';
+  type: 'categoryWise' | 'tatResponse' | 'tatResolution' | 'unitCategoryWise' | 'agingMatrix';
   className?: string;
+  dateRange?: {
+    startDate: Date;
+    endDate: Date;
+  };
 }
 
 export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({
   title,
   data,
   type,
-  className = ""
+  className = "",
+  dateRange
 }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!dateRange) return;
+    
+    setIsDownloading(true);
+    try {
+      switch (type) {
+        case 'unitCategoryWise':
+          await ticketAnalyticsDownloadAPI.downloadUnitCategorywiseData(dateRange.startDate, dateRange.endDate);
+          break;
+        case 'tatResponse':
+          await ticketAnalyticsDownloadAPI.downloadResponseTATData(dateRange.startDate, dateRange.endDate);
+          break;
+        case 'tatResolution':
+          await ticketAnalyticsDownloadAPI.downloadResolutionTATData(dateRange.startDate, dateRange.endDate);
+          break;
+        case 'agingMatrix':
+          await ticketAnalyticsDownloadAPI.downloadTicketAgingMatrixData(dateRange.startDate, dateRange.endDate);
+          break;
+        default:
+          console.error('Unknown chart type for download');
+      }
+    } catch (error) {
+      console.error('Error downloading data:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   const renderContent = () => {
     switch (type) {
       case 'categoryWise':
@@ -202,8 +239,19 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({
 
   return (
     <Card className={`w-full ${className}`}>
-      <CardHeader>
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+        {dateRange && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         {renderContent()}
