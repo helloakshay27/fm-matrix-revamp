@@ -188,11 +188,11 @@ export const ChecklistListPage = () => {
                             <Eye className="w-4 h-4" />
                           </Button>
                         </TableCell>
-                        <TableCell className="font-medium">{checklist.id}</TableCell>
-                        <TableCell>{checklist.activityName}</TableCell>
-                        <TableCell>{checklist.meterCategory}</TableCell>
-                        <TableCell className="text-center">{checklist.numberOfQuestions}</TableCell>
-                        <TableCell>{checklist.scheduledFor}</TableCell>
+                        <TableCell className="font-medium">{checklist.id ?? ''}</TableCell>
+                        <TableCell>{checklist.activityName || ''}</TableCell>
+                        <TableCell>{checklist.meterCategory || ''}</TableCell>
+                        <TableCell className="text-center">{checklist.numberOfQuestions ?? 0}</TableCell>
+                        <TableCell>{checklist.scheduledFor || ''}</TableCell>
                       </TableRow>
                     ))
                   )}
