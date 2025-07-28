@@ -4155,40 +4155,55 @@ export const AddSchedulePage = () => {
     <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
       Select Template
     </Typography>
+
     <Autocomplete
-      disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.templates}
+      disabled={
+        (stepIndex < activeStep && editingStep !== stepIndex) ||
+        loading.templates
+      }
       options={[
         { id: '', label: 'Select Template', value: '' },
-        ...(templates ? templates.map((template) => ({
+        ...(templates || []).map((template) => ({
           id: template.id?.toString?.() ?? '',
           label: template.form_name ?? '',
-          value: template.id?.toString?.() ?? ''
-        })) : [])
+          value: template.id?.toString?.() ?? '',
+        })),
       ]}
-      getOptionLabel={(option) => (option?.label ?? '')}
+      getOptionLabel={(option) => option?.label || ''}
+      isOptionEqualToValue={(option, value) => option.value === value.value}
       value={
         [
           { id: '', label: 'Select Template', value: '' },
-          ...(templates ? templates.map((template) => ({
+          ...(templates || []).map((template) => ({
             id: template.id?.toString?.() ?? '',
             label: template.form_name ?? '',
-            value: template.id?.toString?.() ?? ''
-          })) : [])
-        ].find(option => option.value === (formData.selectedTemplate ?? '')) || { id: '', label: 'Select Template', value: '' }
+            value: template.id?.toString?.() ?? '',
+          })),
+        ].find((option) => option.value === (formData?.selectedTemplate ?? '')) || {
+          id: '',
+          label: 'Select Template',
+          value: '',
+        }
       }
-      isOptionEqualToValue={(option, value) => option.value === value.value}
       onChange={(event, newValue) => {
-        if (newValue && newValue.value) handleTemplateChange(newValue.value);
+        if (newValue && newValue.value !== '') {
+          handleTemplateChange(newValue.value);
+        }
       }}
       renderInput={(params) => (
         <TextField
-          disabled={stepIndex < activeStep && editingStep !== stepIndex}
           {...params}
-          label={<span>Template <span style={{ color: 'currentColor' }}>*</span></span>}
+          label={
+            <span>
+              Template <span style={{ color: 'currentColor' }}>*</span>
+            </span>
+          }
           fullWidth
+          disabled={stepIndex < activeStep && editingStep !== stepIndex}
         />
       )}
     />
+
     {loading.templates && (
       <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
         Loading templates...
