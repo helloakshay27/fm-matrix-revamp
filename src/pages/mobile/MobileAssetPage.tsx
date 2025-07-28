@@ -99,7 +99,7 @@ export const MobileAssetPage = () => {
   const { assetId } = useParams();
   const [searchParams] = useSearchParams();
   const action = searchParams.get("action");
-  // const token = searchParams.get("token");
+  const token = searchParams.get("token");
 
   const [assets, setAssets] = useState<MobileAsset[]>([]);
   const [loading, setLoading] = useState(false);
@@ -129,9 +129,9 @@ export const MobileAssetPage = () => {
       }
 
       if (token) {
-        // Store token in localStorage for future use
-        localStorage.setItem("token", token);
-        console.log("💾 Token stored in localStorage");
+        // Store token in localStorage for future use as mobile_token
+        // localStorage.setItem("mobile_token", token);
+        console.log("💾 Mobile token stored in localStorage");
 
         // Fetch assets using the token
         setLoading(true);
