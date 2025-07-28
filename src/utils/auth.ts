@@ -40,7 +40,7 @@ export const AUTH_KEYS = {
   TOKEN: 'token',
   TEMP_PHONE: 'temp_phone',
   TEMP_EMAIL: 'temp_email',
-  BASE_URL: 'base_url'
+  BASE_URL: 'baseUrl'
 } as const;
 
 // Save user data to localStorage
