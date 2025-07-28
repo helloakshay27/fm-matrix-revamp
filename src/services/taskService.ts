@@ -175,7 +175,7 @@ export const taskService = {
         delete queryParams.status; // Remove the status key to avoid duplication
       }
 
-      const response = await apiClient.get<TaskListResponse>('/all_tasks_listing.json', {
+      const response = await apiClient.get<TaskListResponse>('/all_tasks_listing.json/show_all=true', {
         params: queryParams
       });
       return response.data;
