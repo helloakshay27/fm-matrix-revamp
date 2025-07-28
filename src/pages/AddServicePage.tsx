@@ -199,7 +199,7 @@ export const AddServicePage = () => {
       sendData.append('pms_service[active]', 'true');
       sendData.append('pms_service[description]', formData.serviceDescription || '');
       sendData.append('pms_service[execution_type]', formData.executionType || '');
-      sendData.append('pms_service[base_uom]', formData.umo || ''); 
+      sendData.append('pms_service[base_uom]', formData.umo || '');
       sendData.append('pms_service[service_category]', '');
       sendData.append('pms_service[service_group]', '');
       sendData.append('pms_service[service_code]', '');
@@ -221,7 +221,7 @@ export const AddServicePage = () => {
         });
 
         setTimeout(() => {
-          // window.location.href = `/maintenance/service/details/${response.id}`;
+          window.location.href = `/maintenance/service/details/${response.id}`;
         }, 1500);
       } else if (action === 'new') {
         toast.success('Service created successfully! Ready to add a new service.', {

@@ -145,7 +145,8 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
 
         // Get base URL and ensure it's saved in the main auth system
         let baseUrl =
-          sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
+          sessionStorage.getItem("baseUrl") ||
+          "https://oig-api.gophygital.work";
         baseUrl = baseUrl.replace(/\/$/, "");
         if (!baseUrl.startsWith("http")) {
           baseUrl = `https://${baseUrl}`;
@@ -342,7 +343,7 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
 
   const handleBreakdownClick = () => {
     const idToUse = assetId || assetData.id;
-    navigate(`/mobile/assets/${idToUse}?action=breakdown`);
+    navigate(`/mobile/assets/${idToUse}`);
   };
 
   const toggleSection = (key: string) => {
@@ -423,7 +424,7 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
               <div className="flex items-center">
                 <span className="text-gray-500 w-32">Owner Cost</span>
                 <span className="text-gray-900">
-                  : ₹{assetData.ownership_total_cost|| "0"}
+                  : ₹{assetData.ownership_total_cost || "0"}
                 </span>
               </div>
 
