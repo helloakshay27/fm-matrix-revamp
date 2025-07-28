@@ -54,7 +54,7 @@ import { AssetAnalyticsFilterDialog } from "@/components/AssetAnalyticsFilterDia
 import { AssetAnalyticsCard } from "@/components/AssetAnalyticsCard";
 import { assetAnalyticsDownloadAPI } from "@/services/assetAnalyticsDownloadAPI";
 import { useAssetSearch } from "@/hooks/useAssetSearch";
-import { BASE_URL, getAuthHeader, ENDPOINTS } from "@/config/apiConfig";
+import { API_CONFIG, getFullUrl, getAuthHeader, ENDPOINTS } from "@/config/apiConfig";
 import {
   DndContext,
   closestCenter,
@@ -307,11 +307,11 @@ export const AssetDashboard = () => {
       const toDate = formatDateForAPI(analyticsDateRange.toDate);
 
       // Build the API URL with parameters
-      const url = `${BASE_URL}${ENDPOINTS.ASSET_STATISTICS
-        }?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${getAuthHeader().replace(
-          "Bearer ",
-          ""
-        )}`;
+      const baseEndpoint = `${ENDPOINTS.ASSET_STATISTICS}?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${getAuthHeader().replace(
+        "Bearer ",
+        ""
+      )}`;
+      const url = getFullUrl(baseEndpoint);
 
       console.log("Fetching asset statistics from:", url);
 
@@ -354,11 +354,11 @@ export const AssetDashboard = () => {
       const toDate = formatDateForAPI(analyticsDateRange.toDate);
 
       // Build the API URL with parameters
-      const url = `${BASE_URL}${ENDPOINTS.ASSET_STATUS
-        }?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${getAuthHeader().replace(
-          "Bearer ",
-          ""
-        )}`;
+      const baseEndpoint = `${ENDPOINTS.ASSET_STATUS}?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${getAuthHeader().replace(
+        "Bearer ",
+        ""
+      )}`;
+      const url = getFullUrl(baseEndpoint);
 
       console.log("Fetching asset status from:", url);
 
@@ -399,11 +399,11 @@ export const AssetDashboard = () => {
       const toDate = formatDateForAPI(analyticsDateRange.toDate);
 
       // Build the API URL with parameters
-      const url = `${BASE_URL}${ENDPOINTS.ASSET_DISTRIBUTIONS
-        }?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${getAuthHeader().replace(
-          "Bearer ",
-          ""
-        )}`;
+      const baseEndpoint = `${ENDPOINTS.ASSET_DISTRIBUTIONS}?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${getAuthHeader().replace(
+        "Bearer ",
+        ""
+      )}`;
+      const url = getFullUrl(baseEndpoint);
 
       console.log("Fetching asset distributions from:", url);
 
@@ -446,10 +446,11 @@ export const AssetDashboard = () => {
       const toDate = formatDateForAPI(analyticsDateRange.toDate);
 
       // Build the API URL with parameters
-      const url = `${BASE_URL}/pms/assets/group_wise_assets.json?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${getAuthHeader().replace(
+      const baseEndpoint = `${ENDPOINTS.GROUP_WISE_ASSETS}?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${getAuthHeader().replace(
         "Bearer ",
         ""
       )}`;
+      const url = getFullUrl(baseEndpoint);
 
       console.log("Fetching group-wise assets from:", url);
 
@@ -492,11 +493,11 @@ export const AssetDashboard = () => {
       const toDate = formatDateForAPI(analyticsDateRange.toDate);
 
       // Build the API URL with parameters
-      const url = `${BASE_URL}${ENDPOINTS.CATEGORY_WISE_ASSETS
-        }?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${getAuthHeader().replace(
-          "Bearer ",
-          ""
-        )}`;
+      const baseEndpoint = `${ENDPOINTS.CATEGORY_WISE_ASSETS}?site_id=${siteId}&from_date=${fromDate}&to_date=${toDate}&access_token=${getAuthHeader().replace(
+        "Bearer ",
+        ""
+      )}`;
+      const url = getFullUrl(baseEndpoint);
 
         console.log("Fetching category-wise assets from:", url);
 
@@ -1235,7 +1236,7 @@ export const AssetDashboard = () => {
             </div>
           ) : (
             <>
-              <AssetStats stats={data} onCardClick={handleStatCardClick} />
+              <AssetStats stats={stats} onCardClick={handleStatCardClick} />
 
               {/* <AssetActions
                 searchTerm={searchTerm}

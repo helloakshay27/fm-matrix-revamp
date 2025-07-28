@@ -7,13 +7,11 @@ const getApiConfig = () => {
 
   // Fallback base URL - can be overridden by environment variable or login process
   // In Vite, use import.meta.env instead of process.env
-  const defaultBaseUrl = import.meta.env.VITE_BASE_URL ;
-  const finalBaseUrl = savedBaseUrl || defaultBaseUrl;
+  const finalBaseUrl = savedBaseUrl || import.meta.env.VITE_API_BASE_URL || 'https://api.example.com';
 
   console.log('API Config Debug:', {
     savedToken: savedToken ? 'Present' : 'Missing',
     savedBaseUrl: savedBaseUrl || 'Missing',
-    defaultBaseUrl,
     finalBaseUrl,
     tokenLength: savedToken?.length || 0,
     baseUrlValue: finalBaseUrl
@@ -103,6 +101,9 @@ export const API_CONFIG = {
     ASSET_STATUS: '/pms/assets/assets_status.json',
     // Asset distributions endpoint
     ASSET_DISTRIBUTIONS: '/pms/assets/assets_distributions.json',
+
+    // Group-wise assets endpoint
+    GROUP_WISE_ASSETS: '/pms/assets/group_wise_assets.json',
     // Category-wise assets endpoint
     CATEGORY_WISE_ASSETS: '/pms/assets/category_wise_assets_count.json',
     // Custom forms endpoint
