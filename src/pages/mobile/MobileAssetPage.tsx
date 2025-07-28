@@ -43,9 +43,9 @@ interface AssetApiResponse {
 const mobileAssetService = {
   async getAssets(token: string, page: number = 1): Promise<AssetApiResponse> {
     try {
-      // Get base URL from localStorage or use default
+      // Get base URL from sessionStorage or use default
       let baseUrl =
-        localStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
+        sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
 
       // Ensure baseUrl doesn't have trailing slash and starts with https://
       baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
@@ -57,8 +57,8 @@ const mobileAssetService = {
 
       console.log("🔍 FETCHING MOBILE ASSETS:");
       console.log(
-        "  - Base URL from localStorage:",
-        localStorage.getItem("baseUrl")
+        "  - Base URL from sessionStorage:",
+        sessionStorage.getItem("baseUrl")
       );
       console.log("  - Processed Base URL:", baseUrl);
       console.log("  - Final URL:", url);
@@ -118,14 +118,14 @@ export const MobileAssetPage = () => {
       console.log("  - AssetId:", assetId);
       console.log("  - Action:", action);
       console.log(
-        "  - Current localStorage baseUrl:",
-        localStorage.getItem("baseUrl")
+        "  - Current sessionStorage baseUrl:",
+        sessionStorage.getItem("baseUrl")
       );
 
       // Set baseUrl if not already set
-      if (!localStorage.getItem("baseUrl")) {
-        localStorage.setItem("baseUrl", "https://oig-api.gophygital.work");
-        console.log("📝 Set default baseUrl in localStorage");
+      if (!sessionStorage.getItem("baseUrl")) {
+        sessionStorage.setItem("baseUrl", "https://oig-api.gophygital.work");
+        console.log("📝 Set default baseUrl in sessionStorage");
       }
 
       if (token) {
@@ -205,7 +205,6 @@ export const MobileAssetPage = () => {
     handleTokenAndFetchAssets();
   }, [token, action, assetId]);
 
-  // Find selected asset when assetId or assets change
   useEffect(() => {
     if (assetId && assets.length > 0) {
       const asset = assets.find((a) => a.id.toString() === assetId);
