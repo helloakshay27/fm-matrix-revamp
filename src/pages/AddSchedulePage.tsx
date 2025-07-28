@@ -1643,11 +1643,12 @@ export const AddSchedulePage = () => {
   };
 
   // Helper function to map checklist_for to scheduleFor
-  const mapChecklistFor = (checklistFor: string): string => {
-    if (checklistFor.includes('Service')) return 'Service';
-    if (checklistFor.includes('Asset')) return 'Asset';
-    if (checklistFor.includes('Supplier')) return 'Supplier';
-    if (checklistFor.includes('Training')) return 'Training';
+  const mapChecklistFor = (checklistFor: string | null | undefined): string => {
+    const value = checklistFor ?? '';
+    if (value.includes('Service')) return 'Service';
+    if (value.includes('Asset')) return 'Asset';
+    if (value.includes('Supplier')) return 'Supplier';
+    if (value.includes('Training')) return 'Training';
     return 'Asset'; // default
   };
 
@@ -4250,8 +4251,6 @@ export const AddSchedulePage = () => {
     )}
   </SectionCard>
 )}
-
-
             {/* Auto Ticket Configuration Section */}
             {autoTicket && (
               <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
