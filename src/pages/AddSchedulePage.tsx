@@ -2736,80 +2736,85 @@ export const AddSchedulePage = () => {
                   flexWrap: 'wrap'
                 }}>
                   {attachments.map((attachment) => {
-                    // Check if the file is an image by extension or mime type if available
-                    const isImage = attachment.name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
-                    return (
-                      <Box
-                        key={attachment.id}
-                        sx={{
-                          width: '120px',
-                          height: '120px',
-                          border: '2px dashed #ccc',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          position: 'relative',
-                          backgroundColor: '#fafafa',
-                          '&:hover': {
-                            borderColor: '#999'
-                          }
-                        }}
-                      >
-                        {/* Close button */}
-                        <IconButton
-                          size="small"
-                          onClick={() => setAttachments(prev => prev.filter(a => a.id !== attachment.id))}
-                          sx={{
-                            position: 'absolute',
-                            top: 4,
-                            right: 4,
-                            backgroundColor: 'white',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                            width: 20,
-                            height: 20,
-                            '&:hover': {
-                              backgroundColor: '#f5f5f5'
-                            }
-                          }}
-                        >
-                          <Close sx={{ fontSize: 12 }} />
-                        </IconButton>
+  // Check if the file is an image by extension or mime type if available
+  const isImage = attachment.name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
+  const isReadOnly = stepIndex < activeStep && editingStep !== stepIndex;
+  return (
+    <Box
+      key={attachment.id}
+      sx={{
+        width: '120px',
+        height: '120px',
+        border: '2px dashed #ccc',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        backgroundColor: '#fafafa',
+        '&:hover': {
+          borderColor: '#999'
+        }
+      }}
+    >
+      {/* Close button - only show if not read-only */}
+      {!isReadOnly && (
+        <IconButton
+          size="small"
+          onClick={() => setAttachments(prev => prev.filter(a => a.id !== attachment.id))}
+          sx={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            backgroundColor: 'white',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            width: 20,
+            height: 20,
+            '&:hover': {
+              backgroundColor: '#f5f5f5'
+            }
+          }}
+        >
+          <Close sx={{ fontSize: 12 }} />
+        </IconButton>
+      )}
 
-                        {/* Show image preview if image, else file icon and name */}
-                        {isImage && attachment.url ? (
-                          <img
-                            src={attachment.url}
-                            alt={attachment.name}
-                            style={{
-                              maxWidth: '100px',
-                              maxHeight: '100px',
-                              objectFit: 'contain',
-                              marginBottom: 8,
-                              borderRadius: 4
-                            }}
-                          />
-                        ) : (
-                          <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
-                        )}
-                        {!isImage && (
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              textAlign: 'center',
-                              px: 1,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              width: '100%'
-                            }}
-                          >
-                            {attachment.name}
-                          </Typography>
-                        )}
-                      </Box>
-                    );
-                  })}
+      {/* Show image preview if image, else file icon and name */}
+      {isImage && attachment.url ? (
+        <img
+          src={attachment.url}
+          alt={attachment.name}
+          style={{
+            maxWidth: '100px',
+            maxHeight: '100px',
+            objectFit: 'contain',
+            marginBottom: 8,
+            borderRadius: 4,
+            opacity: isReadOnly ? 0.5 : 1 // Apply opacity if read-only
+          }}
+        />
+      ) : (
+        <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1, opacity: isReadOnly ? 0.5 : 1 }} />
+      )}
+      {!isImage && (
+        <Typography
+          variant="caption"
+          sx={{
+            textAlign: 'center',
+            px: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            width: '100%',
+            opacity: isReadOnly ? 0.5 : 1
+          }}
+        >
+          {attachment.name}
+        </Typography>
+      )}
+    </Box>
+  );
+})}
                 </Box>
               )}
 
@@ -2817,6 +2822,7 @@ export const AddSchedulePage = () => {
               <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <MuiButton
                   variant="outlined"
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
                   // startIcon={<AttachFile />}
                   onClick={addAttachment}
                   sx={{
@@ -4082,7 +4088,7 @@ export const AddSchedulePage = () => {
                     />
                     <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${createNew ? 'translate-x-6' : 'translate-x-1'}`}></span>
                   </label>
-                  <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Create New</span>
+                  <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Create Template</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
@@ -4191,7 +4197,7 @@ export const AddSchedulePage = () => {
             {autoTicket && (
               <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                  Auto Ticket Configuration asd
+                  Auto Ticket Configuration
                 </Typography>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
                   <Box>
@@ -5060,7 +5066,10 @@ export const AddSchedulePage = () => {
             isCompleted={false}
             isCollapsed={false}
             disabled={3 < activeStep && editingStep !== 3}
-            onEdit={() => setEditingStep(3)}
+            onEdit={() => {
+              setActiveStep(3);
+              setEditingStep(3);
+            }}
           />
         );
 
