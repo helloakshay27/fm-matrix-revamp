@@ -1169,6 +1169,10 @@ export const TicketDashboard = () => {
                               data={unitCategorywiseData}
                               type="unitCategoryWise"
                               className="h-full"
+                              dateRange={{
+                                startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
+                                endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
+                              }}
                             />
                           </SortableChartItem>
                         }
@@ -1292,6 +1296,10 @@ export const TicketDashboard = () => {
                             data={unitCategorywiseData}
                             type="unitCategoryWise"
                             className="bg-white border border-gray-200 rounded-lg"
+                            dateRange={{
+                              startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
+                              endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
+                            }}
                           />
                         </SortableChartItem>;
                       }
@@ -1304,6 +1312,10 @@ export const TicketDashboard = () => {
                             data={responseTATData}
                             type="tatResponse"
                             className="bg-white border border-gray-200 rounded-lg"
+                            dateRange={{
+                              startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
+                              endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
+                            }}
                           />
                         </SortableChartItem>;
                       }
