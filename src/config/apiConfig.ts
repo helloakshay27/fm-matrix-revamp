@@ -83,6 +83,11 @@ export const API_CONFIG = {
     // Restaurant endpoints
     RESTAURANTS: '/pms/admin/restaurants',
     RESTAURANT_MENU: '/pms/admin/restaurants',
+    // Ticket analytics download endpoints
+    TICKET_AGING_MATRIX_DOWNLOAD: '/pms/admin/complaints/ticket_ageing_matrix_downloads.json',
+    UNIT_CATEGORYWISE_DOWNLOAD: '/pms/admin/complaints/chart_unit_categorywise_downloads.json',
+    RESOLUTION_TAT_DOWNLOAD: '/pms/admin/complaints/chart_resolution_tat_downloads.json',
+    RESPONSE_TAT_DOWNLOAD: '/pms/admin/complaints/chart_response_tat_downloads.json',
   },
 } as const
 
