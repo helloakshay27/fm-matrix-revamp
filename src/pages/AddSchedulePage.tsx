@@ -4176,15 +4176,17 @@ export const AddSchedulePage = () => {
           disableClearable
           options={templateOptions}
           getOptionLabel={(option) => {
-  console.log("Label check", option);
-  return option?.label ? String(option.label) : '';
-}}
-          isOptionEqualToValue={(option, value) =>
-            option?.value === value?.value
-          }
-          value={selectedTemplate}
+            if (!option || typeof option !== 'object') return '';
+            if (typeof option.label === 'string') return option.label;
+            return '';
+          }}
+          isOptionEqualToValue={(option, value) => {
+            if (!option || !value) return false;
+            return String(option.value) === String(value.value);
+          }}
+          value={selectedTemplate || templateOptions[0]}
           onChange={(event, newValue) => {
-            if (newValue?.value !== undefined) {
+            if (newValue && typeof newValue.value !== 'undefined') {
               handleTemplateChange(newValue.value);
             }
           }}
