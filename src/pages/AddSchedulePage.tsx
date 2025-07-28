@@ -2892,9 +2892,10 @@ export const AddSchedulePage = () => {
             </Box>
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+              {
+                  formData.scheduleFor === 'Asset' && (<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 Checklist Type
-              </Typography>
+              </Typography>)}
               {stepIndex < activeStep && (
                 <MuiButton
                   variant="outlined"
@@ -2918,7 +2919,8 @@ export const AddSchedulePage = () => {
               )}
             </Box>
             <Box sx={{ mb: 3 }}>
-              <RadioGroup
+              {
+                  formData.scheduleFor === 'Asset' && (<RadioGroup
                 row
                 value={formData.checklistType}
                 onChange={(e) => handleChecklistTypeChange(e.target.value)}
@@ -2933,8 +2935,7 @@ export const AddSchedulePage = () => {
                   }
                   label="Individual"
                 />
-                {
-                  formData.scheduleFor === 'Asset' && (
+                
                     <FormControlLabel
                   value="Asset Group"
                   control={
@@ -2945,15 +2946,13 @@ export const AddSchedulePage = () => {
                   }
                   label="Asset Group"
                 />
-                  )
-                }
                 
                 {/* <FormControlLabel 
                     value="Branching" 
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
                     label="Branching" 
                   /> */}
-              </RadioGroup>
+              </RadioGroup>)}
             </Box>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
@@ -4145,14 +4144,7 @@ export const AddSchedulePage = () => {
                   </label>
                   <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Auto Ticket</span>
                 </div>
-                <button
-                  onClick={addQuestionSection}
-                  className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
-                  style={{ fontFamily: 'Work Sans, sans-serif' }}
-                >
-                  <Add className="w-4 h-4" />
-                  Add Section
-                </button>
+                
                 {/* Edit button for Question Setup step */}
                 {stepIndex < activeStep && (
                   <MuiButton
@@ -4363,7 +4355,7 @@ export const AddSchedulePage = () => {
 
             {/* Main Content in White Box */}
             {questionSections.map((section, sectionIndex) => (
-              <div key={section.id} className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
+              <div key={section.id} className="overflow-hidden" >
                 <div className=" p-4 sm:p-6 bg-white">
                   <div className="flex justify-between items-center mb-4">
                     <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
@@ -4490,8 +4482,6 @@ export const AddSchedulePage = () => {
                   )}
 
                   {/* Section Header with Group/Sub-Group */}
-
-
                   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
                     <Box>
                       <Autocomplete
@@ -5120,7 +5110,7 @@ export const AddSchedulePage = () => {
                     </Box>
                   ))}
 
-                  <div className="flex justify-end mt-4">
+                  <div className="flex justify-end mt-4 gap-4">
                     <button
                       onClick={() => addTaskToSection(section.id)}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
@@ -5129,10 +5119,23 @@ export const AddSchedulePage = () => {
                       <Add className="w-4 h-4" />
                       Add Question
                     </button>
+                  {(questionSections.length === 1 || sectionIndex === questionSections.length - 1) && (
+  <button
+    onClick={addQuestionSection}
+    className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
+    style={{ fontFamily: 'Work Sans, sans-serif' }}
+  >
+    <Add className="w-4 h-4" />
+    Add Section
+  </button>
+)}
+
                   </div>
-                </div>
+                {sectionIndex < questionSections.length - 1 && <hr className="my-6 border-t border-gray-200" />}
               </div>
-            ))}
+            </div>
+          ))}
+
 
 
           </div>
