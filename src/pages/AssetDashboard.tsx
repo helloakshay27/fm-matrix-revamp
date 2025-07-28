@@ -55,6 +55,7 @@ import { AssetAnalyticsCard } from "@/components/AssetAnalyticsCard";
 import { assetAnalyticsDownloadAPI } from "@/services/assetAnalyticsDownloadAPI";
 import { useAssetSearch } from "@/hooks/useAssetSearch";
 import { API_CONFIG, getFullUrl, getAuthHeader, ENDPOINTS } from "@/config/apiConfig";
+import { toast } from "sonner";
 import {
   DndContext,
   closestCenter,
@@ -160,12 +161,33 @@ const SortableChartItem = ({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  // Handle pointer down to prevent drag on button/icon clicks
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const target = e.target as HTMLElement;
+    // Check if the click is on a button, icon, or download element
+    if (
+      target.closest('button') ||
+      target.closest('[data-download]') ||
+      target.closest('svg') ||
+      target.tagName === 'BUTTON' ||
+      target.tagName === 'SVG' ||
+      target.closest('.download-btn')
+    ) {
+      e.stopPropagation();
+      return;
+    }
+    // For other elements, proceed with drag
+    if (listeners?.onPointerDown) {
+      listeners.onPointerDown(e);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
+      onPointerDown={handlePointerDown}
       className="cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md"
     >
       {children}
@@ -554,24 +576,32 @@ export const AssetDashboard = () => {
       const fromDate = analyticsDateRange.fromDate;
       const toDate = analyticsDateRange.toDate;
 
+      toast.info("Preparing download...");
+
       switch (type) {
         case 'groupWise':
           await assetAnalyticsDownloadAPI.downloadGroupWiseAssetsData(fromDate, toDate);
+          toast.success("Group-wise assets data downloaded successfully!");
           break;
         case 'categoryWise':
           await assetAnalyticsDownloadAPI.downloadCategoryWiseAssetsData(fromDate, toDate);
+          toast.success("Category-wise assets data downloaded successfully!");
           break;
         case 'assetDistribution':
           await assetAnalyticsDownloadAPI.downloadAssetDistributionsData(fromDate, toDate);
+          toast.success("Asset distribution data downloaded successfully!");
           break;
         case 'assetsInUse':
           await assetAnalyticsDownloadAPI.downloadAssetsInUseData(fromDate, toDate);
+          toast.success("Assets in use data downloaded successfully!");
           break;
         default:
           console.warn('Unknown analytics download type:', type);
+          toast.error('Unknown analytics download type.');
       }
     } catch (error) {
       console.error('Error downloading analytics:', error);
+      toast.error('Failed to download analytics data. Please try again.');
     }
   };
 
@@ -1236,7 +1266,7 @@ export const AssetDashboard = () => {
             </div>
           ) : (
             <>
-              <AssetStats stats={stats} onCardClick={handleStatCardClick} />
+              <AssetStats stats={data} onCardClick={handleStatCardClick} />
 
               {/* <AssetActions
                 searchTerm={searchTerm}

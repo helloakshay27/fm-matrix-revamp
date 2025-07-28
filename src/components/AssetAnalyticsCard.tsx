@@ -142,6 +142,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
               size="sm"
               onClick={onDownload}
               className="flex items-center gap-1"
+              data-download="true"
             >
               <Download className="w-4 h-4" />
               
