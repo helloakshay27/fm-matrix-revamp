@@ -10,6 +10,12 @@ import { ArrowLeft, Upload, Paperclip, X, User, Ticket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+
+interface ComplaintModeResponse {
+  id: number;
+  name: string;
+}
 
 const PRIORITY_OPTIONS = [
   { value: 'P1', label: 'P1 - Critical' },
@@ -67,12 +73,16 @@ export const AddTicketDashboard = () => {
   const [fmUsers, setFmUsers] = useState<any[]>([]);
   const [occupantUsers, setOccupantUsers] = useState<OccupantUserResponse[]>([]);
   const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
+  const [complaintModes, setComplaintModes] = useState<ComplaintModeResponse[]>([]);
+  const [isGoldenTicket, setIsGoldenTicket] = useState(false);
+  const [isFlagged, setIsFlagged] = useState(false);
   
   // Loading states
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingSubcategories, setLoadingSubcategories] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingAccount, setLoadingAccount] = useState(false);
+  const [loadingComplaintModes, setLoadingComplaintModes] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -88,8 +98,7 @@ export const AddTicketDashboard = () => {
     adminPriority: '',
     referenceNumber: '',
     mode: '',
-    isGoldenTicket: false,
-    isFlagged: false
+    complaintMode: ''
   });
 
   // Load initial data
@@ -97,6 +106,7 @@ export const AddTicketDashboard = () => {
     loadCategories();
     loadFMUsers();
     loadOccupantUsers();
+    loadComplaintModes();
     if (onBehalfOf === 'self') {
       loadUserAccount();
     }
@@ -165,6 +175,35 @@ export const AddTicketDashboard = () => {
       setFmUsers(response.fm_users || []);
     } catch (error) {
       console.error('Error loading FM users:', error);
+    }
+  };
+
+  // Load complaint modes
+  const loadComplaintModes = async () => {
+    setLoadingComplaintModes(true);
+    try {
+      const url = getFullUrl(API_CONFIG.ENDPOINTS.COMPLAINT_MODE);
+      const options = getAuthenticatedFetchOptions('GET');
+      
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch complaint modes: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Complaint modes response:', data);
+      
+      // The API returns an array directly, not wrapped in complaint_modes property
+      setComplaintModes(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading complaint modes:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load complaint modes",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingComplaintModes(false);
     }
   };
 
@@ -290,17 +329,15 @@ export const AddTicketDashboard = () => {
         on_behalf_of: onBehalfOf === 'self' ? 'admin' : onBehalfOf,
         complaint_type: ticketType,
         category_type_id: parseInt(formData.categoryType),
-        priority: formData.adminPriority,
+        priority: formData.adminPriority || '',
         society_staff_type: 'User',
-        proactive_reactive: formData.proactiveReactive,
+        proactive_reactive: formData.proactiveReactive || '',
         heading: formData.description,
-        complaint_mode_id: 75,
+        complaint_mode_id: formData.complaintMode ? parseInt(formData.complaintMode) : 75,
         room_id: 1,
         wing_id: 1,
         area_id: 1,
         floor_id: 1,
-        is_golden_ticket: formData.isGoldenTicket,
-        is_flagged: formData.isFlagged,
         // Add user parameters based on selection type
         ...(onBehalfOf === 'self' && userAccount?.id && { id_user: userAccount.id }),
         ...(onBehalfOf !== 'self' && selectedUserId && { 
@@ -309,10 +346,16 @@ export const AddTicketDashboard = () => {
         }),
         ...(formData.assignedTo && { assigned_to: parseInt(formData.assignedTo) }),
         ...(formData.referenceNumber && { reference_number: formData.referenceNumber }),
-        ...(formData.subCategoryType && { sub_category_id: parseInt(formData.subCategoryType) })
+        ...(formData.subCategoryType && { sub_category_id: parseInt(formData.subCategoryType) }),
+        // Add golden ticket and flagged parameters
+        is_golden_ticket: isGoldenTicket,
+        is_flagged: isFlagged
       };
 
-      console.log('Ticket payload:', ticketData);
+      console.log('Ticket payload before API call:', ticketData);
+      console.log('Form data:', formData);
+      console.log('Golden Ticket:', isGoldenTicket);
+      console.log('Is Flagged:', isFlagged);
 
       await ticketManagementAPI.createTicket(ticketData, attachedFiles);
       
@@ -476,26 +519,75 @@ export const AddTicketDashboard = () => {
             </h2>
           </div>
           <div className="p-6 space-y-6">
-            {/* Radio buttons for ticket type */}
-            <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-8">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="request" id="request" className="text-red-500 border-red-500" />
-                <label htmlFor="request" className="text-sm font-medium">Request</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="complaint" id="complaint" className="text-red-500 border-red-500" />
-                <label htmlFor="complaint" className="text-sm font-medium">Complaint</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="suggestion" id="suggestion" className="text-red-500 border-red-500" />
-                <label htmlFor="suggestion" className="text-sm font-medium">Suggestion</label>
-              </div>
-            </RadioGroup>
+            {/* Radio buttons for ticket type and flags */}
+            <div className="flex gap-8">
+              <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-8">
+    <div className="flex items-center space-x-2">
+      <RadioGroupItem value="request" id="request" className="text-[#C72030] border-[#C72030]" />
+      <label htmlFor="request" className="text-sm font-medium">Request</label>
+    </div>
+    <div className="flex items-center space-x-2">
+      <RadioGroupItem value="complaint" id="complaint" className="text-[#C72030] border-[#C72030]" />
+      <label htmlFor="complaint" className="text-sm font-medium">Complaint</label>
+    </div>
+    <div className="flex items-center space-x-2">
+      <RadioGroupItem value="suggestion" id="suggestion" className="text-[#C72030] border-[#C72030]" />
+      <label htmlFor="suggestion" className="text-sm font-medium">Suggestion</label>
+    </div>
+  </RadioGroup>
+            </div>
 
+               <div className="flex gap-8">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="golden"
+                    checked={isGoldenTicket}
+                    onChange={(e) => setIsGoldenTicket(e.target.checked)}
+                    className="w-3 h-3 rounded border-2 border-[#C72030] text-[#C72030] focus:ring-[#C72030]"
+                    style={{
+                      accentColor: '#C72030'
+                    }}
+                  />
+                  <label htmlFor="golden" className="text-sm font-medium">Golden Ticket</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="flagged"
+                    checked={isFlagged}
+                    onChange={(e) => setIsFlagged(e.target.checked)}
+                    className="w-3 h-3 rounded border-2 border-[#C72030] text-[#C72030]"
+                    style={{
+                      accentColor: '#C72030'
+                    }}
+                  />
+                  <label htmlFor="flagged" className="text-sm font-medium">Is Flagged</label>
+                </div>
+              </div>
+              
+              {/* Golden Ticket and Is Flagged radio buttons */}
+             
+                {/* <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="golden" id="golden" className="text-red-500 border-red-500" 
+                    checked={isGoldenTicket}
+                    onClick={() => setIsGoldenTicket(!isGoldenTicket)}
+                  />
+                  <label htmlFor="golden" className="text-sm font-medium">Golden Ticket</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="flagged" id="flagged" className="text-red-500 border-red-500"
+                    checked={isFlagged}
+                    onClick={() => setIsFlagged(!isFlagged)}
+                  />
+                  <label htmlFor="flagged" className="text-sm font-medium">Is Flagged</label>
+                </div> */}
+              
+           
 
             {/* Form fields in exact layout as per image */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Row 1: Category Type, Sub Category Type, Assigned To */}
+              {/* Row 1: Category Type, Sub Category Type, Assigned To, Mode */}
               <FormControl
                 fullWidth
                 variant="outlined"
@@ -566,10 +658,34 @@ export const AddTicketDashboard = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
-            </div>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Mode</InputLabel>
+                <MuiSelect
+                  value={formData.complaintMode}
+                  onChange={(e) => setFormData({ ...formData, complaintMode: e.target.value })}
+                  label="Mode"
+                  notched
+                  displayEmpty
+                  disabled={loadingComplaintModes}
+                >
+                  <MenuItem value="">
+                    {loadingComplaintModes ? "Loading..." : "Select Mode"}
+                  </MenuItem>
+                  {complaintModes.map((mode) => (
+                    <MenuItem key={mode.id} value={mode.id.toString()}>
+                      {mode.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+          
 
             {/* Row 2: Proactive/Reactive, Admin Priority, Reference Number */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
               <FormControl
                 fullWidth
                 variant="outlined"
