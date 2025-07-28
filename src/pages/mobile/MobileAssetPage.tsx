@@ -45,8 +45,8 @@ const mobileAssetService = {
     try {
       // Get base URL from sessionStorage or use default
       let baseUrl =
-        // sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
-        sessionStorage.getItem("baseUrl") || "https://fm-uat-api.lockated.com/";
+        sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
+        // sessionStorage.getItem("baseUrl") || "https://fm-uat-api.lockated.com/";
 
       // Ensure baseUrl doesn't have trailing slash and starts with https://
       baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
@@ -128,8 +128,8 @@ export const MobileAssetPage = () => {
 
       // Set baseUrl if not already set
       if (!sessionStorage.getItem("baseUrl")) {
-        // sessionStorage.setItem("baseUrl", "https://oig-api.gophygital.work");
-        sessionStorage.setItem("baseUrl", "https://fm-uat-api.lockated.com");
+        sessionStorage.setItem("baseUrl", "https://oig-api.gophygital.work");
+        // sessionStorage.setItem("baseUrl", "https://fm-uat-api.lockated.com");
         console.log("📝 Set default baseUrl in sessionStorage");
       }
 
