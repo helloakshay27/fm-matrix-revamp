@@ -4170,6 +4170,10 @@ export const AddSchedulePage = () => {
         (option) => option.value === String(formData?.selectedTemplate ?? '')
       ) || templateOptions[0]; // fallback to default safe option
 
+      console.log('Selected:', formData?.selectedTemplate);
+console.log('Matching Option:', selectedValue);
+
+
       return (
         <Autocomplete
           disabled={
@@ -4208,8 +4212,6 @@ export const AddSchedulePage = () => {
     )}
   </SectionCard>
 )}
-
-
             {/* Auto Ticket Configuration Section */}
             {autoTicket && (
               <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
