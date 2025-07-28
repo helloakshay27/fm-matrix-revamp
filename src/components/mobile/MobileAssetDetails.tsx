@@ -35,11 +35,33 @@ import { HistoryCardTab } from "@/components/asset-details/HistoryCardTab";
 import { DepreciationTab } from "@/components/asset-details/DepreciationTab";
 import { TicketTab } from "@/components/asset-details/TicketTab";
 
+interface Activity {
+  id: number;
+  trackable_id: number;
+  trackable_type: string;
+  owner_id: number;
+  owner_type: string;
+  key: string;
+  parameters: {
+    updated_at?: [string, string];
+    created_by?: [string, string];
+    breakdown?: [boolean, boolean];
+    breakdown_date?: [string | null, string | null];
+    location_type?: [string, string | null];
+    [key: string]: any;
+  };
+  recipient_id?: number | null;
+  recipient_type?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 interface Asset {
   id: number;
   name: string;
   assetNumber?: string;
   status?: string;
+  breakdown?: boolean;
   assetGroup?: string;
   assetSubGroup?: string;
   siteName?: string;
@@ -54,6 +76,10 @@ interface Asset {
   purchase_cost?: number;
   current_date_cost?: number;
   ownership_costs?: OwnershipCost[];
+  activities?: Activity[];
+  model_number?: string;
+  ownership_total_cost?: number;
+  manufacturer?: string;
 }
 
 interface OwnershipCost {
@@ -386,15 +412,15 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
               {/* Status Display */}
               <button
                 onClick={
-                  assetData.status?.toLowerCase() === "breakdown"
+                  (assetData.breakdown || assetData.status?.toLowerCase() === "breakdown")
                     ? handleBreakdownClick
                     : undefined
                 }
                 className={`px-4 py-1 rounded text-xs font-medium transition-colors ${getStatusButtonColor(
-                  assetData.status
+                  assetData.breakdown ? "Breakdown" : assetData.status
                 )}`}
               >
-                {formatStatusText(assetData.status || "In Use")}
+                {formatStatusText(assetData.breakdown ? "Breakdown" : (assetData.status || "In Use"))}
               </button>
             </div>
           </div>

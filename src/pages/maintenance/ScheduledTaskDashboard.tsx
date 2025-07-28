@@ -30,6 +30,7 @@ import { TaskAnalyticsCard } from '@/components/TaskAnalyticsCard';
 import { TaskAnalyticsFilterDialog } from '@/components/TaskAnalyticsFilterDialog';
 import { TaskAnalyticsSelector } from '@/components/TaskAnalyticsSelector';
 import { BarChart3 } from 'lucide-react';
+import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 
 
 interface TaskRecord {
@@ -138,7 +139,7 @@ export const ScheduledTaskDashboard = () => {
   const [searchTaskId, setSearchTaskId] = useState('');
   const [searchChecklist, setSearchChecklist] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearchQuery = useDebounce(searchQuery, 800);
+  const debouncedSearchQuery = useDebounce(searchQuery, 1000);
   const [activeTab, setActiveTab] = useState('list');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -180,6 +181,13 @@ export const ScheduledTaskDashboard = () => {
 
   // Transform API data to TaskRecord format
   const transformApiDataToTaskRecord = (apiData: ApiTaskOccurrence[]): TaskRecord[] => {
+    if (!apiData || !Array.isArray(apiData)) {
+      console.log('No API data or invalid data format:', apiData); // Debug log
+      return [];
+    }
+    
+    console.log('Transforming API data:', apiData.length, 'items'); // Debug log
+    
     return apiData.map(task => ({
       id: task.id.toString(),
       checklist: task.checklist,
@@ -228,11 +236,16 @@ export const ScheduledTaskDashboard = () => {
       }
 
       // Add general search functionality for checklist and asset
-      if (searchTerm) {
-        queryParams.append('q[checklist_or_asset_cont]', searchTerm);
+      if (searchTerm && searchTerm.trim()) {
+        // Try multiple search parameters that the API might understand
+        queryParams.append('q[custom_form_form_name_cont]', searchTerm.trim());
+        // queryParams.append('q[asset_asset_name_cont]', searchTerm.trim());
       }
 
       const apiUrl = getFullUrl(`/all_tasks_listing.json?show_all=true&${queryParams.toString()}`);
+      console.log('API URL:', apiUrl); // Debug log
+      console.log('Search term:', searchTerm); // Debug log
+      
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
@@ -246,7 +259,11 @@ export const ScheduledTaskDashboard = () => {
       }
 
       const data: ApiTaskResponse = await response.json();
-      const transformedData = transformApiDataToTaskRecord(data.asset_task_occurrences);
+      console.log('API Response:', data); // Debug log
+      console.log('Search results count:', data.asset_task_occurrences?.length || 0); // Debug log
+      
+      const transformedData = transformApiDataToTaskRecord(data.asset_task_occurrences || []);
+      console.log('Transformed data:', transformedData.length, 'items'); // Debug log
       setTaskData(transformedData);
 
       // Update status counts
@@ -261,7 +278,8 @@ export const ScheduledTaskDashboard = () => {
       // Update pagination state
       setCurrentPage(data.current_page || 1);
       setTotalPages(data.pages || 1);
-      setTotalCount(data.asset_task_occurrences?.length || 0);
+      // Use the transformed data length for display
+      setTotalCount(transformedData.length);
 
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -275,8 +293,16 @@ export const ScheduledTaskDashboard = () => {
 
   // Load tasks on component mount and when filters change
   useEffect(() => {
+    console.log('Effect triggered - debouncedSearchQuery:', debouncedSearchQuery); // Debug log
     fetchTasks(currentFilters, currentPage, debouncedSearchQuery, selectedStatus);
-  }, [currentFilters, showAll, debouncedSearchQuery, selectedStatus]);
+  }, [currentFilters, debouncedSearchQuery, selectedStatus, showAll]);
+
+  // Separate effect for pagination to avoid infinite loops
+  useEffect(() => {
+    if (currentPage > 1) {
+      fetchTasks(currentFilters, currentPage, debouncedSearchQuery, selectedStatus);
+    }
+  }, [currentPage]);
 
   // Handle filter application
   const handleApplyFilters = (filters: TaskFilters) => {
@@ -299,8 +325,13 @@ export const ScheduledTaskDashboard = () => {
 
   // Handle search functionality
   const handleSearch = (query: string) => {
+    console.log('Search query:', query); // Debug log
     setSearchQuery(query);
     setCurrentPage(1); // Reset to first page when searching
+    // Force immediate search if query is empty (for clear search)
+    if (!query.trim()) {
+      fetchTasks(currentFilters, 1, '', selectedStatus);
+    }
   };
 
   // Handle status card click
@@ -564,7 +595,11 @@ export const ScheduledTaskDashboard = () => {
                 </Button>
               </div>
             ) : (
-              <EnhancedTable
+              <>
+                {/* Debug info */}
+                {console.log('Rendering table with data:', taskData.length, 'items')}
+                {console.log('Search query state:', searchQuery)} {/* Additional debug */}
+                <EnhancedTaskTable
                 data={taskData}
                 columns={[
                   { key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false },
@@ -623,6 +658,7 @@ export const ScheduledTaskDashboard = () => {
                 enableSearch={true}
                 enableSelection={true}
                 enableExport={true}
+                hideTableSearch={false}
                 storageKey="scheduled-tasks-table"
                 onFilterClick={() => setShowTaskFilter(true)}
                 handleExport={() => downloadTaskExport()}
@@ -645,6 +681,7 @@ export const ScheduledTaskDashboard = () => {
                   setShowSelectionPanel(checked && taskData.length > 0);
                 }}
               />
+              </>
             )}
           </div>
 

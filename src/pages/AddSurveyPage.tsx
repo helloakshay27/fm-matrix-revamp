@@ -13,6 +13,7 @@ interface Question {
   text: string;
   answerType: string;
   mandatory: boolean;
+  answerOptions?: string[];
 }
 
 export const AddSurveyPage = () => {
@@ -43,9 +44,38 @@ export const AddSurveyPage = () => {
     }
   };
 
-  const handleQuestionChange = (id: string, field: keyof Question, value: string | boolean) => {
+  const handleQuestionChange = (id: string, field: keyof Question, value: string | boolean | string[]) => {
     setQuestions(questions.map(q => 
       q.id === id ? { ...q, [field]: value } : q
+    ));
+  };
+
+  const handleAddAnswerOption = (questionId: string) => {
+    setQuestions(questions.map(q => 
+      q.id === questionId 
+        ? { ...q, answerOptions: [...(q.answerOptions || []), ''] }
+        : q
+    ));
+  };
+
+  const handleRemoveAnswerOption = (questionId: string, optionIndex: number) => {
+    setQuestions(questions.map(q => 
+      q.id === questionId 
+        ? { ...q, answerOptions: q.answerOptions?.filter((_, index) => index !== optionIndex) }
+        : q
+    ));
+  };
+
+  const handleAnswerOptionChange = (questionId: string, optionIndex: number, value: string) => {
+    setQuestions(questions.map(q => 
+      q.id === questionId 
+        ? { 
+            ...q, 
+            answerOptions: q.answerOptions?.map((option, index) => 
+              index === optionIndex ? value : option
+            )
+          }
+        : q
     ));
   };
 
@@ -180,6 +210,55 @@ export const AddSurveyPage = () => {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Multiple Choice Answer Options */}
+                    {question.answerType === 'multiple-choice' && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-700">Answer Options</span>
+                        </div>
+                        
+                        {(question.answerOptions || ['', '']).map((option, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <Select defaultValue="P">
+                              <SelectTrigger className="w-16">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="P">P</SelectItem>
+                                <SelectItem value="N">N</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Input
+                              placeholder="Answer Option"
+                              value={option}
+                              onChange={(e) => handleAnswerOptionChange(question.id, index, e.target.value)}
+                              className="flex-1"
+                            />
+                            {(question.answerOptions?.length || 0) > 2 && (
+                              <Button
+                                onClick={() => handleRemoveAnswerOption(question.id, index)}
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-500 hover:text-red-700 p-1"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                        
+                        <Button
+                          onClick={() => handleAddAnswerOption(question.id)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-green-600 hover:text-green-700 p-0 h-auto font-medium"
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Add Answer Option
+                        </Button>
+                      </div>
+                    )}
 
                     <div className="flex items-center space-x-2">
                       <Checkbox
