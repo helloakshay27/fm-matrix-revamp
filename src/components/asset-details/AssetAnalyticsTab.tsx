@@ -35,6 +35,7 @@ interface DashboardSummary {
   next_ppm_due: string | null;
   upcoming_amc_date: string | null;
   tickets: string | number;
+  asset_down_time?: string | number;
 }
 
 export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
@@ -45,6 +46,25 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
   const [configStatus, setConfigStatus] = useState<ConfigStatus | null>(null);
   const [dashboardSummary, setDashboardSummary] =
     useState<DashboardSummary | null>(null);
+
+  // Function to format asset down time to DD:HH:MM format
+  const formatDownTime = (downTime: string | number | undefined): string => {
+    if (!downTime) return "00:00:00";
+    
+    // Convert to number if it's a string
+    let totalMinutes = typeof downTime === 'string' ? parseInt(downTime) : downTime;
+    
+    // If the value is in seconds, convert to minutes
+    if (totalMinutes > 10000) {
+      totalMinutes = Math.floor(totalMinutes / 60);
+    }
+    
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+    
+    return `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
 
   useEffect(() => {
     const fetchConfigStatus = async () => {
@@ -126,7 +146,9 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
             style={{ backgroundColor: "#f6f4ee" }}
           >
             <Clock className="w-5 h-5 text-red-600" />
-            <span className="text-red-600 font-medium text-sm">DD:HH:MM</span>
+            <span className="text-red-600 font-medium text-sm">
+              {formatDownTime(dashboardSummary?.asset_down_time)}
+            </span>
           </div>
         </div>
       </div>
