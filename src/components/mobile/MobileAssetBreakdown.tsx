@@ -105,7 +105,7 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
 
         // Get base URL
         let baseUrl =
-          localStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
+          sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
         baseUrl = baseUrl.replace(/\/$/, "");
         if (!baseUrl.startsWith("http")) {
           baseUrl = `https://${baseUrl}`;
