@@ -405,7 +405,7 @@ export const MobileContactForm: React.FC = () => {
               <Input
                 id="delivery_address"
                 type="text"
-                placeholder="Room no-402, Floor 2, Worli (W), 400028"
+                placeholder=""
                 value={formData.delivery_address}
                 onChange={(e) =>
                   handleInputChange("delivery_address", e.target.value)
