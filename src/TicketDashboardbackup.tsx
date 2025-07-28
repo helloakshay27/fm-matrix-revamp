@@ -17,7 +17,6 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ticketManagementAPI, TicketResponse, TicketFilters } from '@/services/ticketManagementAPI';
 import { ticketAnalyticsAPI, TicketCategoryData, TicketStatusData, TicketAgingMatrix, UnitCategorywiseData, ResponseTATData, ResolutionTATReportData, RecentTicketsResponse } from '@/services/ticketAnalyticsAPI';
-import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { TicketAnalyticsCard } from '@/components/TicketAnalyticsCard';
 import { ResponseTATCard } from '@/components/ResponseTATCard';
 import { ResolutionTATCard } from '@/components/ResolutionTATCard';
@@ -990,36 +989,48 @@ export const TicketDashboard = () => {
                           return <SortableChartItem key={chartId} id={chartId}>
                             <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets Status</h3>
-                                <Download 
-                                  className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" 
-                                  onClick={async () => {
-                                    if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
-                                      try {
-                                        await ticketAnalyticsDownloadAPI.downloadTicketStatusData(
-                                          new Date(analyticsDateRange.startDate), 
-                                          new Date(analyticsDateRange.endDate)
-                                        );
-                                      } catch (error) {
-                                        console.error('Error downloading status chart data:', error);
-                                      }
-                                    }
-                                  }}
-                                />
+                                <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets</h3>
+                                <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
                               </div>
-                              <div className="grid grid-cols-3 gap-4">
-                                <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                                  <div className="text-2xl font-bold text-yellow-600">{openTickets}</div>
-                                  <div className="text-sm text-yellow-700 font-medium">Open</div>
+                              <div className="relative flex items-center justify-center">
+                                <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                                  <PieChart>
+                                    <Pie data={statusData} cx="50%" cy="50%" innerRadius={40} outerRadius={80} paddingAngle={2} dataKey="value" label={({
+                                      value,
+                                      name,
+                                      cx,
+                                      cy,
+                                      midAngle,
+                                      innerRadius,
+                                      outerRadius
+                                    }) => {
+                                      if (name === 'Open') {
+                                        return <text x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)} fill="black" textAnchor="middle" dominantBaseline="middle" fontSize="14" fontWeight="bold">
+                                          2
+                                        </text>;
+                                      }
+                                      return <text x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)} fill="black" textAnchor="middle" dominantBaseline="middle" fontSize="14" fontWeight="bold">
+                                        {value}
+                                      </text>;
+                                    }} labelLine={false}>
+                                      {statusData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                                    </Pie>
+                                    <Tooltip />
+                                  </PieChart>
+                                </ResponsiveContainer>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="text-center">
+                                    <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalSummaryTickets}</div>
+                                  </div>
                                 </div>
-                                <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-                                  <div className="text-2xl font-bold text-orange-600">{inProgressTickets}</div>
-                                  <div className="text-sm text-orange-700 font-medium">In Progress</div>
-                                </div>
-                                <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                                  <div className="text-2xl font-bold text-green-600">{closedTickets}</div>
-                                  <div className="text-sm text-green-700 font-medium">Closed</div>
-                                </div>
+                              </div>
+                              <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                                {statusData.map((item, index) => <div key={index} className="flex items-center gap-2">
+                                  <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{
+                                    backgroundColor: item.color
+                                  }}></div>
+                                  <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                                </div>)}
                               </div>
                             </div>
                           </SortableChartItem>;
@@ -1028,46 +1039,48 @@ export const TicketDashboard = () => {
                           return <SortableChartItem key={chartId} id={chartId}>
                             <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Proactive/Reactive Tickets</h3>
-                                <Download 
-                                  className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" 
-                                  onClick={async () => {
-                                    if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
-                                      try {
-                                        await ticketAnalyticsDownloadAPI.downloadTicketsCategorywiseData(
-                                          new Date(analyticsDateRange.startDate), 
-                                          new Date(analyticsDateRange.endDate)
-                                        );
-                                      } catch (error) {
-                                        console.error('Error downloading reactive proactive chart data:', error);
-                                      }
-                                    }
-                                  }}
-                                />
+                                <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Reactive Proactive Ticket</h3>
+                                <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
                               </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-3">
-                                  <h4 className="text-sm font-semibold text-gray-700 text-center">Proactive</h4>
-                                  <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                    <div className="text-xl font-bold text-blue-600">{proactiveOpenTickets}</div>
-                                    <div className="text-xs text-blue-700 font-medium">Open</div>
-                                  </div>
-                                  <div className="text-center p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    <div className="text-xl font-bold text-gray-600">{proactiveClosedTickets}</div>
-                                    <div className="text-xs text-gray-700 font-medium">Closed</div>
+                              <div className="relative flex items-center justify-center">
+                                <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                                  <PieChart>
+                                    <Pie data={typeData} cx="50%" cy="50%" innerRadius={40} outerRadius={80} paddingAngle={2} dataKey="value" label={({
+                                      value,
+                                      name,
+                                      cx,
+                                      cy,
+                                      midAngle,
+                                      innerRadius,
+                                      outerRadius
+                                    }) => {
+                                      if (name === 'Open') {
+                                        return <text x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)} fill="black" textAnchor="middle" dominantBaseline="middle" fontSize="14" fontWeight="bold">
+                                          2
+                                        </text>;
+                                      }
+                                      return <text x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)} fill="black" textAnchor="middle" dominantBaseline="middle" fontSize="14" fontWeight="bold">
+                                        {value}
+                                      </text>;
+                                    }} labelLine={false}>
+                                      {typeData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                                    </Pie>
+                                    <Tooltip />
+                                  </PieChart>
+                                </ResponsiveContainer>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="text-center">
+                                    <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {proactiveOpenTickets + proactiveClosedTickets + reactiveOpenTickets + reactiveClosedTickets}</div>
                                   </div>
                                 </div>
-                                <div className="space-y-3">
-                                  <h4 className="text-sm font-semibold text-gray-700 text-center">Reactive</h4>
-                                  <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
-                                    <div className="text-xl font-bold text-red-600">{reactiveOpenTickets}</div>
-                                    <div className="text-xs text-red-700 font-medium">Open</div>
-                                  </div>
-                                  <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                                    <div className="text-xl font-bold text-green-600">{reactiveClosedTickets}</div>
-                                    <div className="text-xs text-green-700 font-medium">Closed</div>
-                                  </div>
-                                </div>
+                              </div>
+                              <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
+                                {typeData.map((item, index) => <div key={index} className="flex items-center gap-2">
+                                  <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{
+                                    backgroundColor: item.color
+                                  }}></div>
+                                  <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
+                                </div>)}
                               </div>
                             </div>
                           </SortableChartItem>;
@@ -1080,10 +1093,6 @@ export const TicketDashboard = () => {
                               data={unitCategorywiseData}
                               type="unitCategoryWise"
                               className="h-full"
-                              dateRange={{
-                                startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
-                                endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
-                              }}
                             />
                           </SortableChartItem>
                         }
@@ -1093,10 +1102,6 @@ export const TicketDashboard = () => {
                             <ResponseTATCard
                               data={responseTATData}
                               className="h-full"
-                              dateRange={{
-                                startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
-                                endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
-                              }}
                             />
                           </SortableChartItem>
                         }
@@ -1114,22 +1119,9 @@ export const TicketDashboard = () => {
                               <h3 className="text-base sm:text-lg font-bold" style={{
                                 color: '#C72030'
                               }}>Unit Category-wise Tickets</h3>
-                              <Download 
-                                className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" 
-                                style={{ color: '#C72030' }}
-                                onClick={async () => {
-                                  if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
-                                    try {
-                                      await ticketAnalyticsDownloadAPI.downloadUnitCategorywiseData(
-                                        new Date(analyticsDateRange.startDate), 
-                                        new Date(analyticsDateRange.endDate)
-                                      );
-                                    } catch (error) {
-                                      console.error('Error downloading unit category-wise data:', error);
-                                    }
-                                  }
-                                }}
-                              />
+                              <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{
+                                color: '#C72030'
+                              }} />
                             </div>
                             <div className="w-full overflow-x-auto">
                               <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
@@ -1158,19 +1150,9 @@ export const TicketDashboard = () => {
                               <h3 className="text-base sm:text-lg font-bold" style={{
                                 color: '#C72030'
                               }}>Tickets Ageing Matrix</h3>
-                              <Download 
-                                className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" 
-                                style={{ color: '#C72030' }}
-                                onClick={async () => {
-                                  try {
-                                    const startDate = new Date(analyticsDateRange.startDate.split('/').reverse().join('-'));
-                                    const endDate = new Date(analyticsDateRange.endDate.split('/').reverse().join('-'));
-                                    await ticketAnalyticsDownloadAPI.downloadTicketAgingMatrixData(startDate, endDate);
-                                  } catch (error) {
-                                    console.error('Error downloading aging matrix data:', error);
-                                  }
-                                }}
-                              />
+                              <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{
+                                color: '#C72030'
+                              }} />
                             </div>
 
                             <div className="space-y-4 sm:space-y-6">
@@ -1234,10 +1216,6 @@ export const TicketDashboard = () => {
                             data={unitCategorywiseData}
                             type="unitCategoryWise"
                             className="bg-white border border-gray-200 rounded-lg"
-                            dateRange={{
-                              startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
-                              endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
-                            }}
                           />
                         </SortableChartItem>;
                       }
@@ -1250,10 +1228,6 @@ export const TicketDashboard = () => {
                             data={responseTATData}
                             type="tatResponse"
                             className="bg-white border border-gray-200 rounded-lg"
-                            dateRange={{
-                              startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
-                              endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
-                            }}
                           />
                         </SortableChartItem>;
                       }
@@ -1261,14 +1235,10 @@ export const TicketDashboard = () => {
                        // Resolution TAT Chart
                        if (chartId === 'resolutionTat' && visibleSections.includes('resolutionTat')) {
                          return <SortableChartItem key={chartId} id={chartId}>
-                          <ResolutionTATCard
-                            data={resolutionTATReportData}
-                            className="bg-white border border-gray-200 rounded-lg"
-                            dateRange={{
-                              startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
-                              endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
-                            }}
-                          />
+                           <ResolutionTATCard
+                             data={resolutionTATReportData}
+                             className="bg-white border border-gray-200 rounded-lg"
+                           />
                          </SortableChartItem>;
                        }
                       

@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download } from 'lucide-react';
+import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 
 interface ResolutionTATData {
   success: number;
@@ -20,16 +21,37 @@ interface ResolutionTATData {
 interface ResolutionTATCardProps {
   data: ResolutionTATData | null;
   className?: string;
+  dateRange?: {
+    startDate: Date;
+    endDate: Date;
+  };
 }
 
-export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, className = "" }) => {
+export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, className = "", dateRange }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!dateRange) return;
+    
+    setIsDownloading(true);
+    try {
+      await ticketAnalyticsDownloadAPI.downloadResolutionTATData(dateRange.startDate, dateRange.endDate);
+    } catch (error) {
+      console.error('Error downloading resolution TAT data:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   if (!data || !data.response) {
     return (
       <Card className={`bg-white ${className}`}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-bold text-[#C72030]">Resolution TAT Report</CardTitle>
-            <Download className="w-5 h-5 text-[#C72030] cursor-pointer" />
+            <Download 
+              className="w-5 h-5 text-[#C72030] cursor-pointer" 
+              onClick={handleDownload}
+            />
           </div>
         </CardHeader>
         <CardContent>
@@ -55,7 +77,10 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold text-[#C72030]">Resolution TAT Report</CardTitle>
-          <Download className="w-5 h-5 text-[#C72030] cursor-pointer" />
+          <Download 
+            className="w-5 h-5 text-[#C72030] cursor-pointer" 
+            onClick={handleDownload}
+          />
         </div>
       </CardHeader>
       <CardContent>

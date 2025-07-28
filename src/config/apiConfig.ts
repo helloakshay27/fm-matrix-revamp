@@ -129,6 +129,11 @@ export const API_CONFIG = {
     BULK_ASSIGN_TICKETS: '/pms/admin/complaints/bulk_assign_tickets.json',
     BULK_UPDATE_STATUS: '/pms/admin/complaints/bulk_update_status.json',
     COMPLAINT_MODE: '/pms/admin/complaint_modes.json',
+    // Ticket analytics download endpoints
+    TICKET_AGING_MATRIX_DOWNLOAD: '/pms/admin/complaints/ticket_ageing_matrix_downloads.json',
+    TICKET_UNIT_CATEGORYWISE_DOWNLOAD: '/pms/admin/complaints/chart_unit_categorywise_downloads.json',
+    TICKET_RESOLUTION_TAT_DOWNLOAD: '/pms/admin/complaints/chart_resolution_tat_downloads.json',
+    TICKET_RESPONSE_TAT_DOWNLOAD: '/pms/admin/complaints/chart_response_tat_downloads.json',
   },
 } as const
 

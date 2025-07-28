@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Download } from 'lucide-react';
+import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 
 interface ResponseTATData {
   success: number;
@@ -22,16 +23,37 @@ interface ResponseTATData {
 interface ResponseTATCardProps {
   data: ResponseTATData | null;
   className?: string;
+  dateRange?: {
+    startDate: Date;
+    endDate: Date;
+  };
 }
 
-export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, className = "" }) => {
+export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, className = "", dateRange }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!dateRange) return;
+    
+    setIsDownloading(true);
+    try {
+      await ticketAnalyticsDownloadAPI.downloadResponseTATData(dateRange.startDate, dateRange.endDate);
+    } catch (error) {
+      console.error('Error downloading response TAT data:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   if (!data || !data.response) {
     return (
       <Card className={`bg-white ${className}`}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-bold text-[#C72030]">Response TAT</CardTitle>
-            <Download className="w-5 h-5 text-[#C72030] cursor-pointer" />
+            <Download 
+              className="w-5 h-5 text-[#C72030] cursor-pointer" 
+              onClick={handleDownload}
+            />
           </div>
         </CardHeader>
         <CardContent>
@@ -63,7 +85,10 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold text-[#C72030]">Response TAT</CardTitle>
-          <Download className="w-5 h-5 text-[#C72030] cursor-pointer" />
+          <Download 
+            className="w-5 h-5 text-[#C72030] cursor-pointer" 
+            onClick={handleDownload}
+          />
         </div>
       </CardHeader>
       <CardContent>

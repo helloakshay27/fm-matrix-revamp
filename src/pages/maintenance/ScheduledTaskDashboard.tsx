@@ -232,7 +232,7 @@ export const ScheduledTaskDashboard = () => {
         queryParams.append('q[checklist_or_asset_cont]', searchTerm);
       }
 
-      const apiUrl = getFullUrl(`/all_tasks_listing.json?${queryParams.toString()}`);
+      const apiUrl = getFullUrl(`/all_tasks_listing.json?show_all=true?${queryParams.toString()}`);
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
