@@ -4160,35 +4160,38 @@ export const AddSchedulePage = () => {
       const templateOptions = [
         { id: '', label: 'Select Template', value: '' },
         ...(templates || []).map((template) => ({
-          id: template.id?.toString?.() ?? '',
+          id: String(template.id ?? ''),
           label: template.form_name?.trim() ?? '',
-          value: template.id?.toString?.() ?? '',
-        }))
+          value: String(template.id ?? ''),
+        })),
       ];
 
-      const selectedValue = templateOptions.find(
-        (option) => option.value === String(formData?.selectedTemplate ?? '')
-      ) || templateOptions[0]; // fallback to default safe option
-
-      console.log('Selected:', formData?.selectedTemplate);
-console.log('Matching Option:', selectedValue);
-
+      // Safe fallback object always used
+      const selectedTemplate = templateOptions.find(
+        (opt) => opt?.value === String(formData?.selectedTemplate ?? '')
+      ) ?? templateOptions[0];
 
       return (
         <Autocomplete
+          disableClearable
+          options={templateOptions}
+          getOptionLabel={(option) => {
+  console.log("Label check", option);
+  return option?.label ? String(option.label) : '';
+}}
+          isOptionEqualToValue={(option, value) =>
+            option?.value === value?.value
+          }
+          value={selectedTemplate}
+          onChange={(event, newValue) => {
+            if (newValue?.value !== undefined) {
+              handleTemplateChange(newValue.value);
+            }
+          }}
           disabled={
             (stepIndex < activeStep && editingStep !== stepIndex) ||
             loading.templates
           }
-          options={templateOptions}
-          getOptionLabel={(option) => (option?.label ? option.label : '')}
-          isOptionEqualToValue={(option, value) =>
-            option?.value === value?.value
-          }
-          value={selectedValue}
-          onChange={(event, newValue) => {
-            handleTemplateChange(newValue?.value || '');
-          }}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -4212,6 +4215,7 @@ console.log('Matching Option:', selectedValue);
     )}
   </SectionCard>
 )}
+
             {/* Auto Ticket Configuration Section */}
             {autoTicket && (
               <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
