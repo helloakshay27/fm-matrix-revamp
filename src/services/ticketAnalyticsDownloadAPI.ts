@@ -53,6 +53,78 @@ export const ticketAnalyticsDownloadAPI = {
     }
   },
 
+  // Download ticket status data
+  downloadTicketStatusData: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_ticket_status_downloads.json`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download ticket status data: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `ticket-status-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading ticket status data:', error);
+      throw error;
+    }
+  },
+
+  // Download tickets categorywise data
+  downloadTicketsCategorywiseData: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_tickets_categorywise_downloads.json`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download tickets categorywise data: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `tickets-categorywise-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading tickets categorywise data:', error);
+      throw error;
+    }
+  },
+
   // Download unit category-wise data
   downloadUnitCategorywiseData: async (fromDate: Date, toDate: Date): Promise<void> => {
     const siteId = getCurrentSiteId();

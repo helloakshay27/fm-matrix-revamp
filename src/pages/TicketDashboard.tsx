@@ -1069,8 +1069,17 @@ export const TicketDashboard = () => {
                                 <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets</h3>
                                 <Download 
                                   className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" 
-                                  onClick={() => {
-                                    console.log('Status chart download not implemented yet');
+                                  onClick={async () => {
+                                    if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
+                                      try {
+                                        await ticketAnalyticsDownloadAPI.downloadTicketStatusData(
+                                          new Date(analyticsDateRange.startDate), 
+                                          new Date(analyticsDateRange.endDate)
+                                        );
+                                      } catch (error) {
+                                        console.error('Error downloading status chart data:', error);
+                                      }
+                                    }
                                   }}
                                 />
                               </div>
@@ -1124,8 +1133,17 @@ export const TicketDashboard = () => {
                                 <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Reactive Proactive Ticket</h3>
                                 <Download 
                                   className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" 
-                                  onClick={() => {
-                                    console.log('Reactive proactive chart download not implemented yet');
+                                  onClick={async () => {
+                                    if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
+                                      try {
+                                        await ticketAnalyticsDownloadAPI.downloadTicketsCategorywiseData(
+                                          new Date(analyticsDateRange.startDate), 
+                                          new Date(analyticsDateRange.endDate)
+                                        );
+                                      } catch (error) {
+                                        console.error('Error downloading reactive proactive chart data:', error);
+                                      }
+                                    }
                                   }}
                                 />
                               </div>
@@ -1193,6 +1211,10 @@ export const TicketDashboard = () => {
                             <ResponseTATCard
                               data={responseTATData}
                               className="h-full"
+                              dateRange={{
+                                startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
+                                endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
+                              }}
                             />
                           </SortableChartItem>
                         }
@@ -1213,8 +1235,17 @@ export const TicketDashboard = () => {
                               <Download 
                                 className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" 
                                 style={{ color: '#C72030' }}
-                                onClick={() => {
-                                  console.log('Category chart download not implemented yet');
+                                onClick={async () => {
+                                  if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
+                                    try {
+                                      await ticketAnalyticsDownloadAPI.downloadUnitCategorywiseData(
+                                        new Date(analyticsDateRange.startDate), 
+                                        new Date(analyticsDateRange.endDate)
+                                      );
+                                    } catch (error) {
+                                      console.error('Error downloading unit category-wise data:', error);
+                                    }
+                                  }
                                 }}
                               />
                             </div>
@@ -1348,10 +1379,14 @@ export const TicketDashboard = () => {
                        // Resolution TAT Chart
                        if (chartId === 'resolutionTat' && visibleSections.includes('resolutionTat')) {
                          return <SortableChartItem key={chartId} id={chartId}>
-                           <ResolutionTATCard
-                             data={resolutionTATReportData}
-                             className="bg-white border border-gray-200 rounded-lg"
-                           />
+                          <ResolutionTATCard
+                            data={resolutionTATReportData}
+                            className="bg-white border border-gray-200 rounded-lg"
+                            dateRange={{
+                              startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
+                              endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
+                            }}
+                          />
                          </SortableChartItem>;
                        }
                       
