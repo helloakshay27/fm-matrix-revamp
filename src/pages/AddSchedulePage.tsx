@@ -2468,7 +2468,7 @@ export const AddSchedulePage = () => {
 
     // Get selected asset IDs or service IDs based on scheduleFor
     const assetIds = formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' ? formData.asset : [];
-    const serviceIds = formData.scheduleFor === 'Service' ? formData.service : [];
+    const serviceIds = formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' ? formData.service : []  ;
 
     // Get assigned people IDs
     const peopleAssignedIds = formData.assignToType === 'user' ? formData.selectedUsers : [];
@@ -2933,7 +2933,9 @@ export const AddSchedulePage = () => {
                   }
                   label="Individual"
                 />
-                <FormControlLabel
+                {
+                  formData.scheduleFor === 'Asset' && (
+                    <FormControlLabel
                   value="Asset Group"
                   control={
                     <Radio
@@ -2943,6 +2945,9 @@ export const AddSchedulePage = () => {
                   }
                   label="Asset Group"
                 />
+                  )
+                }
+                
                 {/* <FormControlLabel 
                     value="Branching" 
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
@@ -2998,7 +3003,7 @@ export const AddSchedulePage = () => {
               )}
 
               {/* Service Dropdown - Show when scheduleFor is Service */}
-              {formData.scheduleFor === 'Service' && (
+              {formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' && (
                 <Box>
                   <Autocomplete
                     disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.services}
