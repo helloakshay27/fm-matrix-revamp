@@ -37,8 +37,10 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({ title,
 
     switch (type) {
       case 'tickets_categorywise':
-        if (Array.isArray(data)) {
-          const chartData = data.map(item => ({
+        // Handle different possible data structures
+        const categoryData = data?.response || data;
+        if (Array.isArray(categoryData)) {
+          const chartData = categoryData.map(item => ({
             name: item.category || 'Unknown',
             proactive: item.proactive_count || 0,
             reactive: item.reactive_count || 0,
@@ -84,9 +86,11 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({ title,
         break;
 
       case 'ticket_status':
-        if (typeof data === 'object' && data !== null) {
+        // Handle different possible data structures
+        const responseData = data?.response || data;
+        if (typeof responseData === 'object' && responseData !== null) {
           // Filter out non-numeric values and 'info' keys
-          const statusData = Object.entries(data)
+          const statusData = Object.entries(responseData)
             .filter(([key, value]) => key !== 'info' && typeof value === 'number')
             .map(([key, value]) => ({
               name: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
@@ -136,11 +140,15 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({ title,
         break;
 
       case 'ticket_aging_matrix':
-        if (data && typeof data === 'object') {
-          const agingData = Object.entries(data).map(([range, count]) => ({
-            range: range.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-            count: count as number
-          }));
+        // Handle different possible data structures
+        const agingResponseData = data?.response || data;
+        if (agingResponseData && typeof agingResponseData === 'object') {
+          const agingData = Object.entries(agingResponseData)
+            .filter(([key, value]) => key !== 'info' && typeof value === 'number')
+            .map(([range, count]) => ({
+              range: range.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+              count: count as number
+            }));
 
           return (
             <div className="space-y-4">
@@ -160,10 +168,12 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({ title,
 
       case 'response_tat':
       case 'resolution_tat':
-        if (data && typeof data === 'object') {
+        // Handle different possible data structures
+        const tatResponseData = data?.response || data;
+        if (tatResponseData && typeof tatResponseData === 'object') {
           // Filter out non-numeric values and extract only valid TAT data
-          const tatData = Object.entries(data)
-            .filter(([key, value]) => typeof value === 'number')
+          const tatData = Object.entries(tatResponseData)
+            .filter(([key, value]) => key !== 'info' && typeof value === 'number')
             .map(([key, value]) => ({
               category: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
               time: value as number
@@ -186,6 +196,68 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({ title,
               </ResponsiveContainer>
             </div>
           );
+        }
+        break;
+
+      case 'unit_categorywise':
+        // Handle unit categorywise data structure
+        const unitResponseData = data?.response || data;
+        if (unitResponseData && typeof unitResponseData === 'object') {
+          // Extract chart data from the response structure
+          const categories = unitResponseData.tickets_category || [];
+          const openTickets = unitResponseData.open_tickets || [];
+          const closedTickets = unitResponseData.closed_tickets || [];
+          
+          if (Array.isArray(categories)) {
+            const chartData = categories.map((category: string, index: number) => ({
+              name: category || 'Unknown',
+              open: openTickets[index] || 0,
+              closed: closedTickets[index] || 0,
+              total: (openTickets[index] || 0) + (closedTickets[index] || 0)
+            }));
+
+            return (
+              <div className="space-y-4">
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    <Bar dataKey="open" fill="#F59E0B" name="Open" />
+                    <Bar dataKey="closed" fill="#10B981" name="Closed" />
+                  </BarChart>
+                </ResponsiveContainer>
+                
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="text-center">
+                    <div className="font-semibold text-analytics-text">
+                      {chartData.reduce((sum, item) => sum + item.open, 0)}
+                    </div>
+                    <div className="text-yellow-600">Open</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-analytics-text">
+                      {chartData.reduce((sum, item) => sum + item.closed, 0)}
+                    </div>
+                    <div className="text-green-600">Closed</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-analytics-text">
+                      {chartData.reduce((sum, item) => sum + item.total, 0)}
+                    </div>
+                    <div className="text-analytics-muted">Total</div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
         }
         break;
 
