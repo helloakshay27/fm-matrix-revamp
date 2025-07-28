@@ -229,8 +229,9 @@ export const fetchChecklistMaster = async (): Promise<ChecklistMaster[]> => {
 
 export const transformChecklistData = (checklists: ChecklistMaster[]): TransformedChecklistData[] => {
   return checklists.map(checklist => {
-    // Parse checklist_for to get meter category and scheduled for
-    const checklistParts = checklist.checklist_for.split('::');
+    // Safely handle null/undefined checklist_for
+    const checklistFor = typeof checklist.checklist_for === 'string' ? checklist.checklist_for : '';
+    const checklistParts = checklistFor.split('::');
     const meterCategory = checklistParts[1] || 'Asset'; // Asset or Service
     const scheduledFor = checklistParts[1] || 'Asset';
 
