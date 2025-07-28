@@ -1785,6 +1785,7 @@ function App() {
               {/* Mobile Asset Routes */}
               <Route path="/mobile/assets" element={<MobileAssetPage />} />
               <Route path="/mobile/assets/:assetId" element={<MobileAssetPage />} />
+              <Route path="/mobile/assets/:assetId/breakdown" element={<MobileAssetPage />} />
               {/* QR Test Route */}
               <Route path="/qr-test" element={<QRTestPage />} />
             </Routes>
