@@ -12,57 +12,6 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchCustomFormDetails } from '@/services/customFormsAPI';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
-const [taskGroups, setTaskGroups] = useState([]);
-const [taskSubGroups, setTaskSubGroups] = useState([]);
-const [loading, setLoading] = useState({ taskGroups: false, taskSubGroups: false });
-
-const loadTaskGroups = async () => {
-  setLoading(prev => ({ ...prev, taskGroups: true }));
-  try {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TASK_GROUPS}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': getAuthHeader(),
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
-    setTaskGroups(data);
-  } catch (error) {
-    setTaskGroups([]);
-  } finally {
-    setLoading(prev => ({ ...prev, taskGroups: false }));
-  }
-};
-
-const loadTaskSubGroups = async (groupId) => {
-  if (!groupId) return;
-  setLoading(prev => ({ ...prev, taskSubGroups: true }));
-  try {
-    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TASK_SUB_GROUPS}?group_id=${groupId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': getAuthHeader(),
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
-    setTaskSubGroups(data.asset_groups || []);
-  } catch (error) {
-    setTaskSubGroups([]);
-  } finally {
-    setLoading(prev => ({ ...prev, taskSubGroups: false }));
-  }
-};
-
-useEffect(() => {
-  loadTaskGroups();
-}, []);
-
-
-
 const muiFieldStyles = {
   width: '100%',
   '& .MuiOutlinedInput-root': {
@@ -218,12 +167,6 @@ export const ViewSchedulePage = () => {
     navigate(`/maintenance/schedule/performance/${id}`, { state: { formCode } });
   };
 
-
-  useEffect(() => {
-    const groupId = customForm?.content?.[0]?.group_id;
-    if (groupId) loadTaskSubGroups(groupId);
-  }, [customForm]);
-
   return (
     <div className="p-6 mx-auto">
       {/* Header */}
@@ -357,8 +300,8 @@ export const ViewSchedulePage = () => {
             {/* Group and Sub Group Dropdowns with selected value from master data */}
             {(() => {
               // Map taskGroups and taskSubGroups to options for Select components
-              const groupOptions = Array.isArray(taskGroups) ? taskGroups : [];
-              const subGroupOptions = Array.isArray(taskSubGroups) ? taskSubGroups : [];
+              const groupOptions: any[] = [];
+              const subGroupOptions: any[] = [];
               const selectedGroupId = customForm?.content?.[0]?.group_id || '';
               const selectedSubGroupId = customForm?.content?.[0]?.sub_group_id || '';
 
