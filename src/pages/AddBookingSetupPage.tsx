@@ -79,6 +79,8 @@ const muiTheme = createTheme({
 
 export const AddBookingSetupPage = () => {
   const navigate = useNavigate();
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
 
   const coverImageRef = useRef(null);
   const bookingImageRef = useRef(null);
@@ -187,10 +189,10 @@ export const AddBookingSetupPage = () => {
     setLoadingDepartments(true);
     try {
       const response = await fetch(
-        "https://fm-uat-api.lockated.com/pms/departments.json",
+        `https://${baseUrl}/pms/departments.json`,
         {
           headers: {
-            Authorization: getAuthHeader(),
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
@@ -324,6 +326,9 @@ export const AddBookingSetupPage = () => {
         "facility_setup[cutoff_second_min]",
         cancellationRules[1].time.value
       );
+      formDataToSend.append(
+        "facility_setup[booking_limit]", formData.facilityBookedTimes
+      )
       formDataToSend.append(
         "facility_setup[return_second_percentage]",
         cancellationRules[1].deduction
@@ -476,11 +481,11 @@ export const AddBookingSetupPage = () => {
       );
 
       const response = await fetch(
-        "https://fm-uat-api.lockated.com/pms/admin/facility_setups.json",
+        `https://${baseUrl}/pms/admin/facility_setups.json`,
         {
           method: "POST",
           headers: {
-            Authorization: getAuthHeader(),
+            Authorization: `Bearer ${token}`,
           },
           body: formDataToSend,
         }

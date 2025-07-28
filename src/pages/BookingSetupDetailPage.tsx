@@ -190,10 +190,10 @@ export const BookingSetupDetailPage = () => {
     setLoadingDepartments(true);
     try {
       const response = await fetch(
-        "https://fm-uat-api.lockated.com/pms/departments.json",
+        `https://${baseUrl}/pms/departments.json`,
         {
           headers: {
-            Authorization: getAuthHeader(),
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
