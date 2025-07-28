@@ -111,14 +111,43 @@ export const AddSurveyPage = () => {
     ));
   };
 
-  const handleCreateSurvey = () => {
-    console.log('Creating survey...', { category, title, questions });
-    navigate('/maintenance/survey/list');
+  const handleCreateSurvey = async () => {
+    try {
+      setLoading(true);
+      
+      const requestData = {
+        snag_checklist: {
+          name: title,
+          snag_audit_category_id: parseInt(category)
+        },
+        question: questions.map(question => ({
+          descr: question.text,
+          qtype: question.answerType === 'multiple-choice' ? 'multiple' : 
+                 question.answerType === 'input-box' ? 'input' : 'description',
+          quest_mandatory: question.mandatory,
+          image_mandatory: false,
+          ...(question.answerType === 'multiple-choice' && question.answerOptions ? {
+            quest_options: question.answerOptions.map((option, index) => ({
+              option_name: option,
+              option_type: index === 0 ? 'p' : 'n' // You may want to get this from the P/N dropdown
+            }))
+          } : {})
+        }))
+      };
+
+      const response = await apiClient.post('/pms/admin/snag_checklists/create_permit_checklist.json', requestData);
+      console.log('Survey created successfully:', response.data);
+      navigate('/maintenance/survey/list');
+    } catch (error) {
+      console.error('Error creating survey:', error);
+      // You might want to show an error toast here
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleProceed = () => {
-    console.log('Proceeding...', { category, title, questions });
-    navigate('/maintenance/survey/list');
+  const handleProceed = async () => {
+    await handleCreateSurvey();
   };
 
   return (
