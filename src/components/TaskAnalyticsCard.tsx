@@ -241,12 +241,14 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-semibold">{title}</CardTitle>
         {dateRange && (
+         
+
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={handleDownload}
             disabled={isDownloading}
-            className="text-muted-foreground hover:text-foreground"
+            className="flex items-center gap-1"
           >
             <Download className="w-4 h-4" />
           </Button>

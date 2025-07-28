@@ -392,25 +392,25 @@ export const ScheduledTaskDashboard = () => {
     setAnalyticsLoading(true);
     try {
       const promises: Promise<any>[] = [];
-      
+
       if (selectedTypes.includes('technical')) {
         promises.push(taskAnalyticsAPI.getTechnicalChecklistData(startDate, endDate));
       } else {
         promises.push(Promise.resolve(null));
       }
-      
+
       if (selectedTypes.includes('nonTechnical')) {
         promises.push(taskAnalyticsAPI.getNonTechnicalChecklistData(startDate, endDate));
       } else {
         promises.push(Promise.resolve(null));
       }
-      
+
       if (selectedTypes.includes('topTen')) {
         promises.push(taskAnalyticsAPI.getTopTenChecklistData(startDate, endDate));
       } else {
         promises.push(Promise.resolve(null));
       }
-      
+
       if (selectedTypes.includes('siteWise')) {
         promises.push(taskAnalyticsAPI.getSiteWiseChecklistData(startDate, endDate));
       } else {
@@ -504,30 +504,27 @@ export const ScheduledTaskDashboard = () => {
               };
 
               return (
-                <div 
-                  key={index} 
-                  className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer transition-all duration-200 ${
-                    selectedStatus === card.status 
+                <div
+                  key={index}
+                  className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer transition-all duration-200 ${selectedStatus === card.status
                       ? 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
                       : 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
-                  }`}
+                    }`}
                   onClick={() => handleStatusCardClick(card.status)}
                 >
-                  <div className={`w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 ${
-                    selectedStatus === card.status ? 'bg-[#C4B89D54]' : 'bg-[#C4B89D54]'
-                  }`}>
-                    <card.icon 
-                      className="w-4 h-4 sm:w-6 sm:h-6" 
-                      style={{ color: selectedStatus === card.status ?  '#C72030': '#C72030' }} 
+                  <div className={`w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 ${selectedStatus === card.status ? 'bg-[#C4B89D54]' : 'bg-[#C4B89D54]'
+                    }`}>
+                    <card.icon
+                      className="w-4 h-4 sm:w-6 sm:h-6"
+                      style={{ color: selectedStatus === card.status ? '#C72030' : '#C72030' }}
                     />
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
                       {getStatusCount(card.status)}
                     </div>
-                    <div className={`text-xs sm:text-sm font-medium leading-tight ${
-                      selectedStatus === card.status ? 'text-muted-foreground': 'text-muted-foreground'
-                    }`}>
+                    <div className={`text-xs sm:text-sm font-medium leading-tight ${selectedStatus === card.status ? 'text-muted-foreground' : 'text-muted-foreground'
+                      }`}>
                       {card.title}
                     </div>
                   </div>
@@ -539,8 +536,8 @@ export const ScheduledTaskDashboard = () => {
           {/* Clear Filter Button */}
           {selectedStatus && (
             <div className="flex justify-start">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setSelectedStatus(null)}
                 className="bg-white border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
               >
@@ -730,26 +727,22 @@ export const ScheduledTaskDashboard = () => {
 
         <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Header Section with Filter and Selector */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h2 className="text-xl font-semibold">Task Analytics</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Analyze task performance and checklist completion across different categories
-              </p>
-            </div>
+          <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
+
             <div className="flex gap-2">
-              <TaskAnalyticsSelector
-                onSelectionChange={handleAnalyticsSelectionChange}
-                dateRange={analyticsDateRange}
-              />
               <Button
                 variant="outline"
                 onClick={() => setShowAnalyticsFilter(true)}
                 className="flex items-center gap-2"
               >
                 <FilterIcon className="w-4 h-4" />
-                Filter
+                
               </Button>
+              <TaskAnalyticsSelector
+                onSelectionChange={handleAnalyticsSelectionChange}
+                dateRange={analyticsDateRange}
+              />
+
             </div>
           </div>
 
@@ -798,7 +791,7 @@ export const ScheduledTaskDashboard = () => {
                   dateRange={analyticsDateRange}
                 />
               )}
-              
+
               {/* No selection message */}
               {selectedAnalytics.length === 0 && (
                 <div className="col-span-2 flex items-center justify-center py-12">

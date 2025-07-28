@@ -952,8 +952,8 @@ export const TicketDashboard = () => {
 
 
           {/* Header with Filter and Ticket Selector */}
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
+          <div className="flex justify-end items-center gap-2">
+           
               <Button
                 onClick={() => setIsAnalyticsFilterOpen(true)}
                 variant="outline"
@@ -961,17 +961,16 @@ export const TicketDashboard = () => {
                 disabled={analyticsLoading}
               >
                 <Filter className="w-4 h-4" />
-                Filter Analytics
-              </Button>
-              {analyticsDateRange.startDate && analyticsDateRange.endDate && (
+                 {/* {analyticsDateRange.startDate && analyticsDateRange.endDate && (
                 <span className="text-sm text-gray-600">
                   {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
                 </span>
-              )}
+              )} */}
               {analyticsLoading && (
                 <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
               )}
-            </div>
+              </Button>
+             
             <TicketSelector onSelectionChange={handleSelectionChange} />
           </div>
 

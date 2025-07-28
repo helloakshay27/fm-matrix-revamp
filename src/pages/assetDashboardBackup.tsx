@@ -205,7 +205,7 @@ export const AssetDashboard = () => {
     "asset-breakdown",
     "critical-breakdown",
   ]);
-
+  
   // Analytics filter state
   const [analyticsDateRange, setAnalyticsDateRange] = useState({
     fromDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -214,7 +214,7 @@ export const AssetDashboard = () => {
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [selectedAnalyticsTypes, setSelectedAnalyticsTypes] = useState<string[]>([
     'groupWise',
-    'categoryWise',
+    'categoryWise', 
     'statusDistribution',
     'assetDistributions'
   ]);
@@ -266,7 +266,7 @@ export const AssetDashboard = () => {
   });
   const [chartOrder, setChartOrder] = useState<string[]>([
     "statusDistribution",
-    "assetDistributions",
+    "assetDistributions", 
     "categoryWise",
     "groupWise",
   ]);
@@ -527,13 +527,13 @@ export const AssetDashboard = () => {
       setCategoryWiseLoading(false);
     }
   };
-
+  
   // Analytics handler functions
   const handleAnalyticsFilterApply = (startDateStr: string, endDateStr: string) => {
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
     setAnalyticsDateRange({ fromDate: startDate, toDate: endDate });
-
+    
     // Refresh all analytics data with new date range
     fetchAssetStatistics();
     fetchAssetStatus();
@@ -1057,8 +1057,107 @@ export const AssetDashboard = () => {
 
         <TabsContent value="analytics" className="space-y-6 mt-6">
           {/* Analytics Cards */}
+          <div className="grid grid-cols-5 gap-4 mb-6 min-w-[1000px]">
+            {/* Total Assets Available */}
+            <div
+              className="p-6 rounded-lg flex items-center gap-4"
+              style={{ backgroundColor: "#f6f4ee" }}
+            >
+              <div className="w-14 h-14 bg-[#C4B89D54]  flex items-center justify-center">
+                <Package className="w-6 h-6 text-[#C72030]" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  {statisticsLoading
+                    ? "..."
+                    : assetStatistics.total_assets_count?.total_assets_count ||
+                    stats.total}
+                </div>
+                <div className="text-sm text-gray-600">Total Assets</div>
+              </div>
+            </div>
 
+            {/* Asset In Use */}
+            <div
+              className="p-6 rounded-lg flex items-center gap-4"
+              style={{ backgroundColor: "#f6f4ee" }}
+            >
+              <div className="w-14 h-14 bg-[#C4B89D54]  flex items-center justify-center">
+                <Activity
+                  className="w-6 h-6 text-white"
+                  style={{ color: "#C72030" }}
+                />
+              </div>
+              <div>
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  {statisticsLoading
+                    ? "..."
+                    : assetStatistics.assets_in_use?.total_assets_in_use ||
+                    stats.inUse}
+                </div>
+                <div className="text-sm text-gray-600">Asset In Use</div>
+              </div>
+            </div>
 
+            {/* Asset In Breakdown */}
+            <div
+              className="p-6 rounded-lg flex items-center gap-4"
+              style={{ backgroundColor: "#f6f4ee" }}
+            >
+              <div className="w-14 h-14 bg-[#C4B89D54]  flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 text-[#C72030]" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  {statisticsLoading
+                    ? "..."
+                    : assetStatistics.assets_in_breakdown
+                      ?.total_assets_in_breakdown || stats.breakdown}
+                </div>
+                <div className="text-sm text-gray-600">Asset In Breakdown</div>
+              </div>
+            </div>
+
+            {/* Critical Assets In Breakdown */}
+            <div
+              className="p-6 rounded-lg flex items-center gap-4"
+              style={{ backgroundColor: "#f6f4ee" }}
+            >
+              <div className="w-14 h-14 bg-[#C4B89D54]  flex items-center justify-center">
+                <Zap className="w-6 h-6 text-[#C72030]" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  {statisticsLoading
+                    ? "..."
+                    : assetStatistics.critical_assets_in_breakdown
+                      ?.total_assets_in_breakdown || 0}
+                </div>
+                <div className="text-sm text-gray-600">
+                  Critical Assets In Breakdown
+                </div>
+              </div>
+            </div>
+
+            {/* PPM Overdue */}
+            <div
+              className="p-6 rounded-lg flex items-center gap-4"
+              style={{ backgroundColor: "#f6f4ee" }}
+            >
+              <div className="w-14 h-14 bg-[#C4B89D54]  flex items-center justify-center">
+                <Wrench className="w-6 h-6 text-[#C72030]" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                  {statisticsLoading
+                    ? "..."
+                    : assetStatistics.ppm_conduct_assets_count?.total || 0}
+                </div>
+                <div className="text-sm text-gray-600">PPM Overdue</div>
+              </div>
+            </div>
+          </div>
+       
 
           {/* Error message for statistics */}
           {statisticsError && (
@@ -1144,7 +1243,7 @@ export const AssetDashboard = () => {
             >
               <Filter className="w-4 h-4" />
             </Button>
-
+            
             <AssetAnalyticsSelector
               onSelectionChange={handleAnalyticsSelectionChange}
               dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
@@ -1165,7 +1264,7 @@ export const AssetDashboard = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {chartOrder.map((chartType) => {
                       if (!selectedAnalyticsTypes.includes(chartType)) return null;
-
+                      
                       return (
                         <SortableChartItem key={chartType} id={chartType}>
                           {chartType === 'statusDistribution' && (
@@ -1177,7 +1276,7 @@ export const AssetDashboard = () => {
                               onDownload={() => handleAnalyticsDownload('assetsInUse')}
                             />
                           )}
-
+                          
                           {chartType === 'assetDistributions' && (
                             <AssetAnalyticsCard
                               title="Asset Type Distribution"
@@ -1187,7 +1286,7 @@ export const AssetDashboard = () => {
                               onDownload={() => handleAnalyticsDownload('assetDistribution')}
                             />
                           )}
-
+                          
                           {chartType === 'categoryWise' && (
                             <AssetAnalyticsCard
                               title="Category-wise Assets"
@@ -1197,7 +1296,7 @@ export const AssetDashboard = () => {
                               onDownload={() => handleAnalyticsDownload('categoryWise')}
                             />
                           )}
-
+                          
                           {chartType === 'groupWise' && (
                             <AssetAnalyticsCard
                               title="Group-wise Assets"
@@ -1233,7 +1332,7 @@ export const AssetDashboard = () => {
             </div>
           ) : (
             <>
-              <AssetStats stats={data} onCardClick={handleStatCardClick} />
+              <AssetStats stats={stats} onCardClick={handleStatCardClick} />
 
               {/* <AssetActions
                 searchTerm={searchTerm}

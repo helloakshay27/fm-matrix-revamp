@@ -380,7 +380,7 @@ export const Dashboard = () => {
             <div>
               <h1 className="text-2xl font-semibold text-analytics-text">Analytics Dashboard</h1>
               <p className="text-sm text-analytics-muted">
-                Unified view of all analytics across modules
+                Individual view of all analytics across modules
               </p>
             </div>
           </div>
