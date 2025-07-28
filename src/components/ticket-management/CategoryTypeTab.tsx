@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/dialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
+import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { Edit, Trash2, Upload, Plus, X } from 'lucide-react';
 
@@ -124,12 +125,9 @@ export const CategoryTypeTab: React.FC = () => {
 
   const fetchAccountData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = localStorage.getItem('baseUrl');
-      
-      const response = await fetch(`https://${baseUrl}/api/users/account.json`, {
+      const response = await fetch(getFullUrl('/api/users/account.json'), {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
       });
@@ -142,9 +140,9 @@ export const CategoryTypeTab: React.FC = () => {
         form.setValue('siteId', data.company_id?.toString() || '');
         
         // Fetch allowed sites for the user
-        const sitesResponse = await fetch(`https://${baseUrl}/pms/sites/allowed_sites.json?user_id=${data.id}`, {
+        const sitesResponse = await fetch(getFullUrl(`/pms/sites/allowed_sites.json?user_id=${data.id}`), {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': getAuthHeader(),
             'Content-Type': 'application/json',
           },
         });
@@ -217,9 +215,6 @@ export const CategoryTypeTab: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = localStorage.getItem('baseUrl');
-      
       const formData = new FormData();
       
       // Helpdesk category data
@@ -255,10 +250,10 @@ export const CategoryTypeTab: React.FC = () => {
         formData.append('location_data[site_ids][]', accountData.site_id.toString());
       }
 
-      const response = await fetch(`https://${baseUrl}/pms/admin/helpdesk_categories.json`, {
+      const response = await fetch(getFullUrl('/pms/admin/helpdesk_categories.json'), {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': getAuthHeader(),
           // Don't set Content-Type header when using FormData with files
         },
         body: formData,
@@ -408,13 +403,10 @@ export const CategoryTypeTab: React.FC = () => {
     }
     
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = localStorage.getItem('baseUrl');
-      
-      const response = await fetch(`https://${baseUrl}/pms/admin/helpdesk_categories/${category.id}.json`, {
+      const response = await fetch(getFullUrl(`/pms/admin/helpdesk_categories/${category.id}.json`), {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -500,9 +492,9 @@ export const CategoryTypeTab: React.FC = () => {
 
   const renderActions = (item: CategoryApiResponse['helpdesk_categories'][0]) => (
     <div className="flex gap-2">
-      <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
+      {/* <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
         <Edit className="h-4 w-4" />
-      </Button>
+      </Button> */}
       <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
         <Trash2 className="h-4 w-4" />
       </Button>
