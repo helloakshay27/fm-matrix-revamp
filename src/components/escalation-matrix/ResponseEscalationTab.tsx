@@ -18,6 +18,8 @@ import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice'
 import { fetchFMUsers } from '@/store/slices/fmUserSlice'
 import { createResponseEscalation, clearState, fetchResponseEscalations, updateResponseEscalation, deleteResponseEscalation } from '@/store/slices/responseEscalationSlice'
 import { ResponseEscalationApiFormData, FMUserDropdown, EscalationMatrixPayload, ResponseEscalationGetResponse, UpdateResponseEscalationPayload } from '@/types/escalationMatrix'
+import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManagementAPI'
+import { API_CONFIG } from '@/config/apiConfig'
 import { toast } from 'sonner'
 import ReactSelect from 'react-select'
 
@@ -57,6 +59,7 @@ export const ResponseEscalationTab: React.FC = () => {
   const [expandedRules, setExpandedRules] = useState<Set<number>>(new Set())
   const [editingRule, setEditingRule] = useState<ResponseEscalationGetResponse | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null)
 
   // Redux selectors
   const { data: categoriesData, loading: categoriesLoading } = useSelector((state: RootState) => state.helpdeskCategories)
@@ -93,7 +96,20 @@ export const ResponseEscalationTab: React.FC = () => {
     dispatch(fetchHelpdeskCategories())
     dispatch(fetchFMUsers())
     dispatch(fetchResponseEscalations())
+    loadUserAccount()
   }, [dispatch])
+
+  // Load user account to get site_id
+  const loadUserAccount = async () => {
+    try {
+      const account = await ticketManagementAPI.getUserAccount()
+      setUserAccount(account)
+      console.log('User account loaded:', account)
+    } catch (error) {
+      console.error('Error loading user account:', error)
+      toast.error('Failed to load user account')
+    }
+  }
 
   // Handle success/error states
   useEffect(() => {
@@ -287,13 +303,19 @@ export const ResponseEscalationTab: React.FC = () => {
 
   // Form submission
   const onSubmit = (data: ResponseEscalationFormData) => {
-    // Get society_id from localStorage
-    const siteId = localStorage.getItem('siteId') || '2189';
+    // Ensure user account is loaded to get site_id
+    if (!userAccount?.site_id) {
+      toast.error('Unable to determine site ID from user account. Please refresh and try again.')
+      return
+    }
+
+    // Get site_id from user account API response
+    const siteId = userAccount.site_id
 
     // Transform form data to API payload
     const payload: EscalationMatrixPayload = {
       complaint_worker: {
-        society_id: parseInt(siteId),
+        society_id: siteId,
         esc_type: 'response',
         of_phase: 'pms',
         of_atype: 'Pms::Site',
@@ -309,12 +331,13 @@ export const ResponseEscalationTab: React.FC = () => {
     }
 
     console.log('Response escalation payload:', JSON.stringify(payload, null, 2));
+    console.log('Using site ID from user account:', siteId);
     dispatch(createResponseEscalation(payload))
   }
 
   return (
     <div className="space-y-6">
-      {/* Form Section */}
+      {/* Form Section */}``
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader>
