@@ -971,8 +971,15 @@ export const TicketDetailsPage = () => {
                   <TableHead className="text-gray-600 font-medium">Comments</TableHead>
                   <TableHead className="text-gray-600 font-medium">Created On</TableHead>
                   <TableHead className="text-gray-600 font-medium">Created By</TableHead>
-                  <TableHead className="text-gray-600 font-medium">Status</TableHead>
-                  <TableHead className="text-gray-600 font-medium">Action</TableHead>
+                   <TableHead className="text-gray-600 font-medium">L1</TableHead>
+                  <TableHead className="text-gray-600 font-medium">L2</TableHead>
+                  <TableHead className="text-gray-600 font-medium">L3</TableHead>
+                  <TableHead className="text-gray-600 font-medium">L4</TableHead>
+                  <TableHead className="text-gray-600 font-medium">L5</TableHead>
+                  <TableHead className="text-gray-600 font-medium">Master Status</TableHead>
+                  <TableHead className="text-gray-600 font-medium">Cancelled By</TableHead>
+                  {/* <TableHead className="text-gray-600 font-medium">Action</TableHead> */}
+                  <TableHead className="text-gray-600 font-medium">Attachment</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -980,14 +987,27 @@ export const TicketDetailsPage = () => {
                   <TableRow key={index}>
                     <TableCell className="font-medium">{request.id || `REQ-${index + 1}`}</TableCell>
                     <TableCell>{request.amount || 'Not Provided'}</TableCell>
-                    <TableCell>{request.comments || 'No comments'}</TableCell>
-                    <TableCell>{request.created_at || 'Not Provided'}</TableCell>
+                    <TableCell>{request.comment || 'No comments'}</TableCell>
+                    <TableCell>{request.created_on || request.created_at || 'Not Provided'}</TableCell>
                     <TableCell>{request.created_by || 'Not Provided'}</TableCell>
+                    <TableCell>{request.approvals?.L1 || 'Na'}</TableCell>
+                    <TableCell>{request.approvals?.L2 || 'Na'}</TableCell>
+                    <TableCell>{request.approvals?.L3 || 'Na'}</TableCell>
+                    <TableCell>{request.approvals?.L4 || 'Na'}</TableCell>
+                    <TableCell>{request.approvals?.L5 || 'Na'}</TableCell>
                     <TableCell>
                       <Badge className="bg-yellow-100 text-yellow-700">
-                        {request.status || 'Pending'}
+                        {request.master_status || 'Pending'}
                       </Badge>
                     </TableCell>
+                    <TableCell>{request.cancelled_by || 'NA'}</TableCell>
+                    {/* <TableCell>
+                      {request.action && (
+                        <Button variant="outline" size="sm">
+                          Action
+                        </Button>
+                      )}
+                    </TableCell> */}
                     <TableCell>
                       <Button 
                         variant="outline" 
@@ -1014,6 +1034,7 @@ export const TicketDetailsPage = () => {
                         View
                       </Button>
                     </TableCell>
+                   
                   </TableRow>
                 ))}
               </TableBody>

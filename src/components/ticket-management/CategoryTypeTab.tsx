@@ -451,7 +451,7 @@ export const CategoryTypeTab: React.FC = () => {
     { key: 'tat', label: 'Response Time', sortable: false },
     { key: 'category_email', label: 'Vendor Email', sortable: false },
     { key: 'icon_url', label: 'Icon', sortable: false },
-    { key: 'selected_icon_url', label: 'Selected Icon', sortable: false },
+    // { key: 'selected_icon_url', label: 'Selected Icon', sortable: false },
   ];
 
   const renderCell = (item: CategoryApiResponse['helpdesk_categories'][0], columnKey: string) => {

@@ -196,9 +196,13 @@ const UpdateTicketsPage: React.FC = () => {
       );
 
       // Find the complaint mode ID that matches the mode name from API
+      console.log("🔍 Looking for complaint mode match:", ticketData.complaint_mode);
+      console.log("🔍 Available complaint modes:", complaintModes.map(m => ({ id: m.id, name: m.name })));
+      
       const matchingMode = complaintModes.find(
         (mode) => mode.name === ticketData.complaint_mode
       );
+      console.log("✅ Found matching complaint mode:", matchingMode);
 
       // Find the status ID that matches the status name from API
       const matchingStatus = complaintStatuses.find(
@@ -271,7 +275,7 @@ const UpdateTicketsPage: React.FC = () => {
       setFormData((prev) => ({
         ...prev,
         title: ticketData.heading || "",
-        adminPriority: ticketData.priority || "",
+        adminPriority: ticketData.priority ? ticketData.priority.toLowerCase() : "",
         selectedStatus: matchingStatus?.id.toString() || "",
         proactiveReactive: ticketData.proactive_reactive || "",
         serviceType: ticketData.service_type || "",
@@ -434,9 +438,6 @@ const UpdateTicketsPage: React.FC = () => {
     if (
       id &&
       helpdeskData?.helpdesk_categories
-      // complaintModes.length > 0 &&
-      // fmUsers.length > 0 &&
-      // complaintStatuses.length > 0
     ) {
       fetchTicketData(id);
     }
@@ -1206,8 +1207,6 @@ const UpdateTicketsPage: React.FC = () => {
           console.error("401 Authentication failed - invalid or expired token");
           throw new Error("Authentication failed. Please login again.");
         }
-
-        // throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
 
       const result = await response.json();

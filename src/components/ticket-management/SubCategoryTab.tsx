@@ -315,7 +315,7 @@ export const SubCategoryTab: React.FC = () => {
     { key: 'floor', label: 'Floor', sortable: true },
     { key: 'zone', label: 'Zone', sortable: true },
     { key: 'room', label: 'Room', sortable: true },
-    { key: 'icon_url', label: 'Icon', sortable: false },
+    // { key: 'icon_url', label: 'Icon', sortable: false },
   ];
 
   const renderCell = (item: SubCategoryType, columnKey: string) => {
@@ -436,7 +436,7 @@ export const SubCategoryTab: React.FC = () => {
                   )}
                 />
 
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Icon
                   </label>
@@ -460,7 +460,7 @@ export const SubCategoryTab: React.FC = () => {
                       <span className="text-sm text-gray-600">{iconFile.name}</span>
                     )}
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* Tags Section */}
