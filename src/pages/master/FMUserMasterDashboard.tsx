@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,9 +11,9 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { MoreVertical, Plus, Upload, Download, Filter, Eye, Search, Users, X } from 'lucide-react';
+import { Plus, Upload, Download, Filter, Eye, Search, Users, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { 
+import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -22,12 +22,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -36,11 +30,13 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import {
   TextField,
-  Button as MuiButton,
   Box
 } from '@mui/material';
+import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+import { ImportFmUsers } from '@/components/ImportFmUsers';
+import axios from 'axios';
 
 // Transform API data to table format
 const transformFMUserData = (apiUser: FMUser) => ({
@@ -52,15 +48,15 @@ const transformFMUserData = (apiUser: FMUser) => ({
   vendorCompany: apiUser.company_name || 'N/A',
   entityName: `Entity ${apiUser.entity_id}`,
   unit: `Unit ${apiUser.unit_id}`,
-  role: apiUser.designation || 'N/A',
+  role: apiUser.role_id || 'N/A',
   employeeId: apiUser.employee_id || 'N/A',
   createdBy: `User ${apiUser.created_by_id}`,
   accessLevel: apiUser.lock_user_permission?.access_level || 'N/A',
   type: apiUser.user_type === 'pms_admin' ? 'Internal' : 'External',
-  status: apiUser.lock_user_permission_status === 'approved' ? 'Active' : 'Inactive',
+  status: apiUser?.lock_user_permission?.status === 'approved' ? 'Active' : 'Inactive',
   faceRecognition: apiUser.face_added,
   appDownloaded: apiUser.app_downloaded === 'Yes',
-  active: apiUser.lock_user_permission_status === 'approved'
+  active: apiUser.active
 });
 
 export const FMUserMasterDashboard = () => {
@@ -70,7 +66,7 @@ export const FMUserMasterDashboard = () => {
   const { data: fmUsersResponse, loading, error } = useSelector((state: RootState) => state.fmUsers);
   const { data: userCounts, loading: countsLoading } = useSelector((state: RootState) => state.userCounts);
   const { toast } = useToast();
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
@@ -81,6 +77,7 @@ export const FMUserMasterDashboard = () => {
   const [fromUser, setFromUser] = useState('');
   const [toUser, setToUser] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [showImportModal, setShowImportModal] = useState(false);
   const pageSize = 5;
   const [filters, setFilters] = useState({
     name: '',
@@ -89,10 +86,13 @@ export const FMUserMasterDashboard = () => {
 
   // Transform API data to table format
   const [fmUsersData, setFmUsersData] = useState<any[]>([]);
+  const [filteredFMUsersData, setFilteredFMUsersData] = useState<any[]>([]);
 
   useEffect(() => {
     if (fmUsersResponse?.fm_users) {
-      setFmUsersData(fmUsersResponse.fm_users.map(transformFMUserData));
+      const transformedData = fmUsersResponse.fm_users.map(transformFMUserData);
+      setFmUsersData(transformedData);
+      setFilteredFMUsersData(transformedData); // Initialize filtered data with all users
     }
   }, [fmUsersResponse]);
 
@@ -102,17 +102,14 @@ export const FMUserMasterDashboard = () => {
     dispatch(fetchUserCounts());
   }, [setCurrentSection, dispatch]);
 
-  // Apply filters to users
-  const filteredUsers = fmUsersData.filter(user => {
+  // Apply local search filter
+  const filteredUsers = filteredFMUsersData.filter(user => {
     const matchesSearch = user.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.mobile.includes(searchTerm) ||
       user.vendorCompany.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesNameFilter = !filters.name || user.userName.toLowerCase().includes(filters.name.toLowerCase());
-    const matchesEmailFilter = !filters.email || user.email.toLowerCase().includes(filters.email.toLowerCase());
-    
-    return matchesSearch && matchesNameFilter && matchesEmailFilter;
+
+    return matchesSearch;
   });
 
   // Pagination logic
@@ -141,34 +138,41 @@ export const FMUserMasterDashboard = () => {
 
   const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
     try {
-      // Update local state immediately for responsive UI
-      setFmUsersData(prevUsers => 
-        prevUsers.map(user => 
-          user.id === userId 
+      setFmUsersData(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId
+            ? { ...user, active: isActive, status: isActive ? 'Active' : 'Inactive' }
+            : user
+        )
+      );
+      setFilteredFMUsersData(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId
             ? { ...user, active: isActive, status: isActive ? 'Active' : 'Inactive' }
             : user
         )
       );
 
-      // Show toast message
       toast({
         title: "Status Updated",
         description: `User ${isActive ? 'activated' : 'deactivated'} successfully!`,
       });
-      
-      // TODO: Replace with actual API call to update user status
-      // await apiClient.put(`/users/${userId}/status`, { active: isActive });
-      
     } catch (error) {
-      // Revert local state on error
-      setFmUsersData(prevUsers => 
-        prevUsers.map(user => 
-          user.id === userId 
+      setFmUsersData(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId
             ? { ...user, active: !isActive, status: !isActive ? 'Active' : 'Inactive' }
             : user
         )
       );
-      
+      setFilteredFMUsersData(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId
+            ? { ...user, active: !isActive, status: !isActive ? 'Active' : 'Inactive' }
+            : user
+        )
+      );
+
       toast({
         title: "Error",
         description: "Failed to update user status. Please try again.",
@@ -185,17 +189,15 @@ export const FMUserMasterDashboard = () => {
 
   const handleStatusUpdate = async () => {
     try {
-      // TODO: Replace with actual API call to update user status
       toast({
         title: "Status Updated",
         description: `User status updated to ${selectedStatus} successfully!`,
       });
-      
+
       setStatusDialogOpen(false);
       setSelectedUser(null);
       setSelectedStatus('');
-      
-      // Refresh the data to reflect changes
+
       dispatch(fetchFMUsers());
     } catch (error) {
       toast({
@@ -206,29 +208,59 @@ export const FMUserMasterDashboard = () => {
     }
   };
 
-  const handleCloneRoleSubmit = async () => {
+  const handleExportUser = async () => {
     try {
-      if (activeTab === 'handover') {
-        toast({
-          title: "Handover Successful",
-          description: `Role handover from ${fromUser} to ${toUser} completed successfully!`,
-        });
-      } else {
-        toast({
-          title: "Clone Successful",
-          description: `Role cloned to ${toUser} successfully!`,
-        });
-      }
-      
-      setCloneRoleDialogOpen(false);
-      setFromUser('');
-      setToUser('');
-      setActiveTab('handover');
-      
+      const response = await axios.get(`https://${localStorage.getItem('baseUrl')}/pms/account_setups/export_users.json`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        responseType: 'blob',
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'fm_users.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleFilter = async () => {
+    try {
+      const [firstName, lastName = ""] = filters.name.trim().split(" ");
+      const newFilterParams = {
+        "q[firstname_cont]": firstName,
+        "q[lastname_cont]": lastName,
+        "q[email_cont]": filters.email
+      };
+
+      const queryString = new URLSearchParams(newFilterParams).toString();
+      const response = await axios.get(`https://${localStorage.getItem('baseUrl')}/pms/account_setups/fm_users.json?${queryString}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      // Transform and set filtered data
+      const transformedFilteredData = response.data.fm_users.map(transformFMUserData);
+      setFilteredFMUsersData(transformedFilteredData);
+      setCurrentPage(1); // Reset to first page after filtering
+      setFilterDialogOpen(false);
+
+      toast({
+        title: "Filters Applied",
+        description: "Users filtered successfully!",
+      });
+    } catch (error) {
+      console.error(error);
       toast({
         title: "Error",
-        description: "Failed to process request. Please try again.",
+        description: "Failed to apply filters. Please try again.",
         variant: "destructive",
       });
     }
@@ -254,13 +286,49 @@ export const FMUserMasterDashboard = () => {
   };
 
   const handleApplyFilters = () => {
-    setFilterDialogOpen(false);
+    handleFilter();
+  };
+
+  const handleCloneRoleSubmit = async () => {
+    try {
+      if (activeTab === 'handover') {
+        toast({
+          title: "Handover Successful",
+          description: `Role handover from ${fromUser} to ${toUser} completed successfully!`,
+        });
+      } else {
+        toast({
+          title: "Clone Successful",
+          description: `Role cloned to ${toUser} successfully!`,
+        });
+      }
+
+      setCloneRoleDialogOpen(false);
+      setFromUser('');
+      setToUser('');
+      setActiveTab('handover');
+
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process request. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleResetFilters = () => {
     setFilters({
       name: '',
       email: ''
+    });
+    // Restore original data
+    setFilteredFMUsersData(fmUsersData);
+    setCurrentPage(1);
+    setFilterDialogOpen(false);
+    toast({
+      title: "Filters Reset",
+      description: "Filters have been reset successfully!",
     });
   };
 
@@ -278,12 +346,11 @@ export const FMUserMasterDashboard = () => {
   const renderPaginationItems = () => {
     const items = [];
     const showEllipsis = totalPages > 7;
-    
+
     if (showEllipsis) {
-      // Show first page
       items.push(
         <PaginationItem key={1}>
-          <PaginationLink 
+          <PaginationLink
             onClick={() => setCurrentPage(1)}
             isActive={currentPage === 1}
           >
@@ -292,7 +359,6 @@ export const FMUserMasterDashboard = () => {
         </PaginationItem>
       );
 
-      // Show ellipsis or pages 2-3
       if (currentPage > 4) {
         items.push(
           <PaginationItem key="ellipsis1">
@@ -303,7 +369,7 @@ export const FMUserMasterDashboard = () => {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink 
+              <PaginationLink
                 onClick={() => setCurrentPage(i)}
                 isActive={currentPage === i}
               >
@@ -314,12 +380,11 @@ export const FMUserMasterDashboard = () => {
         }
       }
 
-      // Show current page area
       if (currentPage > 3 && currentPage < totalPages - 2) {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink 
+              <PaginationLink
                 onClick={() => setCurrentPage(i)}
                 isActive={currentPage === i}
               >
@@ -330,7 +395,6 @@ export const FMUserMasterDashboard = () => {
         }
       }
 
-      // Show ellipsis or pages before last
       if (currentPage < totalPages - 3) {
         items.push(
           <PaginationItem key="ellipsis2">
@@ -342,7 +406,7 @@ export const FMUserMasterDashboard = () => {
           if (!items.find(item => item.key === i)) {
             items.push(
               <PaginationItem key={i}>
-                <PaginationLink 
+                <PaginationLink
                   onClick={() => setCurrentPage(i)}
                   isActive={currentPage === i}
                 >
@@ -354,11 +418,10 @@ export const FMUserMasterDashboard = () => {
         }
       }
 
-      // Show last page
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
-            <PaginationLink 
+            <PaginationLink
               onClick={() => setCurrentPage(totalPages)}
               isActive={currentPage === totalPages}
             >
@@ -368,11 +431,10 @@ export const FMUserMasterDashboard = () => {
         );
       }
     } else {
-      // Show all pages if total is 7 or less
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
-            <PaginationLink 
+            <PaginationLink
               onClick={() => setCurrentPage(i)}
               isActive={currentPage === i}
             >
@@ -408,13 +470,10 @@ export const FMUserMasterDashboard = () => {
 
   return (
     <div className="w-full p-6 space-y-6">
-
-      {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-[#1a1a1a]">FM User Master</h1>
       </div>
 
-      {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <StatsCard
           title="Total Users"
@@ -443,37 +502,35 @@ export const FMUserMasterDashboard = () => {
         />
       </div>
 
-      {/* Action Buttons */}
       <div className="flex flex-wrap gap-3 items-center">
         <Button onClick={handleAddUser} className="bg-[#C72030] hover:bg-[#a91b29] text-white">
           <Plus className="w-4 h-4 mr-2" />
           Add FM User
         </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white">
+        <Button variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white" onClick={() => setShowImportModal(true)}>
           <Upload className="w-4 h-4 mr-2" />
           Import
         </Button>
-        <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50">
+        <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50" onClick={handleExportUser}>
           <Download className="w-4 h-4 mr-2" />
           Export
         </Button>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="border-gray-300 text-gray-700 hover:bg-gray-50"
           onClick={() => setFilterDialogOpen(true)}
         >
           <Filter className="w-4 h-4 mr-2" />
           Filters
         </Button>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="border-gray-300 text-gray-700 hover:bg-gray-50"
           onClick={() => setCloneRoleDialogOpen(true)}
         >
           Clone Role
         </Button>
-        
-        {/* Search */}
+
         <div className="relative ml-auto">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
@@ -485,7 +542,6 @@ export const FMUserMasterDashboard = () => {
         </div>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
@@ -515,8 +571,8 @@ export const FMUserMasterDashboard = () => {
               {paginatedUsers.map((user) => (
                 <TableRow key={user.id} className="hover:bg-gray-50">
                   <TableCell>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleViewUser(user.id)}
                       className="hover:bg-gray-100"
@@ -524,13 +580,13 @@ export const FMUserMasterDashboard = () => {
                       <Eye className="w-4 h-4" />
                     </Button>
                   </TableCell>
-                   <TableCell>
-                     <Switch 
-                       checked={user.active} 
-                       onCheckedChange={(checked) => handleToggleUserStatus(user.id, checked)}
-                       className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                     />
-                   </TableCell>
+                  <TableCell>
+                    <Switch
+                      checked={user.active}
+                      onCheckedChange={(checked) => handleToggleUserStatus(user.id, checked)}
+                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{user.id}</TableCell>
                   <TableCell>{user.userName}</TableCell>
                   <TableCell>{user.gender}</TableCell>
@@ -548,12 +604,12 @@ export const FMUserMasterDashboard = () => {
                       {user.type}
                     </Badge>
                   </TableCell>
-                   <TableCell>
-                     <Badge 
-                       {...getStatusBadgeProps(user.status)}
-                       onClick={() => handleStatusClick(user)}
-                     />
-                   </TableCell>
+                  <TableCell>
+                    <Badge
+                      {...getStatusBadgeProps(user.status)}
+                      onClick={() => handleStatusClick(user)}
+                    />
+                  </TableCell>
                   <TableCell>
                     <Badge variant={user.faceRecognition ? 'default' : 'secondary'}>
                       {user.faceRecognition ? 'Yes' : 'No'}
@@ -571,22 +627,21 @@ export const FMUserMasterDashboard = () => {
         </div>
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center mt-6">
           <Pagination>
             <PaginationContent>
               <PaginationItem>
-                <PaginationPrevious 
+                <PaginationPrevious
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
                 />
               </PaginationItem>
-              
+
               {renderPaginationItems()}
-              
+
               <PaginationItem>
-                <PaginationNext 
+                <PaginationNext
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
                 />
@@ -596,7 +651,13 @@ export const FMUserMasterDashboard = () => {
         </div>
       )}
 
-      {/* Filter Dialog */}
+      <ImportFmUsers
+        open={showImportModal}
+        onOpenChange={setShowImportModal}
+        title="Bulk Upload"
+        context="custom_forms"
+      />
+
       <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
         <DialogContent className="sm:max-w-[600px] p-0">
           <DialogHeader className="p-6 pb-4 border-b">
@@ -612,7 +673,7 @@ export const FMUserMasterDashboard = () => {
               </Button>
             </div>
           </DialogHeader>
-          
+
           <div className="p-6">
             <Box className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -656,7 +717,6 @@ export const FMUserMasterDashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Status Update Dialog */}
       <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
         <DialogContent className="sm:max-w-[400px] p-0 bg-white">
           <DialogHeader className="p-6 pb-4 border-b">
@@ -672,10 +732,10 @@ export const FMUserMasterDashboard = () => {
               </Button>
             </div>
           </DialogHeader>
-          
+
           <div className="p-6 space-y-6">
-            <Select 
-              value={selectedStatus} 
+            <Select
+              value={selectedStatus}
               onValueChange={setSelectedStatus}
             >
               <SelectTrigger className="w-full bg-white">
@@ -710,7 +770,6 @@ export const FMUserMasterDashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Clone Role Dialog */}
       <Dialog open={cloneRoleDialogOpen} onOpenChange={setCloneRoleDialogOpen}>
         <DialogContent className="sm:max-w-[500px] p-0 bg-white">
           <DialogHeader className="p-6 pb-4 border-b">
@@ -726,24 +785,24 @@ export const FMUserMasterDashboard = () => {
               </Button>
             </div>
           </DialogHeader>
-          
+
           <div className="p-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger 
-                  value="handover" 
+                <TabsTrigger
+                  value="handover"
                   className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white"
                 >
                   Handover To
                 </TabsTrigger>
-                <TabsTrigger 
+                <TabsTrigger
                   value="clone"
                   className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white"
                 >
                   Clone To
                 </TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="handover" className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">From User</label>
@@ -789,7 +848,7 @@ export const FMUserMasterDashboard = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">To User</label>
                   <Select value={toUser} onValueChange={setToUser}>
@@ -835,7 +894,7 @@ export const FMUserMasterDashboard = () => {
                   </Select>
                 </div>
               </TabsContent>
-              
+
               <TabsContent value="clone" className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">To User</label>
