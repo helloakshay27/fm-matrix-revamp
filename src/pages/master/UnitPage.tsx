@@ -7,19 +7,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Square, Plus, X } from 'lucide-react';
+import { Edit, Square, Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { 
   fetchBuildings, 
   fetchWings, 
   fetchAreas, 
   fetchFloors,
-  fetchUnits,
+  fetchAllUnits,
   createUnit, 
-  setSelectedBuilding, 
-  setSelectedWing,
-  setSelectedArea,
-  setSelectedFloor,
   updateUnit
 } from '@/store/slices/locationSlice';
 import { toast } from 'sonner';
@@ -31,115 +27,134 @@ export const UnitPage = () => {
     wings, 
     areas, 
     floors,
-    units, 
-    selectedBuilding, 
-    selectedWing, 
-    selectedArea,
-    selectedFloor 
+    units
   } = useAppSelector((state) => state.location);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<any>(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
+
   const [newUnit, setNewUnit] = useState({
+    building: '',
+    wing: '',
+    area: '',
+    floor: '',
     unitName: '',
-    area: ''
+    areaSize: ''
   });
   const [editUnit, setEditUnit] = useState({
-    buildingId: '',
-    wingId: '',
-    areaId: '',
-    floorId: '',
-    unitName: '',
+    building: '',
+    wing: '',
     area: '',
-    entity: ''
+    floor: '',
+    unitName: '',
+    areaSize: '',
+    active: true
   });
 
   useEffect(() => {
     dispatch(fetchBuildings());
+    dispatch(fetchAllUnits());
   }, [dispatch]);
 
+  // Debug: Log units data when it changes
   useEffect(() => {
-    if (selectedBuilding) {
-      dispatch(fetchWings(selectedBuilding));
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Units state:', units);
+      if (units.data.length > 0) {
+        console.log('First unit sample:', units.data[0]);
+      }
     }
-  }, [dispatch, selectedBuilding]);
+  }, [units]);
+
+  // Reset pagination when units data changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [units.data.length]);
+
+  // Fetch dependencies for add/edit forms
+  useEffect(() => {
+    if (newUnit.building) {
+      dispatch(fetchWings(parseInt(newUnit.building)));
+    }
+  }, [dispatch, newUnit.building]);
 
   useEffect(() => {
-    if (selectedBuilding && selectedWing) {
-      dispatch(fetchAreas({ buildingId: selectedBuilding, wingId: selectedWing }));
+    if (newUnit.building && newUnit.wing) {
+      dispatch(fetchAreas({ buildingId: parseInt(newUnit.building), wingId: parseInt(newUnit.wing) }));
     }
-  }, [dispatch, selectedBuilding, selectedWing]);
+  }, [dispatch, newUnit.building, newUnit.wing]);
 
   useEffect(() => {
-    if (selectedBuilding && selectedWing && selectedArea) {
+    if (newUnit.building && newUnit.wing && newUnit.area) {
       dispatch(fetchFloors({ 
-        buildingId: selectedBuilding, 
-        wingId: selectedWing, 
-        areaId: selectedArea 
+        buildingId: parseInt(newUnit.building), 
+        wingId: parseInt(newUnit.wing), 
+        areaId: parseInt(newUnit.area)
       }));
     }
-  }, [dispatch, selectedBuilding, selectedWing, selectedArea]);
+  }, [dispatch, newUnit.building, newUnit.wing, newUnit.area]);
 
-  useEffect(() => {
-    if (selectedBuilding && selectedWing && selectedArea && selectedFloor) {
-      dispatch(fetchUnits({ 
-        buildingId: selectedBuilding, 
-        wingId: selectedWing, 
-        areaId: selectedArea,
-        floorId: selectedFloor
-      }));
+  // Pagination calculations
+  const filteredUnits = units.data.filter(unit => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      unit.unit_name?.toLowerCase().includes(searchLower) ||
+      unit.building?.name?.toLowerCase().includes(searchLower) ||
+      unit.wing?.name?.toLowerCase().includes(searchLower) ||
+      (unit.area_obj?.name && unit.area_obj.name.toLowerCase().includes(searchLower)) ||
+      unit.floor?.name?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const totalItems = filteredUnits.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentUnits = filteredUnits.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToPrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
     }
-  }, [dispatch, selectedBuilding, selectedWing, selectedArea, selectedFloor]);
-
-  const filteredUnits = units.data.filter(unit =>
-    unit.unit_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Limit results based on entries per page selection
-  const displayedUnits = filteredUnits.slice(0, parseInt(entriesPerPage));
-
-  const handleBuildingChange = (buildingId: string) => {
-    dispatch(setSelectedBuilding(parseInt(buildingId)));
   };
 
-  const handleWingChange = (wingId: string) => {
-    dispatch(setSelectedWing(parseInt(wingId)));
-  };
-
-  const handleAreaChange = (areaId: string) => {
-    dispatch(setSelectedArea(parseInt(areaId)));
-  };
-
-  const handleFloorChange = (floorId: string) => {
-    dispatch(setSelectedFloor(parseInt(floorId)));
+  const goToNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
   };
 
   const handleAddUnit = async () => {
-    if (selectedBuilding && selectedWing && selectedArea && selectedFloor && newUnit.unitName.trim()) {
+    if (newUnit.building && newUnit.wing && newUnit.area && newUnit.floor && newUnit.unitName.trim()) {
       try {
         await dispatch(createUnit({
           unit_name: newUnit.unitName,
-          building_id: selectedBuilding,
-          wing_id: selectedWing,
-          area_id: selectedArea,
-          floor_id: selectedFloor,
-          area: parseInt(newUnit.area) || 0
+          building_id: parseInt(newUnit.building),
+          wing_id: parseInt(newUnit.wing),
+          area_id: parseInt(newUnit.area),
+          floor_id: parseInt(newUnit.floor),
+          area: parseInt(newUnit.areaSize) || 0
         }));
         toast.success('Unit created successfully');
-        setNewUnit({ unitName: '', area: '' });
+        setNewUnit({ building: '', wing: '', area: '', floor: '', unitName: '', areaSize: '' });
         setIsAddDialogOpen(false);
-        dispatch(fetchUnits({ 
-          buildingId: selectedBuilding, 
-          wingId: selectedWing, 
-          areaId: selectedArea,
-          floorId: selectedFloor
-        }));
+        dispatch(fetchAllUnits());
       } catch (error) {
+        console.error('Error creating unit:', error);
         toast.error('Failed to create unit');
       }
+    } else {
+      toast.error('Please fill in all required fields');
     }
   };
 
@@ -152,9 +167,10 @@ export const UnitPage = () => {
         id: unitId,
         updates: { active: !unit.active }
       }));
-      
+      dispatch(fetchAllUnits());
       toast.success('Unit status updated successfully');
     } catch (error) {
+      console.error('Error updating unit status:', error);
       toast.error('Failed to update unit status');
     }
   };
@@ -162,43 +178,42 @@ export const UnitPage = () => {
   const handleEditUnit = (unit: any) => {
     setEditingUnit(unit);
     setEditUnit({
-      buildingId: unit.building_id?.toString() || '',
-      wingId: unit.wing_id?.toString() || '',
-      areaId: unit.area_id?.toString() || '',
-      floorId: unit.floor_id?.toString() || '',
+      building: unit.building_id?.toString() || '',
+      wing: unit.wing_id?.toString() || '',
+      area: unit.area_id?.toString() || '',
+      floor: unit.floor_id?.toString() || '',
       unitName: unit.unit_name || '',
-      area: unit.area?.toString() || '',
-      entity: unit.entity || ''
+      areaSize: unit.area?.toString() || '',
+      active: unit.active
     });
     setIsEditDialogOpen(true);
   };
 
   const handleUpdateUnit = async () => {
-    if (editingUnit && editUnit.unitName.trim()) {
+    if (editingUnit && editUnit.unitName.trim() && editUnit.building && editUnit.wing && editUnit.area && editUnit.floor) {
       try {
         await dispatch(updateUnit({
           id: editingUnit.id,
           updates: {
             unit_name: editUnit.unitName,
-            building_id: parseInt(editUnit.buildingId),
-            wing_id: parseInt(editUnit.wingId),
-            area_id: parseInt(editUnit.areaId),
-            floor_id: parseInt(editUnit.floorId),
-            area: parseInt(editUnit.area) || 0
+            building_id: parseInt(editUnit.building),
+            wing_id: parseInt(editUnit.wing),
+            area_id: parseInt(editUnit.area),
+            floor_id: parseInt(editUnit.floor),
+            area: parseInt(editUnit.areaSize) || 0,
+            active: editUnit.active
           }
         }));
         toast.success('Unit updated successfully');
         setIsEditDialogOpen(false);
         setEditingUnit(null);
-        dispatch(fetchUnits({ 
-          buildingId: selectedBuilding, 
-          wingId: selectedWing, 
-          areaId: selectedArea,
-          floorId: selectedFloor
-        }));
+        dispatch(fetchAllUnits());
       } catch (error) {
+        console.error('Error updating unit:', error);
         toast.error('Failed to update unit');
       }
+    } else {
+      toast.error('Please fill in all required fields');
     }
   };
 
@@ -215,7 +230,6 @@ export const UnitPage = () => {
               <DialogTrigger asChild>
                 <Button 
                   className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2"
-                  disabled={!selectedBuilding || !selectedWing || !selectedArea || !selectedFloor}
                 >
                   <Square className="w-4 h-4" />
                   Add Unit
@@ -236,39 +250,82 @@ export const UnitPage = () => {
                 </DialogHeader>
                 <div className="grid grid-cols-2 gap-4 py-4">
                   <div className="space-y-2">
-                    <Label>Selected Building</Label>
-                    <Input
-                      value={buildings.data.find(b => b.id === selectedBuilding)?.name || ''}
-                      disabled
-                      className="bg-muted"
-                    />
+                    <Label>Select Building</Label>
+                    <Select 
+                      value={newUnit.building} 
+                      onValueChange={(value) => setNewUnit(prev => ({ ...prev, building: value, wing: '', area: '', floor: '' }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Building" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {buildings.data.map((building) => (
+                          <SelectItem key={building.id} value={building.id.toString()}>
+                            {building.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Selected Wing</Label>
-                    <Input
-                      value={wings.data.find(w => w.id === selectedWing)?.name || ''}
-                      disabled
-                      className="bg-muted"
-                    />
+                    <Label>Select Wing</Label>
+                    <Select 
+                      value={newUnit.wing} 
+                      onValueChange={(value) => setNewUnit(prev => ({ ...prev, wing: value, area: '', floor: '' }))}
+                      disabled={!newUnit.building}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Wing" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {wings.data.filter(wing => wing.building_id?.toString() === newUnit.building).map((wing) => (
+                          <SelectItem key={wing.id} value={wing.id.toString()}>
+                            {wing.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Selected Area</Label>
-                    <Input
-                      value={areas.data.find(a => a.id === selectedArea)?.name || ''}
-                      disabled
-                      className="bg-muted"
-                    />
+                    <Label>Select Area</Label>
+                    <Select 
+                      value={newUnit.area} 
+                      onValueChange={(value) => setNewUnit(prev => ({ ...prev, area: value, floor: '' }))}
+                      disabled={!newUnit.wing}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Area" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {areas.data.filter(area => area.wing_id?.toString() === newUnit.wing).map((area) => (
+                          <SelectItem key={area.id} value={area.id.toString()}>
+                            {area.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Selected Floor</Label>
-                    <Input
-                      value={floors.data.find(f => f.id === selectedFloor)?.name || ''}
-                      disabled
-                      className="bg-muted"
-                    />
+                    <Label>Select Floor</Label>
+                    <Select 
+                      value={newUnit.floor} 
+                      onValueChange={(value) => setNewUnit(prev => ({ ...prev, floor: value }))}
+                      disabled={!newUnit.area}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Floor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {floors.data.filter(floor => floor.area_id?.toString() === newUnit.area).map((floor) => (
+                          <SelectItem key={floor.id} value={floor.id.toString()}>
+                            {floor.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div className="space-y-2">
@@ -285,8 +342,8 @@ export const UnitPage = () => {
                     <Label htmlFor="areaSize">Area (Sq.Mtr)</Label>
                     <Input
                       id="areaSize"
-                      value={newUnit.area}
-                      onChange={(e) => setNewUnit(prev => ({ ...prev, area: e.target.value }))}
+                      value={newUnit.areaSize}
+                      onChange={(e) => setNewUnit(prev => ({ ...prev, areaSize: e.target.value }))}
                       placeholder="Enter Area"
                     />
                   </div>
@@ -308,100 +365,10 @@ export const UnitPage = () => {
             </Dialog>
           </div>
 
-          {/* Selection Controls */}
-          <div className="grid grid-cols-4 gap-4 mb-6 max-w-5xl">
-            <div>
-              <label className="text-sm font-medium">Select Building</label>
-              <Select value={selectedBuilding?.toString() || ''} onValueChange={handleBuildingChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select building" />
-                </SelectTrigger>
-                <SelectContent>
-                  {buildings.data.map((building) => (
-                    <SelectItem key={building.id} value={building.id.toString()}>
-                      {building.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Select Wing</label>
-              <Select 
-                value={selectedWing?.toString() || ''} 
-                onValueChange={handleWingChange}
-                disabled={!selectedBuilding}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select wing" />
-                </SelectTrigger>
-                <SelectContent>
-                  {wings.data.map((wing) => (
-                    <SelectItem key={wing.id} value={wing.id.toString()}>
-                      {wing.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Select Area</label>
-              <Select 
-                value={selectedArea?.toString() || ''} 
-                onValueChange={handleAreaChange}
-                disabled={!selectedWing}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select area" />
-                </SelectTrigger>
-                <SelectContent>
-                  {areas.data.map((area) => (
-                    <SelectItem key={area.id} value={area.id.toString()}>
-                      {area.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Select Floor</label>
-              <Select 
-                value={selectedFloor?.toString() || ''} 
-                onValueChange={handleFloorChange}
-                disabled={!selectedArea}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select floor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {floors.data.map((floor) => (
-                    <SelectItem key={floor.id} value={floor.id.toString()}>
-                      {floor.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Controls */}
+          {/* Search Controls */}
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Show</span>
-                <Select value={entriesPerPage} onValueChange={setEntriesPerPage}>
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span className="text-sm text-gray-600">entries</span>
-              </div>
+            <div className="text-sm text-muted-foreground">
+              Total: {totalItems} units
             </div>
             
             <div className="flex items-center gap-2">
@@ -430,26 +397,26 @@ export const UnitPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {!selectedBuilding || !selectedWing || !selectedArea || !selectedFloor ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4">
-                      Please select building, wing, area, and floor to view units
-                    </TableCell>
-                  </TableRow>
-                ) : units.loading ? (
+                {units.loading ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-4">
                       Loading units...
                     </TableCell>
                   </TableRow>
-                ) : displayedUnits.length === 0 ? (
+                ) : units.error ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-4 text-red-600">
+                      Error: {units.error}
+                    </TableCell>
+                  </TableRow>
+                ) : currentUnits.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-4">
                       No units found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  displayedUnits.map((unit) => (
+                  currentUnits.map((unit) => (
                     <TableRow key={unit.id}>
                        <TableCell>
                          <Button variant="ghost" size="sm" onClick={() => handleEditUnit(unit)}>
@@ -474,12 +441,82 @@ export const UnitPage = () => {
             </Table>
           </div>
 
-          {/* Pagination info */}
-          <div className="flex items-center justify-between mt-4">
-            <span className="text-sm text-gray-600">
-              Showing 1 to {Math.min(parseInt(entriesPerPage), displayedUnits.length)} of {filteredUnits.length} entries
-            </span>
-          </div>
+          {/* Pagination Controls */}
+          {units.data.length > 0 && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} units
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPrevious}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                
+                <div className="flex items-center space-x-1">
+                  {/* Show first page */}
+                  {currentPage > 3 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => goToPage(1)}
+                        className="w-8 h-8 p-0"
+                      >
+                        1
+                      </Button>
+                      {currentPage > 4 && <span className="px-2">...</span>}
+                    </>
+                  )}
+                  
+                  {/* Show pages around current page */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
+                    .map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => goToPage(page)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                  
+                  {/* Show last page */}
+                  {currentPage < totalPages - 2 && (
+                    <>
+                      {currentPage < totalPages - 3 && <span className="px-2">...</span>}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => goToPage(totalPages)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {totalPages}
+                      </Button>
+                    </>
+                  )}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNext}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Edit Details Dialog */}
@@ -498,8 +535,8 @@ export const UnitPage = () => {
               <div className="space-y-2">
                 <Label>Select Building</Label>
                 <Select 
-                  value={editUnit.buildingId} 
-                  onValueChange={(value) => setEditUnit(prev => ({ ...prev, buildingId: value }))}
+                  value={editUnit.building} 
+                  onValueChange={(value) => setEditUnit(prev => ({ ...prev, building: value, wing: '', area: '', floor: '' }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Building" />
@@ -517,15 +554,15 @@ export const UnitPage = () => {
               <div className="space-y-2">
                 <Label>Select Wing</Label>
                 <Select 
-                  value={editUnit.wingId} 
-                  onValueChange={(value) => setEditUnit(prev => ({ ...prev, wingId: value }))}
-                  disabled={!editUnit.buildingId}
+                  value={editUnit.wing} 
+                  onValueChange={(value) => setEditUnit(prev => ({ ...prev, wing: value, area: '', floor: '' }))}
+                  disabled={!editUnit.building}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Wing" />
                   </SelectTrigger>
                   <SelectContent className="bg-white z-50">
-                    {wings.data.filter(wing => Number(wing.building_id) === Number(editUnit.buildingId)).map((wing) => (
+                    {wings.data.filter(wing => wing.building_id?.toString() === editUnit.building).map((wing) => (
                       <SelectItem key={wing.id} value={wing.id.toString()}>
                         {wing.name}
                       </SelectItem>
@@ -537,15 +574,15 @@ export const UnitPage = () => {
               <div className="space-y-2">
                 <Label>Select Area</Label>
                 <Select 
-                  value={editUnit.areaId} 
-                  onValueChange={(value) => setEditUnit(prev => ({ ...prev, areaId: value }))}
-                  disabled={!editUnit.wingId}
+                  value={editUnit.area} 
+                  onValueChange={(value) => setEditUnit(prev => ({ ...prev, area: value, floor: '' }))}
+                  disabled={!editUnit.wing}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Area" />
                   </SelectTrigger>
                   <SelectContent className="bg-white z-50">
-                    {areas.data.filter(area => Number(area.wing_id) === Number(editUnit.wingId)).map((area) => (
+                    {areas.data.filter(area => area.wing_id?.toString() === editUnit.wing).map((area) => (
                       <SelectItem key={area.id} value={area.id.toString()}>
                         {area.name}
                       </SelectItem>
@@ -557,15 +594,15 @@ export const UnitPage = () => {
               <div className="space-y-2">
                 <Label>Select Floor</Label>
                 <Select 
-                  value={editUnit.floorId} 
-                  onValueChange={(value) => setEditUnit(prev => ({ ...prev, floorId: value }))}
-                  disabled={!editUnit.areaId}
+                  value={editUnit.floor} 
+                  onValueChange={(value) => setEditUnit(prev => ({ ...prev, floor: value }))}
+                  disabled={!editUnit.area}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Floor" />
                   </SelectTrigger>
                   <SelectContent className="bg-white z-50">
-                    {floors.data.filter(floor => floor.area_id === parseInt(editUnit.areaId)).map((floor) => (
+                    {floors.data.filter(floor => floor.area_id?.toString() === editUnit.area).map((floor) => (
                       <SelectItem key={floor.id} value={floor.id.toString()}>
                         {floor.name}
                       </SelectItem>
@@ -585,30 +622,26 @@ export const UnitPage = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="editSelectEntity">Select Entity</Label>
-                <Select 
-                  value={editUnit.entity} 
-                  onValueChange={(value) => setEditUnit(prev => ({ ...prev, entity: value }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Entity" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white z-50">
-                    <SelectItem value="entity1">Entity 1</SelectItem>
-                    <SelectItem value="entity2">Entity 2</SelectItem>
-                    <SelectItem value="entity3">Entity 3</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2 col-span-1">
-                <Label htmlFor="editAreaSize">Area</Label>
+                <Label htmlFor="editAreaSize">Area (Sq.Mtr)</Label>
                 <Input
                   id="editAreaSize"
-                  value={editUnit.area}
-                  onChange={(e) => setEditUnit(prev => ({ ...prev, area: e.target.value }))}
+                  value={editUnit.areaSize}
+                  onChange={(e) => setEditUnit(prev => ({ ...prev, areaSize: e.target.value }))}
                   placeholder="Enter Area"
                 />
+              </div>
+              
+              <div className="space-y-2 col-span-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="editActive" 
+                    checked={editUnit.active}
+                    onCheckedChange={(checked) => setEditUnit(prev => ({ ...prev, active: checked as boolean }))}
+                  />
+                  <label htmlFor="editActive" className="text-sm font-medium">
+                    Active
+                  </label>
+                </div>
               </div>
             </div>
             
@@ -616,7 +649,7 @@ export const UnitPage = () => {
               <Button 
                 onClick={handleUpdateUnit} 
                 className="bg-purple-600 hover:bg-purple-700 text-white px-8"
-                disabled={!editUnit.unitName.trim() || !editUnit.buildingId || !editUnit.wingId || !editUnit.areaId || !editUnit.floorId}
+                disabled={!editUnit.unitName.trim() || !editUnit.building || !editUnit.wing || !editUnit.area || !editUnit.floor}
               >
                 Submit
               </Button>

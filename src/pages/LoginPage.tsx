@@ -165,7 +165,7 @@ export const LoginPage = () => {
       });
       saveToken(response.access_token);
       saveBaseUrl(baseUrl);
-
+      localStorage.setItem("userId", response.id.toString());
       toast.success("Login Successful", {
         description: `Welcome back, ${response.firstname}!`
       });

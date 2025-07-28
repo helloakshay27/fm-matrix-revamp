@@ -70,23 +70,30 @@ export const formatDateForAPI = (date: Date): string => {
   return date.toISOString().split('T')[0];
 };
 
+const getSelectedSiteId = () => {
+  return localStorage.getItem("selectedSiteId") ; // Default to 2189 if not found
+};
 export const getCurrentSiteId = (): string => {
   // Try to get site_id from localStorage first
-  const siteId = localStorage.getItem('site_id');
+  const siteId = localStorage.getItem('selectedSiteId');
   if (siteId) return siteId;
-  
+
+  console.log("siteId default", siteId);
+
   // Fallback to URL parameters
   const urlParams = new URLSearchParams(window.location.search);
-  return urlParams.get('site_id') || '7'; // Default site_id
+  return urlParams.get('site_id'); // Default site_id
 };
 
 // Task Analytics API Functions
 export const taskAnalyticsAPI = {
   getTechnicalChecklistData: async (fromDate: Date, toDate: Date): Promise<TechnicalChecklistResponse> => {
     const token = getToken();
-    const siteId = getCurrentSiteId();
+    const siteId = getSelectedSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
+
+    
     
     const url = getFullUrl(`/pms/custom_forms/chart_technical_checklist_monthly.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${token}`);
     
