@@ -309,6 +309,16 @@ export const AddTicketDashboard = () => {
       return;
     }
 
+    // Validate complaint mode is selected
+    if (!formData.complaintMode) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a complaint mode",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Validate user selection for behalf of others
     if (onBehalfOf !== 'self' && !selectedUserId) {
       toast({
@@ -321,7 +331,22 @@ export const AddTicketDashboard = () => {
 
     setIsSubmitting(true);
     try {
-      const siteId = localStorage.getItem('siteId') || '2189';
+      // Ensure user account is loaded to get site_id
+      if (!userAccount) {
+        await loadUserAccount();
+      }
+
+      // Get site_id from user account API response
+      const siteId = userAccount?.site_id?.toString();
+      
+      if (!siteId) {
+        toast({
+          title: "Error",
+          description: "Unable to determine site ID from user account. Please refresh and try again.",
+          variant: "destructive"
+        });
+        return;
+      }
       
       const ticketData = {
         of_phase: 'pms',
@@ -333,7 +358,7 @@ export const AddTicketDashboard = () => {
         society_staff_type: 'User',
         proactive_reactive: formData.proactiveReactive || '',
         heading: formData.description,
-        complaint_mode_id: formData.complaintMode ? parseInt(formData.complaintMode) : 75,
+        ...(formData.complaintMode && { complaint_mode_id: parseInt(formData.complaintMode) }),
         room_id: 1,
         wing_id: 1,
         area_id: 1,
@@ -353,6 +378,8 @@ export const AddTicketDashboard = () => {
       };
 
       console.log('Ticket payload before API call:', ticketData);
+      console.log('Using site ID from user account:', siteId);
+      console.log('User account info:', userAccount);
       console.log('Form data:', formData);
       console.log('Golden Ticket:', isGoldenTicket);
       console.log('Is Flagged:', isFlagged);
@@ -661,13 +688,14 @@ export const AddTicketDashboard = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
+                required
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
                 <InputLabel shrink>Mode</InputLabel>
                 <MuiSelect
                   value={formData.complaintMode}
                   onChange={(e) => setFormData({ ...formData, complaintMode: e.target.value })}
-                  label="Mode"
+                  label="Mode*"
                   notched
                   displayEmpty
                   disabled={loadingComplaintModes}
