@@ -215,6 +215,8 @@ export interface UserAccountResponse {
   department_name: string;
   email: string;
   mobile: string;
+  site_id: number;
+  company_id: number;
 }
 
 export interface OccupantUserResponse {

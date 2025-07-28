@@ -1,4 +1,3 @@
-
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiClient } from '@/utils/apiClient';
 
@@ -78,6 +77,24 @@ export interface Unit {
   area_obj?: Area;
 }
 
+export interface Room {
+  id: number;
+  name: string;
+  building_id: string;
+  wing_id: number;
+  area_id: string | number | null;
+  floor_id: number;
+  unit_id: number | null;
+  active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  area?: Area | null;
+  wing?: Wing;
+  building?: Building;
+  floor?: Floor;
+  unit?: Unit | null;
+}
+
 export interface LocationState {
   sites: {
     data: Site[];
@@ -106,6 +123,11 @@ export interface LocationState {
   };
   units: {
     data: Unit[];
+    loading: boolean;
+    error: string | null;
+  };
+  rooms: {
+    data: Room[];
     loading: boolean;
     error: string | null;
   };
@@ -165,11 +187,67 @@ export const fetchFloors = createAsyncThunk(
   }
 );
 
+export const fetchAllFloors = createAsyncThunk(
+  'location/fetchAllFloors',
+  async () => {
+    const response = await apiClient.get('/pms/floors.json');
+    return response.data.floors || [];
+  }
+);
+
+export const fetchAllUnits = createAsyncThunk(
+  'location/fetchAllUnits',
+  async () => {
+    try {
+      const response = await apiClient.get('/pms/units.json');
+      console.log('API response for fetchAllUnits:', response.data);
+      // Handle both direct array and wrapped response
+      if (Array.isArray(response.data)) {
+        return response.data;
+      } else if (response.data && Array.isArray(response.data.units)) {
+        return response.data.units;
+      } else {
+        return [];
+      }
+    } catch (error) {
+      console.error('Error fetching all units:', error);
+      throw error;
+    }
+  }
+);
+
 export const fetchUnits = createAsyncThunk(
   'location/fetchUnits',
   async ({ buildingId, wingId, areaId, floorId }: { buildingId: number; wingId: number; areaId: number; floorId: number }) => {
     const response = await apiClient.get(`/pms/units.json?building_id=${buildingId}&wing_id=${wingId}&area_id=${areaId}&floor_id=${floorId}`);
     return Array.isArray(response.data) ? response.data : [response.data];
+  }
+);
+
+export const fetchRooms = createAsyncThunk(
+  'location/fetchRooms',
+  async ({ buildingId, wingId, areaId, floorId }: { buildingId: number; wingId: number; areaId: number; floorId: number }) => {
+    const response = await apiClient.get(`/pms/rooms.json?building_id=${buildingId}&wing_id=${wingId}&area_id=${areaId}&floor_id=${floorId}`);
+    return Array.isArray(response.data) ? response.data : [response.data];
+  }
+);
+
+export const fetchAllRooms = createAsyncThunk(
+  'location/fetchAllRooms',
+  async () => {
+    const response = await apiClient.get('/pms/rooms.json');
+    
+    // Handle both array response and wrapped response
+    let rooms = [];
+    if (Array.isArray(response.data)) {
+      rooms = response.data;
+    } else if (response.data.rooms && Array.isArray(response.data.rooms)) {
+      rooms = response.data.rooms;
+    } else if (response.data) {
+      rooms = [response.data];
+    }
+    
+    return rooms;
   }
 );
 
@@ -246,6 +324,30 @@ export const createUnit = createAsyncThunk(
   }
 );
 
+export const createRoom = createAsyncThunk(
+  'location/createRoom',
+  async (roomData: {
+    name: string;
+    building_id: number;
+    wing_id: number;
+    area_id?: number;
+    floor_id: number;
+    unit_id?: number;
+    active?: boolean;
+    create_qr?: boolean;
+  }) => {
+    const payload = {
+      pms_room: {
+        ...roomData,
+        active: roomData.active ?? true,
+        create_qr: roomData.create_qr ?? false
+      }
+    };
+    const response = await apiClient.post('/pms/rooms.json', payload);
+    return response.data;
+  }
+);
+
 // Update operations
 export const updateBuilding = createAsyncThunk(
   'location/updateBuilding',
@@ -302,6 +404,17 @@ export const updateUnit = createAsyncThunk(
   }
 );
 
+export const updateRoom = createAsyncThunk(
+  'location/updateRoom',
+  async ({ id, updates }: { id: number; updates: any }) => {
+    const payload = {
+      pms_room: updates
+    };
+    const response = await apiClient.put(`/pms/rooms/${id}.json`, payload);
+    return response.data;
+  }
+);
+
 const initialState: LocationState = {
   sites: { data: [], loading: false, error: null },
   buildings: { data: [], loading: false, error: null },
@@ -309,6 +422,7 @@ const initialState: LocationState = {
   areas: { data: [], loading: false, error: null },
   floors: { data: [], loading: false, error: null },
   units: { data: [], loading: false, error: null },
+  rooms: { data: [], loading: false, error: null },
   selectedBuilding: null,
   selectedWing: null,
   selectedArea: null,
@@ -328,6 +442,7 @@ const locationSlice = createSlice({
       state.areas.data = [];
       state.floors.data = [];
       state.units.data = [];
+      state.rooms.data = [];
     },
     setSelectedWing: (state, action) => {
       state.selectedWing = action.payload;
@@ -336,16 +451,19 @@ const locationSlice = createSlice({
       state.areas.data = [];
       state.floors.data = [];
       state.units.data = [];
+      state.rooms.data = [];
     },
     setSelectedArea: (state, action) => {
       state.selectedArea = action.payload;
       state.selectedFloor = null;
       state.floors.data = [];
       state.units.data = [];
+      state.rooms.data = [];
     },
     setSelectedFloor: (state, action) => {
       state.selectedFloor = action.payload;
       state.units.data = [];
+      state.rooms.data = [];
     },
     clearAllSelections: (state) => {
       state.selectedBuilding = null;
@@ -356,6 +474,7 @@ const locationSlice = createSlice({
       state.areas.data = [];
       state.floors.data = [];
       state.units.data = [];
+      state.rooms.data = [];
     }
   },
   extraReducers: (builder) => {
@@ -425,6 +544,19 @@ const locationSlice = createSlice({
         state.floors.loading = false;
         state.floors.error = action.error.message || 'Failed to fetch floors';
       })
+      // All Floors
+      .addCase(fetchAllFloors.pending, (state) => {
+        state.floors.loading = true;
+        state.floors.error = null;
+      })
+      .addCase(fetchAllFloors.fulfilled, (state, action) => {
+        state.floors.loading = false;
+        state.floors.data = action.payload;
+      })
+      .addCase(fetchAllFloors.rejected, (state, action) => {
+        state.floors.loading = false;
+        state.floors.error = action.error.message || 'Failed to fetch all floors';
+      })
       // Units
       .addCase(fetchUnits.pending, (state) => {
         state.units.loading = true;
@@ -437,6 +569,49 @@ const locationSlice = createSlice({
       .addCase(fetchUnits.rejected, (state, action) => {
         state.units.loading = false;
         state.units.error = action.error.message || 'Failed to fetch units';
+      })
+      // All Units
+      .addCase(fetchAllUnits.pending, (state) => {
+        state.units.loading = true;
+        state.units.error = null;
+      })
+      .addCase(fetchAllUnits.fulfilled, (state, action) => {
+        state.units.loading = false;
+        state.units.data = action.payload;
+      })
+      .addCase(fetchAllUnits.rejected, (state, action) => {
+        state.units.loading = false;
+        state.units.error = action.error.message || 'Failed to fetch all units';
+      })
+      // Rooms
+      .addCase(fetchRooms.pending, (state) => {
+        state.rooms.loading = true;
+        state.rooms.error = null;
+      })
+      .addCase(fetchRooms.fulfilled, (state, action) => {
+        state.rooms.loading = false;
+        state.rooms.data = action.payload;
+      })
+      .addCase(fetchRooms.rejected, (state, action) => {
+        state.rooms.loading = false;
+        state.rooms.error = action.error.message || 'Failed to fetch rooms';
+      })
+      // All Rooms
+      .addCase(fetchAllRooms.pending, (state) => {
+        state.rooms.loading = true;
+        state.rooms.error = null;
+      })
+      .addCase(fetchAllRooms.fulfilled, (state, action) => {
+        state.rooms.loading = false;
+        state.rooms.data = action.payload;
+      })
+      .addCase(fetchAllRooms.rejected, (state, action) => {
+        state.rooms.loading = false;
+        state.rooms.error = action.error.message || 'Failed to fetch all rooms';
+      })
+      // Create Room
+      .addCase(createRoom.fulfilled, (state, action) => {
+        state.rooms.data.push(action.payload);
       })
       // Update Building
       .addCase(updateBuilding.fulfilled, (state, action) => {
@@ -476,6 +651,14 @@ const locationSlice = createSlice({
         const unitIndex = state.units.data.findIndex(unit => unit.id === id);
         if (unitIndex !== -1) {
           state.units.data[unitIndex] = { ...state.units.data[unitIndex], ...updates };
+        }
+      })
+      // Update Room
+      .addCase(updateRoom.fulfilled, (state, action) => {
+        const { id, updates } = action.payload;
+        const roomIndex = state.rooms.data.findIndex(room => room.id === id);
+        if (roomIndex !== -1) {
+          state.rooms.data[roomIndex] = { ...state.rooms.data[roomIndex], ...updates };
         }
       });
   },

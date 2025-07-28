@@ -137,6 +137,8 @@ export const API_CONFIG = {
     TICKET_UNIT_CATEGORYWISE_DOWNLOAD: '/pms/admin/complaints/chart_unit_categorywise_downloads.json',
     TICKET_RESOLUTION_TAT_DOWNLOAD: '/pms/admin/complaints/chart_resolution_tat_downloads.json',
     TICKET_RESPONSE_TAT_DOWNLOAD: '/pms/admin/complaints/chart_response_tat_downloads.json',
+    COST_APPROVALS_CREATE: '/pms/create_muliple_cost_Approvals.json',
+    
   },
 } as const
 
