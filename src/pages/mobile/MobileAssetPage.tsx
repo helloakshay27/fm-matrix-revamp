@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useLocation } from "react-router-dom";
 import { MobileAssetList } from "@/components/mobile/MobileAssetList";
 import { MobileAssetDetails } from "@/components/mobile/MobileAssetDetails";
 import { MobileAssetBreakdown } from "@/components/mobile/MobileAssetBreakdown";
@@ -45,7 +45,8 @@ const mobileAssetService = {
     try {
       // Get base URL from sessionStorage or use default
       let baseUrl =
-        sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
+        // sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
+        sessionStorage.getItem("baseUrl") || "https://fm-uat-api.lockated.com/";
 
       // Ensure baseUrl doesn't have trailing slash and starts with https://
       baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
@@ -98,8 +99,11 @@ const mobileAssetService = {
 export const MobileAssetPage = () => {
   const { assetId } = useParams();
   const [searchParams] = useSearchParams();
-  const action = searchParams.get("action");
+  const location = useLocation();
   const token = searchParams.get("token");
+
+  // Check if this is a breakdown page based on URL path
+  const isBreakdownPage = location.pathname.includes('/breakdown');
 
   const [assets, setAssets] = useState<MobileAsset[]>([]);
   const [loading, setLoading] = useState(false);
@@ -116,7 +120,7 @@ export const MobileAssetPage = () => {
       console.log("🔍 MOBILE ASSETS PAGE INITIALIZATION:");
       console.log("  - Token from URL:", token?.substring(0, 20) + "...");
       console.log("  - AssetId:", assetId);
-      console.log("  - Action:", action);
+      console.log("  - Is Breakdown Page:", isBreakdownPage);
       console.log(
         "  - Current sessionStorage baseUrl:",
         sessionStorage.getItem("baseUrl")
@@ -124,7 +128,8 @@ export const MobileAssetPage = () => {
 
       // Set baseUrl if not already set
       if (!sessionStorage.getItem("baseUrl")) {
-        sessionStorage.setItem("baseUrl", "https://oig-api.gophygital.work");
+        // sessionStorage.setItem("baseUrl", "https://oig-api.gophygital.work");
+        sessionStorage.setItem("baseUrl", "https://fm-uat-api.lockated.com");
         console.log("📝 Set default baseUrl in sessionStorage");
       }
 
@@ -203,7 +208,7 @@ export const MobileAssetPage = () => {
     };
 
     handleTokenAndFetchAssets();
-  }, [token, action, assetId]);
+  }, [token, assetId, isBreakdownPage]);
 
   useEffect(() => {
     if (assetId && assets.length > 0) {
@@ -275,18 +280,12 @@ export const MobileAssetPage = () => {
     );
   }
 
-  // Route based on action parameter
-  switch (action) {
-    case "details":
-      return selectedAsset ? (
-        <MobileAssetDetails asset={selectedAsset} />
-      ) : (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <p className="text-muted-foreground">Asset not found</p>
-        </div>
-      );
-
-    case "breakdown":
+  // Route based on URL structure
+  // If assetId is present, show details page
+  // If no assetId, show asset list
+  if (assetId) {
+    if (isBreakdownPage) {
+      // Show breakdown page when URL contains /breakdown
       return selectedAsset ? (
         <MobileAssetBreakdown asset={selectedAsset} />
       ) : (
@@ -294,15 +293,25 @@ export const MobileAssetPage = () => {
           <p className="text-muted-foreground">Asset not found</p>
         </div>
       );
-
-    default:
-      return (
-        <MobileAssetList
-          assets={assets || []}
-          onLoadMore={loadMoreAssets}
-          hasMore={hasMore}
-          loadingMore={loadingMore}
-        />
+    } else {
+      // Show details page when assetId is in URL (without /breakdown)
+      return selectedAsset ? (
+        <MobileAssetDetails asset={selectedAsset} />
+      ) : (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <p className="text-muted-foreground">Asset not found</p>
+        </div>
       );
+    }
   }
+
+  // Show asset list by default
+  return (
+    <MobileAssetList
+      assets={assets || []}
+      onLoadMore={loadMoreAssets}
+      hasMore={hasMore}
+      loadingMore={loadingMore}
+    />
+  );
 };

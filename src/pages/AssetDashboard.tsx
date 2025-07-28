@@ -521,7 +521,7 @@ export const AssetDashboard = () => {
       )}`;
       const url = getFullUrl(baseEndpoint);
 
-        console.log("Fetching category-wise assets from:", url);
+      console.log("Fetching category-wise assets from:", url);
 
       console.log("Fetching category-wise assets from:", url);
 
@@ -653,6 +653,8 @@ export const AssetDashboard = () => {
     assetGroup: asset.pms_asset_group || asset.asset_group || "",
     assetSubGroup: asset.sub_group || asset.asset_sub_group || "",
     assetType: asset.asset_type,
+    purchaseCost: asset.purchase_cost,
+    currentBookValue: asset.current_book_value
   }));
 
   const transformedSearchedAssets = searchAssets.map((asset, index) => ({
@@ -869,6 +871,8 @@ export const AssetDashboard = () => {
       name: asset.name,
     }));
 
+  console.log(selectedAssetObjects)
+
   const handleAddAsset = () => {
     navigate("/maintenance/asset/add");
   };
@@ -909,6 +913,7 @@ export const AssetDashboard = () => {
     const selectedAssetObjects = displayAssets.filter((asset) =>
       selectedAssets.includes(asset.id)
     );
+    console.log(selectedAssetObjects)
     navigate("/maintenance/asset/dispose", {
       state: { selectedAssets: selectedAssetObjects },
     });

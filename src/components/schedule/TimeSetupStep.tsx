@@ -65,7 +65,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
   const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   return (
-    <div className="bg-gray-50">
+    <div >
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-[#C72030] rounded-full flex items-center justify-center">

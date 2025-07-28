@@ -38,7 +38,7 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
   };
 
   const handleAssetClick = (assetId: number) => {
-    navigate(`/mobile/assets/${assetId}?action=details`);
+    navigate(`/mobile/assets/${assetId}`);
   };
 
   const formatDate = (dateString?: string) => {
