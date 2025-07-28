@@ -220,9 +220,15 @@ export const AddSurveyPage = () => {
                         
                         {(question.answerOptions || ['', '']).map((option, index) => (
                           <div key={index} className="flex items-center gap-2">
-                            <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center text-white text-xs font-medium">
-                              {String.fromCharCode(65 + index)}
-                            </div>
+                            <Select defaultValue="P">
+                              <SelectTrigger className="w-16">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="P">P</SelectItem>
+                                <SelectItem value="N">N</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <Input
                               placeholder="Answer Option"
                               value={option}
