@@ -135,7 +135,7 @@ export const AddSurveyPage = () => {
         }))
       };
 
-      const response = await apiClient.post('/pms/admin/snag_checklists/create_permit_checklist.json', requestData);
+      const response = await apiClient.post('/pms/admin/snag_checklists.json', requestData);
       console.log('Survey created successfully:', response.data);
       navigate('/maintenance/survey/list');
     } catch (error) {
