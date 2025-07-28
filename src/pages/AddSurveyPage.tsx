@@ -94,10 +94,10 @@ export const AddSurveyPage = () => {
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900">Add survey</h1>
+          <h1 className="text-2xl font-bold text-gray-900 uppercase tracking-wide">ADD SURVEY</h1>
         </div>
         
-        <div className="bg-white rounded-lg shadow-sm p-8">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
 
           {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -133,48 +133,55 @@ export const AddSurveyPage = () => {
 
           {/* Add Questions Section */}
           <div className="mb-8">
-            <div className="flex items-center gap-4 mb-6">
-              <h2 className="text-lg font-medium text-gray-900">Add No. of Questions</h2>
-              <div className="flex items-center gap-2">
-                <Select 
-                  value={numberOfQuestions.toString().padStart(2, '0')} 
-                  onValueChange={(value) => setNumberOfQuestions(parseInt(value))}
-                >
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
-                      <SelectItem key={num} value={num.toString().padStart(2, '0')}>
-                        {num.toString().padStart(2, '0')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={handleAddQuestion}
-                  size="sm"
-                  className="w-8 h-8 rounded-full bg-green-600 hover:bg-green-700 p-0"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
+            <div className="border-l-4 border-red-500 bg-red-50 p-4 rounded-r-lg mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                  <Plus className="w-4 h-4 text-white" />
+                </div>
+                <h2 className="text-lg font-bold text-red-600 uppercase tracking-wide">ADD NO. OF QUESTIONS</h2>
               </div>
-              <span className="text-gray-600">No. of Questions</span>
-              <span className="font-medium text-gray-900">{numberOfQuestions}</span>
+              <div className="flex items-center gap-4 mt-4">
+                <div className="flex items-center gap-2">
+                  <Select 
+                    value={numberOfQuestions.toString().padStart(2, '0')} 
+                    onValueChange={(value) => setNumberOfQuestions(parseInt(value))}
+                  >
+                    <SelectTrigger className="w-20 border-red-200 focus:border-red-500">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
+                        <SelectItem key={num} value={num.toString().padStart(2, '0')}>
+                          {num.toString().padStart(2, '0')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={handleAddQuestion}
+                    size="sm"
+                    className="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 p-0"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <span className="text-gray-600 font-medium">No. of Questions</span>
+                <span className="font-bold text-red-600">{numberOfQuestions}</span>
+              </div>
             </div>
 
             {/* Questions Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {questions.map((question) => (
-                <div key={question.id} className="border border-gray-200 rounded-lg p-4">
+                <div key={question.id} className="border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 bg-white">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium text-gray-900">New Question</h3>
+                    <h3 className="font-bold text-gray-900 uppercase tracking-wide">NEW QUESTION</h3>
                     {questions.length > 1 && (
                       <Button
                         onClick={() => handleRemoveQuestion(question.id)}
                         variant="ghost"
                         size="sm"
-                        className="text-red-500 hover:text-red-700 p-1"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded-full"
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -285,7 +292,7 @@ export const AddSurveyPage = () => {
               <Button
                 onClick={handleAddQuestion}
                 variant="outline"
-                className="border-dashed border-gray-300 hover:border-orange-400 hover:text-orange-600"
+                className="border-dashed border-red-300 hover:border-red-500 hover:text-red-600 hover:bg-red-50 font-medium"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add More Questions
@@ -297,14 +304,14 @@ export const AddSurveyPage = () => {
           <div className="flex justify-center gap-4 pt-6 border-t border-gray-200">
             <Button
               onClick={handleCreateSurvey}
-              className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-3 rounded-lg font-medium"
+              className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-bold uppercase tracking-wide"
             >
               Create Survey
             </Button>
             <Button
               onClick={handleProceed}
               variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-3 rounded-lg font-medium"
+              className="border-red-300 text-red-600 hover:bg-red-50 hover:border-red-500 px-8 py-3 rounded-lg font-bold uppercase tracking-wide"
             >
               Proceed
             </Button>
