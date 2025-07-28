@@ -1,3 +1,5 @@
+import { API_CONFIG } from '@/config/apiConfig';
+
 // Types for inventory analytics API responses
 export interface ItemsStatusData {
   info_active_items: string;
