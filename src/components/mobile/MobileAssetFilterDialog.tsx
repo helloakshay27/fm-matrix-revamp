@@ -682,11 +682,11 @@ export const MobileAssetFilterDialog: React.FC<MobileAssetFilterDialogProps> = (
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="In Use">In Use</SelectItem>
-                  <SelectItem value="Breakdown">Breakdown</SelectItem>
-                  <SelectItem value="In Store">In Store</SelectItem>
-                  <SelectItem value="Disposed">Disposed</SelectItem>
-                  <SelectItem value="Under Maintenance">Under Maintenance</SelectItem>
+                  <SelectItem value="in_use">In Use</SelectItem>
+                  <SelectItem value="breakdown">Breakdown</SelectItem>
+                  <SelectItem value="in_storage">In Store</SelectItem>
+                  <SelectItem value="disposed">Disposed</SelectItem>
+                  <SelectItem value="under_maintenance">Under Maintenance</SelectItem>
                 </SelectContent>
               </Select>
             </div>
