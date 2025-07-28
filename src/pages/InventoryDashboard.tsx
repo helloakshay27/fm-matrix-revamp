@@ -1694,7 +1694,7 @@ export const InventoryDashboard = () => {
         </TabsList>
 
         <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-end items-center gap-2">
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => setIsAnalyticsFilterOpen(true)}
@@ -1702,7 +1702,6 @@ export const InventoryDashboard = () => {
                 className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
               >
                 <Filter className="w-4 h-4" />
-                Filter Analytics
               </Button>
             </div>
             <InventoryAnalyticsSelector onSelectionChange={(options) => setSelectedAnalyticsOptions(options)} />
