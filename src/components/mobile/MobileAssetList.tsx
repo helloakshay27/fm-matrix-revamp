@@ -1,12 +1,12 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin, SlidersHorizontal } from "lucide-react";
 
 interface Asset {
-  id: string;
+  id: number;
   name: string;
-  assetNumber: string;
-  status: string;
+  assetNumber?: string;
+  status?: string;
   assetGroup?: string;
   assetSubGroup?: string;
   siteName?: string;
@@ -19,16 +19,24 @@ interface Asset {
 
 interface MobileAssetListProps {
   assets: Asset[];
+  onLoadMore?: () => Promise<void>;
+  hasMore?: boolean;
+  loadingMore?: boolean;
 }
 
-export const MobileAssetList: React.FC<MobileAssetListProps> = ({ assets }) => {
+export const MobileAssetList: React.FC<MobileAssetListProps> = ({ 
+  assets, 
+  onLoadMore, 
+  hasMore = false, 
+  loadingMore = false 
+}) => {
   const navigate = useNavigate();
 
   const handleBack = () => {
     navigate(-1);
   };
 
-  const handleAssetClick = (assetId: string) => {
+  const handleAssetClick = (assetId: number) => {
     navigate(`/mobile/assets/${assetId}?action=details`);
   };
 
@@ -63,6 +71,25 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({ assets }) => {
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
   };
+
+  // Handle infinite scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!onLoadMore || !hasMore || loadingMore) return;
+
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+      
+      // Load more when user is 100px from bottom
+      if (scrollTop + windowHeight >= documentHeight - 100) {
+        onLoadMore();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [onLoadMore, hasMore, loadingMore]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -155,6 +182,21 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({ assets }) => {
               <MapPin className="h-12 w-12 mx-auto" />
             </div>
             <p className="text-gray-500">No assets found</p>
+          </div>
+        )}
+
+        {/* Load More Indicator */}
+        {loadingMore && (
+          <div className="text-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4B003F] mx-auto"></div>
+            <p className="text-sm text-gray-500 mt-2">Loading more assets...</p>
+          </div>
+        )}
+
+        {/* End of List Indicator */}
+        {assets.length > 0 && !hasMore && !loadingMore && (
+          <div className="text-center py-4">
+            <p className="text-sm text-gray-500">No more assets to load</p>
           </div>
         )}
       </div>
