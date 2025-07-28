@@ -232,7 +232,7 @@ export const ScheduledTaskDashboard = () => {
         queryParams.append('q[checklist_or_asset_cont]', searchTerm);
       }
 
-      const apiUrl = getFullUrl(`/all_tasks_listing.json?show_all=true?${queryParams.toString()}`);
+      const apiUrl = getFullUrl(`/all_tasks_listing.json?show_all=true&${queryParams.toString()}`);
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
@@ -507,8 +507,8 @@ export const ScheduledTaskDashboard = () => {
                 <div
                   key={index}
                   className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer transition-all duration-200 ${selectedStatus === card.status
-                      ? 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
-                      : 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
+                    ? 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
+                    : 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
                     }`}
                   onClick={() => handleStatusCardClick(card.status)}
                 >
@@ -736,7 +736,7 @@ export const ScheduledTaskDashboard = () => {
                 className="flex items-center gap-2"
               >
                 <FilterIcon className="w-4 h-4" />
-                
+
               </Button>
               <TaskAnalyticsSelector
                 onSelectionChange={handleAnalyticsSelectionChange}
