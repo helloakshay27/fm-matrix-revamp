@@ -19,6 +19,7 @@ import { fetchFMUsers } from '@/store/slices/fmUserSlice'
 import { createResponseEscalation, clearState, fetchResponseEscalations, updateResponseEscalation, deleteResponseEscalation } from '@/store/slices/responseEscalationSlice'
 import { ResponseEscalationApiFormData, FMUserDropdown, EscalationMatrixPayload, ResponseEscalationGetResponse, UpdateResponseEscalationPayload } from '@/types/escalationMatrix'
 import { toast } from 'sonner'
+import ReactSelect from 'react-select'
 
 // Schema for form validation
 const responseEscalationSchema = z.object({
@@ -82,6 +83,10 @@ export const ResponseEscalationTab: React.FC = () => {
     ...user,
     displayName: `${user.firstname} ${user.lastname}`,
   })) || []
+
+  // Options for react-select
+  const categoryOptions = categoriesData?.helpdesk_categories?.map(cat => ({ value: cat.id, label: cat.name })) || []
+  const userOptions = fmUsers?.map(user => ({ value: user.id, label: user.displayName })) || []
 
   // Fetch data on component mount
   useEffect(() => {
@@ -282,17 +287,13 @@ export const ResponseEscalationTab: React.FC = () => {
 
   // Form submission
   const onSubmit = (data: ResponseEscalationFormData) => {
-    // Get society_id from localStorage (set by siteSlice)
-    const societyId = localStorage.getItem('selectedSiteId')
-    if (!societyId) {
-      toast.error('Site not selected. Please select a site first.')
-      return
-    }
+    // Get society_id from localStorage
+    const siteId = localStorage.getItem('siteId') || '2189';
 
     // Transform form data to API payload
     const payload: EscalationMatrixPayload = {
       complaint_worker: {
-        society_id: parseInt(societyId),
+        society_id: parseInt(siteId),
         esc_type: 'response',
         of_phase: 'pms',
         of_atype: 'Pms::Site',
@@ -307,6 +308,7 @@ export const ResponseEscalationTab: React.FC = () => {
       },
     }
 
+    console.log('Response escalation payload:', JSON.stringify(payload, null, 2));
     dispatch(createResponseEscalation(payload))
   }
 
@@ -322,40 +324,47 @@ export const ResponseEscalationTab: React.FC = () => {
             {/* Category Selection Dropdown */}
             <div className="space-y-3">
               <Label className="text-base font-semibold">Category Type</Label>
-              <Select
-                disabled={categoriesLoading || selectedCategories.length >= 15}
-                onValueChange={(value) => handleCategorySelect(parseInt(value))}
-              >
-                <SelectTrigger className="w-full bg-white">
-                  <SelectValue placeholder={
-                    categoriesLoading ? "Loading categories..." : 
-                    selectedCategories.length >= 15 ? "Maximum categories selected" :
-                    "Select up to 15 Options..."
-                  } />
-                </SelectTrigger>
-                <SelectContent className="bg-white z-50">
-                  {availableCategories.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Selected Categories */}
-              {selectedCategories.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {selectedCategories.map((categoryId) => (
-                    <Badge key={categoryId} variant="secondary" className="flex items-center gap-1">
-                      {getCategoryName(categoryId)}
-                      <X
-                        className="h-3 w-3 cursor-pointer"
-                        onClick={() => handleCategoryRemove(categoryId)}
-                      />
-                    </Badge>
-                  ))}
-                </div>
-              )}
+              <ReactSelect
+                isMulti
+                options={categoryOptions}
+                onChange={(selected) => {
+                  const newCategories = selected ? selected.map(s => s.value) : [];
+                  setSelectedCategories(newCategories);
+                  form.setValue('categoryIds', newCategories);
+                }}
+                value={categoryOptions.filter(option => selectedCategories.includes(option.value))}
+                className="mt-1"
+                placeholder="Select up to 15 categories..."
+                isLoading={categoriesLoading}
+                isDisabled={categoriesLoading}
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    minHeight: '40px',
+                    border: '1px solid #e2e8f0',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      border: '1px solid #cbd5e1'
+                    }
+                  }),
+                  multiValue: (base) => ({
+                    ...base,
+                    backgroundColor: '#f1f5f9'
+                  }),
+                  multiValueLabel: (base) => ({
+                    ...base,
+                    color: '#334155'
+                  }),
+                  multiValueRemove: (base) => ({
+                    ...base,
+                    color: '#64748b',
+                    '&:hover': {
+                      backgroundColor: '#e2e8f0',
+                      color: '#475569'
+                    }
+                  })
+                }}
+              />
 
               {form.formState.errors.categoryIds && (
                 <p className="text-sm text-destructive">{form.formState.errors.categoryIds.message}</p>
@@ -379,46 +388,38 @@ export const ResponseEscalationTab: React.FC = () => {
                           {level.toUpperCase()}
                         </TableCell>
                         <TableCell>
-                          <div className="space-y-2">
-                            <Select
-                              disabled={fmUsersLoading || selectedUsers[level].length >= 15}
-                              onValueChange={(value) => handleUserSelect(level, parseInt(value))}
-                            >
-                              <SelectTrigger className="w-full bg-white">
-                                <SelectValue placeholder={
-                                  fmUsersLoading ? "Loading users..." :
-                                  selectedUsers[level].length >= 15 ? "Maximum users selected" :
-                                  "Select up to 15 Options..."
-                                } />
-                              </SelectTrigger>
-                              <SelectContent className="bg-white z-50">
-                                {getAvailableUsers(level).map((user) => (
-                                  <SelectItem key={user.id} value={user.id.toString()}>
-                                    {user.displayName}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                          <ReactSelect
+                            isMulti
+                            options={userOptions}
+                            onChange={(selected) => {
+                              const newUsers = selected ? selected.map(s => s.value) : [];
+                              const updatedUsers = { ...selectedUsers, [level]: newUsers };
+                              setSelectedUsers(updatedUsers);
+                              form.setValue('escalationLevels', updatedUsers);
+                            }}
+                            value={userOptions.filter(option => selectedUsers[level].includes(option.value))}
+                            placeholder="Select up to 15 users..."
+                            isLoading={fmUsersLoading}
+                            isDisabled={fmUsersLoading}
+                            className="min-w-[250px]"
+                            styles={{
+                              control: (base) => ({
+                                ...base,
+                                minHeight: '32px',
+                                fontSize: '14px',
+                                border: 'none',
+                                boxShadow: 'none'
+                              }),
+                              multiValue: (base) => ({
+                                ...base,
+                                fontSize: '12px'
+                              })
+                            }}
+                          />
 
-                            {/* Selected Users */}
-                            {selectedUsers[level].length > 0 && (
-                              <div className="flex flex-wrap gap-1">
-                                {selectedUsers[level].map((userId) => (
-                                  <Badge key={userId} variant="outline" className="flex items-center gap-1 text-xs">
-                                    {getUserName(userId)}
-                                    <X
-                                      className="h-3 w-3 cursor-pointer"
-                                      onClick={() => handleUserRemove(level, userId)}
-                                    />
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-
-                            {form.formState.errors.escalationLevels?.[level] && (
-                              <p className="text-xs text-destructive">{form.formState.errors.escalationLevels[level]?.message}</p>
-                            )}
-                          </div>
+                          {form.formState.errors.escalationLevels?.[level] && (
+                            <p className="text-xs text-destructive">{form.formState.errors.escalationLevels[level]?.message}</p>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -609,40 +610,19 @@ export const ResponseEscalationTab: React.FC = () => {
                 <CardTitle>Category Selection</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Select
-                    disabled={categoriesLoading || selectedCategories.length >= 15}
-                    onValueChange={(value) => handleCategorySelect(parseInt(value))}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={
-                        categoriesLoading ? "Loading categories..." : 
-                        selectedCategories.length >= 15 ? "Maximum categories selected" :
-                        "Select a category"
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableCategories.map((category) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Selected Categories */}
-                <div className="flex flex-wrap gap-2">
-                  {selectedCategories.map((categoryId) => (
-                    <Badge key={categoryId} variant="secondary" className="flex items-center gap-1">
-                      {getCategoryName(categoryId)}
-                      <X
-                        className="h-3 w-3 cursor-pointer"
-                        onClick={() => handleCategoryRemove(categoryId)}
-                      />
-                    </Badge>
-                  ))}
-                </div>
+                <ReactSelect
+                  options={categoryOptions}
+                  value={categoryOptions.filter(option => selectedCategories.includes(option.value))}
+                  onChange={(selected) => {
+                    const newCategories = selected ? [selected.value] : [];
+                    setSelectedCategories(newCategories);
+                    form.setValue('categoryIds', newCategories);
+                  }}
+                  className="mt-1"
+                  placeholder="Select category..."
+                  isLoading={categoriesLoading}
+                  isDisabled={categoriesLoading}
+                />
               </CardContent>
             </Card>
 
@@ -658,40 +638,21 @@ export const ResponseEscalationTab: React.FC = () => {
                       {level.toUpperCase()} - Escalation Level {level.slice(1)}
                     </Label>
                     
-                    <div className="flex items-center space-x-2">
-                      <Select
-                        disabled={fmUsersLoading || selectedUsers[level].length >= 15}
-                        onValueChange={(value) => handleUserSelect(level, parseInt(value))}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder={
-                            fmUsersLoading ? "Loading users..." :
-                            selectedUsers[level].length >= 15 ? "Maximum users selected" :
-                            "Select a user"
-                          } />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getAvailableUsers(level).map((user) => (
-                            <SelectItem key={user.id} value={user.id.toString()}>
-                              {user.displayName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Selected Users */}
-                    <div className="flex flex-wrap gap-2">
-                      {selectedUsers[level].map((userId) => (
-                        <Badge key={userId} variant="outline" className="flex items-center gap-1">
-                          {getUserName(userId)}
-                          <X
-                            className="h-3 w-3 cursor-pointer"
-                            onClick={() => handleUserRemove(level, userId)}
-                          />
-                        </Badge>
-                      ))}
-                    </div>
+                    <ReactSelect
+                      isMulti
+                      options={userOptions}
+                      value={userOptions.filter(option => selectedUsers[level].includes(option.value))}
+                      onChange={(selected) => {
+                        const newUsers = selected ? selected.map(s => s.value) : [];
+                        const updatedUsers = { ...selectedUsers, [level]: newUsers };
+                        setSelectedUsers(updatedUsers);
+                        form.setValue('escalationLevels', updatedUsers);
+                      }}
+                      placeholder="Select up to 15 users..."
+                      isLoading={fmUsersLoading}
+                      isDisabled={fmUsersLoading}
+                      className="min-w-[250px]"
+                    />
                   </div>
                 ))}
               </CardContent>

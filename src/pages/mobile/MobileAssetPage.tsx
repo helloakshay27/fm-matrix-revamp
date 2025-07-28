@@ -45,7 +45,7 @@ const mobileAssetService = {
     try {
       // Get base URL from localStorage or use default
       let baseUrl =
-        localStorage.getItem("baseUrl") || "https://fm-uat-api.lockated.com";
+        localStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
 
       // Ensure baseUrl doesn't have trailing slash and starts with https://
       baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
@@ -124,14 +124,14 @@ export const MobileAssetPage = () => {
 
       // Set baseUrl if not already set
       if (!localStorage.getItem("baseUrl")) {
-        localStorage.setItem("baseUrl", "https://fm-uat-api.lockated.com");
+        localStorage.setItem("baseUrl", "https://oig-api.gophygital.work");
         console.log("📝 Set default baseUrl in localStorage");
       }
 
       if (token) {
-        // Store token in localStorage for future use
-        localStorage.setItem("mobile_token", token);
-        console.log("💾 Token stored in localStorage");
+        // Store token in localStorage for future use as mobile_token
+        // localStorage.setItem("mobile_token", token);
+        console.log("💾 Mobile token stored in localStorage");
 
         // Fetch assets using the token
         setLoading(true);

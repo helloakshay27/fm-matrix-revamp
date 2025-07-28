@@ -145,7 +145,7 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
 
         // Get base URL and ensure it's saved in the main auth system
         let baseUrl =
-          localStorage.getItem("baseUrl") || "https://fm-uat-api.lockated.com";
+          localStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
         baseUrl = baseUrl.replace(/\/$/, "");
         if (!baseUrl.startsWith("http")) {
           baseUrl = `https://${baseUrl}`;
