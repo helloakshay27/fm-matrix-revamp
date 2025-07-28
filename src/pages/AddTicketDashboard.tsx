@@ -87,7 +87,9 @@ export const AddTicketDashboard = () => {
     proactiveReactive: '',
     adminPriority: '',
     referenceNumber: '',
-    mode: ''
+    mode: '',
+    isGoldenTicket: false,
+    isFlagged: false
   });
 
   // Load initial data
@@ -297,6 +299,8 @@ export const AddTicketDashboard = () => {
         wing_id: 1,
         area_id: 1,
         floor_id: 1,
+        is_golden_ticket: formData.isGoldenTicket,
+        is_flagged: formData.isFlagged,
         // Add user parameters based on selection type
         ...(onBehalfOf === 'self' && userAccount?.id && { id_user: userAccount.id }),
         ...(onBehalfOf !== 'self' && selectedUserId && { 
@@ -487,6 +491,7 @@ export const AddTicketDashboard = () => {
                 <label htmlFor="suggestion" className="text-sm font-medium">Suggestion</label>
               </div>
             </RadioGroup>
+
 
             {/* Form fields in exact layout as per image */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

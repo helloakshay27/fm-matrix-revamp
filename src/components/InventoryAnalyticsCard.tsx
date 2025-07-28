@@ -1,23 +1,71 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+import { inventoryAnalyticsDownloadAPI } from '@/services/inventoryAnalyticsDownloadAPI';
+import { toast } from 'sonner';
 
 interface InventoryAnalyticsCardProps {
   title: string;
   data: any;
   type?: 'itemsStatus' | 'categoryWise' | 'greenConsumption' | 'consumptionReportGreen' | 'consumptionReportNonGreen' | 'currentMinimumStockNonGreen' | 'currentMinimumStockGreen';
   className?: string;
+  dateRange?: {
+    startDate: Date;
+    endDate: Date;
+  };
 }
 
 export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   title,
   data,
   type = 'itemsStatus',
-  className = ''
+  className = '',
+  dateRange
 }) => {
+  const [downloadLoading, setDownloadLoading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!dateRange) {
+      toast.error('Date range is required for download');
+      return;
+    }
+
+    setDownloadLoading(true);
+    try {
+      switch (type) {
+        case 'itemsStatus':
+          await inventoryAnalyticsDownloadAPI.downloadItemsStatusData(dateRange.startDate, dateRange.endDate);
+          toast.success('Items status data downloaded successfully');
+          break;
+        case 'categoryWise':
+          await inventoryAnalyticsDownloadAPI.downloadCategoryWiseData(dateRange.startDate, dateRange.endDate);
+          toast.success('Category wise data downloaded successfully');
+          break;
+        default:
+          toast.error('Download not available for this data type');
+      }
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast.error('Failed to download data');
+    } finally {
+      setDownloadLoading(false);
+    }
+  };
   if (!data) {
     return (
       <div className={`bg-white rounded-lg border border-gray-200 p-6 shadow-sm ${className}`}>
-        <h3 className="text-lg font-bold text-[#C72030] mb-4">{title}</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            disabled={downloadLoading || !dateRange}
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+        </div>
         <div className="flex items-center justify-center h-32 text-gray-500">
           No data available
         </div>
@@ -190,6 +238,14 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
     <div className={`bg-white rounded-lg border border-gray-200 p-6 shadow-sm ${className}`}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDownload}
+          disabled={downloadLoading || !dateRange}
+        >
+          <Download className="w-4 h-4" />
+        </Button>
       </div>
       {renderContent()}
     </div>
