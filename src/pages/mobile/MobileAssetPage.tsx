@@ -85,7 +85,7 @@ const mobileAssetService = {
       // Add filter parameters if provided
       if (filters) {
         if (filters.assetName) queryParams.append('q[name_cont]', filters.assetName);
-        if (filters.assetId) queryParams.append('q[asset_id_cont]', filters.assetId);
+        if (filters.assetId) queryParams.append('q[id_eq]', filters.assetId);
         if (filters.groupId) queryParams.append('q[pms_asset_group_id_eq]', filters.groupId);
         if (filters.subgroupId) queryParams.append('q[pms_asset_sub_group_id_eq]', filters.subgroupId);
         if (filters.siteId) queryParams.append('q[pms_site_id_eq]', filters.siteId);
