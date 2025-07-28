@@ -1,12 +1,12 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  ItemsStatusData, 
-  CategoryWiseData, 
+import {
+  ItemsStatusData,
+  CategoryWiseData,
   GreenConsumptionData,
   ConsumptionReportGreenData,
   ConsumptionReportNonGreenData,
-  MinimumStockData 
+  MinimumStockData
 } from '@/store/slices/inventoryAnalyticsSlice';
 import { Activity, Package, Leaf, BarChart3, AlertTriangle, CheckCircle } from 'lucide-react';
 
@@ -103,7 +103,7 @@ export function InventoryAnalyticsCards({
                       <td className="p-2 text-green-600">+{item.addition} {item.unit}</td>
                       <td className="p-2 text-red-600">-{item.consumption} {item.unit}</td>
                       <td className="p-2 text-[hsl(var(--analytics-text))] font-medium">{item.current_stock} {item.unit}</td>
-                      <td className="p-2 text-[hsl(var(--analytics-text))]">₹{item.cost.toLocaleString()}</td>
+                      <td className="p-2 text-[hsl(var(--analytics-text))]">{localStorage.getItem('currency')}{item.cost.toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>

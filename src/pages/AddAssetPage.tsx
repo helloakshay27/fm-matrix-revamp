@@ -24,7 +24,7 @@ const compressImage = async (file: File, maxWidth = 1200, quality = 0.8): Promis
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
-    
+
     img.onload = () => {
       // Calculate new dimensions
       let { width, height } = img;
@@ -32,10 +32,10 @@ const compressImage = async (file: File, maxWidth = 1200, quality = 0.8): Promis
         height = (height * maxWidth) / width;
         width = maxWidth;
       }
-      
+
       canvas.width = width;
       canvas.height = height;
-      
+
       // Draw and compress
       ctx?.drawImage(img, 0, 0, width, height);
       canvas.toBlob(
@@ -54,7 +54,7 @@ const compressImage = async (file: File, maxWidth = 1200, quality = 0.8): Promis
         quality
       );
     };
-    
+
     img.onerror = () => reject(new Error('Failed to load image'));
     img.src = URL.createObjectURL(file);
   });
@@ -70,10 +70,10 @@ const AssetImageUpload = ({ categoryName, categoryKey, onImageUpload, onImageRem
 }) => {
   const handleImageUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    
+
     const file = files[0]; // Only allow one image per asset
     const maxFileSize = 10 * 1024 * 1024; // 10MB
-    
+
     // Check file type
     if (!file.type.startsWith('image/')) {
       toast.error('Invalid File Type', {
@@ -81,7 +81,7 @@ const AssetImageUpload = ({ categoryName, categoryKey, onImageUpload, onImageRem
       });
       return;
     }
-    
+
     // Check file size
     if (file.size > maxFileSize) {
       toast.error('File Too Large', {
@@ -89,7 +89,7 @@ const AssetImageUpload = ({ categoryName, categoryKey, onImageUpload, onImageRem
       });
       return;
     }
-    
+
     try {
       // Compress image if needed
       const compressedFile = await compressImage(file, 1200, 0.8);
@@ -117,7 +117,7 @@ const AssetImageUpload = ({ categoryName, categoryKey, onImageUpload, onImageRem
     //       </span>
     //       {categoryName.toUpperCase()} ASSET IMAGE
     //     </div>
-        
+
     //     {/* <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
     //       {images.length > 0 ? (
     //         <div className="space-y-4">
@@ -414,12 +414,12 @@ const AddAssetPage = () => {
 
   const buildCustomFieldsPayload = () => {
     const result: Record<string, Record<string, string>> = {};
-    
+
     // Start with the default IT asset details (system_details and hardware)
     Object.entries(itAssetDetails).forEach(([section, fields]) => {
       result[section] = { ...fields };
     });
-    
+
     // Add any additional custom fields from itAssetsCustomFields
     Object.entries(itAssetsCustomFields).forEach(([section, fields]) => {
       // Map section names to the correct backend structure
@@ -432,7 +432,7 @@ const AddAssetPage = () => {
         // Fallback to snake_case conversion
         sectionKey = section.trim().toLowerCase().replace(/\s+/g, '_');
       }
-      
+
       if (!result[sectionKey]) {
         result[sectionKey] = {};
       }
@@ -442,7 +442,7 @@ const AddAssetPage = () => {
         result[sectionKey][fieldKey] = field.value;
       });
     });
-    
+
     return result;
   };
 
@@ -462,137 +462,137 @@ const AddAssetPage = () => {
     checkPreviousReading?: boolean;
   }
 
-//   const [attachments, setAttachments] = useState({
-//   landAttachments: [],
-//   manualsUpload: [],
-//   insuranceDetails: [],
-//   purchaseInvoice: [],
-//   amc: []
-// });
+  //   const [attachments, setAttachments] = useState({
+  //   landAttachments: [],
+  //   manualsUpload: [],
+  //   insuranceDetails: [],
+  //   purchaseInvoice: [],
+  //   amc: []
+  // });
 
-// Helper function to compress images
-const compressImage = (file: File, maxWidth = 1200, quality = 0.8): Promise<File> => {
-  return new Promise((resolve) => {
-    if (!file.type.startsWith('image/')) {
-      resolve(file);
-      return;
+  // Helper function to compress images
+  const compressImage = (file: File, maxWidth = 1200, quality = 0.8): Promise<File> => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith('image/')) {
+        resolve(file);
+        return;
+      }
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+
+      img.onload = () => {
+        const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: file.type,
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              resolve(file);
+            }
+          },
+          file.type,
+          quality
+        );
+      };
+
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleFileUpload = async (category: string, files: FileList | null) => {
+    if (!files) return;
+
+    const maxFileSize = 10 * 1024 * 1024; // 10MB per file
+    const maxTotalSize = 50 * 1024 * 1024; // 50MB total
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/jpg', 'image/png'];
+
+    const fileArray = Array.from(files);
+    const processedFiles: File[] = [];
+    let totalSize = 0;
+
+    // Calculate current total size
+    Object.values(attachments).forEach(fileList => {
+      if (Array.isArray(fileList)) {
+        fileList.forEach(file => {
+          totalSize += file.size || 0;
+        });
+      }
+    });
+
+    // Validate and compress each file
+    for (const file of fileArray) {
+      // Check file type
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Unsupported File Format', {
+          description: `File "${file.name}" is not supported. Please upload PDF, DOC, DOCX, JPG, JPEG, or PNG files only.`,
+        });
+        continue;
+      }
+
+      // Compress image files
+      let processedFile = file;
+      if (file.type.startsWith('image/')) {
+        try {
+          processedFile = await compressImage(file);
+          console.log(`Compressed ${file.name}: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(processedFile.size / 1024 / 1024).toFixed(2)}MB`);
+        } catch (error) {
+          console.warn(`Failed to compress ${file.name}, using original file:`, error);
+          processedFile = file;
+        }
+      }
+
+      // Check individual file size (after compression)
+      if (processedFile.size > maxFileSize) {
+        toast.error('File Too Large', {
+          description: `File "${file.name}" is too large (${(processedFile.size / 1024 / 1024).toFixed(2)}MB). Maximum file size is 10MB.`,
+        });
+        continue;
+      }
+
+      // Check total size
+      if (totalSize + processedFile.size > maxTotalSize) {
+        toast.error('Upload Limit Exceeded', {
+          description: `Adding "${file.name}" would exceed the total upload limit of 50MB. Please remove some files first.`,
+        });
+        continue;
+      }
+
+      totalSize += processedFile.size;
+      processedFiles.push(processedFile);
     }
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
+    if (processedFiles.length > 0) {
+      setAttachments(prev => ({
+        ...prev,
+        [category]: [...(prev[category] || []), ...processedFiles]
+      }));
 
-    img.onload = () => {
-      const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
-      canvas.width = img.width * ratio;
-      canvas.height = img.height * ratio;
-
-      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            const compressedFile = new File([blob], file.name, {
-              type: file.type,
-              lastModified: Date.now(),
-            });
-            resolve(compressedFile);
-          } else {
-            resolve(file);
-          }
-        },
-        file.type,
-        quality
-      );
-    };
-
-    img.src = URL.createObjectURL(file);
-  });
-};
-
-const handleFileUpload = async (category: string, files: FileList | null) => {
-  if (!files) return;
-  
-  const maxFileSize = 10 * 1024 * 1024; // 10MB per file
-  const maxTotalSize = 50 * 1024 * 1024; // 50MB total
-  const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/jpg', 'image/png'];
-  
-  const fileArray = Array.from(files);
-  const processedFiles: File[] = [];
-  let totalSize = 0;
-  
-  // Calculate current total size
-  Object.values(attachments).forEach(fileList => {
-    if (Array.isArray(fileList)) {
-      fileList.forEach(file => {
-        totalSize += file.size || 0;
-      });
-    }
-  });
-  
-  // Validate and compress each file
-  for (const file of fileArray) {
-    // Check file type
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Unsupported File Format', {
-        description: `File "${file.name}" is not supported. Please upload PDF, DOC, DOCX, JPG, JPEG, or PNG files only.`,
-      });
-      continue;
-    }
-    
-    // Compress image files
-    let processedFile = file;
-    if (file.type.startsWith('image/')) {
-      try {
-        processedFile = await compressImage(file);
-        console.log(`Compressed ${file.name}: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(processedFile.size / 1024 / 1024).toFixed(2)}MB`);
-      } catch (error) {
-        console.warn(`Failed to compress ${file.name}, using original file:`, error);
-        processedFile = file;
+      // Show success message
+      if (processedFiles.length === 1) {
+        console.log(`Successfully added "${processedFiles[0].name}"`);
+      } else {
+        console.log(`Successfully added ${processedFiles.length} files`);
       }
     }
-    
-    // Check individual file size (after compression)
-    if (processedFile.size > maxFileSize) {
-      toast.error('File Too Large', {
-        description: `File "${file.name}" is too large (${(processedFile.size / 1024 / 1024).toFixed(2)}MB). Maximum file size is 10MB.`,
-      });
-      continue;
-    }
-    
-    // Check total size
-    if (totalSize + processedFile.size > maxTotalSize) {
-      toast.error('Upload Limit Exceeded', {
-        description: `Adding "${file.name}" would exceed the total upload limit of 50MB. Please remove some files first.`,
-      });
-      continue;
-    }
-    
-    totalSize += processedFile.size;
-    processedFiles.push(processedFile);
-  }
-  
-  if (processedFiles.length > 0) {
+  };
+
+  const removeFile = (category, index) => {
     setAttachments(prev => ({
       ...prev,
-      [category]: [...(prev[category] || []), ...processedFiles]
+      [category]: prev[category].filter((_, i) => i !== index)
     }));
-    
-    // Show success message
-    if (processedFiles.length === 1) {
-      console.log(`Successfully added "${processedFiles[0].name}"`);
-    } else {
-      console.log(`Successfully added ${processedFiles.length} files`);
-    }
-  }
-};
-
-const removeFile = (category, index) => {
-  setAttachments(prev => ({
-    ...prev,
-    [category]: prev[category].filter((_, i) => i !== index)
-  }));
-};
+  };
 
   const [meterUnitTypes, setMeterUnitTypes] = useState<Array<{ id: number; unit_name: string }>>([]);
   const [loadingUnitTypes, setLoadingUnitTypes] = useState(false);
@@ -685,84 +685,84 @@ const removeFile = (category, index) => {
 
   console.log('It Assets Custom Fields:', itAssetsCustomFields);
 
-const [attachments, setAttachments] = useState({
-  // Category-specific attachments (existing category documents)
-  landAttachments: [],           // Land documents  
-  vehicleAttachments: [],        // Vehicle documents (RC, insurance, etc.)
-  leaseholdAttachments: [],      // Leasehold improvement documents
-  buildingAttachments: [],       // Building documents
-  furnitureAttachments: [],      // Furniture & Fixtures documents
-  itEquipmentAttachments: [],    // IT Equipment documents
-  machineryAttachments: [],      // Machinery & Equipment documents
-  toolsAttachments: [],          // Tools & Instruments documents
-  meterAttachments: [],          // Meter documents
-  
-  // Common sections for all categories - Asset Manuals
-  landManualsUpload: [],             // Land - Asset manuals
-  vehicleManualsUpload: [],          // Vehicle - Asset manuals
-  leaseholdimprovementManualsUpload: [], // Leasehold Improvement - Asset manuals
-  buildingManualsUpload: [],         // Building - Asset manuals
-  furniturefixturesManualsUpload: [], // Furniture & Fixtures - Asset manuals
-  itequipmentManualsUpload: [],      // IT Equipment - Asset manuals
-  machineryequipmentManualsUpload: [], // Machinery & Equipment - Asset manuals
-  toolsinstrumentsManualsUpload: [], // Tools & Instruments - Asset manuals
-  meterManualsUpload: [],            // Meter - Asset manuals
-  
-  // Common sections for all categories - Insurance Details
-  landInsuranceDetails: [],          // Land - Insurance documents
-  vehicleInsuranceDetails: [],       // Vehicle - Insurance documents
-  leaseholdimprovementInsuranceDetails: [], // Leasehold Improvement - Insurance documents
-  buildingInsuranceDetails: [],      // Building - Insurance documents
-  furniturefixturesInsuranceDetails: [], // Furniture & Fixtures - Insurance documents
-  itequipmentInsuranceDetails: [],   // IT Equipment - Insurance documents
-  machineryequipmentInsuranceDetails: [], // Machinery & Equipment - Insurance documents
-  toolsinstrumentsInsuranceDetails: [], // Tools & Instruments - Insurance documents
-  meterInsuranceDetails: [],         // Meter - Insurance documents
-  
-  // Common sections for all categories - Purchase Invoices
-  landPurchaseInvoice: [],           // Land - Purchase invoices
-  vehiclePurchaseInvoice: [],        // Vehicle - Purchase invoices
-  leaseholdimprovementPurchaseInvoice: [], // Leasehold Improvement - Purchase invoices
-  buildingPurchaseInvoice: [],       // Building - Purchase invoices
-  furniturefixturesPurchaseInvoice: [], // Furniture & Fixtures - Purchase invoices
-  itequipmentPurchaseInvoice: [],    // IT Equipment - Purchase invoices
-  machineryequipmentPurchaseInvoice: [], // Machinery & Equipment - Purchase invoices
-  toolsinstrumentsPurchaseInvoice: [], // Tools & Instruments - Purchase invoices
-  meterPurchaseInvoice: [],          // Meter - Purchase invoices
-  
-  // Common sections for all categories - Other Documents
-  landOtherDocuments: [],            // Land - Other documents
-  vehicleOtherDocuments: [],         // Vehicle - Other documents
-  leaseholdimprovementOtherDocuments: [], // Leasehold Improvement - Other documents
-  buildingOtherDocuments: [],        // Building - Other documents
-  furniturefixturesOtherDocuments: [], // Furniture & Fixtures - Other documents
-  itequipmentOtherDocuments: [],     // IT Equipment - Other documents
-  machineryequipmentOtherDocuments: [], // Machinery & Equipment - Other documents
-  toolsinstrumentsOtherDocuments: [], // Tools & Instruments - Other documents
-  meterOtherDocuments: [],           // Meter - Other documents
-  
-  // AMC documents for all categories
-  landAmc: [],                       // Land - AMC documents
-  vehicleAmc: [],                    // Vehicle - AMC documents
-  leaseholdimprovementAmc: [],       // Leasehold Improvement - AMC documents
-  buildingAmc: [],                   // Building - AMC documents
-  furniturefixturesAmc: [],          // Furniture & Fixtures - AMC documents
-  itequipmentAmc: [],                // IT Equipment - AMC documents
-  machineryequipmentAmc: [],         // Machinery & Equipment - AMC documents
-  toolsinstrumentsAmc: [],           // Tools & Instruments - AMC documents
-  meterAmc: [],                      // Meter - AMC documents
-  
-  // Asset images for each category
-  landAssetImage: [],
-  vehicleAssetImage: [],
-  leaseholdimprovementAssetImage: [],
-  buildingAssetImage: [],
-  furniturefixturesAssetImage: [],
-  itequipmentAssetImage: [],
-  machineryequipmentAssetImage: [],
-  toolsinstrumentsAssetImage: [],
-  meterAssetImage: []
-});
+  const [attachments, setAttachments] = useState({
+    // Category-specific attachments (existing category documents)
+    landAttachments: [],           // Land documents  
+    vehicleAttachments: [],        // Vehicle documents (RC, insurance, etc.)
+    leaseholdAttachments: [],      // Leasehold improvement documents
+    buildingAttachments: [],       // Building documents
+    furnitureAttachments: [],      // Furniture & Fixtures documents
+    itEquipmentAttachments: [],    // IT Equipment documents
+    machineryAttachments: [],      // Machinery & Equipment documents
+    toolsAttachments: [],          // Tools & Instruments documents
+    meterAttachments: [],          // Meter documents
+
+    // Common sections for all categories - Asset Manuals
+    landManualsUpload: [],             // Land - Asset manuals
+    vehicleManualsUpload: [],          // Vehicle - Asset manuals
+    leaseholdimprovementManualsUpload: [], // Leasehold Improvement - Asset manuals
+    buildingManualsUpload: [],         // Building - Asset manuals
+    furniturefixturesManualsUpload: [], // Furniture & Fixtures - Asset manuals
+    itequipmentManualsUpload: [],      // IT Equipment - Asset manuals
+    machineryequipmentManualsUpload: [], // Machinery & Equipment - Asset manuals
+    toolsinstrumentsManualsUpload: [], // Tools & Instruments - Asset manuals
+    meterManualsUpload: [],            // Meter - Asset manuals
+
+    // Common sections for all categories - Insurance Details
+    landInsuranceDetails: [],          // Land - Insurance documents
+    vehicleInsuranceDetails: [],       // Vehicle - Insurance documents
+    leaseholdimprovementInsuranceDetails: [], // Leasehold Improvement - Insurance documents
+    buildingInsuranceDetails: [],      // Building - Insurance documents
+    furniturefixturesInsuranceDetails: [], // Furniture & Fixtures - Insurance documents
+    itequipmentInsuranceDetails: [],   // IT Equipment - Insurance documents
+    machineryequipmentInsuranceDetails: [], // Machinery & Equipment - Insurance documents
+    toolsinstrumentsInsuranceDetails: [], // Tools & Instruments - Insurance documents
+    meterInsuranceDetails: [],         // Meter - Insurance documents
+
+    // Common sections for all categories - Purchase Invoices
+    landPurchaseInvoice: [],           // Land - Purchase invoices
+    vehiclePurchaseInvoice: [],        // Vehicle - Purchase invoices
+    leaseholdimprovementPurchaseInvoice: [], // Leasehold Improvement - Purchase invoices
+    buildingPurchaseInvoice: [],       // Building - Purchase invoices
+    furniturefixturesPurchaseInvoice: [], // Furniture & Fixtures - Purchase invoices
+    itequipmentPurchaseInvoice: [],    // IT Equipment - Purchase invoices
+    machineryequipmentPurchaseInvoice: [], // Machinery & Equipment - Purchase invoices
+    toolsinstrumentsPurchaseInvoice: [], // Tools & Instruments - Purchase invoices
+    meterPurchaseInvoice: [],          // Meter - Purchase invoices
+
+    // Common sections for all categories - Other Documents
+    landOtherDocuments: [],            // Land - Other documents
+    vehicleOtherDocuments: [],         // Vehicle - Other documents
+    leaseholdimprovementOtherDocuments: [], // Leasehold Improvement - Other documents
+    buildingOtherDocuments: [],        // Building - Other documents
+    furniturefixturesOtherDocuments: [], // Furniture & Fixtures - Other documents
+    itequipmentOtherDocuments: [],     // IT Equipment - Other documents
+    machineryequipmentOtherDocuments: [], // Machinery & Equipment - Other documents
+    toolsinstrumentsOtherDocuments: [], // Tools & Instruments - Other documents
+    meterOtherDocuments: [],           // Meter - Other documents
+
+    // AMC documents for all categories
+    landAmc: [],                       // Land - AMC documents
+    vehicleAmc: [],                    // Vehicle - AMC documents
+    leaseholdimprovementAmc: [],       // Leasehold Improvement - AMC documents
+    buildingAmc: [],                   // Building - AMC documents
+    furniturefixturesAmc: [],          // Furniture & Fixtures - AMC documents
+    itequipmentAmc: [],                // IT Equipment - AMC documents
+    machineryequipmentAmc: [],         // Machinery & Equipment - AMC documents
+    toolsinstrumentsAmc: [],           // Tools & Instruments - AMC documents
+    meterAmc: [],                      // Meter - AMC documents
+
+    // Asset images for each category
+    landAssetImage: [],
+    vehicleAssetImage: [],
+    leaseholdimprovementAssetImage: [],
+    buildingAssetImage: [],
+    furniturefixturesAssetImage: [],
+    itequipmentAssetImage: [],
+    machineryequipmentAssetImage: [],
+    toolsinstrumentsAssetImage: [],
+    meterAssetImage: []
+  });
   const [selectedAssetCategory, setSelectedAssetCategory] = useState('');
 
   const handleGoBack = () => {
@@ -892,15 +892,15 @@ const [attachments, setAttachments] = useState({
   const handleFieldChange: HandleFieldChangeFn = (field, value) => {
     // Clear validation errors when user starts typing
     if (validationErrors.length > 0) {
-      const fieldErrorExists = validationErrors.some(error => 
+      const fieldErrorExists = validationErrors.some(error =>
         error.toLowerCase().includes(field.toLowerCase()) ||
         (field === 'name' && error.includes('Asset Name')) ||
         (field === 'model_number' && error.includes('Model No')) ||
         (field === 'manufacturer' && error.includes('Manufacturer'))
       );
-      
+
       if (fieldErrorExists) {
-        setValidationErrors(prev => prev.filter(error => 
+        setValidationErrors(prev => prev.filter(error =>
           !error.toLowerCase().includes(field.toLowerCase()) &&
           !(field === 'name' && error.includes('Asset Name')) &&
           !(field === 'model_number' && error.includes('Model No')) &&
@@ -913,7 +913,7 @@ const [attachments, setAttachments] = useState({
     if (field === 'warranty_expiry' && value) {
       const purchaseDate = new Date(formData.purchased_on);
       const warrantyDate = new Date(value);
-      
+
       if (formData.purchased_on && warrantyDate < purchaseDate) {
         toast.error('Invalid Warranty Date', {
           description: 'Warranty expiry date cannot be before the purchase date.',
@@ -927,7 +927,7 @@ const [attachments, setAttachments] = useState({
     if (field === 'purchased_on' && value) {
       const purchaseDate = new Date(value);
       const warrantyDate = new Date(formData.warranty_expiry);
-      
+
       if (formData.warranty_expiry && warrantyDate < purchaseDate) {
         toast.error('Invalid Purchase Date', {
           description: 'Purchase date cannot be after the warranty expiry date.',
@@ -1013,7 +1013,7 @@ const [attachments, setAttachments] = useState({
   const buildExtraFieldsAttributes = () => {
     let extraFields = [];
     console.log('Building extra fields attributes...', customFields);
-    
+
     // Custom fields
     Object.keys(customFields).forEach(sectionKey => {
       (customFields[sectionKey] || []).forEach(field => {
@@ -1048,7 +1048,7 @@ const [attachments, setAttachments] = useState({
         if (fieldObj.value && (fieldObj.value as any) instanceof Date) {
           processedValue = ((fieldObj.value as unknown) as Date).toISOString();
         }
-        
+
         extraFields.push({
           field_name: key,
           field_value: processedValue,
@@ -1162,7 +1162,7 @@ const [attachments, setAttachments] = useState({
     fetchUsers();
     fetchMeterUnitTypes();
   }, []);
-  
+
   // Fetch meter unit types
   const fetchMeterUnitTypes = async () => {
     try {
@@ -1483,7 +1483,7 @@ const [attachments, setAttachments] = useState({
 
     // Get the validation rules for the current category
     const baseValidationRules = {
-      baseFields: ['name','asset_code'],
+      baseFields: ['name', 'asset_code'],
       groupFields: ['pms_asset_group_id', 'pms_asset_sub_group_id'],
       purchaseFields: ['purchase_cost', 'purchased_on'],
       // datesFields: ['commisioning_date'],
@@ -1573,8 +1573,8 @@ const [attachments, setAttachments] = useState({
 
     switch (sectionType) {
       case 'basic':
-        return checkFieldsCompleted(rules.baseFields || []) && 
-               checkFieldsCompleted(rules.categorySpecificFields || [], true);
+        return checkFieldsCompleted(rules.baseFields || []) &&
+          checkFieldsCompleted(rules.categorySpecificFields || [], true);
       case 'group':
         return checkFieldsCompleted(rules.groupFields || []);
       case 'location':
@@ -1593,8 +1593,8 @@ const [attachments, setAttachments] = useState({
   // Function to get completion status icon
   const getCompletionStatusIcon = (sectionType: string) => {
     const isCompleted = isSectionCompleted(sectionType);
-    return isCompleted ? 
-      <CheckCircle className="w-4 h-4 text-green-600" /> : 
+    return isCompleted ?
+      <CheckCircle className="w-4 h-4 text-green-600" /> :
       <div className="w-4 h-4 border-2 border-gray-300 rounded-full"></div>;
   };
 
@@ -1648,9 +1648,9 @@ const [attachments, setAttachments] = useState({
   // Helper function to get category-specific attachment arrays
   const getCategoryAttachments = () => {
     if (!selectedAssetCategory) return {};
-    
+
     const categoryKey = selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '');
-    
+
     return {
       asset_image: attachments[`${categoryKey}AssetImage`] || [],
       asset_manuals: attachments[`${categoryKey}ManualsUpload`] || [],
@@ -1754,7 +1754,7 @@ const [attachments, setAttachments] = useState({
 
     // Get validation rules for current category
     const currentCategoryRules = categoryValidationRules[selectedAssetCategory];
-    
+
     if (!currentCategoryRules) {
       toast.error('Category Not Selected', {
         description: 'Please select an asset category to continue.',
@@ -1774,7 +1774,7 @@ const [attachments, setAttachments] = useState({
       purchased_on: 'Purchase Date',
       commisioning_date: 'Commissioning Date',
       warranty_expiry: 'Warranty Expiry Date',
-      
+
       // Location fields
       site: 'Site',
       building: 'Building',
@@ -1788,20 +1788,20 @@ const [attachments, setAttachments] = useState({
       land_type: 'Land Type',
       location: 'Location',
       land_area: 'Area (sq ft)', // Using land_area to avoid conflict
-      
+
       // Building fields
       building_type: 'Building Type',
       built_up_area: 'Built-up Area (sq ft)',
-      
+
       // Leasehold Improvement fields
       improvement_description: 'Improvement Description',
       location_site: 'Location Site',
-      
+
       // Vehicle fields
       vehicle_type: 'Vehicle Type',
       make_model: 'Make & Model',
       registration_number: 'Registration Number',
-      
+
       // Generic fallback
       model_number: 'Model Number',
       manufacturer: 'Manufacturer'
@@ -1834,13 +1834,13 @@ const [attachments, setAttachments] = useState({
 
     // 2. Validate group fields
     // for (const field of currentCategoryRules.groupFields) {
-      // if (field === 'pms_asset_group_id' && !selectedGroup) {
-      //   toast.error(`${fieldDisplayNames[field]} Required`, {
-      //     description: `Please select an asset ${fieldDisplayNames[field].toLowerCase()} to continue.`,
-      //     duration: 4000,
-      //   });
-      //   return [`${fieldDisplayNames[field]} is required`];
-      // }
+    // if (field === 'pms_asset_group_id' && !selectedGroup) {
+    //   toast.error(`${fieldDisplayNames[field]} Required`, {
+    //     description: `Please select an asset ${fieldDisplayNames[field].toLowerCase()} to continue.`,
+    //     duration: 4000,
+    //   });
+    //   return [`${fieldDisplayNames[field]} is required`];
+    // }
     //   if (field === 'pms_asset_sub_group_id' && !formData[field]) {
     //     toast.error(`${fieldDisplayNames[field]} Required`, {
     //       description: `Please select an asset ${fieldDisplayNames[field].toLowerCase()} to continue.`,
@@ -1900,7 +1900,7 @@ const [attachments, setAttachments] = useState({
     // 7. Validate category-specific required fields from assetFieldsConfig
     for (const fieldName of currentCategoryRules.categorySpecificFields || []) {
       const displayName = fieldDisplayNames[fieldName] || fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-      
+
       // Check if field is in extraFormFields (dynamic fields from the category forms)
       const validationError = validateExtraField(fieldName, displayName);
       if (validationError.length > 0) {
@@ -1972,11 +1972,11 @@ const [attachments, setAttachments] = useState({
     }
 
     // AMC Details validation (if any AMC field is filled, all are required)
-    if (formData.amc_detail.supplier_id || 
-        formData.amc_detail.amc_start_date || 
-        formData.amc_detail.amc_end_date || 
-        formData.amc_detail.amc_cost) {
-      
+    if (formData.amc_detail.supplier_id ||
+      formData.amc_detail.amc_start_date ||
+      formData.amc_detail.amc_end_date ||
+      formData.amc_detail.amc_cost) {
+
       if (!formData.amc_detail.supplier_id) {
         toast.error('AMC Vendor Required', {
           description: 'Please select an AMC vendor since AMC details are being filled.',
@@ -2014,7 +2014,7 @@ const [attachments, setAttachments] = useState({
     if (formData.warranty_expiry && formData.purchased_on) {
       const purchaseDate = new Date(formData.purchased_on);
       const warrantyDate = new Date(formData.warranty_expiry);
-      
+
       if (warrantyDate < purchaseDate) {
         toast.error('Invalid Warranty Date', {
           description: 'Warranty expiry date cannot be before the purchase date.',
@@ -2032,7 +2032,7 @@ const [attachments, setAttachments] = useState({
     // Validate mandatory fields one by one
     const validationErrors = validateMandatoryFields();
     setValidationErrors(validationErrors);
-    
+
     if (validationErrors.length > 0) {
       // Since we're showing individual toasts in validateMandatoryFields, 
       // we just need to scroll to the first error field and return
@@ -2051,354 +2051,354 @@ const [attachments, setAttachments] = useState({
 
     // Clear validation errors if all fields are valid
     setValidationErrors([]);
-    
+
     // Show success message before proceeding
     toast.success('Validation Complete', {
       description: 'All required fields are filled. Creating asset...',
       duration: 2000,
     });
-  // Build the complete payload
-  const payload = {
-    pms_asset: {
-      // Basic asset fields
-      name: formData.name,
-      asset_number: formData.asset_number,
-      model_number: formData.model_number,
-      serial_number: formData.serial_number,
-      manufacturer: formData.manufacturer,
-      status: formData.status,
-      critical: formData.critical,
-      breakdown: formData.breakdown,
-      
-      // Location fields
-      pms_site_id: selectedLocation.site,
-      pms_building_id: selectedLocation.building,
-      pms_wing_id: selectedLocation.wing,
-      pms_area_id: selectedLocation.area,
-      pms_floor_id: selectedLocation.floor,
-      pms_room_id: selectedLocation.room,
-      
-      // Vendor and supplier fields
-      loaned_from_vendor_id: formData.loaned_from_vendor_id,
-      pms_supplier_id: formData.pms_supplier_id,
-      
-      // Dates
-      agreement_from_date: formData.agreement_from_date,
-      agreement_to_date: formData.agreement_to_date,
-      commisioning_date: formData.commisioning_date,
-      purchased_on: formData.purchased_on,
-      warranty_expiry: formData.warranty_expiry,
-      
-      // Asset grouping
-      pms_asset_group_id: formData.pms_asset_group_id,
-      pms_asset_sub_group_id: formData.pms_asset_sub_group_id,
-      
-      // Financial fields
-      salvage_value: formData.salvage_value,
-      depreciation_rate: formData.depreciation_rate,
-      depreciation_method: formData.depreciation_method,
-      useful_life: formData.useful_life,
-      purchase_cost: formData.purchase_cost,
-      
-      // Asset type flags
-      it_asset: formData.it_asset,
-      it_meter: formData.it_meter,
-      is_meter: formData.is_meter,
-      asset_loaned: formData.asset_loaned,
-      depreciation_applicable: formData.depreciation_applicable,
-      
-      // Meter fields
-      meter_tag_type: formData.meter_tag_type,
-      parent_meter_id: formData.parent_meter_id,
-      
-      // Warranty
-      warranty: formData.warranty,
-      warranty_period: formData.warranty_period,
-      
-      // Other fields
-      depreciation_applicable_for: formData.depreciation_applicable_for,
-      indiv_group: formData.indiv_group,
-      allocation_type: formData.allocation_type,
-      
-      // Array fields
-      asset_ids: formData.asset_ids,
-      
-      // Single allocation field
-      allocation_id: formData.allocation_id,
-      
-      // Nested objects
-      asset_move_to: formData.asset_move_to,
-      amc_detail: formData.amc_detail,
-      
-      // IT Asset custom fields (as nested object)
-      custom_fields: buildCustomFieldsPayload(),
-      
-      // Extra fields for other categories (as array)
-      extra_fields_attributes: buildExtraFieldsAttributes(),
-      
-      // Meter measures
-      consumption_pms_asset_measures_attributes: consumptionMeasureFields.map(field => ({
-        name: field.name,
-        meter_unit_id: field.unitType,
-        min_value: field.min,
-        max_value: field.max,
-        alert_below: field.alertBelowVal,
-        alert_above: field.alertAboveVal,
-        multiplier_factor: field.multiplierFactor,
-        active: true,
-        meter_tag: "Consumption",
-        check_previous_reading: field.checkPreviousReading || false,
-        _destroy: false
-      })),
-      
-      non_consumption_pms_asset_measures_attributes: nonConsumptionMeasureFields.map(field => ({
-        name: field.name,
-        meter_unit_id: field.unitType,
-        min_value: field.min,
-        max_value: field.max,
-        alert_below: field.alertBelowVal,
-        alert_above: field.alertAboveVal,
-        multiplier_factor: field.multiplierFactor,
-        active: true,
-        meter_tag: "Non Consumption",
-        check_previous_reading: field.checkPreviousReading || false,
-        _destroy: false
-      })),
-      
-      // Category-specific file attachments
-      ...getCategoryAttachments()
+    // Build the complete payload
+    const payload = {
+      pms_asset: {
+        // Basic asset fields
+        name: formData.name,
+        asset_number: formData.asset_number,
+        model_number: formData.model_number,
+        serial_number: formData.serial_number,
+        manufacturer: formData.manufacturer,
+        status: formData.status,
+        critical: formData.critical,
+        breakdown: formData.breakdown,
+
+        // Location fields
+        pms_site_id: selectedLocation.site,
+        pms_building_id: selectedLocation.building,
+        pms_wing_id: selectedLocation.wing,
+        pms_area_id: selectedLocation.area,
+        pms_floor_id: selectedLocation.floor,
+        pms_room_id: selectedLocation.room,
+
+        // Vendor and supplier fields
+        loaned_from_vendor_id: formData.loaned_from_vendor_id,
+        pms_supplier_id: formData.pms_supplier_id,
+
+        // Dates
+        agreement_from_date: formData.agreement_from_date,
+        agreement_to_date: formData.agreement_to_date,
+        commisioning_date: formData.commisioning_date,
+        purchased_on: formData.purchased_on,
+        warranty_expiry: formData.warranty_expiry,
+
+        // Asset grouping
+        pms_asset_group_id: formData.pms_asset_group_id,
+        pms_asset_sub_group_id: formData.pms_asset_sub_group_id,
+
+        // Financial fields
+        salvage_value: formData.salvage_value,
+        depreciation_rate: formData.depreciation_rate,
+        depreciation_method: formData.depreciation_method,
+        useful_life: formData.useful_life,
+        purchase_cost: formData.purchase_cost,
+
+        // Asset type flags
+        it_asset: formData.it_asset,
+        it_meter: formData.it_meter,
+        is_meter: formData.is_meter,
+        asset_loaned: formData.asset_loaned,
+        depreciation_applicable: formData.depreciation_applicable,
+
+        // Meter fields
+        meter_tag_type: formData.meter_tag_type,
+        parent_meter_id: formData.parent_meter_id,
+
+        // Warranty
+        warranty: formData.warranty,
+        warranty_period: formData.warranty_period,
+
+        // Other fields
+        depreciation_applicable_for: formData.depreciation_applicable_for,
+        indiv_group: formData.indiv_group,
+        allocation_type: formData.allocation_type,
+
+        // Array fields
+        asset_ids: formData.asset_ids,
+
+        // Single allocation field
+        allocation_id: formData.allocation_id,
+
+        // Nested objects
+        asset_move_to: formData.asset_move_to,
+        amc_detail: formData.amc_detail,
+
+        // IT Asset custom fields (as nested object)
+        custom_fields: buildCustomFieldsPayload(),
+
+        // Extra fields for other categories (as array)
+        extra_fields_attributes: buildExtraFieldsAttributes(),
+
+        // Meter measures
+        consumption_pms_asset_measures_attributes: consumptionMeasureFields.map(field => ({
+          name: field.name,
+          meter_unit_id: field.unitType,
+          min_value: field.min,
+          max_value: field.max,
+          alert_below: field.alertBelowVal,
+          alert_above: field.alertAboveVal,
+          multiplier_factor: field.multiplierFactor,
+          active: true,
+          meter_tag: "Consumption",
+          check_previous_reading: field.checkPreviousReading || false,
+          _destroy: false
+        })),
+
+        non_consumption_pms_asset_measures_attributes: nonConsumptionMeasureFields.map(field => ({
+          name: field.name,
+          meter_unit_id: field.unitType,
+          min_value: field.min,
+          max_value: field.max,
+          alert_below: field.alertBelowVal,
+          alert_above: field.alertAboveVal,
+          multiplier_factor: field.multiplierFactor,
+          active: true,
+          meter_tag: "Non Consumption",
+          check_previous_reading: field.checkPreviousReading || false,
+          _destroy: false
+        })),
+
+        // Category-specific file attachments
+        ...getCategoryAttachments()
+      }
+    };
+
+    console.log('Final payload:', payload);
+    console.log('AMC Detail being sent:', payload.pms_asset.amc_detail);
+    console.log('Loan details - loaned_from_vendor_id:', payload.pms_asset.loaned_from_vendor_id);
+    console.log('Loan details - agreement_from_date:', payload.pms_asset.agreement_from_date);
+    console.log('Loan details - agreement_to_date:', payload.pms_asset.agreement_to_date);
+    console.log('Loan details - asset_loaned flag:', payload.pms_asset.asset_loaned);
+    console.log('Selected Loaned Vendor ID State:', selectedLoanedVendorId);
+    console.log('Asset Loaned Toggle State:', assetLoanedToggle);
+    console.log('Extra fields attributes being sent:', payload.pms_asset.extra_fields_attributes);
+    console.log('Using FormData:', hasFiles());
+
+    // If sending files, use FormData
+    if (hasFiles()) {
+      const formDataObj = new FormData();
+
+      // Add all non-file fields
+      Object.entries(payload.pms_asset).forEach(([key, value]) => {
+        if (!['asset_manuals', 'asset_insurances', 'asset_purchases', 'asset_other_uploads', 'land_attachments', 'extra_fields_attributes', 'consumption_pms_asset_measures_attributes', 'non_consumption_pms_asset_measures_attributes', 'amc_detail', 'asset_move_to'].includes(key)) {
+          if (typeof value === 'object' && value !== null) {
+            formDataObj.append(`pms_asset[${key}]`, JSON.stringify(value));
+          } else {
+            // Ensure value is string or Blob for FormData
+            if (
+              typeof value === 'string' ||
+              value instanceof Blob
+            ) {
+              formDataObj.append(`pms_asset[${key}]`, value);
+            } else if (
+              typeof value === 'boolean' ||
+              typeof value === 'number'
+            ) {
+              formDataObj.append(`pms_asset[${key}]`, value.toString());
+            } else if (value !== null && value !== undefined) {
+              formDataObj.append(`pms_asset[${key}]`, JSON.stringify(value));
+            }
+          }
+        }
+      });
+
+      // Handle nested objects specially for FormData - flatten them
+      // Handle amc_detail
+      if (payload.pms_asset.amc_detail && typeof payload.pms_asset.amc_detail === 'object') {
+        Object.entries(payload.pms_asset.amc_detail).forEach(([fieldKey, fieldValue]) => {
+          if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+            formDataObj.append(`pms_asset[amc_detail][${fieldKey}]`, String(fieldValue));
+          }
+        });
+      }
+
+      // Handle asset_move_to
+      if (payload.pms_asset.asset_move_to && typeof payload.pms_asset.asset_move_to === 'object') {
+        Object.entries(payload.pms_asset.asset_move_to).forEach(([fieldKey, fieldValue]) => {
+          if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+            formDataObj.append(`pms_asset[asset_move_to][${fieldKey}]`, String(fieldValue));
+          }
+        });
+      }
+
+      // Handle extra_fields_attributes specially for FormData
+      if (payload.pms_asset.extra_fields_attributes && Array.isArray(payload.pms_asset.extra_fields_attributes)) {
+        payload.pms_asset.extra_fields_attributes.forEach((field, index) => {
+          Object.entries(field).forEach(([fieldKey, fieldValue]) => {
+            formDataObj.append(`pms_asset[extra_fields_attributes][${index}][${fieldKey}]`, String(fieldValue));
+          });
+        });
+      }
+
+      // Handle consumption measures
+      if (payload.pms_asset.consumption_pms_asset_measures_attributes && Array.isArray(payload.pms_asset.consumption_pms_asset_measures_attributes)) {
+        payload.pms_asset.consumption_pms_asset_measures_attributes.forEach((measure, index) => {
+          Object.entries(measure).forEach(([measureKey, measureValue]) => {
+            formDataObj.append(`pms_asset[consumption_pms_asset_measures_attributes][${index}][${measureKey}]`, String(measureValue));
+          });
+        });
+      }
+
+      // Handle non-consumption measures
+      if (payload.pms_asset.non_consumption_pms_asset_measures_attributes && Array.isArray(payload.pms_asset.non_consumption_pms_asset_measures_attributes)) {
+        payload.pms_asset.non_consumption_pms_asset_measures_attributes.forEach((measure, index) => {
+          Object.entries(measure).forEach(([measureKey, measureValue]) => {
+            formDataObj.append(`pms_asset[non_consumption_pms_asset_measures_attributes][${index}][${measureKey}]`, String(measureValue));
+          });
+        });
+      }
+
+      // Add category-specific files dynamically
+      if (selectedAssetCategory) {
+        const categoryKey = selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '');
+        const categoryAttachments = getCategoryAttachments();
+
+        // Add asset image
+        if (categoryAttachments.asset_image && categoryAttachments.asset_image.length > 0) {
+          formDataObj.append("pms_asset[asset_image]", categoryAttachments.asset_image[0]);
+        }
+
+        // Add category-specific documents
+        if (categoryAttachments.asset_manuals) {
+          categoryAttachments.asset_manuals.forEach(file =>
+            formDataObj.append("asset_manuals[]", file)
+          );
+        }
+
+        if (categoryAttachments.asset_insurances) {
+          categoryAttachments.asset_insurances.forEach(file =>
+            formDataObj.append("asset_insurances[]", file)
+          );
+        }
+
+        if (categoryAttachments.asset_purchases) {
+          categoryAttachments.asset_purchases.forEach(file =>
+            formDataObj.append("asset_purchases[]", file)
+          );
+        }
+
+        if (categoryAttachments.asset_other_uploads) {
+          categoryAttachments.asset_other_uploads.forEach(file =>
+            formDataObj.append("asset_other_uploads[]", file)
+          );
+        }
+
+        if (categoryAttachments.amc_documents) {
+          categoryAttachments.amc_documents.forEach(file =>
+            formDataObj.append("amc_documents[]", file)
+          );
+        }
+
+        // Add category-specific attachments (if any)
+        if (categoryAttachments.category_attachments) {
+          categoryAttachments.category_attachments.forEach(file =>
+            formDataObj.append(`${categoryKey}_attachments[]`, file)
+          );
+        }
+      }
+      // Debug: Log FormData contents
+      console.log('FormData contents:');
+      const amcKeys = [];
+      const loanKeys = [];
+      for (let [key, value] of formDataObj.entries()) {
+        if (key.includes('amc_detail')) {
+          amcKeys.push(`${key}: ${value}`);
+        }
+        if (key.includes('loaned_from_vendor') || key.includes('agreement_') || key.includes('asset_loaned')) {
+          loanKeys.push(`${key}: ${value}`);
+        }
+        console.log(key, value);
+      }
+      console.log('AMC FormData entries:', amcKeys);
+      console.log('Loan FormData entries:', loanKeys);
+
+      // Submit with FormData
+      apiClient.post('pms/assets.json', formDataObj, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        },
+        timeout: 300000, // 5 minutes timeout for large files
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            console.log(`Upload progress: ${percentCompleted}%`);
+          }
+        }
+      })
+        .then(response => {
+          console.log('Asset created successfully:', response.data);
+          toast.success('Asset Created Successfully', {
+            description: 'The asset has been created and saved.',
+            duration: 3000,
+          });
+          // Small delay to show the toast before redirect
+          setTimeout(() => {
+            window.location.href = "/maintenance/asset";
+          }, 1000);
+        })
+        .catch(err => {
+          console.error('Error creating asset:', err);
+
+          if (err.response?.status === 413) {
+            toast.error('Upload Failed', {
+              description: 'Request too large. Please reduce the number or size of files and try again.',
+              duration: 6000,
+            });
+          } else if (err.response?.status === 422) {
+            toast.error('Validation Error', {
+              description: 'Please check your form data and try again.',
+              duration: 6000,
+            });
+          } else if (err.code === 'ECONNABORTED') {
+            toast.error('Upload Timeout', {
+              description: 'Please try with smaller files or check your internet connection.',
+              duration: 6000,
+            });
+          } else {
+            toast.error('Upload Failed', {
+              description: err.response?.data?.message || err.message || 'An unknown error occurred',
+              duration: 6000,
+            });
+          }
+        });
+    } else {
+      // Submit as JSON
+      apiClient.post('pms/assets.json', payload, {
+        headers: { "Content-Type": "application/json" }
+      })
+        .then(response => {
+          console.log('Asset created successfully:', response.data);
+          navigate('/maintenance/asset');
+        })
+        .catch(err => {
+          console.error('Error creating asset:', err);
+        });
     }
   };
 
-  console.log('Final payload:', payload);
-  console.log('AMC Detail being sent:', payload.pms_asset.amc_detail);
-  console.log('Loan details - loaned_from_vendor_id:', payload.pms_asset.loaned_from_vendor_id);
-  console.log('Loan details - agreement_from_date:', payload.pms_asset.agreement_from_date);
-  console.log('Loan details - agreement_to_date:', payload.pms_asset.agreement_to_date);
-  console.log('Loan details - asset_loaned flag:', payload.pms_asset.asset_loaned);
-  console.log('Selected Loaned Vendor ID State:', selectedLoanedVendorId);
-  console.log('Asset Loaned Toggle State:', assetLoanedToggle);
-  console.log('Extra fields attributes being sent:', payload.pms_asset.extra_fields_attributes);
-  console.log('Using FormData:', hasFiles());
+  // Helper function to check if there are files to upload
+  const hasFiles = () => {
+    if (!selectedAssetCategory) return false;
 
-  // If sending files, use FormData
-  if (hasFiles()) {
-    const formDataObj = new FormData();
-    
-    // Add all non-file fields
-    Object.entries(payload.pms_asset).forEach(([key, value]) => {
-      if (!['asset_manuals', 'asset_insurances', 'asset_purchases', 'asset_other_uploads', 'land_attachments', 'extra_fields_attributes', 'consumption_pms_asset_measures_attributes', 'non_consumption_pms_asset_measures_attributes', 'amc_detail', 'asset_move_to'].includes(key)) {
-        if (typeof value === 'object' && value !== null) {
-          formDataObj.append(`pms_asset[${key}]`, JSON.stringify(value));
-        } else {
-          // Ensure value is string or Blob for FormData
-          if (
-            typeof value === 'string' ||
-            value instanceof Blob
-          ) {
-            formDataObj.append(`pms_asset[${key}]`, value);
-          } else if (
-            typeof value === 'boolean' ||
-            typeof value === 'number'
-          ) {
-            formDataObj.append(`pms_asset[${key}]`, value.toString());
-          } else if (value !== null && value !== undefined) {
-            formDataObj.append(`pms_asset[${key}]`, JSON.stringify(value));
-          }
-        }
-      }
-    });
+    const categoryAttachments = getCategoryAttachments();
 
-    // Handle nested objects specially for FormData - flatten them
-    // Handle amc_detail
-    if (payload.pms_asset.amc_detail && typeof payload.pms_asset.amc_detail === 'object') {
-      Object.entries(payload.pms_asset.amc_detail).forEach(([fieldKey, fieldValue]) => {
-        if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
-          formDataObj.append(`pms_asset[amc_detail][${fieldKey}]`, String(fieldValue));
-        }
-      });
-    }
-
-    // Handle asset_move_to
-    if (payload.pms_asset.asset_move_to && typeof payload.pms_asset.asset_move_to === 'object') {
-      Object.entries(payload.pms_asset.asset_move_to).forEach(([fieldKey, fieldValue]) => {
-        if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
-          formDataObj.append(`pms_asset[asset_move_to][${fieldKey}]`, String(fieldValue));
-        }
-      });
-    }
-    
-    // Handle extra_fields_attributes specially for FormData
-    if (payload.pms_asset.extra_fields_attributes && Array.isArray(payload.pms_asset.extra_fields_attributes)) {
-      payload.pms_asset.extra_fields_attributes.forEach((field, index) => {
-        Object.entries(field).forEach(([fieldKey, fieldValue]) => {
-          formDataObj.append(`pms_asset[extra_fields_attributes][${index}][${fieldKey}]`, String(fieldValue));
-        });
-      });
-    }
-    
-    // Handle consumption measures
-    if (payload.pms_asset.consumption_pms_asset_measures_attributes && Array.isArray(payload.pms_asset.consumption_pms_asset_measures_attributes)) {
-      payload.pms_asset.consumption_pms_asset_measures_attributes.forEach((measure, index) => {
-        Object.entries(measure).forEach(([measureKey, measureValue]) => {
-          formDataObj.append(`pms_asset[consumption_pms_asset_measures_attributes][${index}][${measureKey}]`, String(measureValue));
-        });
-      });
-    }
-    
-    // Handle non-consumption measures
-    if (payload.pms_asset.non_consumption_pms_asset_measures_attributes && Array.isArray(payload.pms_asset.non_consumption_pms_asset_measures_attributes)) {
-      payload.pms_asset.non_consumption_pms_asset_measures_attributes.forEach((measure, index) => {
-        Object.entries(measure).forEach(([measureKey, measureValue]) => {
-          formDataObj.append(`pms_asset[non_consumption_pms_asset_measures_attributes][${index}][${measureKey}]`, String(measureValue));
-        });
-      });
-    }
-    
-    // Add category-specific files dynamically
-    if (selectedAssetCategory) {
-      const categoryKey = selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '');
-      const categoryAttachments = getCategoryAttachments();
-      
-      // Add asset image
-      if (categoryAttachments.asset_image && categoryAttachments.asset_image.length > 0) {
-        formDataObj.append("pms_asset[asset_image]", categoryAttachments.asset_image[0]);
-      }
-      
-      // Add category-specific documents
-      if (categoryAttachments.asset_manuals) {
-        categoryAttachments.asset_manuals.forEach(file => 
-          formDataObj.append("asset_manuals[]", file)
-        );
-      }
-      
-      if (categoryAttachments.asset_insurances) {
-        categoryAttachments.asset_insurances.forEach(file => 
-          formDataObj.append("asset_insurances[]", file)
-        );
-      }
-      
-      if (categoryAttachments.asset_purchases) {
-        categoryAttachments.asset_purchases.forEach(file => 
-          formDataObj.append("asset_purchases[]", file)
-        );
-      }
-      
-      if (categoryAttachments.asset_other_uploads) {
-        categoryAttachments.asset_other_uploads.forEach(file => 
-          formDataObj.append("asset_other_uploads[]", file)
-        );
-      }
-      
-      if (categoryAttachments.amc_documents) {
-        categoryAttachments.amc_documents.forEach(file => 
-          formDataObj.append("amc_documents[]", file)
-        );
-      }
-      
-      // Add category-specific attachments (if any)
-      if (categoryAttachments.category_attachments) {
-        categoryAttachments.category_attachments.forEach(file => 
-          formDataObj.append(`${categoryKey}_attachments[]`, file)
-        );
-      }
-    }
-    // Debug: Log FormData contents
-    console.log('FormData contents:');
-    const amcKeys = [];
-    const loanKeys = [];
-    for (let [key, value] of formDataObj.entries()) {
-      if (key.includes('amc_detail')) {
-        amcKeys.push(`${key}: ${value}`);
-      }
-      if (key.includes('loaned_from_vendor') || key.includes('agreement_') || key.includes('asset_loaned')) {
-        loanKeys.push(`${key}: ${value}`);
-      }
-      console.log(key, value);
-    }
-    console.log('AMC FormData entries:', amcKeys);
-    console.log('Loan FormData entries:', loanKeys);
-
-    // Submit with FormData
-    apiClient.post('pms/assets.json', formDataObj, {
-      headers: { 
-        "Content-Type": "multipart/form-data"
-      },
-      timeout: 300000, // 5 minutes timeout for large files
-      onUploadProgress: (progressEvent) => {
-        if (progressEvent.total) {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          console.log(`Upload progress: ${percentCompleted}%`);
-        }
-      }
-    })
-    .then(response => {
-      console.log('Asset created successfully:', response.data);
-      toast.success('Asset Created Successfully', {
-        description: 'The asset has been created and saved.',
-        duration: 3000,
-      });
-      // Small delay to show the toast before redirect
-      setTimeout(() => {
-        window.location.href = "/maintenance/asset";
-      }, 1000);
-    })
-    .catch(err => {
-      console.error('Error creating asset:', err);
-      
-      if (err.response?.status === 413) {
-        toast.error('Upload Failed', {
-          description: 'Request too large. Please reduce the number or size of files and try again.',
-          duration: 6000,
-        });
-      } else if (err.response?.status === 422) {
-        toast.error('Validation Error', {
-          description: 'Please check your form data and try again.',
-          duration: 6000,
-        });
-      } else if (err.code === 'ECONNABORTED') {
-        toast.error('Upload Timeout', {
-          description: 'Please try with smaller files or check your internet connection.',
-          duration: 6000,
-        });
-      } else {
-        toast.error('Upload Failed', {
-          description: err.response?.data?.message || err.message || 'An unknown error occurred',
-          duration: 6000,
-        });
-      }
-    });
-  } else {
-    // Submit as JSON
-    apiClient.post('pms/assets.json', payload, {
-      headers: { "Content-Type": "application/json" }
-    })
-    .then(response => {
-      console.log('Asset created successfully:', response.data);
-      navigate('/maintenance/asset');
-    })
-    .catch(err => {
-      console.error('Error creating asset:', err);
-    });
-  }
-};
-
-// Helper function to check if there are files to upload
-const hasFiles = () => {
-  if (!selectedAssetCategory) return false;
-  
-  const categoryAttachments = getCategoryAttachments();
-  
-  return (
-    (categoryAttachments.asset_image && categoryAttachments.asset_image.length > 0) ||
-    (categoryAttachments.asset_manuals && categoryAttachments.asset_manuals.length > 0) ||
-    (categoryAttachments.asset_insurances && categoryAttachments.asset_insurances.length > 0) ||
-    (categoryAttachments.asset_purchases && categoryAttachments.asset_purchases.length > 0) ||
-    (categoryAttachments.asset_other_uploads && categoryAttachments.asset_other_uploads.length > 0) ||
-    (categoryAttachments.amc_documents && categoryAttachments.amc_documents.length > 0) ||
-    (categoryAttachments.category_attachments && categoryAttachments.category_attachments.length > 0)
-  );
-};
+    return (
+      (categoryAttachments.asset_image && categoryAttachments.asset_image.length > 0) ||
+      (categoryAttachments.asset_manuals && categoryAttachments.asset_manuals.length > 0) ||
+      (categoryAttachments.asset_insurances && categoryAttachments.asset_insurances.length > 0) ||
+      (categoryAttachments.asset_purchases && categoryAttachments.asset_purchases.length > 0) ||
+      (categoryAttachments.asset_other_uploads && categoryAttachments.asset_other_uploads.length > 0) ||
+      (categoryAttachments.amc_documents && categoryAttachments.amc_documents.length > 0) ||
+      (categoryAttachments.category_attachments && categoryAttachments.category_attachments.length > 0)
+    );
+  };
   // ...existing code...
   const handleSaveAndCreate = () => {
     console.log('Save and create new asset');
@@ -2418,22 +2418,22 @@ const hasFiles = () => {
     }
   };
   return <div className="p-4 sm:p-6 max-w-full mx-auto min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="mb-4 sm:mb-6">
-        <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
-          <button 
-            onClick={handleGoBack}
-            className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="w-4 h-4 text-gray-600" />
-          </button>
-          <span>Asset List</span>
-          <span>{'>'}</span>
-          <span className="text-gray-900 font-medium">Create New Asset</span>
-        </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">NEW ASSET</h1>
+    {/* Header */}
+    <div className="mb-4 sm:mb-6">
+      <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600 mb-2">
+        <button
+          onClick={handleGoBack}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
+          aria-label="Go back"
+        >
+          <ArrowLeft className="w-4 h-4 text-gray-600" />
+        </button>
+        <span>Asset List</span>
+        <span>{'>'}</span>
+        <span className="text-gray-900 font-medium">Create New Asset</span>
       </div>
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-900">NEW ASSET</h1>
+    </div>
 
     <div className="space-y-4 sm:space-y-6">
       {/* Asset Category Selection */}
@@ -2537,7 +2537,7 @@ const hasFiles = () => {
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <div className="space-y-6">
             {/* Asset Image Upload */}
-           
+
             {/* Basic Identification */}
             <Card>
               <CardHeader>
@@ -2963,7 +2963,7 @@ const hasFiles = () => {
                     variant="outlined"
                     type="number"
                     InputProps={{
-                      startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                      startAdornment: <InputAdornment position="start">{localStorage.getItem('currency')}</InputAdornment>,
                     }}
                     fullWidth
                     sx={{
@@ -3103,14 +3103,14 @@ const hasFiles = () => {
                     }
                     }
                     onChange={e =>
-                        handleExtraFieldChange(
-                          'reaponsible_department',
-                          (e.target as HTMLInputElement).value,
-                          'select',
-                          'landUsageDevelopment',
-                          'Responsible Department'
-                        )
-                      }
+                      handleExtraFieldChange(
+                        'reaponsible_department',
+                        (e.target as HTMLInputElement).value,
+                        'select',
+                        'landUsageDevelopment',
+                        'Responsible Department'
+                      )
+                    }
                   />
 
                   {/* Custom Fields */}
@@ -3264,12 +3264,12 @@ const hasFiles = () => {
               </CardContent>
             </Card>
             <AssetImageUpload
-                categoryName="Land"
-                categoryKey="landAssetImage"
-                onImageUpload={handleFileUpload}
-                onImageRemove={removeFile}
-                images={attachments.landAssetImage}
-              />
+              categoryName="Land"
+              categoryKey="landAssetImage"
+              onImageUpload={handleFileUpload}
+              onImageRemove={removeFile}
+              images={attachments.landAssetImage}
+            />
           </div>
         </LocalizationProvider>
       )}
@@ -3279,7 +3279,7 @@ const hasFiles = () => {
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <div className="space-y-6">
             {/* Asset Image Upload */}
-          
+
 
             {/* Basic Identification */}
             <Card>
@@ -3595,7 +3595,7 @@ const hasFiles = () => {
                     fullWidth
                     type="number"
                     InputProps={{
-                      startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                      startAdornment: <InputAdornment position="start">{localStorage.getItem('currency')}</InputAdornment>,
                     }}
                     sx={{
                       '& .MuiOutlinedInput-root': {
@@ -3675,7 +3675,7 @@ const hasFiles = () => {
                     <MuiSelect
                       label="Depreciation Method"
                       defaultValue=""
-                      onChange={(e) =>{
+                      onChange={(e) => {
                         handleExtraFieldChange(
                           'depreciation_method',
                           (e.target as HTMLInputElement).value,
@@ -3685,7 +3685,7 @@ const hasFiles = () => {
                         );
                         handleFieldChange('depreciation_method', e.target.value);
                       }
-                    }
+                      }
                     >
                       <MenuItem value="">Select Method</MenuItem>
                       <MenuItem value="straight">Straight Line</MenuItem>
@@ -3703,7 +3703,7 @@ const hasFiles = () => {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
-                    onChange={(e) =>{
+                    onChange={(e) => {
                       handleExtraFieldChange(
                         'useful_life_years',
                         (e.target as HTMLInputElement).value,
@@ -3711,10 +3711,10 @@ const hasFiles = () => {
                         'leaseholdFinancial',
                         'Useful Life (Years)'
                       );
-                       handleFieldChange('useful_life', e.target.value);
+                      handleFieldChange('useful_life', e.target.value);
 
                     }
-                  }
+                    }
                   />
                   <TextField
                     label="Depreciation Rate (%)"
@@ -3730,7 +3730,7 @@ const hasFiles = () => {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
-                    onChange={(e) =>{
+                    onChange={(e) => {
                       handleExtraFieldChange(
                         'depreciation_rate',
                         (e.target as HTMLInputElement).value,
@@ -3738,7 +3738,7 @@ const hasFiles = () => {
                         'leaseholdFinancial',
                         'Depreciation Rate'
                       );
-                       handleFieldChange('depreciation_rate', e.target.value)
+                      handleFieldChange('depreciation_rate', e.target.value)
                     }
                     }
                   />
@@ -3749,7 +3749,7 @@ const hasFiles = () => {
                     fullWidth
                     type="number"
                     InputProps={{
-                      startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                      startAdornment: <InputAdornment position="start">{localStorage.getItem('currency')}</InputAdornment>,
                     }}
                     sx={{
                       '& .MuiOutlinedInput-root': {
@@ -3972,7 +3972,7 @@ const hasFiles = () => {
                     fullWidth
                     sx={{
                       '& .MuiOutlinedInput-root': {
-                        
+
                       }
                     }}
                   >
@@ -4007,7 +4007,7 @@ const hasFiles = () => {
                       rows={4}
                       sx={{
                         '& .MuiOutlinedInput-root': {
-                          
+
                         }
                       }}
                       onChange={(e) =>
@@ -4098,7 +4098,7 @@ const hasFiles = () => {
                 </div>
               </CardContent>
             </Card>
-           
+
           </div>
         </LocalizationProvider>
       )}
@@ -4108,7 +4108,7 @@ const hasFiles = () => {
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <div className="space-y-6">
             {/* Asset Image Upload */}
-            
+
 
             {/* Basic Identification */}
             <Card>
@@ -4139,7 +4139,7 @@ const hasFiles = () => {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
-                  onChange={e => handleFieldChange('serial_number', e.target.value)}
+                    onChange={e => handleFieldChange('serial_number', e.target.value)}
 
                   />
                   <TextField
@@ -4542,144 +4542,144 @@ const hasFiles = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <DatePicker
-                  label="Date of Purchase"
-                  slotProps={{
-                    textField: {
-                    fullWidth: true,
-                    variant: 'outlined',
-                    sx: {
-                      '& .MuiOutlinedInput-root': {
-                      height: { xs: '36px', md: '45px' }
+                    label="Date of Purchase"
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        variant: 'outlined',
+                        sx: {
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }
                       }
-                    }
-                    }
-                  }}
-                  onChange={date => {
-                    handleExtraFieldChange(
-                    'purchase_date',
-                    date,
-                    'date',
-                    'vehicleFinancial',
-                    'Date of Purchase'
-                    );
-                    handleFieldChange('commisioning_date', date);
-                  }}
+                    }}
+                    onChange={date => {
+                      handleExtraFieldChange(
+                        'purchase_date',
+                        date,
+                        'date',
+                        'vehicleFinancial',
+                        'Date of Purchase'
+                      );
+                      handleFieldChange('commisioning_date', date);
+                    }}
                   />
                   <div className="flex gap-2">
-                  <FormControl
-                    sx={{
-                    minWidth: 80,
-                    '& .MuiOutlinedInput-root': {
-                      height: { xs: '36px', md: '45px' }
-                    }
-                    }}
-                  >
-                    <InputLabel>Currency</InputLabel>
-                    <MuiSelect
-                    label="Currency"
-                    defaultValue="inr"
-                    onChange={e => {
-                      handleExtraFieldChange(
-                      'currency',
-                      (e.target as HTMLInputElement).value,
-                      'select',
-                      'vehicleFinancial',
-                      'Currency'
-                      );
-                    }}
+                    <FormControl
+                      sx={{
+                        minWidth: 80,
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
                     >
-                    <MenuItem value="inr">INR</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
-                  <TextField
-                    label="Purchase Cost"
-                    placeholder="Enter purchase cost"
-                    variant="outlined"
-                    type="number"
-                    sx={{
-                    flexGrow: 1,
-                    '& .MuiOutlinedInput-root': {
-                      height: { xs: '36px', md: '45px' }
-                    }
-                    }}
-                    InputProps={{
-                    startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                    }}
-                    onChange={e => handleFieldChange('purchase_cost', e.target.value)}
-                  />
+                      <InputLabel>Currency</InputLabel>
+                      <MuiSelect
+                        label="Currency"
+                        defaultValue="inr"
+                        onChange={e => {
+                          handleExtraFieldChange(
+                            'currency',
+                            (e.target as HTMLInputElement).value,
+                            'select',
+                            'vehicleFinancial',
+                            'Currency'
+                          );
+                        }}
+                      >
+                        <MenuItem value="inr">INR</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                    <TextField
+                      label="Purchase Cost"
+                      placeholder="Enter purchase cost"
+                      variant="outlined"
+                      type="number"
+                      sx={{
+                        flexGrow: 1,
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">{localStorage.getItem('currency')}</InputAdornment>,
+                      }}
+                      onChange={e => handleFieldChange('purchase_cost', e.target.value)}
+                    />
                   </div>
                   <TextField
-                  label="Depreciation Rate (%)"
-                  placeholder="Linked to depreciation module"
-                  variant="outlined"
-                  fullWidth
-                  type="number"
-                  InputProps={{
-                    endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                    height: { xs: '36px', md: '45px' }
+                    label="Depreciation Rate (%)"
+                    placeholder="Linked to depreciation module"
+                    variant="outlined"
+                    fullWidth
+                    type="number"
+                    InputProps={{
+                      endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        height: { xs: '36px', md: '45px' }
+                      }
+                    }}
+                    onChange={e =>
+                      handleExtraFieldChange(
+                        'depreciation_rate',
+                        (e.target as HTMLInputElement).value,
+                        'number',
+                        'vehicleFinancial',
+                        'Depreciation Rate'
+                      )
                     }
-                  }}
-                  onChange={e =>
-                    handleExtraFieldChange(
-                    'depreciation_rate',
-                    (e.target as HTMLInputElement).value,
-                    'number',
-                    'vehicleFinancial',
-                    'Depreciation Rate'
-                    )
-                  }
                   />
                   <TextField
-                  label="Current Book Value (INR)"
-                  placeholder="Calculated or manually entered"
-                  variant="outlined"
-                  fullWidth
-                  type="number"
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">₹</InputAdornment>,
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                    height: { xs: '36px', md: '45px' }
+                    label="Current Book Value (INR)"
+                    placeholder="Calculated or manually entered"
+                    variant="outlined"
+                    fullWidth
+                    type="number"
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">{localStorage.getItem('currency')}</InputAdornment>,
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        height: { xs: '36px', md: '45px' }
+                      }
+                    }}
+                    onChange={e =>
+                      handleExtraFieldChange(
+                        'current_book_value',
+                        (e.target as HTMLInputElement).value,
+                        'number',
+                        'vehicleFinancial',
+                        'Current Book Value'
+                      )
                     }
-                  }}
-                  onChange={e =>
-                    handleExtraFieldChange(
-                    'current_book_value',
-                    (e.target as HTMLInputElement).value,
-                    'number',
-                    'vehicleFinancial',
-                    'Current Book Value'
-                    )
-                  }
                   />
 
                   {/* Custom Fields */}
                   {(customFields.vehicleFinancial || []).map(field => (
-                  <div key={field.id} className="relative">
-                    <TextField
-                    label={field.name}
-                    placeholder={`Enter ${field.name}`}
-                    variant="outlined"
-                    fullWidth
-                    value={field.value}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                      height: { xs: '36px', md: '45px' }
-                      }
-                    }}
-                    onChange={e => handleCustomFieldChange('vehicleFinancial', field.id, e.target.value)}
-                    />
-                    <button
-                    onClick={() => removeCustomField('vehicleFinancial', field.id)}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
-                    >
-                    <X className="w-3 h-3" />
-                    </button>
-                  </div>
+                    <div key={field.id} className="relative">
+                      <TextField
+                        label={field.name}
+                        placeholder={`Enter ${field.name}`}
+                        variant="outlined"
+                        fullWidth
+                        value={field.value}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                        onChange={e => handleCustomFieldChange('vehicleFinancial', field.id, e.target.value)}
+                      />
+                      <button
+                        onClick={() => removeCustomField('vehicleFinancial', field.id)}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               </CardContent>
@@ -5111,7 +5111,7 @@ const hasFiles = () => {
                 ))}
               </CardContent>
             </Card>
-        
+
           </div>
         </LocalizationProvider>
       )}
@@ -5121,7 +5121,7 @@ const hasFiles = () => {
         <LocalizationProvider dateAdapter={AdapterDateFns}>
           <div className="space-y-6">
             {/* Asset Image Upload */}
-            
+
 
             {/* Basic Identification */}
             <Card>
@@ -6079,7 +6079,7 @@ const hasFiles = () => {
                   rows={4}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      
+
                     }
                   }}
                   onChange={(e) =>
@@ -6179,10 +6179,10 @@ const hasFiles = () => {
         selectedAssetCategory === 'Machinery & Equipment' || selectedAssetCategory === 'Meter' ||
         selectedAssetCategory === 'Tools & Instruments') && (
           <>
-            
+
 
             {/* Location Details */}
-          
+
 
             {/* Asset Details */}
             <div className="bg-white shadow-sm rounded-lg overflow-hidden">
@@ -6194,12 +6194,12 @@ const hasFiles = () => {
                   ASSET DETAILS
                 </div>
                 <div className="flex items-center gap-2">
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       openCustomFieldModal('assetDetails');
-                    }} 
-                    className="px-3 py-1 rounded text-sm flex items-center gap-1" 
+                    }}
+                    className="px-3 py-1 rounded text-sm flex items-center gap-1"
                     style={{
                       backgroundColor: '#F6F4EE',
                       color: '#C72030'
@@ -6214,55 +6214,55 @@ const hasFiles = () => {
               {expandedSections.asset && <div className="p-4 sm:p-6">
                 {/* First row: Asset Name, Model No., Manufacturer */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                  <TextField 
-                    required 
-                    label="Asset Name" 
-                    placeholder="Enter Asset Name" 
-                    name="assetName" 
-                    fullWidth 
-                    variant="outlined" 
+                  <TextField
+                    required
+                    label="Asset Name"
+                    placeholder="Enter Asset Name"
+                    name="assetName"
+                    fullWidth
+                    variant="outlined"
                     value={formData.name || ''}
                     error={hasValidationError('Asset Name')}
                     helperText={hasValidationError('Asset Name') ? 'Asset Name is required' : ''}
                     InputLabelProps={{
                       shrink: true
-                    }} 
+                    }}
                     InputProps={{
                       sx: fieldStyles
                     }}
                     onChange={e => handleFieldChange('name', e.target.value)}
                   />
-                  <TextField 
-                    required 
-                    label="Model No." 
-                    placeholder="Enter Model No" 
-                    name="modelNo" 
-                    fullWidth 
-                    variant="outlined" 
+                  <TextField
+                    required
+                    label="Model No."
+                    placeholder="Enter Model No"
+                    name="modelNo"
+                    fullWidth
+                    variant="outlined"
                     value={formData.model_number || ''}
                     error={hasValidationError('Model No')}
                     helperText={hasValidationError('Model No') ? 'Model No. is required' : ''}
                     InputLabelProps={{
                       shrink: true
-                    }} 
+                    }}
                     InputProps={{
                       sx: fieldStyles
                     }}
                     onChange={e => handleFieldChange('model_number', e.target.value)}
                   />
-                  <TextField 
-                    required 
-                    label="Manufacturer" 
-                    placeholder="Enter Manufacturer" 
-                    name="manufacturer" 
-                    fullWidth 
-                    variant="outlined" 
+                  <TextField
+                    required
+                    label="Manufacturer"
+                    placeholder="Enter Manufacturer"
+                    name="manufacturer"
+                    fullWidth
+                    variant="outlined"
                     value={formData.manufacturer || ''}
                     error={hasValidationError('Manufacturer')}
                     helperText={hasValidationError('Manufacturer') ? 'Manufacturer is required' : ''}
                     InputLabelProps={{
                       shrink: true
-                    }} 
+                    }}
                     InputProps={{
                       sx: fieldStyles
                     }}
@@ -6410,7 +6410,7 @@ const hasFiles = () => {
                 ))}
               </div>}
             </div>
-              <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
               <div onClick={() => toggleSection('location')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
                 <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
                   <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
@@ -6635,54 +6635,54 @@ const hasFiles = () => {
                       color: itAssetsToggle ? '#C72030' : '#9CA3AF'
                     }}>SYSTEM DETAILS</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <TextField 
-                        label="OS" 
-                        placeholder="Enter OS" 
-                        name="os" 
-                        fullWidth 
-                        variant="outlined" 
+                      <TextField
+                        label="OS"
+                        placeholder="Enter OS"
+                        name="os"
+                        fullWidth
+                        variant="outlined"
                         value={itAssetDetails.system_details.os}
                         onChange={(e) => handleItAssetDetailsChange('system_details', 'os', e.target.value)}
                         disabled={!itAssetsToggle}
                         InputLabelProps={{
                           shrink: true
-                        }} 
+                        }}
                         InputProps={{
                           sx: fieldStyles
                         }}
                       />
 
-                      <TextField 
-                        label="Total Memory" 
-                        placeholder="Enter Total Memory" 
-                        name="totalMemory" 
-                        fullWidth 
-                        variant="outlined" 
+                      <TextField
+                        label="Total Memory"
+                        placeholder="Enter Total Memory"
+                        name="totalMemory"
+                        fullWidth
+                        variant="outlined"
                         value={itAssetDetails.system_details.memory}
                         onChange={(e) => handleItAssetDetailsChange('system_details', 'memory', e.target.value)}
                         disabled={!itAssetsToggle}
                         InputLabelProps={{
                           shrink: true
-                        }} 
+                        }}
                         InputProps={{
                           sx: fieldStyles
-                        }} 
+                        }}
                       />
-                      <TextField 
-                        label="Processor" 
-                        placeholder="Enter Processor" 
-                        name="processor" 
-                        fullWidth 
-                        variant="outlined" 
+                      <TextField
+                        label="Processor"
+                        placeholder="Enter Processor"
+                        name="processor"
+                        fullWidth
+                        variant="outlined"
                         value={itAssetDetails.system_details.processor}
                         onChange={(e) => handleItAssetDetailsChange('system_details', 'processor', e.target.value)}
                         disabled={!itAssetsToggle}
                         InputLabelProps={{
                           shrink: true
-                        }} 
+                        }}
                         InputProps={{
                           sx: fieldStyles
-                        }} 
+                        }}
                       />
 
                       {/* Custom Fields for System Details */}
@@ -6750,53 +6750,53 @@ const hasFiles = () => {
                       )}
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <TextField 
-                        label="Model" 
-                        placeholder="Enter Model" 
-                        name="hdModel" 
-                        fullWidth 
-                        variant="outlined" 
+                      <TextField
+                        label="Model"
+                        placeholder="Enter Model"
+                        name="hdModel"
+                        fullWidth
+                        variant="outlined"
                         value={itAssetDetails.hardware.model}
                         onChange={(e) => handleItAssetDetailsChange('hardware', 'model', e.target.value)}
                         disabled={!itAssetsToggle}
                         InputLabelProps={{
                           shrink: true
-                        }} 
+                        }}
                         InputProps={{
                           sx: fieldStyles
-                        }} 
+                        }}
                       />
-                      <TextField 
-                        label="Serial No." 
-                        placeholder="Enter Serial No." 
-                        name="hdSerialNo" 
-                        fullWidth 
-                        variant="outlined" 
+                      <TextField
+                        label="Serial No."
+                        placeholder="Enter Serial No."
+                        name="hdSerialNo"
+                        fullWidth
+                        variant="outlined"
                         value={itAssetDetails.hardware.serial_no}
                         onChange={(e) => handleItAssetDetailsChange('hardware', 'serial_no', e.target.value)}
                         disabled={!itAssetsToggle}
                         InputLabelProps={{
                           shrink: true
-                        }} 
+                        }}
                         InputProps={{
                           sx: fieldStyles
-                        }} 
+                        }}
                       />
-                      <TextField 
-                        label="Capacity" 
-                        placeholder="Enter Capacity" 
-                        name="hdCapacity" 
-                        fullWidth 
-                        variant="outlined" 
+                      <TextField
+                        label="Capacity"
+                        placeholder="Enter Capacity"
+                        name="hdCapacity"
+                        fullWidth
+                        variant="outlined"
                         value={itAssetDetails.hardware.capacity}
                         onChange={(e) => handleItAssetDetailsChange('hardware', 'capacity', e.target.value)}
                         disabled={!itAssetsToggle}
                         InputLabelProps={{
                           shrink: true
-                        }} 
+                        }}
                         InputProps={{
                           sx: fieldStyles
-                        }} 
+                        }}
                       />
 
                       {/* Custom Fields for Hardware Details */}
@@ -6846,40 +6846,40 @@ const hasFiles = () => {
                       <span className="text-[#C72030] font-medium text-sm sm:text-base">Meter Type</span>
                       <div className="flex gap-6">
                         <div className="flex items-center space-x-2">
-                          <input 
-                            type="radio" 
-                            id="meter-type-parent" 
-                            name="meter_tag_type" 
-                            value="ParentMeter" 
-                            checked={meterType === 'ParentMeter'} 
+                          <input
+                            type="radio"
+                            id="meter-type-parent"
+                            name="meter_tag_type"
+                            value="ParentMeter"
+                            checked={meterType === 'ParentMeter'}
                             onChange={e => {
                               setMeterType(e.target.value);
                               handleFieldChange('meter_tag_type', e.target.value);
-                            }} 
+                            }}
                             disabled={!meterDetailsToggle}
-                            className="w-4 h-4 text-[#C72030] border-gray-300" 
+                            className="w-4 h-4 text-[#C72030] border-gray-300"
                             style={{
                               accentColor: '#C72030'
-                            }} 
+                            }}
                           />
                           <label htmlFor="meter-type-parent" className={`text-sm ${!meterDetailsToggle ? 'text-gray-400' : ''}`}>Parent</label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <input 
-                            type="radio" 
-                            id="meter-type-sub" 
-                            name="meter_tag_type" 
-                            value="SubMeter" 
-                            checked={meterType === 'SubMeter'} 
-                            onChange={e => { 
-                              setMeterType(e.target.value); 
-                              handleFieldChange('meter_tag_type', e.target.value); 
-                            }} 
+                          <input
+                            type="radio"
+                            id="meter-type-sub"
+                            name="meter_tag_type"
+                            value="SubMeter"
+                            checked={meterType === 'SubMeter'}
+                            onChange={e => {
+                              setMeterType(e.target.value);
+                              handleFieldChange('meter_tag_type', e.target.value);
+                            }}
                             disabled={!meterDetailsToggle}
-                            className="w-4 h-4 text-[#C72030] border-gray-300" 
+                            className="w-4 h-4 text-[#C72030] border-gray-300"
                             style={{
                               accentColor: '#C72030'
-                            }} 
+                            }}
                           />
                           <label htmlFor="meter-type-sub" className={`text-sm ${!meterDetailsToggle ? 'text-gray-400' : ''}`}>Sub</label>
                         </div>
@@ -7124,31 +7124,31 @@ const hasFiles = () => {
                 {/* Custom Fields */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
 
-                {(customFields.purchaseDetails || []).map((field) => (
-                  <div key={field.id} className="flex items-center gap-2 mb-2">
-                    <TextField
-                      label={field.name}
-                      value={field.value}
-                      onChange={(e) => { handleCustomFieldChange('purchaseDetails', field.id, e.target.value); }}
-                      variant="outlined"
-                      fullWidth
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          height: { xs: '36px', md: '45px' }
-                        }
-                      }}
-                    />
-                    <button
-                      onClick={() => removeCustomField('purchaseDetails', field.id)}
-                      className="p-2 text-red-500 hover:bg-red-50 rounded"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                  {(customFields.purchaseDetails || []).map((field) => (
+                    <div key={field.id} className="flex items-center gap-2 mb-2">
+                      <TextField
+                        label={field.name}
+                        value={field.value}
+                        onChange={(e) => { handleCustomFieldChange('purchaseDetails', field.id, e.target.value); }}
+                        variant="outlined"
+                        fullWidth
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => removeCustomField('purchaseDetails', field.id)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                
-                
+
+
               </div>}
             </div>
 
@@ -7191,14 +7191,14 @@ const hasFiles = () => {
                     <label className={`text-sm font-medium mb-4 block ${!depreciationToggle ? 'text-gray-400' : 'text-gray-700'}`}>Method</label>
                     <div className="flex gap-8">
                       <div className="flex items-center space-x-2">
-                        <input 
-                          type="radio" 
-                          id="straight-line" 
-                          name="depreciationMethod" 
-                          value="straight_line" 
-                          defaultChecked 
+                        <input
+                          type="radio"
+                          id="straight-line"
+                          name="depreciationMethod"
+                          value="straight_line"
+                          defaultChecked
                           disabled={!depreciationToggle}
-                          className="w-4 h-4 text-[#C72030] border-gray-300" 
+                          className="w-4 h-4 text-[#C72030] border-gray-300"
                           style={{
                             accentColor: '#C72030'
                           }}
@@ -7207,13 +7207,13 @@ const hasFiles = () => {
                         <label htmlFor="straight-line" className={`text-sm ${!depreciationToggle ? 'text-gray-400' : ''}`}>Straight Line</label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <input 
-                          type="radio" 
-                          id="wdv" 
-                          name="depreciationMethod" 
-                          value="wdv" 
+                        <input
+                          type="radio"
+                          id="wdv"
+                          name="depreciationMethod"
+                          value="wdv"
                           disabled={!depreciationToggle}
-                          className="w-4 h-4 text-[#C72030] border-gray-300" 
+                          className="w-4 h-4 text-[#C72030] border-gray-300"
                           style={{
                             accentColor: '#C72030'
                           }}
@@ -7226,49 +7226,49 @@ const hasFiles = () => {
 
                   {/* Input Fields Row */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <TextField 
-                      required 
-                      label="Useful Life (in yrs)" 
-                      placeholder="YRS" 
-                      name="usefulLife" 
-                      fullWidth 
-                      variant="outlined" 
+                    <TextField
+                      required
+                      label="Useful Life (in yrs)"
+                      placeholder="YRS"
+                      name="usefulLife"
+                      fullWidth
+                      variant="outlined"
                       disabled={!depreciationToggle}
                       InputLabelProps={{
                         shrink: true
-                      }} 
+                      }}
                       InputProps={{
                         sx: fieldStyles
                       }}
                       onChange={e => handleFieldChange('useful_life', e.target.value)}
                     />
-                    <TextField 
-                      required 
-                      label="Salvage Value" 
-                      placeholder="Enter Value" 
-                      name="salvageValue" 
-                      fullWidth 
-                      variant="outlined" 
+                    <TextField
+                      required
+                      label="Salvage Value"
+                      placeholder="Enter Value"
+                      name="salvageValue"
+                      fullWidth
+                      variant="outlined"
                       disabled={!depreciationToggle}
                       InputLabelProps={{
                         shrink: true
-                      }} 
+                      }}
                       InputProps={{
                         sx: fieldStyles
                       }}
                       onChange={e => handleFieldChange('salvage_value', e.target.value)}
                     />
-                    <TextField 
-                      required 
-                      label="Depreciation Rate" 
-                      placeholder="Enter Value" 
-                      name="depreciationRate" 
-                      fullWidth 
-                      variant="outlined" 
+                    <TextField
+                      required
+                      label="Depreciation Rate"
+                      placeholder="Enter Value"
+                      name="depreciationRate"
+                      fullWidth
+                      variant="outlined"
                       disabled={!depreciationToggle}
                       InputLabelProps={{
                         shrink: true
-                      }} 
+                      }}
                       InputProps={{
                         sx: fieldStyles
                       }}
@@ -7479,40 +7479,40 @@ const hasFiles = () => {
                       ))}
                     </MuiSelect>
                   </FormControl>
-                  <TextField 
-                    required 
-                    label="Agreement Start Date*" 
-                    placeholder="dd/mm/yyyy" 
-                    name="agreementStartDate" 
-                    type="date" 
-                    fullWidth 
-                    variant="outlined" 
+                  <TextField
+                    required
+                    label="Agreement Start Date*"
+                    placeholder="dd/mm/yyyy"
+                    name="agreementStartDate"
+                    type="date"
+                    fullWidth
+                    variant="outlined"
                     disabled={!assetLoanedToggle}
                     InputLabelProps={{
                       shrink: true
-                    }} 
+                    }}
                     InputProps={{
                       sx: fieldStyles
                     }}
                     onChange={(e) => handleFieldChange('agreement_from_date', e.target.value)}
                   />
-                  <TextField 
-                    required 
-                    label="Agreement End Date*" 
-                    placeholder="dd/mm/yyyy" 
-                    name="agreementEndDate" 
-                    type="date" 
-                    fullWidth 
-                    variant="outlined" 
+                  <TextField
+                    required
+                    label="Agreement End Date*"
+                    placeholder="dd/mm/yyyy"
+                    name="agreementEndDate"
+                    type="date"
+                    fullWidth
+                    variant="outlined"
                     disabled={!assetLoanedToggle}
                     InputLabelProps={{
                       shrink: true
-                    }} 
+                    }}
                     InputProps={{
                       sx: fieldStyles
                     }}
                     onChange={(e) => handleFieldChange('agreement_to_date', e.target.value)}
-                  
+
                   />
                 </div>
               </div>}
@@ -7559,7 +7559,7 @@ const hasFiles = () => {
                           </MenuItem>
                         ))}
                       </MuiSelect>
-                    </FormControl>  
+                    </FormControl>
 
                     <TextField label="Start Date" placeholder="dd/mm/yyyy" name="amcStartDate" type="date" fullWidth variant="outlined" InputLabelProps={{
                       shrink: true
@@ -7628,14 +7628,14 @@ const hasFiles = () => {
               </div>}
             </div>
             {/* Asset Image Upload for these categories */}
-          
 
 
-            
-      
+
+
+
 
             {/* Attachments */}
-           
+
           </>
         )}
 
@@ -7831,141 +7831,141 @@ const hasFiles = () => {
           </div>
         </div>
       )} */}
-       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-              <div onClick={() => toggleSection('attachments')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
-                <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                  <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                    <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
-                  </span>
-                  ATTACHMENTS
-                </div>
-                {expandedSections.attachments ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-              </div>
-              {expandedSections.attachments && <div className="p-4 sm:p-6">
-                {/* Category-specific Asset Image */}
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-4">Asset Image</h3>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                    <input 
-                      type="file" 
-                      accept=".jpg,.jpeg,.png,.gif" 
-                      onChange={e => handleFileUpload(`${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}AssetImage`, e.target.files)} 
-                      className="hidden" 
-                      id="asset-image-upload" 
-                    />
-                    <label htmlFor="asset-image-upload" className="cursor-pointer block">
-                      <div className="flex items-center justify-center space-x-2 mb-2">
-                        <span className="text-[#C72030] font-medium text-xs sm:text-sm">Choose Asset Image</span>
-                        <span className="text-gray-500 text-xs sm:text-sm">
-                          {(() => {
-                            const categoryKey = `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}AssetImage`;
-                            return attachments[categoryKey]?.length > 0 ? `${attachments[categoryKey].length} image(s) selected` : 'No image chosen';
-                          })()}
-                        </span>
-                      </div>
-                    </label>
+      <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+        <div onClick={() => toggleSection('attachments')} className="cursor-pointer border-l-4 border-l-[#C72030] p-4 sm:p-6 flex justify-between items-center bg-white">
+          <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
+            <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
+              <Paperclip className="w-3 h-3 sm:w-4 sm:h-4" />
+            </span>
+            ATTACHMENTS
+          </div>
+          {expandedSections.attachments ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+        </div>
+        {expandedSections.attachments && <div className="p-4 sm:p-6">
+          {/* Category-specific Asset Image */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">Asset Image</h3>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.gif"
+                onChange={e => handleFileUpload(`${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}AssetImage`, e.target.files)}
+                className="hidden"
+                id="asset-image-upload"
+              />
+              <label htmlFor="asset-image-upload" className="cursor-pointer block">
+                <div className="flex items-center justify-center space-x-2 mb-2">
+                  <span className="text-[#C72030] font-medium text-xs sm:text-sm">Choose Asset Image</span>
+                  <span className="text-gray-500 text-xs sm:text-sm">
                     {(() => {
                       const categoryKey = `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}AssetImage`;
-                      return attachments[categoryKey]?.length > 0 && (
-                        <div className="mt-2 space-y-1">
-                          {attachments[categoryKey].map((file, index) => (
-                            <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
-                              <span className="text-xs sm:text-sm truncate">{file.name}</span>
-                              <button onClick={() => removeFile(categoryKey, index)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      );
+                      return attachments[categoryKey]?.length > 0 ? `${attachments[categoryKey].length} image(s) selected` : 'No image chosen';
                     })()}
-                    <div className="mt-2">
-                      <label htmlFor="asset-image-upload">
-                        <button className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto">
-                          <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
-                          Upload Asset Image
+                  </span>
+                </div>
+              </label>
+              {(() => {
+                const categoryKey = `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}AssetImage`;
+                return attachments[categoryKey]?.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {attachments[categoryKey].map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                        <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                        <button onClick={() => removeFile(categoryKey, index)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                          <X className="w-4 h-4" />
                         </button>
-                      </label>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+              <div className="mt-2">
+                <label htmlFor="asset-image-upload">
+                  <button className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto">
+                    <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                    Upload Asset Image
+                  </button>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Common Document Sections for All Categories */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            {[{
+              label: 'Manuals Upload',
+              id: 'manuals-upload',
+              category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}ManualsUpload`,
+              accept: '.pdf,.doc,.docx,.txt'
+            }, {
+              label: 'Insurance Details',
+              id: 'insurance-upload',
+              category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}InsuranceDetails`,
+              accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+            }, {
+              label: 'Purchase Invoice',
+              id: 'invoice-upload',
+              category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}PurchaseInvoice`,
+              accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+            }, {
+              label: 'Other Documents',
+              id: 'other-upload',
+              category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}OtherDocuments`,
+              accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+            }
+              // , {
+              //   label: 'AMC Documents',
+              //   id: 'amc-upload',
+              //   category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}Amc`,
+              //   accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
+              // }
+            ].map(field => (
+              <div key={field.id}>
+                <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">{field.label}</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                  <input
+                    type="file"
+                    multiple
+                    accept={field.accept}
+                    onChange={e => handleFileUpload(field.category, e.target.files)}
+                    className="hidden"
+                    id={field.id}
+                  />
+                  <label htmlFor={field.id} className="cursor-pointer block">
+                    <div className="flex items-center justify-center space-x-2 mb-2">
+                      <span className="text-[#C72030] font-medium text-xs sm:text-sm">Choose File</span>
+                      <span className="text-gray-500 text-xs sm:text-sm">
+                        {attachments[field.category]?.length > 0 ? `${attachments[field.category].length} file(s) selected` : 'No file chosen'}
+                      </span>
                     </div>
+                  </label>
+                  {attachments[field.category]?.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {attachments[field.category].map((file, index) => (
+                        <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
+                          <span className="text-xs sm:text-sm truncate">{file.name}</span>
+                          <button onClick={() => removeFile(field.category, index)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-2">
+                    <label htmlFor={field.id}>
+                      <button className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto">
+                        <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                        Upload Files
+                      </button>
+                    </label>
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>}
 
-                {/* Common Document Sections for All Categories */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  {[{
-                    label: 'Manuals Upload',
-                    id: 'manuals-upload',
-                    category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}ManualsUpload`,
-                    accept: '.pdf,.doc,.docx,.txt'
-                  }, {
-                    label: 'Insurance Details',
-                    id: 'insurance-upload',
-                    category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}InsuranceDetails`,
-                    accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-                  }, {
-                    label: 'Purchase Invoice',
-                    id: 'invoice-upload',
-                    category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}PurchaseInvoice`,
-                    accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-                  }, {
-                    label: 'Other Documents',
-                    id: 'other-upload',
-                    category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}OtherDocuments`,
-                    accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-                  }
-                  // , {
-                  //   label: 'AMC Documents',
-                  //   id: 'amc-upload',
-                  //   category: `${selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '')}Amc`,
-                  //   accept: '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-                  // }
-                ].map(field => (
-                    <div key={field.id}>
-                      <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">{field.label}</label>
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                        <input 
-                          type="file" 
-                          multiple 
-                          accept={field.accept} 
-                          onChange={e => handleFileUpload(field.category, e.target.files)} 
-                          className="hidden" 
-                          id={field.id} 
-                        />
-                        <label htmlFor={field.id} className="cursor-pointer block">
-                          <div className="flex items-center justify-center space-x-2 mb-2">
-                            <span className="text-[#C72030] font-medium text-xs sm:text-sm">Choose File</span>
-                            <span className="text-gray-500 text-xs sm:text-sm">
-                              {attachments[field.category]?.length > 0 ? `${attachments[field.category].length} file(s) selected` : 'No file chosen'}
-                            </span>
-                          </div>
-                        </label>
-                        {attachments[field.category]?.length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            {attachments[field.category].map((file, index) => (
-                              <div key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded text-left">
-                                <span className="text-xs sm:text-sm truncate">{file.name}</span>
-                                <button onClick={() => removeFile(field.category, index)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded">
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        <div className="mt-2">
-                          <label htmlFor={field.id}>
-                            <button className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto">
-                              <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
-                              Upload Files
-                            </button>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>}
-
-            </div>
+      </div>
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 sm:pt-6">

@@ -33,13 +33,13 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({ title, d
 
   const renderGroupWiseChart = () => {
     const chartData = data.group_wise_assets?.slice(0, 10) || [];
-    
+
     return (
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis 
-            dataKey="group_name" 
+          <XAxis
+            dataKey="group_name"
             angle={-45}
             textAnchor="end"
             height={80}
@@ -127,7 +127,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({ title, d
 
   const renderAssetBreakdown = () => {
     const breakdownData = data.breakdown_by_group || [];
-    
+
     return (
       <div className="space-y-6">
         <div>
@@ -143,7 +143,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({ title, d
             </BarChart>
           </ResponsiveContainer>
         </div>
-        
+
         <div>
           <h4 className="text-lg font-semibold mb-4">Critical Breakdown Items</h4>
           <div className="space-y-2">
@@ -154,11 +154,10 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({ title, d
                   <div className="text-sm text-muted-foreground">{item.group_name}</div>
                 </div>
                 <div className="text-right">
-                  <div className={`px-2 py-1 rounded text-xs font-medium ${
-                    item.priority === 'Critical' ? 'bg-red-100 text-red-800' :
-                    item.priority === 'High' ? 'bg-orange-100 text-orange-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
+                  <div className={`px-2 py-1 rounded text-xs font-medium ${item.priority === 'Critical' ? 'bg-red-100 text-red-800' :
+                      item.priority === 'High' ? 'bg-orange-100 text-orange-800' :
+                        'bg-yellow-100 text-yellow-800'
+                    }`}>
                     {item.priority}
                   </div>
                   <div className="text-sm text-muted-foreground">{item.breakdown_date}</div>
@@ -173,7 +172,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({ title, d
 
   const renderCategoryWiseChart = () => {
     const chartData = data.categories?.slice(0, 8) || [];
-    
+
     return (
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
@@ -212,19 +211,19 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({ title, d
             <div className="text-sm text-muted-foreground">Breakdown</div>
           </div>
           <div className="text-center p-4 rounded-lg border">
-            <div className="text-2xl font-bold text-purple-600">₹{data.summary?.value_per_asset}</div>
+            <div className="text-2xl font-bold text-purple-600">{localStorage.getItem('currency')}{data.summary?.value_per_asset}</div>
             <div className="text-sm text-muted-foreground">Value/Asset</div>
           </div>
         </div>
-        
+
         {data.group_wise && (
           <div>
             <h4 className="text-lg font-semibold mb-4">Asset Distribution by Group</h4>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={data.group_wise.group_wise_assets?.slice(0, 8)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="group_name" 
+                <XAxis
+                  dataKey="group_name"
                   angle={-45}
                   textAnchor="end"
                   height={80}

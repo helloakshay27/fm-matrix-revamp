@@ -60,54 +60,54 @@ export const RepairReplaceModal: React.FC<RepairReplaceModalProps> = ({
     setInUseReason('');
   };
   return <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader className="relative">
-          <DialogTitle className="text-lg font-semibold text-gray-900">Asset Status Update</DialogTitle>
-          <button onClick={onClose} className="absolute right-0 top-0 p-1 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 ">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </button>
-        </DialogHeader>
-        
-        <div className="space-y-6 py-4">
-          {/* Action Type */}
-          <div>
-            <RadioGroup value={actionType} onValueChange={setActionType} className="flex gap-6">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="repaired" id="repaired" />
-                <Label htmlFor="repaired">Repaired</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="replaced" id="replaced" />
-                <Label htmlFor="replaced">Replaced</Label>
-              </div>
-            </RadioGroup>
-          </div>
+    <DialogContent className="max-w-md">
+      <DialogHeader className="relative">
+        <DialogTitle className="text-lg font-semibold text-gray-900">Asset Status Update</DialogTitle>
+        <button onClick={onClose} className="absolute right-0 top-0 p-1 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 ">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </button>
+      </DialogHeader>
 
-          {/* Cost */}
-          <div className="space-y-2">
-            <TextField label="Cost (In Rupees)" type="number" placeholder="" value={costInRupees} onChange={e => setCostInRupees(e.target.value)} fullWidth variant="outlined" sx={fieldStyles} InputProps={{
-            startAdornment: <span className="text-gray-500 mr-2">₹</span>
-          }} />
-          </div>
-
-          {/* Warranty */}
-          <div className="space-y-2">
-            <TextField label="Warranty (In Month)" type="number" placeholder="" value={warrantyInMonth} onChange={e => setWarrantyInMonth(e.target.value)} fullWidth variant="outlined" sx={fieldStyles} />
-          </div>
-
-          {/* In Use Reason */}
-          <div className="space-y-2">
-            <TextField label="In Use Reason" placeholder="" value={inUseReason} onChange={e => setInUseReason(e.target.value)} fullWidth variant="outlined" multiline rows={3} sx={fieldStyles} />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
-            <Button onClick={handleSubmit} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex-1">
-              Submit
-            </Button>
-          </div>
+      <div className="space-y-6 py-4">
+        {/* Action Type */}
+        <div>
+          <RadioGroup value={actionType} onValueChange={setActionType} className="flex gap-6">
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="repaired" id="repaired" />
+              <Label htmlFor="repaired">Repaired</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="replaced" id="replaced" />
+              <Label htmlFor="replaced">Replaced</Label>
+            </div>
+          </RadioGroup>
         </div>
-      </DialogContent>
-    </Dialog>;
+
+        {/* Cost */}
+        <div className="space-y-2">
+          <TextField label="Cost (In Rupees)" type="number" placeholder="" value={costInRupees} onChange={e => setCostInRupees(e.target.value)} fullWidth variant="outlined" sx={fieldStyles} InputProps={{
+            startAdornment: <span className="text-gray-500 mr-2">{localStorage.getItem('currency')}</span>
+          }} />
+        </div>
+
+        {/* Warranty */}
+        <div className="space-y-2">
+          <TextField label="Warranty (In Month)" type="number" placeholder="" value={warrantyInMonth} onChange={e => setWarrantyInMonth(e.target.value)} fullWidth variant="outlined" sx={fieldStyles} />
+        </div>
+
+        {/* In Use Reason */}
+        <div className="space-y-2">
+          <TextField label="In Use Reason" placeholder="" value={inUseReason} onChange={e => setInUseReason(e.target.value)} fullWidth variant="outlined" multiline rows={3} sx={fieldStyles} />
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3 pt-4">
+          <Button onClick={handleSubmit} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex-1">
+            Submit
+          </Button>
+        </div>
+      </div>
+    </DialogContent>
+  </Dialog>;
 };

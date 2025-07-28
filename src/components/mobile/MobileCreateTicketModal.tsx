@@ -18,6 +18,7 @@ export const MobileCreateTicketModal: React.FC<MobileCreateTicketModalProps> = (
   onSuccess
 }) => {
   const { toast } = useToast();
+ 
   const [formData, setFormData] = useState({
     issueType: '',
     category: '',
@@ -60,15 +61,15 @@ export const MobileCreateTicketModal: React.FC<MobileCreateTicketModalProps> = (
       <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
+          <button
+            onClick={onClose}
+            className="text-red-600 hover:text-red-700"
+          >
+            <X className="h-5 w-5" />
+          </button>
           <h2 className="text-lg font-semibold text-gray-900">Overview</h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-end gap-2">
             <Edit className="h-5 w-5 text-red-600" />
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X className="h-5 w-5" />
-            </button>
           </div>
         </div>
 

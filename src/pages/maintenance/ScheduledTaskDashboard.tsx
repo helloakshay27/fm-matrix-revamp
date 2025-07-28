@@ -765,6 +765,7 @@ export const ScheduledTaskDashboard = () => {
                   title="Technical Checklist"
                   data={technicalData.response}
                   type="technical"
+                  dateRange={analyticsDateRange}
                 />
               )}
 
@@ -774,6 +775,7 @@ export const ScheduledTaskDashboard = () => {
                   title="Non-Technical Checklist"
                   data={nonTechnicalData.response}
                   type="nonTechnical"
+                  dateRange={analyticsDateRange}
                 />
               )}
 
@@ -783,6 +785,7 @@ export const ScheduledTaskDashboard = () => {
                   title="Top 10 Checklist Types"
                   data={topTenData.response}
                   type="topTen"
+                  dateRange={analyticsDateRange}
                 />
               )}
 
@@ -792,6 +795,7 @@ export const ScheduledTaskDashboard = () => {
                   title="Site-wise Checklist Status"
                   data={siteWiseData.response}
                   type="siteWise"
+                  dateRange={analyticsDateRange}
                 />
               )}
               

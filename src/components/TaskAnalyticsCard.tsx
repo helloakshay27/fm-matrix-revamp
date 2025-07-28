@@ -1,12 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { taskAnalyticsDownloadAPI } from '@/services/taskAnalyticsDownloadAPI';
 
 interface TaskAnalyticsCardProps {
   title: string;
   data: any;
   type: 'technical' | 'nonTechnical' | 'topTen' | 'siteWise';
   className?: string;
+  dateRange?: {
+    startDate: Date;
+    endDate: Date;
+  };
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
@@ -15,8 +22,38 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
   title, 
   data, 
   type, 
-  className = '' 
+  className = '',
+  dateRange
 }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!dateRange) return;
+    
+    setIsDownloading(true);
+    try {
+      switch (type) {
+        case 'technical':
+          await taskAnalyticsDownloadAPI.downloadTechnicalChecklistData(dateRange.startDate, dateRange.endDate);
+          break;
+        case 'nonTechnical':
+          await taskAnalyticsDownloadAPI.downloadNonTechnicalChecklistData(dateRange.startDate, dateRange.endDate);
+          break;
+        case 'topTen':
+          await taskAnalyticsDownloadAPI.downloadTopTenChecklistData(dateRange.startDate, dateRange.endDate);
+          break;
+        case 'siteWise':
+          await taskAnalyticsDownloadAPI.downloadSiteWiseChecklistData(dateRange.startDate, dateRange.endDate);
+          break;
+        default:
+          console.error('Unknown chart type for download');
+      }
+    } catch (error) {
+      console.error('Error downloading data:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   const renderContent = () => {
     if (!data) {
       return (
@@ -201,8 +238,19 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
 
   return (
     <Card className={`h-full ${className}`}>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+        {dateRange && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="pt-0">
         {renderContent()}

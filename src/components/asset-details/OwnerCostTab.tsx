@@ -161,7 +161,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset }) => {
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{item.date}</TableCell>
                     <TableCell>{item.status}</TableCell>
-                    <TableCell>₹{item.cost}</TableCell>
+                    <TableCell>{localStorage.getItem('currency')}{item.cost}</TableCell>
                     <TableCell>{item.warranty_in_month} months</TableCell>
                     <TableCell>{asset.name || "N/A"}</TableCell>
                   </TableRow>

@@ -14,9 +14,19 @@ export const EscalationMatrixPage: React.FC = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="response-escalation">Response Escalation</TabsTrigger>
-          <TabsTrigger value="resolution-escalation">Resolution Escalation</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+          <TabsTrigger
+            value="response-escalation"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            Response Escalation
+          </TabsTrigger>
+          <TabsTrigger
+            value="resolution-escalation"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            Resolution Escalation
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="response-escalation" className="mt-6">

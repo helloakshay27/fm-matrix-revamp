@@ -166,16 +166,8 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
     <div className="h-screen bg-gray-50 flex flex-col">
       {/* Mobile Header */}
       <div className="bg-white shadow-sm p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-center mb-4">
           <h1 className="text-lg font-semibold text-gray-900">Tickets</h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="text-red-600 hover:text-red-700"
-          >
-            <Plus className="h-5 w-5" />
-          </Button>
         </div>
 
         {/* Tab Navigation */}
@@ -363,6 +355,16 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
             </div>
           ))
         )}
+      </div>
+
+      {/* Floating Action Button (FAB) */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
       </div>
 
       {/* Create Ticket Modal */}

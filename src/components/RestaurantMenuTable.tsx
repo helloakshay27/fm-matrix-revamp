@@ -182,9 +182,9 @@ export const RestaurantMenuTable = () => {
       case 'name':
         return item.name || '';
       case 'master_price':
-        return `₹${item.master_price}`;
+        return `${localStorage.getItem('currency')}${item.master_price}`;
       case 'display_price':
-        return `₹${item.display_price}`;
+        return `${localStorage.getItem('currency')}${item.display_price}`;
       case 'category_id':
         return item.category_id || '';
       case 'sub_category_id':

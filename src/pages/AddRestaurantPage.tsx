@@ -935,7 +935,7 @@ export const AddRestaurantPage = () => {
               </div>
               <div>
                 <TextField
-                  label="Delivery Charge (₹)"
+                  label={`Delivery Charge (${localStorage.getItem('currency')})`}
                   value={orderConfig.deliveryCharge}
                   onChange={(e) => setOrderConfig(prev => ({ ...prev, deliveryCharge: e.target.value }))}
                   fullWidth
@@ -946,7 +946,7 @@ export const AddRestaurantPage = () => {
               </div>
               <div>
                 <TextField
-                  label="Minimum Order (₹)"
+                  label={`Minimum Order (${localStorage.getItem('currency')})`}
                   value={orderConfig.minimumOrder}
                   onChange={(e) => setOrderConfig(prev => ({ ...prev, minimumOrder: e.target.value }))}
                   fullWidth

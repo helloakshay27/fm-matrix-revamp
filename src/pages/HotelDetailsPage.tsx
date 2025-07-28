@@ -19,29 +19,29 @@ export const HotelDetailsPage = () => {
       {/* Hotel Image Gallery */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="md:col-span-2">
-          <img 
+          <img
             src="https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
             alt="Hotel main view"
             className="w-full h-80 object-cover rounded-lg"
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <img 
+          <img
             src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
             alt="Hotel room"
             className="w-full h-36 object-cover rounded-lg"
           />
-          <img 
+          <img
             src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
             alt="Hotel exterior"
             className="w-full h-36 object-cover rounded-lg"
           />
-          <img 
+          <img
             src="https://images.unsplash.com/photo-1559599238-12b7b4b01c8f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
             alt="Hotel amenities"
             className="w-full h-36 object-cover rounded-lg"
           />
-          <img 
+          <img
             src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
             alt="Hotel pool"
             className="w-full h-36 object-cover rounded-lg"
@@ -55,11 +55,10 @@ export const HotelDetailsPage = () => {
           <button
             key={tab}
             onClick={() => setActiveTab(tab.toLowerCase())}
-            className={`px-4 py-2 border-b-2 transition-colors ${
-              activeTab === tab.toLowerCase()
+            className={`px-4 py-2 border-b-2 transition-colors ${activeTab === tab.toLowerCase()
                 ? 'border-orange-500 text-orange-500 font-medium'
                 : 'border-transparent text-gray-600 hover:text-gray-800'
-            }`}
+              }`}
           >
             {tab}
           </button>
@@ -84,7 +83,7 @@ export const HotelDetailsPage = () => {
               <div>
                 <h2 className="text-xl font-semibold mb-4">About this property</h2>
                 <p className="text-gray-600 mb-4">Hotel in Alibag with 24-hour front desk and restaurant</p>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
@@ -126,8 +125,8 @@ export const HotelDetailsPage = () => {
               <div>
                 <h2 className="text-xl font-semibold mb-4">Accessibility</h2>
                 <p className="text-gray-600">
-                  If you have requests for specific accessibility needs, please 
-                  contact the property using the information on the reservation 
+                  If you have requests for specific accessibility needs, please
+                  contact the property using the information on the reservation
                   confirmation received after booking.
                 </p>
               </div>
@@ -141,10 +140,10 @@ export const HotelDetailsPage = () => {
             <CardContent className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <div className="text-3xl font-bold text-gray-900">₹10,000</div>
+                  <div className="text-3xl font-bold text-gray-900">{localStorage.getItem('currency')}10,000</div>
                   <div className="text-gray-600">for 4 nights</div>
                 </div>
-                <Button 
+                <Button
                   onClick={handleBookNow}
                   className="bg-gray-900 hover:bg-gray-800 text-white px-6 py-2"
                 >
@@ -154,7 +153,7 @@ export const HotelDetailsPage = () => {
 
               <div className="border rounded-lg p-4 mb-4">
                 <h3 className="font-semibold mb-3">Standard Room</h3>
-                
+
                 <div className="space-y-3 text-sm">
                   <div className="flex items-center gap-2">
                     <Car className="w-4 h-4" />
