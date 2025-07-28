@@ -200,17 +200,8 @@ export const InventoryDashboard = () => {
   });
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<any>({
-    statusData: {
-      count_of_active_items: 0,
-      count_of_inactive_items: 0,
-      count_of_critical_items: 0,
-      count_of_non_critical_items: 0,
-      activeItems: 0,
-      inactiveItems: 0,
-      criticalItems: 0,
-      nonCriticalItems: 0
-    },
-    categoryData: []
+    statusData: null,
+    categoryData: null
   });
   const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>([
     'items_status',
@@ -621,18 +612,14 @@ export const InventoryDashboard = () => {
       // Fetch selected analytics data
       if (selectedAnalyticsOptions.includes('items_status')) {
         const statusResponse = await inventoryAnalyticsAPI.getItemsStatus(fromDate, toDate);
-        // Map API response to expected format
-        results.statusData = {
-          activeItems: statusResponse.count_of_active_items || 0,
-          inactiveItems: statusResponse.count_of_inactive_items || 0,
-          criticalItems: statusResponse.count_of_critical_items || 0,
-          nonCriticalItems: statusResponse.count_of_non_critical_items || 0
-        };
+        // Store the complete API response for the InventoryAnalyticsCard
+        results.statusData = statusResponse;
       }
       
       if (selectedAnalyticsOptions.includes('category_wise')) {
         const categoryResponse = await inventoryAnalyticsAPI.getCategoryWise(fromDate, toDate);
-        results.categoryData = categoryResponse.category_counts || [];
+        // Store the complete API response for the InventoryAnalyticsCard
+        results.categoryData = categoryResponse;
       }
       
       if (selectedAnalyticsOptions.includes('green_consumption')) {
@@ -679,18 +666,20 @@ export const InventoryDashboard = () => {
 
   // Update the analytics section to use dynamic data with safety checks
   const itemStatusData = [
-    { name: "Active", value: analyticsData.statusData?.activeItems || 0, fill: "#c6b692" },
-    { name: "Inactive", value: analyticsData.statusData?.inactiveItems || 0, fill: "#d8dcdd" },
+    { name: "Active", value: analyticsData.statusData?.count_of_active_items || 0, fill: "#22C55E" },
+    { name: "Inactive", value: analyticsData.statusData?.count_of_inactive_items || 0, fill: "#EF4444" },
+    { name: "Critical", value: analyticsData.statusData?.count_of_critical_items || 0, fill: "#F97316" },
+    { name: "Non-Critical", value: analyticsData.statusData?.count_of_non_critical_items || 0, fill: "#3B82F6" },
   ];
 
   const criticalityData = [
-    { name: "Critical", value: analyticsData.statusData?.criticalItems || 0, fill: "#c6b692" },
-    { name: "Non-Critical", value: analyticsData.statusData?.nonCriticalItems || 0, fill: "#d8dcdd" },
+    { name: "Critical", value: analyticsData.statusData?.count_of_critical_items || 0, fill: "#F97316" },
+    { name: "Non-Critical", value: analyticsData.statusData?.count_of_non_critical_items || 0, fill: "#3B82F6" },
   ];
 
   // Group data from API - with safety check
-  const groupChartData = (analyticsData.categoryData && Array.isArray(analyticsData.categoryData)) 
-    ? analyticsData.categoryData.map(({ group_name, item_count }) => ({
+  const groupChartData = (analyticsData.categoryData?.category_counts && Array.isArray(analyticsData.categoryData.category_counts)) 
+    ? analyticsData.categoryData.category_counts.map(({ group_name, item_count }) => ({
         name: group_name,
         value: item_count
       })) 
