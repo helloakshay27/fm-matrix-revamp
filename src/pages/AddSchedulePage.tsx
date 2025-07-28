@@ -4156,53 +4156,50 @@ export const AddSchedulePage = () => {
       Select Template
     </Typography>
 
-    <Autocomplete
-      disabled={
-        (stepIndex < activeStep && editingStep !== stepIndex) ||
-        loading.templates
-      }
-      options={[
+    {(() => {
+      const templateOptions = [
         { id: '', label: 'Select Template', value: '' },
         ...(templates || []).map((template) => ({
           id: template.id?.toString?.() ?? '',
-          label: template.form_name ?? '',
+          label: template.form_name?.trim() ?? '',
           value: template.id?.toString?.() ?? '',
-        })),
-      ]}
-      getOptionLabel={(option) => option?.label || ''}
-      isOptionEqualToValue={(option, value) => option.value === value.value}
-      value={
-        [
-          { id: '', label: 'Select Template', value: '' },
-          ...(templates || []).map((template) => ({
-            id: template.id?.toString?.() ?? '',
-            label: template.form_name ?? '',
-            value: template.id?.toString?.() ?? '',
-          })),
-        ].find((option) => option.value === (formData?.selectedTemplate ?? '')) || {
-          id: '',
-          label: 'Select Template',
-          value: '',
-        }
-      }
-      onChange={(event, newValue) => {
-        if (newValue && newValue.value !== '') {
-          handleTemplateChange(newValue.value);
-        }
-      }}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label={
-            <span>
-              Template <span style={{ color: 'currentColor' }}>*</span>
-            </span>
+        }))
+      ];
+
+      const selectedValue = templateOptions.find(
+        (option) => option.value === String(formData?.selectedTemplate ?? '')
+      ) || templateOptions[0]; // fallback to default safe option
+
+      return (
+        <Autocomplete
+          disabled={
+            (stepIndex < activeStep && editingStep !== stepIndex) ||
+            loading.templates
           }
-          fullWidth
-          disabled={stepIndex < activeStep && editingStep !== stepIndex}
+          options={templateOptions}
+          getOptionLabel={(option) => (option?.label ? option.label : '')}
+          isOptionEqualToValue={(option, value) =>
+            option?.value === value?.value
+          }
+          value={selectedValue}
+          onChange={(event, newValue) => {
+            handleTemplateChange(newValue?.value || '');
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={
+                <span>
+                  Template <span style={{ color: 'currentColor' }}>*</span>
+                </span>
+              }
+              fullWidth
+              disabled={stepIndex < activeStep && editingStep !== stepIndex}
+            />
+          )}
         />
-      )}
-    />
+      );
+    })()}
 
     {loading.templates && (
       <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
@@ -4211,6 +4208,7 @@ export const AddSchedulePage = () => {
     )}
   </SectionCard>
 )}
+
 
             {/* Auto Ticket Configuration Section */}
             {autoTicket && (
