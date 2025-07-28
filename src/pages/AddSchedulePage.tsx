@@ -4184,17 +4184,25 @@ export const AddSchedulePage = () => {
     {(() => {
       const templateOptions = [
         { id: '', label: 'Select Template', value: '' },
-        ...(templates || []).map((template) => ({
-          id: String(template.id ?? ''),
-          label: template.form_name?.trim() ?? '',
-          value: String(template.id ?? ''),
+        ...(Array.isArray(templates) ? templates : []).map((template) => ({
+          id: String(template?.id ?? ''),
+          label: (template?.form_name ?? '').toString().trim(),
+          value: String(template?.id ?? ''),
         })),
       ];
 
-      // Safe fallback object always used
-      const selectedTemplate = templateOptions.find(
-        (opt) => opt?.value === String(formData?.selectedTemplate ?? '')
-      ) ?? templateOptions[0];
+      console.log('Available Template Options:', templateOptions);
+
+      const selectedTemplateValue = String(formData?.selectedTemplate ?? '');
+      const selectedTemplate =
+        templateOptions.find(
+          (opt) =>
+            opt &&
+            typeof opt.value === 'string' &&
+            opt.value === selectedTemplateValue
+        ) ?? templateOptions[0];
+
+      console.log('Current Selected Template:', selectedTemplate);
 
       return (
         <Autocomplete
@@ -4207,12 +4215,13 @@ export const AddSchedulePage = () => {
           }}
           isOptionEqualToValue={(option, value) => {
             if (!option || !value) return false;
-            return String(option.value) === String(value.value);
+            return String(option.value ?? '') === String(value.value ?? '');
           }}
           value={selectedTemplate || templateOptions[0]}
           onChange={(event, newValue) => {
+            console.log('Template Selected by User:', newValue);
             if (newValue && typeof newValue.value !== 'undefined') {
-              handleTemplateChange(newValue.value);
+              handleTemplateChange(newValue.value ?? '');
             }
           }}
           disabled={
@@ -4242,6 +4251,7 @@ export const AddSchedulePage = () => {
     )}
   </SectionCard>
 )}
+
 
             {/* Auto Ticket Configuration Section */}
             {autoTicket && (
