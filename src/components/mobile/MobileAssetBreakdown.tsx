@@ -1,9 +1,30 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, MapPin } from "lucide-react";
+
+interface Activity {
+  id: number;
+  trackable_id: number;
+  trackable_type: string;
+  owner_id: number;
+  owner_type: string;
+  key: string;
+  parameters: {
+    updated_at?: [string, string];
+    created_by?: [string, string];
+    breakdown?: [boolean, boolean];
+    breakdown_date?: [string | null, string | null];
+    location_type?: [string, string | null];
+    [key: string]: any;
+  };
+  recipient_id?: number | null;
+  recipient_type?: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 interface Asset {
   id: number;
@@ -27,6 +48,7 @@ interface Asset {
   technical?: boolean;
   asset_type_category?: string;
   ownership_costs?: OwnershipCost[];
+  activities?: Activity[];
 }
 
 interface OwnershipCost {
@@ -67,12 +89,33 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
   const [loading, setLoading] = useState(false);
   const [breakdownAge, setBreakdownAge] = useState<string>("");
 
+  // Get breakdown date from activities or fallback to breakdown_date
+  const getBreakdownDate = useCallback((): string | null => {
+    if (assetData.activities) {
+      // Find the latest activity where breakdown changed to true
+      const breakdownActivity = assetData.activities
+        .filter(activity => 
+          activity.parameters.breakdown && 
+          activity.parameters.breakdown[1] === true &&
+          activity.parameters.breakdown_date &&
+          activity.parameters.breakdown_date[1] // Use the new breakdown date
+        )
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+      
+      if (breakdownActivity && breakdownActivity.parameters.breakdown_date) {
+        return breakdownActivity.parameters.breakdown_date[1]; // Use breakdown start date (new value)
+      }
+    }
+    return assetData.breakdown_date || null;
+  }, [assetData.activities, assetData.breakdown_date]);
+
   // Calculate breakdown age
   useEffect(() => {
-    if (assetData.breakdown_date) {
-      const breakdownDate = new Date(assetData.breakdown_date);
+    const breakdownDate = getBreakdownDate();
+    if (breakdownDate) {
+      const breakdown = new Date(breakdownDate);
       const now = new Date();
-      const diffTime = Math.abs(now.getTime() - breakdownDate.getTime());
+      const diffTime = Math.abs(now.getTime() - breakdown.getTime());
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       const diffHours = Math.floor(
         (diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
@@ -86,7 +129,7 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
           .padStart(2, "0")}:${diffMinutes.toString().padStart(2, "0")}`
       );
     }
-  }, [assetData.breakdown_date]);
+  }, [getBreakdownDate]);
 
   // Fetch detailed asset data and breakdown information
   useEffect(() => {
@@ -126,25 +169,34 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
           const assetApiData = await assetResponse.json();
           setAssetData(assetApiData.asset);
 
-          // Convert ownership costs to breakdown history format
-          if (
-            assetApiData.asset.ownership_costs &&
-            assetApiData.asset.ownership_costs.length > 0
-          ) {
-            const history = assetApiData.asset.ownership_costs.map(
-              (cost: OwnershipCost) => ({
-                id: cost.id,
-                date: cost.date,
-                aging: calculateAging(cost.date),
-                costSpent: cost.cost ? `₹${cost.cost.toLocaleString()}` : "₹0",
-                attendeeName:
-                  cost.status === "Repaired"
-                    ? "Repair Technician"
-                    : "Replacement Team",
-                status: cost.status,
-                warranty_in_month: cost.warranty_in_month,
+          // Convert activities to breakdown history format
+          if (assetApiData.asset.activities && assetApiData.asset.activities.length > 0) {
+            const history = assetApiData.asset.activities
+              .filter((activity: Activity) => 
+                activity.parameters.breakdown && 
+                activity.parameters.breakdown[1] === true &&
+                activity.parameters.breakdown_date &&
+                activity.parameters.breakdown_date[1] // Only activities that have a new breakdown date
+              )
+              .map((activity: Activity) => {
+                const breakdownDate = activity.parameters.breakdown_date?.[1] || activity.created_at; // Use the NEW breakdown date
+                const updatedDate = activity.parameters.updated_at?.[1] || activity.updated_at;
+                
+                return {
+                  id: activity.id,
+                  date: new Date(breakdownDate).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "2-digit", 
+                    year: "numeric"
+                  }),
+                  time: calculateTimeDifference(breakdownDate, updatedDate),
+                  aging: calculateAging(breakdownDate, updatedDate),
+                  costSpent: "NA", // As requested
+                  attendeeName: "Repair Technician", // Default value
+                  status: "Breakdown"
+                };
               })
-            );
+              .sort((a, b) => b.id - a.id); // Sort by activity ID descending (latest first)
 
             setBreakdownHistory(history);
           } else {
@@ -158,9 +210,9 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
           {
             id: 1,
             date: "28/07/2025",
-            time: "",
+            time: "00:00:00",
             aging: "1 day",
-            costSpent: "₹15,000",
+            costSpent: "NA",
             attendeeName: "Repair Technician",
           },
         ]);
@@ -173,25 +225,32 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
   }, [assetId, initialAsset.id]);
 
   // Helper function to calculate aging from date
-  const calculateAging = (dateString: string, endDate?: string) => {
-    if (!dateString) return "N/A";
+  const calculateAging = (startDateString: string, endDateString?: string) => {
+    if (!startDateString) return "N/A";
 
-    // Parse date in DD/MM/YYYY format
-    const dateParts = dateString.split("/");
-    if (dateParts.length !== 3) return "N/A";
-
-    const start = new Date(
-      parseInt(dateParts[2]),
-      parseInt(dateParts[1]) - 1,
-      parseInt(dateParts[0])
-    );
-    const end = endDate ? new Date(endDate) : new Date();
+    const start = new Date(startDateString);
+    const end = endDateString ? new Date(endDateString) : new Date();
     const diffTime = Math.abs(end.getTime() - start.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) return "Today";
     if (diffDays === 1) return "1 day";
     return `${diffDays} days`;
+  };
+
+  // Helper function to calculate time difference in DD:HH:MM format
+  const calculateTimeDifference = (startDateString: string, endDateString: string) => {
+    if (!startDateString || !endDateString) return "00:00:00";
+
+    const start = new Date(startDateString);
+    const end = new Date(endDateString);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return `${diffDays.toString().padStart(2, "0")}:${diffHours.toString().padStart(2, "0")}:${diffMinutes.toString().padStart(2, "0")}`;
   };
 
   // Format date for display
@@ -305,7 +364,7 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
             <div className="space-y-1">
               <p className="text-sm font-medium text-gray-500">Created On:</p>
               <p className="text-sm text-gray-600">
-                {formatDate(assetData.breakdown_date || "")}
+                {formatDate(getBreakdownDate() || "")}
               </p>
             </div>
 
