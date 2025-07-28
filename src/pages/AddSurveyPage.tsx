@@ -234,12 +234,9 @@ export const AddSurveyPage = () => {
                           <SelectValue placeholder="Choose Answer Type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="text">Text</SelectItem>
                           <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-                          <SelectItem value="checkbox">Checkbox</SelectItem>
-                          <SelectItem value="dropdown">Dropdown</SelectItem>
-                          <SelectItem value="rating">Rating</SelectItem>
-                          <SelectItem value="date">Date</SelectItem>
+                          <SelectItem value="input-box">Input Box</SelectItem>
+                          <SelectItem value="description-box">Description Box</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
