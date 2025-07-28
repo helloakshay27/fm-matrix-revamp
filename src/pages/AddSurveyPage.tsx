@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { apiClient } from '@/utils/apiClient';
+import { getFullUrl } from '@/config/apiConfig';
 
 interface Question {
   id: string;
@@ -16,15 +18,45 @@ interface Question {
   answerOptions?: string[];
 }
 
+interface Category {
+  id: number;
+  name: string;
+  snag_audit_id: number;
+  company_id: number;
+  project_id: number;
+  active: number;
+  created_at: string;
+  updated_at: string;
+  sub_categories: any[];
+}
+
 export const AddSurveyPage = () => {
   const navigate = useNavigate();
   const [category, setCategory] = useState('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState('');
   const [numberOfQuestions, setNumberOfQuestions] = useState(2);
   const [questions, setQuestions] = useState<Question[]>([
     { id: '1', text: '', answerType: '', mandatory: false },
     { id: '2', text: '', answerType: '', mandatory: false }
   ]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.get('/snag_audit_categories.json');
+        setCategories(response.data || []);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleAddQuestion = () => {
     const newQuestion: Question = {
@@ -105,15 +137,16 @@ export const AddSurveyPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Category*
               </label>
-              <Select value={category} onValueChange={setCategory}>
+              <Select value={category} onValueChange={setCategory} disabled={loading}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Category" />
+                  <SelectValue placeholder={loading ? "Loading categories..." : "Select Category"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="feedback">Feedback</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="security">Security</SelectItem>
-                  <SelectItem value="general">General</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id.toString()}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
