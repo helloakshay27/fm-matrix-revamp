@@ -8,6 +8,7 @@ interface Asset {
   name: string;
   assetNumber?: string;
   status?: string;
+  breakdown?: boolean;
   assetGroup?: string;
   assetSubGroup?: string;
   siteName?: string;
@@ -102,10 +103,10 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
               </div>
               <div
                 className={`text-xs px-2 py-1 rounded font-medium ${getStatusBadgeColor(
-                  asset.status
+                  asset.breakdown ? "Breakdown" : asset.status
                 )}`}
               >
-                {formatStatusText(asset.status || "Breakdown")}
+                {formatStatusText(asset.breakdown ? "Breakdown" : (asset.status || "Breakdown"))}
               </div>
             </div>
 

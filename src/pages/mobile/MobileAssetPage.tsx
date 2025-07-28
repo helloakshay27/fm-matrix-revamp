@@ -4,12 +4,34 @@ import { MobileAssetList } from "@/components/mobile/MobileAssetList";
 import { MobileAssetDetails } from "@/components/mobile/MobileAssetDetails";
 import { MobileAssetBreakdown } from "@/components/mobile/MobileAssetBreakdown";
 
+interface Activity {
+  id: number;
+  trackable_id: number;
+  trackable_type: string;
+  owner_id: number;
+  owner_type: string;
+  key: string;
+  parameters: {
+    updated_at?: [string, string];
+    created_by?: [string, string];
+    breakdown?: [boolean, boolean];
+    breakdown_date?: [string | null, string | null];
+    location_type?: [string, string | null];
+    [key: string]: any;
+  };
+  recipient_id?: number | null;
+  recipient_type?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Mobile Asset Service
 interface MobileAsset {
   id: number;
   name: string;
   assetNumber?: string;
   status?: string;
+  breakdown?: boolean;
   assetGroup?: string;
   assetSubGroup?: string;
   siteName?: string;
@@ -21,6 +43,7 @@ interface MobileAsset {
   ownerCost?: number;
   association?: string;
   asset_type_category?: string;
+  activities?: Activity[];
 }
 
 interface AssetApiResponse {

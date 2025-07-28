@@ -20,13 +20,15 @@ import { toast } from 'sonner';
 export function BuildingPage() {
   const dispatch = useAppDispatch();
   const { sites, buildings } = useAppSelector((state) => state.location);
-  
+
   const [search, setSearch] = useState('');
   const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingBuilding, setEditingBuilding] = useState<any>(null);
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<string>('all');
+
+  console.log(sites)
 
   const createForm = useForm<BuildingFormData>({
     resolver: zodResolver(buildingSchema),
@@ -58,7 +60,7 @@ export function BuildingPage() {
 
   useEffect(() => {
     // Get user ID from localStorage or auth context
-    const userId = localStorage.getItem('user_id') || '87989'; // Default for demo
+    const userId = JSON.parse(localStorage.getItem('user')).id; // Default for demo
     dispatch(fetchSites(userId));
     dispatch(fetchBuildings());
   }, [dispatch]);
@@ -67,7 +69,7 @@ export function BuildingPage() {
     if (!buildings.data || !Array.isArray(buildings.data)) return [];
     return buildings.data.filter((building) => {
       const matchesSearch = building.name.toLowerCase().includes(search.toLowerCase()) ||
-                           building.site_id.toLowerCase().includes(search.toLowerCase());
+        building.site_id.toLowerCase().includes(search.toLowerCase());
       const matchesSite = selectedSiteFilter === 'all' || building.site_id === selectedSiteFilter;
       return matchesSearch && matchesSite;
     });
@@ -94,7 +96,7 @@ export function BuildingPage() {
 
   const handleEditBuilding = async (data: BuildingFormData) => {
     if (!editingBuilding) return;
-    
+
     try {
       const updates = {
         ...data,
@@ -170,7 +172,7 @@ export function BuildingPage() {
           <h1 className="text-3xl font-bold">Buildings</h1>
           <p className="text-muted-foreground">Manage building information</p>
         </div>
-        
+
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
             <Button>
@@ -205,9 +207,9 @@ export function BuildingPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {sites.data && Array.isArray(sites.data) && sites.data.map((site) => (
+                          {sites?.data.sites && Array.isArray(sites.data.sites) && sites.data.sites.map((site) => (
                             <SelectItem key={site.id} value={site.id.toString()}>
-                              {site.site_name}
+                              {site.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -216,7 +218,7 @@ export function BuildingPage() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={createForm.control}
                   name="name"
@@ -264,7 +266,7 @@ export function BuildingPage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={createForm.control}
                     name="has_area"
@@ -282,7 +284,7 @@ export function BuildingPage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={createForm.control}
                     name="has_floor"
@@ -300,7 +302,7 @@ export function BuildingPage() {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={createForm.control}
                     name="has_room"
@@ -319,7 +321,7 @@ export function BuildingPage() {
                     )}
                   />
                 </div>
-                
+
                 <div className="flex justify-end space-x-2">
                   <Button type="button" variant="outline" onClick={resetCreateForm}>
                     Cancel
@@ -400,7 +402,7 @@ export function BuildingPage() {
                   <TableHead className="text-center">Floor</TableHead>
                   <TableHead className="text-center">Room</TableHead>
                   <TableHead>Status</TableHead>
-                  
+
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -504,7 +506,7 @@ export function BuildingPage() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={editForm.control}
                 name="name"
@@ -552,7 +554,7 @@ export function BuildingPage() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={editForm.control}
                   name="has_area"
@@ -570,7 +572,7 @@ export function BuildingPage() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={editForm.control}
                   name="has_floor"
@@ -588,7 +590,7 @@ export function BuildingPage() {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={editForm.control}
                   name="has_room"
@@ -628,7 +630,7 @@ export function BuildingPage() {
                   </FormItem>
                 )}
               />
-              
+
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={resetEditForm}>
                   Cancel
