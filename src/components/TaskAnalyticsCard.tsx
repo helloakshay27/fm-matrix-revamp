@@ -1,12 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { taskAnalyticsDownloadAPI, DownloadType } from '@/services/taskAnalyticsDownloadAPI';
 
 interface TaskAnalyticsCardProps {
   title: string;
   data: any;
   type: 'technical' | 'nonTechnical' | 'topTen' | 'siteWise';
   className?: string;
+  dateRange?: {
+    from: Date;
+    to: Date;
+  };
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
@@ -15,8 +22,29 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
   title, 
   data, 
   type, 
-  className = '' 
+  className = '',
+  dateRange
 }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!dateRange) {
+      console.warn('Date range not provided for download');
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      await taskAnalyticsDownloadAPI.downloadAnalyticsData(type as DownloadType, {
+        fromDate: dateRange.from,
+        toDate: dateRange.to
+      });
+    } catch (error) {
+      console.error('Download failed:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   const renderContent = () => {
     if (!data) {
       return (
@@ -201,8 +229,19 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
 
   return (
     <Card className={`h-full ${className}`}>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+        {dateRange && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="h-8 w-8 p-0 hover:bg-gray-100"
+          >
+            <Download className={`h-4 w-4 ${isDownloading ? 'animate-pulse' : ''}`} />
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="pt-0">
         {renderContent()}
