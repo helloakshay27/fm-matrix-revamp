@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin, SlidersHorizontal } from "lucide-react";
 import { getStatusBadgeColor, formatStatusText } from "@/utils/statusUtils";
+import { MobileAssetFilterDialog, MobileAssetFilters } from "./MobileAssetFilterDialog";
 
 interface Asset {
   id: number;
@@ -24,15 +25,27 @@ interface MobileAssetListProps {
   onLoadMore?: () => Promise<void>;
   hasMore?: boolean;
   loadingMore?: boolean;
+  onApplyFilters?: (filters: MobileAssetFilters) => void;
 }
 
 export const MobileAssetList: React.FC<MobileAssetListProps> = ({ 
   assets, 
   onLoadMore, 
   hasMore = false, 
-  loadingMore = false 
+  loadingMore = false,
+  onApplyFilters
 }) => {
   const navigate = useNavigate();
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [currentFilters, setCurrentFilters] = useState<MobileAssetFilters>({});
+
+  // Debug: Log when assets prop changes
+  useEffect(() => {
+    console.log("📱 MobileAssetList: Assets prop updated:", {
+      assetsCount: assets.length,
+      firstAsset: assets[0] ? { id: assets[0].id, name: assets[0].name } : null
+    });
+  }, [assets]);
 
   const handleBack = () => {
     navigate(-1);
@@ -41,6 +54,26 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
   const handleAssetClick = (assetId: number) => {
     navigate(`/mobile/assets/${assetId}`);
   };
+
+  const handleOpenFilter = () => {
+    setIsFilterOpen(true);
+  };
+
+  const handleCloseFilter = () => {
+    setIsFilterOpen(false);
+  };
+
+  const handleApplyFilters = (filters: MobileAssetFilters) => {
+    setCurrentFilters(filters);
+    if (onApplyFilters) {
+      onApplyFilters(filters);
+    }
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = Object.values(currentFilters).some(value => 
+    value !== undefined && value !== null && value !== ''
+  );
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "24 Jul 2025";
@@ -85,9 +118,23 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
             </button>
             <h1 className="text-lg font-semibold text-[#4B003F]">Assets</h1>
           </div>
-          <button className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50">
-            <SlidersHorizontal className="h-4 w-4 text-black" />
-            <span className="text-sm text-black">Filters</span>
+          <button 
+            onClick={handleOpenFilter}
+            className={`flex items-center gap-2 px-3 py-1.5 border rounded-lg transition-colors ${
+              hasActiveFilters 
+                ? 'border-[#4B003F] bg-[#4B003F] text-white' 
+                : 'border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            <span className="text-sm">
+              {hasActiveFilters ? 'Filtered' : 'Filters'}
+            </span>
+            {hasActiveFilters && (
+              <span className="bg-white text-[#4B003F] text-xs px-1.5 py-0.5 rounded-full font-medium">
+                {Object.values(currentFilters).filter(v => v !== undefined && v !== null && v !== '').length}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -180,6 +227,14 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
           </div>
         )}
       </div>
+
+      {/* Filter Dialog */}
+      <MobileAssetFilterDialog
+        isOpen={isFilterOpen}
+        onClose={handleCloseFilter}
+        onApplyFilters={handleApplyFilters}
+        currentFilters={currentFilters}
+      />
     </div>
   );
 };

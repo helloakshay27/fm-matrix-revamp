@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useLocation } from "react-router-dom";
 import { MobileAssetList } from "@/components/mobile/MobileAssetList";
 import { MobileAssetDetails } from "@/components/mobile/MobileAssetDetails";
 import { MobileAssetBreakdown } from "@/components/mobile/MobileAssetBreakdown";
+import { MobileAssetFilters } from "@/components/mobile/MobileAssetFilterDialog";
 
 interface Activity {
   id: number;
@@ -64,7 +65,7 @@ interface AssetApiResponse {
 }
 
 const mobileAssetService = {
-  async getAssets(token: string, page: number = 1): Promise<AssetApiResponse> {
+  async getAssets(token: string, page: number = 1, filters?: MobileAssetFilters): Promise<AssetApiResponse> {
     try {
       // Get base URL from sessionStorage or use default
       let baseUrl =
@@ -77,7 +78,27 @@ const mobileAssetService = {
         baseUrl = `https://${baseUrl}`;
       }
 
-      const url = `${baseUrl}/pms/assets.json?page=${page}`;
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      queryParams.append('page', page.toString());
+      
+      // Add filter parameters if provided
+      if (filters) {
+        if (filters.assetName) queryParams.append('q[name_cont]', filters.assetName);
+        if (filters.assetId) queryParams.append('q[asset_id_cont]', filters.assetId);
+        if (filters.groupId) queryParams.append('q[pms_asset_group_id_eq]', filters.groupId);
+        if (filters.subgroupId) queryParams.append('q[pms_asset_sub_group_id_eq]', filters.subgroupId);
+        if (filters.siteId) queryParams.append('q[pms_site_id_eq]', filters.siteId);
+        if (filters.buildingId) queryParams.append('q[pms_building_id_eq]', filters.buildingId);
+        if (filters.wingId) queryParams.append('q[pms_wing_id_eq]', filters.wingId);
+        if (filters.areaId) queryParams.append('q[pms_area_id_eq]', filters.areaId);
+        if (filters.floorId) queryParams.append('q[pms_floor_id_eq]', filters.floorId);
+        if (filters.roomId) queryParams.append('q[pms_room_id_eq]', filters.roomId);
+        if (filters.status) queryParams.append('q[status_eq]', filters.status);
+        if (filters.breakdown !== undefined) queryParams.append('q[breakdown_eq]', filters.breakdown.toString());
+      }
+
+      const url = `${baseUrl}/pms/assets.json?${queryParams.toString()}`;
 
       console.log("🔍 FETCHING MOBILE ASSETS:");
       console.log(
@@ -87,6 +108,7 @@ const mobileAssetService = {
       console.log("  - Processed Base URL:", baseUrl);
       console.log("  - Final URL:", url);
       console.log("  - Page:", page);
+      console.log("  - Filters:", filters);
       console.log("  - Token:", token?.substring(0, 20) + "...");
 
       const response = await fetch(url, {
@@ -136,6 +158,7 @@ export const MobileAssetPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [currentFilters, setCurrentFilters] = useState<MobileAssetFilters>({});
 
   // Handle token storage and asset fetching
   useEffect(() => {
@@ -161,7 +184,7 @@ export const MobileAssetPage = () => {
         sessionStorage.setItem("mobile_token", token);
         console.log("💾 Mobile token stored in sessionStorage");
 
-        // Fetch assets using the token
+        // Fetch assets using the token - only on initial load (no filters)
         setLoading(true);
         setError(null);
 
@@ -231,7 +254,7 @@ export const MobileAssetPage = () => {
     };
 
     handleTokenAndFetchAssets();
-  }, [token, assetId, isBreakdownPage]);
+  }, [token, assetId, isBreakdownPage]); // Removed currentFilters from dependency array
 
   useEffect(() => {
     if (assetId && assets.length > 0) {
@@ -254,10 +277,9 @@ export const MobileAssetPage = () => {
       const nextPage = currentPage + 1;
       const apiResponse = await mobileAssetService.getAssets(
         tokenToUse,
-        nextPage
-      );
-
-      // Append new assets to existing ones
+        nextPage,
+        currentFilters
+      );      // Append new assets to existing ones
       setAssets((prevAssets) => [...prevAssets, ...(apiResponse.assets || [])]);
       setCurrentPage(apiResponse.pagination.current_page);
       setTotalPages(apiResponse.pagination.total_pages);
@@ -281,6 +303,51 @@ export const MobileAssetPage = () => {
       console.error("❌ Failed to load more assets:", err);
     } finally {
       setLoadingMore(false);
+    }
+  };
+
+  // Handle filter changes
+  const handleApplyFilters = async (filters: MobileAssetFilters) => {
+    console.log("🔍 APPLYING FILTERS:", JSON.stringify(filters, null, 2));
+    setCurrentFilters(filters);
+    
+    // Reset pagination when filters change
+    setCurrentPage(1);
+    setAssets([]);
+    
+    const tokenToUse = token || sessionStorage.getItem("mobile_token");
+    if (!tokenToUse) {
+      console.error("❌ No token available for filter request");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log("📡 Calling mobileAssetService.getAssets with filters...");
+      const apiResponse = await mobileAssetService.getAssets(tokenToUse, 1, filters);
+      console.log("✅ Filtered API Response:", {
+        assetsCount: apiResponse.assets?.length || 0,
+        pagination: apiResponse.pagination,
+        firstAsset: apiResponse.assets?.[0] ? {
+          id: apiResponse.assets[0].id,
+          name: apiResponse.assets[0].name
+        } : null
+      });
+      setAssets(apiResponse.assets || []);
+      setCurrentPage(apiResponse.pagination.current_page);
+      setTotalPages(apiResponse.pagination.total_pages);
+      setHasMore(
+        apiResponse.pagination.current_page < apiResponse.pagination.total_pages
+      );
+      console.log("✅ Filtered assets loaded:", apiResponse.assets?.length || 0, "assets");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch filtered assets";
+      setError(errorMessage);
+      console.error("❌ Failed to fetch filtered assets:", errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -335,6 +402,7 @@ export const MobileAssetPage = () => {
       onLoadMore={loadMoreAssets}
       hasMore={hasMore}
       loadingMore={loadingMore}
+      onApplyFilters={handleApplyFilters}
     />
   );
 };
