@@ -5,7 +5,7 @@ import { ArrowLeft, Upload, X, CalendarIcon, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from "@/utils/apiClient";
 import { getToken, getUser } from "@/utils/auth";
-import { ENDPOINTS, BASE_URL, TOKEN } from "@/config/apiConfig";
+import { API_CONFIG, getFullUrl, getAuthHeader } from "@/config/apiConfig";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchHelpdeskCategories } from "@/store/slices/helpdeskCategoriesSlice";
 import { format } from "date-fns";
@@ -1168,25 +1168,25 @@ const UpdateTicketsPage: React.FC = () => {
       }
 
       // Get authentication token with fallback
-      const authToken = TOKEN || getToken();
-      console.log("Using TOKEN from API config:", TOKEN ? 'Token present' : 'Token missing');
+      const authToken = API_CONFIG.TOKEN || getToken();
+      console.log("Using TOKEN from API config:", API_CONFIG.TOKEN ? 'Token present' : 'Token missing');
       console.log("Using fallback getToken():", getToken() ? 'Token present' : 'Token missing');
       console.log("Final authToken:", authToken ? 'Token present' : 'Token missing');
-      console.log("Using BASE_URL from API config:", BASE_URL);
+      console.log("Using BASE_URL from API config:", API_CONFIG.BASE_URL);
 
       if (!authToken) {
         console.error("No authentication token found in API config or auth utils");
         throw new Error("No authentication token found. Please login again.");
       }
 
-      const apiUrl = `${BASE_URL}${ENDPOINTS.UPDATE_TICKET}`;
+      const apiUrl = getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_TICKET);
       console.log("Making API call to:", apiUrl);
 
-      // Make API call using BASE_URL and TOKEN from API config with fallback
+      // Make API call using API_CONFIG for baseURL and token
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${authToken}`,
+          Authorization: getAuthHeader(),
           // Note: Don't set Content-Type for FormData - browser sets it automatically with boundary
         },
         body: formDataToSend,
@@ -1207,7 +1207,7 @@ const UpdateTicketsPage: React.FC = () => {
           throw new Error("Authentication failed. Please login again.");
         }
         
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        // throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
 
       const result = await response.json();
