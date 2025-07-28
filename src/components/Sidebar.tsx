@@ -11,7 +11,8 @@ import {
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
   ChevronRight, ChevronLeft, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
-  Archive, TreePine, FlaskConical, Mail, ClipboardList
+  Archive, TreePine, FlaskConical, Mail, ClipboardList,
+  Currency
 } from 'lucide-react';
 
 const navigationStructure = {
@@ -612,7 +613,12 @@ const modulesByPackage = {
           ]
         }
       ]
-    }
+    },
+    // {
+    //   name: 'Currency',
+    //   icon: Currency,
+    //   href: '/settings/currency',
+    // }
   ]
 };
 

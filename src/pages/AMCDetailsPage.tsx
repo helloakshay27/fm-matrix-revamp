@@ -85,7 +85,7 @@ export const AMCDetailsPage = () => {
 
   const formatCurrency = (amount: number | null): string => {
     if (amount === null || amount === undefined) return '—';
-    return `₹${amount}`;
+    return `${localStorage.getItem('currency')}${amount}`;
   };
 
   if (loading) {

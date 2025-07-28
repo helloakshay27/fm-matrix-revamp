@@ -64,7 +64,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({ 
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
-              
+
               <div className="grid grid-cols-1 gap-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-analytics-muted">Total Items:</span>
@@ -103,7 +103,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({ 
                   <Bar dataKey="count" fill="#10B981" name="Items" />
                 </BarChart>
               </ResponsiveContainer>
-              
+
               <div className="text-sm">
                 <div className="font-medium text-analytics-text mb-2">Category Summary</div>
                 {chartData.slice(0, 3).map((item, index) => (
@@ -138,7 +138,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({ 
                   <Line type="monotone" dataKey="regular" stroke="#6B7280" strokeWidth={2} name="Regular Items" />
                 </LineChart>
               </ResponsiveContainer>
-              
+
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="text-center">
                   <div className="font-semibold text-green-600">{data.total_green_consumed || 0}</div>
@@ -164,7 +164,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({ 
                   {data.items.length} Items Below Minimum Stock
                 </span>
               </div>
-              
+
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {data.items.slice(0, 10).map((item: any, index: number) => (
                   <div key={index} className="flex justify-between items-center p-2 bg-analytics-background rounded">
@@ -179,7 +179,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({ 
                   </div>
                 ))}
               </div>
-              
+
               {data.items.length > 10 && (
                 <div className="text-center text-sm text-analytics-muted">
                   +{data.items.length - 10} more items
@@ -193,16 +193,16 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({ 
       case 'high_value':
         if (data && data.items) {
           const totalValue = data.items.reduce((sum: number, item: any) => sum + (item.value || 0), 0);
-          
+
           return (
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <Package className="w-5 h-5 text-blue-500" />
                 <span className="font-medium text-analytics-text">
-                  High Value Items (₹{totalValue.toLocaleString()})
+                  High Value Items ({localStorage.getItem('currency')}{totalValue.toLocaleString()})
                 </span>
               </div>
-              
+
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {data.items.slice(0, 10).map((item: any, index: number) => (
                   <div key={index} className="flex justify-between items-center p-2 bg-analytics-background rounded">
@@ -211,13 +211,13 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({ 
                       <div className="text-xs text-analytics-muted">{item.category || 'No Category'}</div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-medium text-blue-600">₹{(item.value || 0).toLocaleString()}</div>
+                      <div className="text-sm font-medium text-blue-600">{localStorage.getItem('currency')}{(item.value || 0).toLocaleString()}</div>
                       <div className="text-xs text-analytics-muted">Qty: {item.quantity || 0}</div>
                     </div>
                   </div>
                 ))}
               </div>
-              
+
               {data.items.length > 10 && (
                 <div className="text-center text-sm text-analytics-muted">
                   +{data.items.length - 10} more items
