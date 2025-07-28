@@ -404,7 +404,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
           </div>
 
           {/* Show All Tasks Toggle */}
-          {onShowAllChange && (
+          {/* {onShowAllChange && (
             <div>
               <h3 className="text-sm font-medium text-[#C72030] mb-4">Display Options</h3>
               <div className="flex items-center space-x-3">
@@ -428,7 +428,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
                 </span>
               </div>
             </div>
-          )}
+          )} */}
         </div>
 
         {/* Action Buttons */}
