@@ -250,6 +250,7 @@ export const DisposeAssetPage: React.FC = () => {
   const location = useLocation();
   const { toast } = useToast();
   const [selectedAssets, setSelectedAssets] = useState(location.state?.selectedAssets || []);
+  console.log(selectedAssets)
 
   // Per-asset breakdown and sold value states
   const [breakdowns, setBreakdowns] = useState<{ [key: string]: string }>({});
@@ -262,7 +263,7 @@ export const DisposeAssetPage: React.FC = () => {
   const [vendor, setVendor] = useState('');
   const [user, setUser] = useState('');
   const [comments, setComments] = useState('');
-const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '' }]);
+  const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '' }]);
   const [attachments, setAttachments] = useState<string[]>([]);
 
   // Function to refresh a specific asset's data
@@ -278,11 +279,11 @@ const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '
 
       if (response.ok) {
         const updatedAssetData = await response.json();
-        
+
         // Update the asset in selectedAssets state
-        setSelectedAssets(prevAssets => 
-          prevAssets.map(asset => 
-            asset.id === assetId 
+        setSelectedAssets(prevAssets =>
+          prevAssets.map(asset =>
+            asset.id === assetId
               ? { ...asset, status: updatedAssetData.status || asset.status }
               : asset
           )
@@ -375,18 +376,18 @@ const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '
           'Content-Type': 'application/json'
         }
       });
-      
+
       // Show success message
       toast({
         title: "Asset Disposal Successful",
         description: 'Asset is marked as "Disposed" and recorded successfully',
         variant: "default",
       });
-      
+
       navigate('/maintenance/asset');
     } catch (error) {
       console.error('Dispose Asset API error:', error);
-      
+
       // Show error message
       toast({
         title: "Asset Disposal Failed",

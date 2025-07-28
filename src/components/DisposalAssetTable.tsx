@@ -19,24 +19,24 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { StatusBadge } from '@/components/StatusBadge';
 
-interface Asset{
-  area: string|null;
-  assetGroup:string;
-  assetNumber:string;
+interface Asset {
+  area: string | null;
+  assetGroup: string;
+  assetNumber: string;
   asset_code?: string;
-  assetSubGroup:string;
-  assetType:string|null;
-  building: string|null;
-  id:number;
-  name:string;
-  pmsRoom:string|null;
-  serialNumber:string;
-  siteName:string;
-  status:string;
-  wing:string|null;
+  assetSubGroup: string;
+  assetType: string | null;
+  building: string | null;
+  id: number;
+  name: string;
+  pmsRoom: string | null;
+  serialNumber: string;
+  siteName: string;
+  status: string;
+  wing: string | null;
   purchase_cost?: string | number;
   current_book_value?: string | number;
- commisioning_date?: string;
+  commisioning_date?: string;
   asset_number?: string;
   site_name?: string;
 }
@@ -56,7 +56,7 @@ export const DisposalAssetTable: React.FC<DisposalAssetTableProps> = ({
   soldValues,
   onSoldValueChange
 }) => {
-
+  console.log(selectedAssets)
   const breakdownOptions = [
     'Breakdown',
     'Maintenance Required',
@@ -85,14 +85,14 @@ export const DisposalAssetTable: React.FC<DisposalAssetTableProps> = ({
               <TableCell className="font-medium">{typeof asset.name === 'string' ? asset.name : ''}</TableCell>
               <TableCell>{typeof asset.assetNumber === 'string' || typeof asset.assetNumber === 'number' ? asset.assetNumber : ''}</TableCell>
               <TableCell>
-                <StatusBadge 
-                  status={asset.status || ''} 
+                <StatusBadge
+                  status={asset.status || ''}
                   assetId={asset.id}
                 />
               </TableCell>
               <TableCell>{typeof asset.siteName === 'string' ? asset.siteName : ''}</TableCell>
-              <TableCell>{typeof asset.purchase_cost === 'string' || typeof asset.purchase_cost === 'number' ? asset.purchase_cost : 'NA'}</TableCell>
-              <TableCell>{asset.current_book_value }</TableCell>
+              <TableCell>{typeof asset.purchaseCost === 'string' || typeof asset.purchaseCost === 'number' ? asset.purchaseCost : 'NA'}</TableCell>
+              <TableCell>{asset.currentBookValue}</TableCell>
               <TableCell>
                 <TextField
                   size="small"
