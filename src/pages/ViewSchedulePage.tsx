@@ -88,6 +88,10 @@ export const ViewSchedulePage = () => {
 
   // Modal states
   const [showSetApprovalModal, setShowSetApprovalModal] = useState(false);
+  const [groupOptions, setGroupOptions] = useState<any[]>([]);
+  const [subGroupOptions, setSubGroupOptions] = useState<any[]>([]);
+
+  
 
   // Fetch custom form details
   const {
@@ -105,9 +109,65 @@ export const ViewSchedulePage = () => {
   const assetTask = formDetailsData?.asset_task;
   const emailRules = formDetailsData?.email_rules || [];
 
+
   // Toggle states for Create Ticket and Weightage
   const createTicketEnabled = customForm?.create_ticket || false;
   const weightageEnabled = customForm?.weightage_enabled || false;
+
+  const selectedGroupId = customForm?.content?.[0]?.group_id || '';
+  const selectedSubGroupId = customForm?.content?.[0]?.sub_group_id || '';
+  
+  // Fetch group options on mount
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const res = await fetch(
+          `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TASK_GROUPS}`,
+          {
+            headers: {
+              Authorization: getAuthHeader(),
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        const data = await res.json();
+        // The API returns { asset_groups: [...] }
+        setGroupOptions(data || []);
+      } catch (err) {
+        setGroupOptions([]);
+      }
+    };
+    fetchGroups();
+  }, []);
+
+
+  // Fetch subgroup options when selectedGroupId changes
+  useEffect(() => {
+    if (!selectedGroupId) {
+      setSubGroupOptions([]);
+      return;
+    }
+    const fetchSubGroups = async () => {
+      try {
+        const res = await fetch(
+          `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TASK_SUB_GROUPS}?group_id=${selectedGroupId}`,
+          {
+            headers: {
+              Authorization: getAuthHeader(),
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        const data = await res.json();
+        // The API returns { asset_groups: [...] }
+        setSubGroupOptions(data.asset_groups || []);
+      } catch (err) {
+        setSubGroupOptions([]);
+      }
+    };
+    fetchSubGroups();
+  }, [selectedGroupId]);
+  
 
   // Format date function
   const formatDate = (dateStr: string | null | undefined) => {
@@ -166,6 +226,9 @@ export const ViewSchedulePage = () => {
   const handleViewPerformance = () => {
     navigate(`/maintenance/schedule/performance/${id}`, { state: { formCode } });
   };
+  
+  console.log("selected",selectedGroupId, selectedSubGroupId );
+  
 
   return (
     <div className="p-6 mx-auto">
@@ -299,47 +362,44 @@ export const ViewSchedulePage = () => {
           <CardContent className="space-y-4">
             {/* Group and Sub Group Dropdowns with selected value from master data */}
             {(() => {
-              // Map taskGroups and taskSubGroups to options for Select components
-              const groupOptions: any[] = [];
-              const subGroupOptions: any[] = [];
-              const selectedGroupId = customForm?.content?.[0]?.group_id || '';
-              const selectedSubGroupId = customForm?.content?.[0]?.sub_group_id || '';
-
+              
               return (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <FormControl fullWidth variant="outlined" disabled>
-                      <InputLabel shrink>Group</InputLabel>
-                      <Select
-                        value={selectedGroupId || ''}
-                        label="Group"
-                        disabled
-                        sx={muiFieldStyles}
-                      >
-                        {groupOptions.map(group => (
-                          <MenuItem key={group.id} value={group.id}>
-                            {group.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+  <InputLabel shrink>Group</InputLabel>
+  <Select
+    value={selectedGroupId || ''}
+    label="Group"
+    disabled
+    sx={muiFieldStyles}
+  >
+    {groupOptions.map(group => (
+      <MenuItem key={group.id} value={group.id}>
+        {console.log("group",group)}
+        {group.name}
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
+
                   </div>
                   <div className="space-y-2">
                     <FormControl fullWidth variant="outlined" disabled>
-                      <InputLabel shrink>Sub Group</InputLabel>
-                      <Select
-                        value={selectedSubGroupId || ''}
-                        label="Sub Group"
-                        disabled
-                        sx={muiFieldStyles}
-                      >
-                        {subGroupOptions.map(subGroup => (
-                          <MenuItem key={subGroup.id} value={subGroup.id}>
-                            {subGroup.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+  <InputLabel shrink>Sub Group</InputLabel>
+  <Select
+    value={selectedSubGroupId || ''}
+    label="Sub Group"
+    disabled
+    sx={muiFieldStyles}
+  >
+    {subGroupOptions.map(subGroup => (
+      <MenuItem key={subGroup.id} value={subGroup.id}>
+        {subGroup.name}
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
                   </div>
                 </div>
               );

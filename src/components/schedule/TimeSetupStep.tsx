@@ -79,6 +79,27 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
           </div>
           <h2 className="text-xl font-semibold text-[#C72030]">Time Setup</h2>
         </div>
+        {disabled && (
+          <MuiButton
+            variant="outlined"
+            size="small"
+            startIcon={<Edit />}
+            onClick={onEdit}
+            sx={{
+              color: '#C72030',
+              borderColor: '#C72030',
+              fontSize: '12px',
+              padding: '4px 12px',
+              minWidth: 'auto',
+              '&:hover': {
+                borderColor: '#C72030',
+                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+              }
+            }}
+          >
+            Edit
+          </MuiButton>
+        )}
       </div>
 
     <Card sx={{ mb: 2, pt:3, border: isCompleted ? '1px solid #059669' : '1px solid #E5E7EB' }}>
