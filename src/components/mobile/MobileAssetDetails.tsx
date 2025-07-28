@@ -135,7 +135,7 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
       setLoading(true);
       try {
         // Get the mobile token specifically
-        const mobileToken = localStorage.getItem("mobile_token");
+        const mobileToken = sessionStorage.getItem("mobile_token");
         if (!mobileToken) {
           throw new Error("Mobile token not found");
         }
