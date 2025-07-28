@@ -170,10 +170,10 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
       
 
       {/* Filter Button */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-end">
         <Button onClick={() => setIsFilterModalOpen(true)} variant="outline" className="flex items-center gap-2 px-4 py-2 h-10">
           <Filter className="h-4 w-4" />
-          Filter
+          
           {activeFilterCount > 0 && <span className="ml-1 px-2 py-1 text-xs bg-purple-600 text-white rounded-full">
               {activeFilterCount}
             </span>}

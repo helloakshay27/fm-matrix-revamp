@@ -66,14 +66,24 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
     switch (type) {
       case 'technical':
       case 'nonTechnical': {
+        // Handle the response structure - check if data has a 'response' property
+        const responseData = data?.response || data;
+        if (!responseData || typeof responseData !== 'object') {
+          return (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-muted-foreground">No data available</p>
+            </div>
+          );
+        }
+
         // Transform the data for chart display
-        const chartData = Object.entries(data).map(([key, value]: [string, any]) => ({
+        const chartData = Object.entries(responseData).map(([key, value]: [string, any]) => ({
           name: key,
-          open: value.open,
-          closed: value.closed,
-          work_in_progress: value.work_in_progress,
-          overdue: value.overdue,
-          total: value.open + value.closed + value.work_in_progress + value.overdue
+          open: value?.open || 0,
+          closed: value?.closed || 0,
+          work_in_progress: value?.work_in_progress || 0,
+          overdue: value?.overdue || 0,
+          total: (value?.open || 0) + (value?.closed || 0) + (value?.work_in_progress || 0) + (value?.overdue || 0)
         }));
 
         return (
@@ -126,8 +136,18 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
       }
 
       case 'topTen': {
+        // Handle the response structure for top ten data
+        const responseData = data?.response || data;
+        if (!Array.isArray(responseData)) {
+          return (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-muted-foreground">No data available or invalid data format</p>
+            </div>
+          );
+        }
+
         // For top ten, show both chart and table
-        const chartData = data.slice(0, 10).map((item: any, index: number) => ({
+        const chartData = responseData.slice(0, 10).map((item: any, index: number) => ({
           ...item,
           color: COLORS[index % COLORS.length]
         }));
@@ -158,11 +178,11 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {data.slice(0, 10).map((item: any, index: number) => (
+                  {responseData.slice(0, 10).map((item: any, index: number) => (
                     <tr key={index} className="border-b">
                       <td className="p-2 font-medium">#{index + 1}</td>
-                      <td className="p-2">{item.type}</td>
-                      <td className="text-right p-2 font-semibold">{item.count}</td>
+                      <td className="p-2">{item.type || 'N/A'}</td>
+                      <td className="text-right p-2 font-semibold">{item.count || 0}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -173,13 +193,23 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
       }
 
       case 'siteWise': {
-        const chartData = Object.entries(data).map(([siteName, value]: [string, any]) => ({
+        // Handle the response structure for site-wise data
+        const responseData = data?.response || data;
+        if (!responseData || typeof responseData !== 'object') {
+          return (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-muted-foreground">No data available</p>
+            </div>
+          );
+        }
+
+        const chartData = Object.entries(responseData).map(([siteName, value]: [string, any]) => ({
           site: siteName,
-          open: value.open,
-          closed: value.closed,
-          work_in_progress: value.work_in_progress,
-          overdue: value.overdue,
-          total: value.open + value.closed + value.work_in_progress + value.overdue
+          open: value?.open || 0,
+          closed: value?.closed || 0,
+          work_in_progress: value?.work_in_progress || 0,
+          overdue: value?.overdue || 0,
+          total: (value?.open || 0) + (value?.closed || 0) + (value?.work_in_progress || 0) + (value?.overdue || 0)
         }));
 
         return (
@@ -241,12 +271,14 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-semibold">{title}</CardTitle>
         {dateRange && (
+         
+
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={handleDownload}
             disabled={isDownloading}
-            className="text-muted-foreground hover:text-foreground"
+            className="flex items-center gap-1"
           >
             <Download className="w-4 h-4" />
           </Button>
