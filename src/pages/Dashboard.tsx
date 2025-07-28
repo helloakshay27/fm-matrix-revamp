@@ -321,12 +321,27 @@ export const Dashboard = () => {
           />
         );
       case 'tasks':
+        // Map endpoint names to TaskAnalyticsCard type values
+        const getTaskAnalyticsType = (endpoint: string) => {
+          switch (endpoint) {
+            case 'technical_checklist': return 'technical';
+            case 'non_technical_checklist': return 'nonTechnical';
+            case 'top_ten_checklist': return 'topTen';
+            case 'site_wise_checklist': return 'siteWise';
+            default: return 'technical';
+          }
+        };
+        
         return (
           <TaskAnalyticsCard
             key={analytic.id}
             title={analytic.title}
             data={data}
-            type={analytic.endpoint as any}
+            type={getTaskAnalyticsType(analytic.endpoint)}
+            dateRange={dateRange ? {
+              startDate: dateRange.from!,
+              endDate: dateRange.to!
+            } : undefined}
           />
         );
       case 'amc':
