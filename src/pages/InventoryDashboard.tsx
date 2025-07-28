@@ -747,6 +747,7 @@ export const InventoryDashboard = () => {
                   title="Items Status"
                   data={analyticsData.statusData}
                   type="itemsStatus"
+                  dateRange={dateRange}
                 />
               )}
               {selectedAnalyticsOptions.includes('category_wise') && analyticsData.categoryData && (
@@ -754,6 +755,7 @@ export const InventoryDashboard = () => {
                   title="Category Wise Items"
                   data={analyticsData.categoryData}
                   type="categoryWise"
+                  dateRange={dateRange}
                 />
               )}
               {selectedAnalyticsOptions.includes('green_consumption') && analyticsData.greenConsumption && (
@@ -761,6 +763,7 @@ export const InventoryDashboard = () => {
                   title="Green Consumption"
                   data={analyticsData.greenConsumption}
                   type="greenConsumption"
+                  dateRange={dateRange}
                 />
               )}
               {selectedAnalyticsOptions.includes('consumption_report_green') && analyticsData.consumptionReportGreen && (
@@ -768,6 +771,7 @@ export const InventoryDashboard = () => {
                   title="Consumption Report Green"
                   data={analyticsData.consumptionReportGreen}
                   type="consumptionReportGreen"
+                  dateRange={dateRange}
                 />
               )}
               {selectedAnalyticsOptions.includes('consumption_report_non_green') && analyticsData.consumptionReportNonGreen && (
@@ -775,6 +779,7 @@ export const InventoryDashboard = () => {
                   title="Consumption Report Non-Green"
                   data={analyticsData.consumptionReportNonGreen}
                   type="consumptionReportNonGreen"
+                  dateRange={dateRange}
                 />
               )}
               {selectedAnalyticsOptions.includes('current_minimum_stock_green') && analyticsData.minimumStockGreen && (
@@ -782,6 +787,7 @@ export const InventoryDashboard = () => {
                   title="Current Minimum Stock Green"
                   data={analyticsData.minimumStockGreen}
                   type="currentMinimumStockGreen"
+                  dateRange={dateRange}
                 />
               )}
               {selectedAnalyticsOptions.includes('current_minimum_stock_non_green') && analyticsData.minimumStockNonGreen && (
@@ -789,6 +795,7 @@ export const InventoryDashboard = () => {
                   title="Current Minimum Stock Non-Green"
                   data={analyticsData.minimumStockNonGreen}
                   type="currentMinimumStockNonGreen"
+                  dateRange={dateRange}
                 />
               )}
             </div>
