@@ -4183,7 +4183,6 @@ export const AddSchedulePage = () => {
 
     {(() => {
       const templateOptions = [
-        { id: '', label: 'Select Template', value: '' },
         ...(Array.isArray(templates) ? templates : []).map((template) => ({
           id: String(template?.id ?? ''),
           label: (template?.form_name ?? '').toString().trim(),
