@@ -1193,61 +1193,71 @@ export const AssetDashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {/* Left Section - Analytics Cards (3 columns) */}
             <div className="lg:col-span-3 space-y-6">
-              {/* Analytics Cards in 2x2 Grid with Drag and Drop */}
+              {/* Analytics Cards with Custom Layout */}
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {chartOrder.map((chartType) => {
-                      if (!selectedAnalyticsTypes.includes(chartType)) return null;
-
-                      return (
-                        <SortableChartItem key={chartType} id={chartType}>
-                          {chartType === 'statusDistribution' && (
-                            <AssetAnalyticsCard
-                              title="Asset Status"
-                              type="statusDistribution"
-                              data={chartStatusData}
-                              dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                              onDownload={() => handleAnalyticsDownload('assetsInUse')}
-                            />
-                          )}
-
-                          {chartType === 'assetDistributions' && (
-                            <AssetAnalyticsCard
-                              title="Asset Type Distribution"
-                              type="assetDistributions"
-                              data={chartTypeData}
-                              dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                              onDownload={() => handleAnalyticsDownload('assetDistribution')}
-                            />
-                          )}
-
-                          {chartType === 'categoryWise' && (
-                            <AssetAnalyticsCard
-                              title="Category-wise Assets"
-                              type="categoryWise"
-                              data={categoryData}
-                              dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                              onDownload={() => handleAnalyticsDownload('categoryWise')}
-                            />
-                          )}
-
-                          {chartType === 'groupWise' && (
-                            <AssetAnalyticsCard
-                              title="Group-wise Assets"
-                              type="groupWise"
-                              data={groupData}
-                              dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                              onDownload={() => handleAnalyticsDownload('groupWise')}
-                            />
-                          )}
+                  <div className="space-y-6">
+                    {/* First Row - Status and Asset Distribution */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {selectedAnalyticsTypes.includes('statusDistribution') && (
+                        <SortableChartItem key="statusDistribution" id="statusDistribution">
+                          <AssetAnalyticsCard
+                            title="Asset Status"
+                            type="statusDistribution"
+                            data={chartStatusData}
+                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                            onDownload={() => handleAnalyticsDownload('assetsInUse')}
+                          />
                         </SortableChartItem>
-                      );
-                    })}
+                      )}
+
+                      {selectedAnalyticsTypes.includes('assetDistributions') && (
+                        <SortableChartItem key="assetDistributions" id="assetDistributions">
+                          <AssetAnalyticsCard
+                            title="Asset Type Distribution"
+                            type="assetDistributions"
+                            data={chartTypeData}
+                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                            onDownload={() => handleAnalyticsDownload('assetDistribution')}
+                          />
+                        </SortableChartItem>
+                      )}
+                    </div>
+
+                    {/* Second Row - Category-wise and Group-wise (col-6 each) */}
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mt-8">
+                      {selectedAnalyticsTypes.includes('categoryWise') && (
+                        <SortableChartItem key="categoryWise" id="categoryWise">
+                          <AssetAnalyticsCard
+                            title="Category-wise Assets"
+                            type="categoryWise"
+                            data={categoryData}
+                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                            onDownload={() => handleAnalyticsDownload('categoryWise')}
+                          />
+                        </SortableChartItem>
+                      )}
+
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mt-8">
+                    
+
+                      {selectedAnalyticsTypes.includes('groupWise') && (
+                        <SortableChartItem key="groupWise" id="groupWise">
+                          <AssetAnalyticsCard
+                            title="Group-wise Assets"
+                            type="groupWise"
+                            data={groupData}
+                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                            onDownload={() => handleAnalyticsDownload('groupWise')}
+                          />
+                        </SortableChartItem>
+                      )}
+                    </div>
                   </div>
                 </SortableContext>
               </DndContext>
