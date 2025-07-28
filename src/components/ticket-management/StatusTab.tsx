@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { ticketManagementAPI } from '@/services/ticketManagementAPI';
+import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -61,6 +61,7 @@ export const StatusTab: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [allowReopen, setAllowReopen] = useState(false);
+  const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
 
   const currentSiteId =
     accounts && accounts.length > 0
@@ -79,7 +80,18 @@ export const StatusTab: React.FC = () => {
 
   useEffect(() => {
     fetchStatuses();
+    loadUserAccount();
   }, []);
+
+  const loadUserAccount = async () => {
+    try {
+      const account = await ticketManagementAPI.getUserAccount();
+      setUserAccount(account);
+    } catch (error) {
+      console.error('Error loading user account:', error);
+      toast.error('Failed to load user account');
+    }
+  };
 
   const fetchStatuses = async () => {
     setIsLoading(true);
@@ -95,6 +107,18 @@ export const StatusTab: React.FC = () => {
   };
 
   const handleSubmit = async (data: StatusFormData) => {
+    if (!userAccount?.company_id) {
+      toast.error('Unable to determine company ID. Please refresh and try again.');
+      return;
+    }
+
+    // Check if position already exists
+    const positionExists = statuses.some(status => status.position === data.position);
+    if (positionExists) {
+      toast.error('Order already exists. Please enter a different order.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const statusData = {
@@ -103,7 +127,7 @@ export const StatusTab: React.FC = () => {
         color_code: data.colorCode,
         position: data.position,
         of_phase: 'pms',
-        society_id: '15', // Default society ID
+        society_id: userAccount.company_id.toString(),
       };
 
       await ticketManagementAPI.createStatus(statusData);
@@ -154,6 +178,7 @@ export const StatusTab: React.FC = () => {
       toast.error('Failed to delete status');
     }
   };
+  
 
   const columns = [
     { key: 'position', label: 'Order', sortable: true },

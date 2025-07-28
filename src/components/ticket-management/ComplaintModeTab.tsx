@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { EditComplaintModeModal } from './modals/EditComplaintModeModal';
-import { ticketManagementAPI } from '@/services/ticketManagementAPI';
+import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -51,6 +51,7 @@ export const ComplaintModeTab: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingComplaintMode, setEditingComplaintMode] = useState<any>(null);
+  const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
 
   const form = useForm<ComplaintModeFormData>({
     resolver: zodResolver(complaintModeSchema),
@@ -61,7 +62,18 @@ export const ComplaintModeTab: React.FC = () => {
 
   useEffect(() => {
     fetchComplaintModes();
+    loadUserAccount();
   }, []);
+
+  const loadUserAccount = async () => {
+    try {
+      const account = await ticketManagementAPI.getUserAccount();
+      setUserAccount(account);
+    } catch (error) {
+      console.error('Error loading user account:', error);
+      toast.error('Failed to load user account');
+    }
+  };
 
   const fetchComplaintModes = async () => {
     setIsLoading(true);
@@ -77,12 +89,17 @@ export const ComplaintModeTab: React.FC = () => {
   };
 
   const handleSubmit = async (data: ComplaintModeFormData) => {
+    if (!userAccount?.company_id) {
+      toast.error('Unable to determine company ID. Please refresh and try again.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const complaintModeData = {
         name: data.complaintMode,
         of_phase: 'pms',
-        society_id: '15', // Default society ID
+        society_id: userAccount.company_id.toString(),
       };
 
       await ticketManagementAPI.createComplaintMode(complaintModeData);
