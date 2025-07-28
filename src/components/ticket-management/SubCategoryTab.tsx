@@ -33,6 +33,7 @@ import { fetchWings } from '@/store/slices/wingsSlice';
 import { fetchFloors } from '@/store/slices/floorsSlice';
 import { fetchZones } from '@/store/slices/zonesSlice';
 import { fetchRooms } from '@/store/slices/roomsSlice';
+import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
 
 const subCategorySchema = z.object({
   category: z.string().min(1, 'Category selection is required'),
@@ -346,12 +347,12 @@ export const SubCategoryTab: React.FC = () => {
 
   const renderActions = (item: SubCategoryType) => (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm" onClick={() => {
+      {/* <Button variant="ghost" size="sm" onClick={() => {
         setEditingSubCategory(item);
         setEditModalOpen(true);
       }}>
         <Edit className="h-4 w-4" />
-      </Button>
+      </Button> */}
       <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
         <Trash2 className="h-4 w-4" />
       </Button>
@@ -364,28 +365,9 @@ export const SubCategoryTab: React.FC = () => {
     }
     
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = localStorage.getItem('baseUrl');
-      
-      const response = await fetch(`https://${baseUrl}/pms/admin/modify_helpdesk_sub_category.json`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: subCategory.id.toString(),
-          active: "0"
-        }),
-      });
-
-      if (response.ok) {
-        setSubCategories(subCategories.filter(sub => sub.id !== subCategory.id));
-        toast.success('Sub-category deleted successfully!');
-      } else {
-        const errorData = await response.json().catch(() => null);
-        toast.error(errorData?.message || 'Failed to delete sub-category');
-      }
+      await ticketManagementAPI.deleteSubCategory(subCategory.id);
+      setSubCategories(subCategories.filter(sub => sub.id !== subCategory.id));
+      toast.success('Sub-category deleted successfully!');
     } catch (error) {
       console.error('Error deleting sub-category:', error);
       toast.error('Failed to delete sub-category');
