@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStatuses, createStatus, updateStatus, deleteStatus, fetchAccounts } from '@/store/slices/statusesSlice';
+import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 const statusSchema = z.object({
   name: z.string().min(1, 'Status is required'),
@@ -151,13 +152,13 @@ export const StatusTab: React.FC = () => {
     }
     
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = localStorage.getItem('baseUrl');
+      // Use apiConfig for baseURL and token
+      const url = getFullUrl('/pms/admin/modify_complaint_status.json');
       
-      const response = await fetch(`https://${baseUrl}/pms/admin/modify_complaint_status.json`, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -178,7 +179,7 @@ export const StatusTab: React.FC = () => {
       toast.error('Failed to delete status');
     }
   };
-  
+
 
   const columns = [
     { key: 'position', label: 'Order', sortable: true },
