@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, MapPin, Star, Users, Percent } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 interface Restaurant {
   id: string;
@@ -14,7 +14,7 @@ interface Restaurant {
 
 interface MobileRestaurantDashboardProps {
   restaurants: Restaurant[];
-  userOrders?: any[];
+  userOrders?: unknown[];
 }
 
 export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps> = ({
@@ -22,14 +22,42 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
   userOrders = []
 }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'restaurant' | 'orders'>('restaurant');
+
+  // Check if user is from external scan
+  const sourceParam = searchParams.get('source');
+  const isExternalScan = sourceParam === 'external';
+
+  // Set default tab based on user type
+  useEffect(() => {
+    console.log("🔍 RESTAURANT DASHBOARD - EXTERNAL DETECTION:");
+    console.log("  - sourceParam:", sourceParam);
+    console.log("  - isExternalScan:", isExternalScan);
+    
+    if (isExternalScan) {
+      console.log("👤 EXTERNAL USER: Setting restaurant tab as default");
+      setActiveTab('restaurant'); // External users see restaurant tab by default
+    } else {
+      console.log("📱 INTERNAL USER: Setting restaurant tab as default");
+      setActiveTab('restaurant'); // Keep restaurant as default for dashboard
+    }
+  }, [isExternalScan, sourceParam]);
 
   const handleBack = () => {
     navigate(-1);
   };
 
   const handleRestaurantClick = (restaurantId: string) => {
-    navigate(`/mobile/restaurant/${restaurantId}/details`);
+    // Preserve source parameter when navigating
+    const currentParams = new URLSearchParams(window.location.search);
+    const queryString = currentParams.toString();
+    const url = queryString 
+      ? `/mobile/restaurant/${restaurantId}/details?${queryString}`
+      : `/mobile/restaurant/${restaurantId}/details`;
+    
+    console.log("🍽️ NAVIGATING TO RESTAURANT:", url);
+    navigate(url);
   };
 
   return (
@@ -49,7 +77,7 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
         <div className="flex">
           <button
             onClick={() => setActiveTab('restaurant')}
-            className={`flex-1 py-4 px-6 text-sm font-medium border-b-2 transition-colors ${
+            className={`${isExternalScan ? 'w-full' : 'flex-1'} py-4 px-6 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'restaurant'
                 ? 'border-red-600 text-red-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -57,16 +85,18 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
           >
             Restaurant
           </button>
-          <button
-            onClick={() => setActiveTab('orders')}
-            className={`flex-1 py-4 px-6 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'orders'
-                ? 'border-red-600 text-red-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            My Orders
-          </button>
+          {!isExternalScan && (
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`flex-1 py-4 px-6 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'orders'
+                  ? 'border-red-600 text-red-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              My Orders
+            </button>
+          )}
         </div>
       </div>
 
@@ -123,17 +153,17 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
           </div>
         )}
 
-        {activeTab === 'orders' && (
+        {activeTab === 'orders' && !isExternalScan && (
           <div className="space-y-4">
             {userOrders.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500">No orders found</p>
               </div>
             ) : (
-              userOrders.map((order) => (
-                <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+              userOrders.map((order, index) => (
+                <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                   {/* Order details will be implemented based on the order structure */}
-                  <p className="text-gray-600">Order #{order.id}</p>
+                  <p className="text-gray-600">Order #{index + 1}</p>
                 </div>
               ))
             )}

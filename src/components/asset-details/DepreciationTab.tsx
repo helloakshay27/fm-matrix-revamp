@@ -67,7 +67,7 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
   const currentDate = new Date();
   const currentMonthName = currentDate.toLocaleString('default', { month: 'long' });
   const currentYear = currentDate.getFullYear().toString();
-  
+
   const [selectedMonth, setSelectedMonth] = useState(currentMonthName);
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [depreciationData, setDepreciationData] = useState<any[]>([]);
@@ -89,10 +89,10 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
     const lastDay = new Date(parseInt(year), monthIndex + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDay = firstDay.getDay();
-    
+
     const weeks = [];
     let currentWeek = [];
-    
+
     // Add empty cells for days before the first day of the month
     const startDay = startingDay === 0 ? 6 : startingDay - 1; // Convert Sunday (0) to be last (6)
     for (let i = 0; i < startDay; i++) {
@@ -104,20 +104,20 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
         isCurrentMonth: false
       });
     }
-    
+
     // Add days of the current month
     for (let day = 1; day <= daysInMonth; day++) {
       currentWeek.push({
         day: day,
         isCurrentMonth: true
       });
-      
+
       if (currentWeek.length === 7) {
         weeks.push(currentWeek);
         currentWeek = [];
       }
     }
-    
+
     // Fill the last week with days from next month
     while (currentWeek.length < 7 && currentWeek.length > 0) {
       currentWeek.push({
@@ -125,16 +125,16 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
         isCurrentMonth: false
       });
     }
-    
+
     if (currentWeek.length > 0) {
       weeks.push(currentWeek);
     }
-    
+
     return weeks;
   };
 
   const calendarDays = getCalendarDays(selectedMonth, selectedYear);
-  
+
   function getApiDate(day: number, month: string, year: string) {
     const monthIndex = new Date(`${month} 1, 2000`).getMonth() + 1;
     return `${day.toString().padStart(2, '0')}/${monthIndex.toString().padStart(2, '0')}/${year}`;
@@ -192,11 +192,11 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
   useEffect(() => {
     const fetchActualCost = async () => {
       if (!assetId) return;
-      
+
       try {
         const apiDate = getApiDate(selectedDay, selectedMonth, selectedYear);
         console.log("Fetching actual cost for date:", apiDate);
-        
+
         const response = await axios.get(
           `${API_CONFIG.BASE_URL}/pms/depreciation_calculator.json`,
           {
@@ -209,7 +209,7 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
             },
           }
         );
-        
+
         console.log("Actual cost response:", response.data);
         setActualCost(Number(response.data) || 0);
       } catch (error) {
@@ -253,7 +253,7 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
               <label className="text-sm text-gray-500 font-medium">Salvage Value</label>
               <div className="font-semibold text-base lg:text-lg">
                 {asset.salvage_value !== undefined && asset.salvage_value !== null
-                  ? `₹${asset.salvage_value.toLocaleString()}`
+                  ? `${localStorage.getItem('currency')}${asset.salvage_value.toLocaleString()}`
                   : '-'}
               </div>
             </div>
@@ -296,10 +296,10 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
                       {depreciationData.map((row) => (
                         <TableRow key={row.year}>
                           <TableCell className="text-sm font-medium">{row.year}</TableCell>
-                          <TableCell className="text-sm">₹{row.bookValueStart.toLocaleString()}</TableCell>
-                          <TableCell className="text-sm">₹{row.depreciation.toLocaleString()}</TableCell>
+                          <TableCell className="text-sm">{localStorage.getItem('currency')}{row.bookValueStart.toLocaleString()}</TableCell>
+                          <TableCell className="text-sm">{localStorage.getItem('currency')}{row.depreciation.toLocaleString()}</TableCell>
                           <TableCell className="text-sm">{row.date}</TableCell>
-                          <TableCell className="text-sm">₹{row.bookValueEnd.toLocaleString()}</TableCell>
+                          <TableCell className="text-sm">{localStorage.getItem('currency')}{row.bookValueEnd.toLocaleString()}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -372,15 +372,14 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
                     {week.map((dayObj, dayIndex) => (
                       <div
                         key={dayIndex}
-                        className={`p-2 lg:p-2.5 rounded text-sm cursor-pointer transition-colors ${
-                          dayObj.day === selectedDay && dayObj.isCurrentMonth
-                            ? 'bg-[#C72030] text-white'
-                            : !dayObj.isCurrentMonth
-                              ? 'text-gray-300 hover:bg-gray-100'
-                              : dayIndex === 6
-                                ? 'text-red-500 hover:bg-red-50'
-                                : 'text-gray-700 hover:bg-gray-200'
-                        }`}
+                        className={`p-2 lg:p-2.5 rounded text-sm cursor-pointer transition-colors ${dayObj.day === selectedDay && dayObj.isCurrentMonth
+                          ? 'bg-[#C72030] text-white'
+                          : !dayObj.isCurrentMonth
+                            ? 'text-gray-300 hover:bg-gray-100'
+                            : dayIndex === 6
+                              ? 'text-red-500 hover:bg-red-50'
+                              : 'text-gray-700 hover:bg-gray-200'
+                          }`}
                         onClick={() => dayObj.isCurrentMonth && setSelectedDay(dayObj.day)}
                       >
                         {dayObj.day}
@@ -397,7 +396,7 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
                 <div className="text-right">
                   <div className="text-sm text-gray-500 mb-1">ACTUAL COST</div>
                   <div className="text-2xl lg:text-3xl font-bold text-gray-900">
-                    ₹ {actualCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {localStorage.getItem('currency')} {actualCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
                   <div className="w-full h-1 bg-[#C72030] mt-2 rounded-full"></div>
                 </div>
@@ -436,7 +435,7 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
                   />
                   <YAxis
                     domain={['auto', 'auto']} // let Y-axis auto-scale
-                    tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`}
+                    tickFormatter={(value) => `${localStorage.getItem('currency')}${(value / 1000).toFixed(0)}K`}
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12 }}
@@ -444,7 +443,7 @@ export const DepreciationTab: React.FC<DepreciationTab> = ({ asset, assetId }) =
                   />
                   <ChartTooltip
                     content={<ChartTooltipContent />}
-                    formatter={(value) => [`₹${value.toLocaleString()}`, 'Book Value']}
+                    formatter={(value) => [`${localStorage.getItem('currency')}${value.toLocaleString()}`, 'Book Value']}
                     wrapperStyle={{ zIndex: 1000 }}
                   />
                   <Line

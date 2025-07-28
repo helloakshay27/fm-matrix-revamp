@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import axios from 'axios';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
-import { useParams } from 'react-router-dom';
 
 interface HistoryCardTabProps {
   asset: Asset;
@@ -69,13 +68,20 @@ interface ActivityHistoryEntry {
 export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }) => {
   const [activeTab, setActiveTab] = useState<'history-details' | 'logs'>('history-details');
   const [activityHistory, setActivityHistory] = useState<ActivityHistoryEntry[]>([]);
-  const { id } = useParams();
 
   useEffect(() => {
     const fetchHistory = async () => {
+      // Use assetId prop if available, otherwise fall back to asset.id
+      const idToUse = assetId || asset.id;
+      
+      if (!idToUse) {
+        console.warn('No asset ID available for history fetch');
+        return;
+      }
+
       try {
         const response = await axios.get(
-          `${API_CONFIG.BASE_URL}/pms/assets/${id}/get_asset_history.json`,
+          `${API_CONFIG.BASE_URL}/pms/assets/${idToUse}/get_asset_history.json`,
           {
             headers: {
               Authorization: getAuthHeader(),
@@ -84,11 +90,12 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
         );
         setActivityHistory(response.data.activity_history || []);
       } catch (error) {
+        console.error('Failed to fetch asset history:', error);
         setActivityHistory([]);
       }
     };
     fetchHistory();
-  }, [id]);
+  }, [assetId, asset.id]);
 
   // Basic asset info mapped from asset prop
   const basicAssetInfo = [

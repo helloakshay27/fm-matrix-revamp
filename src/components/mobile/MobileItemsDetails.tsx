@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Plus, Minus, X } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import React, { useState, useEffect } from "react";
+import { ArrowLeft, Plus, Minus, X } from "lucide-react";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { restaurantApi } from "@/services/restaurantApi";
 
 interface MenuItem {
   id: string;
@@ -26,53 +27,196 @@ interface Restaurant {
 export const MobileItemsDetails: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { selectedItems: initialItems, restaurant } = location.state as {
+  const [searchParams] = useSearchParams();
+
+  // Check if user is from external scan (Google Lens, etc.)
+  const sourceParam = searchParams.get("source");
+  const isExternalScan = sourceParam === "external";
+
+  const {
+    selectedItems: initialItems,
+    restaurant,
+    isExternalScan: passedExternalScan,
+    sourceParam: passedSourceParam,
+  } = location.state as {
     selectedItems: MenuItem[];
     restaurant: Restaurant;
+    isExternalScan?: boolean;
+    sourceParam?: string;
   };
 
+  // Use passed external scan flag as fallback if URL parameter is not present
+  const finalIsExternalScan = isExternalScan || passedExternalScan || false;
+  const finalSourceParam = sourceParam || passedSourceParam;
+
+  // 🔍 Debug logging for external detection in Items Details
+  useEffect(() => {
+    console.log("🛒 ITEMS DETAILS - EXTERNAL DETECTION:");
+    console.log("  - URL source param:", sourceParam);
+    console.log("  - Passed sourceParam:", passedSourceParam);
+    console.log("  - Final sourceParam:", finalSourceParam);
+    console.log("  - Passed isExternalScan:", passedExternalScan);
+    console.log("  - Final isExternalScan:", finalIsExternalScan);
+    console.log("  - Current URL:", window.location.href);
+  }, [
+    searchParams,
+    sourceParam,
+    passedSourceParam,
+    finalSourceParam,
+    passedExternalScan,
+    finalIsExternalScan,
+  ]);
+
   const [items, setItems] = useState<MenuItem[]>(initialItems);
-  const [note, setNote] = useState<string>('');
+  const [note, setNote] = useState<string>("");
   const [showNoteDialog, setShowNoteDialog] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const handleBack = () => {
     navigate(-1);
   };
 
   const updateQuantity = (itemId: string, change: number) => {
-    setItems(prev => prev.map(item => {
-      if (item.id === itemId) {
-        const newQuantity = Math.max(0, item.quantity + change);
-        return { ...item, quantity: newQuantity };
-      }
-      return item;
-    }).filter(item => item.quantity > 0));
+    setItems((prev) =>
+      prev
+        .map((item) => {
+          if (item.id === itemId) {
+            const newQuantity = Math.max(0, item.quantity + change);
+            return { ...item, quantity: newQuantity };
+          }
+          return item;
+        })
+        .filter((item) => item.quantity > 0)
+    );
   };
 
   const getTotalItems = () => {
     return items.reduce((total, item) => total + item.quantity, 0);
   };
 
+  const getTotalPrice = () => {
+    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
+
   const addMoreItems = () => {
-    navigate(`/mobile/restaurant/${restaurant.id}/details`);
+    // Preserve any source parameter when going back to restaurant details
+    const backUrl = finalSourceParam
+      ? `/mobile/restaurant/${restaurant.id}/details?source=${finalSourceParam}`
+      : `/mobile/restaurant/${restaurant.id}/details`;
+
+    console.log("🔄 NAVIGATING BACK TO RESTAURANT:");
+    console.log("  - finalSourceParam:", finalSourceParam);
+    console.log("  - finalIsExternalScan:", finalIsExternalScan);
+    console.log("  - Back URL:", backUrl);
+
+    navigate(backUrl);
   };
 
-  const handlePlaceOrder = () => {
-    navigate(`/mobile/restaurant/${restaurant.id}/order-review`, {
-      state: { 
-        items, 
-        restaurant, 
-        note
+  // Retrieve user from local storage
+  // ✅ Safely get user from localStorage
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  const userId = user?.id;
+
+  // ✅ Optional guard: user must be logged in
+  // if (!userId) {
+  //   console.error("User not found in localStorage. Please log in.");
+  //   return null; // or navigate to login
+  // }
+
+  // ✅ Place order handler
+  const handlePlaceOrder = async () => {
+    if (isSubmitting) return; // Prevent double submission
+
+    console.log("🚀 HANDLING PLACE ORDER:");
+    console.log("  - finalSourceParam:", finalSourceParam);
+    console.log("  - finalIsExternalScan:", finalIsExternalScan);
+
+    // 🔀 EXTERNAL USER FLOW: Redirect to contact form first
+    if (finalIsExternalScan) {
+      console.log("🔄 EXTERNAL USER: Redirecting to contact form");
+      
+      // Construct contact form URL with source parameter
+      const contactFormUrl = finalSourceParam 
+        ? `/mobile/restaurant/${restaurant.id}/contact-form?source=${finalSourceParam}`
+        : `/mobile/restaurant/${restaurant.id}/contact-form`;
+      
+      navigate(contactFormUrl, {
+        state: {
+          selectedItems: items,
+          restaurant,
+          totalPrice: getTotalPrice(),
+          totalItems: getTotalItems(),
+          note,
+          isExternalScan: finalIsExternalScan,
+          sourceParam: finalSourceParam,
+        },
+      });
+      return;
+    }
+    setIsSubmitting(true);
+
+    const orderData = {
+      food_order: {
+        restaurant_id: parseInt(restaurant.id),
+        user_id: userId,
+        requests: note || "",
+        items_attributes: items.map((item) => ({
+          menu_id: parseInt(item.id),
+          quantity: item.quantity,
+        })),
+      },
+    };
+
+    console.log("🚀 SUBMITTING ORDER:");
+    console.log("  - finalSourceParam:", finalSourceParam);
+    console.log("  - finalIsExternalScan:", finalIsExternalScan);
+    console.log("  - Order data:", orderData);
+
+    try {
+      // const result = await restaurantApi.placeOrder(orderData);
+      const result = await restaurantApi.createQROrder(orderData);
+      console.log("📡 API Response:", result);
+
+      if (result.success) {
+        console.log("✅ Order placed successfully:", result.data);
+        console.log("🧭 NAVIGATION: Going to order-review with:");
+        console.log("  - showSuccessImmediately: true");
+        console.log("  - finalSourceParam:", finalSourceParam);
+        console.log("  - finalIsExternalScan:", finalIsExternalScan);
+
+        // Navigate to order review with success state
+        // navigate(`/mobile/restaurant/${restaurant.id}/order-placed`, {
+        navigate(`/mobile/restaurant/${restaurant.id}/order-review`, {
+          state: {
+            orderData: result.data,
+            restaurant,
+            totalPrice: getTotalPrice(),
+            totalItems: getTotalItems(),
+            items,
+            note,
+            isExternalScan: finalIsExternalScan, // Pass the external scan flag
+            sourceParam: finalSourceParam, // Pass the source parameter
+            showSuccessImmediately: true, // Flag to show success immediately
+          },
+        });
+      } else {
+        console.error("❌ Order placement failed:", result.message);
+        alert(result.message || "Failed to place order. Please try again.");
       }
-    });
+    } catch (error) {
+      console.error("Network error during order placement:", error);
+      alert("Network error. Please check your connection and try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
   const handleSaveNote = () => {
     setShowNoteDialog(false);
   };
 
   const handleClearNote = () => {
-    setNote('');
+    setNote("");
     setShowNoteDialog(false);
   };
 
@@ -91,8 +235,12 @@ export const MobileItemsDetails: React.FC = () => {
       {/* Restaurant Info */}
       <div className="bg-white px-4 py-3 border-b border-gray-100">
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900">{restaurant.name}</h2>
-          <span className="text-sm text-gray-600">Total Items - {getTotalItems()}</span>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {restaurant.name}
+          </h2>
+          <span className="text-sm text-gray-600">
+            Total Items - {getTotalItems()}
+          </span>
         </div>
       </div>
 
@@ -101,8 +249,14 @@ export const MobileItemsDetails: React.FC = () => {
         <div className="p-4 space-y-4">
           {items.map((item) => (
             <div key={item.id} className="flex justify-between items-center">
-              <span className="text-gray-900 font-medium">{item.name}</span>
-              <div className="flex items-center border-2 border-red-600 rounded-lg bg-white">
+              <div className="flex-1">
+                <span className="text-gray-900 font-medium">{item.name}</span>
+                <div className="text-sm text-gray-600 mt-1">
+                  ₹{item.price} × {item.quantity} = ₹
+                  {item.price * item.quantity}
+                </div>
+              </div>
+              <div className="flex items-center border-2 border-red-600 rounded-lg bg-white ml-3">
                 <button
                   onClick={() => updateQuantity(item.id, -1)}
                   className="px-3 py-1 text-red-600 hover:bg-red-50 text-lg font-bold"
@@ -121,7 +275,24 @@ export const MobileItemsDetails: React.FC = () => {
               </div>
             </div>
           ))}
-          
+
+          {/* Total Price Section */}
+          {items.length > 0 && (
+            <div className="pt-4 border-t border-gray-400">
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-semibold text-gray-900">
+                  Total Amount
+                </span>
+                <span className="text-xl font-bold text-red-600">
+                  ₹{getTotalPrice()}
+                </span>
+              </div>
+              <div className="text-sm text-gray-600 mt-1">
+                {getTotalItems()} item{getTotalItems() > 1 ? "s" : ""}
+              </div>
+            </div>
+          )}
+
           {/* Add More Items */}
           <div className="pt-2">
             <button
@@ -142,7 +313,9 @@ export const MobileItemsDetails: React.FC = () => {
             <div className="w-5 h-5 bg-gray-900 rounded-sm flex items-center justify-center mr-2">
               <span className="text-white text-xs">📝</span>
             </div>
-            <span className="font-semibold text-gray-900">Note for the restaurant</span>
+            <span className="font-semibold text-gray-900">
+              Note for the restaurant
+            </span>
           </div>
           {note && (
             <div className="text-gray-600 border-b border-dashed border-gray-400 pb-1">
@@ -164,10 +337,10 @@ export const MobileItemsDetails: React.FC = () => {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
         <Button
           onClick={handlePlaceOrder}
-          disabled={items.length === 0}
+          disabled={items.length === 0 || isSubmitting}
           className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl text-lg font-semibold disabled:opacity-50"
         >
-          Place Order
+          {isSubmitting ? "Placing Order..." : "Place Order"}
         </Button>
       </div>
 
@@ -177,7 +350,9 @@ export const MobileItemsDetails: React.FC = () => {
           <div className="bg-[#E8E2D3] rounded-lg w-full max-w-md">
             {/* Dialog Header */}
             <div className="flex justify-between items-center p-4 border-b border-gray-300">
-              <h3 className="text-lg font-semibold text-gray-900">Add a note for the restaurant</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Add a note for the restaurant
+              </h3>
               <button onClick={() => setShowNoteDialog(false)}>
                 <X className="w-6 h-6 text-gray-600" />
               </button>

@@ -42,6 +42,7 @@ import wingsReducer from './slices/wingsSlice'
 import floorsReducer from './slices/floorsSlice'
 import zonesReducer from './slices/zonesSlice'
 import roomsReducer from './slices/roomsSlice'
+import { addCurrencyReducer, getCurrencyReducer } from './slices/currencySlice'
 
 export const store = configureStore({
   reducer: {
@@ -124,6 +125,10 @@ export const store = configureStore({
     fetchService: fetchServiceReducer,
     createService: createServiceReducer,
     updateService: updateServiceReducer,
+
+    // Currency
+    // addCurrency: addCurrencyReducer,
+    getCurrency: getCurrencyReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

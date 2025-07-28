@@ -45,7 +45,7 @@ export const CreateScheduleModal = ({ isOpen, onClose, onSubmit }: CreateSchedul
             <X className="w-4 h-4 text-red-500" />
           </Button>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -127,17 +127,17 @@ export const CreateScheduleModal = ({ isOpen, onClose, onSubmit }: CreateSchedul
           </div>
 
           <div className="bg-gray-50 p-3 rounded text-xs text-gray-600">
-            <strong>Disclaimer:</strong> The Services include the provision of the Platform that enables you to arrange and 
-            schedule different home-based services with independent third-party service provider of those 
+            <strong>Disclaimer:</strong> The Services include the provision of the Platform that enables you to arrange and
+            schedule different home-based services with independent third-party service provider of those
             services ("Service Professionals").
           </div>
 
           <div className="flex justify-center pt-2">
-            <Button 
+            <Button
               onClick={handleSubmit}
               className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
             >
-              Pay ₹
+              Pay {localStorage.getItem('currency')}
             </Button>
           </div>
         </div>

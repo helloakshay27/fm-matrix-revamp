@@ -283,12 +283,11 @@ export const AssetDashboard = () => {
       const currentDate = getCurrentDate();
 
       // Build the API URL with parameters
-      const url = `${BASE_URL}${
-        ENDPOINTS.ASSET_STATISTICS
-      }?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace(
-        "Bearer ",
-        ""
-      )}`;
+      const url = `${BASE_URL}${ENDPOINTS.ASSET_STATISTICS
+        }?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace(
+          "Bearer ",
+          ""
+        )}`;
 
       console.log("Fetching asset statistics from:", url);
 
@@ -330,12 +329,11 @@ export const AssetDashboard = () => {
       const currentDate = getCurrentDate();
 
       // Build the API URL with parameters
-      const url = `${BASE_URL}${
-        ENDPOINTS.ASSET_STATUS
-      }?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace(
-        "Bearer ",
-        ""
-      )}`;
+      const url = `${BASE_URL}${ENDPOINTS.ASSET_STATUS
+        }?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace(
+          "Bearer ",
+          ""
+        )}`;
 
       console.log("Fetching asset status from:", url);
 
@@ -375,12 +373,11 @@ export const AssetDashboard = () => {
       const currentDate = getCurrentDate();
 
       // Build the API URL with parameters
-      const url = `${BASE_URL}${
-        ENDPOINTS.ASSET_DISTRIBUTIONS
-      }?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace(
-        "Bearer ",
-        ""
-      )}`;
+      const url = `${BASE_URL}${ENDPOINTS.ASSET_DISTRIBUTIONS
+        }?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace(
+          "Bearer ",
+          ""
+        )}`;
 
       console.log("Fetching asset distributions from:", url);
 
@@ -465,12 +462,11 @@ export const AssetDashboard = () => {
       const siteId = getSelectedSiteId();
 
       // Build the API URL with parameters
-      const url = `${BASE_URL}${
-        ENDPOINTS.CATEGORY_WISE_ASSETS
-      }?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace(
-        "Bearer ",
-        ""
-      )}`;
+      const url = `${BASE_URL}${ENDPOINTS.CATEGORY_WISE_ASSETS
+        }?site_id=${siteId}&from_date=&to_date=&access_token=${getAuthHeader().replace(
+          "Bearer ",
+          ""
+        )}`;
 
       console.log("Fetching category-wise assets from:", url);
 
@@ -639,7 +635,7 @@ export const AssetDashboard = () => {
     // Ideally, the API should return aggregated stats for all filtered results
     return {
       total: totalCount || totalAssets, // Use total count from API if available
-      total_value: "₹0.00",
+      total_value: `${localStorage.getItem('currency')}0.00`,
       nonItAssets: Math.floor((totalCount || totalAssets) * 0.6),
       itAssets: Math.floor((totalCount || totalAssets) * 0.4),
       inUse: inUseAssets,
@@ -656,7 +652,7 @@ export const AssetDashboard = () => {
     total_value:
       totalValue !== undefined && totalValue !== null
         ? String(totalValue)
-        : "₹0.00",
+        : `${localStorage.getItem('currency')}0.00`,
   };
 
   console.log("Final stats object:", stats);
@@ -869,29 +865,29 @@ export const AssetDashboard = () => {
     // Use API data for asset type distribution if available
     const chartTypeData = assetDistributions
       ? [
-          {
-            name: "IT Equipment",
-            value: assetDistributions.info.total_it_assets,
-            color: "#d8dcdd",
-          },
-          {
-            name: "Non-IT Equipment",
-            value: assetDistributions.info.total_non_it_assets,
-            color: "#c6b692",
-          },
-        ]
+        {
+          name: "IT Equipment",
+          value: assetDistributions.info.total_it_assets,
+          color: "#d8dcdd",
+        },
+        {
+          name: "Non-IT Equipment",
+          value: assetDistributions.info.total_non_it_assets,
+          color: "#c6b692",
+        },
+      ]
       : [
-          {
-            name: "IT Equipment",
-            value: stats.itAssets,
-            color: "#d8dcdd",
-          },
-          {
-            name: "Non-IT Equipment",
-            value: stats.nonItAssets,
-            color: "#c6b692",
-          },
-        ];
+        {
+          name: "IT Equipment",
+          value: stats.itAssets,
+          color: "#d8dcdd",
+        },
+        {
+          name: "Non-IT Equipment",
+          value: stats.nonItAssets,
+          color: "#c6b692",
+        },
+      ];
 
     return { chartStatusData, chartTypeData };
   };
@@ -901,11 +897,11 @@ export const AssetDashboard = () => {
   // Process category-wise assets data for category chart
   const categoryData = categoryWiseAssets?.asset_type_category_counts
     ? Object.entries(categoryWiseAssets.asset_type_category_counts).map(
-        ([name, value]) => ({
-          name,
-          value,
-        })
-      )
+      ([name, value]) => ({
+        name,
+        value,
+      })
+    )
     : [{ name: "Loading...", value: 0 }];
 
   // Process group-wise assets data for group chart
@@ -989,7 +985,7 @@ export const AssetDashboard = () => {
                   {statisticsLoading
                     ? "..."
                     : assetStatistics.total_assets_count?.total_assets_count ||
-                      stats.total}
+                    stats.total}
                 </div>
                 <div className="text-sm text-gray-600">Total Assets</div>
               </div>
@@ -1011,7 +1007,7 @@ export const AssetDashboard = () => {
                   {statisticsLoading
                     ? "..."
                     : assetStatistics.assets_in_use?.total_assets_in_use ||
-                      stats.inUse}
+                    stats.inUse}
                 </div>
                 <div className="text-sm text-gray-600">Asset In Use</div>
               </div>
@@ -1030,7 +1026,7 @@ export const AssetDashboard = () => {
                   {statisticsLoading
                     ? "..."
                     : assetStatistics.assets_in_breakdown
-                        ?.total_assets_in_breakdown || stats.breakdown}
+                      ?.total_assets_in_breakdown || stats.breakdown}
                 </div>
                 <div className="text-sm text-gray-600">Asset In Breakdown</div>
               </div>
@@ -1049,7 +1045,7 @@ export const AssetDashboard = () => {
                   {statisticsLoading
                     ? "..."
                     : assetStatistics.critical_assets_in_breakdown
-                        ?.total_assets_in_breakdown || 0}
+                      ?.total_assets_in_breakdown || 0}
                 </div>
                 <div className="text-sm text-gray-600">
                   Critical Assets In Breakdown

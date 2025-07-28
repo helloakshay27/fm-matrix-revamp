@@ -41,12 +41,12 @@ export const AddMaterialPRDashboard = () => {
           {/* Supplier Details */}
           <Card>
             <CardHeader>
-             <CardTitle className="text-[#C72030] flex items-center">
-  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-    1
-  </h2>
-  SUPPLIER DETAILS
-</CardTitle>
+              <CardTitle className="text-[#C72030] flex items-center">
+                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                  1
+                </h2>
+                SUPPLIER DETAILS
+              </CardTitle>
 
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -63,7 +63,7 @@ export const AddMaterialPRDashboard = () => {
                   <MenuItem value="lt">L&T</MenuItem>
                 </MuiSelect>
               </FormControl>
-              
+
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Plant Detail</InputLabel>
                 <MuiSelect
@@ -75,7 +75,7 @@ export const AddMaterialPRDashboard = () => {
                   <MenuItem value="plant1">Plant 1</MenuItem>
                 </MuiSelect>
               </FormControl>
-              
+
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Billing Address*</InputLabel>
                 <MuiSelect
@@ -87,7 +87,7 @@ export const AddMaterialPRDashboard = () => {
                   <MenuItem value="address1">Address 1</MenuItem>
                 </MuiSelect>
               </FormControl>
-              
+
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Delivery Address*</InputLabel>
                 <MuiSelect
@@ -99,7 +99,7 @@ export const AddMaterialPRDashboard = () => {
                   <MenuItem value="address1">Address 1</MenuItem>
                 </MuiSelect>
               </FormControl>
-              
+
               <TextField
                 label="Reference#"
                 placeholder="Enter Number"
@@ -109,7 +109,7 @@ export const AddMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
               />
-              
+
               <TextField
                 label="TDS%"
                 placeholder="Enter Number"
@@ -119,7 +119,7 @@ export const AddMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
               />
-              
+
               <TextField
                 label="Payment Terms(In Days)"
                 placeholder="Enter Number"
@@ -129,7 +129,7 @@ export const AddMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
               />
-              
+
               <TextField
                 label="Advance Amount"
                 placeholder="Enter Number"
@@ -139,7 +139,7 @@ export const AddMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
               />
-              
+
               <div className="md:col-span-2">
                 <TextField
                   label="Terms & Conditions*"
@@ -160,11 +160,11 @@ export const AddMaterialPRDashboard = () => {
             <CardHeader>
               <CardTitle className="text-orange-600 flex items-center justify-between">
                 <div className="flex items-center text-[#C72030]">
-  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-    2
-  </h2>
-  ITEM DETAILS
-</div>
+                  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                    2
+                  </h2>
+                  ITEM DETAILS
+                </div>
 
                 <Button onClick={addItem} size="sm" className="bg-purple-600 hover:bg-purple-700">
                   Add Item
@@ -184,7 +184,7 @@ export const AddMaterialPRDashboard = () => {
                       <X className="w-4 h-4" />
                     </Button>
                   )}
-                  
+
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                     <InputLabel shrink>Item Details*</InputLabel>
                     <MuiSelect
@@ -196,7 +196,7 @@ export const AddMaterialPRDashboard = () => {
                       <MenuItem value="item1">Item 1</MenuItem>
                     </MuiSelect>
                   </FormControl>
-                  
+
                   <TextField
                     label="SAC/HSN Code"
                     placeholder="Enter Code"
@@ -206,7 +206,7 @@ export const AddMaterialPRDashboard = () => {
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
                   />
-                  
+
                   <TextField
                     label="Product Description*"
                     placeholder="Product Description"
@@ -216,7 +216,7 @@ export const AddMaterialPRDashboard = () => {
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
                   />
-                  
+
                   <TextField
                     label="Each"
                     placeholder="Enter Number"
@@ -226,7 +226,7 @@ export const AddMaterialPRDashboard = () => {
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
                   />
-                  
+
                   <TextField
                     label="Quantity*"
                     placeholder="Enter Number"
@@ -236,7 +236,7 @@ export const AddMaterialPRDashboard = () => {
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
                   />
-                  
+
                   <TextField
                     label="Expected Date*"
                     type="date"
@@ -247,7 +247,7 @@ export const AddMaterialPRDashboard = () => {
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
                   />
-                  
+
                   <TextField
                     label="Amount*"
                     placeholder="Enter Number"
@@ -266,11 +266,11 @@ export const AddMaterialPRDashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-[#C72030] flex items-center">
-  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-    3
-  </h2>
-  ATTACHMENTS
-</CardTitle>
+                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                  3
+                </h2>
+                ATTACHMENTS
+              </CardTitle>
 
             </CardHeader>
             <CardContent>
@@ -310,10 +310,10 @@ export const AddMaterialPRDashboard = () => {
           </div>
 
           <div className="bg-white p-4 rounded-lg border">
-            <h3 className="font-medium mb-2">Total Amount: ₹</h3>
+            <h3 className="font-medium mb-2">Total Amount: {localStorage.getItem('currency')}</h3>
           </div>
 
-          <Button 
+          <Button
             className="w-full bg-purple-600 hover:bg-purple-700 text-white"
             onClick={() => navigate('/finance/material-pr')}
           >

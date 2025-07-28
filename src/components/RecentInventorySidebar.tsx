@@ -136,7 +136,7 @@ export const RecentInventorySidebar: React.FC<RecentInventorySidebarProps> = ({
   return (
     <div className={`bg-background/60 backdrop-blur-sm rounded-xl border border-primary/20 p-6 ${className}`}>
       <h3 className="text-lg font-semibold mb-4 text-foreground">Recent Inventory</h3>
-      
+
       <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
         {recentInventory.map((item) => (
           <div
@@ -185,7 +185,7 @@ export const RecentInventorySidebar: React.FC<RecentInventorySidebarProps> = ({
                   {item.stockStatus} Stock
                 </Badge>
               </div>
-              
+
               <div className="text-xs space-y-1">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Group:</span>
@@ -201,7 +201,7 @@ export const RecentInventorySidebar: React.FC<RecentInventorySidebarProps> = ({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Value:</span>
-                  <span className="font-medium">₹{item.value.toLocaleString()}</span>
+                  <span className="font-medium">${localStorage.getItem('currency')}{item.value.toLocaleString()}</span>
                 </div>
               </div>
             </div>
