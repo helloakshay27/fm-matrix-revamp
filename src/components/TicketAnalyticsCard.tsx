@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
+import { useToast } from '@/hooks/use-toast';
 
 interface TicketAnalyticsCardProps {
   title: string;
@@ -24,6 +25,7 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({
   dateRange
 }) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const { toast } = useToast();
 
   const handleDownload = async () => {
     if (!dateRange) return;
@@ -33,21 +35,47 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({
       switch (type) {
         case 'unitCategoryWise':
           await ticketAnalyticsDownloadAPI.downloadUnitCategorywiseData(dateRange.startDate, dateRange.endDate);
+          toast({
+            title: "Success",
+            description: "Unit category-wise data downloaded successfully"
+          });
           break;
         case 'tatResponse':
           await ticketAnalyticsDownloadAPI.downloadResponseTATData(dateRange.startDate, dateRange.endDate);
+          toast({
+            title: "Success",
+            description: "Response TAT data downloaded successfully"
+          });
           break;
         case 'tatResolution':
           await ticketAnalyticsDownloadAPI.downloadResolutionTATData(dateRange.startDate, dateRange.endDate);
+          toast({
+            title: "Success",
+            description: "Resolution TAT data downloaded successfully"
+          });
           break;
         case 'agingMatrix':
           await ticketAnalyticsDownloadAPI.downloadTicketAgingMatrixData(dateRange.startDate, dateRange.endDate);
+          toast({
+            title: "Success",
+            description: "Aging matrix data downloaded successfully"
+          });
           break;
         default:
           console.error('Unknown chart type for download');
+          toast({
+            title: "Error",
+            description: "Unknown chart type for download",
+            variant: "destructive"
+          });
       }
     } catch (error) {
       console.error('Error downloading data:', error);
+      toast({
+        title: "Error",
+        description: `Failed to download ${title.toLowerCase()} data`,
+        variant: "destructive"
+      });
     } finally {
       setIsDownloading(false);
     }

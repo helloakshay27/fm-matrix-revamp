@@ -14,6 +14,14 @@ const getCurrentSiteId = (): string => {
 const getAccessToken = (): string => {
   return localStorage.getItem('token') || API_CONFIG.TOKEN;
 };
+const getBaseUrl = (): string => {
+  const baseUrl = API_CONFIG.BASE_URL;
+  if (!baseUrl) {
+    console.warn('Base URL is not configured, this should not happen with fallback');
+    throw new Error('Base URL is not configured. Please check your authentication settings.');
+  }
+  return baseUrl;
+};
 
 // Download functionality for asset analytics
 export const assetAnalyticsDownloadAPI = {
@@ -23,9 +31,35 @@ export const assetAnalyticsDownloadAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
-    
-    const url = `https://fm-uat-api.lockated.com/pms/assets/export_group_wise_assets_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
-    
+
+    const url = `${getBaseUrl()}/pms/assets/export_group_wise_assets_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    try {
+      console.log("Fetching group-wise assets from:", url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download group-wise assets data: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `group-wise-assets-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading group-wise assets data:', error);
+      throw error;
+    }
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -59,9 +93,10 @@ export const assetAnalyticsDownloadAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
-    
-    const url = `https://fm-uat-api.lockated.com/pms/assets/category_wise_assets_count_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
-    
+
+    const url = `${getBaseUrl()}/pms/assets/category_wise_assets_count_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    console.log("Fetching category-wise assets from:", url);
+    console.log("Fetching category-wise assets from:", url);
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -95,9 +130,9 @@ export const assetAnalyticsDownloadAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
-    
-    const url = `https://fm-uat-api.lockated.com/pms/assets/assets_distributions_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
-    
+
+    const url = `${getBaseUrl()}/pms/assets/assets_distributions_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    console.log("Fetching asset distributions from:", url);
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -131,9 +166,9 @@ export const assetAnalyticsDownloadAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
-    
-    const url = `https://fm-uat-api.lockated.com/pms/assets/card_assets_in_use_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
-    
+
+    const url = `${getBaseUrl()}/pms/assets/card_assets_in_use_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    console.log("Fetching assets in use from:", url);
     try {
       const response = await fetch(url, {
         method: 'GET',

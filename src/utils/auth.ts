@@ -133,25 +133,25 @@ export const loginUser = async (email: string, password: string, baseUrl: string
 
 
 // Login with email and password
-export const loginWithEmail = async (email: string, password: string): Promise<LoginResponse> => {
-  const response = await fetch('https://fm-uat-api.lockated.com/api/users/sign_in.json', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      email,
-      password
-    }),
-  });
+// export const loginWithEmail = async (email: string, password: string): Promise<LoginResponse> => {
+//   const response = await fetch('https://fm-uat-api.lockated.com/api/users/sign_in.json', {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify({
+//       email,
+//       password
+//     }),
+//   });
 
-  if (!response.ok) {
-    throw new Error('Login failed');
-  }
+//   if (!response.ok) {
+//     throw new Error('Login failed');
+//   }
 
-  const data = await response.json();
-  return data;
-};
+//   const data = await response.json();
+//   return data;
+// };
 
 // Login with phone and password (first step)
 export const loginWithPhone = async (phone: string, password: string): Promise<{ success: boolean; message: string }> => {

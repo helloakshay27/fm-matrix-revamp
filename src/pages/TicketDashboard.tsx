@@ -46,9 +46,33 @@ const SortableChartItem = ({
     transition,
     opacity: isDragging ? 0.5 : 1
   };
-  return <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-move">
-    {children}
-  </div>;
+  
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      {...attributes} 
+      className="relative group"
+    >
+      {/* Drag area - everywhere except buttons */}
+      <div 
+        {...listeners}
+        className="absolute inset-0 cursor-move"
+        onPointerDown={(e) => {
+          // Prevent drag when clicking on buttons or download icons
+          const target = e.target as HTMLElement;
+          if (target.closest('button') || target.closest('[data-download-button]') || target.tagName === 'svg' || target.tagName === 'path') {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+      />
+      {/* Content */}
+      <div className="relative">
+        {children}
+      </div>
+    </div>
+  );
 };
 export const TicketDashboard = () => {
   const navigate = useNavigate();
@@ -66,27 +90,27 @@ export const TicketDashboard = () => {
   const [totalTickets, setTotalTickets] = useState(0);
   const [initialTotalTickets, setInitialTotalTickets] = useState(0); // Store unfiltered total
   const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
-  
+
   // Analytics data states with default dates (last year to today)
   const getDefaultDateRange = () => {
     const today = new Date();
     const lastYear = new Date();
     lastYear.setFullYear(today.getFullYear() - 1);
-    
+
     const formatDate = (date: Date) => {
       const day = date.getDate().toString().padStart(2, '0');
       const month = (date.getMonth() + 1).toString().padStart(2, '0');
       const year = date.getFullYear();
       return `${day}/${month}/${year}`;
     };
-    
+
     return {
       startDate: formatDate(lastYear),
       endDate: formatDate(today)
     };
   };
-  
-  const [analyticsDateRange, setAnalyticsDateRange] = useState<{startDate: string; endDate: string}>(getDefaultDateRange());
+
+  const [analyticsDateRange, setAnalyticsDateRange] = useState<{ startDate: string; endDate: string }>(getDefaultDateRange());
   const [categoryAnalyticsData, setCategoryAnalyticsData] = useState<TicketCategoryData[]>([]);
   const [statusAnalyticsData, setStatusAnalyticsData] = useState<TicketStatusData | null>(null);
   const [agingMatrixAnalyticsData, setAgingMatrixAnalyticsData] = useState<TicketAgingMatrix | null>(null);
@@ -95,7 +119,18 @@ export const TicketDashboard = () => {
   const [resolutionTATReportData, setResolutionTATReportData] = useState<ResolutionTATReportData | null>(null);
   const [recentTicketsData, setRecentTicketsData] = useState<RecentTicketsResponse | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  
+
+  // Utility function to convert DD/MM/YYYY to Date object
+  const convertDateStringToDate = (dateString: string): Date => {
+    try {
+      const [day, month, year] = dateString.split('/');
+      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } catch (error) {
+      console.error('Error converting date string:', dateString, error);
+      return new Date(); // Fallback to current date
+    }
+  };
+
   const [ticketSummary, setTicketSummary] = useState({
     total_tickets: 0,
     open_tickets: 0,
@@ -121,11 +156,11 @@ export const TicketDashboard = () => {
     setAnalyticsLoading(true);
     try {
       const [
-        categoryData, 
-        statusData, 
-        agingData, 
-        unitCategoryData, 
-        responseTATData, 
+        categoryData,
+        statusData,
+        agingData,
+        unitCategoryData,
+        responseTATData,
         resolutionTATData,
         recentTickets
       ] = await Promise.all([
@@ -137,7 +172,7 @@ export const TicketDashboard = () => {
         ticketAnalyticsAPI.getResolutionTATReportData(startDate, endDate),
         ticketAnalyticsAPI.getRecentTickets()
       ]);
-      
+
       setCategoryAnalyticsData(categoryData);
       setStatusAnalyticsData(statusData);
       setAgingMatrixAnalyticsData(agingData);
@@ -145,7 +180,7 @@ export const TicketDashboard = () => {
       setResponseTATData(responseTATData);
       setResolutionTATReportData(resolutionTATData);
       setRecentTicketsData(recentTickets);
-      
+
       // toast({
       //   title: "Success",
       //   description: "Analytics data updated successfully"
@@ -165,11 +200,11 @@ export const TicketDashboard = () => {
   // Handle analytics filter apply
   const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
     setAnalyticsDateRange(filters);
-    
-    // Convert date strings to Date objects
-    const startDate = new Date(filters.startDate.split('/').reverse().join('-')); // Convert DD/MM/YYYY to YYYY-MM-DD
-    const endDate = new Date(filters.endDate.split('/').reverse().join('-'));
-    
+
+    // Convert date strings to Date objects using utility function
+    const startDate = convertDateStringToDate(filters.startDate);
+    const endDate = convertDateStringToDate(filters.endDate);
+
     fetchAnalyticsData(startDate, endDate);
   };
 
@@ -178,7 +213,7 @@ export const TicketDashboard = () => {
     try {
       const summary = await ticketManagementAPI.getTicketSummary();
       setTicketSummary(summary);
-      
+
       // Store initial total count only if not already stored and no filters are applied
       if (Object.keys(filters).length === 0 && initialTotalTickets === 0) {
         setInitialTotalTickets(summary.total_tickets);
@@ -224,8 +259,8 @@ export const TicketDashboard = () => {
   // Load analytics data with default date range on component mount
   useEffect(() => {
     const defaultRange = getDefaultDateRange();
-    const startDate = new Date(defaultRange.startDate.split('/').reverse().join('-'));
-    const endDate = new Date(defaultRange.endDate.split('/').reverse().join('-'));
+    const startDate = convertDateStringToDate(defaultRange.startDate);
+    const endDate = convertDateStringToDate(defaultRange.endDate);
     fetchAnalyticsData(startDate, endDate);
   }, []);
 
@@ -234,9 +269,9 @@ export const TicketDashboard = () => {
   const inProgressTickets = statusAnalyticsData?.overall.total_wip || ticketSummary.in_progress_tickets;
   const closedTickets = statusAnalyticsData?.overall.total_closed || ticketSummary.closed_tickets;
   const totalSummaryTickets = (openTickets + inProgressTickets + closedTickets) || ticketSummary.total_tickets;
-  const pendingTickets = statusAnalyticsData?.overall.total_pending || ticketSummary.pending_tickets;
+  const pendingTickets = ticketSummary.pending_tickets; // Use ticket summary for pending as it's not in analytics
   const totalTicketsCount = initialTotalTickets || totalSummaryTickets;
-   const displayTotalTickets = totalTicketsCount.toLocaleString();
+  const displayTotalTickets = totalTicketsCount.toLocaleString();
 
 
   // Analytics data with updated colors matching design using real API data
@@ -257,7 +292,7 @@ export const TicketDashboard = () => {
     value: pendingTickets,
     color: '#d8dcdd'
   }
-];
+  ];
 
   // Ticket type breakdown cards
   const ticketTypeCards = [{
@@ -295,76 +330,76 @@ export const TicketDashboard = () => {
     value: ticketSummary.requests,
     icon: Ticket,
     color: 'bg-indigo-500'
-  },{
+  }, {
     title: 'Pending Tickets',
     value: ticketSummary.pending_tickets,
     icon: Ticket,
     color: 'bg-indigo-500'
   }
-];
+  ];
 
   // Calculate category data from API analytics data or fallback to tickets
-  const categoryChartData = categoryAnalyticsData.length > 0 
+  const categoryChartData = categoryAnalyticsData.length > 0
     ? categoryAnalyticsData.map(item => ({
-        name: item.category,
-        proactive: item.proactive.Open + item.proactive.Closed,
-        reactive: item.reactive.Open + item.reactive.Closed,
-        value: item.proactive.Open + item.proactive.Closed + item.reactive.Open + item.reactive.Closed
-      }))
+      name: item.category,
+      proactive: item.proactive.Open + item.proactive.Closed,
+      reactive: item.reactive.Open + item.reactive.Closed,
+      value: item.proactive.Open + item.proactive.Closed + item.reactive.Open + item.reactive.Closed
+    }))
     : (() => {
-        const safeTickets = tickets || [];
-        const categoryData = safeTickets.reduce((acc, ticket) => {
-          const category = ticket.category_type;
-          if (category) {
-            acc[category] = (acc[category] || 0) + 1;
-          }
-          return acc;
-        }, {});
-        return Object.entries(categoryData).map(([name, value]) => ({
-          name,
-          value
-        }));
-      })();
+      const safeTickets = tickets || [];
+      const categoryData = safeTickets.reduce((acc, ticket) => {
+        const category = ticket.category_type;
+        if (category) {
+          acc[category] = (acc[category] || 0) + 1;
+        }
+        return acc;
+      }, {});
+      return Object.entries(categoryData).map(([name, value]) => ({
+        name,
+        value
+      }));
+    })();
 
   // Aging matrix data from API or fallback
-  const agingMatrixData = agingMatrixAnalyticsData?.response.matrix 
+  const agingMatrixData = agingMatrixAnalyticsData?.response.matrix
     ? Object.entries(agingMatrixAnalyticsData.response.matrix).map(([priority, data]) => ({
-        priority,
-        'T1': data.T1 || 0,
-        'T2': data.T2 || 0,
-        'T3': data.T3 || 0,
-        'T4': data.T4 || 0,
-        'T5': data.T5 || 0
-      }))
+      priority,
+      'T1': data.T1 || 0,
+      'T2': data.T2 || 0,
+      'T3': data.T3 || 0,
+      'T4': data.T4 || 0,
+      'T5': data.T5 || 0
+    }))
     : [{
-        priority: 'P1',
-        'T1': 20,
-        'T2': 3,
-        'T3': 4,
-        'T4': 0,
-        'T5': Math.max(203, openTickets)
-      }, {
-        priority: 'P2',
-        'T1': 2,
-        'T2': 0,
-        'T3': 0,
-        'T4': 0,
-        'T5': 4
-      }, {
-        priority: 'P3',
-        'T1': 1,
-        'T2': 0,
-        'T3': 1,
-        'T4': 0,
-        'T5': 7
-      }, {
-        priority: 'P4',
-        'T1': 1,
-        'T2': 0,
-        'T3': 0,
-        'T4': 0,
-        'T5': 5
-      }];
+      priority: 'P1',
+      'T1': 20,
+      'T2': 3,
+      'T3': 4,
+      'T4': 0,
+      'T5': Math.max(203, openTickets)
+    }, {
+      priority: 'P2',
+      'T1': 2,
+      'T2': 0,
+      'T3': 0,
+      'T4': 0,
+      'T5': 4
+    }, {
+      priority: 'P3',
+      'T1': 1,
+      'T2': 0,
+      'T3': 1,
+      'T4': 0,
+      'T5': 7
+    }, {
+      priority: 'P4',
+      'T1': 1,
+      'T2': 0,
+      'T3': 0,
+      'T4': 0,
+      'T5': 5
+    }];
 
   // Proactive vs Reactive data from API analytics
   const proactiveOpenTickets = statusAnalyticsData?.proactive_reactive.proactive.open || 0;
@@ -442,7 +477,7 @@ export const TicketDashboard = () => {
     }
   };
   const handleClearSelection = () => {
-   // console.log('TicketDashboard - Clearing selection');
+    // console.log('TicketDashboard - Clearing selection');
     setSelectedTickets([]);
   };
   const handleGoldenTicket = async () => {
@@ -511,7 +546,7 @@ export const TicketDashboard = () => {
         title: "Success",
         description: response.message || "Ticket(s) flagged successfully"
       });
-      
+
       // Refresh the page to update the data
       window.location.reload();
     } catch (error) {
@@ -584,36 +619,36 @@ export const TicketDashboard = () => {
   const handleStatusCardClick = (cardType: string) => {
     console.log('Status card clicked:', cardType);
     let newFilters: TicketFilters = {};
-    
+
     if (cardType === 'total') {
       // Clear all filters to show all records
-     // console.log('Clearing all filters to show all tickets');
+      // console.log('Clearing all filters to show all tickets');
       setFilters({});
       setCurrentPage(1);
       return;
     }
-    
+
     if (cardType !== 'total') {
       // Use the correct API parameter format for status filtering
       if (cardType === 'open') {
         newFilters.complaint_status_name_eq = 'Open';
-       // console.log('Setting Open filter with complaint_status_name_eq=Open');
+        // console.log('Setting Open filter with complaint_status_name_eq=Open');
       } else if (cardType === 'pending') {
         newFilters.complaint_status_name_eq = 'Pending';
-      //  console.log('Setting Pending filter with complaint_status_name_eq=Pending');
+        //  console.log('Setting Pending filter with complaint_status_name_eq=Pending');
       } else if (cardType === 'in_progress') {
         newFilters.complaint_status_name_eq = 'In Progress';
-      //  console.log('Setting In Progress filter with complaint_status_name_eq=In Progress');
+        //  console.log('Setting In Progress filter with complaint_status_name_eq=In Progress');
       } else if (cardType === 'closed') {
         newFilters.complaint_status_name_eq = 'Closed';
         console.log('Setting Closed filter with complaint_status_name_eq=Closed');
       }
     }
-    
+
     console.log('Setting filters:', newFilters);
     setFilters(newFilters);
     setCurrentPage(1);
-    
+
     // Log what the resulting URL will look like
     const testParams = new URLSearchParams();
     testParams.append('page', '1');
@@ -627,7 +662,7 @@ export const TicketDashboard = () => {
   // Helper function to check if a status card is currently active
   const isStatusCardActive = (cardType: string) => {
     if (cardType === 'total') return false;
-    
+
     if (cardType === 'open') {
       return filters.complaint_status_name_eq === 'Open';
     } else if (cardType === 'pending') {
@@ -637,7 +672,7 @@ export const TicketDashboard = () => {
     } else if (cardType === 'closed') {
       return filters.complaint_status_name_eq === 'Closed';
     }
-    
+
     return false;
   };
 
@@ -843,8 +878,8 @@ export const TicketDashboard = () => {
           <div title="Flag ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Flag
               className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged
-                  ? 'text-red-500 fill-red-500'
-                  : 'text-gray-600'
+                ? 'text-red-500 fill-red-500'
+                : 'text-gray-600'
                 }`}
               onClick={(e) => {
                 e.stopPropagation();
@@ -855,8 +890,8 @@ export const TicketDashboard = () => {
           <div title="Star ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Star
               className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_golden_ticket
-                  ? 'text-yellow-500 fill-yellow-500'
-                  : 'text-gray-600'
+                ? 'text-yellow-500 fill-yellow-500'
+                : 'text-gray-600'
                 }`}
               onClick={(e) => {
                 e.stopPropagation();
@@ -903,49 +938,49 @@ export const TicketDashboard = () => {
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <Tabs defaultValue="tickets" className="w-full">
-       <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-  <TabsTrigger
-    value="tickets"
-    className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      strokeWidth={2}
-      className="lucide lucide-ticket w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
-    >
-      <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
-      <path d="M13 5v2" />
-      <path d="M13 17v2" />
-      <path d="M13 11v2" />
-    </svg>
-    Ticket List
-  </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+          <TabsTrigger
+            value="tickets"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              strokeWidth={2}
+              className="lucide lucide-ticket w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+            >
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+              <path d="M13 5v2" />
+              <path d="M13 17v2" />
+              <path d="M13 11v2" />
+            </svg>
+            Ticket List
+          </TabsTrigger>
 
-  <TabsTrigger
-    value="analytics"
-    className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-  >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      strokeWidth={2}
-      className="lucide lucide-chart-column w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
-    >
-      <path d="M3 3v16a2 2 0 0 0 2 2h16" />
-      <path d="M18 17V9" />
-      <path d="M13 17V5" />
-      <path d="M8 17v-3" />
-    </svg>
-    Analytics
-  </TabsTrigger>
-</TabsList>
+          <TabsTrigger
+            value="analytics"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              strokeWidth={2}
+              className="lucide lucide-chart-column w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+            >
+              <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+              <path d="M18 17V9" />
+              <path d="M13 17V5" />
+              <path d="M8 17v-3" />
+            </svg>
+            Analytics
+          </TabsTrigger>
+        </TabsList>
 
 
         <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
@@ -954,15 +989,15 @@ export const TicketDashboard = () => {
 
           {/* Header with Filter and Ticket Selector */}
           <div className="flex justify-end items-center gap-2">
-           
-              <Button
-                onClick={() => setIsAnalyticsFilterOpen(true)}
-                variant="outline"
-                className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
-                disabled={analyticsLoading}
-              >
-                <Filter className="w-4 h-4" />
-                 {/* {analyticsDateRange.startDate && analyticsDateRange.endDate && (
+
+            <Button
+              onClick={() => setIsAnalyticsFilterOpen(true)}
+              variant="outline"
+              className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
+              disabled={analyticsLoading}
+            >
+              <Filter className="w-4 h-4" />
+              {/* {analyticsDateRange.startDate && analyticsDateRange.endDate && (
                 <span className="text-sm text-gray-600">
                   {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
                 </span>
@@ -970,8 +1005,8 @@ export const TicketDashboard = () => {
               {analyticsLoading && (
                 <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
               )}
-              </Button>
-             
+            </Button>
+
             <TicketSelector onSelectionChange={handleSelectionChange} />
           </div>
 
@@ -991,17 +1026,25 @@ export const TicketDashboard = () => {
                             <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets Status</h3>
-                                <Download 
-                                  className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" 
+                                <Download
+                                  className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer"
                                   onClick={async () => {
                                     if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
                                       try {
-                                        await ticketAnalyticsDownloadAPI.downloadTicketStatusData(
-                                          new Date(analyticsDateRange.startDate), 
-                                          new Date(analyticsDateRange.endDate)
-                                        );
+                                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                                        await ticketAnalyticsDownloadAPI.downloadTicketStatusData(startDate, endDate);
+                                        toast({
+                                          title: "Success",
+                                          description: "Ticket status data downloaded successfully"
+                                        });
                                       } catch (error) {
                                         console.error('Error downloading status chart data:', error);
+                                        toast({
+                                          title: "Error",
+                                          description: "Failed to download ticket status data",
+                                          variant: "destructive"
+                                        });
                                       }
                                     }
                                   }}
@@ -1029,17 +1072,25 @@ export const TicketDashboard = () => {
                             <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Proactive/Reactive Tickets</h3>
-                                <Download 
-                                  className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" 
+                                <Download
+                                  className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer"
                                   onClick={async () => {
                                     if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
                                       try {
-                                        await ticketAnalyticsDownloadAPI.downloadTicketsCategorywiseData(
-                                          new Date(analyticsDateRange.startDate), 
-                                          new Date(analyticsDateRange.endDate)
-                                        );
+                                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                                        await ticketAnalyticsDownloadAPI.downloadTicketsCategorywiseData(startDate, endDate);
+                                        toast({
+                                          title: "Success",
+                                          description: "Proactive/Reactive data downloaded successfully"
+                                        });
                                       } catch (error) {
                                         console.error('Error downloading reactive proactive chart data:', error);
+                                        toast({
+                                          title: "Error",
+                                          description: "Failed to download proactive/reactive data",
+                                          variant: "destructive"
+                                        });
                                       }
                                     }
                                   }}
@@ -1081,8 +1132,8 @@ export const TicketDashboard = () => {
                               type="unitCategoryWise"
                               className="h-full"
                               dateRange={{
-                                startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
-                                endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
+                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
                               }}
                             />
                           </SortableChartItem>
@@ -1094,8 +1145,8 @@ export const TicketDashboard = () => {
                               data={responseTATData}
                               className="h-full"
                               dateRange={{
-                                startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
-                                endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
+                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
                               }}
                             />
                           </SortableChartItem>
@@ -1114,18 +1165,26 @@ export const TicketDashboard = () => {
                               <h3 className="text-base sm:text-lg font-bold" style={{
                                 color: '#C72030'
                               }}>Unit Category-wise Tickets</h3>
-                              <Download 
-                                className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" 
+                              <Download
+                                className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer"
                                 style={{ color: '#C72030' }}
                                 onClick={async () => {
                                   if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
                                     try {
-                                      await ticketAnalyticsDownloadAPI.downloadUnitCategorywiseData(
-                                        new Date(analyticsDateRange.startDate), 
-                                        new Date(analyticsDateRange.endDate)
-                                      );
+                                      const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                                      const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                                      await ticketAnalyticsDownloadAPI.downloadUnitCategorywiseData(startDate, endDate);
+                                      toast({
+                                        title: "Success",
+                                        description: "Unit category-wise data downloaded successfully"
+                                      });
                                     } catch (error) {
                                       console.error('Error downloading unit category-wise data:', error);
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to download unit category-wise data",
+                                        variant: "destructive"
+                                      });
                                     }
                                   }
                                 }}
@@ -1158,16 +1217,26 @@ export const TicketDashboard = () => {
                               <h3 className="text-base sm:text-lg font-bold" style={{
                                 color: '#C72030'
                               }}>Tickets Ageing Matrix</h3>
-                              <Download 
-                                className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" 
+                              <Download
+                                className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer"
                                 style={{ color: '#C72030' }}
                                 onClick={async () => {
                                   try {
-                                    const startDate = new Date(analyticsDateRange.startDate.split('/').reverse().join('-'));
-                                    const endDate = new Date(analyticsDateRange.endDate.split('/').reverse().join('-'));
+                                    const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                                    const endDate = convertDateStringToDate(analyticsDateRange.endDate);
                                     await ticketAnalyticsDownloadAPI.downloadTicketAgingMatrixData(startDate, endDate);
+                                    toast({
+                                      title: "Success",
+                                      description: "Ticket aging matrix data downloaded successfully"
+                                    });
+                                    console.log('Ticket aging matrix data downloaded successfully');
                                   } catch (error) {
                                     console.error('Error downloading aging matrix data:', error);
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to download aging matrix data",
+                                      variant: "destructive"
+                                    });
                                   }
                                 }}
                               />
@@ -1197,14 +1266,14 @@ export const TicketDashboard = () => {
                                       </tr>
                                     </thead>
                                     <tbody>
-                                       {agingMatrixData.map((row, index) => <tr key={index} className="bg-white">
-                                         <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
-                                         <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T1}</td>
-                                         <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T2}</td>
-                                         <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T3}</td>
-                                         <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T4}</td>
-                                         <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T5}</td>
-                                       </tr>)}
+                                      {agingMatrixData.map((row, index) => <tr key={index} className="bg-white">
+                                        <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
+                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T1}</td>
+                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T2}</td>
+                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T3}</td>
+                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T4}</td>
+                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T5}</td>
+                                      </tr>)}
                                     </tbody>
                                   </table>
                                 </div>
@@ -1215,17 +1284,17 @@ export const TicketDashboard = () => {
                                 <div className="rounded-lg p-4 sm:p-8 text-center" style={{
                                   backgroundColor: '#EDE4D8'
                                 }}>
-                                   <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">
-                                     {agingMatrixAnalyticsData?.average_days || 569} Days
-                                   </div>
-                                   <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
+                                  <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">
+                                    {agingMatrixAnalyticsData?.average_days || 569} Days
+                                  </div>
+                                  <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </SortableChartItem>;
                       }
-                      
+
                       // Unit Category Wise Chart
                       if (chartId === 'unitCategoryWise' && visibleSections.includes('unitCategoryWise')) {
                         return <SortableChartItem key={chartId} id={chartId}>
@@ -1235,13 +1304,13 @@ export const TicketDashboard = () => {
                             type="unitCategoryWise"
                             className="bg-white border border-gray-200 rounded-lg"
                             dateRange={{
-                              startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
-                              endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
+                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
                             }}
                           />
                         </SortableChartItem>;
                       }
-                      
+
                       // Response TAT Chart
                       if (chartId === 'responseTat' && visibleSections.includes('responseTat')) {
                         return <SortableChartItem key={chartId} id={chartId}>
@@ -1251,27 +1320,27 @@ export const TicketDashboard = () => {
                             type="tatResponse"
                             className="bg-white border border-gray-200 rounded-lg"
                             dateRange={{
-                              startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
-                              endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
+                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
                             }}
                           />
                         </SortableChartItem>;
                       }
-                      
-                       // Resolution TAT Chart
-                       if (chartId === 'resolutionTat' && visibleSections.includes('resolutionTat')) {
-                         return <SortableChartItem key={chartId} id={chartId}>
+
+                      // Resolution TAT Chart
+                      if (chartId === 'resolutionTat' && visibleSections.includes('resolutionTat')) {
+                        return <SortableChartItem key={chartId} id={chartId}>
                           <ResolutionTATCard
                             data={resolutionTATReportData}
                             className="bg-white border border-gray-200 rounded-lg"
                             dateRange={{
-                              startDate: new Date(analyticsDateRange.startDate.split('/').reverse().join('-')),
-                              endDate: new Date(analyticsDateRange.endDate.split('/').reverse().join('-'))
+                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
                             }}
                           />
-                         </SortableChartItem>;
-                       }
-                      
+                        </SortableChartItem>;
+                      }
+
                       return null;
                     })}
                   </div>
@@ -1323,15 +1392,13 @@ export const TicketDashboard = () => {
               const IconComponent = item.icon;
               const isActive = isStatusCardActive(item.type);
               return (
-                <div 
-                  key={i} 
-                  className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 transition-all ${
-                    isActive 
-                      ? "" 
+                <div
+                  key={i}
+                  className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 transition-all ${isActive
+                      ? ""
                       : "bg-[#f6f4ee]"
-                  } ${
-                    item.clickable ? "cursor-pointer hover:bg-[#edeae3] hover:shadow-lg" : ""
-                  }`}
+                    } ${item.clickable ? "cursor-pointer hover:bg-[#edeae3] hover:shadow-lg" : ""
+                    }`}
                   onClick={() => {
                     if (item.clickable) {
                       handleStatusCardClick(item.type);
@@ -1436,8 +1503,8 @@ export const TicketDashboard = () => {
                             onClick={() => setCurrentPage(pageNum)}
                             disabled={loading}
                             className={`w-8 h-8 flex items-center justify-center text-sm rounded disabled:opacity-50 ${currentPage === pageNum
-                                ? 'bg-[#C72030] text-white'
-                                : 'text-gray-700 hover:bg-gray-100'
+                              ? 'bg-[#C72030] text-white'
+                              : 'text-gray-700 hover:bg-gray-100'
                               }`}
                           >
                             {pageNum}
