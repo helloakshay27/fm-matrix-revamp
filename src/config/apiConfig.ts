@@ -89,7 +89,7 @@ export const API_CONFIG = {
     // Add task group endpoints
     TASK_GROUPS: '/pms/asset_groups.json?type=checklist',
     TASK_SUB_GROUPS: '/pms/assets/get_asset_group_sub_group.json', // Will append ?group_id=
-    TICKETS_SUMMARY: '/pms/admin/ticket_summary',
+    TICKETS_SUMMARY: '/pms/admin/ticket_summary.json',
     TICKETS_EXPORT_EXCEL: '/pms/admin/complaints.xlsx',
     // Checklist master endpoint
     CHECKLIST_MASTER: '/master_checklist_list.json',
