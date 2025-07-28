@@ -343,8 +343,13 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
 
   const handleBreakdownClick = () => {
     const idToUse = assetId || assetData.id;
-    navigate(`/mobile/assets/${idToUse}`);
+    navigate(`/mobile/assets/${idToUse}/breakdown`);
   };
+
+  // const handleBreakdownClick = () => {
+  //   const idToUse = assetId || assetData.id;
+  //   navigate(`/mobile/assets/${idToUse}?action=breakdown`);
+  // };
 
   const toggleSection = (key: string) => {
     setOpenSections((prev) => ({

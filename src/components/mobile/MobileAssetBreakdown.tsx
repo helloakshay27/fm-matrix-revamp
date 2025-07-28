@@ -213,7 +213,7 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
 
   const handleViewAsset = () => {
     const idToUse = assetId || assetData.id;
-    navigate(`/mobile/assets/${idToUse}?action=details`);
+    navigate(`/mobile/assets/${idToUse}`);
   };
 
   if (loading) {
