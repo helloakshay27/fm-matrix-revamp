@@ -17,6 +17,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ticketManagementAPI, TicketResponse, TicketFilters } from '@/services/ticketManagementAPI';
 import { ticketAnalyticsAPI, TicketCategoryData, TicketStatusData, TicketAgingMatrix, UnitCategorywiseData, ResponseTATData, ResolutionTATReportData, RecentTicketsResponse } from '@/services/ticketAnalyticsAPI';
+import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
 import { TicketAnalyticsCard } from '@/components/TicketAnalyticsCard';
 import { ResponseTATCard } from '@/components/ResponseTATCard';
 import { ResolutionTATCard } from '@/components/ResolutionTATCard';
@@ -1066,7 +1067,12 @@ export const TicketDashboard = () => {
                             <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets</h3>
-                                <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                                <Download 
+                                  className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" 
+                                  onClick={() => {
+                                    console.log('Status chart download not implemented yet');
+                                  }}
+                                />
                               </div>
                               <div className="relative flex items-center justify-center">
                                 <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
@@ -1116,7 +1122,12 @@ export const TicketDashboard = () => {
                             <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Reactive Proactive Ticket</h3>
-                                <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                                <Download 
+                                  className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" 
+                                  onClick={() => {
+                                    console.log('Reactive proactive chart download not implemented yet');
+                                  }}
+                                />
                               </div>
                               <div className="relative flex items-center justify-center">
                                 <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
@@ -1199,9 +1210,13 @@ export const TicketDashboard = () => {
                               <h3 className="text-base sm:text-lg font-bold" style={{
                                 color: '#C72030'
                               }}>Unit Category-wise Tickets</h3>
-                              <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{
-                                color: '#C72030'
-                              }} />
+                              <Download 
+                                className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" 
+                                style={{ color: '#C72030' }}
+                                onClick={() => {
+                                  console.log('Category chart download not implemented yet');
+                                }}
+                              />
                             </div>
                             <div className="w-full overflow-x-auto">
                               <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
@@ -1230,9 +1245,19 @@ export const TicketDashboard = () => {
                               <h3 className="text-base sm:text-lg font-bold" style={{
                                 color: '#C72030'
                               }}>Tickets Ageing Matrix</h3>
-                              <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{
-                                color: '#C72030'
-                              }} />
+                              <Download 
+                                className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" 
+                                style={{ color: '#C72030' }}
+                                onClick={async () => {
+                                  try {
+                                    const startDate = new Date(analyticsDateRange.startDate.split('/').reverse().join('-'));
+                                    const endDate = new Date(analyticsDateRange.endDate.split('/').reverse().join('-'));
+                                    await ticketAnalyticsDownloadAPI.downloadTicketAgingMatrixData(startDate, endDate);
+                                  } catch (error) {
+                                    console.error('Error downloading aging matrix data:', error);
+                                  }
+                                }}
+                              />
                             </div>
 
                             <div className="space-y-4 sm:space-y-6">
