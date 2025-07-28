@@ -14,7 +14,7 @@ import { AnalyticsGrid } from '@/components/dashboard/AnalyticsGrid';
 import { TicketAnalyticsCard } from '@/components/dashboard/TicketAnalyticsCard';
 import { TaskAnalyticsCard } from '@/components/TaskAnalyticsCard';
 import { AMCAnalyticsCard } from '@/components/AMCAnalyticsCard';
-import { InventoryAnalyticsCard } from '@/components/dashboard/InventoryAnalyticsCard';
+import { InventoryAnalyticsCard } from '@/components/InventoryAnalyticsCard';
 import { ScheduleAnalyticsCard } from '@/components/dashboard/ScheduleAnalyticsCard';
 import { AssetAnalyticsCard } from '@/components/dashboard/AssetAnalyticsCard';
 import { ticketAnalyticsAPI } from '@/services/ticketAnalyticsAPI';
@@ -354,12 +354,29 @@ export const Dashboard = () => {
           />
         );
       case 'inventory':
+        // Map endpoint names to InventoryAnalyticsCard type values
+        const getInventoryAnalyticsType = (endpoint: string) => {
+          switch (endpoint) {
+            case 'items_status': return 'itemsStatus';
+            case 'category_wise': return 'categoryWise';
+            case 'green_consumption': return 'greenConsumption';
+            case 'aging_matrix': return 'consumptionReportGreen';
+            case 'low_stock': return 'currentMinimumStockNonGreen';
+            case 'high_value': return 'currentMinimumStockGreen';
+            default: return 'itemsStatus';
+          }
+        };
+        
         return (
           <InventoryAnalyticsCard
             key={analytic.id}
             title={analytic.title}
             data={data}
-            type={analytic.endpoint as any}
+            type={getInventoryAnalyticsType(analytic.endpoint)}
+            dateRange={dateRange ? {
+              startDate: dateRange.from!,
+              endDate: dateRange.to!
+            } : undefined}
           />
         );
       case 'schedule':
