@@ -129,9 +129,9 @@ export const MobileAssetPage = () => {
       }
 
       if (token) {
-        // Store token in localStorage for future use as mobile_token
-        // localStorage.setItem("mobile_token", token);
-        console.log("💾 Mobile token stored in localStorage");
+        // Store token in sessionStorage for future use as mobile_token
+        sessionStorage.setItem("mobile_token", token);
+        console.log("💾 Mobile token stored in sessionStorage");
 
         // Fetch assets using the token
         setLoading(true);
@@ -160,10 +160,10 @@ export const MobileAssetPage = () => {
           setLoading(false);
         }
       } else {
-        // Try to get token from localStorage
-        const storedToken = localStorage.getItem("mobile_token");
+        // Try to get token from sessionStorage
+        const storedToken = sessionStorage.getItem("mobile_token");
         if (storedToken) {
-          console.log("📱 Using stored token from localStorage");
+          console.log("📱 Using stored token from sessionStorage");
           setLoading(true);
           setError(null);
 
@@ -218,7 +218,7 @@ export const MobileAssetPage = () => {
   const loadMoreAssets = async () => {
     if (loadingMore || !hasMore) return;
 
-    const tokenToUse = token || localStorage.getItem("mobile_token");
+    const tokenToUse = token || sessionStorage.getItem("mobile_token");
     if (!tokenToUse) return;
 
     setLoadingMore(true);
