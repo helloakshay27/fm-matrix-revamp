@@ -224,9 +224,11 @@ export const ResolutionEscalationTab: React.FC = () => {
 
   const onSubmit = async (data: ResolutionEscalationFormData) => {
     try {
+      const siteId = localStorage.getItem('siteId') || '2189';
+      
       const payload = {
         complaint_worker: {
-          society_id: 3584,
+          society_id: parseInt(siteId),
           esc_type: 'resolution',
           of_phase: 'pms',
           of_atype: 'Pms::Site',
@@ -281,6 +283,7 @@ export const ResolutionEscalationTab: React.FC = () => {
         }
       };
 
+      console.log('Resolution escalation payload:', JSON.stringify(payload, null, 2));
       await dispatch(createResolutionEscalation(payload));
     } catch (err) {
       console.error('Error creating resolution escalation:', err);
@@ -294,11 +297,14 @@ export const ResolutionEscalationTab: React.FC = () => {
     const safeParseUsers = (escalateToUsers: any): number[] => {
       if (!escalateToUsers) return [];
       try {
+        let userArray: (string | number)[] = [];
         if (typeof escalateToUsers === 'string') {
-          return JSON.parse(escalateToUsers);
+          userArray = JSON.parse(escalateToUsers);
         } else if (Array.isArray(escalateToUsers)) {
-          return escalateToUsers;
+          userArray = escalateToUsers;
         }
+        // Convert all values to numbers, handling both string and number IDs
+        return userArray.map(id => typeof id === 'string' ? parseInt(id) : id).filter(id => !isNaN(id));
       } catch (error) {
         console.error('Error parsing escalate_to_users in edit:', error);
       }
@@ -472,7 +478,7 @@ export const ResolutionEscalationTab: React.FC = () => {
       {/* Create Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Select up to 15 Categories</CardTitle>
+          <CardTitle>Select Categories</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -715,7 +721,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                             <TableBody>
                               {rule.escalations.map((escalation) => {
                                 // Safely parse escalate_to_users with error handling
-                                let escalateToUsers: number[] = [];
+                                let escalateToUsers: (string | number)[] = [];
                                 if (escalation.escalate_to_users) {
                                   try {
                                     if (typeof escalation.escalate_to_users === 'string') {
@@ -729,10 +735,12 @@ export const ResolutionEscalationTab: React.FC = () => {
                                   }
                                 }
                                 
-                                // Ensure escalateToUsers is an array before mapping
+                                // Ensure escalateToUsers is an array before mapping and handle both string and number IDs
                                 const userNames = Array.isArray(escalateToUsers) 
-                                  ? escalateToUsers.map((userId: number) => {
-                                      const user = fmUsers?.fm_users?.find(u => u.id === userId);
+                                  ? escalateToUsers.map((userId: string | number) => {
+                                      // Convert to number for comparison, as API might return strings
+                                      const userIdNum = typeof userId === 'string' ? parseInt(userId) : userId;
+                                      const user = fmUsers?.fm_users?.find(u => u.id === userIdNum);
                                       return user ? `${user.firstname} ${user.lastname}` : `User ${userId}`;
                                     }).join(', ')
                                   : '';

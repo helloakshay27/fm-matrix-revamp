@@ -128,6 +128,7 @@ export const API_CONFIG = {
     // Bulk ticket operations
     BULK_ASSIGN_TICKETS: '/pms/admin/complaints/bulk_assign_tickets.json',
     BULK_UPDATE_STATUS: '/pms/admin/complaints/bulk_update_status.json',
+    COMPLAINT_MODE: '/pms/admin/complaint_modes.json',
   },
 } as const
 

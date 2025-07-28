@@ -204,6 +204,8 @@ export interface CreateTicketFormData {
   area_id: number;
   floor_id: number;
   tower_id?: number;
+  is_golden_ticket?: boolean;
+  is_flagged?: boolean;
 }
 
 export interface UserAccountResponse {
@@ -496,6 +498,14 @@ export const ticketManagementAPI = {
     }
     if (ticketData.tower_id) {
       formData.append('complaint[tower_id]', ticketData.tower_id.toString());
+    }
+
+    // Add golden ticket and flagged parameters
+    if (ticketData.is_golden_ticket !== undefined) {
+      formData.append('complaint[is_golden_ticket]', ticketData.is_golden_ticket.toString());
+    }
+    if (ticketData.is_flagged !== undefined) {
+      formData.append('complaint[is_flagged]', ticketData.is_flagged.toString());
     }
 
     // Add attachments
