@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,58 @@ import { SetApprovalModal } from '@/components/SetApprovalModal';
 import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCustomFormDetails } from '@/services/customFormsAPI';
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+
+const [taskGroups, setTaskGroups] = useState([]);
+const [taskSubGroups, setTaskSubGroups] = useState([]);
+const [loading, setLoading] = useState({ taskGroups: false, taskSubGroups: false });
+
+const loadTaskGroups = async () => {
+  setLoading(prev => ({ ...prev, taskGroups: true }));
+  try {
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TASK_GROUPS}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': getAuthHeader(),
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    setTaskGroups(data);
+  } catch (error) {
+    setTaskGroups([]);
+  } finally {
+    setLoading(prev => ({ ...prev, taskGroups: false }));
+  }
+};
+
+const loadTaskSubGroups = async (groupId) => {
+  if (!groupId) return;
+  setLoading(prev => ({ ...prev, taskSubGroups: true }));
+  try {
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TASK_SUB_GROUPS}?group_id=${groupId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': getAuthHeader(),
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    setTaskSubGroups(data.asset_groups || []);
+  } catch (error) {
+    setTaskSubGroups([]);
+  } finally {
+    setLoading(prev => ({ ...prev, taskSubGroups: false }));
+  }
+};
+
+useEffect(() => {
+  loadTaskGroups();
+}, []);
+
+
 
 const muiFieldStyles = {
   width: '100%',
@@ -166,6 +218,12 @@ export const ViewSchedulePage = () => {
     navigate(`/maintenance/schedule/performance/${id}`, { state: { formCode } });
   };
 
+
+  useEffect(() => {
+    const groupId = customForm?.content?.[0]?.group_id;
+    if (groupId) loadTaskSubGroups(groupId);
+  }, [customForm]);
+
   return (
     <div className="p-6 mx-auto">
       {/* Header */}
@@ -211,7 +269,7 @@ export const ViewSchedulePage = () => {
 
       <div className="space-y-8">
         {/* Basic Info */}
-        <Card className="shadow-lg rounded-xl border border-[#e5e7eb]">
+        <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-[#C72030] flex items-center gap-2 text-lg font-semibold">
               <span className="bg-[#C72030] text-white rounded-full w-7 h-7 flex items-center justify-center text-base">1</span>
@@ -219,7 +277,7 @@ export const ViewSchedulePage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6 pt-2">
-            <div className="grid grid-cols-2 gap-6">
+            <div className="flex justify-between gap-6">
               <div className="space-y-3">
                 <Label className="text-base font-medium">Type</Label>
                 <RadioGroup value={customForm?.schedule_type || 'PPM'} className="flex gap-4" disabled>
@@ -296,35 +354,54 @@ export const ViewSchedulePage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <FormControl fullWidth variant="outlined" disabled>
-                  <InputLabel shrink>Checklist Group</InputLabel>
-                  <Select
-                    value="Select Group"
-                    label="Checklist Group"
-                    disabled
-                    sx={muiFieldStyles}
-                  >
-                    <MenuItem value="Select Group">Select Group</MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-              <div className="space-y-2">
-                <FormControl fullWidth variant="outlined" disabled>
-                  <InputLabel shrink>Checklist Sub Group</InputLabel>
-                  <Select
-                    value="Select Sub Group"
-                    label="Checklist Sub Group"
-                    disabled
-                    sx={muiFieldStyles}
-                  >
-                    <MenuItem value="Select Sub Group">Select Sub Group</MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-            </div>
-            
+            {/* Group and Sub Group Dropdowns with selected value from master data */}
+            {(() => {
+              // Map taskGroups and taskSubGroups to options for Select components
+              const groupOptions = Array.isArray(taskGroups) ? taskGroups : [];
+              const subGroupOptions = Array.isArray(taskSubGroups) ? taskSubGroups : [];
+              const selectedGroupId = customForm?.content?.[0]?.group_id || '';
+              const selectedSubGroupId = customForm?.content?.[0]?.sub_group_id || '';
+
+              return (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <FormControl fullWidth variant="outlined" disabled>
+                      <InputLabel shrink>Group</InputLabel>
+                      <Select
+                        value={selectedGroupId || ''}
+                        label="Group"
+                        disabled
+                        sx={muiFieldStyles}
+                      >
+                        {groupOptions.map(group => (
+                          <MenuItem key={group.id} value={group.id}>
+                            {group.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </div>
+                  <div className="space-y-2">
+                    <FormControl fullWidth variant="outlined" disabled>
+                      <InputLabel shrink>Sub Group</InputLabel>
+                      <Select
+                        value={selectedSubGroupId || ''}
+                        label="Sub Group"
+                        disabled
+                        sx={muiFieldStyles}
+                      >
+                        {subGroupOptions.map(subGroup => (
+                          <MenuItem key={subGroup.id} value={subGroup.id}>
+                            {subGroup.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Dynamic Task Content */}
             {customForm?.content && customForm.content.length > 0 && (
               <div className="space-y-4">
@@ -359,23 +436,23 @@ export const ViewSchedulePage = () => {
                     </div>
                     <div className="space-y-2 flex items-center  gap-4">
                       <div className="flex items-start space-x-2">
-                        <Checkbox 
-                          checked={task.required === 'true'} 
-                          disabled 
+                        <Checkbox
+                          checked={task.required === 'true'}
+                          disabled
                           className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
                         />
                         <Label className="text-gray-400">Mandatory</Label>
                       </div>
                       <div className="flex items-start space-x-2 m-0">
-                        <Checkbox 
-                          checked={task.is_reading === 'true'} 
-                          disabled 
+                        <Checkbox
+                          checked={task.is_reading === 'true'}
+                          disabled
                           className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
                         />
                         <Label className="text-gray-400">Reading</Label>
                       </div>
                     </div>
-                    
+
                     {/* Conditional Value Sections */}
                     <div className="col-span-3">
                       {task.type === 'dropdown' && Array.isArray(task.values) && task.values.length > 0 && (
@@ -503,6 +580,58 @@ export const ViewSchedulePage = () => {
           </CardContent>
         </Card>
 
+        {/* Time Setup */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[#C72030] flex items-center gap-2">
+              <span className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+              Time Setup
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Parse cron expression and show as MUI Table */}
+            {(() => {
+              const cron = (assetTask && ((assetTask as any).cron_expression || (assetTask as any).cron || (assetTask as any).schedule_cron)) || '';
+              let minutes: string[] = [], hours: string[] = [], months: string[] = [], weekdays: string[] = [];
+              if (cron) {
+                const parts = cron.split(' ');
+                if (parts.length >= 5) {
+                  minutes = parts[0].split(',');
+                  hours = parts[1].split(',');
+                  months = parts[3] === '*' ? ['All'] : parts[3].split(',');
+                  weekdays = parts[4] === '*' ? ['All'] : parts[4].split(',');
+                }
+              }
+              if (!hours.length || (hours.length === 1 && hours[0] === '*')) hours = ['All'];
+              if (!minutes.length || (minutes.length === 1 && minutes[0] === '*')) minutes = ['All'];
+              if (!months.length) months = ['All'];
+              if (!weekdays.length) weekdays = ['All'];
+              const weekdayMap: Record<string, string> = { '1': 'Sunday', '2': 'Monday', '3': 'Tuesday', '4': 'Wednesday', '5': 'Thursday', '6': 'Friday', '7': 'Saturday' };
+              const weekdayNames = weekdays.map(wd => weekdayMap[wd] || wd);
+              return (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Hours</TableHead>
+                      <TableHead>Minutes</TableHead>
+                      <TableHead>Day of Week</TableHead>
+                      <TableHead>Month</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>{hours.join(', ')}</TableCell>
+                      <TableCell>{minutes.join(', ')}</TableCell>
+                      <TableCell>{weekdayNames.join(', ')}</TableCell>
+                      <TableCell>{months.join(', ')}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              );
+            })()}
+          </CardContent>
+        </Card>
+
         {/* Schedule */}
         <Card>
           <CardHeader>
@@ -527,7 +656,7 @@ export const ViewSchedulePage = () => {
             </div>
 
             {/* Dynamic Asset/Service Display */}
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label>{customForm?.sch_type === 'Service' ? 'Services' : 'Assets'}</Label>
               <div className="bg-red-50 p-2 rounded border border-red-200">
                 {customForm?.sch_type === 'Service' ? (
@@ -547,9 +676,9 @@ export const ViewSchedulePage = () => {
                   <div className="text-red-600 text-sm">No assets or services assigned</div>
                 )}
               </div>
-            </div>
+            </div> */}
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-4 mt-3">
               <div className="space-y-2">
                 <TextField
                   label="Assign to"
@@ -715,7 +844,7 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div>
-              
+
             </div>
 
             <div className="grid grid-cols-3 gap-4">
@@ -764,7 +893,7 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div>
-              
+
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -790,7 +919,7 @@ export const ViewSchedulePage = () => {
                   sx={muiFieldStyles}
                 />
               </div>
-              
+
             </div>
           </CardContent>
         </Card>
@@ -847,7 +976,7 @@ export const ViewSchedulePage = () => {
                   {assetTask?.assets && assetTask.assets.length > 0 ? (
                     assetTask.assets.map((asset, index) => (
                       <TableRow key={index}>
-                        <TableCell>{asset.asset_name || 'N/A'}</TableCell>
+                        <TableCell>{asset.name || 'N/A'}</TableCell>
                         <TableCell>{asset.asset_code || 'N/A'}</TableCell>
                         <TableCell>{asset.model_number || 'N/A'}</TableCell>
                         <TableCell>{asset.purchase_date ? formatDateTime(asset.purchase_date) : 'N/A'}</TableCell>
@@ -983,7 +1112,7 @@ export const ViewSchedulePage = () => {
 
         {/* Action Buttons */}
         <div className="flex gap-3 pt-6">
-          <Button 
+          <Button
             onClick={() => navigate('/maintenance/schedule')}
             variant="outline"
             className="px-8"
@@ -1001,7 +1130,7 @@ export const ViewSchedulePage = () => {
       </div>
 
       {/* Set Approval Modal */}
-      <SetApprovalModal 
+      <SetApprovalModal
         isOpen={showSetApprovalModal}
         onClose={() => setShowSetApprovalModal(false)}
       />
