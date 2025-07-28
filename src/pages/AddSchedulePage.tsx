@@ -4150,48 +4150,52 @@ export const AddSchedulePage = () => {
             {/* Conditional Sections based on toggles */}
 
             {/* Create New Template Section */}
-            {createNew && (
-              <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                  Select Template
-                </Typography>
-                <Autocomplete
-                  disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.templates}
-
-                  options={[
-                    { id: '', label: 'Select Template', value: '' },
-                    ...(templates ? templates.map((template) => ({
-                      id: template.id.toString(),
-                      label: template.form_name,
-                      value: template.id.toString()
-                    })) : [])
-                  ]}
-                  getOptionLabel={(option) => option.label}
-                  value={[
-                    { id: '', label: 'Select Template', value: '' },
-                    ...(templates ? templates.map((template) => ({
-                      id: template.id.toString(),
-                      label: template.form_name,
-                      value: template.id.toString()
-                    })) : [])
-                  ].find(option => option.value === formData.selectedTemplate) || null}
-                  onChange={(event, newValue) => {
-                    if (newValue) handleTemplateChange(newValue.value);
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                      {...params} label={<span>Template <span style={{ color: 'currentColor' }}>*</span></span>} fullWidth />
-                  )}
-                />
-                {loading.templates && (
-                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                    Loading templates...
-                  </Typography>
-                )}
-
-              </SectionCard>
-            )}
+{createNew && (
+  <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
+    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+      Select Template
+    </Typography>
+    <Autocomplete
+      disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.templates}
+      options={[
+        { id: '', label: 'Select Template', value: '' },
+        ...(templates ? templates.map((template) => ({
+          id: template.id?.toString?.() ?? '',
+          label: template.form_name ?? '',
+          value: template.id?.toString?.() ?? ''
+        })) : [])
+      ]}
+      getOptionLabel={(option) => (option?.label ?? '')}
+      value={
+        [
+          { id: '', label: 'Select Template', value: '' },
+          ...(templates ? templates.map((template) => ({
+            id: template.id?.toString?.() ?? '',
+            label: template.form_name ?? '',
+            value: template.id?.toString?.() ?? ''
+          })) : [])
+        ].find(option => option.value === (formData.selectedTemplate ?? '')) || { id: '', label: 'Select Template', value: '' }
+      }
+      isOptionEqualToValue={(option, value) => option.value === value.value}
+      onChange={(event, newValue) => {
+        if (newValue && newValue.value) handleTemplateChange(newValue.value);
+      }}
+      renderInput={(params) => (
+        <TextField
+          disabled={stepIndex < activeStep && editingStep !== stepIndex}
+          {...params}
+          label={<span>Template <span style={{ color: 'currentColor' }}>*</span></span>}
+          fullWidth
+        />
+      )}
+    />
+    {loading.templates && (
+      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+        Loading templates...
+      </Typography>
+    )}
+  </SectionCard>
+)}
 
             {/* Auto Ticket Configuration Section */}
             {autoTicket && (
