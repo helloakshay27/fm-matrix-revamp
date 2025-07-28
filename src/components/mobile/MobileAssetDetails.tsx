@@ -8,6 +8,7 @@ import {
 import axios from "axios";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import { saveToken, saveBaseUrl } from "@/utils/auth";
+import { getStatusButtonColor, formatStatusText } from "@/utils/statusUtils";
 import {
   ArrowLeft,
   ChevronRight,
@@ -376,29 +377,19 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {/* Status Toggle Buttons */}
-              <div className="flex items-center bg-gray-100 rounded-full p-1">
-                <button
-                  onClick={handleBreakdownClick}
-                  className={`px-4 py-1 rounded-full text-xs font-medium transition-colors ${
-                    assetData.status?.toLowerCase() === "breakdown"
-                      ? "bg-red-500 text-white"
-                      : "text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  Breakdown
-                </button>
-                <button
-                  className={`px-4 py-1 rounded-full text-xs font-medium transition-colors ${
-                    assetData.status?.toLowerCase() === "in use" ||
-                    !assetData.status
-                      ? "bg-green-500 text-white"
-                      : "text-gray-600 hover:bg-gray-200"
-                  }`}
-                >
-                  In Use
-                </button>
-              </div>
+              {/* Status Display */}
+              <button
+                onClick={
+                  assetData.status?.toLowerCase() === "breakdown"
+                    ? handleBreakdownClick
+                    : undefined
+                }
+                className={`px-4 py-1 rounded text-xs font-medium transition-colors ${getStatusButtonColor(
+                  assetData.status
+                )}`}
+              >
+                {formatStatusText(assetData.status || "In Use")}
+              </button>
             </div>
           </div>
 
@@ -425,21 +416,21 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
               <div className="flex items-center">
                 <span className="text-gray-500 w-32">Equipment ID</span>
                 <span className="text-gray-900">
-                  : {assetData.assetNumber || "123456"}
+                  : {assetData.model_number || "123456"}
                 </span>
               </div>
 
               <div className="flex items-center">
                 <span className="text-gray-500 w-32">Owner Cost</span>
                 <span className="text-gray-900">
-                  : ₹{assetData.purchase_cost?.toLocaleString() || "N/A"}
+                  : ₹{assetData.ownership_total_cost|| "0"}
                 </span>
               </div>
 
               <div className="flex items-center">
                 <span className="text-gray-500 w-32">Association</span>
                 <span className="text-gray-900">
-                  : {assetData.association || "Facility Management"}
+                  : {assetData.manufacturer || "Facility Management"}
                 </span>
               </div>
             </div>

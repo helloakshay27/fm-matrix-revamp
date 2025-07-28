@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin, SlidersHorizontal } from "lucide-react";
+import { getStatusBadgeColor, formatStatusText } from "@/utils/statusUtils";
 
 interface Asset {
   id: number;
@@ -40,20 +41,6 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
     navigate(`/mobile/assets/${assetId}?action=details`);
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "breakdown":
-      case "under repair":
-        return "bg-black text-white";
-      case "in use":
-        return "bg-[#2E7D32] text-white"; // Dark green
-      case "in store":
-        return "bg-gray-700 text-white";
-      default:
-        return "bg-gray-600 text-white";
-    }
-  };
-
   const formatDate = (dateString?: string) => {
     if (!dateString) return "24 Jul 2025";
     const date = new Date(dateString);
@@ -62,14 +49,6 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
       month: "short",
       year: "numeric",
     });
-  };
-
-  const capitalizeWords = (str: string) => {
-    return str
-      .toLowerCase()
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
   };
 
   // Handle infinite scroll
@@ -126,7 +105,7 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
                   asset.status
                 )}`}
               >
-                {capitalizeWords(asset.status || "Breakdown")}
+                {formatStatusText(asset.status || "Breakdown")}
               </div>
             </div>
 

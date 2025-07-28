@@ -33,6 +33,7 @@ interface OwnershipCost {
   id: number;
   date: string;
   status: string;
+  time: string;
   cost: number | null;
   warranty_in_month: string | null;
   asset_name: string | null;
@@ -42,6 +43,7 @@ interface OwnershipCost {
 interface BreakdownHistory {
   id: number;
   date: string;
+  time: string;
   aging: string;
   costSpent: string;
   attendeeName: string;
@@ -156,6 +158,7 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
           {
             id: 1,
             date: "28/07/2025",
+            time: "",
             aging: "1 day",
             costSpent: "₹15,000",
             attendeeName: "Repair Technician",
@@ -244,7 +247,7 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
           <CardContent className="p-4 space-y-4">
             <div className="flex justify-between">
               <p className="text-sm text-gray-700">Criticality :</p>
-              <Badge className="bg-black text-white text-xs px-2 py-1 rounded">
+              <Badge className="bg-red-600 text-white text-xs px-2 py-1 rounded">
                 Breakdown
               </Badge>
             </div>
@@ -366,7 +369,7 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-500">DD:HH:MM</p>
-                      <p className="text-sm font-medium">{breakdown.aging}</p>
+                      <p className="text-sm font-medium">{breakdown.time || "00:00:00"}</p>
                     </div>
                   </div>
 
