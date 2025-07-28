@@ -433,10 +433,10 @@ const UpdateTicketsPage: React.FC = () => {
     // If we have an ID from the URL, fetch the ticket data
     if (
       id &&
-      helpdeskData?.helpdesk_categories &&
-      complaintModes.length > 0 &&
-      fmUsers.length > 0 &&
-      complaintStatuses.length > 0
+      helpdeskData?.helpdesk_categories
+      // complaintModes.length > 0 &&
+      // fmUsers.length > 0 &&
+      // complaintStatuses.length > 0
     ) {
       fetchTicketData(id);
     }
@@ -1201,12 +1201,12 @@ const UpdateTicketsPage: React.FC = () => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("API Error Response:", errorText);
-        
+
         if (response.status === 401) {
           console.error("401 Authentication failed - invalid or expired token");
           throw new Error("Authentication failed. Please login again.");
         }
-        
+
         // throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
 
@@ -1222,7 +1222,7 @@ const UpdateTicketsPage: React.FC = () => {
       navigate(`/maintenance/ticket/details/${ticketId}`);
     } catch (error) {
       console.error("Error updating tickets:", error);
-      
+
       // Handle authentication errors specifically
       if (error instanceof Error && error.message.includes("Authentication failed")) {
         toast({
@@ -1234,12 +1234,11 @@ const UpdateTicketsPage: React.FC = () => {
         // navigate("/login");
         return;
       }
-      
+
       toast({
         title: "Error",
-        description: `Failed to update tickets: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
+        description: `Failed to update tickets: ${error instanceof Error ? error.message : "Unknown error"
+          }`,
         variant: "destructive",
       });
     } finally {
@@ -1282,7 +1281,7 @@ const UpdateTicketsPage: React.FC = () => {
                 <Textarea
                   value={formData.title}
                   onChange={(e) => handleInputChange("title", e.target.value)}
-                     disabled
+                  disabled
                   placeholder="Enter title"
                   className="h-10 min-h-[2.5rem] w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
                 />
@@ -1711,7 +1710,7 @@ const UpdateTicketsPage: React.FC = () => {
                   onChange={(e) =>
                     handleInputChange("refNumber", e.target.value)
                   }
-                  
+
                   className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
@@ -1897,9 +1896,8 @@ const UpdateTicketsPage: React.FC = () => {
                       placeholder={
                         isLoadingAssets || isLoadingServices
                           ? "Loading..."
-                          : `Select ${
-                              formData.associatedTo.asset ? "Asset" : "Service"
-                            }`
+                          : `Select ${formData.associatedTo.asset ? "Asset" : "Service"
+                          }`
                       }
                       className="text-gray-500"
                     />
@@ -1943,22 +1941,22 @@ const UpdateTicketsPage: React.FC = () => {
                 placeholder="Add comment"
               />
               <div className="mt-2">
-  <label className="flex items-center">
-    <input
-      type="checkbox"
-      checked={formData.costInvolved}
-      onChange={(e) => handleCostInvolvedChange(e.target.checked)}
-      style={{
-        accentColor: '#C72030',
-        width: '12px',
-        height: '12px',
-        borderColor: '#C72030',
-      }}
-      className="mr-2"
-    />
-    Cost Involved
-  </label>
-</div>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.costInvolved}
+                    onChange={(e) => handleCostInvolvedChange(e.target.checked)}
+                    style={{
+                      accentColor: '#C72030',
+                      width: '12px',
+                      height: '12px',
+                      borderColor: '#C72030',
+                    }}
+                    className="mr-2"
+                  />
+                  Cost Involved
+                </label>
+              </div>
             </div>
 
             {/* Cost Approval Requests */}
@@ -2055,7 +2053,7 @@ const UpdateTicketsPage: React.FC = () => {
                           </td>
                           <td className="px-4 py-3 text-gray-900 border-b">
                             {request.attachments &&
-                            request.attachments.length > 0 ? (
+                              request.attachments.length > 0 ? (
                               <div className="flex flex-col gap-1 max-w-xs">
                                 {request.attachments.map(
                                   (attachment, index) => {
@@ -2090,7 +2088,7 @@ const UpdateTicketsPage: React.FC = () => {
                                             );
                                           }
                                         }}
-                                       className="flex items-center gap-2 text-[#C72030] hover:text-[#a81926] rounded px-2 py-1 text-sm text-left transition-colors"
+                                        className="flex items-center gap-2 text-[#C72030] hover:text-[#a81926] rounded px-2 py-1 text-sm text-left transition-colors"
 
                                         title="Download attachment"
                                       >
