@@ -1026,7 +1026,7 @@ export const TicketDashboard = () => {
                             <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets Status</h3>
-                                <Download
+                                {/* <Download
                                   className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer"
                                   onClick={async () => {
                                     if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
@@ -1048,7 +1048,7 @@ export const TicketDashboard = () => {
                                       }
                                     }
                                   }}
-                                />
+                                /> */}
                               </div>
                               <div className="grid grid-cols-3 gap-4">
                                 <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
@@ -1072,7 +1072,7 @@ export const TicketDashboard = () => {
                             <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Proactive/Reactive Tickets</h3>
-                                <Download
+                                {/* <Download
                                   className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer"
                                   onClick={async () => {
                                     if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
@@ -1094,7 +1094,7 @@ export const TicketDashboard = () => {
                                       }
                                     }
                                   }}
-                                />
+                                /> */}
                               </div>
                               <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-3">

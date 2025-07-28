@@ -46,7 +46,7 @@ const muiFieldStyles = {
     },
     '&.MuiInputLabel-shrink': {
       transform: 'translate(14px, -9px) scale(0.75)',
-      backgroundColor: '#FFFFFF',
+      backgroundColor: 'transparent', // <-- Make label background transparent
       padding: '0 4px',
     },
     '&.Mui-disabled': {
@@ -350,51 +350,117 @@ export const ViewSchedulePage = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-700">Tasks:</h4>
                 {customForm.content.map((task, index) => (
-                  <div key={index} className="grid grid-cols-3 gap-4 p-4 border rounded-lg bg-gray-50">
-                    <div className="space-y-2">
-                      <TextField
-                        label={`Task ${index + 1}`}
-                        value={task.label}
-                        InputProps={{ readOnly: true, disabled: true }}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        sx={muiFieldStyles}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <FormControl fullWidth variant="outlined" disabled>
-                        <InputLabel shrink>Input Type</InputLabel>
-                        <Select
-                          value={task.type === 'text' ? 'Text' : task.type === 'radio-group' ? 'Radio' : task.type}
-                          label="Input Type"
-                          disabled
-                          sx={muiFieldStyles}
-                        >
-                          <MenuItem value={task.type === 'text' ? 'Text' : task.type === 'radio-group' ? 'Radio' : task.type}>
-                            {task.type === 'text' ? 'Text' : task.type === 'radio-group' ? 'Radio' : task.type}
-                          </MenuItem>
-                        </Select>
-                      </FormControl>
-                    </div>
-                    <div className="space-y-2 flex items-center  gap-4">
-                      <div className="flex items-start space-x-2">
-                        <Checkbox
-                          checked={task.required === 'true'}
-                          disabled
-                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
-                        />
-                        <Label className="text-gray-400">Mandatory</Label>
-                      </div>
-                      <div className="flex items-start space-x-2 m-0">
-                        <Checkbox
-                          checked={task.is_reading === 'true'}
-                          disabled
-                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
-                        />
-                        <Label className="text-gray-400">Reading</Label>
-                      </div>
-                    </div>
+                  <div key={index} className="p-4 border rounded-lg bg-gray-50">
+                    <div className="flex items-center gap-8">
+    <div className="flex items-center space-x-2 mb-6">
+      <Checkbox
+        checked={task.required === 'true'}
+        disabled
+        className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
+      />
+      <Label className="text-gray-900 font-medium">Mandatory</Label>
+    </div>
+    <div className="flex items-center space-x-2 mb-6">
+      <Checkbox
+        checked={!!task.hint}
+        disabled
+        className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
+      />
+      <Label className="text-gray-900 font-medium">Help Text</Label>
+    </div>
+    <div className="flex items-center space-x-2 mb-6">
+      <Checkbox
+        checked={task.is_reading === 'true'}
+        disabled
+        className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
+      />
+      <Label className="text-gray-900 font-medium">Reading</Label>
+    </div>
+    <div className="flex items-center space-x-2 mb-6">
+      <Checkbox
+        checked={task.rating_enabled === 'true'}
+        disabled
+        className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
+      />
+      <Label className="text-gray-900 font-medium">Rating</Label>
+    </div>
+  </div>
+  {/* Fields Row */}
+  <div className="flex gap-4 mb-4">
+    <div className="flex-1">
+      <TextField
+        label="Task"
+        value={task.label}
+        InputProps={{ readOnly: true, disabled: true }}
+        fullWidth
+        variant="outlined"
+        InputLabelProps={{ shrink: true }}
+        sx={muiFieldStyles}
+      />
+    </div>
+    <div className="flex-1">
+      <FormControl fullWidth variant="outlined" disabled>
+        <InputLabel shrink>Input Type</InputLabel>
+        <Select
+          value={
+            task.type === 'text'
+              ? 'Text'
+              : task.type === 'radio-group'
+              ? 'Radio'
+              : task.type === 'numeric'
+              ? 'Numeric'
+              : task.type
+          }
+          label="Input Type"
+          disabled
+          sx={muiFieldStyles}
+        >
+          <MenuItem value={
+            task.type === 'text'
+              ? 'Text'
+              : task.type === 'radio-group'
+              ? 'Radio'
+              : task.type === 'numeric'
+              ? 'Numeric'
+              : task.type
+          }>
+            {task.type === 'text'
+              ? 'Text'
+              : task.type === 'radio-group'
+              ? 'Radio'
+              : task.type === 'numeric'
+              ? 'Numeric'
+              : task.type}
+          </MenuItem>
+        </Select>
+      </FormControl>
+    </div>
+    <div className="flex-1">
+      <TextField
+        label="Weightage"
+        value={task.weightage || ''}
+        InputProps={{ readOnly: true, disabled: true }}
+        fullWidth
+        variant="outlined"
+        InputLabelProps={{ shrink: true }}
+        sx={muiFieldStyles}
+      />
+    </div>
+  </div>
+  {/* Hint Row */}
+  {task.hint && (
+    <div className="mb-4">
+      <TextField
+        label="Help Text (Hint)"
+        value={task.hint}
+        InputProps={{ readOnly: true, disabled: true }}
+        fullWidth
+        variant="outlined"
+        InputLabelProps={{ shrink: true }}
+        sx={muiFieldStyles}
+      />
+    </div>
+  )}
 
                     {/* Conditional Value Sections */}
                     <div className="col-span-3">
@@ -623,16 +689,20 @@ export const ViewSchedulePage = () => {
 
             <div className="grid grid-cols-3 gap-4 mt-3">
               <div className="space-y-2">
-                <TextField
-                  label="Assign to"
-                  value={customForm?.supervisors?.[0] || 'Not assigned'}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>
+  <TextField
+    label="Assign to"
+    value={
+      Array.isArray(assetTask.assigned_to) && assetTask.assigned_to.length > 0
+        ? assetTask.assigned_to.map((user: any) => user.name).join(', ')
+        : 'Not assigned'
+    }
+    InputProps={{ readOnly: true, disabled: true }}
+    fullWidth
+    variant="outlined"
+    InputLabelProps={{ shrink: true }}
+    sx={muiFieldStyles}
+  />
+</div>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Scan Type</InputLabel>

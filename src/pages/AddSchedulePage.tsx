@@ -4116,6 +4116,28 @@ export const AddSchedulePage = () => {
                   <Add className="w-4 h-4" />
                   Add Section
                 </button>
+                {/* Edit button for Question Setup step */}
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      fontSize: '12px',
+                      padding: '4px 12px',
+                      minWidth: 'auto',
+                      '&:hover': {
+                        borderColor: '#C72030',
+                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
               </div>
             </div>
 
@@ -4526,6 +4548,7 @@ export const AddSchedulePage = () => {
                             <FormControlLabel
                               control={
                                 <Checkbox
+                                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                   checked={task.mandatory}
                                   onChange={(e) => updateTaskInSection(section.id, task.id, 'mandatory', e.target.checked)}
                                   sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
@@ -4536,6 +4559,7 @@ export const AddSchedulePage = () => {
                             <FormControlLabel
                               control={
                                 <Checkbox
+                                disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                   checked={task.helpText}
                                   onChange={(e) => updateTaskInSection(section.id, task.id, 'helpText', e.target.checked)}
                                   sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
@@ -4555,6 +4579,7 @@ export const AddSchedulePage = () => {
                                       updateTaskInSection(section.id, task.id, 'inputType', 'number');
                                     }
                                   }}
+                                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                   sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
                                 />
                               }
@@ -4565,6 +4590,7 @@ export const AddSchedulePage = () => {
                                 control={
                                   <Checkbox
                                     checked={task.rating}
+                                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                     onChange={(e) => updateTaskInSection(section.id, task.id, 'rating', e.target.checked)}
                                     sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
                                   />
@@ -5033,6 +5059,8 @@ export const AddSchedulePage = () => {
             }}
             isCompleted={false}
             isCollapsed={false}
+            disabled={3 < activeStep && editingStep !== 3}
+            onEdit={() => setEditingStep(3)}
           />
         );
 
