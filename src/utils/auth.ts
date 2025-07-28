@@ -96,6 +96,7 @@ export const clearAuth = (): void => {
   localStorage.removeItem(AUTH_KEYS.TEMP_PHONE);
   localStorage.removeItem(AUTH_KEYS.TEMP_EMAIL);
   localStorage.removeItem(AUTH_KEYS.BASE_URL);
+  localStorage.clear();
   
 };
 
