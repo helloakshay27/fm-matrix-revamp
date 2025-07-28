@@ -179,7 +179,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset }) => {
           {/* Footer */}
           <div className="bg-gray-50 p-4 border-t text-right">
             <span className="text-lg font-semibold text-[#1A1A1A]">
-              Total Cost: OMR{totalCost.toLocaleString()}
+              Total Cost: OMR {totalCost.toLocaleString()}
             </span>
           </div>
         </div>
