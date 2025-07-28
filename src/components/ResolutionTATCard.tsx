@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download } from 'lucide-react';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
+import { useToast } from '@/hooks/use-toast';
 
 interface ResolutionTATData {
   success: number;
@@ -29,6 +30,7 @@ interface ResolutionTATCardProps {
 
 export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, className = "", dateRange }) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const { toast } = useToast();
 
   const handleDownload = async () => {
     if (!dateRange) return;
@@ -36,8 +38,17 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
     setIsDownloading(true);
     try {
       await ticketAnalyticsDownloadAPI.downloadResolutionTATData(dateRange.startDate, dateRange.endDate);
+      toast({
+        title: "Success",
+        description: "Resolution TAT data downloaded successfully"
+      });
     } catch (error) {
       console.error('Error downloading resolution TAT data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download resolution TAT data",
+        variant: "destructive"
+      });
     } finally {
       setIsDownloading(false);
     }
@@ -78,7 +89,7 @@ export const ResolutionTATCard: React.FC<ResolutionTATCardProps> = ({ data, clas
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold text-[#C72030]">Resolution TAT Report</CardTitle>
           <Download 
-            className="w-5 h-5 text-[#C72030] cursor-pointer" 
+            className={`w-5 h-5 text-[#C72030] cursor-pointer ${isDownloading ? 'opacity-50' : ''}`}
             onClick={handleDownload}
           />
         </div>

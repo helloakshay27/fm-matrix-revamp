@@ -498,6 +498,8 @@ export const AssetDashboard = () => {
           ""
         )}`;
 
+        console.log("Fetching category-wise assets from:", url);
+
       console.log("Fetching category-wise assets from:", url);
 
       const response = await fetch(url, {

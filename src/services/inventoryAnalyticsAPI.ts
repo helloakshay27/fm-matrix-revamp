@@ -201,6 +201,14 @@ const getCurrentSiteId = (): string => {
 const getAccessToken = (): string => {
   return localStorage.getItem('token')
 };
+const getBaseUrl = (): string => {
+  const baseUrl = API_CONFIG.BASE_URL;
+  if (!baseUrl) {
+    console.warn('Base URL is not configured, this should not happen with fallback');
+    throw new Error('Base URL is not configured. Please check your authentication settings.');
+  }
+  return baseUrl;
+};
 
 // Inventory Analytics API
 export const inventoryAnalyticsAPI = {
@@ -211,7 +219,7 @@ export const inventoryAnalyticsAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `https://fm-uat-api.lockated.com/pms/inventories/items_status.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/items_status.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -227,7 +235,7 @@ export const inventoryAnalyticsAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `https://fm-uat-api.lockated.com/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/category_wise_items.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -243,7 +251,7 @@ export const inventoryAnalyticsAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `https://fm-uat-api.lockated.com/pms/inventories/inventory_consumption_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/inventory_consumption_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -259,7 +267,7 @@ export const inventoryAnalyticsAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `https://fm-uat-api.lockated.com/pms/inventories/consumption_report_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/consumption_report_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -275,7 +283,7 @@ export const inventoryAnalyticsAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `https://fm-uat-api.lockated.com/pms/inventories/consumption_report_non_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/consumption_report_non_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -291,7 +299,7 @@ export const inventoryAnalyticsAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `https://fm-uat-api.lockated.com/pms/inventories/current_minimum_stock_non_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/current_minimum_stock_non_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {
@@ -307,7 +315,7 @@ export const inventoryAnalyticsAPI = {
     const toDateStr = formatDateForAPI(toDate);
     const accessToken = getAccessToken();
 
-    const url = `https://fm-uat-api.lockated.com/pms/inventories/current_minimum_stock_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    const url = `${getBaseUrl()}/pms/inventories/current_minimum_stock_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
 
     const response = await fetch(url);
     if (!response.ok) {

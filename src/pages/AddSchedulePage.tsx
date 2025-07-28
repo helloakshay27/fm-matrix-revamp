@@ -2735,61 +2735,81 @@ export const AddSchedulePage = () => {
                   mb: 2,
                   flexWrap: 'wrap'
                 }}>
-                  {attachments.map((attachment) => (
-                    <Box
-                      key={attachment.id}
-                      sx={{
-                        width: '120px',
-                        height: '120px',
-                        border: '2px dashed #ccc',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        position: 'relative',
-                        backgroundColor: '#fafafa',
-                        '&:hover': {
-                          borderColor: '#999'
-                        }
-                      }}
-                    >
-                      {/* Close button */}
-                      <IconButton
-                        size="small"
-                        onClick={() => setAttachments(prev => prev.filter(a => a.id !== attachment.id))}
+                  {attachments.map((attachment) => {
+                    // Check if the file is an image by extension or mime type if available
+                    const isImage = attachment.name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
+                    return (
+                      <Box
+                        key={attachment.id}
                         sx={{
-                          position: 'absolute',
-                          top: 4,
-                          right: 4,
-                          backgroundColor: 'white',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                          width: 20,
-                          height: 20,
+                          width: '120px',
+                          height: '120px',
+                          border: '2px dashed #ccc',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          position: 'relative',
+                          backgroundColor: '#fafafa',
                           '&:hover': {
-                            backgroundColor: '#f5f5f5'
+                            borderColor: '#999'
                           }
                         }}
                       >
-                        <Close sx={{ fontSize: 12 }} />
-                      </IconButton>
+                        {/* Close button */}
+                        <IconButton
+                          size="small"
+                          onClick={() => setAttachments(prev => prev.filter(a => a.id !== attachment.id))}
+                          sx={{
+                            position: 'absolute',
+                            top: 4,
+                            right: 4,
+                            backgroundColor: 'white',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                            width: 20,
+                            height: 20,
+                            '&:hover': {
+                              backgroundColor: '#f5f5f5'
+                            }
+                          }}
+                        >
+                          <Close sx={{ fontSize: 12 }} />
+                        </IconButton>
 
-                      {/* File icon and name */}
-                      <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          textAlign: 'center',
-                          px: 1,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          width: '100%'
-                        }}
-                      >
-                        {attachment.name}
-                      </Typography>
-                    </Box>
-                  ))}
+                        {/* Show image preview if image, else file icon and name */}
+                        {isImage && attachment.url ? (
+                          <img
+                            src={attachment.url}
+                            alt={attachment.name}
+                            style={{
+                              maxWidth: '100px',
+                              maxHeight: '100px',
+                              objectFit: 'contain',
+                              marginBottom: 8,
+                              borderRadius: 4
+                            }}
+                          />
+                        ) : (
+                          <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
+                        )}
+                        {!isImage && (
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              textAlign: 'center',
+                              px: 1,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              width: '100%'
+                            }}
+                          >
+                            {attachment.name}
+                          </Typography>
+                        )}
+                      </Box>
+                    );
+                  })}
                 </Box>
               )}
 

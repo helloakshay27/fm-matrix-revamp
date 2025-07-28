@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Download } from 'lucide-react';
 import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
+import { useToast } from '@/hooks/use-toast';
 
 interface ResponseTATData {
   success: number;
@@ -31,6 +32,7 @@ interface ResponseTATCardProps {
 
 export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, className = "", dateRange }) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const { toast } = useToast();
 
   const handleDownload = async () => {
     if (!dateRange) return;
@@ -38,8 +40,17 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
     setIsDownloading(true);
     try {
       await ticketAnalyticsDownloadAPI.downloadResponseTATData(dateRange.startDate, dateRange.endDate);
+      toast({
+        title: "Success",
+        description: "Response TAT data downloaded successfully"
+      });
     } catch (error) {
       console.error('Error downloading response TAT data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download response TAT data",
+        variant: "destructive"
+      });
     } finally {
       setIsDownloading(false);
     }
@@ -86,7 +97,7 @@ export const ResponseTATCard: React.FC<ResponseTATCardProps> = ({ data, classNam
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold text-[#C72030]">Response TAT</CardTitle>
           <Download 
-            className="w-5 h-5 text-[#C72030] cursor-pointer" 
+            className={`w-5 h-5 text-[#C72030] cursor-pointer ${isDownloading ? 'opacity-50' : ''}`}
             onClick={handleDownload}
           />
         </div>

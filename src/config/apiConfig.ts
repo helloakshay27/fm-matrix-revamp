@@ -7,7 +7,7 @@ const getApiConfig = () => {
 
   // Fallback base URL - can be overridden by environment variable or login process
   // In Vite, use import.meta.env instead of process.env
-  const defaultBaseUrl = import.meta.env.VITE_BASE_URL || 'https://fm-uat-api.lockated.com';
+  const defaultBaseUrl = import.meta.env.VITE_BASE_URL ;
   const finalBaseUrl = savedBaseUrl || defaultBaseUrl;
 
   console.log('API Config Debug:', {
@@ -18,6 +18,8 @@ const getApiConfig = () => {
     tokenLength: savedToken?.length || 0,
     baseUrlValue: finalBaseUrl
   });
+
+  
 
   return {
     BASE_URL: finalBaseUrl,
