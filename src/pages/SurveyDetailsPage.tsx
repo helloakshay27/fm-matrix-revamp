@@ -22,6 +22,8 @@ export const SurveyDetailsPage = () => {
   const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [wings, setWings] = useState<Array<{id: number, name: string}>>([]);
   const [loadingWings, setLoadingWings] = useState(false);
+  const [floors, setFloors] = useState<Array<{id: number, name: string}>>([]);
+  const [loadingFloors, setLoadingFloors] = useState(false);
   
   // State for location configuration
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -110,6 +112,33 @@ export const SurveyDetailsPage = () => {
     }
   };
 
+  // Fetch floors
+  const fetchFloors = async () => {
+    try {
+      setLoadingFloors(true);
+      const response = await fetch(getFullUrl('/pms/floors.json'), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch floors');
+      }
+      
+      const floorsData = await response.json();
+      setFloors(floorsData.floors.map((floor: any) => ({
+        id: floor.id,
+        name: floor.name
+      })));
+    } catch (error) {
+      console.error('Error fetching floors:', error);
+    } finally {
+      setLoadingFloors(false);
+    }
+  };
+
   // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
@@ -138,6 +167,7 @@ export const SurveyDetailsPage = () => {
     loadData();
     fetchBuildings();
     fetchWings();
+    fetchFloors();
   }, [id, toast]);
 
   // Get category name by ID
@@ -518,16 +548,27 @@ export const SurveyDetailsPage = () => {
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Floors</h4>
                       <Select onValueChange={(value) => {
-                        if (!locationConfig.selectedFloors.includes(value)) {
-                          addSelectedItem('floor', value);
+                        // value contains the floor ID, find the floor name for display
+                        const selectedFloor = floors.find(f => f.id.toString() === value);
+                        if (selectedFloor && !locationConfig.selectedFloors.includes(selectedFloor.name)) {
+                          addSelectedItem('floor', selectedFloor.name);
+                          // You can also store the ID separately if needed for backend
+                          console.log('Selected floor ID:', value, 'Name:', selectedFloor.name);
                         }
                       }}>
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder={`${locationConfig.selectedFloors.length} floor(s) selected`} />
+                          <SelectValue placeholder="Select floor" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="First Floor">First Floor</SelectItem>
-                          <SelectItem value="Second Floor">Second Floor</SelectItem>
+                          {loadingFloors ? (
+                            <SelectItem value="loading" disabled>Loading floors...</SelectItem>
+                          ) : (
+                            floors.map((floor) => (
+                              <SelectItem key={floor.id} value={floor.id.toString()}>
+                                {floor.name}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                        {/* Selected floors */}
