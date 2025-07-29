@@ -517,14 +517,13 @@ export const SurveyDetailsPage = () => {
                   {locationConfig.floor && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Floors</h4>
-                      <Select onValueChange={(value) => {
+                       <Select onValueChange={(value) => {
                         if (!locationConfig.selectedFloors.includes(value)) {
                           addSelectedItem('floor', value);
                         }
                       }}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder={`${locationConfig.selectedFloors.length} floor(s) selected`} />
-                          <ChevronDown className="h-4 w-4" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Ground Floor">Ground Floor</SelectItem>
