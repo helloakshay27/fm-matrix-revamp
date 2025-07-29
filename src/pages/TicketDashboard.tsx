@@ -150,7 +150,7 @@ export const TicketDashboard = () => {
     const testEndDate = '29/07/2025';
     const convertedStart = convertDateStringToDate(testStartDate);
     const convertedEnd = convertDateStringToDate(testEndDate);
-    
+
     const formatDateForAPI = (date: Date): string => {
       // Use UTC methods to avoid timezone issues
       const year = date.getUTCFullYear();
@@ -158,13 +158,13 @@ export const TicketDashboard = () => {
       const day = date.getUTCDate().toString().padStart(2, '0');
       return `${year}-${month}-${day}`;
     };
-    
+
     console.log('Date Conversion Test:', {
       input: { start: testStartDate, end: testEndDate },
       converted: { start: convertedStart, end: convertedEnd },
-      apiFormat: { 
-        start: formatDateForAPI(convertedStart), 
-        end: formatDateForAPI(convertedEnd) 
+      apiFormat: {
+        start: formatDateForAPI(convertedStart),
+        end: formatDateForAPI(convertedEnd)
       }
     });
   }, []);
@@ -1130,7 +1130,7 @@ export const TicketDashboard = () => {
                     {/* Third Row - Category Wise ProActive/Reactive (Dual-bar chart) */}
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('categoryWiseProactiveReactive') && (
-                                              <SortableChartItem key="categoryWiseProactiveReactive" id="categoryWiseProactiveReactive">
+                        <SortableChartItem key="categoryWiseProactiveReactive" id="categoryWiseProactiveReactive">
                           <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
                             {/* Drag indicator */}
                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
@@ -1168,7 +1168,7 @@ export const TicketDashboard = () => {
                                 {categorywiseTicketsData && categorywiseTicketsData.length > 0 ? (
                                   <div className="h-80">
                                     <ResponsiveContainer width="100%" height="100%">
-                                      <BarChart 
+                                      <BarChart
                                         data={categorywiseTicketsData.slice(0, 10).map(categoryData => ({
                                           category: categoryData.category || 'Unknown',
                                           proactiveOpen: categoryData.proactive?.Open || 0,
@@ -1181,19 +1181,19 @@ export const TicketDashboard = () => {
                                         margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
                                       >
                                         <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
-                                        <XAxis 
-                                          dataKey="category" 
+                                        <XAxis
+                                          dataKey="category"
                                           angle={-45}
                                           textAnchor="end"
                                           height={100}
                                           fontSize={10}
                                           tick={{ fill: '#374151' }}
                                         />
-                                        <YAxis 
+                                        <YAxis
                                           fontSize={12}
                                           tick={{ fill: '#374151' }}
                                         />
-                                        <Tooltip 
+                                        <Tooltip
                                           content={({ active, payload, label }) => {
                                             if (active && payload && payload.length) {
                                               const data = payload[0].payload;
