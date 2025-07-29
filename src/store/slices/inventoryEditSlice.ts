@@ -62,7 +62,8 @@ export const fetchInventory = createAsyncThunk(
 export const updateInventory = createAsyncThunk(
   'inventoryEdit/updateInventory',
   async ({ id, inventoryData }: { id: string; inventoryData: any }) => {
-    const response = await apiClient.put(`https://fm-uat-api.lockated.com/pms/inventories/${id}.json`, {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const response = await apiClient.put(`https://${baseUrl}/pms/inventories/${id}.json`, {
       pms_inventory: inventoryData
     })
     return response.data
