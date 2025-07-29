@@ -66,24 +66,8 @@ export const SurveyDetailsPage = () => {
           {/* Questions Section */}
           <div>
             {/* Add Questions Header */}
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-700 font-medium">Add No. of Questions</span>
-                <Select disabled defaultValue="02">
-                  <SelectTrigger className="w-16 h-8 bg-gray-50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="02">02</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button size="sm" className="w-8 h-8 p-0 bg-red-100 hover:bg-red-200 text-red-600" disabled>
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="text-gray-600">
-                No. of Questions <span className="font-medium">2</span>
-              </div>
+            <div className="text-gray-600 mb-6">
+              No. of Questions <span className="font-medium">2</span>
             </div>
 
             {/* Questions Grid */}
