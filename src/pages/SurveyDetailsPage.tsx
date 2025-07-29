@@ -24,6 +24,8 @@ export const SurveyDetailsPage = () => {
   const [loadingWings, setLoadingWings] = useState(false);
   const [floors, setFloors] = useState<Array<{id: number, name: string}>>([]);
   const [loadingFloors, setLoadingFloors] = useState(false);
+  const [zones, setZones] = useState<Array<{id: number, name: string}>>([]);
+  const [loadingZones, setLoadingZones] = useState(false);
   
   // State for location configuration
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -139,6 +141,33 @@ export const SurveyDetailsPage = () => {
     }
   };
 
+  // Fetch zones
+  const fetchZones = async () => {
+    try {
+      setLoadingZones(true);
+      const response = await fetch(getFullUrl('/pms/zones.json'), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch zones');
+      }
+      
+      const zonesData = await response.json();
+      setZones(zonesData.zones.map((zone: any) => ({
+        id: zone.id,
+        name: zone.name
+      })));
+    } catch (error) {
+      console.error('Error fetching zones:', error);
+    } finally {
+      setLoadingZones(false);
+    }
+  };
+
   // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
@@ -168,6 +197,7 @@ export const SurveyDetailsPage = () => {
     fetchBuildings();
     fetchWings();
     fetchFloors();
+    fetchZones();
   }, [id, toast]);
 
   // Get category name by ID
@@ -595,19 +625,29 @@ export const SurveyDetailsPage = () => {
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Zones</h4>
                        <Select onValueChange={(value) => {
-                         if (!locationConfig.selectedZones.includes(value)) {
-                           addSelectedItem('zone', value);
+                         // value contains the zone ID, find the zone name for display
+                         const selectedZone = zones.find(z => z.id.toString() === value);
+                         if (selectedZone && !locationConfig.selectedZones.includes(selectedZone.name)) {
+                           addSelectedItem('zone', selectedZone.name);
+                           // You can also store the ID separately if needed for backend
+                           console.log('Selected zone ID:', value, 'Name:', selectedZone.name);
                          }
                        }}>
                          <SelectTrigger className="w-full">
                            <SelectValue placeholder={`${locationConfig.selectedZones.length} zone(s) selected`} />
                          </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Zone A">Zone A</SelectItem>
-                          <SelectItem value="Zone B">Zone B</SelectItem>
-                          <SelectItem value="Zone C">Zone C</SelectItem>
-                        </SelectContent>
-                      </Select>
+                         <SelectContent>
+                           {loadingZones ? (
+                             <SelectItem value="loading" disabled>Loading zones...</SelectItem>
+                           ) : (
+                             zones.map((zone) => (
+                               <SelectItem key={zone.id} value={zone.id.toString()}>
+                                 {zone.name}
+                               </SelectItem>
+                             ))
+                           )}
+                         </SelectContent>
+                       </Select>
                       {/* Selected zones */}
                       {locationConfig.selectedZones.length > 0 && (
                         <div className="flex flex-wrap gap-2">
