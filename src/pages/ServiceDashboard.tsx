@@ -366,11 +366,11 @@ export const ServiceDashboard = () => {
       case 'serviceName':
         return (
           <span
-            className="cursor-pointer hover:underline"
-            onClick={() => {
-              setSelectedService(item);
-              setShowServiceActionPanel(true);
-            }}
+            // className="cursor-pointer hover:underline"
+            // onClick={() => {
+            //   setSelectedService(item);
+            //   setShowServiceActionPanel(true);
+            // }}
           >
             {item.service_name || '-'}
           </span>
