@@ -898,7 +898,7 @@ export const AMCDashboard = () => {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                      {totalAMCs}
+                    {apiData?.total_amcs_count}
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total AMC</div>
                   </div>
@@ -913,7 +913,7 @@ export const AMCDashboard = () => {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                      {activeAMCs}
+                    {apiData?.active_amcs_count}
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active AMC</div>
                   </div>
@@ -928,7 +928,7 @@ export const AMCDashboard = () => {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                      {inactiveAMCs}
+                    {apiData?.inactive_amcs_count}
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive AMC</div>
                   </div>
@@ -943,7 +943,7 @@ export const AMCDashboard = () => {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                      {flaggedAMCs}
+                    {apiData?.flagged_amcs_count}
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Flagged AMC</div>
                   </div>
