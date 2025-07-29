@@ -51,9 +51,6 @@ export const SurveyDetailsPage = () => {
       </div>
 
       <div>
-        <p className="text-muted-foreground text-sm mb-2">
-          Survey &gt; Survey List &gt; Survey Details
-        </p>
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Survey Details</h1>
       </div>
 
