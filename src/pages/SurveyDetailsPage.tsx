@@ -384,7 +384,6 @@ export const SurveyDetailsPage = () => {
                       }}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder={`${locationConfig.selectedBuildings.length} building(s) selected`} />
-                          <ChevronDown className="h-4 w-4" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Gophygital">Gophygital</SelectItem>
