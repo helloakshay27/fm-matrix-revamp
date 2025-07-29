@@ -31,7 +31,75 @@ import { TaskAnalyticsFilterDialog } from '@/components/TaskAnalyticsFilterDialo
 import { TaskAnalyticsSelector } from '@/components/TaskAnalyticsSelector';
 import { BarChart3 } from 'lucide-react';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
+
+// Sortable Chart Item Component for Drag and Drop
+const SortableChartItem = ({
+  id,
+  children
+}: {
+  id: string;
+  children: React.ReactNode;
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({
+    id
+  });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1
+  };
+
+  // Handle pointer down to prevent drag on button/icon clicks
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const target = e.target as HTMLElement;
+    // Check if the click is on a button, icon, or download element
+    if (
+      target.closest('button') ||
+      target.closest('[data-download]') ||
+      target.closest('svg') ||
+      target.tagName === 'BUTTON' ||
+      target.tagName === 'SVG' ||
+      target.closest('.download-btn') ||
+      target.closest('[data-download-button]')
+    ) {
+      e.stopPropagation();
+      return;
+    }
+    // For other elements, proceed with drag
+    if (listeners?.onPointerDown) {
+      listeners.onPointerDown(e);
+    }
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      onPointerDown={handlePointerDown}
+      className="cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group relative"
+    >
+      {/* Drag indicator */}
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200 z-10">
+        <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
+      </div>
+      {children}
+    </div>
+  );
+};
 
 interface TaskRecord {
   id: string;
@@ -164,6 +232,15 @@ export const ScheduledTaskDashboard = () => {
   const [siteWiseData, setSiteWiseData] = useState<SiteWiseChecklistResponse | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [selectedAnalytics, setSelectedAnalytics] = useState<string[]>(['technical', 'nonTechnical', 'topTen', 'siteWise']);
+  const [chartOrder, setChartOrder] = useState<string[]>(['technical', 'nonTechnical', 'topTen', 'siteWise']);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
+  );
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -194,7 +271,7 @@ export const ScheduledTaskDashboard = () => {
       type: task.schedule_type,
       schedule: task.start_date,
       assignTo: task.assigned_to_name,
-      status: task.task_status === 'Scheduled' ? 'Open' : task.task_status,
+      status: task.task_status ,
       scheduleFor: 'Service', // Default value as mentioned
       assetsServices: task.asset,
       site: task.site_name,
@@ -471,6 +548,18 @@ export const ScheduledTaskDashboard = () => {
     const endDate = new Date(endDateStr);
     setAnalyticsDateRange({ startDate, endDate });
     fetchAnalyticsData(startDate, endDate, selectedAnalytics);
+  };
+
+  // Handle drag end for analytics chart reordering
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      setChartOrder(items => {
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
   };
 
   // Load analytics data when tab is selected
@@ -764,7 +853,15 @@ export const ScheduledTaskDashboard = () => {
 
         <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Header Section with Filter and Selector */}
-          <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            {/* Drag info indicator */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex gap-1">
+                <div className="w-1 h-4 bg-gray-300 rounded-full"></div>
+                <div className="w-1 h-4 bg-gray-300 rounded-full"></div>
+              </div>
+              <span>Drag cards to reorder</span>
+            </div>
 
             <div className="flex gap-2">
               <Button
@@ -788,57 +885,79 @@ export const ScheduledTaskDashboard = () => {
               <div className="text-gray-500">Loading analytics...</div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Technical Checklist */}
-              {selectedAnalytics.includes('technical') && technicalData && (
-                <TaskAnalyticsCard
-                  title="Technical Checklist"
-                  data={technicalData.response}
-                  type="technical"
-                  dateRange={analyticsDateRange}
-                />
-              )}
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {chartOrder.map(analyticsType => {
+                    if (!selectedAnalytics.includes(analyticsType)) return null;
 
-              {/* Non-Technical Checklist */}
-              {selectedAnalytics.includes('nonTechnical') && nonTechnicalData && (
-                <TaskAnalyticsCard
-                  title="Non-Technical Checklist"
-                  data={nonTechnicalData.response}
-                  type="nonTechnical"
-                  dateRange={analyticsDateRange}
-                />
-              )}
+                    if (analyticsType === 'technical' && technicalData) {
+                      return (
+                        <SortableChartItem key="technical" id="technical">
+                          <TaskAnalyticsCard
+                            title="Technical Checklist"
+                            data={technicalData.response}
+                            type="technical"
+                            dateRange={analyticsDateRange}
+                          />
+                        </SortableChartItem>
+                      );
+                    }
 
-              {/* Top Ten Checklist */}
-              {selectedAnalytics.includes('topTen') && topTenData && (
-                <TaskAnalyticsCard
-                  title="Top 10 Checklist Types"
-                  data={topTenData.response}
-                  type="topTen"
-                  dateRange={analyticsDateRange}
-                />
-              )}
+                    if (analyticsType === 'nonTechnical' && nonTechnicalData) {
+                      return (
+                        <SortableChartItem key="nonTechnical" id="nonTechnical">
+                          <TaskAnalyticsCard
+                            title="Non-Technical Checklist"
+                            data={nonTechnicalData.response}
+                            type="nonTechnical"
+                            dateRange={analyticsDateRange}
+                          />
+                        </SortableChartItem>
+                      );
+                    }
 
-              {/* Site Wise Checklist */}
-              {selectedAnalytics.includes('siteWise') && siteWiseData && (
-                <TaskAnalyticsCard
-                  title="Site-wise Checklist Status"
-                  data={siteWiseData.response}
-                  type="siteWise"
-                  dateRange={analyticsDateRange}
-                />
-              )}
+                    if (analyticsType === 'topTen' && topTenData) {
+                      return (
+                        <SortableChartItem key="topTen" id="topTen">
+                          <TaskAnalyticsCard
+                            title="Top 10 Checklist Types"
+                            data={topTenData.response}
+                            type="topTen"
+                            dateRange={analyticsDateRange}
+                          />
+                        </SortableChartItem>
+                      );
+                    }
 
-              {/* No selection message */}
-              {selectedAnalytics.length === 0 && (
-                <div className="col-span-2 flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">No analytics selected. Please select at least one report to view.</p>
-                  </div>
+                    if (analyticsType === 'siteWise' && siteWiseData) {
+                      return (
+                        <SortableChartItem key="siteWise" id="siteWise">
+                          <TaskAnalyticsCard
+                            title="Site-wise Checklist Status"
+                            data={siteWiseData.response}
+                            type="siteWise"
+                            dateRange={analyticsDateRange}
+                          />
+                        </SortableChartItem>
+                      );
+                    }
+
+                    return null;
+                  })}
+
+                  {/* No selection message */}
+                  {selectedAnalytics.length === 0 && (
+                    <div className="col-span-2 flex items-center justify-center py-12">
+                      <div className="text-center">
+                        <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">No analytics selected. Please select at least one report to view.</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </SortableContext>
+            </DndContext>
           )}
         </TabsContent>
       </Tabs>
