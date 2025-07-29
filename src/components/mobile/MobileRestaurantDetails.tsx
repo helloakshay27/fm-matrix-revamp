@@ -8,7 +8,7 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Restaurant as ApiRestaurant } from "@/services/restaurantApi";
 
@@ -49,6 +49,7 @@ export const MobileRestaurantDetails: React.FC<
   MobileRestaurantDetailsProps
 > = ({ restaurant }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   
   // 🔍 Check if user is from external scan (Google Lens, etc.)
@@ -72,6 +73,29 @@ export const MobileRestaurantDetails: React.FC<
   const [selectedMenuImage, setSelectedMenuImage] = useState<string | null>(
     null
   );
+
+  // Restore preserved cart when coming back from items details
+  useEffect(() => {
+    // Get preserved cart from navigation state (when coming back from items details)
+    const preservedCart = (location.state as { preservedCart?: MenuItem[] })?.preservedCart || [];
+    
+    if (preservedCart.length > 0) {
+      console.log("🔄 RESTORING PRESERVED CART:", preservedCart);
+      
+      // Create a map of preserved items for quick lookup
+      const preservedItemsMap = new Map(
+        preservedCart.map(item => [item.id, item.quantity || 0])
+      );
+      
+      // Update menu items with preserved quantities
+      setMenuItems(prevItems => 
+        prevItems.map(item => ({
+          ...item,
+          quantity: preservedItemsMap.get(item.id) || 0
+        }))
+      );
+    }
+  }, [location.state]);
 
   // Get all available images (cover images + fallback)
   const availableImages =

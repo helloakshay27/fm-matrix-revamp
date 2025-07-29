@@ -114,8 +114,17 @@ export const MobileItemsDetails: React.FC = () => {
     console.log("  - finalSourceParam:", finalSourceParam);
     console.log("  - finalIsExternalScan:", finalIsExternalScan);
     console.log("  - Back URL:", backUrl);
+    console.log("  - Current items to preserve:", items);
 
-    navigate(backUrl);
+    // Navigate back with current cart state preserved
+    navigate(backUrl, {
+      state: {
+        preservedCart: items, // Pass current items to preserve selection
+        restaurant,
+        isExternalScan: finalIsExternalScan,
+        sourceParam: finalSourceParam,
+      }
+    });
   };
 
   // Retrieve user from local storage
