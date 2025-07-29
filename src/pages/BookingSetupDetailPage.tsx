@@ -207,6 +207,10 @@ export const BookingSetupDetailPage = () => {
     }
   };
 
+  const handleEditClick = (id) => {
+    navigate(`/settings/vas/booking/setup/edit/${id}`);
+  }
+
   const fetchFacilityBookingDetails = async () => {
     try {
       const response = await dispatch(
@@ -248,12 +252,12 @@ export const BookingSetupDetailPage = () => {
         termsConditions: response.terms,
         cancellationText: response.cancellation_policy,
         amenities: {
-          tv: false,
-          whiteboard: false,
-          casting: false,
-          smartPenForTV: false,
-          wirelessCharging: false,
-          meetingRoomInventory: false,
+          tv: response.amenity_info[0].selected,
+          whiteboard: response.amenity_info[1].selected,
+          casting: response.amenity_info[2].selected,
+          smartPenForTV: response.amenity_info[3].selected,
+          wirelessCharging: response.amenity_info[4].selected,
+          meetingRoomInventory: response.amenity_info[5].selected,
         },
         seaterInfo: response.seater_info,
         floorInfo: response.location_info,
@@ -268,6 +272,18 @@ export const BookingSetupDetailPage = () => {
           wrapTime: slot.facility_slot.wrap_time,
         })),
       });
+      const transformedRules = response.cancellation_rules.map((rule: any) => ({
+        time: {
+          type: rule.hour, // You can dynamically determine this if needed
+          value: rule.min,
+          day: rule.day,
+        },
+        deduction: rule.deduction?.toString() || '',
+      }));
+
+      setCancellationRules([...transformedRules]);
+
+      setCancellationRules(response.cancellation_rules)
       setSelectedFile(response?.cover_image?.document);
       setSelectedBookingFiles(
         response?.documents.map((doc) => doc.document.document)
@@ -277,6 +293,8 @@ export const BookingSetupDetailPage = () => {
       console.log(error);
     }
   };
+
+  console.log(cancellationRules)
 
   useEffect(() => {
     fetchDepartments();
@@ -296,12 +314,21 @@ export const BookingSetupDetailPage = () => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Booking List
             </Button>
-            <button
-              className="bg-[#F6F4EE] py-2 px-4 rounded mt-2 flex items-center gap-2"
-              onClick={() => setShowQr(true)}
-            >
-              <QrCode className="w-4 h-4" color="#000" /> QR Code
-            </button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleEditClick(id)}
+                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 mt-2"
+              >
+                Edit
+              </Button>
+              <button
+                className="bg-[#F6F4EE] py-2 px-4 rounded mt-2 flex items-center gap-2"
+                onClick={() => setShowQr(true)}
+              >
+                <QrCode className="w-4 h-4" color="#000" /> QR Code
+              </button>
+            </div>
           </div>
           <div className="p-6 space-y-8">
             {/* Basic Info */}
@@ -945,31 +972,31 @@ export const BookingSetupDetailPage = () => {
                         size="small"
                         style={{ width: "80px" }}
                         variant="outlined"
-                        value={rule.time.day}
+                        value={rule.day}
                         InputProps={{ readOnly: true }}
                       />
                       <FormControl size="small" style={{ width: "80px" }}>
                         <Select
-                          value={rule.time.type}
+                          value={rule.hour ?? ''}
                           disabled
                         >
-                          <MenuItem value="Hr">Hr</MenuItem>
                           {Array.from({ length: 24 }, (_, i) => (
-                            <MenuItem key={i + 1} value={(i + 1).toString()}>
-                              {i + 1}
+                            <MenuItem key={i} value={i}>
+                              {i}
                             </MenuItem>
                           ))}
                         </Select>
                       </FormControl>
+
                       <FormControl size="small" style={{ width: "80px" }}>
                         <Select
-                          value={rule.time.value}
+                          value={rule.min}
                           disabled
                         >
                           {Array.from({ length: 24 }, (_, i) => (
                             <MenuItem
                               key={i}
-                              value={i.toString().padStart(2, "0")}
+                              value={i}
                             >
                               {i.toString().padStart(2, "0")}
                             </MenuItem>

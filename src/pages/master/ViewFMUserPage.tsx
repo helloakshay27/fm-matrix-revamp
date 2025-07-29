@@ -127,25 +127,25 @@ export const ViewFMUserPage = () => {
         mobile: userData.mobile || '',
         email: userData.email || '',
         company_name: userData.company_name || '',
-        entity_id: userData.entity_id?.toString() || '',
+        entity_id: userData.entity_id || '',
         unit_id: userData.unit_id || '',
-        designation: userData.designation || '',
-        employee_id: userData.employee_id || '',
+        designation: userData.lock_user_permission.designation || '',
+        employee_id: userData.lock_user_permission.employee_id || '',
         user_type: userData.user_type === 'pms_admin' ? 'internal' : 'external',
         lock_user_permission_status: userData.lock_user_permission_status || '',
         face_added: userData.face_added || false,
         app_downloaded: userData.app_downloaded || 'No',
         access_level: userData.lock_user_permission?.access_level || 'Site',
         daily_helpdesk_report: false,
-        site: userData.site_id || '',
-        base_unit: '',
-        system_user_type: 'admin',
-        department: '',
-        role: 'admin',
+        site: userData.lock_user_permission.site_id || '',
+        base_unit: userData.unit_id,
+        system_user_type: userData.user_type,
+        department: userData.department_id,
+        role: formData.lock_role_id,
         vendor_company: '',
         company_cluster: '',
         last_working_day: 'Last Working Day',
-        email_preference: ''
+        email_preference: userData.urgency_email_enabled
       });
     } else {
       console.log('userData not found for id:', id);
@@ -460,7 +460,7 @@ export const ViewFMUserPage = () => {
                       {department?.length > 0 ? (
                         department.map((dept) => (
                           <SelectItem key={dept.id} value={dept.id}>
-                            {dept.name}
+                            {dept.department_name}
                           </SelectItem>
                         ))
                       ) : (
