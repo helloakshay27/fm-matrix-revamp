@@ -266,7 +266,7 @@ export const transformCustomFormsData = (forms: CustomForm[]): TransformedSchedu
   return forms.map(form => {
     // Split checklist_for to get type and schedule type
     const checklistParts = form.checklist_for.split('::');
-    const type = checklistParts[0] || '';
+    const type = form.schedule_type || '';
     const scheduleType = checklistParts[1] || '';
     
     // Format dates
