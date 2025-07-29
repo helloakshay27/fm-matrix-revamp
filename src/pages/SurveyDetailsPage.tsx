@@ -79,24 +79,6 @@ export const SurveyDetailsPage = () => {
 
       {/* Questions Counter Section */}
       <div className="flex items-center gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-gray-700">Add No. of Questions</span>
-          <Select defaultValue="02" disabled>
-            <SelectTrigger className="w-16 bg-gray-50">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="01">01</SelectItem>
-              <SelectItem value="02">02</SelectItem>
-              <SelectItem value="03">03</SelectItem>
-              <SelectItem value="04">04</SelectItem>
-              <SelectItem value="05">05</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button size="sm" className="bg-gray-400 text-white w-8 h-8 p-0" disabled>
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">No. of Questions</span>
           <span className="text-sm font-medium">2</span>
