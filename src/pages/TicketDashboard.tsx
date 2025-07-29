@@ -346,7 +346,7 @@ export const TicketDashboard = () => {
   }
   ];
 
-  // Calculate category data from API analytics data or fallback to tickets
+  // Calculate category data from API analytics data only
   const categoryChartData = categoryAnalyticsData.length > 0
     ? categoryAnalyticsData.map(item => ({
       name: item.category,
@@ -354,20 +354,7 @@ export const TicketDashboard = () => {
       reactive: item.reactive.Open + item.reactive.Closed,
       value: item.proactive.Open + item.proactive.Closed + item.reactive.Open + item.reactive.Closed
     }))
-    : (() => {
-      const safeTickets = tickets || [];
-      const categoryData = safeTickets.reduce((acc, ticket) => {
-        const category = ticket.category_type;
-        if (category) {
-          acc[category] = (acc[category] || 0) + 1;
-        }
-        return acc;
-      }, {});
-      return Object.entries(categoryData).map(([name, value]) => ({
-        name,
-        value
-      }));
-    })();
+    : []; // No fallback to tickets data
 
   // Aging matrix data from API or fallback
   const agingMatrixData = agingMatrixAnalyticsData?.response.matrix
@@ -1304,7 +1291,7 @@ export const TicketDashboard = () => {
                               </div>
 
                               {/* Summary Box - Full Width Below Table */}
-                              {/* <div className="w-full">
+                              <div className="w-full">
                                 <div className="rounded-lg p-4 sm:p-8 text-center" style={{
                                   backgroundColor: '#EDE4D8'
                                 }}>
@@ -1313,7 +1300,7 @@ export const TicketDashboard = () => {
                                   </div>
                                   <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
                                 </div>
-                              </div> */}
+                              </div>
                             </div>
                           </div>
                         </SortableChartItem>;
