@@ -389,11 +389,6 @@ export const SurveyListDashboard = () => {
                 <Plus className="w-4 h-4" />
                 Add
               </Button>
-              
-              <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
-                <Upload className="w-4 h-4" />
-                <span className="hidden sm:inline">Import</span>
-              </Button>
             </div>
           }
           rightActions={
