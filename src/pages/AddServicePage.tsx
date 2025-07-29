@@ -36,14 +36,11 @@ export const AddServicePage = () => {
   const [errors, setErrors] = useState({
     serviceName: false,
     executionType: false,
-    umo: false,
     siteId: false,
     buildingId: false,
     wingId: false,
     areaId: false,
     floorId: false,
-    groupId: false,
-    subGroupId: false,
   });
 
   const handleInputChange = (field: string, value: string | number | null) => {
@@ -54,9 +51,6 @@ export const AddServicePage = () => {
     }
     if (field === 'executionType' && value !== '') {
       setErrors(prev => ({ ...prev, executionType: false }));
-    }
-    if (field === 'umo' && value.toString().trim() !== '') {
-      setErrors(prev => ({ ...prev, umo: false }));
     }
     if (field === 'siteId' && value !== null) {
       setErrors(prev => ({ ...prev, siteId: false }));
@@ -73,12 +67,6 @@ export const AddServicePage = () => {
     if (field === 'floorId' && value !== null) {
       setErrors(prev => ({ ...prev, floorId: false }));
     }
-    if (field === 'groupId' && value !== null) {
-      setErrors(prev => ({ ...prev, groupId: false }));
-    }
-    if (field === 'subGroupId' && value !== null) {
-      setErrors(prev => ({ ...prev, subGroupId: false }));
-    }
   };
 
   const handleLocationChange = useCallback((location: typeof formData) => {
@@ -93,8 +81,6 @@ export const AddServicePage = () => {
       wingId: location.wingId !== null ? false : prev.wingId,
       areaId: location.areaId !== null ? false : prev.areaId,
       floorId: location.floorId !== null ? false : prev.floorId,
-      groupId: location.groupId !== null ? false : prev.groupId,
-      subGroupId: location.subGroupId !== null ? false : prev.subGroupId,
     }));
   }, []);
 
@@ -118,51 +104,39 @@ export const AddServicePage = () => {
 
     const hasServiceNameError = formData.serviceName.trim() === '';
     const hasExecutionTypeError = formData.executionType === '';
-    const hasUmoError = formData.umo.trim() === '';
     const hasSiteIdError = formData.siteId === null;
     const hasBuildingIdError = formData.buildingId === null;
     const hasWingIdError = formData.wingId === null;
     const hasAreaIdError = formData.areaId === null;
     const hasFloorIdError = formData.floorId === null;
-    const hasGroupIdError = formData.groupId === null;
-    const hasSubGroupIdError = formData.subGroupId === null;
 
     if (
       hasServiceNameError ||
       hasExecutionTypeError ||
-      hasUmoError ||
       hasSiteIdError ||
       hasBuildingIdError ||
       hasWingIdError ||
       hasAreaIdError ||
-      hasFloorIdError ||
-      hasGroupIdError ||
-      hasSubGroupIdError
+      hasFloorIdError
     ) {
       setErrors({
         serviceName: hasServiceNameError,
         executionType: hasExecutionTypeError,
-        umo: hasUmoError,
         siteId: hasSiteIdError,
         buildingId: hasBuildingIdError,
         wingId: hasWingIdError,
         areaId: hasAreaIdError,
         floorId: hasFloorIdError,
-        groupId: hasGroupIdError,
-        subGroupId: hasSubGroupIdError,
       });
 
       const errorFields = [];
       if (hasServiceNameError) errorFields.push('Service Name');
       if (hasExecutionTypeError) errorFields.push('Execution Type');
-      if (hasUmoError) errorFields.push('UMO');
       if (hasSiteIdError) errorFields.push('Site');
       if (hasBuildingIdError) errorFields.push('Building');
       if (hasWingIdError) errorFields.push('Wing');
       if (hasAreaIdError) errorFields.push('Area');
       if (hasFloorIdError) errorFields.push('Floor');
-      if (hasGroupIdError) errorFields.push('Group');
-      if (hasSubGroupIdError) errorFields.push('Sub-Group');
 
       toast.info(`Please fill in the following required fields: ${errorFields.join(', ')}`, {
         duration: 5000,
@@ -176,14 +150,11 @@ export const AddServicePage = () => {
     setErrors({
       serviceName: false,
       executionType: false,
-      umo: false,
       siteId: false,
       buildingId: false,
       wingId: false,
       areaId: false,
       floorId: false,
-      groupId: false,
-      subGroupId: false,
     });
 
     const sendData = new FormData();
@@ -347,15 +318,12 @@ export const AddServicePage = () => {
               )}
             </FormControl>
             <TextField
-              required
               label="UMO"
               placeholder="Enter UMO"
               value={formData.umo}
               onChange={(e) => handleInputChange('umo', e.target.value)}
               fullWidth
               variant="outlined"
-              error={errors.umo}
-              helperText={errors.umo ? 'UMO is required' : ''}
               slotProps={{
                 inputLabel: {
                   shrink: true,
@@ -377,8 +345,6 @@ export const AddServicePage = () => {
               wingId: errors.wingId,
               areaId: errors.areaId,
               floorId: errors.floorId,
-              groupId: errors.groupId,
-              subGroupId: errors.subGroupId,
             }}
             helperTexts={{
               siteId: errors.siteId ? 'Site is required' : '',
@@ -386,8 +352,6 @@ export const AddServicePage = () => {
               wingId: errors.wingId ? 'Wing is required' : '',
               areaId: errors.areaId ? 'Area is required' : '',
               floorId: errors.floorId ? 'Floor is required' : '',
-              groupId: errors.groupId ? 'Group is required' : '',
-              subGroupId: errors.subGroupId ? 'Sub-Group is required' : '',
             }}
             disabled={isSubmitting}
           />

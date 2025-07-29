@@ -31,6 +31,8 @@ export const TicketAnalyticsCard: React.FC<TicketAnalyticsCardProps> = ({ title,
   };
 
   const renderContent = () => {
+    console.log('TicketAnalyticsCard rendering:', { title, type, data });
+    
     if (!data) {
       return <div className="text-center text-analytics-muted py-8">No data available</div>;
     }

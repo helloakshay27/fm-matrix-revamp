@@ -48,35 +48,39 @@ const analyticsOptions = {
       { id: 'site_wise_checklist', endpoint: 'site_wise_checklist', label: 'Site-wise Checklist' },
     ]
   },
-  schedule: {
-    icon: Calendar,
-    label: 'Schedule',
-    color: '#3B82F6',
-    options: [
-      { id: 'schedule_overview', endpoint: 'schedule_overview', label: 'Schedule Overview' },
-      { id: 'schedule_completion', endpoint: 'schedule_completion', label: 'Schedule Completion' },
-      { id: 'resource_utilization', endpoint: 'resource_utilization', label: 'Resource Utilization' },
-    ]
-  },
-  inventory: {
-    icon: Package,
-    label: 'Inventory',
-    color: '#F59E0B',
-    options: [
-      { id: 'items_status', endpoint: 'items_status', label: 'Items Status' },
-      { id: 'category_wise', endpoint: 'category_wise', label: 'Category-wise' },
-      { id: 'green_consumption', endpoint: 'green_consumption', label: 'Green Consumption' },
-      { id: 'aging_matrix', endpoint: 'aging_matrix', label: 'Aging Matrix' },
-      { id: 'low_stock', endpoint: 'low_stock', label: 'Low Stock Items' },
-      { id: 'high_value', endpoint: 'high_value', label: 'High Value Items' },
-    ]
-  },
+  // schedule: {
+  //   icon: Calendar,
+  //   label: 'Schedule',
+  //   color: '#3B82F6',
+  //   options: [
+  //     { id: 'schedule_overview', endpoint: 'schedule_overview', label: 'Schedule Overview' },
+  //     { id: 'schedule_completion', endpoint: 'schedule_completion', label: 'Schedule Completion' },
+  //     { id: 'resource_utilization', endpoint: 'resource_utilization', label: 'Resource Utilization' },
+  //   ]
+  // },
+  // inventory: {
+  //   icon: Package,
+  //   label: 'Inventory',
+  //   color: '#F59E0B',
+  //   options: [
+  //     { id: 'items_status', endpoint: 'items_status', label: 'Items Status' },
+  //     { id: 'category_wise', endpoint: 'category_wise', label: 'Category-wise' },
+  //     { id: 'green_consumption', endpoint: 'green_consumption', label: 'Green Consumption' },
+  //     { id: 'aging_matrix', endpoint: 'aging_matrix', label: 'Aging Matrix' },
+  //     { id: 'low_stock', endpoint: 'low_stock', label: 'Low Stock Items' },
+  //     { id: 'high_value', endpoint: 'high_value', label: 'High Value Items' },
+  //   ]
+  // },
   amc: {
     icon: Settings,
     label: 'AMC',
     color: '#8B5CF6',
     options: [
       { id: 'amc_status_overview', endpoint: 'status_overview', label: 'AMC Status Overview' },
+      { id: 'amc_type_distribution', endpoint: 'type_distribution', label: 'AMC Type Distribution' },
+      { id: 'amc_expiry_analysis', endpoint: 'expiry_analysis', label: 'AMC Expiry Analysis' },
+      { id: 'amc_service_tracking', endpoint: 'service_tracking', label: 'AMC Service Tracking' },
+      { id: 'amc_vendor_performance', endpoint: 'vendor_performance', label: 'AMC Vendor Performance' },
     ]
   },
   assets: {

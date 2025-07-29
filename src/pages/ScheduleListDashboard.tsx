@@ -1,4 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
 import { Button } from '@/components/ui/button';
 import Switch from '@mui/material/Switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,6 +27,9 @@ import { toast, Toaster } from "sonner";
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
+  // State for deactivate modal (must be inside component)
+  const [deactivateModal, setDeactivateModal] = useState<{ open: boolean; scheduleId: string | null }>({ open: false, scheduleId: null });
+  const [deactivateOption, setDeactivateOption] = useState<'upcoming' | 'all'>('upcoming');
   const [showImportModal, setShowImportModal] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [showActionPanel, setShowActionPanel] = useState(false);
@@ -165,39 +176,47 @@ export const ScheduleListDashboard = () => {
   };
   const handleExport = () => navigate('/maintenance/schedule/export');
   
-  const handleToggleActive = async (scheduleId: string) => {
+  // Handle toggle click
+  const handleToggleActive = (scheduleId: string) => {
+    const currentSchedule = schedules.find(schedule => schedule.id === scheduleId);
+    // Use the same logic as the toggle UI for determining ON/OFF
+    const isActive = (optimisticActive[scheduleId] !== undefined)
+      ? optimisticActive[scheduleId]
+      : (
+          currentSchedule?.active === null ||
+          currentSchedule?.active === true ||
+          currentSchedule?.active === 1
+        );
+    if (isActive) {
+      // If ON, show modal to turn OFF
+      setDeactivateModal({ open: true, scheduleId });
+      setDeactivateOption('upcoming');
+    } else {
+      // If OFF, turn ON directly
+      updateScheduleActive(scheduleId, 1);
+    }
+  };
+
+  // API call for activation/deactivation
+  const updateScheduleActive = async (scheduleId: string, active: 0 | 1, deactivated_tasks?: 'upcoming' | 'all') => {
     setOptimisticActive(prev => ({
-    ...prev,
-    [scheduleId]: !schedules.find(s => s.id === scheduleId)?.active
-  }));
+      ...prev,
+      [scheduleId]: !!active
+    }));
     try {
-      // Find the current schedule to get its current active status
-      const currentSchedule = schedules.find(schedule => schedule.id === scheduleId);
-      if (!currentSchedule) {
-        console.error('Schedule not found:', scheduleId);
-        toast.error('Schedule not found.', {
-          position: 'top-right',
-          duration: 4000,
-          style: {
-            background: '#ef4444',
-            color: 'white',
-            border: 'none',
-          },
-        });
-        return;
+      // Find the custom_form_code for this schedule
+      const schedule = schedules.find(s => s.id === scheduleId);
+      const code = schedule?.custom_form_code || scheduleId;
+      const payload: any = { pms_custom_form: { active } };
+      // Only include deactivated_tasks if deactivating
+      if (active === 0 && deactivated_tasks) {
+        payload.pms_custom_form.deactivated_tasks = deactivated_tasks;
+      } else if (active === 1 && payload.pms_custom_form.deactivated_tasks) {
+        delete payload.pms_custom_form.deactivated_tasks;
       }
-
-      // Toggle the active status
-      const newActiveStatus = !currentSchedule.active;
-
-      // Make PUT API call to update the active status with .json extension
-      const response = await apiClient.put(`${ENDPOINTS.UPDATE_CUSTOM_FORM}/${scheduleId}.json`, 
-      {  pms_custom_form:{
-        active: newActiveStatus ? 1 : 0
-      }});
-
-      console.log('Schedule active status updated:', response.data);
-      toast.success(`Schedule ${newActiveStatus ? 'activated' : 'deactivated'} successfully.`, {
+      // Always use the update_custom_form_update endpoint with custom_form_code
+      const response = await apiClient.put(`/pms/custom_forms/update_custom_form_update.json?id=${code}`, payload);
+      toast.success(`Schedule ${active ? 'activated' : 'deactivated'} successfully.`, {
         position: 'top-right',
         duration: 4000,
         style: {
@@ -206,14 +225,12 @@ export const ScheduleListDashboard = () => {
           border: 'none',
         },
       });
-      // Refetch the data to update the UI
       refetch();
     } catch (error) {
-      console.error('Error updating schedule active status:', error);
       setOptimisticActive(prev => ({
-      ...prev,
-      [scheduleId]: schedules.find(s => s.id === scheduleId)?.active
-    }));
+        ...prev,
+        [scheduleId]: schedules.find(s => s.id === scheduleId)?.active
+      }));
       toast.error('Failed to update schedule status. Please try again.', {
         position: 'top-right',
         duration: 4000,
@@ -224,6 +241,14 @@ export const ScheduleListDashboard = () => {
         },
       });
     }
+  };
+
+  // Handle modal submit
+  const handleDeactivateSubmit = async () => {
+    if (deactivateModal.scheduleId) {
+      await updateScheduleActive(deactivateModal.scheduleId, 0, deactivateOption);
+    }
+    setDeactivateModal({ open: false, scheduleId: null });
   };
   const handleEditSchedule = (id: string) => navigate(`/maintenance/schedule/edit/${id}`);
   const handleCopySchedule = (id: string) => navigate(`/maintenance/schedule/copy/${id}`);
@@ -296,6 +321,8 @@ export const ScheduleListDashboard = () => {
     </div>
   );
   const renderCell = (item: TransformedScheduleData, columnKey: string) => {
+    console.log("Rendering cell for column:", columnKey, "with item:", item);
+    
     if (columnKey === 'actions') {
       return (
         <div className="flex gap-1">
@@ -317,16 +344,24 @@ export const ScheduleListDashboard = () => {
         </span>;
     }
     if (columnKey === 'active') {
-      // Use custom toggle UI as requested
+      // Treat null, true, or 1 as active (ON)
+      console.log("item", item, item.active, typeof item.active);
+      const isActive = (optimisticActive[item.id] !== undefined)
+        ? optimisticActive[item.id]
+        : (
+            item.active === null ||
+            item.active === true ||
+            item.active === 1
+          );
       return (
         <div className="flex items-center justify-center">
           <div
-            className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${optimisticActive[item.id] ?? item.active ? 'bg-green-500' : 'bg-gray-300'}`}
+            className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}
             onClick={() => handleToggleActive(item.id)}
-            aria-label={item.active ? 'Deactivate schedule' : 'Activate schedule'}
+            aria-label={isActive ? 'Deactivate schedule' : 'Activate schedule'}
           >
             <span
-              className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${optimisticActive[item.id] ?? item.active ? 'translate-x-6' : 'translate-x-1'}`}
+              className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'}`}
             />
           </div>
         </div>
@@ -334,6 +369,29 @@ export const ScheduleListDashboard = () => {
     }
     return item[columnKey as keyof TransformedScheduleData];
   };
+
+  // Deactivate Modal
+  const DeactivateChecklistModal = (
+    <Dialog open={deactivateModal.open} onClose={() => setDeactivateModal({ open: false, scheduleId: null })}>
+      <DialogTitle>Deactivate Checklist</DialogTitle>
+      <DialogContent>
+        <FormLabel component="legend" style={{ fontWeight: 600, marginBottom: 8 }}>Deactivate</FormLabel>
+        <RadioGroup
+          aria-label="deactivate-tasks"
+          name="deactivate-tasks"
+          value={deactivateOption}
+          onChange={e => setDeactivateOption(e.target.value as 'upcoming' | 'all')}
+          row
+        >
+          <FormControlLabel value="upcoming" control={<Radio color="primary" />} label="Upcoming Tasks" />
+          <FormControlLabel value="all" control={<Radio color="primary" />} label="All Tasks" />
+        </RadioGroup>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleDeactivateSubmit} className="bg-[#6B2245] text-white hover:bg-[#6B2245]/90">Submit</Button>
+      </DialogActions>
+    </Dialog>
+  );
 
   // Analytics data calculations
   const totalSchedules = schedules.length;
@@ -690,10 +748,8 @@ export const ScheduleListDashboard = () => {
     <div className="p-2 sm:p-4 lg:p-6">
       {/* Sonner Toaster for notifications */}
       <Toaster position="top-right" richColors closeButton />
-      {/* <div className="mb-4 sm:mb-6">
-        <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Schedule Dashboard</h1>
-      </div> */}
-
+      {/* Deactivate Checklist Modal */}
+      {DeactivateChecklistModal}
       {/* Only Schedule List tab, no analytics */}
       <div className="w-full">
         {renderListTab()}

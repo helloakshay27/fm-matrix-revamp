@@ -35,23 +35,24 @@ interface LocationSelectorProps {
     subGroupId: null | number;
   }) => void;
   resetTrigger?: boolean;
+  disabled?: boolean;
   errors?: {
-    siteId: boolean;
-    buildingId: boolean;
-    wingId: boolean;
-    areaId: boolean;
-    floorId: boolean;
-    groupId: boolean;
-    subGroupId: boolean;
+    siteId?: boolean;
+    buildingId?: boolean;
+    wingId?: boolean;
+    areaId?: boolean;
+    floorId?: boolean;
+    groupId?: boolean;
+    subGroupId?: boolean;
   };
   helperTexts?: {
-    siteId: string;
-    buildingId: string;
-    wingId: string;
-    areaId: string;
-    floorId: string;
-    groupId: string;
-    subGroupId: string;
+    siteId?: string;
+    buildingId?: string;
+    wingId?: string;
+    areaId?: string;
+    floorId?: string;
+    groupId?: string;
+    subGroupId?: string;
   };
 }
 
@@ -59,6 +60,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   fieldStyles,
   onLocationChange,
   resetTrigger,
+  disabled = false,
   errors = {
     siteId: false,
     buildingId: false,
@@ -377,8 +379,8 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         </FormControl>
 
         {/* Group */}
-        <FormControl fullWidth variant="outlined" error={errors.groupId}>
-          <InputLabel id="group-select-label" shrink>Group*</InputLabel>
+        <FormControl fullWidth variant="outlined">
+          <InputLabel id="group-select-label" shrink>Group</InputLabel>
           <MuiSelect
             labelId="group-select-label"
             label="Group"
@@ -397,7 +399,6 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
               </MenuItem>
             ))}
           </MuiSelect>
-          {errors.groupId && <FormHelperText>{helperTexts.groupId}</FormHelperText>}
           {loading.groups && (
             <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
               <CircularProgress size={16} />
@@ -406,8 +407,8 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         </FormControl>
 
         {/* SubGroup */}
-        <FormControl fullWidth variant="outlined" error={errors.subGroupId}>
-          <InputLabel id="subgroup-select-label" shrink>Sub-Group*</InputLabel>
+        <FormControl fullWidth variant="outlined">
+          <InputLabel id="subgroup-select-label" shrink>Sub-Group</InputLabel>
           <MuiSelect
             labelId="subgroup-select-label"
             label="Sub-Group"
@@ -426,7 +427,6 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
               </MenuItem>
             ))}
           </MuiSelect>
-          {errors.subGroupId && <FormHelperText>{helperTexts.subGroupId}</FormHelperText>}
           {loading.subGroups && (
             <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
               <CircularProgress size={16} />

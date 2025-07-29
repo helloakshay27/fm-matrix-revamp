@@ -282,7 +282,7 @@ export const MobileRestaurantDetails: React.FC<
           <h2 className="text-xl font-bold text-gray-900">{restaurant.name}</h2>
           <div className="flex items-center bg-orange-100 px-2 py-1 rounded-lg">
             <span className="text-sm font-semibold text-gray-900 mr-1">
-              {restaurant.rating}
+              {restaurant.rating ? Number(restaurant.rating).toFixed(1) : '4.0'}
             </span>
             <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
           </div>
@@ -294,8 +294,8 @@ export const MobileRestaurantDetails: React.FC<
         </div>
 
         <div className="flex items-center text-gray-500 text-sm">
-          <Users className="w-4 h-4 mr-1" />
-          <span>{restaurant.timeRange}</span>
+          {/* <Users className="w-4 h-4 mr-1" /> */}
+          {/* <span>{restaurant.timeRange}</span> */}
         </div>
       </div>
 

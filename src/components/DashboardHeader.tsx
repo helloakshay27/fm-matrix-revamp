@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Bell, User, MapPin, ChevronDown, Home, Loader2, LogOut, Settings, Mail, Building2 } from 'lucide-react';
+import { Bell, Building2, User, MapPin, ChevronDown, Home, Loader2, LogOut, Settings, Mail } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
@@ -27,7 +27,7 @@ export interface Site {
   name: string;
 }
 
-export const Header = () => {
+export const DashboardHeader = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
 
@@ -96,7 +96,7 @@ export const Header = () => {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-10 w-full shadow-sm">
+    <header className="h-16 bg-white border-b border-[#D5DbDB] w-full shadow-sm">
       <div className="flex items-center justify-between h-full px-6">
         <div className="flex align-items-center gap-14">
 
@@ -137,128 +137,135 @@ export const Header = () => {
 
           {/* Dashboard Button */}
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/')}
             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
           >
             <Home className="w-4 h-4" />
-            Dashboard
+            Home
           </button>
 
           {/* Project Dropdown */}
 
         </div>
 
-        <div className="flex items-center gap-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+        <div className="flex items-center gap-6">
+          {/* Filter Selectors Section */}
+          <div className="flex items-center gap-3 pr-6 border-r border-[#D5DbDB]">
+            {/* Project Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors">
                 <Building2 className="w-4 h-4" />
-
-              {projectLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <span className="text-sm font-medium">
-                  {selectedCompany?.name || 'Select Project'}
-                </span>
-              )}
-              <ChevronDown className="w-3 h-3" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
-              {companies.map((company) => (
-                <DropdownMenuItem
-                  key={company.id}
-                  onClick={() => handleCompanyChange(company.id)}
-                  className={selectedCompany?.id === company.id ? 'bg-[#f6f4ee] text-[#C72030]' : ''}
-                >
-                  {company.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Site Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
-              <MapPin className="w-4 h-4" />
-              {siteLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <span className="text-sm font-medium">
-                  {selectedSite?.name || 'Select Site'}
-                </span>
-              )}
-              <ChevronDown className="w-3 h-3" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
-              {sites.length > 0 ? (
-                sites.map((site) => (
+                {projectLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <span className="text-sm font-medium">
+                    {selectedCompany?.name || 'Select Project'}
+                  </span>
+                )}
+                <ChevronDown className="w-3 h-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
+                {companies.map((company) => (
                   <DropdownMenuItem
-                    key={site.id}
-                    onClick={() => handleSiteChange(site.id)}
-                    className={selectedSite?.id === site.id ? 'bg-[#f6f4ee] text-[#C72030]' : ''}
+                    key={company.id}
+                    onClick={() => handleCompanyChange(company.id)}
+                    className={selectedCompany?.id === company.id ? 'bg-[#f6f4ee] text-[#C72030]' : ''}
                   >
-                    {site.name}
+                    {company.name}
                   </DropdownMenuItem>
-                ))
-              ) : (
-                <DropdownMenuItem disabled>
-                  {selectedCompany ? 'No sites available' : 'Select a project first'}
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-
-          <div className="relative">
-            <button className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors">
-              <Bell className="w-5 h-5 text-[#1a1a1a]" />
-            </button>
-            {notificationCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0 rounded-full">
-                {notificationCount}
-              </Badge>
-            )}
+            {/* Site Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-2 text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors">
+                <MapPin className="w-4 h-4" />
+                {siteLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <span className="text-sm font-medium">
+                    {selectedSite?.name || 'Select Site'}
+                  </span>
+                )}
+                <ChevronDown className="w-3 h-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
+                {sites.length > 0 ? (
+                  sites.map((site) => (
+                    <DropdownMenuItem
+                      key={site.id}
+                      onClick={() => handleSiteChange(site.id)}
+                      className={selectedSite?.id === site.id ? 'bg-[#f6f4ee] text-[#C72030]' : ''}
+                    >
+                      {site.name}
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled>
+                    {selectedCompany ? 'No sites available' : 'Select a project first'}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
-          <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-            <DropdownMenuTrigger className="flex items-center gap-2">
-              <div className="w-9 h-9 bg-[#C4b89D] rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-[#1a1a1a]" />
-              </div>
-              <div className="hidden md:block">
-                <span className="text-sm font-medium text-[#1a1a1a]">{user.firstname}</span>
-                <ChevronDown className="w-3 h-3 text-[#1a1a1a] inline-block ml-1" />
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 bg-white border border-[#D5DbDB] shadow-lg p-2">
-              <div className="px-2 py-2 mb-2 border-b border-gray-100">
-                <p className="font-medium text-sm">{user.firstname} {user.lastname}</p>
-                <div className="flex items-center text-gray-600 text-xs mt-1">
-                  <Mail className="w-3 h-3 mr-1" />
-                  <span>{user.email}</span>
-                </div>
-                <div className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded mt-2 inline-block">
-                  User
-                </div>
-              </div>
-              <DropdownMenuItem className="flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                <span>Profile Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  clearAuth();
-                  window.location.reload();
+          {/* Actions Section */}
+          <div className="flex items-center gap-3">
+            {/* Notification Bell */}
+            <div className="relative">
+              <button className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors group">
+                <Bell className="w-5 h-5 text-[#1a1a1a] group-hover:text-[#C72030]" />
+              </button>
+              {notificationCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[18px] h-[18px] flex items-center justify-center p-0 rounded-full">
+                  {notificationCount}
+                </Badge>
+              )}
+            </div>
 
-                  navigate('/login');
-                }}
-                className="flex items-center gap-2 text-red-600 focus:text-red-700 focus:bg-red-50"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            {/* Profile Dropdown */}
+            <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+              <DropdownMenuTrigger className="flex items-center gap-2 px-2 py-1 hover:bg-[#f6f4ee] rounded-lg transition-colors">
+                <div className="w-8 h-8 bg-[#C4b89D] rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-[#1a1a1a]" />
+                </div>
+                <div className="hidden md:block text-left">
+                  <span className="text-sm font-medium text-[#1a1a1a] block leading-tight">{user.firstname}</span>
+                  <span className="text-xs text-gray-500">User</span>
+                </div>
+                <ChevronDown className="w-3 h-3 text-[#1a1a1a] hidden md:block" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-64 bg-white border border-[#D5DbDB] shadow-lg p-2" align="end">
+                <div className="px-2 py-2 mb-2 border-b border-gray-100">
+                  <p className="font-medium text-sm">{user.firstname} {user.lastname}</p>
+                  <div className="flex items-center text-gray-600 text-xs mt-1">
+                    <Mail className="w-3 h-3 mr-1" />
+                    <span>{user.email}</span>
+                  </div>
+                  <div className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded mt-2 inline-block">
+                    User
+                  </div>
+                </div>
+                <DropdownMenuItem className="flex items-center gap-2">
+                  <Settings className="w-4 h-4" />
+                  <span>Profile Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    clearAuth();
+                    window.location.reload();
+                    navigate('/login');
+                  }}
+                  className="flex items-center gap-2 text-red-600 focus:text-red-700 focus:bg-red-50"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
     </header>

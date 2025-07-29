@@ -38,6 +38,7 @@ export interface TransformedScheduleData {
   category: string;
   active: boolean;
   createdOn: string;
+  custom_form_code: string;
 }
 
 export const fetchCustomForms = async (queryParams?: Record<string, string>): Promise<CustomFormsResponse> => {
@@ -266,7 +267,7 @@ export const transformCustomFormsData = (forms: CustomForm[]): TransformedSchedu
   return forms.map(form => {
     // Split checklist_for to get type and schedule type
     const checklistParts = form.checklist_for.split('::');
-    const type = checklistParts[0] || '';
+    const type = form.schedule_type || '';
     const scheduleType = checklistParts[1] || '';
     
     // Format dates
@@ -292,8 +293,9 @@ export const transformCustomFormsData = (forms: CustomForm[]): TransformedSchedu
       validFrom: formatDate(form.start_date),
       validTill: formatDate(form.end_date),
       category: type === 'PPM' ? 'Technical' : 'Non Technical',
-      active: form.active === 1,
-      createdOn: formatDate(form.created_at)
+      active: form.active === true || form.active === null,
+      createdOn: formatDate(form.created_at),
+      custom_form_code: form.custom_form_code
     };
   });
 };

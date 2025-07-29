@@ -365,7 +365,7 @@ export const MobileOrdersPage: React.FC = () => {
       {/* Tab Navigation */}
       <div className="bg-white border-b border-gray-200">
         <div className="flex">
-          <button
+          {/* <button
             onClick={handleRestaurantTab}
             className={`${isExternalScan ? 'w-full' : 'flex-1'} py-4 px-4 text-center font-medium ${
               activeTab === 'restaurant'
@@ -374,7 +374,7 @@ export const MobileOrdersPage: React.FC = () => {
             }`}
           >
             Restaurant
-          </button>
+          </button> */}
           {!isExternalScan && (
             <button
               onClick={() => setActiveTab('orders')}

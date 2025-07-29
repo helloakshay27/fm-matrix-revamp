@@ -558,6 +558,11 @@ function App() {
                 path="/password-reset-success"
                 element={<PasswordResetSuccessPage />}
               />
+                <Route path="/dashboard"   element={
+                  <ProtectedRoute>
+                  <Dashboard />
+                  </ProtectedRoute>
+                } />
 
               <Route
                 path="/"
@@ -571,7 +576,6 @@ function App() {
               >
                 <Route index element={<Index />} />
 
-                <Route path="/dashboard" element={<Dashboard />} />
 
                 {/* Rule Engine Routes */}
                 <Route
