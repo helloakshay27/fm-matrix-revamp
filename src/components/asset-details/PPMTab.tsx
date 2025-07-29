@@ -427,12 +427,12 @@ export const PPMTab: React.FC<PPMTabProps> = ({ assetId }) => {
             />
           </div>
           
-          <Button variant="outline" size="sm">
+          {/* <Button variant="outline" size="sm">
             <Grid3X3 className="w-4 h-4" />
           </Button>
           <Button variant="outline" size="sm">
             <Download className="w-4 h-4" />
-          </Button>
+          </Button> */}
         </div>
       </div>
 

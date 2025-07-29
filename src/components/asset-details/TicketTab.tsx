@@ -699,15 +699,15 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
               className="pl-10 w-64 min-w-[200px]"
             />
           </div>
-          <Button variant="outline" size="sm">
+          {/* <Button variant="outline" size="sm">
             <RotateCcw className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="sm">
+          </Button> */}
+          {/* <Button variant="outline" size="sm">
             <Grid3X3 className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="sm">
+          </Button> */}
+          {/* <Button variant="outline" size="sm">
             <ChevronDown className="w-4 h-4" />
-          </Button>
+          </Button> */}
         </div>
       </div>
 

@@ -2943,7 +2943,7 @@ const AddAssetPage = () => {
                           )
                         }
                       >
-                        <MenuItem value="inr">INR</MenuItem>
+                        <MenuItem value="inr">OMR</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <TextField
@@ -4662,7 +4662,7 @@ const AddAssetPage = () => {
                           );
                         }}
                       >
-                        <MenuItem value="inr">INR</MenuItem>
+                        <MenuItem value="inr">OMR</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <TextField
