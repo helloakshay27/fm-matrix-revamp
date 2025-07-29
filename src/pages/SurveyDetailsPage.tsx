@@ -20,6 +20,8 @@ export const SurveyDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [buildings, setBuildings] = useState<Array<{id: number, name: string}>>([]);
   const [loadingBuildings, setLoadingBuildings] = useState(false);
+  const [wings, setWings] = useState<Array<{id: number, name: string}>>([]);
+  const [loadingWings, setLoadingWings] = useState(false);
   
   // State for location configuration
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -81,6 +83,33 @@ export const SurveyDetailsPage = () => {
     }
   };
 
+  // Fetch wings
+  const fetchWings = async () => {
+    try {
+      setLoadingWings(true);
+      const response = await fetch(getFullUrl('/pms/wings.json'), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch wings');
+      }
+      
+      const wingsData = await response.json();
+      setWings(wingsData.wings.map((wing: any) => ({
+        id: wing.id,
+        name: wing.name
+      })));
+    } catch (error) {
+      console.error('Error fetching wings:', error);
+    } finally {
+      setLoadingWings(false);
+    }
+  };
+
   // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
@@ -108,6 +137,7 @@ export const SurveyDetailsPage = () => {
 
     loadData();
     fetchBuildings();
+    fetchWings();
   }, [id, toast]);
 
   // Get category name by ID
@@ -456,17 +486,27 @@ export const SurveyDetailsPage = () => {
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Wings</h4>
                       <Select onValueChange={(value) => {
-                        if (!locationConfig.selectedWings.includes(value)) {
-                          addSelectedItem('wing', value);
+                        // value contains the wing ID, find the wing name for display
+                        const selectedWing = wings.find(w => w.id.toString() === value);
+                        if (selectedWing && !locationConfig.selectedWings.includes(selectedWing.name)) {
+                          addSelectedItem('wing', selectedWing.name);
+                          // You can also store the ID separately if needed for backend
+                          console.log('Selected wing ID:', value, 'Name:', selectedWing.name);
                         }
                       }}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder={`${locationConfig.selectedWings.length} wing(s) selected`} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="A Wing">A Wing</SelectItem>
-                          <SelectItem value="B Wing">B Wing</SelectItem>
-                          <SelectItem value="C Wing">C Wing</SelectItem>
+                          {loadingWings ? (
+                            <SelectItem value="loading" disabled>Loading wings...</SelectItem>
+                          ) : (
+                            wings.map((wing) => (
+                              <SelectItem key={wing.id} value={wing.id.toString()}>
+                                {wing.name}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                       {/* Selected wings */}
