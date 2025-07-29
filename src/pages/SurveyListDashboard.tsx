@@ -120,12 +120,6 @@ export const SurveyListDashboard = () => {
               <Edit className="w-4 h-4" />
             </button>
             <button 
-              onClick={() => handleAction('Copy', item.id)}
-              className="p-1 text-gray-600 hover:text-gray-800"
-            >
-              <Copy className="w-4 h-4" />
-            </button>
-            <button 
               onClick={() => handleAction('View', item.id)}
               className="p-1 text-gray-600 hover:text-gray-800"
             >
