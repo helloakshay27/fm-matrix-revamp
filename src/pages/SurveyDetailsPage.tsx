@@ -293,9 +293,6 @@ export const SurveyDetailsPage = () => {
         <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
-              6
-            </div>
             <h3 className="text-lg font-medium text-red-600">Survey Mapping List</h3>
           </div>
           
