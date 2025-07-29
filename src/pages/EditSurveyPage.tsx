@@ -48,7 +48,7 @@ export const EditSurveyPage = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await apiClient.get('/pms/admin/snag_audit_categories.json');
+      const response = await apiClient.get('/snag_audit_categories.json');
       setCategories(response.data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
