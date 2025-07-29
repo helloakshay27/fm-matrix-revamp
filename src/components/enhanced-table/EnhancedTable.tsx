@@ -437,8 +437,6 @@ export function EnhancedTable<T extends Record<string, any>>({
             </div>
           )}
 
-          {rightActions}
-
           {onFilterClick && (
             <Button
               variant="outline"
