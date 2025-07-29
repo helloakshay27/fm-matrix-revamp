@@ -462,22 +462,7 @@ export const SurveyDetailsPage = () => {
                           )}
                         </SelectContent>
                       </Select>
-                      {/* Selected buildings */}
-                      {locationConfig.selectedBuildings.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {locationConfig.selectedBuildings.map((building) => (
-                            <span key={building} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
-                              {building}
-                              <button
-                                onClick={() => removeSelectedItem('building', building)}
-                                className="ml-1 text-gray-500 hover:text-gray-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                       {/* Selected buildings */}
                     </div>
                   )}
 
