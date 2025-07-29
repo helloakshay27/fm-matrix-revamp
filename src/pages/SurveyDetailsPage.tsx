@@ -462,7 +462,6 @@ export const SurveyDetailsPage = () => {
                       }}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder={`${locationConfig.selectedWings.length} wing(s) selected`} />
-                          <ChevronDown className="h-4 w-4" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="A Wing">A Wing</SelectItem>
