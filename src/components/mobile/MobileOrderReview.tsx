@@ -223,6 +223,9 @@ export const MobileOrderReview: React.FC = () => {
     console.log("  - showSuccessImmediately:", showSuccessImmediately);
     console.log("  - contactDetails:", contactDetails);
     console.log("  - orderData:", orderData);
+    console.log("  - orderData.order_status:", orderData?.order_status);
+    console.log("  - orderData.order_status_color:", orderData?.order_status_color);
+    console.log("  - orderData.requests:", orderData?.requests);
     console.log("  - Current URL:", window.location.href);
   }, [
     passedExternalScan,
@@ -259,16 +262,41 @@ export const MobileOrderReview: React.FC = () => {
   };
 
   const getTotalItems = () => {
-    return (
-      totalItems || items.reduce((total, item) => total + item.quantity, 0)
-    );
+    // Use passed totalItems if available
+    if (totalItems) {
+      return totalItems;
+    }
+    
+    // Use API items if available
+    if (orderData?.items && orderData.items.length > 0) {
+      return orderData.items.reduce((total, item) => total + item.quantity, 0);
+    }
+    
+    // Fallback to passed items
+    return items.reduce((total, item) => total + item.quantity, 0);
   };
 
   const getTotalPrice = () => {
-    return (
-      totalPrice ||
-      items.reduce((total, item) => total + item.price * item.quantity, 0)
-    );
+    // Priority 1: Use API total_amount if available and greater than 0
+    if (orderData?.total_amount && orderData.total_amount > 0) {
+      return orderData.total_amount;
+    }
+    
+    // Priority 2: Use passed totalPrice
+    if (totalPrice && totalPrice > 0) {
+      return totalPrice;
+    }
+    
+    // Priority 3: Calculate from items
+    const calculatedPrice = items.reduce((total, item) => {
+      // Only add to total if item has a valid price
+      if (item.price != null && item.price !== undefined && item.price > 0) {
+        return total + item.price * item.quantity;
+      }
+      return total;
+    }, 0);
+    
+    return calculatedPrice;
   };
 
   // Get user details from API response, contact details, or localStorage
@@ -276,35 +304,39 @@ export const MobileOrderReview: React.FC = () => {
     // Priority 1: For external users, use contact details from the form
     if (contactDetails) {
       return {
-        customer_name: contactDetails.customer_name,
-        customer_number: contactDetails.customer_mobile,
-        customer_email: contactDetails.customer_email,
-        delivery_location: contactDetails.delivery_address,
+        customer_name: contactDetails.customer_name || "",
+        customer_number: contactDetails.customer_mobile || "",
+        customer_email: contactDetails.customer_email || "",
+        delivery_location: contactDetails.delivery_address || "",
       };
     }
 
     // Priority 2: Use API response data if available (for existing orders)
     if (orderData && typeof orderData === 'object') {
       const apiOrder = orderData as ApiOrderData;
-      if (apiOrder.user_name) {
-        // Build delivery location from available fields
-        let deliveryLocation = "Default delivery location";
-        if (apiOrder.flat) {
-          deliveryLocation = apiOrder.flat;
-          if (apiOrder.user_department_name) {
-            deliveryLocation += `, ${apiOrder.user_department_name}`;
-          }
-        } else if (apiOrder.user_department_name) {
-          deliveryLocation = apiOrder.user_department_name;
-        }
-
-        return {
-          customer_name: apiOrder.user_name,
-          customer_number: apiOrder.user_phone || apiOrder.contact_number || "Not provided",
-          customer_email: apiOrder.user_email || apiOrder.email || "Not provided",
-          delivery_location: deliveryLocation,
-        };
+      
+      // Build delivery location from available fields
+      let deliveryLocation = "";
+      if (apiOrder.flat) {
+        deliveryLocation = apiOrder.flat;
       }
+      if (apiOrder.user_department_name) {
+        deliveryLocation = deliveryLocation 
+          ? `${deliveryLocation}, ${apiOrder.user_department_name}` 
+          : apiOrder.user_department_name;
+      }
+      if (apiOrder.user_unit_name) {
+        deliveryLocation = deliveryLocation 
+          ? `${deliveryLocation}, ${apiOrder.user_unit_name}` 
+          : apiOrder.user_unit_name;
+      }
+
+      return {
+        customer_name: apiOrder.user_name || "",
+        customer_number: apiOrder.user_phone || apiOrder.contact_number || "",
+        customer_email: apiOrder.user_email || apiOrder.email || "",
+        delivery_location: deliveryLocation,
+      };
     }
 
     // Priority 3: For internal users, get from localStorage as fallback
@@ -312,14 +344,23 @@ export const MobileOrderReview: React.FC = () => {
     const user = storedUser ? JSON.parse(storedUser) : null;
     
     return {
-      customer_name: user?.name || user?.user_name || "User",
-      customer_number: user?.mobile || user?.phone || "Not provided",
-      customer_email: user?.email || "Not provided", 
-      delivery_location: user?.address || user?.flat || "Default delivery location",
+      customer_name: user?.name || user?.user_name || "",
+      customer_number: user?.mobile || user?.phone || "",
+      customer_email: user?.email || "", 
+      delivery_location: user?.address || user?.flat || "",
     };
   };
 
   const userDetails = getUserDetails();
+
+  // Debug: Log status and color values
+  console.log("🎨 STATUS DEBUG:", {
+    order_status: orderData?.order_status,
+    order_status_color: orderData?.order_status_color,
+    requests: orderData?.requests,
+    hasOrderData: !!orderData,
+    orderDataKeys: orderData ? Object.keys(orderData) : 'no orderData'
+  });
 
   const handleConfirmOrder = () => {
     setShowSuccess(true);
@@ -561,83 +602,163 @@ export const MobileOrderReview: React.FC = () => {
 
       {/* Order Summary */}
       <div className="bg-[#E8E2D3] mx-4 mt-4 rounded-lg p-4">
+        {/* Debug logging for status and color values */}
+        {(() => {
+          console.log("🎨 STATUS DEBUG:", {
+            order_status: orderData?.order_status,
+            order_status_color: orderData?.order_status_color,
+            requests: orderData?.requests,
+            hasOrderData: !!orderData,
+            orderDataKeys: orderData ? Object.keys(orderData) : 'no orderData'
+          });
+          return null;
+        })()}
+        
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Order Summary</h2>
-          <span className="bg-gray-400 text-white px-3 py-1 rounded text-sm">
-            Pending
-          </span>
+          {/* Dynamic status based on order data */}
+          {orderData?.order_status ? (
+            <span 
+              className="px-3 py-1 rounded text-sm font-medium text-white"
+              style={{ 
+                backgroundColor: orderData.order_status_color || '#6b7280',
+                color: 'white'
+              }}
+            >
+              {orderData.order_status}
+            </span>
+          ) : (
+            <span className="bg-gray-400 text-white px-3 py-1 rounded text-sm">
+              Pending
+            </span>
+          )}
         </div>
 
         <div className="border-t border-gray-400 border-dashed pt-4 mb-4">
-          <div className="flex justify-between items-center mb-3">
-            <span className="font-semibold text-gray-900">Order ID</span>
-            <span className="font-semibold text-gray-900">
-              #{orderData?.id || "Pending"}
-            </span>
-          </div>
+          {/* Order ID - Only show if available */}
+          {orderData?.id && (
+            <div className="flex justify-between items-center mb-3">
+              <span className="font-semibold text-gray-900">Order ID</span>
+              <span className="font-semibold text-gray-900">
+                #{orderData.id}
+              </span>
+            </div>
+          )}
 
           <div className="flex justify-between items-center mb-4">
             <span className="font-semibold text-gray-900">
-              {restaurant.name}
+              {orderData?.restaurant_name || restaurant.name}
             </span>
             <span className="text-gray-600">
               Total Items - {getTotalItems()}
             </span>
           </div>
 
-          {/* Items List */}
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="flex justify-between items-center mb-2"
-            >
-              <span className="text-gray-900">{item.name}</span>
-              <span className="text-gray-900 font-medium">
-                {item.quantity < 10 ? `0${item.quantity}` : item.quantity}
-              </span>
-            </div>
-          ))}
+          {/* Items List - Use API items if available, otherwise use passed items */}
+          {(orderData?.items && orderData.items.length > 0 ? orderData.items : items).map((item, index) => {
+            // Handle both API item format and regular item format
+            const itemName = 'menu_name' in item ? item.menu_name : item.name;
+            const itemQuantity = item.quantity;
+            const itemPrice = 'rate' in item ? item.rate : item.price;
+            const itemId = 'menu_id' in item ? item.menu_id.toString() : item.id;
+            
+            return (
+              <div
+                key={itemId || index}
+                className="flex justify-between items-center mb-2"
+              >
+                <div className="flex-1">
+                  <span className="text-gray-900">{itemName}</span>
+                  {/* Show individual price only if available and greater than 0 */}
+                  {itemPrice != null && itemPrice !== undefined && itemPrice > 0 && (
+                    <div className="text-sm text-gray-600 mt-1">
+                      ₹{itemPrice} × {itemQuantity} = ₹{itemPrice * itemQuantity}
+                    </div>
+                  )}
+                </div>
+                <span className="text-gray-900 font-medium ml-3">
+                  {itemQuantity < 10 ? `0${itemQuantity}` : itemQuantity}
+                </span>
+              </div>
+            );
+          })}
 
-          {/* Total Price */}
-          <div className="border-t border-gray-400 border-dashed pt-3 mt-3">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-gray-900">Total Amount</span>
-              <span className="font-semibold text-red-600 text-lg">
-                ₹{getTotalPrice()}
-              </span>
+          {/* Total Price - Only show if greater than 0 */}
+          {getTotalPrice() > 0 && (
+            <div className="border-t border-gray-400 border-dashed pt-3 mt-3">
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-gray-900">Total Amount</span>
+                <span className="font-semibold text-red-600 text-lg">
+                  ₹{getTotalPrice()}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="border-t border-gray-400 border-dashed pt-4">
           <h3 className="font-semibold text-gray-900 mb-3">Details</h3>
           <div className="border-t border-gray-400 border-dashed pt-3 space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-900">Name</span>
-              <span className="text-gray-900">{userDetails.customer_name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-900">Contact Number</span>
-              <span className="text-gray-900">{userDetails.customer_number}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-900">Email</span>
-              <span className="text-gray-900 text-sm break-all">{userDetails.customer_email}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-900">Delivery Location</span>
-              <div className="text-right max-w-[60%]">
-                <div className="text-gray-900 text-sm break-words">
-                  {userDetails.delivery_location}
+            {/* Name - Only show if available */}
+            {userDetails.customer_name && userDetails.customer_name !== "User" && (
+              <div className="flex justify-between">
+                <span className="text-gray-900">Name</span>
+                <span className="text-gray-900">{userDetails.customer_name}</span>
+              </div>
+            )}
+            
+            {/* Contact Number - Only show if available and not "Not provided" */}
+            {userDetails.customer_number && userDetails.customer_number !== "Not provided" && (
+              <div className="flex justify-between">
+                <span className="text-gray-900">Contact Number</span>
+                <span className="text-gray-900">{userDetails.customer_number}</span>
+              </div>
+            )}
+            
+            {/* Email - Only show if available and not "Not provided" */}
+            {userDetails.customer_email && userDetails.customer_email !== "Not provided" && (
+              <div className="flex justify-between">
+                <span className="text-gray-900">Email</span>
+                <span className="text-gray-900 text-sm break-all">{userDetails.customer_email}</span>
+              </div>
+            )}
+            
+            {/* Delivery Location - Only show if available and not default */}
+            {userDetails.delivery_location && 
+             userDetails.delivery_location !== "Default delivery location" && 
+             userDetails.delivery_location.trim() !== "" && (
+              <div className="flex justify-between">
+                <span className="text-gray-900">Delivery Location</span>
+                <div className="text-right max-w-[60%]">
+                  <div className="text-gray-900 text-sm break-words">
+                    {userDetails.delivery_location}
+                  </div>
                 </div>
               </div>
-            </div>
-            {note && (
+            )}
+
+            {/* Facility Name - Show if available from localStorage */}
+            {(() => {
+              const storedFacility = localStorage.getItem("currentFacilityName");
+              return storedFacility && storedFacility.trim() !== "" && (
+                <div className="flex justify-between">
+                  <span className="text-gray-900">Facility</span>
+                  <div className="text-right max-w-[60%]">
+                    <div className="text-gray-900 text-sm break-words">
+                      {storedFacility}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+            
+            {/* Note - Show API requests or passed note */}
+            {((orderData?.requests && orderData.requests.trim() !== "") || (note && note.trim() !== "")) && (
               <div className="flex justify-between">
                 <span className="text-gray-900">Note</span>
                 <div className="text-right max-w-[60%]">
                   <div className="text-gray-900 text-sm break-words">
-                    {note}
+                    {orderData?.requests || note}
                   </div>
                 </div>
               </div>

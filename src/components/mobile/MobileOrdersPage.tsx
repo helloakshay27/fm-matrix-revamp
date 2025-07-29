@@ -91,6 +91,7 @@ export const MobileOrdersPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'restaurant' | 'orders'>('restaurant'); // Default to restaurant for external users
   const [orders, setOrders] = useState<Order[]>([]);
+  const [originalFoodOrders, setOriginalFoodOrders] = useState<FoodOrder[]>([]); // Store original API data
   const [restaurants, setRestaurants] = useState<RestaurantBysite[]>([]);
   const [loading, setLoading] = useState(true);
   const [restaurantLoading, setRestaurantLoading] = useState(false);
@@ -135,6 +136,9 @@ export const MobileOrdersPage: React.FC = () => {
         
         const foodOrders = await restaurantApi.getUserOrders(userId);
         console.log("📦 RECEIVED ORDERS:", foodOrders);
+        
+        // Store original API data
+        setOriginalFoodOrders(foodOrders);
         
         // Convert to Order format and sort by created_at (newest first)
         const convertedOrders = foodOrders
@@ -310,16 +314,26 @@ export const MobileOrdersPage: React.FC = () => {
         image: ''
       };
       
-      // Navigate to order review page with order data and flag indicating it's already placed
+      // Find the original FoodOrder data to pass complete API response
+      const originalFoodOrder = originalFoodOrders.find(fo => fo.id.toString() === orderId);
+      
+      // Navigate to order review page with complete order data
       navigate(`/mobile/restaurant/${order.restaurantId}/order-review`, {
         state: {
           items: mockItems,
           restaurant: mockRestaurant,
-          note: 'Previous order details',
+          note: originalFoodOrder?.requests || 'Previous order details',
           isExistingOrder: true,
           totalPrice: order.totalAmount,
           totalItems: order.items.reduce((sum, item) => sum + item.quantity, 0),
-          orderData: { id: order.id }
+          orderData: originalFoodOrder || {
+            id: order.id,
+            order_status: order.status,
+            order_status_color: order.statusColor,
+            restaurant_name: order.restaurantName,
+            total_amount: order.totalAmount,
+            requests: 'Previous order details'
+          }
         }
       });
     }
