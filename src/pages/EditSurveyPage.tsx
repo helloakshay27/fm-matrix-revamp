@@ -96,9 +96,16 @@ export const EditSurveyPage = () => {
     const updatedQuestions = [...questions];
     updatedQuestions[index] = { ...updatedQuestions[index], [field]: value };
     
-    // Reset options when answer type changes
+    // Reset options when answer type changes and add default options for multiple choice
     if (field === 'qtype') {
-      updatedQuestions[index].quest_options = [];
+      if (value === 'multiple' || value === 'single') {
+        updatedQuestions[index].quest_options = [
+          { option_name: '', option_type: 'p' },
+          { option_name: '', option_type: 'p' }
+        ];
+      } else {
+        updatedQuestions[index].quest_options = [];
+      }
     }
     
     setQuestions(updatedQuestions);
