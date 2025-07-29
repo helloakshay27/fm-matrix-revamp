@@ -41,36 +41,44 @@ const SortableChartItem = ({
   } = useSortable({
     id
   });
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1
   };
-  
+
+  // Handle pointer down to prevent drag on button/icon clicks
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const target = e.target as HTMLElement;
+    // Check if the click is on a button, icon, or download element
+    if (
+      target.closest('button') ||
+      target.closest('[data-download]') ||
+      target.closest('svg') ||
+      target.tagName === 'BUTTON' ||
+      target.tagName === 'SVG' ||
+      target.closest('.download-btn') ||
+      target.closest('[data-download-button]')
+    ) {
+      e.stopPropagation();
+      return;
+    }
+    // For other elements, proceed with drag
+    if (listeners?.onPointerDown) {
+      listeners.onPointerDown(e);
+    }
+  };
+
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
-      className="relative group"
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      onPointerDown={handlePointerDown}
+      className="cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group"
     >
-      {/* Drag area - everywhere except buttons */}
-      <div 
-        {...listeners}
-        className="absolute inset-0 cursor-move"
-        onPointerDown={(e) => {
-          // Prevent drag when clicking on buttons or download icons
-          const target = e.target as HTMLElement;
-          if (target.closest('button') || target.closest('[data-download-button]') || target.tagName === 'svg' || target.tagName === 'path') {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-        }}
-      />
-      {/* Content */}
-      <div className="relative">
-        {children}
-      </div>
+      {children}
     </div>
   );
 };
@@ -1023,7 +1031,11 @@ export const TicketDashboard = () => {
                       {chartOrder.filter(id => ['statusChart', 'reactiveChart', 'unitCategoryWise', 'responseTat'].includes(id)).map(chartId => {
                         if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
                           return <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
+                              {/* Drag indicator */}
+                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
+                                <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
+                              </div>
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets Status</h3>
                                 {/* <Download
@@ -1050,15 +1062,15 @@ export const TicketDashboard = () => {
                                   }}
                                 /> */}
                               </div>
-                              <div className="grid grid-cols-3 gap-4">
+                              <div className="flex grid-cols-3 gap-4">
                                 <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                                   <div className="text-2xl font-bold text-yellow-600">{openTickets}</div>
                                   <div className="text-sm text-yellow-700 font-medium">Open</div>
                                 </div>
-                                <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                                {/* <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
                                   <div className="text-2xl font-bold text-orange-600">{inProgressTickets}</div>
                                   <div className="text-sm text-orange-700 font-medium">In Progress</div>
-                                </div>
+                                </div> */}
                                 <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
                                   <div className="text-2xl font-bold text-green-600">{closedTickets}</div>
                                   <div className="text-sm text-green-700 font-medium">Closed</div>
@@ -1069,7 +1081,11 @@ export const TicketDashboard = () => {
                         }
                         if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
                           return <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
+                              {/* Drag indicator */}
+                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
+                                <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
+                              </div>
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Proactive/Reactive Tickets</h3>
                                 {/* <Download
@@ -1160,7 +1176,11 @@ export const TicketDashboard = () => {
                     {chartOrder.filter(id => ['categoryChart', 'agingMatrix', 'resolutionTat'].includes(id)).map(chartId => {
                       if (chartId === 'categoryChart' && visibleSections.includes('categoryChart')) {
                         return <SortableChartItem key={chartId} id={chartId}>
-                          <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
+                          <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
+                            {/* Drag indicator */}
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
+                              <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
+                            </div>
                             <div className="flex items-center justify-between mb-4">
                               <h3 className="text-base sm:text-lg font-bold" style={{
                                 color: '#C72030'
@@ -1212,7 +1232,11 @@ export const TicketDashboard = () => {
                       }
                       if (chartId === 'agingMatrix' && visibleSections.includes('agingMatrix')) {
                         return <SortableChartItem key={chartId} id={chartId}>
-                          <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
+                          <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
+                            {/* Drag indicator */}
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
+                              <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
+                            </div>
                             <div className="flex items-center justify-between mb-4 sm:mb-6">
                               <h3 className="text-base sm:text-lg font-bold" style={{
                                 color: '#C72030'
@@ -1357,30 +1381,18 @@ export const TicketDashboard = () => {
 
         <TabsContent value="tickets" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Ticket Statistics Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+          <div className="flex flex-wrap gap-4 lg:justify-between justify-center">
             {[{
               label: 'Total Tickets',
               value: displayTotalTickets,
               icon: Settings,
               type: 'total',
-              clickable: true // Make total tickets clickable to clear filters
+              clickable: true
             }, {
               label: 'Open',
               value: openTickets,
               icon: Settings,
               type: 'open',
-              clickable: true
-            }, {
-              label: 'In Progress',
-              value: inProgressTickets,
-              icon: Settings,
-              type: 'in_progress',
-              clickable: true
-            }, {
-              label: 'Pending',
-              value: pendingTickets,
-              icon: Settings,
-              type: 'pending',
               clickable: true
             }, {
               label: 'Closed',
@@ -1394,28 +1406,30 @@ export const TicketDashboard = () => {
               return (
                 <div
                   key={i}
-                  className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 transition-all ${isActive
-                      ? ""
-                      : "bg-[#f6f4ee]"
-                    } ${item.clickable ? "cursor-pointer hover:bg-[#edeae3] hover:shadow-lg" : ""
-                    }`}
-                  onClick={() => {
-                    if (item.clickable) {
-                      handleStatusCardClick(item.type);
-                    }
-                  }}
+                  className={`w-full sm:w-[240px] md:w-[260px] lg:w-[260px] xl:w-[300px] flex items-center justify-center p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] gap-2 sm:gap-4 transition-all 
+        ${isActive ? "" : "bg-[#f6f4ee]"} 
+        ${item.clickable ? "cursor-pointer hover:bg-[#edeae3] hover:shadow-lg" : ""}`}
+                  onClick={() => item.clickable && handleStatusCardClick(item.type)}
                 >
                   <div className="w-[52px] h-[36px] sm:w-[62px] sm:h-[62px] rounded-lg flex items-center justify-center flex-shrink-0 bg-[rgba(199,32,48,0.08)]">
                     <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-gray-600 mb-1">{item.value}</div>
-                    <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">{item.label}</div>
+                    <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-gray-600 mb-1">
+                      {item.value}
+                    </div>
+                    <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">
+                      {item.label}
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
+
+
+
+
 
 
           {/* Tickets Table */}

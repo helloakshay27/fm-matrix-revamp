@@ -1335,35 +1335,7 @@ const UpdateTicketsPage: React.FC = () => {
 
               {/* Row 2 */}
               {/* Responsible Person */}
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-gray-700">
-                  Responsible Person
-                </label>
-                <Select
-                  value={formData.responsiblePerson}
-                  onValueChange={(value) =>
-                    handleInputChange("responsiblePerson", value)
-                  }
-                >
-                  <SelectTrigger className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <SelectValue
-                      placeholder="Select responsible person"
-                      className="text-gray-500"
-                    />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded shadow-lg z-50">
-                    {fmUsers.map((user) => (
-                      <SelectItem
-                        key={user.id}
-                        value={user.id.toString()}
-                        className="text-gray-900 hover:bg-gray-100"
-                      >
-                        {user.firstname} {user.lastname}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+             
 
               {/* Review (Tracking) */}
               <div className="space-y-1">
