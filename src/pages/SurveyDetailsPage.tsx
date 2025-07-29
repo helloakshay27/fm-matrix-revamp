@@ -32,6 +32,8 @@ export const SurveyDetailsPage = () => {
   // State for location configuration
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [locationMappings, setLocationMappings] = useState([]);
+  const [surveyMappings, setSurveyMappings] = useState<any[]>([]);
+  const [loadingSurveyMappings, setLoadingSurveyMappings] = useState(false);
   const [locationConfig, setLocationConfig] = useState({
     building: false,
     wing: false,
@@ -209,6 +211,32 @@ export const SurveyDetailsPage = () => {
     }
   };
 
+  // Fetch survey mappings
+  const fetchSurveyMappings = async () => {
+    if (!id) return;
+    
+    try {
+      setLoadingSurveyMappings(true);
+      const response = await fetch(getFullUrl(`/survey_mappings.json?q[survey_id_eq]=${id}`), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch survey mappings');
+      }
+      
+      const mappingsData = await response.json();
+      setSurveyMappings(mappingsData);
+    } catch (error) {
+      console.error('Error fetching survey mappings:', error);
+    } finally {
+      setLoadingSurveyMappings(false);
+    }
+  };
+
   // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
@@ -240,6 +268,7 @@ export const SurveyDetailsPage = () => {
     fetchFloors();
     fetchZones();
     fetchRooms();
+    fetchSurveyMappings();
   }, [id, toast]);
 
   // Get category name by ID
@@ -307,6 +336,9 @@ export const SurveyDetailsPage = () => {
         title: "Success",
         description: "Survey mapping created successfully",
       });
+
+      // Refresh survey mappings data
+      fetchSurveyMappings();
 
       // Reset form
       setLocationConfig({
@@ -836,20 +868,24 @@ export const SurveyDetailsPage = () => {
           </div>
           
           {/* Table Body */}
-          {locationMappings.length > 0 ? (
-            locationMappings.map((mapping) => (
+          {loadingSurveyMappings ? (
+            <div className="p-8 text-center text-gray-500">
+              Loading survey mappings...
+            </div>
+          ) : surveyMappings.length > 0 ? (
+            surveyMappings.map((mapping) => (
                <div key={mapping.id} className="grid grid-cols-6 border-b border-gray-200 last:border-b-0">
-                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.building}</div>
-                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.wing}</div>
-                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor}</div>
-                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.zone}</div>
-                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.room}</div>
-                 <div className="p-4 text-gray-700">-</div>
+                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.building_name || '-'}</div>
+                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.wing_name || '-'}</div>
+                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor_name || '-'}</div>
+                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor_name || '-'}</div>
+                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.room_name || '-'}</div>
+                 <div className="p-4 text-gray-700">{mapping.qr_code || '-'}</div>
                </div>
             ))
           ) : (
             <div className="p-8 text-center text-gray-500">
-              No location mappings found
+              No survey mappings found
             </div>
            )}
          </div>
