@@ -112,13 +112,6 @@ export const SurveyDetailsPage = () => {
                 </Card>)}
             </div>
 
-            {/* Add More Questions Button */}
-            <div className="flex justify-center">
-              <Button variant="outline" className="border-2 border-dashed border-red-300 text-red-600 hover:bg-red-50 px-6 py-3" disabled>
-                <Plus className="w-4 h-4 mr-2" />
-                Add More Questions
-              </Button>
-            </div>
           </div>
 
           {/* Asset Mapping List Table */}
