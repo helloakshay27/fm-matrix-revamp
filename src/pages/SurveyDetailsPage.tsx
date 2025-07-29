@@ -65,7 +65,7 @@ export const SurveyDetailsPage = () => {
 
           {/* Questions Section */}
           <div>
-            {/* Add Questions Header */}
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Questions</h3>
             <div className="text-gray-600 mb-6">
               No. of Questions <span className="font-medium">2</span>
             </div>
