@@ -853,15 +853,9 @@ export const ScheduledTaskDashboard = () => {
 
         <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Header Section with Filter and Selector */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
             {/* Drag info indicator */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="flex gap-1">
-                <div className="w-1 h-4 bg-gray-300 rounded-full"></div>
-                <div className="w-1 h-4 bg-gray-300 rounded-full"></div>
-              </div>
-              <span>Drag cards to reorder</span>
-            </div>
+      
 
             <div className="flex gap-2">
               <Button
