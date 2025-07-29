@@ -52,8 +52,8 @@ export const SurveyDetailsPage = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Category*
           </label>
-          <Select defaultValue="">
-            <SelectTrigger className="w-full">
+          <Select defaultValue="feedback" disabled>
+            <SelectTrigger className="w-full bg-gray-50">
               <SelectValue placeholder="Select Category" />
             </SelectTrigger>
             <SelectContent>
@@ -70,8 +70,9 @@ export const SurveyDetailsPage = () => {
           <input 
             type="text" 
             placeholder="Enter the title"
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
             defaultValue={surveyData.title}
+            disabled
           />
         </div>
       </div>
@@ -80,8 +81,8 @@ export const SurveyDetailsPage = () => {
       <div className="flex items-center gap-4 mb-6">
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gray-700">Add No. of Questions</span>
-          <Select defaultValue="02">
-            <SelectTrigger className="w-16">
+          <Select defaultValue="02" disabled>
+            <SelectTrigger className="w-16 bg-gray-50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -92,7 +93,7 @@ export const SurveyDetailsPage = () => {
               <SelectItem value="05">05</SelectItem>
             </SelectContent>
           </Select>
-          <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white w-8 h-8 p-0">
+          <Button size="sm" className="bg-gray-400 text-white w-8 h-8 p-0" disabled>
             <Plus className="w-4 h-4" />
           </Button>
         </div>
@@ -115,9 +116,10 @@ export const SurveyDetailsPage = () => {
           <CardContent className="space-y-4">
             <div>
               <textarea 
-                className="w-full p-3 border border-gray-300 rounded-md min-h-[80px] resize-none" 
+                className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 min-h-[80px] resize-none" 
                 placeholder="Enter your Question"
                 defaultValue={surveyData.questions[0]?.text}
+                disabled
               />
             </div>
 
@@ -125,8 +127,8 @@ export const SurveyDetailsPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Answer Type
               </label>
-              <Select defaultValue="Multiple Choice">
-                <SelectTrigger className="w-full">
+              <Select defaultValue="Multiple Choice" disabled>
+                <SelectTrigger className="w-full bg-gray-50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -143,8 +145,8 @@ export const SurveyDetailsPage = () => {
               </label>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <Select defaultValue="P">
-                    <SelectTrigger className="w-16 h-10">
+                  <Select defaultValue="P" disabled>
+                    <SelectTrigger className="w-16 h-10 bg-gray-50">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -155,13 +157,14 @@ export const SurveyDetailsPage = () => {
                   <input 
                     type="text" 
                     placeholder="Answer Option"
-                    className="flex-1 p-3 border border-gray-300 rounded-md"
+                    className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
                     defaultValue="Very Satisfied"
+                    disabled
                   />
                 </div>
                 <div className="flex items-center gap-3">
-                  <Select defaultValue="P">
-                    <SelectTrigger className="w-16 h-10">
+                  <Select defaultValue="P" disabled>
+                    <SelectTrigger className="w-16 h-10 bg-gray-50">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -172,11 +175,12 @@ export const SurveyDetailsPage = () => {
                   <input 
                     type="text" 
                     placeholder="Answer Option"
-                    className="flex-1 p-3 border border-gray-300 rounded-md"
+                    className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
                     defaultValue="Satisfied"
+                    disabled
                   />
                 </div>
-                <Button variant="outline" className="w-full border-dashed border-green-400 text-green-600 hover:bg-green-50">
+                <Button variant="outline" className="w-full border-dashed border-gray-300 text-gray-400" disabled>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Answer Option
                 </Button>
@@ -184,7 +188,7 @@ export const SurveyDetailsPage = () => {
             </div>
 
             <div className="flex items-center space-x-2">
-              <Checkbox id="mandatory-1" defaultChecked />
+              <Checkbox id="mandatory-1" defaultChecked disabled className="data-[state=checked]:bg-gray-400" />
               <label htmlFor="mandatory-1" className="text-sm text-gray-700">
                 Mandatory
               </label>
@@ -203,9 +207,10 @@ export const SurveyDetailsPage = () => {
           <CardContent className="space-y-4">
             <div>
               <textarea 
-                className="w-full p-3 border border-gray-300 rounded-md min-h-[80px] resize-none" 
+                className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 min-h-[80px] resize-none" 
                 placeholder="Enter your Question"
                 defaultValue={surveyData.questions[1]?.text}
+                disabled
               />
             </div>
 
@@ -213,8 +218,8 @@ export const SurveyDetailsPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Answer Type
               </label>
-              <Select defaultValue="">
-                <SelectTrigger className="w-full">
+              <Select defaultValue="Text Area" disabled>
+                <SelectTrigger className="w-full bg-gray-50">
                   <SelectValue placeholder="Choose Answer Type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -226,7 +231,7 @@ export const SurveyDetailsPage = () => {
             </div>
 
             <div className="flex items-center space-x-2">
-              <Checkbox id="mandatory-2" />
+              <Checkbox id="mandatory-2" disabled />
               <label htmlFor="mandatory-2" className="text-sm text-gray-700">
                 Mandatory
               </label>
@@ -237,7 +242,7 @@ export const SurveyDetailsPage = () => {
 
       {/* Add More Questions Button */}
       <div className="flex justify-center">
-        <Button variant="outline" className="border-2 border-dashed border-red-300 text-red-600 hover:bg-red-50 px-6 py-3">
+        <Button variant="outline" className="border-2 border-dashed border-gray-300 text-gray-400 px-6 py-3" disabled>
           <Plus className="w-4 h-4 mr-2" />
           Add More Questions
         </Button>
