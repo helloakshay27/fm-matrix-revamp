@@ -91,7 +91,7 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
 
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel shrink id="category-label">
+                <InputLabel shrink id="category-label" sx={{ backgroundColor: 'white', px: 1 }}>
                   Category
                 </InputLabel>
                 <Select
@@ -100,6 +100,7 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
                   onChange={handleChange('category')}
                   displayEmpty
                   sx={fieldHeightSx}
+
                 >
                   <MenuItem value="">
                     <em>Select Category</em>
@@ -129,7 +130,7 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
 
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel shrink id="criticality-label">
+                <InputLabel shrink id="criticality-label" sx={{ backgroundColor: 'white', px: 1 }}>
                   Criticality
                 </InputLabel>
                 <Select

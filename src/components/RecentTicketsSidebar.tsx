@@ -24,7 +24,7 @@ export function RecentTicketsSidebar() {
       setLoading(true);
       const response = await ticketAnalyticsAPI.getRecentTickets();
       const mappedTickets = response.complaints.map((ticket: any) => ({
-        id: ticket.ticket_number,
+        id: ticket.id,
         title: ticket.heading,
         category: ticket.category_type,
         subCategory: ticket.sub_category_type,
@@ -94,7 +94,7 @@ export function RecentTicketsSidebar() {
     }
   };
   const handleViewDetails = (ticketId: string) => {
-    navigate(`/maintenance/ticket-details/${ticketId}`);
+    navigate(`details/${ticketId}`);
   };
   return <>
       <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">

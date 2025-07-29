@@ -111,7 +111,7 @@ export const AddFMUserPage = () => {
         site_id: formData.baseSite,
         lock_user_permissions_attributes: [
           {
-            account_id: "",
+            account_id: userAccount.company_id,
             employee_id: formData.employeeId,
             designation: formData.designation,
             unit_id: formData.selectBaseUnit,
