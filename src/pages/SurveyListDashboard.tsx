@@ -125,12 +125,6 @@ export const SurveyListDashboard = () => {
             >
               <Eye className="w-4 h-4" />
             </button>
-            <button 
-              onClick={() => handleAction('Share', item.id)}
-              className="p-1 text-gray-600 hover:text-gray-800"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
           </div>
         );
       case 'status':
