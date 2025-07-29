@@ -101,45 +101,6 @@ export const SurveyDetailsPage = () => {
                       </Select>
                     </div>
 
-                    {/* Answer Options - Only show for Multiple Choice */}
-                    {question.type === "Multiple Choice" && question.options && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                          Answer Options
-                        </label>
-                        <div className="space-y-3">
-                          {question.options.map((option, optionIndex) => (
-                            <div key={optionIndex} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-white">
-                              <div className="flex items-center">
-                                <Select disabled defaultValue="P">
-                                  <SelectTrigger className="w-16 h-8 bg-gray-50">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="P">P</SelectItem>
-                                    <SelectItem value="N">N</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div className="flex-1">
-                                <input 
-                                  type="text" 
-                                  value={option} 
-                                  disabled
-                                  className="w-full bg-transparent border-none outline-none text-gray-700 placeholder-gray-400"
-                                  placeholder="Answer Option"
-                                />
-                              </div>
-                            </div>
-                          ))}
-                          <Button variant="outline" className="w-full border-dashed border-green-400 text-green-600 hover:bg-green-50" disabled>
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Answer Option
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
                     {/* Mandatory Checkbox */}
                     <div className="flex items-center space-x-2">
                       <Checkbox id={`mandatory-${question.id}`} checked={question.mandatory} disabled className="data-[state=checked]:bg-gray-400" />
