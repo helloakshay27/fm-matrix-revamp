@@ -509,18 +509,6 @@ export const SurveyDetailsPage = () => {
                     </div>
                   </div>
 
-                  {/* Customer Enabled */}
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="customerEnabled" 
-                        checked={locationConfig.customerEnabled}
-                        onCheckedChange={(checked) => setLocationConfig({...locationConfig, customerEnabled: !!checked})}
-                        className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-                      />
-                      <label htmlFor="customerEnabled" className="text-sm font-medium">Customer Enabled</label>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Dropdown sections based on checked items */}
