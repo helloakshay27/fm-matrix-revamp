@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { fetchSnagChecklistById, fetchSnagChecklistCategories, SnagChecklist } from '@/services/snagChecklistAPI';
 import { useToast } from '@/components/ui/use-toast';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
-import { SearchableDropdown } from '@/components/SearchableDropdown';
 export const SurveyDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -23,8 +22,6 @@ export const SurveyDetailsPage = () => {
   const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [wings, setWings] = useState<Array<{id: number, name: string}>>([]);
   const [loadingWings, setLoadingWings] = useState(false);
-  const [floors, setFloors] = useState<Array<{id: number, name: string}>>([]);
-  const [loadingFloors, setLoadingFloors] = useState(false);
   
   // State for location configuration
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -38,7 +35,7 @@ export const SurveyDetailsPage = () => {
     customerEnabled: false,
     selectedBuildings: ['Gophygital'],
     selectedWings: ['A Wing'],
-    selectedFloors: [],
+    selectedFloors: ['Ground Floor'],
     selectedZones: [],
     selectedRooms: []
   });
@@ -113,33 +110,6 @@ export const SurveyDetailsPage = () => {
     }
   };
 
-  // Fetch floors
-  const fetchFloors = async () => {
-    try {
-      setLoadingFloors(true);
-      const response = await fetch(getFullUrl('/pms/floors.json'), {
-        headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch floors');
-      }
-      
-      const floorsData = await response.json();
-      setFloors(floorsData.floors.map((floor: any) => ({
-        id: floor.id,
-        name: floor.name
-      })));
-    } catch (error) {
-      console.error('Error fetching floors:', error);
-    } finally {
-      setLoadingFloors(false);
-    }
-  };
-
   // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
@@ -168,7 +138,6 @@ export const SurveyDetailsPage = () => {
     loadData();
     fetchBuildings();
     fetchWings();
-    fetchFloors();
   }, [id, toast]);
 
   // Get category name by ID
@@ -548,37 +517,20 @@ export const SurveyDetailsPage = () => {
                   {locationConfig.floor && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Floors</h4>
-                      <SearchableDropdown
-                        placeholder={`${locationConfig.selectedFloors.length} floor(s) selected`}
-                        options={floors.map(floor => ({ value: floor.id.toString(), label: floor.name }))}
-                        value={null}
-                        onChange={(selectedOption) => {
-                          if (selectedOption && !locationConfig.selectedFloors.includes(selectedOption.label)) {
-                            addSelectedItem('floor', selectedOption.label);
-                            console.log('Selected floor ID:', selectedOption.value, 'Name:', selectedOption.label);
-                          }
-                        }}
-                        isLoading={loadingFloors}
-                        isSearchable={true}
-                        isClearable={true}
-                        noOptionsMessage="No floors found"
-                      />
-                      {/* Selected floors */}
-                      {locationConfig.selectedFloors.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {locationConfig.selectedFloors.map((floor) => (
-                            <span key={floor} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
-                              {floor}
-                              <button
-                                onClick={() => removeSelectedItem('floor', floor)}
-                                className="ml-1 text-gray-500 hover:text-gray-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      <Select onValueChange={(value) => {
+                        if (!locationConfig.selectedFloors.includes(value)) {
+                          addSelectedItem('floor', value);
+                        }
+                      }}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder={`${locationConfig.selectedFloors.length} floor(s) selected`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="First Floor">First Floor</SelectItem>
+                          <SelectItem value="Second Floor">Second Floor</SelectItem>
+                        </SelectContent>
+                      </Select>
+                       {/* Selected floors */}
                     </div>
                   )}
 
