@@ -1304,16 +1304,16 @@ export const TicketDashboard = () => {
                               </div>
 
                               {/* Summary Box - Full Width Below Table */}
-                              <div className="w-full">
+                              {/* <div className="w-full">
                                 <div className="rounded-lg p-4 sm:p-8 text-center" style={{
                                   backgroundColor: '#EDE4D8'
                                 }}>
                                   <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">
-                                    {agingMatrixAnalyticsData?.average_days || 569} Days
+                                    {agingMatrixAnalyticsData?.average_days } Days
                                   </div>
                                   <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
                                 </div>
-                              </div>
+                              </div> */}
                             </div>
                           </div>
                         </SortableChartItem>;
