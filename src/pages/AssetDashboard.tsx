@@ -211,6 +211,8 @@ export const AssetDashboard = () => {
     totalValue,
   } = useSelector((state: RootState) => state.assets);
 
+  console.log(assets)
+
   console.log(data);
   // Local state
   const [currentPage, setCurrentPage] = useState(1);
@@ -654,7 +656,8 @@ export const AssetDashboard = () => {
     assetSubGroup: asset.sub_group || asset.asset_sub_group || "",
     assetType: asset.asset_type,
     purchaseCost: asset.purchase_cost,
-    currentBookValue: asset.current_book_value
+    currentBookValue: asset.current_book_value,
+    floor: asset.pms_floor
   }));
 
   const transformedSearchedAssets = searchAssets.map((asset, index) => ({
@@ -671,6 +674,7 @@ export const AssetDashboard = () => {
     assetGroup: asset.assetGroup || "",
     assetSubGroup: asset.assetSubGroup || "",
     assetType: asset.assetType,
+    floor: asset.pms_floor
   }));
 
   // Use search results if search term exists, otherwise use Redux assets
@@ -1244,7 +1248,7 @@ export const AssetDashboard = () => {
 
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mt-8">
-                    
+
 
                       {selectedAnalyticsTypes.includes('groupWise') && (
                         <SortableChartItem key="groupWise" id="groupWise">
