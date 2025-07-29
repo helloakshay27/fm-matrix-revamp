@@ -594,15 +594,14 @@ export const SurveyDetailsPage = () => {
                   {locationConfig.zone && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Zones</h4>
-                      <Select onValueChange={(value) => {
-                        if (!locationConfig.selectedZones.includes(value)) {
-                          addSelectedItem('zone', value);
-                        }
-                      }}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder={`${locationConfig.selectedZones.length} zone(s) selected`} />
-                          <ChevronDown className="h-4 w-4" />
-                        </SelectTrigger>
+                       <Select onValueChange={(value) => {
+                         if (!locationConfig.selectedZones.includes(value)) {
+                           addSelectedItem('zone', value);
+                         }
+                       }}>
+                         <SelectTrigger className="w-full">
+                           <SelectValue placeholder={`${locationConfig.selectedZones.length} zone(s) selected`} />
+                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Zone A">Zone A</SelectItem>
                           <SelectItem value="Zone B">Zone B</SelectItem>
@@ -632,15 +631,14 @@ export const SurveyDetailsPage = () => {
                   {locationConfig.room && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Rooms</h4>
-                      <Select onValueChange={(value) => {
-                        if (!locationConfig.selectedRooms.includes(value)) {
-                          addSelectedItem('room', value);
-                        }
-                      }}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder={`${locationConfig.selectedRooms.length} room(s) selected`} />
-                          <ChevronDown className="h-4 w-4" />
-                        </SelectTrigger>
+                       <Select onValueChange={(value) => {
+                         if (!locationConfig.selectedRooms.includes(value)) {
+                           addSelectedItem('room', value);
+                         }
+                       }}>
+                         <SelectTrigger className="w-full">
+                           <SelectValue placeholder={`${locationConfig.selectedRooms.length} room(s) selected`} />
+                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="Room 101">Room 101</SelectItem>
                           <SelectItem value="Room 102">Room 102</SelectItem>
