@@ -960,17 +960,7 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div>
-              <div className="space-y-2">
-                <TextField
-                  label="Grace Time Value"
-                  value={assetTask?.grace_time_value || '3'}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>
+              
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Grace Time</InputLabel>
@@ -985,6 +975,17 @@ export const ViewSchedulePage = () => {
                     </MenuItem>
                   </Select>
                 </FormControl>
+              </div>
+              <div className="space-y-2">
+                <TextField
+                  label="Grace Time Value"
+                  value={assetTask?.grace_time_value || '3'}
+                  InputProps={{ readOnly: true, disabled: true }}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={muiFieldStyles}
+                />
               </div>
 
             </div>

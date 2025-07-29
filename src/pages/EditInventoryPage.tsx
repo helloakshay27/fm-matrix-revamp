@@ -175,18 +175,6 @@ export const EditInventoryPage = () => {
       updated_at: new Date().toISOString()
     };
 
-    console.log('=== INVENTORY UPDATE PAYLOAD ===');
-    console.log('Inventory ID:', id);
-    console.log('Form Data:', formData);
-    console.log('Inventory Type:', inventoryType);
-    console.log('Criticality:', criticality, '→', criticalityValue);
-    console.log('Tax Applicable:', taxApplicable);
-    console.log('Eco Friendly:', ecoFriendly);
-    console.log('Payload Data:', inventoryData);
-    console.log('Full Payload:', { pms_inventory: inventoryData });
-    console.log('API Endpoint:', `https://fm-uat-api.lockated.com/pms/inventories/${id}.json`);
-    console.log('================================');
-
     dispatch(updateInventory({ id, inventoryData }));
   };
 
