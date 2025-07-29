@@ -94,30 +94,37 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
   };
 
   const handleOrderClick = (order: FoodOrder) => {
-    // Navigate to order review with complete order data
-    navigate('/mobile/order-review', { 
-      state: { 
-        order: order,
+    // Create mock data to match order review format using real order data
+    const mockItems = order.items?.map(item => ({
+      id: item.id?.toString() || item.menu_id?.toString(),
+      name: item.menu_name || 'Menu Item',
+      description: item.menu_sub_category || 'Food item',
+      price: item.rate || 0,
+      image: '',
+      quantity: item.quantity || 1
+    })) || [];
+    
+    const mockRestaurant = {
+      id: order.restaurant_id?.toString(),
+      name: order.restaurant_name || 'Restaurant',
+      location: 'Restaurant Location',
+      rating: 4.1,
+      timeRange: '60-65 mins',
+      discount: '20% OFF',
+      image: order.restaurant_cover_images?.[0]?.document || ''
+    };
+    
+    // Navigate to order review page with complete order data
+    navigate(`/mobile/restaurant/${order.restaurant_id}/order-review`, {
+      state: {
+        items: mockItems,
+        restaurant: mockRestaurant,
+        note: order.requests || 'Previous order details',
         isExistingOrder: true,
-        items: order.items?.map(item => ({
-          id: item.id?.toString() || item.menu_id?.toString(),
-          name: item.menu_name || 'Menu Item',
-          description: item.menu_sub_category || 'Food item',
-          price: item.rate || 0,
-          image: '',
-          quantity: item.quantity || 1
-        })) || [],
-        restaurant: {
-          id: order.restaurant_id?.toString(),
-          name: order.restaurant_name || 'Restaurant',
-          location: 'Restaurant Location',
-          rating: 4.1,
-          timeRange: '60-65 mins',
-          discount: '20% OFF',
-          image: order.restaurant_cover_images?.[0]?.document || ''
-        },
+        totalPrice: order.total_amount,
+        totalItems: order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0,
         orderData: order
-      } 
+      }
     });
   };
 
