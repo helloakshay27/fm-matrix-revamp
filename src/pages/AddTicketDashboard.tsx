@@ -384,11 +384,17 @@ export const AddTicketDashboard = () => {
       console.log('Golden Ticket:', isGoldenTicket);
       console.log('Is Flagged:', isFlagged);
 
-      await ticketManagementAPI.createTicket(ticketData, attachedFiles);
+      const response = await ticketManagementAPI.createTicket(ticketData, attachedFiles);
+      console.log('Create ticket response:', response);
+      
+      // Extract ticket number from response - common patterns are ticket_number, complaint_number, or number
+      const ticketNumber = response?.ticket_number || response?.complaint_number || response?.number || response?.complaint?.ticket_number;
       
       toast({
         title: "Success",
-        description: "Ticket created successfully!"
+        description: ticketNumber 
+          ? `Ticket created successfully - ${ticketNumber}`
+          : "Ticket created successfully!"
       });
       
       navigate('/maintenance/ticket');

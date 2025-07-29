@@ -880,6 +880,9 @@ export const AssetDashboard = () => {
   const handleAddAsset = () => {
     navigate("/maintenance/asset/add");
   };
+  const handleAddSchedule = () => {
+    navigate("/maintenance/schedule/add?type=Asset");
+  };
 
   const handleImport = () => {
     setUploadType("import");
@@ -1312,6 +1315,7 @@ export const AssetDashboard = () => {
                   onFilterOpen={() => setIsFilterOpen(true)}
                   onSearch={handleSearch}
                   onRefreshData={handleRefresh}
+                  handleAddSchedule={handleAddSchedule}
                 />
 
                 {/* Empty state when no data and filters are applied */}

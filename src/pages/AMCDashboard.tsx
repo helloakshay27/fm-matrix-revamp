@@ -955,6 +955,12 @@ export const AMCDashboard = () => {
 
               {showActionPanel && (
                 <SelectionPanel
+                actions={[
+                  {
+                    label: 'Add Schedule',
+                    icon: Plus,
+                    onClick: () => navigate('/maintenance/schedule/add?type=AMC'),
+                }]}
                   onAdd={handleAddClick}
                   onClearSelection={() => setShowActionPanel(false)}
                   onImport={handleImportClick}

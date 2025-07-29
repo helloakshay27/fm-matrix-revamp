@@ -230,4 +230,29 @@ export const taskService = {
       throw new Error('Failed to reschedule task');
     }
   },
+
+  getJobSheet: async (id: string) => {
+    try {
+      const response = await apiClient.get(`/pms/asset_task_occurrences/${id}/job_sheet.json`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching job sheet:', error);
+      throw new Error('Failed to fetch job sheet');
+    }
+  },
+
+updateTaskComments: async (id: string, comments: string) => {
+  try {
+    const response = await apiClient.put(`/pms/asset_task_occurences/${id}.json`, {
+      pms_asset_task_occurrence: {
+        task_comments: comments
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating task comments:', error);
+    throw new Error('Failed to update task comments');
+  }
+},
+
 };
