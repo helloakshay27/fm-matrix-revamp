@@ -1381,51 +1381,52 @@ export const TicketDashboard = () => {
 
         <TabsContent value="tickets" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Ticket Statistics Cards */}
-          <div className="flex flex-wrap gap-4 lg:justify-between justify-center">
-            {[{
-              label: 'Total Tickets',
-              value: displayTotalTickets,
-              icon: Settings,
-              type: 'total',
-              clickable: true
-            }, {
-              label: 'Open',
-              value: openTickets,
-              icon: Settings,
-              type: 'open',
-              clickable: true
-            }, {
-              label: 'Closed',
-              value: closedTickets,
-              icon: Settings,
-              type: 'closed',
-              clickable: true
-            }].map((item, i) => {
-              const IconComponent = item.icon;
-              const isActive = isStatusCardActive(item.type);
-              return (
-                <div
-                  key={i}
-                  className={`w-full sm:w-[240px] md:w-[260px] lg:w-[260px] xl:w-[300px] flex items-center justify-center p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] gap-2 sm:gap-4 transition-all 
-        ${isActive ? "" : "bg-[#f6f4ee]"} 
-        ${item.clickable ? "cursor-pointer hover:bg-[#edeae3] hover:shadow-lg" : ""}`}
-                  onClick={() => item.clickable && handleStatusCardClick(item.type)}
-                >
-                  <div className="w-[52px] h-[36px] sm:w-[62px] sm:h-[62px] rounded-lg flex items-center justify-center flex-shrink-0 bg-[rgba(199,32,48,0.08)]">
-                    <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-gray-600 mb-1">
-                      {item.value}
-                    </div>
-                    <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">
-                      {item.label}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+<div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+  {[{
+    label: 'Total Tickets',
+    value: displayTotalTickets,
+    icon: Settings,
+    type: 'total',
+    clickable: true
+  }, {
+    label: 'Open',
+    value: openTickets,
+    icon: Settings,
+    type: 'open',
+    clickable: true
+  }, {
+    label: 'Closed',
+    value: closedTickets,
+    icon: Settings,
+    type: 'closed',
+    clickable: true
+  }].map((item, i) => {
+    const IconComponent = item.icon;
+    const isActive = isStatusCardActive(item.type);
+    return (
+      <div
+        key={i}
+        className={`flex items-center justify-center p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] gap-2 sm:gap-4 transition-all 
+          ${isActive ? "" : "bg-[#f6f4ee]"} 
+          ${item.clickable ? "cursor-pointer hover:bg-[#edeae3] hover:shadow-lg" : ""}`}
+        onClick={() => item.clickable && handleStatusCardClick(item.type)}
+      >
+        <div className="w-[52px] h-[36px] sm:w-[62px] sm:h-[62px] rounded-lg flex items-center justify-center flex-shrink-0 bg-[rgba(199,32,48,0.08)]">
+          <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
+        </div>
+        <div className="flex flex-col min-w-0">
+          <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-gray-600 mb-1">
+            {item.value}
           </div>
+          <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">
+            {item.label}
+          </div>
+        </div>
+      </div>
+    );
+  })}
+</div>
+
 
 
 
