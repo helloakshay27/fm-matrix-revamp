@@ -13,6 +13,11 @@ import { fetchServicesData } from '@/store/slices/servicesSlice';
 import { fetchAMCDetails } from '@/store/slices/amcDetailsSlice';
 import { apiClient } from '@/utils/apiClient';
 
+interface Service {
+  id: string | number;
+  service_name: string;
+}
+
 export const EditAMCPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -57,11 +62,13 @@ export const EditAMCPage = () => {
   const [subGroups, setSubGroups] = useState<Array<{ id: number, name: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [services, setServices] = useState<Service[]>([]); // [newServices]
+
 
   // Extract data from Redux state
   const assets = Array.isArray((assetsData as any)?.assets) ? (assetsData as any).assets : Array.isArray(assetsData) ? assetsData : [];
   const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
-  const services = Array.isArray(servicesData) ? servicesData : [];
+  // const services = Array.isArray(servicesData) ? servicesData : [];
 
   // Fetch AMC data when component mounts
   useEffect(() => {
@@ -202,7 +209,7 @@ export const EditAMCPage = () => {
   useEffect(() => {
     dispatch(fetchAssetsData({ page: 1 }));
     dispatch(fetchSuppliersData());
-    dispatch(fetchServicesData());
+    // dispatch(fetchServicesData());
 
     const fetchAssetGroups = async () => {
       setLoading(true);
@@ -228,6 +235,30 @@ export const EditAMCPage = () => {
         setLoading(false);
       }
     };
+    const fetchService = async () => {
+      try {
+        const response = await apiClient.get('/pms/services/get_services.json');
+        if (Array.isArray(response.data)) {
+          setServices(response.data);
+        } else if (response.data && Array.isArray(response.data.services)) {
+          setServices(response.data.services);
+        } else {
+          console.warn('API response is not an array:', response.data);
+          setServices([]);
+        }
+      }
+      catch (error) {
+        console.error('Error fetching services:', error);
+        setServices([]);
+        toast({
+          title: "Error",
+          description: "Failed to fetch services.",
+          variant: "destructive", // this styles it as an error
+        });
+      }
+    }
+
+    fetchService();
 
     fetchAssetGroups();
   }, [dispatch, toast]);
@@ -719,20 +750,28 @@ export const EditAMCPage = () => {
               </div>
 
               <div>
-                <MaterialDatePicker
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Start Date"
                   value={formData.startDate}
-                  onChange={(value) => handleInputChange('startDate', value)}
-                  placeholder="Select Start Date"
-                  className="h-[28px] sm:h-[36px] md:h-[45px]"
+                  onChange={(e) => handleInputChange('startDate', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ style: { height: 46 } }}
+                  sx={{ '& .MuiInputBase-root': { height: 46 } }}
                 />
               </div>
 
               <div>
-                <MaterialDatePicker
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="First Service Date"
                   value={formData.firstService}
-                  onChange={(value) => handleInputChange('firstService', value)}
-                  placeholder="Select First Service Date"
-                  className="h-[28px] sm:h-[36px] md:h-[45px]"
+                  onChange={(e) => handleInputChange('firstService', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ style: { height: 46 } }}
+                  sx={{ '& .MuiInputBase-root': { height: 46 } }}
                 />
               </div>
 
@@ -759,11 +798,15 @@ export const EditAMCPage = () => {
               </div>
 
               <div>
-                <MaterialDatePicker
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="End Date"
                   value={formData.endDate}
-                  onChange={(value) => handleInputChange('endDate', value)}
-                  placeholder="Select End Date"
-                  className="h-[28px] sm:h-[36px] md:h-[45px]"
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ style: { height: 46 } }}
+                  sx={{ '& .MuiInputBase-root': { height: 46 } }}
                 />
               </div>
 
@@ -1028,7 +1071,7 @@ export const EditAMCPage = () => {
             {updateLoading ? 'Updating...' : 'Update'}
           </Button>
           <Button
-           onClick={() => navigate(`/maintenance/amc/details/${id}`)}
+            onClick={() => navigate(`/maintenance/amc/details/${id}`)}
             disabled={updateLoading}
             style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90"

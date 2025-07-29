@@ -96,7 +96,7 @@ export const fetchBuildings = createAsyncThunk<Building[], number>(
     const response = await axios.get(`${BASE_URL}/pms/sites/${siteId}/buildings.json`, {
       headers: { Authorization: `Bearer ${TOKEN}` }
     });
-    return response.data.buildings.map((item: any) => item.building);
+    return response.data.buildings.map((item: any) => item);
   }
 );
 

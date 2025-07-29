@@ -207,6 +207,8 @@ const AddAssetPage = () => {
     fetchRooms
   } = useLocationData();
 
+  console.log(buildings)
+
   const [expandedSections, setExpandedSections] = useState({
     location: true,
     asset: true,
@@ -6465,8 +6467,8 @@ const AddAssetPage = () => {
                     >
                       <MenuItem value=""><em>Select Building</em></MenuItem>
                       {buildings.map((building) => (
-                        <MenuItem key={building.building.id} value={building.building.id.toString()}>
-                          {building.building.name}
+                        <MenuItem key={building.id} value={building.id.toString()}>
+                          {building.name}
                         </MenuItem>
                       ))}
                     </MuiSelect>

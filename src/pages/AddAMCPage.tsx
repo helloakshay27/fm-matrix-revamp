@@ -19,6 +19,10 @@ import { Autocomplete, Checkbox, CircularProgress } from '@mui/material';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 
+interface Service {
+  id: string | number;
+  service_name: string;
+}
 
 export const AddAMCPage = () => {
   const navigate = useNavigate();
@@ -30,6 +34,7 @@ export const AddAMCPage = () => {
   const { data: suppliersData, loading: suppliersLoading } = useAppSelector(state => state.suppliers);
   const { data: servicesData, loading: servicesLoading } = useAppSelector(state => state.services);
   const { loading: amcCreateLoading, success: amcCreateSuccess, error: amcCreateError } = useAppSelector(state => state.amcCreate);
+  const [services, setServices] = useState<Service[]>([]); // [newServices]
 
   // Form state
   const [formData, setFormData] = useState({
@@ -78,9 +83,11 @@ export const AddAMCPage = () => {
 
   // Extract data from Redux state
   const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
-  const services = Array.isArray(servicesData) ? servicesData : [];
+  // const services = Array.isArray(servicesData) ? servicesData : [];
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
   const checkedIcon = <CheckBoxIcon fontSize="small" />;
+
+
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
@@ -142,7 +149,7 @@ export const AddAMCPage = () => {
     dispatch(fetchAssetsData({ page: 1 }));
     dispatch(fetchInventoryAssets());
     dispatch(fetchSuppliersData());
-    dispatch(fetchServicesData());
+    // dispatch(fetchServicesData());
 
     const fetchAssetGroups = async () => {
       setLoading(true);
@@ -165,8 +172,30 @@ export const AddAMCPage = () => {
       }
     };
 
+    const fetchService = async () => {
+      try {
+        const response = await apiClient.get('/pms/services/get_services.json');
+        if (Array.isArray(response.data)) {
+          setServices(response.data);
+        } else if (response.data && Array.isArray(response.data.services)) {
+          setServices(response.data.services);
+        } else {
+          console.warn('API response is not an array:', response.data);
+          setServices([]);
+        }
+      }
+      catch (error) {
+        console.error('Error fetching services:', error);
+        setServices([]);
+        toast.error("Failed to fetch services.");
+      }
+    }
+
+    fetchService();
     fetchAssetGroups();
   }, [dispatch]);
+
+  // console.log("service,", s)
 
   // Handle AMC creation success
   useEffect(() => {

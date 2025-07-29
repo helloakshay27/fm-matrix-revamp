@@ -20,6 +20,7 @@ import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManag
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
+import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
 import {
   createComplaintMode,
   fetchComplaintModes,
@@ -132,27 +133,9 @@ export const ComplaintModeTab: React.FC = () => {
     }
     
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = localStorage.getItem('baseUrl');
-      
-      const response = await fetch(`https://${baseUrl}/pms/admin/delete_complaint_mode.json`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: complaintMode.id
-        }),
-      });
-
-      if (response.ok) {
-        setComplaintModes(complaintModes.filter(mode => mode.id !== complaintMode.id));
-        toast.success('Complaint mode deleted successfully!');
-      } else {
-        const errorData = await response.json().catch(() => null);
-        toast.error(errorData?.message || 'Failed to delete complaint mode');
-      }
+      await ticketManagementAPI.deleteComplaintMode(complaintMode.id);
+      setComplaintModes(complaintModes.filter(mode => mode.id !== complaintMode.id));
+      toast.success('Complaint mode deleted successfully!');
     } catch (error) {
       console.error('Error deleting complaint mode:', error);
       toast.error('Failed to delete complaint mode');
@@ -171,9 +154,9 @@ export const ComplaintModeTab: React.FC = () => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
+      {/* <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
         <Edit className="h-4 w-4" />
-      </Button>
+      </Button> */}
       <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
         <Trash2 className="h-4 w-4" />
       </Button>

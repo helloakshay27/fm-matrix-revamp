@@ -503,6 +503,7 @@ import { RestaurantOrdersTable } from './components/RestaurantOrdersTable';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { useEffect } from 'react';
 import { getCurrency } from './store/slices/currencySlice';
+import { EditBookingSetupPage } from "./pages/setup/EditBookingSetupPage";
 
 const queryClient = new QueryClient();
 
@@ -1741,6 +1742,7 @@ function App() {
                 <Route path="/settings/vas/booking/setup" element={<BookingSetupDashboard />} />
                 <Route path="/settings/vas/booking/setup/add" element={<AddBookingSetupPage />} />
                 <Route path="/settings/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
+                <Route path="/settings/vas/booking/setup/edit/:id" element={<EditBookingSetupPage />} />
                 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
               </Route>
 
