@@ -639,7 +639,7 @@ export const TicketDashboard = () => {
     if (cardType !== 'total') {
       // Use the correct API parameter format for status filtering
       if (cardType === 'open') {
-        newFilters.complaint_status_fixed_state_eq = 'Open';
+        newFilters.complaint_status_fixed_state_not_eq = 'Open';
         // console.log('Setting Open filter with complaint_status_fixed_state_eq=Open');
       } else if (cardType === 'pending') {
         newFilters.complaint_status_fixed_state_eq = 'Pending';
@@ -672,7 +672,7 @@ export const TicketDashboard = () => {
     if (cardType === 'total') return false;
 
     if (cardType === 'open') {
-      return filters.complaint_status_fixed_state_eq === 'Open';
+      return filters.complaint_status_fixed_state_not_eq === 'Open';
     } else if (cardType === 'pending') {
       return filters.complaint_status_fixed_state_eq === 'Pending';
     } else if (cardType === 'in_progress') {
