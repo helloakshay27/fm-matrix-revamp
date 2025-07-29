@@ -144,7 +144,7 @@ export const SurveyDetailsPage = () => {
       <div className="flex items-center gap-4 mb-6">
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">No. of Questions</span>
-          <span className="text-sm font-medium">2</span>
+          <span className="text-sm font-medium">5</span>
         </div>
       </div>
 
@@ -274,6 +274,181 @@ export const SurveyDetailsPage = () => {
             <div className="flex items-center space-x-2">
               <Checkbox id="mandatory-2" disabled />
               <label htmlFor="mandatory-2" className="text-sm text-gray-700">
+                Mandatory
+              </label>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Question 3 */}
+        <Card className="border border-gray-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <CardTitle className="text-base font-medium">
+              New Question
+            </CardTitle>
+            <X className="w-4 h-4 text-gray-400" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <textarea 
+                className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 min-h-[80px] resize-none" 
+                placeholder="Enter your Question"
+                defaultValue="How would you rate the quality of our products?"
+                disabled
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Answer Type
+              </label>
+              <Select defaultValue="Multiple Choice" disabled>
+                <SelectTrigger className="w-full bg-gray-50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
+                  <SelectItem value="Text Area">Text Area</SelectItem>
+                  <SelectItem value="Short Answer">Short Answer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Answer Options
+              </label>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Select defaultValue="P" disabled>
+                    <SelectTrigger className="w-16 h-10 bg-gray-50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="P">P</SelectItem>
+                      <SelectItem value="N">N</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <input 
+                    type="text" 
+                    placeholder="Answer Option"
+                    className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                    defaultValue="Excellent"
+                    disabled
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <Select defaultValue="P" disabled>
+                    <SelectTrigger className="w-16 h-10 bg-gray-50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="P">P</SelectItem>
+                      <SelectItem value="N">N</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <input 
+                    type="text" 
+                    placeholder="Answer Option"
+                    className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                    defaultValue="Good"
+                    disabled
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox id="mandatory-3" defaultChecked disabled className="data-[state=checked]:bg-gray-400" />
+              <label htmlFor="mandatory-3" className="text-sm text-gray-700">
+                Mandatory
+              </label>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Question 4 */}
+        <Card className="border border-gray-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <CardTitle className="text-base font-medium">
+              New Question
+            </CardTitle>
+            <X className="w-4 h-4 text-gray-400" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <textarea 
+                className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 min-h-[80px] resize-none" 
+                placeholder="Enter your Question"
+                defaultValue="Would you recommend our services to others?"
+                disabled
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Answer Type
+              </label>
+              <Select defaultValue="Short Answer" disabled>
+                <SelectTrigger className="w-full bg-gray-50">
+                  <SelectValue placeholder="Choose Answer Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
+                  <SelectItem value="Text Area">Text Area</SelectItem>
+                  <SelectItem value="Short Answer">Short Answer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox id="mandatory-4" defaultChecked disabled className="data-[state=checked]:bg-gray-400" />
+              <label htmlFor="mandatory-4" className="text-sm text-gray-700">
+                Mandatory
+              </label>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Question 5 - Full width below the grid */}
+      <div className="mb-6">
+        <Card className="border border-gray-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <CardTitle className="text-base font-medium">
+              New Question
+            </CardTitle>
+            <X className="w-4 h-4 text-gray-400" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <textarea 
+                className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 min-h-[80px] resize-none" 
+                placeholder="Enter your Question"
+                defaultValue="Please provide any additional feedback or comments about your experience:"
+                disabled
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Answer Type
+              </label>
+              <Select defaultValue="Text Area" disabled>
+                <SelectTrigger className="w-full bg-gray-50">
+                  <SelectValue placeholder="Choose Answer Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
+                  <SelectItem value="Text Area">Text Area</SelectItem>
+                  <SelectItem value="Short Answer">Short Answer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox id="mandatory-5" disabled />
+              <label htmlFor="mandatory-5" className="text-sm text-gray-700">
                 Mandatory
               </label>
             </div>
