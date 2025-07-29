@@ -232,9 +232,9 @@ export const RestaurantOrderDetailPage = () => {
               <h3 className="text-lg font-semibold mb-4">Order ID: {order.order_details.order_id}</h3>
               <div className="space-y-2">
                 <div><span className="font-medium">Order Date:</span> {order.order_details.order_date}</div>
-                <div><span className="font-medium">Payment Mode:</span> {order.order_details.payment_mode}</div>
-                <div><span className="font-medium">Payment Status:</span> {order.order_details.payment_status}</div>
-                <div><span className="font-medium">Transaction ID:</span> {order.order_details.transaction_id}</div>
+                <div><span className="font-medium">Payment Mode:</span> {Number(order.totals.total_amount) > 0 && order.order_details.payment_mode}</div>
+                <div><span className="font-medium">Payment Status:</span> {Number(order.totals.total_amount) > 0 && order.order_details.payment_status}</div>
+                <div><span className="font-medium">Transaction ID:</span> {Number(order.totals.total_amount) > 0 && order.order_details.transaction_id}</div>
                 <div><span className="font-medium">Preferred Time:</span> {order.order_details.preferred_time}</div>
               </div>
             </div>
@@ -268,27 +268,32 @@ export const RestaurantOrderDetailPage = () => {
             </div>
 
             {/* Right Column - Total Price */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Total Price</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Sub Total:</span>
-                  <span>{order.totals.sub_total}</span>
+            {
+              Number(order.totals.total_amount) > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Total Price</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Sub Total:</span>
+                      <span>{order.totals.sub_total}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>GST:</span>
+                      <span>{order.totals.gst}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Delivery Charge:</span>
+                      <span>{order.totals.delivery_charge}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-lg border-t pt-2 border-gray-400">
+                      <span>TOTAL:</span>
+                      <span>{order.totals.total_amount}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>GST:</span>
-                  <span>{order.totals.gst}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Delivery Charge:</span>
-                  <span>{order.totals.delivery_charge}</span>
-                </div>
-                <div className="flex justify-between font-semibold text-lg border-t pt-2 border-gray-400">
-                  <span>TOTAL:</span>
-                  <span>{order.totals.total_amount}</span>
-                </div>
-              </div>
-            </div>
+              )
+            }
+
           </div>
         </div>
 
