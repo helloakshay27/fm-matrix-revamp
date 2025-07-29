@@ -267,7 +267,7 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
   };
 
   return (
-    <Card className={`h-full ${className}`}>
+    <Card className={`h-full transition-all duration-200 hover:shadow-lg border-gray-200 group ${className}`}>
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-semibold">{title}</CardTitle>
         {dateRange && (
