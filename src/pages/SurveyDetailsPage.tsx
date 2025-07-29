@@ -289,7 +289,8 @@ export const SurveyDetailsPage = () => {
       </Card>
 
       {/* Survey Mapping List Table */}
-      <div className="mt-8">
+      <Card className="border border-gray-200 bg-gray-50">
+        <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
@@ -630,8 +631,9 @@ export const SurveyDetailsPage = () => {
             <div className="p-8 text-center text-gray-500">
               No location mappings found
             </div>
-          )}
-        </div>
-      </div>
+           )}
+         </div>
+        </CardContent>
+      </Card>
     </div>;
 };
