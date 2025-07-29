@@ -52,14 +52,14 @@ export const SurveyDetailsPage = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Category*
           </label>
-          <Select defaultValue="feedback" disabled>
+          <Select defaultValue={surveyData.category} disabled>
             <SelectTrigger className="w-full bg-gray-50">
               <SelectValue placeholder="Select Category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="feedback">Feedback</SelectItem>
-              <SelectItem value="research">Research</SelectItem>
-              <SelectItem value="satisfaction">Satisfaction</SelectItem>
+              <SelectItem value="Feedback">Feedback</SelectItem>
+              <SelectItem value="Research">Research</SelectItem>
+              <SelectItem value="Satisfaction">Satisfaction</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -71,8 +71,9 @@ export const SurveyDetailsPage = () => {
             type="text" 
             placeholder="Enter the title"
             className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
-            defaultValue={surveyData.title}
+            value={surveyData.title}
             disabled
+            readOnly
           />
         </div>
       </div>
