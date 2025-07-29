@@ -42,8 +42,8 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   // Status color logic moved to StatusBadge component
 
   const [showActionPanel, setShowActionPanel] = useState(false);
- const handleExcelExport = async () => {
-    
+  const handleExcelExport = async () => {
+
     try {
       const response = await fetch(
         `https://${localStorage.getItem('baseUrl')}/pms/assets/assets_data_report.xlsx`,
@@ -51,7 +51,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
           method: "GET",
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
-            
+
             Accept:
               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
           },
@@ -71,14 +71,14 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-     
-   
+
+
     } catch (error) {
-      
+
       console.error("Error exporting assets to Excel:", error);
-      
+
     }
-  }; 
+  };
   const selectionActions = [
     // {
     //   label: 'Update',
@@ -242,8 +242,8 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         );
       case "assetStatus":
         return (
-          <StatusBadge 
-            status={asset.status} 
+          <StatusBadge
+            status={asset.status}
             assetId={asset.id}
             onStatusUpdate={onRefreshData}
           />
@@ -263,7 +263,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
           </span>
         );
       case "floor":
-        return <span className="text-sm text-gray-600">NA</span>;
+        return <span className="text-sm text-gray-600">{asset?.floor?.name}</span>;
         {
           /* Floor not in API response */
         }
