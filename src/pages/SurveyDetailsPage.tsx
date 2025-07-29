@@ -26,6 +26,8 @@ export const SurveyDetailsPage = () => {
   const [loadingFloors, setLoadingFloors] = useState(false);
   const [zones, setZones] = useState<Array<{id: number, name: string}>>([]);
   const [loadingZones, setLoadingZones] = useState(false);
+  const [rooms, setRooms] = useState<Array<{id: number, name: string}>>([]);
+  const [loadingRooms, setLoadingRooms] = useState(false);
   
   // State for location configuration
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -168,6 +170,34 @@ export const SurveyDetailsPage = () => {
     }
   };
 
+  // Fetch rooms
+  const fetchRooms = async () => {
+    try {
+      setLoadingRooms(true);
+      const response = await fetch(getFullUrl('/pms/rooms.json'), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch rooms');
+      }
+      
+      const roomsData = await response.json();
+      // Note: Based on the JSON structure provided, it's a direct array, not wrapped in an object
+      setRooms(roomsData.map((room: any) => ({
+        id: room.id,
+        name: room.name
+      })));
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+    } finally {
+      setLoadingRooms(false);
+    }
+  };
+
   // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
@@ -198,6 +228,7 @@ export const SurveyDetailsPage = () => {
     fetchWings();
     fetchFloors();
     fetchZones();
+    fetchRooms();
   }, [id, toast]);
 
   // Get category name by ID
@@ -672,19 +703,29 @@ export const SurveyDetailsPage = () => {
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Rooms</h4>
                        <Select onValueChange={(value) => {
-                         if (!locationConfig.selectedRooms.includes(value)) {
-                           addSelectedItem('room', value);
+                         // value contains the room ID, find the room name for display
+                         const selectedRoom = rooms.find(r => r.id.toString() === value);
+                         if (selectedRoom && !locationConfig.selectedRooms.includes(selectedRoom.name)) {
+                           addSelectedItem('room', selectedRoom.name);
+                           // You can also store the ID separately if needed for backend
+                           console.log('Selected room ID:', value, 'Name:', selectedRoom.name);
                          }
                        }}>
                          <SelectTrigger className="w-full">
                            <SelectValue placeholder={`${locationConfig.selectedRooms.length} room(s) selected`} />
                          </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Room 101">Room 101</SelectItem>
-                          <SelectItem value="Room 102">Room 102</SelectItem>
-                          <SelectItem value="Room 103">Room 103</SelectItem>
-                        </SelectContent>
-                      </Select>
+                         <SelectContent>
+                           {loadingRooms ? (
+                             <SelectItem value="loading" disabled>Loading rooms...</SelectItem>
+                           ) : (
+                             rooms.map((room) => (
+                               <SelectItem key={room.id} value={room.id.toString()}>
+                                 {room.name}
+                               </SelectItem>
+                             ))
+                           )}
+                         </SelectContent>
+                       </Select>
                       {/* Selected rooms */}
                       {locationConfig.selectedRooms.length > 0 && (
                         <div className="flex flex-wrap gap-2">
