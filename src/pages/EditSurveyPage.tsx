@@ -217,7 +217,7 @@ export const EditSurveyPage = () => {
         </div>
       </div>
 
-      <Card className="w-full max-w-6xl mx-auto">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>Edit Survey</CardTitle>
         </CardHeader>
