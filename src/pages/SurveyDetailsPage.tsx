@@ -186,53 +186,44 @@ export const SurveyDetailsPage = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Selected
+                Answer Options
               </label>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200">
-                  <span className="text-gray-700 font-medium">Working</span>
-                  <div className="flex items-center gap-2">
-                    <Select defaultValue="P" disabled>
-                      <SelectTrigger className="w-16 h-8 bg-white border border-gray-300">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
-                        <SelectItem value="P">P</SelectItem>
-                        <SelectItem value="N">N</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <X className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600" />
-                  </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Select defaultValue="P" disabled>
+                    <SelectTrigger className="w-16 h-10 bg-gray-50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="P">P</SelectItem>
+                      <SelectItem value="N">N</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <input 
+                    type="text" 
+                    placeholder="Answer Option"
+                    className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                    defaultValue="Very Satisfied"
+                    disabled
+                  />
                 </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200">
-                  <span className="text-gray-700 font-medium">Not Working</span>
-                  <div className="flex items-center gap-2">
-                    <Select defaultValue="N" disabled>
-                      <SelectTrigger className="w-16 h-8 bg-white border border-gray-300">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
-                        <SelectItem value="P">P</SelectItem>
-                        <SelectItem value="N">N</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <X className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600" />
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200">
-                  <span className="text-gray-700 font-medium">NA</span>
-                  <div className="flex items-center gap-2">
-                    <Select defaultValue="P" disabled>
-                      <SelectTrigger className="w-16 h-8 bg-white border border-gray-300">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="z-50 bg-white border border-gray-200 shadow-lg">
-                        <SelectItem value="P">P</SelectItem>
-                        <SelectItem value="N">N</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <X className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600" />
-                  </div>
+                <div className="flex items-center gap-3">
+                  <Select defaultValue="P" disabled>
+                    <SelectTrigger className="w-16 h-10 bg-gray-50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="P">P</SelectItem>
+                      <SelectItem value="N">N</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <input 
+                    type="text" 
+                    placeholder="Answer Option"
+                    className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                    defaultValue="Satisfied"
+                    disabled
+                  />
                 </div>
               </div>
             </div>
