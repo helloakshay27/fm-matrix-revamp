@@ -43,10 +43,17 @@ export const MobileContactForm: React.FC = () => {
   const facilitySetupData = localStorage.getItem("facility_setup");
   const facilityData = facilitySetupData ? JSON.parse(facilitySetupData) : null;
   
+  // Check for token-based authentication
+  const appToken = localStorage.getItem("app_token");
+  const appUserInfo = localStorage.getItem("app_user_info");
+  const userInfo = appUserInfo ? JSON.parse(appUserInfo) : null;
+  
   console.log("📋 STORED DATA:");
   console.log("  - siteID:", siteID);
   console.log("  - orgID:", orgID);
   console.log("  - facilityData:", facilityData);
+  console.log("  - appToken:", appToken);
+  console.log("  - userInfo:", userInfo);
 
   const {
     selectedItems: items,
@@ -76,13 +83,16 @@ export const MobileContactForm: React.FC = () => {
   // Get source parameter from URL or passed state
   const finalSourceParam = searchParams.get("source") || sourceParam;
   const finalIsExternalScan = isExternalScan || finalSourceParam === "external";
+  const finalIsAppUser = finalSourceParam === "app" || appToken;
 
   // 🔍 Debug logging
-  console.log("📋 CONTACT FORM - EXTERNAL DETECTION:");
+  console.log("📋 CONTACT FORM - SOURCE DETECTION:");
   console.log("  - URL source param:", searchParams.get("source"));
   console.log("  - Passed sourceParam:", sourceParam);
   console.log("  - Final sourceParam:", finalSourceParam);
   console.log("  - Final isExternalScan:", finalIsExternalScan);
+  console.log("  - Final isAppUser:", finalIsAppUser);
+  console.log("  - appToken present:", !!appToken);
   console.log("  - URL facilityId:", searchParams.get("facilityId"));
   console.log("  - Passed facilityId:", facilityId);
   console.log("  - Stored facilityId:", storedFacilityId);
@@ -91,13 +101,11 @@ export const MobileContactForm: React.FC = () => {
   console.log("  - Stored siteID:", siteID);
 
   const [formData, setFormData] = useState<ContactFormData>({
-    customer_mobile: "",
-    customer_name: "",
-    customer_email: "",
-    delivery_address: facilityData?.fac_name || "",
-  });
-
-  console.log("formData", formData);
+    customer_mobile: userInfo?.mobile || "",
+    customer_name: userInfo?.name || "",
+    customer_email: userInfo?.email || "",
+    delivery_address: "",
+  });  console.log("formData", formData);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -165,6 +173,64 @@ export const MobileContactForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      // Priority 1: Token-based order for authenticated app users
+      if (appToken) {
+        console.log("🔑 TOKEN USER: Placing order with token authentication");
+        
+        const tokenOrderData = {
+          token: appToken,
+          food_order: {
+            restaurant_id: parseInt(restaurant.id),
+            preferred_time: undefined,
+            requests: note || "",
+            items_attributes: items.map((item) => ({
+              menu_id: parseInt(item.id),
+              quantity: item.quantity,
+            })),
+          },
+        };
+
+        console.log("📡 SUBMITTING TOKEN ORDER:", tokenOrderData);
+
+        const result = await restaurantApi.createTokenOrder(tokenOrderData);
+        console.log("📡 TOKEN ORDER API Response:", result);
+
+        if (result.success && result.data) {
+          console.log("✅ Token order placed successfully:", result.data);
+
+          // Navigate to order review with success state
+          navigate(`/mobile/restaurant/${restaurant.id}/order-review`, {
+            state: {
+              orderData: {
+                id: result.data.order_id,
+                restaurant_name: result.data.restaurant_name || restaurant.name,
+                customer_name: result.data.customer_name || formData.customer_name,
+                total_amount: result.data.total_amount,
+                message: result.data.message,
+              },
+              restaurant,
+              totalPrice: result.data.total_amount,
+              totalItems: totalItems,
+              items,
+              note,
+              contactDetails: formData,
+              isTokenUser: true,
+              showSuccessImmediately: true,
+            },
+          });
+          return; // Exit early on success
+        } else {
+          console.error("❌ Token order placement failed:", result.message);
+          toast({
+            variant: "destructive",
+            title: "Order Failed",
+            description: result.message || "Failed to place order. Please try again.",
+          });
+          return; // Exit on failure
+        }
+      }
+
+      // Priority 2: External QR scan users
       console.log("🚀 EXTERNAL USER: Placing order with contact details");
 
       if (finalIsExternalScan && finalFacilityId && (siteId || siteID)) {
@@ -174,7 +240,7 @@ export const MobileContactForm: React.FC = () => {
         
         const qrOrderData = {
           customer_name: formData.customer_name,
-          customer_mobile: formData.customer_mobile, // API expects customer_number field
+          customer_number: formData.customer_mobile, // API expects customer_number field
           customer_email: formData.customer_email,
           delivery_address: deliveryLocation,
           facility_id: parseInt(finalFacilityId),
@@ -229,7 +295,7 @@ export const MobileContactForm: React.FC = () => {
           });
         }
       } else {
-        // Fallback to regular order API for internal users or missing data
+        // Priority 3: Fallback to regular order API for internal users or missing data
         console.log("📱 FALLBACK: Using regular order API");
 
         // Get user from localStorage
@@ -241,7 +307,7 @@ export const MobileContactForm: React.FC = () => {
 
         const orderData = {
           customer_name: formData.customer_name,
-          customer_mobile: formData.customer_mobile, // API expects customer_number field
+          customer_number: formData.customer_mobile, // API expects customer_number field
           customer_email: formData.customer_email,
           delivery_address: deliveryLocation,
           facility_id: parseInt(finalFacilityId || "0"),
@@ -313,11 +379,18 @@ export const MobileContactForm: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4">
-        <div className="flex items-center">
-          <button onClick={handleBack} className="mr-4">
-            <ArrowLeft className="w-6 h-6 text-gray-600" />
-          </button>
-          <h1 className="text-lg font-semibold text-gray-900">Order Review</h1>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <button onClick={handleBack} className="mr-4">
+              <ArrowLeft className="w-6 h-6 text-gray-600" />
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">Order Review</h1>
+          </div>
+          {finalIsAppUser && (
+            <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+              App User
+            </div>
+          )}
         </div>
       </div>
 
@@ -338,6 +411,9 @@ export const MobileContactForm: React.FC = () => {
                 className="text-sm font-medium text-gray-700 mb-2 block"
               >
                 Contact Number <span className="text-red-500">*</span>
+                {appToken && userInfo?.mobile && (
+                  <span className="text-xs text-gray-500 ml-2">(From App)</span>
+                )}
               </Label>
               <Input
                 id="customer_mobile"
@@ -350,7 +426,10 @@ export const MobileContactForm: React.FC = () => {
                   handleInputChange("customer_mobile", value);
                 }}
                 maxLength={10}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                readOnly={appToken && userInfo?.mobile}
+                className={`w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
+                  appToken && userInfo?.mobile ? 'bg-gray-50 cursor-not-allowed' : ''
+                }`}
               />
             </div>
 
@@ -361,6 +440,9 @@ export const MobileContactForm: React.FC = () => {
                 className="text-sm font-medium text-gray-700 mb-2 block"
               >
                 Name <span className="text-red-500">*</span>
+                {appToken && userInfo?.name && (
+                  <span className="text-xs text-gray-500 ml-2">(From App)</span>
+                )}
               </Label>
               <Input
                 id="customer_name"
@@ -370,7 +452,10 @@ export const MobileContactForm: React.FC = () => {
                 onChange={(e) =>
                   handleInputChange("customer_name", e.target.value)
                 }
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                readOnly={appToken && userInfo?.name}
+                className={`w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
+                  appToken && userInfo?.name ? 'bg-gray-50 cursor-not-allowed' : ''
+                }`}
               />
             </div>
 
@@ -381,6 +466,9 @@ export const MobileContactForm: React.FC = () => {
                 className="text-sm font-medium text-gray-700 mb-2 block"
               >
                 Email <span className="text-red-500">*</span>
+                {appToken && userInfo?.email && (
+                  <span className="text-xs text-gray-500 ml-2">(From App)</span>
+                )}
               </Label>
               <Input
                 id="customer_email"
@@ -390,7 +478,10 @@ export const MobileContactForm: React.FC = () => {
                 onChange={(e) =>
                   handleInputChange("customer_email", e.target.value.toLowerCase())
                 }
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                readOnly={appToken && userInfo?.email}
+                className={`w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
+                  appToken && userInfo?.email ? 'bg-gray-50 cursor-not-allowed' : ''
+                }`}
               />
             </div>
 
