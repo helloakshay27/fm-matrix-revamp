@@ -38,12 +38,12 @@ export const SurveyDetailsPage = () => {
     floor: false,
     zone: false,
     room: false,
-    customerEnabled: false,
-    selectedBuildings: ['Gophygital'],
-    selectedWings: ['A Wing'],
-    selectedFloors: ['Ground Floor'],
+    selectedBuildings: [],
+    selectedWings: [],
+    selectedFloors: [],
     selectedZones: [],
-    selectedRooms: []
+    selectedRooms: [],
+    selectedRoomIds: [] // Add this to track room IDs
   });
 
   const removeSelectedItem = (type, item) => {
@@ -52,6 +52,17 @@ export const SurveyDetailsPage = () => {
       ...prev,
       [key]: prev[key].filter(selected => selected !== item)
     }));
+    
+    // Also remove from selectedRoomIds if removing a room
+    if (type === 'room') {
+      const room = rooms.find(r => r.name === item);
+      if (room) {
+        setLocationConfig(prev => ({
+          ...prev,
+          selectedRoomIds: prev.selectedRoomIds.filter(id => id !== room.id)
+        }));
+      }
+    }
   };
 
   const addSelectedItem = (type, item) => {
@@ -241,31 +252,84 @@ export const SurveyDetailsPage = () => {
     navigate('/maintenance/survey/list');
   };
 
-  const handleSubmitLocation = () => {
-    const newMapping = {
-      id: Date.now(),
-      building: locationConfig.selectedBuildings.join(', '),
-      wing: locationConfig.selectedWings.join(', '),
-      floor: locationConfig.selectedFloors.join(', '),
-      zone: locationConfig.selectedZones.join(', '),
-      room: locationConfig.selectedRooms.join(', ')
-    };
-    setLocationMappings([...locationMappings, newMapping]);
-    setIsDialogOpen(false);
-    // Reset form
-    setLocationConfig({
-      building: false,
-      wing: false,
-      floor: false,
-      zone: false,
-      room: false,
-      customerEnabled: false,
-      selectedBuildings: [],
-      selectedWings: [],
-      selectedFloors: [],
-      selectedZones: [],
-      selectedRooms: []
-    });
+  const handleSubmitLocation = async () => {
+    try {
+      // Validate that we have room IDs selected
+      if (locationConfig.selectedRoomIds.length === 0) {
+        toast({
+          title: "Error",
+          description: "Please select at least one room",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Prepare the API request
+      const requestData = {
+        survey_id: parseInt(id!), // Convert to number as required by API
+        room_ids: locationConfig.selectedRoomIds
+      };
+
+      console.log('Submitting survey mapping:', requestData);
+
+      // Make the POST API call
+      const response = await fetch(getFullUrl('/survey_mappings.json'), {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create survey mapping');
+      }
+
+      const result = await response.json();
+      console.log('Survey mapping created successfully:', result);
+
+      // Create a local mapping for display
+      const newMapping = {
+        id: Date.now(),
+        building: locationConfig.selectedBuildings.join(', '),
+        wing: locationConfig.selectedWings.join(', '),
+        floor: locationConfig.selectedFloors.join(', '),
+        zone: locationConfig.selectedZones.join(', '),
+        room: locationConfig.selectedRooms.join(', ')
+      };
+      
+      setLocationMappings([...locationMappings, newMapping]);
+      setIsDialogOpen(false);
+
+      // Show success message
+      toast({
+        title: "Success",
+        description: "Survey mapping created successfully",
+      });
+
+      // Reset form
+      setLocationConfig({
+        building: false,
+        wing: false,
+        floor: false,
+        zone: false,
+        room: false,
+        selectedBuildings: [],
+        selectedWings: [],
+        selectedFloors: [],
+        selectedZones: [],
+        selectedRooms: [],
+        selectedRoomIds: []
+      });
+    } catch (error) {
+      console.error('Error creating survey mapping:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create survey mapping",
+        variant: "destructive"
+      });
+    }
   };
   return <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       {/* Header */}
@@ -695,7 +759,11 @@ export const SurveyDetailsPage = () => {
                          const selectedRoom = rooms.find(r => r.id.toString() === value);
                          if (selectedRoom && !locationConfig.selectedRooms.includes(selectedRoom.name)) {
                            addSelectedItem('room', selectedRoom.name);
-                           // You can also store the ID separately if needed for backend
+                           // Also store the room ID for the API call
+                           setLocationConfig(prev => ({
+                             ...prev,
+                             selectedRoomIds: [...prev.selectedRoomIds, selectedRoom.id]
+                           }));
                            console.log('Selected room ID:', value, 'Name:', selectedRoom.name);
                          }
                        }}>
