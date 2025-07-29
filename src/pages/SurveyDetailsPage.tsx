@@ -132,7 +132,7 @@ export const SurveyDetailsPage = () => {
           <input 
             type="text" 
             placeholder="Enter the title"
-            className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+            className="w-full h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-gray-300"
             value={surveyData.title}
             disabled
             readOnly
