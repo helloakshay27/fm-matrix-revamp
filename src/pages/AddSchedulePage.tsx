@@ -1867,7 +1867,7 @@ export const AddSchedulePage = () => {
           activityName: prev.activityName || templateData.form_name || '',
           description: prev.description || templateData.description || '',
           type: templateData.schedule_type || prev.type,
-          scheduleFor: mapChecklistFor(templateData.checklist_for)
+          scheduleFor: prev.scheduleFor
         }));
 
         toast(`Template "${templateData.form_name}" loaded successfully!`);
@@ -2468,7 +2468,7 @@ export const AddSchedulePage = () => {
 
     // Get selected asset IDs or service IDs based on scheduleFor
     const assetIds = formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' ? formData.asset : [];
-    const serviceIds = formData.scheduleFor === 'Service' ? formData.service : [];
+    const serviceIds = formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' ? formData.service : []  ;
 
     // Get assigned people IDs
     const peopleAssignedIds = formData.assignToType === 'user' ? formData.selectedUsers : [];
@@ -2511,9 +2511,8 @@ export const AddSchedulePage = () => {
     }
 
     return {
-      schedule_type: formData.type.toLowerCase(),
+      schedule_type: 'ppm',
       pms_custom_form: {
-        // pms_site_id: "7", // This should come from context/auth
         created_source: "form",
         create_ticket: autoTicket ? "1" : "0",
         ticket_level: formData.ticketLevel,
@@ -2523,13 +2522,12 @@ export const AddSchedulePage = () => {
         schedule_type: formData.type,
         form_name: formData.activityName,
         description: formData.description,
-        // custom_form: customForm,
         supervisors: formData.supervisors ? [formData.supervisors] : [],
         submission_time_type: formData.submissionTime || "",
         submission_time_value: formData.submissionTimeValue || "",
         supplier_id: formData.supplier || ""
       },
-      sch_type: formData.type.toLowerCase(),
+      sch_type: 'ppm',
       checklist_type: formData.scheduleFor,
       group_id: formData.assetGroup || "",
       sub_group_id: Array.isArray(formData.assetSubGroup) ? (formData.assetSubGroup[0] || "") : (formData.assetSubGroup || ""),
@@ -2553,6 +2551,7 @@ export const AddSchedulePage = () => {
         start_date: formatDateToISO(formData.startFrom),
         end_date: formatDateToISO(formData.endAt)
       },
+      backup_assigned_to_id:  formData.backupAssignee || "",
       people_assigned_to_ids: peopleAssignedIds,
       ppm_rule_ids: formData.emailTriggerRule ? [formData.emailTriggerRule] : [],
       amc_rule_ids: [""],
@@ -2564,7 +2563,7 @@ export const AddSchedulePage = () => {
       cronDay: cronDay,
       cronMonth: cronMonth,
       cron_expression: cronExpression,
-      expholder: ""
+      // expholder: ""
     };
   };
 
@@ -2892,9 +2891,10 @@ export const AddSchedulePage = () => {
             </Box>
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+              {
+                  formData.scheduleFor === 'Asset' && (<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 Checklist Type
-              </Typography>
+              </Typography>)}
               {stepIndex < activeStep && (
                 <MuiButton
                   variant="outlined"
@@ -2918,7 +2918,8 @@ export const AddSchedulePage = () => {
               )}
             </Box>
             <Box sx={{ mb: 3 }}>
-              <RadioGroup
+              {
+                  formData.scheduleFor === 'Asset' && (<RadioGroup
                 row
                 value={formData.checklistType}
                 onChange={(e) => handleChecklistTypeChange(e.target.value)}
@@ -2933,7 +2934,8 @@ export const AddSchedulePage = () => {
                   }
                   label="Individual"
                 />
-                <FormControlLabel
+                
+                    <FormControlLabel
                   value="Asset Group"
                   control={
                     <Radio
@@ -2943,12 +2945,13 @@ export const AddSchedulePage = () => {
                   }
                   label="Asset Group"
                 />
+                
                 {/* <FormControlLabel 
                     value="Branching" 
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
                     label="Branching" 
                   /> */}
-              </RadioGroup>
+              </RadioGroup>)}
             </Box>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
@@ -2998,7 +3001,7 @@ export const AddSchedulePage = () => {
               )}
 
               {/* Service Dropdown - Show when scheduleFor is Service */}
-              {formData.scheduleFor === 'Service' && (
+              {formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' && (
                 <Box>
                   <Autocomplete
                     disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.services}
@@ -4140,14 +4143,7 @@ export const AddSchedulePage = () => {
                   </label>
                   <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Auto Ticket</span>
                 </div>
-                <button
-                  onClick={addQuestionSection}
-                  className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
-                  style={{ fontFamily: 'Work Sans, sans-serif' }}
-                >
-                  <Add className="w-4 h-4" />
-                  Add Section
-                </button>
+                
                 {/* Edit button for Question Setup step */}
                 {stepIndex < activeStep && (
                   <MuiButton
@@ -4358,7 +4354,7 @@ export const AddSchedulePage = () => {
 
             {/* Main Content in White Box */}
             {questionSections.map((section, sectionIndex) => (
-              <div key={section.id} className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
+              <div key={section.id} className="overflow-hidden" >
                 <div className=" p-4 sm:p-6 bg-white">
                   <div className="flex justify-between items-center mb-4">
                     <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
@@ -4485,8 +4481,6 @@ export const AddSchedulePage = () => {
                   )}
 
                   {/* Section Header with Group/Sub-Group */}
-
-
                   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
                     <Box>
                       <Autocomplete
@@ -4763,284 +4757,272 @@ export const AddSchedulePage = () => {
                           </Box>
                         )}
 
-                        {/* Enter Value Section for Dropdown */}
-{task.inputType === 'dropdown' && (() => {
-  // Always show Yes/No as first two options, then any additional user options
-  let dropdownValues = Array.isArray(task.dropdownValues) ? [...task.dropdownValues] : [];
-  // Ensure Yes/No are present and mapped
-  if (!dropdownValues.length || dropdownValues.length < 2) {
-    dropdownValues = [
-      { label: 'Yes', type: 'positive' },
-      { label: 'No', type: 'negative' },
-      ...dropdownValues.filter(v => v.label !== 'Yes' && v.label !== 'No')
-    ];
-  } else {
-    // If Yes/No are not present, prepend them
-    if (!dropdownValues.some(v => v.label === 'Yes')) dropdownValues.unshift({ label: 'Yes', type: 'positive' });
-    if (!dropdownValues.some(v => v.label === 'No')) dropdownValues.splice(1, 0, { label: 'No', type: 'negative' });
-  }
-  return (
-    <Box sx={{ mt: 2 }}>
-      <Box sx={{ backgroundColor: '#F5F5F5', border: '1px solid #E0E0E0', borderRadius: 0, padding: 2 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333' }}>
-          Enter Value
-        </Typography>
+{task.inputType === 'dropdown' && (
+                          <Box sx={{ mt: 2 }}>
+                            <Box sx={{
+                              backgroundColor: '#F5F5F5',
+                              border: '1px solid #E0E0E0',
+                              borderRadius: 0,
+                              padding: 2
+                            }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333' }}>
+                                Enter Value
+                              </Typography>
 
-        {dropdownValues.map((value, valueIndex) => (
-          <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-            <TextField
-              disabled={stepIndex < activeStep && editingStep !== stepIndex}
-              fullWidth
-              size="small"
-              placeholder="Enter option value"
-              value={value.label}
-              onChange={(e) => updateDropdownValue(section.id, task.id, valueIndex, e.target.value)}
-              label={
-                <span>
-                  Option {task.mandatory && <span style={{ color: 'inherit' }}>*</span>}
-                </span>
-              }
-              sx={{ '& .MuiOutlinedInput-root': { backgroundColor: 'white' } }}
-            />
+                              {task.dropdownValues && task.dropdownValues.map((value, valueIndex) => (
+                                <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                                  <TextField
+                                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-            <Autocomplete
-              disabled={stepIndex < activeStep && editingStep !== stepIndex}
-              options={[
-                { id: 'positive', label: 'P', value: 'positive' },
-                { id: 'negative', label: 'N', value: 'negative' }
-              ]}
-              getOptionLabel={(option) => option.label}
-              value={
-                ['positive', 'negative'].includes(value.type)
-                  ? {
-                      id: value.type,
-                      label: value.type === 'positive' ? 'P' : 'N',
-                      value: value.type
-                    }
-                  : null
-              }
-              onChange={(event, newValue) => {
-                if (newValue) updateDropdownType(section.id, task.id, valueIndex, newValue.value);
-              }}
-              renderInput={(params) => (
-                <TextField {...params} fullWidth label={<span>Type <span style={{ color: 'currentColor' }}>*</span></span>} />
-              )}
-              isOptionEqualToValue={(option, value) => option.value === value.value}
-            />
+                                    fullWidth
+                                    size="small"
+                                    placeholder="Enter option value"
+                                    value={value.label}
+                                    onChange={(e) => updateDropdownValue(section.id, task.id, valueIndex, e.target.value)}
+                                    label={<span>Option{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                                    sx={{
+                                      '& .MuiOutlinedInput-root': {
+                                        backgroundColor: 'white'
+                                      }
+                                    }}
+                                  />
 
-            {dropdownValues.length > 1 && (
-              <IconButton size="small" onClick={() => removeDropdownValue(section.id, task.id, valueIndex)} sx={{ color: '#C72030' }}>
-                <Close />
-              </IconButton>
-            )}
-          </Box>
-        ))}
+                                  <Autocomplete
+                                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <MuiButton
-            variant="outlined"
-            size="small"
-            startIcon={<Add />}
-            onClick={() => addDropdownValue(section.id, task.id)}
-            sx={{
-              color: '#C72030',
-              borderColor: '#C72030',
-              fontSize: '12px',
-              padding: '4px 12px',
-              '&:hover': {
-                borderColor: '#C72030',
-                backgroundColor: 'rgba(199, 32, 48, 0.04)'
-              }
-            }}
-          >
-            Add Option
-          </MuiButton>
-        </Box>
-      </Box>
-    </Box>
-  );
-})()}
+                                    options={[
+                                      { id: 'positive', label: 'P', value: 'positive' },
+                                      { id: 'negative', label: 'N', value: 'negative' }
+                                    ]}
+                                    getOptionLabel={(option) => option.label}
+                                    value={['positive', 'negative'].includes(value.type)
+                                      ? { id: value.type, label: value.type === 'positive' ? 'P' : 'N', value: value.type }
+                                      : null}
+                                    onChange={(event, newValue) => {
+                                      if (newValue) updateDropdownType(section.id, task.id, valueIndex, newValue.value);
+                                    }}
+                                    renderInput={(params) => (
+                                      <TextField
+                                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-{/* Radio InputType */}
-{task.inputType === 'radio' && (() => {
-  // Always show Yes/No as first two options, then any additional user options
-  let radioValues = Array.isArray(task.radioValues) ? [...task.radioValues] : [];
-  if (!radioValues.length || radioValues.length < 2) {
-    radioValues = [
-      { label: 'Yes', type: 'positive' },
-      { label: 'No', type: 'negative' },
-      ...radioValues.filter(v => v.label !== 'Yes' && v.label !== 'No')
-    ];
-  } else {
-    if (!radioValues.some(v => v.label === 'Yes')) radioValues.unshift({ label: 'Yes', type: 'positive' });
-    if (!radioValues.some(v => v.label === 'No')) radioValues.splice(1, 0, { label: 'No', type: 'negative' });
-  }
-  return (
-    <Box sx={{ mt: 2 }}>
-      <Box sx={{ backgroundColor: '#F5F5F5', border: '1px solid #E0E0E0', borderRadius: 0, padding: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>Selected</Typography>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>Enter Value</Typography>
-        </Box>
+                                        {...params}
+                                        label={<span>Type <span style={{ color: 'currentColor' }}>*</span></span>}
+                                        fullWidth
+                                      />
+                                    )}
+                                    isOptionEqualToValue={(option, value) => option.value === value.value}
+                                  />
 
-        {radioValues.map((value, valueIndex) => (
-          <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-            <Radio
-              checked={valueIndex === 0}
-              name={`radio-${section.id}-${task.id}`}
-              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-            />
+                                  {task.dropdownValues.length > 1 && (
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => removeDropdownValue(section.id, task.id, valueIndex)}
+                                      sx={{ color: '#C72030' }}
+                                    >
+                                      <Close />
+                                    </IconButton>
+                                  )}
+                                </Box>
+                              ))}
 
-            <TextField
-              disabled={stepIndex < activeStep && editingStep !== stepIndex}
-              fullWidth
-              size="small"
-              placeholder="Enter option value"
-              value={value.label}
-              onChange={(e) => updateRadioValue(section.id, task.id, valueIndex, e.target.value)}
-              label={
-                <span>
-                  Option {task.mandatory && <span style={{ color: 'inherit' }}>*</span>}
-                </span>
-              }
-              sx={{ '& .MuiOutlinedInput-root': { backgroundColor: 'white' } }}
-            />
+                              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                <MuiButton
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<Add />}
+                                  onClick={() => addDropdownValue(section.id, task.id)}
+                                  sx={{
+                                    color: '#C72030',
+                                    borderColor: '#C72030',
+                                    fontSize: '12px',
+                                    padding: '4px 12px',
+                                    '&:hover': {
+                                      borderColor: '#C72030',
+                                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                    }
+                                  }}
+                                >
+                                  Add Option
+                                </MuiButton>
+                              </Box>
+                            </Box>
+                          </Box>
+                        )}
 
-            <Autocomplete
-              size="small"
-              disableClearable
-              options={[
-                { id: 'positive', label: 'P', value: 'positive' },
-                { id: 'negative', label: 'N', value: 'negative' }
-              ]}
-              getOptionLabel={(option) => option.label}
-              value={
-                ['positive', 'negative'].includes(value.type)
-                  ? {
-                      id: value.type,
-                      label: value.type === 'positive' ? 'P' : 'N',
-                      value: value.type
-                    }
-                  : null
-              }
-              onChange={(_event, newValue) => {
-                if (newValue) updateRadioType(section.id, task.id, valueIndex, newValue.value);
-              }}
-              renderInput={(params) => (
-                <TextField {...params} label={<span>Type <span style={{ color: 'currentColor' }}>*</span></span>} fullWidth />
-              )}
-              isOptionEqualToValue={(option, value) => option.value === value.value}
-            />
+                        {/* Enter Value Section for Radio */}
+                        {task.inputType === 'radio' && (
+                          <Box sx={{ mt: 2 }}>
+                            <Box sx={{
+                              backgroundColor: '#F5F5F5',
+                              border: '1px solid #E0E0E0',
+                              borderRadius: 0,
+                              padding: 2
+                            }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                                  Selected
+                                </Typography>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                                  Enter Value
+                                </Typography>
+                              </Box>
 
-            {radioValues.length > 1 && (
-              <IconButton size="small" onClick={() => removeRadioValue(section.id, task.id, valueIndex)} sx={{ color: '#C72030' }}>
-                <Close />
-              </IconButton>
-            )}
-          </Box>
-        ))}
+                              {task.radioValues && task.radioValues.map((value, valueIndex) => (
+                                <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                                  <Radio
+                                    checked={valueIndex === 0} // First option selected by default
+                                    name={`radio-${section.id}-${task.id}`}
+                                    sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                  />
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <MuiButton
-            variant="outlined"
-            size="small"
-            startIcon={<Add />}
-            onClick={() => addRadioValue(section.id, task.id)}
-            sx={{
-              color: '#C72030',
-              borderColor: '#C72030',
-              fontSize: '12px',
-              padding: '4px 12px',
-              '&:hover': {
-                borderColor: '#C72030',
-                backgroundColor: 'rgba(199, 32, 48, 0.04)'
-              }
-            }}
-          >
-            Add Option
-          </MuiButton>
-        </Box>
-      </Box>
-    </Box>
-  );
-})()}
+                                  <TextField
+                                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-{/* Checkbox InputType */}
-{task.inputType === 'checkbox' && (() => {
-  // Always show Yes/No as first two options, then any additional user options
-  let checkboxValues = Array.isArray(task.checkboxValues) ? [...task.checkboxValues] : [];
-  if (!checkboxValues.length || checkboxValues.length < 2) {
-    checkboxValues = ['Yes', 'No', ...checkboxValues.filter(v => v !== 'Yes' && v !== 'No')];
-  } else {
-    if (!checkboxValues.includes('Yes')) checkboxValues.unshift('Yes');
-    if (!checkboxValues.includes('No')) checkboxValues.splice(1, 0, 'No');
-  }
-  const checkboxSelectedStates = (task.checkboxSelectedStates && task.checkboxSelectedStates.length === checkboxValues.length)
-    ? task.checkboxSelectedStates
-    : Array(checkboxValues.length).fill(false);
-  return (
-    <Box sx={{ mt: 2 }}>
-      <Box sx={{ backgroundColor: '#F5F5F5', border: '1px solid #E0E0E0', borderRadius: 0, padding: 2 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>Selected</Typography>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>Enter Value</Typography>
-        </Box>
+                                    fullWidth
+                                    size="small"
+                                    placeholder="Enter option value"
+                                    value={value.label}
+                                    onChange={(e) => updateRadioValue(section.id, task.id, valueIndex, e.target.value)}
+                                    label={<span>Option{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                                    sx={{
+                                      '& .MuiOutlinedInput-root': {
+                                        backgroundColor: 'white'
+                                      }
+                                    }}
+                                  />
 
-        {checkboxValues.map((value, valueIndex) => (
-          <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-            <Checkbox
-              checked={checkboxSelectedStates?.[valueIndex] || false}
-              onChange={(e) => updateCheckboxSelectedState(section.id, task.id, valueIndex, e.target.checked)}
-              sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-            />
+                                  <FormControl size="small" sx={{ minWidth: 80 }}>
+                                    <InputLabel>
+                                      Type <span style={{ color: 'currentColor' }}>*</span>
+                                    </InputLabel>
+                                    <Select
+                                      value={value.type}
+                                      onChange={(e) => updateRadioType(section.id, task.id, valueIndex, e.target.value)}
+                                      sx={{
+                                        backgroundColor: 'white',
+                                        '& .MuiSelect-select': {
+                                          color: '#666'
+                                        }
+                                      }}
+                                    >
+                                      <MenuItem value="positive">P</MenuItem>
+                                      <MenuItem value="negative">N</MenuItem>
+                                    </Select>
+                                  </FormControl>
 
-            <TextField
-              disabled={stepIndex < activeStep && editingStep !== stepIndex}
-              fullWidth
-              size="small"
-              placeholder="Enter option value"
-              value={value}
-              onChange={(e) => updateCheckboxValue(section.id, task.id, valueIndex, e.target.value)}
-              label={
-                <span>
-                  Option {task.mandatory && <span style={{ color: 'inherit' }}>*</span>}
-                </span>
-              }
-              sx={{ '& .MuiOutlinedInput-root': { backgroundColor: 'white' } }}
-            />
+                                  {task.radioValues.length > 1 && (
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => removeRadioValue(section.id, task.id, valueIndex)}
+                                      sx={{ color: '#C72030' }}
+                                    >
+                                      <Close />
+                                    </IconButton>
+                                  )}
+                                </Box>
+                              ))}
 
-            {checkboxValues.length > 1 && (
-              <IconButton size="small" onClick={() => removeCheckboxValue(section.id, task.id, valueIndex)} sx={{ color: '#C72030' }}>
-                <Close />
-              </IconButton>
-            )}
-          </Box>
-        ))}
+                              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                <MuiButton
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<Add />}
+                                  onClick={() => addRadioValue(section.id, task.id)}
+                                  sx={{
+                                    color: '#C72030',
+                                    borderColor: '#C72030',
+                                    fontSize: '12px',
+                                    padding: '4px 12px',
+                                    '&:hover': {
+                                      borderColor: '#C72030',
+                                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                    }
+                                  }}
+                                >
+                                  Add Option
+                                </MuiButton>
+                              </Box>
+                            </Box>
+                          </Box>
+                        )}
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <MuiButton
-            variant="outlined"
-            size="small"
-            startIcon={<Add />}
-            onClick={() => addCheckboxValue(section.id, task.id)}
-            sx={{
-              color: '#C72030',
-              borderColor: '#C72030',
-              fontSize: '12px',
-              padding: '4px 12px',
-              '&:hover': {
-                borderColor: '#C72030',
-                backgroundColor: 'rgba(199, 32, 48, 0.04)'
-              }
-            }}
-          >
-            Add Option
-          </MuiButton>
-        </Box>
-      </Box>
-    </Box>
-  );
-})()}
+                        {/* Enter Value Section for Checkbox */}
+                        {task.inputType === 'checkbox' && (
+                          <Box sx={{ mt: 2 }}>
+                            <Box sx={{
+                              backgroundColor: '#F5F5F5',
+                              border: '1px solid #E0E0E0',
+                              borderRadius: 0,
+                              padding: 2
+                            }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                                  Selected
+                                </Typography>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                                  Enter Value
+                                </Typography>
+                              </Box>
+
+                              {task.checkboxValues && task.checkboxValues.map((value, valueIndex) => (
+                                <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                                  <Checkbox
+                                    checked={task.checkboxSelectedStates?.[valueIndex] || false}
+                                    onChange={(e) => updateCheckboxSelectedState(section.id, task.id, valueIndex, e.target.checked)}
+                                    sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                  />
+
+                                  <TextField
+                                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                                    fullWidth
+                                    size="small"
+                                    placeholder="Enter option value"
+                                    value={value}
+                                    onChange={(e) => updateCheckboxValue(section.id, task.id, valueIndex, e.target.value)}
+                                    label={<span>Option{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                                    sx={{
+                                      '& .MuiOutlinedInput-root': {
+                                        backgroundColor: 'white'
+                                      }
+                                    }}
+                                  />
+
+                                  {task.checkboxValues.length > 1 && (
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => removeCheckboxValue(section.id, task.id, valueIndex)}
+                                      sx={{ color: '#C72030' }}
+                                    >
+                                      <Close />
+                                    </IconButton>
+                                  )}
+                                </Box>
+                              ))}
+
+                              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                <MuiButton
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<Add />}
+                                  onClick={() => addCheckboxValue(section.id, task.id)}
+                                  sx={{
+                                    color: '#C72030',
+                                    borderColor: '#C72030',
+                                    fontSize: '12px',
+                                    padding: '4px 12px',
+                                    '&:hover': {
+                                      borderColor: '#C72030',
+                                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                    }
+                                  }}
+                                >
+                                  Add Option
+                                </MuiButton>
+                              </Box>
+                            </Box>
+                          </Box>
+                        )}
 
                         {/* Enter Value Section for Options & Inputs */}
                         {task.inputType === 'options-inputs' && (
@@ -5115,7 +5097,7 @@ export const AddSchedulePage = () => {
                     </Box>
                   ))}
 
-                  <div className="flex justify-end mt-4">
+                  <div className="flex justify-end mt-4 gap-4">
                     <button
                       onClick={() => addTaskToSection(section.id)}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
@@ -5124,10 +5106,23 @@ export const AddSchedulePage = () => {
                       <Add className="w-4 h-4" />
                       Add Question
                     </button>
+                  {(questionSections.length === 1 || sectionIndex === questionSections.length - 1) && (
+  <button
+    onClick={addQuestionSection}
+    className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
+    style={{ fontFamily: 'Work Sans, sans-serif' }}
+  >
+    <Add className="w-4 h-4" />
+    Add Section
+  </button>
+)}
+
                   </div>
-                </div>
+                {sectionIndex < questionSections.length - 1 && <hr className="my-6 border-t border-gray-200" />}
               </div>
-            ))}
+            </div>
+          ))}
+
 
 
           </div>

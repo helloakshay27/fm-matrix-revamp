@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
-import { fetchFMUsers, FMUser } from '@/store/slices/fmUserSlice';
+import { fetchFMUsers, fetchRoles, fetchSuppliers, fetchUnits, FMUser } from '@/store/slices/fmUserSlice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,16 +14,59 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Edit2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAppSelector } from '@/store/hooks';
+import { fetchAllowedSites } from '@/store/slices/siteSlice';
+import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
+import { fetchDepartmentData } from '@/store/slices/departmentSlice';
+import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
+
+interface FormData {
+  firstname: string;
+  lastname: string;
+  gender: string;
+  mobile: string;
+  email: string;
+  company_name: string;
+  entity_id: string;
+  unit_id: string;
+  designation: string;
+  employee_id: string;
+  user_type: 'internal' | 'external';
+  lock_user_permission_status: string;
+  face_added: boolean;
+  app_downloaded: string;
+  access_level: string;
+  daily_helpdesk_report: boolean;
+  site: string;
+  base_unit: string;
+  system_user_type: string;
+  department: string;
+  role: string;
+  vendor_company: string;
+  company_cluster: string;
+  last_working_day: string;
+  email_preference: string;
+}
 
 export const ViewFMUserPage = () => {
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
   const { id } = useParams();
   const { toast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
   const { data: fmUsersResponse, loading } = useSelector((state: RootState) => state.fmUsers);
-  
-  const [formData, setFormData] = useState({
+  const { data: entitiesData, loading: entitiesLoading } = useAppSelector((state) => state.entities);
+  const { data: suppliers, loading: suppliersLoading } = useAppSelector((state) => state.fetchSuppliers);
+  const { data: units, loading: unitsLoading } = useAppSelector((state) => state.fetchUnits);
+  const { data: department, loading: departmentLoading } = useAppSelector((state) => state.department);
+  const { data: roles, loading: roleLoading } = useAppSelector((state) => state.fetchRoles);
+  const { sites } = useAppSelector((state) => state.site);
+  const { selectedCompany } = useAppSelector((state: RootState) => state.project);
+
+  const [formData, setFormData] = useState<FormData>({
     firstname: '',
     lastname: '',
     gender: '',
@@ -40,7 +83,7 @@ export const ViewFMUserPage = () => {
     app_downloaded: 'No',
     access_level: '',
     daily_helpdesk_report: false,
-    site: 'lockated',
+    site: '',
     base_unit: '',
     system_user_type: 'admin',
     department: '',
@@ -51,64 +94,91 @@ export const ViewFMUserPage = () => {
     email_preference: ''
   });
 
-  // Find the user data
+  const userId = JSON.parse(localStorage.getItem('user'))?.id;
+
+  useEffect(() => {
+    dispatch(fetchEntities());
+    dispatch(fetchSuppliers({ baseUrl, token }));
+    dispatch(fetchUnits({ baseUrl, token }));
+    dispatch(fetchDepartmentData());
+    dispatch(fetchRoles({ baseUrl, token }));
+    dispatch(fetchAllowedSites(userId));
+    dispatch(fetchAllowedCompanies());
+  }, [dispatch, baseUrl, token, userId]);
+
   const userData = fmUsersResponse?.fm_users?.find(user => user.id.toString() === id);
 
   useEffect(() => {
     setCurrentSection('Master');
     if (!fmUsersResponse?.fm_users) {
+      console.log('Fetching FM users...');
       dispatch(fetchFMUsers());
     }
+    console.log('fmUsersResponse:', fmUsersResponse);
   }, [setCurrentSection, dispatch, fmUsersResponse]);
 
   useEffect(() => {
     if (userData) {
+      console.log('userData:', userData);
       setFormData({
-        firstname: userData.firstname || 'yyuiyiy',
-        lastname: userData.lastname || 'iiujo',
-        gender: userData.gender || 'Male',
-        mobile: userData.mobile || '7897780978',
-        email: userData.email || 'tesruhhh@gmail.com',
+        firstname: userData.firstname || '',
+        lastname: userData.lastname || '',
+        gender: userData.gender || '',
+        mobile: userData.mobile || '',
+        email: userData.email || '',
         company_name: userData.company_name || '',
-        entity_id: userData.entity_id?.toString() || '',
-        unit_id: userData.unit_id?.toString() || '',
-        designation: userData.designation || 'Designation',
-        employee_id: userData.employee_id || 'Employee ID',
+        entity_id: userData.entity_id || '',
+        unit_id: userData.unit_id || '',
+        designation: userData.lock_user_permission.designation || '',
+        employee_id: userData.lock_user_permission.employee_id || '',
         user_type: userData.user_type === 'pms_admin' ? 'internal' : 'external',
         lock_user_permission_status: userData.lock_user_permission_status || '',
         face_added: userData.face_added || false,
         app_downloaded: userData.app_downloaded || 'No',
         access_level: userData.lock_user_permission?.access_level || 'Site',
         daily_helpdesk_report: false,
-        site: 'lockated',
-        base_unit: '',
-        system_user_type: 'admin',
-        department: '',
-        role: 'admin',
+        site: userData.lock_user_permission.site_id || '',
+        base_unit: userData.unit_id,
+        system_user_type: userData.user_type,
+        department: userData.department_id,
+        role: formData.lock_role_id,
         vendor_company: '',
         company_cluster: '',
         last_working_day: 'Last Working Day',
-        email_preference: ''
+        email_preference: userData.urgency_email_enabled
       });
+    } else {
+      console.log('userData not found for id:', id);
     }
-  }, [userData]);
+  }, [userData, id]);
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = <K extends keyof FormData>(field: K, value: FormData[K]) => {
+    console.log(`Updating ${field} to:`, value);
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleSubmit = () => {
-    toast({
-      title: "Success",
-      description: "User details updated successfully!"
-    });
-    navigate('/master/user/fm-users');
+  const handleSubmit = async () => {
+    try {
+      // TODO: Implement updateFMUser action in your Redux slice
+      // await dispatch(updateFMUser({ id, data: formData, baseUrl, token }));
+      toast({
+        title: "Success",
+        description: "User details updated successfully!"
+      });
+      navigate('/master/user/fm-users');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update user details.",
+        variant: "destructive"
+      });
+    }
   };
 
-  if (loading) {
+  if (loading || entitiesLoading || suppliersLoading || unitsLoading || departmentLoading || roleLoading) {
     return (
       <div className="w-full p-6 space-y-6">
         <div className="flex items-center justify-center h-64">
@@ -150,25 +220,34 @@ export const ViewFMUserPage = () => {
                     <div className="w-32 h-32 bg-amber-100 rounded-full flex items-center justify-center">
                       <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center">
                         <svg className="w-16 h-16 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                         </svg>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               {/* Left Side Form Controls */}
               <div className="space-y-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Site</Label>
                   <Select value={formData.site} onValueChange={(value) => handleInputChange('site', value)}>
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue placeholder="Select Site" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="lockated">Lockated</SelectItem>
-                      <SelectItem value="other">Other Site</SelectItem>
+                      {sites?.length > 0 ? (
+                        sites.map((site) => (
+                          <SelectItem key={site.id} value={site.id}>
+                            {site.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          No sites available
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -180,8 +259,17 @@ export const ViewFMUserPage = () => {
                       <SelectValue placeholder="Select Base Unit" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="unit1">Unit 1</SelectItem>
-                      <SelectItem value="unit2">Unit 2</SelectItem>
+                      {units?.length > 0 ? (
+                        units.map((unit) => (
+                          <SelectItem key={unit.id} value={unit.id}>
+                            {unit?.building?.name} - {unit.unit_name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          No units available
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -190,12 +278,19 @@ export const ViewFMUserPage = () => {
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">User Type</Label>
                   <Select value={formData.system_user_type} onValueChange={(value) => handleInputChange('system_user_type', value)}>
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue placeholder="Select User Type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="admin">Admin(Web & App)</SelectItem>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="pms_admin">Admin (Web & App)</SelectItem>
+                      <SelectItem value="pms_technician">Technician (App)</SelectItem>
+                      <SelectItem value="pms_hse">Head Site Engineer</SelectItem>
+                      <SelectItem value="pms_se">Site Engineer</SelectItem>
+                      <SelectItem value="pms_occupant_admin">Customer Admin</SelectItem>
+                      <SelectItem value="pms_accounts">Accounts</SelectItem>
+                      <SelectItem value="pms_po">Purchase Officer</SelectItem>
+                      <SelectItem value="pms_qc">Quality Control</SelectItem>
+                      <SelectItem value="pms_security">Security</SelectItem>
+                      <SelectItem value="pms_security_supervisor">Security Supervisor</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -207,8 +302,17 @@ export const ViewFMUserPage = () => {
                       <SelectValue placeholder="Select Entity" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="1">Entity 1</SelectItem>
-                      <SelectItem value="2">Entity 2</SelectItem>
+                      {entitiesData?.entities?.length > 0 ? (
+                        entitiesData.entities.map((entity: Entity) => (
+                          <SelectItem key={entity.id} value={entity.id}>
+                            {entity.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          No entities available
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -220,9 +324,9 @@ export const ViewFMUserPage = () => {
                       <SelectValue placeholder="Select Email Preference" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      <SelectItem value="daily">Daily</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="0">All Emails</SelectItem>
+                      <SelectItem value="1">Critical Emails Only</SelectItem>
+                      <SelectItem value="2">No Emails</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -261,7 +365,7 @@ export const ViewFMUserPage = () => {
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Gender</Label>
                   <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue placeholder="Select Gender" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Male">Male</SelectItem>
@@ -353,9 +457,17 @@ export const ViewFMUserPage = () => {
                       <SelectValue placeholder="Select Department" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="it">IT</SelectItem>
-                      <SelectItem value="hr">HR</SelectItem>
-                      <SelectItem value="finance">Finance</SelectItem>
+                      {department?.length > 0 ? (
+                        department.map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.department_name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          No departments available
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -375,12 +487,20 @@ export const ViewFMUserPage = () => {
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Role</Label>
                   <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue placeholder="Select Role" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
+                      {roles?.length > 0 ? (
+                        roles.map((role) => (
+                          <SelectItem key={role.id} value={role.id}>
+                            {role.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          No roles available
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -391,8 +511,17 @@ export const ViewFMUserPage = () => {
                       <SelectValue placeholder="Select Vendor Company" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="company1">Company 1</SelectItem>
-                      <SelectItem value="company2">Company 2</SelectItem>
+                      {suppliers?.length > 0 ? (
+                        suppliers.map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id}>
+                            {supplier.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled>
+                          No vendors available
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -404,7 +533,7 @@ export const ViewFMUserPage = () => {
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Access Level</Label>
                   <Select value={formData.access_level} onValueChange={(value) => handleInputChange('access_level', value)}>
                     <SelectTrigger className="w-full">
-                      <SelectValue />
+                      <SelectValue placeholder="Select Access Level" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="site">Site</SelectItem>
@@ -437,7 +566,7 @@ export const ViewFMUserPage = () => {
 
               {/* Submit Button */}
               <div className="flex justify-center pt-6">
-                <Button 
+                <Button
                   onClick={handleSubmit}
                   className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2 rounded-md"
                 >

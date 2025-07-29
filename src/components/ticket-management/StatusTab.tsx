@@ -212,9 +212,9 @@ export const StatusTab: React.FC = () => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm">
+      {/* <Button variant="ghost" size="sm">
         <Edit className="h-4 w-4" />
-      </Button>
+      </Button> */}
       <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
         <Trash2 className="h-4 w-4" />
       </Button>

@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { SetApprovalModal } from '@/components/SetApprovalModal';
 import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { assetService } from '@/services/assetService';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCustomFormDetails } from '@/services/customFormsAPI';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
@@ -91,7 +92,60 @@ export const ViewSchedulePage = () => {
   const [groupOptions, setGroupOptions] = useState<any[]>([]);
   const [subGroupOptions, setSubGroupOptions] = useState<any[]>([]);
 
-  
+  // Supervisor and Supplier state
+  const [users, setUsers] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [loading, setLoading] = useState<{ users: boolean; suppliers: boolean }>({ users: false, suppliers: false });
+
+  // Load users for supervisors
+  const loadUsers = async () => {
+    setLoading(prev => ({ ...prev, users: true }));
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ESCALATION_USERS}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setUsers(data.users || []);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+      const mockUsers = [
+        { id: 1, full_name: 'John Doe' },
+        { id: 2, full_name: 'Jane Smith' },
+        { id: 3, full_name: 'Mike Johnson' }
+      ];
+      setUsers(mockUsers);
+    } finally {
+      setLoading(prev => ({ ...prev, users: false }));
+    }
+  };
+
+  // Load suppliers
+  const loadSuppliers = async () => {
+    setLoading(prev => ({ ...prev, suppliers: true }));
+    try {
+      const data = await assetService.getSuppliers();
+      setSuppliers(data);
+    } catch (error) {
+      console.error('Failed to load suppliers:', error);
+    } finally {
+      setLoading(prev => ({ ...prev, suppliers: false }));
+    }
+  };
+
+  // Call both APIs on mount
+  useEffect(() => {
+    loadUsers();
+    loadSuppliers();
+  }, []);
+
+
 
   // Fetch custom form details
   const {
@@ -116,7 +170,7 @@ export const ViewSchedulePage = () => {
 
   const selectedGroupId = customForm?.content?.[0]?.group_id || '';
   const selectedSubGroupId = customForm?.content?.[0]?.sub_group_id || '';
-  
+
   // Fetch group options on mount
   useEffect(() => {
     const fetchGroups = async () => {
@@ -167,7 +221,7 @@ export const ViewSchedulePage = () => {
     };
     fetchSubGroups();
   }, [selectedGroupId]);
-  
+
 
   // Format date function
   const formatDate = (dateStr: string | null | undefined) => {
@@ -226,9 +280,6 @@ export const ViewSchedulePage = () => {
   const handleViewPerformance = () => {
     navigate(`/maintenance/schedule/performance/${id}`, { state: { formCode } });
   };
-  
-  console.log("selected",selectedGroupId, selectedSubGroupId );
-  
 
   return (
     <div className="p-6 mx-auto">
@@ -362,44 +413,43 @@ export const ViewSchedulePage = () => {
           <CardContent className="space-y-4">
             {/* Group and Sub Group Dropdowns with selected value from master data */}
             {(() => {
-              
               return (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <FormControl fullWidth variant="outlined" disabled>
-  <InputLabel shrink>Group</InputLabel>
-  <Select
-    value={selectedGroupId || ''}
-    label="Group"
-    disabled
-    sx={muiFieldStyles}
-  >
-    {groupOptions.map(group => (
-      <MenuItem key={group.id} value={group.id}>
-        {console.log("group",group)}
-        {group.name}
-      </MenuItem>
-    ))}
-  </Select>
-</FormControl>
+                      <InputLabel shrink>Group</InputLabel>
+                      <Select
+                        value={selectedGroupId || ''}
+                        label="Group"
+                        disabled
+                        sx={muiFieldStyles}
+                      >
+                        {groupOptions.map(group => (
+                          <MenuItem key={group.id} value={group.id}>
+                            {console.log("group", group)}
+                            {group.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
 
                   </div>
                   <div className="space-y-2">
                     <FormControl fullWidth variant="outlined" disabled>
-  <InputLabel shrink>Sub Group</InputLabel>
-  <Select
-    value={selectedSubGroupId || ''}
-    label="Sub Group"
-    disabled
-    sx={muiFieldStyles}
-  >
-    {subGroupOptions.map(subGroup => (
-      <MenuItem key={subGroup.id} value={subGroup.id}>
-        {subGroup.name}
-      </MenuItem>
-    ))}
-  </Select>
-</FormControl>
+                      <InputLabel shrink>Sub Group</InputLabel>
+                      <Select
+                        value={selectedSubGroupId || ''}
+                        label="Sub Group"
+                        disabled
+                        sx={muiFieldStyles}
+                      >
+                        {subGroupOptions.map(subGroup => (
+                          <MenuItem key={subGroup.id} value={subGroup.id}>
+                            {subGroup.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   </div>
                 </div>
               );
@@ -412,115 +462,115 @@ export const ViewSchedulePage = () => {
                 {customForm.content.map((task, index) => (
                   <div key={index} className="p-4 border rounded-lg bg-gray-50">
                     <div className="flex items-center gap-8">
-    <div className="flex items-center space-x-2 mb-6">
-      <Checkbox
-        checked={task.required === 'true'}
-        disabled
-        className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
-      />
-      <Label className="text-gray-900 font-medium">Mandatory</Label>
-    </div>
-    <div className="flex items-center space-x-2 mb-6">
-      <Checkbox
-        checked={!!task.hint}
-        disabled
-        className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
-      />
-      <Label className="text-gray-900 font-medium">Help Text</Label>
-    </div>
-    <div className="flex items-center space-x-2 mb-6">
-      <Checkbox
-        checked={task.is_reading === 'true'}
-        disabled
-        className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
-      />
-      <Label className="text-gray-900 font-medium">Reading</Label>
-    </div>
-    <div className="flex items-center space-x-2 mb-6">
-      <Checkbox
-        checked={task.rating_enabled === 'true'}
-        disabled
-        className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
-      />
-      <Label className="text-gray-900 font-medium">Rating</Label>
-    </div>
-  </div>
-  {/* Fields Row */}
-  <div className="flex gap-4 mb-4">
-    <div className="flex-1">
-      <TextField
-        label="Task"
-        value={task.label}
-        InputProps={{ readOnly: true, disabled: true }}
-        fullWidth
-        variant="outlined"
-        InputLabelProps={{ shrink: true }}
-        sx={muiFieldStyles}
-      />
-    </div>
-    <div className="flex-1">
-      <FormControl fullWidth variant="outlined" disabled>
-        <InputLabel shrink>Input Type</InputLabel>
-        <Select
-          value={
-            task.type === 'text'
-              ? 'Text'
-              : task.type === 'radio-group'
-              ? 'Radio'
-              : task.type === 'numeric'
-              ? 'Numeric'
-              : task.type
-          }
-          label="Input Type"
-          disabled
-          sx={muiFieldStyles}
-        >
-          <MenuItem value={
-            task.type === 'text'
-              ? 'Text'
-              : task.type === 'radio-group'
-              ? 'Radio'
-              : task.type === 'numeric'
-              ? 'Numeric'
-              : task.type
-          }>
-            {task.type === 'text'
-              ? 'Text'
-              : task.type === 'radio-group'
-              ? 'Radio'
-              : task.type === 'numeric'
-              ? 'Numeric'
-              : task.type}
-          </MenuItem>
-        </Select>
-      </FormControl>
-    </div>
-    <div className="flex-1">
-      <TextField
-        label="Weightage"
-        value={task.weightage || ''}
-        InputProps={{ readOnly: true, disabled: true }}
-        fullWidth
-        variant="outlined"
-        InputLabelProps={{ shrink: true }}
-        sx={muiFieldStyles}
-      />
-    </div>
-  </div>
-  {/* Hint Row */}
-  {task.hint && (
-    <div className="mb-4">
-      <TextField
-        label="Help Text (Hint)"
-        value={task.hint}
-        InputProps={{ readOnly: true, disabled: true }}
-        fullWidth
-        variant="outlined"
-        InputLabelProps={{ shrink: true }}
-        sx={muiFieldStyles}
-      />
-    </div>
-  )}
+                      <div className="flex items-center space-x-2 mb-6">
+                        <Checkbox
+                          checked={task.required === 'true'}
+                          disabled
+                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
+                        />
+                        <Label className="text-gray-900 font-medium">Mandatory</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 mb-6">
+                        <Checkbox
+                          checked={!!task.hint}
+                          disabled
+                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
+                        />
+                        <Label className="text-gray-900 font-medium">Help Text</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 mb-6">
+                        <Checkbox
+                          checked={task.is_reading === 'true'}
+                          disabled
+                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
+                        />
+                        <Label className="text-gray-900 font-medium">Reading</Label>
+                      </div>
+                      {task.rating_enabled === 'true' && (<div className="flex items-center space-x-2 mb-6">
+                        <Checkbox
+                          checked={task.rating_enabled === 'true'}
+                          disabled
+                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030] data-[state=checked]:text-white bg-[#F5F5F5] border-[#D1D5DB]"
+                        />
+                        <Label className="text-gray-900 font-medium">Rating</Label>
+                      </div>)}
+                    </div>
+                    {/* Fields Row */}
+                    <div className="flex gap-4 mb-4">
+                      <div className="flex-1">
+                        <TextField
+                          label="Task"
+                          value={task.label}
+                          InputProps={{ readOnly: true, disabled: true }}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: true }}
+                          sx={muiFieldStyles}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <FormControl fullWidth variant="outlined" disabled>
+                          <InputLabel shrink>Input Type</InputLabel>
+                          <Select
+                            value={
+                              task.type === 'text'
+                                ? 'Text'
+                                : task.type === 'radio-group'
+                                  ? 'Radio'
+                                  : task.type === 'numeric'
+                                    ? 'Numeric'
+                                    : task.type
+                            }
+                            label="Input Type"
+                            disabled
+                            sx={muiFieldStyles}
+                          >
+                            <MenuItem value={
+                              task.type === 'text'
+                                ? 'Text'
+                                : task.type === 'radio-group'
+                                  ? 'Radio'
+                                  : task.type === 'numeric'
+                                    ? 'Numeric'
+                                    : task.type
+                            }>
+                              {task.type === 'text'
+                                ? 'Text'
+                                : task.type === 'radio-group'
+                                  ? 'Radio'
+                                  : task.type === 'numeric'
+                                    ? 'Numeric'
+                                    : task.type}
+                            </MenuItem>
+                          </Select>
+                        </FormControl>
+                      </div>
+                      {task.weightage && (<div className="flex-1">
+                        <TextField
+                          label="Weightage"
+                          value={task.weightage || ''}
+                          InputProps={{ readOnly: true, disabled: true }}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: true }}
+                          sx={muiFieldStyles}
+                        />
+                      </div>)}
+                    </div>
+                    {/* Hint Row */}
+                    {task.hint && (
+                      <div className="mb-4">
+                        <TextField
+                          label="Help Text (Hint)"
+                          value={task.hint}
+                          InputProps={{ readOnly: true, disabled: true }}
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: true }}
+                          sx={muiFieldStyles}
+                        />
+                      </div>
+                    )}
 
                     {/* Conditional Value Sections */}
                     <div className="col-span-3">
@@ -749,20 +799,20 @@ export const ViewSchedulePage = () => {
 
             <div className="grid grid-cols-3 gap-4 mt-3">
               <div className="space-y-2">
-  <TextField
-    label="Assign to"
-    value={
-      Array.isArray(assetTask.assigned_to) && assetTask.assigned_to.length > 0
-        ? assetTask.assigned_to.map((user: any) => user.name).join(', ')
-        : 'Not assigned'
-    }
-    InputProps={{ readOnly: true, disabled: true }}
-    fullWidth
-    variant="outlined"
-    InputLabelProps={{ shrink: true }}
-    sx={muiFieldStyles}
-  />
-</div>
+                <TextField
+                  label="Assign to"
+                  value={
+                    Array.isArray(assetTask.assigned_to) && assetTask.assigned_to.length > 0
+                      ? assetTask.assigned_to.map((user: any) => user.name).join(', ')
+                      : 'Not assigned'
+                  }
+                  InputProps={{ readOnly: true, disabled: true }}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={muiFieldStyles}
+                />
+              </div>
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Scan Type</InputLabel>
@@ -822,13 +872,32 @@ export const ViewSchedulePage = () => {
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Supervisors</InputLabel>
                   <Select
-                    value={customForm?.supervisors?.join(', ') || 'Select Supervisors'}
+                    value={
+                      Array.isArray(customForm?.supervisors) && customForm.supervisors.length > 0
+                        ? customForm.supervisors.map((id: any) => {
+                          const user = users.find(u => String(u.id) === String(id));
+                          return user ? user.full_name : id;
+                        }).join(', ')
+                        : 'Select Supervisors'
+                    }
                     label="Supervisors"
                     disabled
                     sx={muiFieldStyles}
                   >
-                    <MenuItem value={customForm?.supervisors?.join(', ') || 'Select Supervisors'}>
-                      {customForm?.supervisors?.join(', ') || 'Select Supervisors'}
+                    <MenuItem value={
+                      Array.isArray(customForm?.supervisors) && customForm.supervisors.length > 0
+                        ? customForm.supervisors.map((id: any) => {
+                          const user = users.find(u => String(u.id) === String(id));
+                          return user ? user.full_name : id;
+                        }).join(', ')
+                        : 'Select Supervisors'
+                    }>
+                      {Array.isArray(customForm?.supervisors) && customForm.supervisors.length > 0
+                        ? customForm.supervisors.map((id: any) => {
+                          const user = users.find(u => String(u.id) === String(id));
+                          return user ? user.full_name : id;
+                        }).join(', ')
+                        : 'Select Supervisors'}
                     </MenuItem>
                   </Select>
                 </FormControl>
@@ -891,17 +960,7 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div>
-              <div className="space-y-2">
-                <TextField
-                  label="Grace Time Value"
-                  value={assetTask?.grace_time_value || '3'}
-                  InputProps={{ readOnly: true, disabled: true }}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  sx={muiFieldStyles}
-                />
-              </div>
+              
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Grace Time</InputLabel>
@@ -916,6 +975,17 @@ export const ViewSchedulePage = () => {
                     </MenuItem>
                   </Select>
                 </FormControl>
+              </div>
+              <div className="space-y-2">
+                <TextField
+                  label="Grace Time Value"
+                  value={assetTask?.grace_time_value || '3'}
+                  InputProps={{ readOnly: true, disabled: true }}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={muiFieldStyles}
+                />
               </div>
 
             </div>
@@ -955,14 +1025,24 @@ export const ViewSchedulePage = () => {
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Select Supplier</InputLabel>
                   <Select
-                    value={customForm?.supplier_id ? `Supplier ID: ${customForm.supplier_id}` : 'Select Supplier'}
+                    value={
+                      customForm?.supplier_id
+                        ? (suppliers.find(s => String(s.id) === String(customForm.supplier_id))?.name || `Supplier ID: ${customForm.supplier_id}`)
+                        : 'Select Supplier'
+                    }
                     label="Select Supplier"
                     disabled
                     sx={muiFieldStyles}
                   >
-                    <MenuItem value={customForm?.supplier_id ? `Supplier ID: ${customForm.supplier_id}` : 'Select Supplier'}>
-                      {customForm?.supplier_id ? `Supplier ID: ${customForm.supplier_id}` : 'Select Supplier'}
-                    </MenuItem>
+                    {suppliers && suppliers.length > 0 ? (
+                      suppliers.map(supplier => (
+                        <MenuItem key={supplier.id} value={supplier.name}>{supplier.name}</MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem value={customForm?.supplier_id ? `Supplier ID: ${customForm.supplier_id}` : 'Select Supplier'}>
+                        {customForm?.supplier_id ? `Supplier ID: ${customForm.supplier_id}` : 'Select Supplier'}
+                      </MenuItem>
+                    )}
                   </Select>
                 </FormControl>
               </div>
@@ -1038,9 +1118,7 @@ export const ViewSchedulePage = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Asset Name</TableHead>
-                    <TableHead>Asset Code</TableHead>
                     <TableHead>Model Number</TableHead>
-                    <TableHead>Purchase Date</TableHead>
                     <TableHead>Purchase Cost</TableHead>
                     <TableHead>Created on</TableHead>
                   </TableRow>
@@ -1050,11 +1128,11 @@ export const ViewSchedulePage = () => {
                     assetTask.assets.map((asset, index) => (
                       <TableRow key={index}>
                         <TableCell>{asset.name || 'N/A'}</TableCell>
-                        <TableCell>{asset.asset_code || 'N/A'}</TableCell>
+                        {/* <TableCell>{asset.asset_code || 'N/A'}</TableCell> */}
                         <TableCell>{asset.model_number || 'N/A'}</TableCell>
-                        <TableCell>{asset.purchase_date ? formatDateTime(asset.purchase_date) : 'N/A'}</TableCell>
+                        {/* <TableCell>{asset.purchase_date ? formatDateTime(asset.purchase_date) : 'N/A'}</TableCell> */}
                         <TableCell>{asset.purchase_cost || 'N/A'}</TableCell>
-                        <TableCell>{asset.created_on ? formatDateTime(asset.created_on) : 'N/A'}</TableCell>
+                        <TableCell>{asset.created_at ? formatDateTime(asset.created_on) : 'N/A'}</TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -1085,11 +1163,12 @@ export const ViewSchedulePage = () => {
                   <TableHead>Rule Name</TableHead>
                   <TableHead>Trigger Type</TableHead>
                   <TableHead>Trigger To</TableHead>
-                  <TableHead>Role</TableHead>
+                  {/* <TableHead>Role</TableHead> */}
                   <TableHead>Period Value</TableHead>
                   <TableHead>Period Type</TableHead>
-                  <TableHead>Created On</TableHead>
+                  {/* <TableHead>Created On</TableHead> */}
                   <TableHead>Created By</TableHead>
+                  
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1099,11 +1178,18 @@ export const ViewSchedulePage = () => {
                       <TableCell>{rule.rule_name || 'N/A'}</TableCell>
                       <TableCell>{rule.trigger_type || 'N/A'}</TableCell>
                       <TableCell>{rule.trigger_to || 'N/A'}</TableCell>
-                      <TableCell>{rule.role || 'N/A'}</TableCell>
+                      {/* <TableCell>{rule.role || 'N/A'}</TableCell> */}
                       <TableCell>{rule.period_value || 'N/A'}</TableCell>
                       <TableCell>{rule.period_type || 'N/A'}</TableCell>
-                      <TableCell>{rule.created_on ? formatDateTime(rule.created_on) : 'N/A'}</TableCell>
-                      <TableCell>{rule.created_by || 'N/A'}</TableCell>
+                      {/* <TableCell>{rule.created_on ? formatDateTime(rule.created_on) : 'N/A'}</TableCell> */}
+                      <TableCell>{
+                      Array.isArray(customForm?.supervisors) && customForm.supervisors.length > 0
+                        ? customForm.supervisors.map((id: any) => {
+                          const user = users.find(u => String(u.id) === String(rule.created_by));
+                          return user ? user.full_name : id;
+                        }).join(', ')
+                        : 'N/A'
+                    }</TableCell>
                     </TableRow>
                   ))
                 ) : (

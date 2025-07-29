@@ -2,6 +2,7 @@ import { createAsyncThunk } from '@reduxjs/toolkit'
 import createApiSlice from '../api/apiSlice'
 import { apiClient } from '@/utils/apiClient'
 import { ENDPOINTS } from '@/config/apiConfig'
+import axios from 'axios';
 
 // Define the FM User interface based on API response
 export interface FMUser {
@@ -43,7 +44,76 @@ export const fetchFMUsers = createAsyncThunk(
   }
 )
 
+export const fetchSuppliers = createAsyncThunk("fetchSuppliers", async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
+  try {
+    const response = await axios.get(`https://${baseUrl}/pms/suppliers/get_suppliers.json`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    return response.data
+  } catch (error) {
+    const message = error.response?.data?.message || error.message || 'Failed to fetch suppliers'
+    return rejectWithValue(message)
+  }
+})
+
+export const fetchUnits = createAsyncThunk("fetchUnits", async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
+  try {
+    const response = await axios.get(`https://${baseUrl}/pms/units.json`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    return response.data
+  } catch (error) {
+    const message = error.response?.data?.message || error.message || 'Failed to fetch units'
+    return rejectWithValue(message)
+  }
+})
+
+export const fetchRoles = createAsyncThunk("fetchRoles", async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
+  try {
+    const response = await axios.get(`https://${baseUrl}/lock_roles.json`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    return response.data
+  } catch (error) {
+    const message = error.response?.data?.message || error.message || 'Failed to fetch roles'
+    return rejectWithValue(message)
+  }
+})
+
+export const createFmUser = createAsyncThunk(
+  'createFmUser',
+  async ({ data, baseUrl, token }: { data: any, baseUrl: string, token: string }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`https://${baseUrl}/pms/users.json`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      return response.data
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Failed to create FM user'
+      return rejectWithValue(message)
+    }
+  }
+)
+
 // Create the FM users slice
 const fmUserSlice = createApiSlice<FMUserResponse>('fmUsers', fetchFMUsers)
+const fetchSuppliersSlice = createApiSlice('fetchSuppliers', fetchSuppliers)
+const fetchUnitsSlice = createApiSlice('fetchUnits', fetchUnits)
+const fetchRolesSlice = createApiSlice('fetchRoles', fetchRoles)
+const createFmUserSlice = createApiSlice('createFmUser', createFmUser)
+
+export const fetchSuppliersReducer = fetchSuppliersSlice.reducer
+export const fetchUnitsReducer = fetchUnitsSlice.reducer
+export const fetchRolesReducer = fetchRolesSlice.reducer
+export const createFmUserReducer = createFmUserSlice.reducer
 
 export default fmUserSlice.reducer
+

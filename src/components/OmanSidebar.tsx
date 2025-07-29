@@ -233,16 +233,16 @@ const modulesByPackage = {
         { name: 'Services', icon: Wrench, href: '/maintenance/service' },
         { name: 'Assets', icon: Building, href: '/maintenance/asset' },
 
-        {
-            name: 'Inventory',
-            icon: Package,
-            href: '/maintenance/inventory',
-            subItems: [
-                { name: 'Inventory Master', href: '/maintenance/inventory', color: 'text-[#1a1a1a]' },
-                { name: 'Inventory Consumption', href: '/maintenance/inventory-consumption', color: 'text-[#1a1a1a]' },
-                // { name: 'Eco-Friendly List', href: '/maintenance/eco-friendly-list', color: 'text-[#1a1a1a]' }
-            ]
-        },
+        // {
+        //     name: 'Inventory',
+        //     icon: Package,
+        //     href: '/maintenance/inventory',
+        //     subItems: [
+        //         { name: 'Inventory Master', href: '/maintenance/inventory', color: 'text-[#1a1a1a]' },
+        //         { name: 'Inventory Consumption', href: '/maintenance/inventory-consumption', color: 'text-[#1a1a1a]' },
+        //         // { name: 'Eco-Friendly List', href: '/maintenance/eco-friendly-list', color: 'text-[#1a1a1a]' }
+        //     ]
+        // },
         { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
         // { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
 
@@ -390,28 +390,28 @@ const modulesByPackage = {
                         { name: 'Cost Approval', href: '/settings/ticket-management/cost-approval' }
                     ]
                 },
-                {
-                    name: 'Inventory Management',
-                    href: '/settings/inventory-management',
-                    subItems: [
-                        { name: 'SAC/HSN Code', href: '/settings/inventory-management/sac-hsn-code' }
-                    ]
-                },
-                {
-                    name: 'Safety',
-                    href: '/settings/safety',
-                    subItems: [
-                        { name: 'Permit Setup', href: '/settings/safety/permit-setup' },
-                        { name: 'Incident Setup', href: '/settings/safety/incident' }
-                    ]
-                },
-                {
-                    name: 'Waste Management',
-                    href: '/settings/waste-management',
-                    subItems: [
-                        { name: 'Setup', href: '/settings/waste-management/setup' }
-                    ]
-                },
+                // {
+                //     name: 'Inventory Management',
+                //     href: '/settings/inventory-management',
+                //     subItems: [
+                //         { name: 'SAC/HSN Code', href: '/settings/inventory-management/sac-hsn-code' }
+                //     ]
+                // },
+                // {
+                //     name: 'Safety',
+                //     href: '/settings/safety',
+                //     subItems: [
+                //         { name: 'Permit Setup', href: '/settings/safety/permit-setup' },
+                //         { name: 'Incident Setup', href: '/settings/safety/incident' }
+                //     ]
+                // },
+                // {
+                //     name: 'Waste Management',
+                //     href: '/settings/waste-management',
+                //     subItems: [
+                //         { name: 'Setup', href: '/settings/waste-management/setup' }
+                //     ]
+                // },
             ]
         },
         // {
@@ -458,21 +458,21 @@ const modulesByPackage = {
                         { name: 'Setup', href: '/settings/vas/fnb/setup' },
                     ]
                 },
-                {
-                    name: 'MOM',
-                    href: '/settings/vas/mom',
-                    subItems: [
-                        { name: 'Client Tag Setup', href: '/settings/vas/mom/client-tag-setup' },
-                        { name: 'Product Tag Setup', href: '/settings/vas/mom/product-tag-setup' }
-                    ]
-                },
-                {
-                    name: 'Space Management',
-                    href: '/settings/vas/space-management',
-                    subItems: [
-                        { name: 'Seat Setup', href: '/settings/vas/space-management/seat-setup' }
-                    ]
-                },
+                // {
+                //     name: 'MOM',
+                //     href: '/settings/vas/mom',
+                //     subItems: [
+                //         { name: 'Client Tag Setup', href: '/settings/vas/mom/client-tag-setup' },
+                //         { name: 'Product Tag Setup', href: '/settings/vas/mom/product-tag-setup' }
+                //     ]
+                // },
+                // {
+                //     name: 'Space Management',
+                //     href: '/settings/vas/space-management',
+                //     subItems: [
+                //         { name: 'Seat Setup', href: '/settings/vas/space-management/seat-setup' }
+                //     ]
+                // },
                 {
                     name: 'Booking',
                     href: '/settings/vas/booking',
@@ -480,15 +480,15 @@ const modulesByPackage = {
                         { name: 'Setup', href: '/settings/vas/booking/setup' }
                     ]
                 },
-                {
-                    name: 'Parking Management',
-                    href: '/settings/vas/parking-management',
-                    subItems: [
-                        { name: 'Parking Category', href: '/settings/vas/parking-management/parking-category' },
-                        { name: 'Slot Configuration', href: '/settings/vas/parking-management/slot-configuration' },
-                        { name: 'Time Slot Setup', href: '/settings/vas/parking-management/time-slot-setup' }
-                    ]
-                }
+                // {
+                //     name: 'Parking Management',
+                //     href: '/settings/vas/parking-management',
+                //     subItems: [
+                //         { name: 'Parking Category', href: '/settings/vas/parking-management/parking-category' },
+                //         { name: 'Slot Configuration', href: '/settings/vas/parking-management/slot-configuration' },
+                //         { name: 'Time Slot Setup', href: '/settings/vas/parking-management/time-slot-setup' }
+                //     ]
+                // }
             ]
         }
     ]

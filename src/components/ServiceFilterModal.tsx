@@ -58,8 +58,8 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
     // if (filters.serviceName.trim() === '') {
     //   setErrors({ serviceName: true });
     // } else {
-      onApply(filters);
-      onClose();
+    onApply(filters);
+    onClose();
     // }
   };
 
@@ -98,6 +98,8 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
     disableEnforceFocus: true,
   };
 
+  console.log(buildings)
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
       <DialogContent className="max-w-2xl" aria-describedby="filter-dialog-description">
@@ -135,8 +137,8 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                   InputProps={{
                     sx: fieldStyles
                   }}
-                  // error={errors.serviceName}
-                  // helperText={errors.serviceName && "Service Name is required"}
+                // error={errors.serviceName}
+                // helperText={errors.serviceName && "Service Name is required"}
                 />
               </div>
             </div>

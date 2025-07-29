@@ -207,6 +207,8 @@ const AddAssetPage = () => {
     fetchRooms
   } = useLocationData();
 
+  console.log(buildings)
+
   const [expandedSections, setExpandedSections] = useState({
     location: true,
     asset: true,
@@ -366,6 +368,9 @@ const AddAssetPage = () => {
     indiv_group: '',
     allocation_type: 'department',
     asset_ids: [],
+    // Leasehold Improvement specific fields
+    location_site: '',
+    improvement_description: '',
     group_id: '',
     sub_group_id: '',
     consumption_pms_asset_measures_attributes: [],
@@ -1043,10 +1048,14 @@ const AddAssetPage = () => {
     // Standard extra fields (dynamic)
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
       if (fieldObj?.value !== undefined && fieldObj?.value !== '' && fieldObj?.value !== null) {
-        // Convert date objects to ISO string
+        // Convert date objects to date-only string (YYYY-MM-DD format)
         let processedValue = fieldObj.value;
         if (fieldObj.value && (fieldObj.value as any) instanceof Date) {
-          processedValue = ((fieldObj.value as unknown) as Date).toISOString();
+          // Format as YYYY-MM-DD without time
+          const date = (fieldObj.value as unknown) as Date;
+          processedValue = date.getFullYear() + '-' + 
+                          String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(date.getDate()).padStart(2, '0');
         }
 
         extraFields.push({
@@ -2464,6 +2473,9 @@ const AddAssetPage = () => {
                   asset_category: category,
                   name: '',
                   asset_number: '',
+                  // Preserve these fields for Leasehold Improvement
+                  location_site: category === 'Leasehold Improvement' ? prevData.location_site : '',
+                  improvement_description: category === 'Leasehold Improvement' ? prevData.improvement_description : '',
                 }));
               }}
               className="flex flex-wrap gap-2 lg:gap-3"
@@ -3385,15 +3397,17 @@ const AddAssetPage = () => {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const value = (e.target as HTMLInputElement).value;
                       handleExtraFieldChange(
-                        `leasehold_location`,
-                        (e.target as HTMLInputElement).value,
+                        'location_site',
+                        value,
                         'text',
                         'leaseholdLocationAssoc',
-                        `Leasehold Location`
-                      )
-                    }
+                        'Location Site'
+                      );
+                      handleFieldChange('location_site', value);
+                    }}
                   />
                   <FormControl
                     fullWidth
@@ -3488,6 +3502,31 @@ const AddAssetPage = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <TextField
+                    label="Improvement Description"
+                    placeholder="Describe the improvement work"
+                    variant="outlined"
+                    fullWidth
+                    multiline
+                    rows={2}
+                    sx={{
+                      gridColumn: { md: 'span 2' },
+                      '& .MuiOutlinedInput-root': {
+                        minHeight: { xs: '60px', md: '70px' }
+                      }
+                    }}
+                    onChange={(e) => {
+                      const value = (e.target as HTMLInputElement).value;
+                      handleExtraFieldChange(
+                        'improvement_description',
+                        value,
+                        'text',
+                        'improvementDetails',
+                        'Improvement Description'
+                      );
+                      handleFieldChange('improvement_description', value);
+                    }}
+                  />
                   <FormControl
                     fullWidth
                     sx={{
@@ -3531,9 +3570,20 @@ const AddAssetPage = () => {
                     <MuiSelect
                       label="Vendor / Contractor Name"
                       value={selectedVendorId}
-                      onChange={(e) => setSelectedVendorId(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedVendorId(e.target.value);
+                        const selectedVendor = vendors.find(vendor => vendor.id === e.target.value);
+                        if (selectedVendor) {
+                          handleExtraFieldChange(
+                            'vendor_contractor_name',
+                            selectedVendor.name,
+                            'text',
+                            'improvementDetails',
+                            'Vendor / Contractor Name'
+                          );
+                        }
+                      }}
                       disabled={vendorsLoading}
-
                     >
                       <MenuItem value="">
                         {vendorsLoading ? 'Loading vendors...' : 'Select Vendor'}
@@ -4350,6 +4400,30 @@ const AddAssetPage = () => {
                     </MuiSelect>
                   </FormControl>
                 </div>
+
+                {/* Custom Fields for Technical Specifications */}
+                {(customFields.vehicleTechnicalSpecs || []).map((field) => (
+                  <div key={field.id} className="flex items-center gap-2 mb-2">
+                    <TextField
+                      label={field.name}
+                      value={field.value}
+                      onChange={(e) => { handleCustomFieldChange('vehicleTechnicalSpecs', field.id, e.target.value); }}
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => removeCustomField('vehicleTechnicalSpecs', field.id)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
               </CardContent>
             </Card>
 
@@ -4608,6 +4682,73 @@ const AddAssetPage = () => {
                       onChange={e => handleFieldChange('purchase_cost', e.target.value)}
                     />
                   </div>
+                  <DatePicker
+                    label="Warranty Expires On"
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        variant: 'outlined',
+                        sx: {
+                          '& .MuiOutlinedInput-root': {
+                            height: { xs: '36px', md: '45px' }
+                          }
+                        }
+                      }
+                    }}
+                    onChange={(date) => handleFieldChange('warranty_expiry', date)}
+                  />
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Under Warranty</label>
+                    <div className="flex gap-6">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="vehicle-warranty-yes"
+                          name="vehicle-warranty"
+                          value="yes"
+                          checked={underWarranty === 'yes'}
+                          onChange={e => {
+                            setUnderWarranty(e.target.value);
+                            handleFieldChange('warranty', e.target.value === 'yes');
+                          }}
+                          className="w-4 h-4 text-[#C72030] border-gray-300"
+                          style={{ accentColor: '#C72030' }}
+                        />
+                        <label htmlFor="vehicle-warranty-yes" className="text-sm">Yes</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="vehicle-warranty-no"
+                          name="vehicle-warranty"
+                          value="no"
+                          checked={underWarranty === 'no'}
+                          onChange={e => {
+                            setUnderWarranty(e.target.value);
+                            handleFieldChange('warranty', e.target.value === 'yes');
+                          }}
+                          className="w-4 h-4 text-[#C72030] border-gray-300"
+                          style={{ accentColor: '#C72030' }}
+                        />
+                        <label htmlFor="vehicle-warranty-no" className="text-sm">No</label>
+                      </div>
+                    </div>
+                  </div>
+                  {underWarranty === 'yes' && (
+                    <TextField
+                      label="Warranty Period"
+                      placeholder="e.g. 24 months"
+                      variant="outlined"
+                      fullWidth
+                      value={formData.warranty_period}
+                      onChange={e => handleFieldChange('warranty_period', e.target.value)}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                  )}
                   <TextField
                     label="Depreciation Rate (%)"
                     placeholder="Linked to depreciation module"
@@ -4828,6 +4969,30 @@ const AddAssetPage = () => {
                     </MuiSelect>
                   </FormControl>
                 </div>
+
+                {/* Custom Fields for Performance Tracking */}
+                {(customFields.vehiclePerformance || []).map((field) => (
+                  <div key={field.id} className="flex items-center gap-2 mb-2">
+                    <TextField
+                      label={field.name}
+                      value={field.value}
+                      onChange={(e) => { handleCustomFieldChange('vehiclePerformance', field.id, e.target.value); }}
+                      variant="outlined"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => removeCustomField('vehiclePerformance', field.id)}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
               </CardContent>
             </Card>
 
@@ -5921,14 +6086,11 @@ const AddAssetPage = () => {
                         variant="outlined"
                         fullWidth
                         value={field.value}
-                        // onChange={(e) => handleCustomFieldChange('buildingUsage', field.id, e.target.value)}
+                        onChange={(e) => handleCustomFieldChange('buildingUsage', field.id, e.target.value)}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             height: { xs: '36px', md: '45px' }
                           }
-                        }}
-                        onChange={(e) => {
-                          handleCustomFieldChange('buildingLocation', field.id, e.target.value);
                         }}
                       />
                       <button
@@ -6465,8 +6627,8 @@ const AddAssetPage = () => {
                     >
                       <MenuItem value=""><em>Select Building</em></MenuItem>
                       {buildings.map((building) => (
-                        <MenuItem key={building.building.id} value={building.building.id.toString()}>
-                          {building.building.name}
+                        <MenuItem key={building.id} value={building.id.toString()}>
+                          {building.name}
                         </MenuItem>
                       ))}
                     </MuiSelect>

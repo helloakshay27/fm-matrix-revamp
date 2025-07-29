@@ -186,7 +186,7 @@ export const AMCAnalyticsCard: React.FC<AMCAnalyticsCardProps> = ({
   };
 
   return (
-    <Card className={`${className}`}>
+    <Card className={`transition-all duration-200 hover:shadow-lg border-gray-200 group ${className}`}>
       <CardHeader>
         <CardTitle className="text-lg font-semibold">{title}</CardTitle>
       </CardHeader>

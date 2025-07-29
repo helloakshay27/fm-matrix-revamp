@@ -159,6 +159,7 @@ export const CostApprovalModal: React.FC<CostApprovalModalProps> = ({
               Cost*
             </label>
             <Input
+              type='number'
               placeholder="Enter Cost"
               value={cost}
               onChange={(e) => setCost(e.target.value)}

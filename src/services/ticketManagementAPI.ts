@@ -251,7 +251,7 @@ export interface TicketFilters {
   user_firstname_or_user_lastname_cont?: string;
   search_all_fields_cont?: string;
   assigned_to_in?: number[];
-  complaint_status_name_eq?: string;
+  complaint_status_fixed_state_eq?: string;
 }
 
 // Helper function to format date for API (DD/MM/YYYY)
@@ -582,6 +582,21 @@ export const ticketManagementAPI = {
 
   async getSubCategories() {
     const response = await apiClient.get('/pms/admin/get_all_helpdesk_sub_categories.json');
+    return response.data;
+  },
+
+  async deleteSubCategory(subCategoryId: string) {
+    const response = await apiClient.post('/pms/admin/modify_helpdesk_sub_category.json', {
+      id: subCategoryId,
+      active: "0"
+    });
+    return response.data;
+  },
+
+  async deleteComplaintMode(complaintModeId: number) {
+    const response = await apiClient.post('/pms/admin/delete_complaint_mode.json', {
+      id: complaintModeId
+    });
     return response.data;
   },
 

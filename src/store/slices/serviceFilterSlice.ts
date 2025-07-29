@@ -48,7 +48,7 @@ export const fetchBuildings = createAsyncThunk(
   'serviceFilter/fetchBuildings',
   async (siteId: number) => {
     const response = await apiClient.get(`/pms/sites/${siteId}/buildings.json`);
-    return response.data.buildings.map((item: any) => item.building);
+    return response.data.buildings.map((item: any) => item);
   }
 );
 

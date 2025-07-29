@@ -113,6 +113,7 @@ export const ServiceDashboard = () => {
 
 
   const handleAddClick = () => navigate('/maintenance/service/add');
+  const handleAddSchedule = () => navigate('/maintenance/schedule/add?type=Service');
   const handleImportClick = () => {
     setShowBulkUploadModal(true);
     setShowActionPanel(false);
@@ -236,7 +237,7 @@ export const ServiceDashboard = () => {
   };
 
   const handleStatusToggle = async (id: number) => {
-    const baseUrl = 'fm-uat-api.lockated.com';
+    const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
     const siteId = localStorage.getItem('siteId') || '2189';
     try {
@@ -366,11 +367,11 @@ export const ServiceDashboard = () => {
       case 'serviceName':
         return (
           <span
-            className="cursor-pointer hover:underline"
-            onClick={() => {
-              setSelectedService(item);
-              setShowServiceActionPanel(true);
-            }}
+            // className="cursor-pointer hover:underline"
+            // onClick={() => {
+            //   setSelectedService(item);
+            //   setShowServiceActionPanel(true);
+            // }}
           >
             {item.service_name || '-'}
           </span>
@@ -632,7 +633,9 @@ export const ServiceDashboard = () => {
 
           {showActionPanel && (
             <SelectionPanel
-              actions={[]}
+              actions={[
+                { label: 'Add Schedule', icon: Plus, onClick: handleAddSchedule },
+              ]}
               onAdd={handleAddClick}
               onImport={handleImportClick}
               onClearSelection={() => setShowActionPanel(false)}

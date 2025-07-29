@@ -58,14 +58,40 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
     opacity: isDragging ? 0.5 : 1,
   };
 
+  // Handle pointer down to prevent drag on button/icon clicks
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const target = e.target as HTMLElement;
+    // Check if the click is on a button, icon, or download element
+    if (
+      target.closest('button') ||
+      target.closest('[data-download]') ||
+      target.closest('svg') ||
+      target.tagName === 'BUTTON' ||
+      target.tagName === 'SVG' ||
+      target.closest('.download-btn') ||
+      target.closest('[data-download-button]')
+    ) {
+      e.stopPropagation();
+      return;
+    }
+    // For other elements, proceed with drag
+    if (listeners?.onPointerDown) {
+      listeners.onPointerDown(e);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
-      className="cursor-move"
+      onPointerDown={handlePointerDown}
+      className="cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group relative"
     >
+      {/* Drag indicator */}
+      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200 z-10">
+        <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
+      </div>
       {children}
     </div>
   );
@@ -130,7 +156,8 @@ export const AMCDashboard = () => {
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [amcAnalyticsData, setAmcAnalyticsData] = useState<AMCStatusData | null>(null);
-  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview']);
+  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview', 'type_distribution', 'vendor_performance', 'expiry_analysis', 'cost_analysis', 'service_tracking', 'compliance_report']);
+  const [analyticsChartOrder, setAnalyticsChartOrder] = useState<string[]>(['status_overview', 'type_distribution', 'vendor_performance', 'expiry_analysis', 'cost_analysis', 'service_tracking', 'compliance_report']);
 
   // Set default dates: last year to today for analytics
   const getDefaultDateRange = () => {
@@ -176,7 +203,7 @@ export const AMCDashboard = () => {
     try {
       const analyticsData = await amcAnalyticsAPI.getAMCStatusData(startDate, endDate);
       setAmcAnalyticsData(analyticsData);
-      toast.success('AMC analytics data updated successfully');
+      // toast.success('AMC analytics data updated successfully');
     } catch (error) {
       console.error('Error fetching AMC analytics data:', error);
       toast.error('Failed to fetch AMC analytics data');
@@ -430,6 +457,31 @@ export const AMCDashboard = () => {
         return arrayMove(items, oldIndex, newIndex);
       });
     }
+  };
+
+  // Handle drag end for analytics charts
+  const handleAnalyticsDragEnd = (event: any) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      setAnalyticsChartOrder((items) => {
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // Handle analytics selection change and update chart order
+  const handleAnalyticsSelectionChange = (options: string[]) => {
+    setSelectedAnalyticsOptions(options);
+    // Update chart order to only include selected options in the existing order
+    setAnalyticsChartOrder(prevOrder => {
+      const newOrder = prevOrder.filter(chartType => options.includes(chartType));
+      // Add any new selections that weren't in the previous order
+      const newCharts = options.filter(chartType => !prevOrder.includes(chartType));
+      return [...newOrder, ...newCharts];
+    });
   };
 
   const renderCell = (item: AMCRecord, columnKey: string) => {
@@ -813,7 +865,11 @@ export const AMCDashboard = () => {
             </TabsList>
 
             <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-              <div className="flex justify-between items-center">
+              {/* Header Section with Filter and Selector */}
+              <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
+                {/* Drag info indicator */}
+               
+
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -822,10 +878,9 @@ export const AMCDashboard = () => {
                     disabled={analyticsLoading}
                   >
                     <Filter className="w-4 h-4" />
-                    Filter Analytics
                   </Button>
+                  <AMCAnalyticsSelector onSelectionChange={handleAnalyticsSelectionChange} />
                 </div>
-                <AMCAnalyticsSelector onSelectionChange={(options) => setSelectedAnalyticsOptions(options)} />
               </div>
 
               {analyticsLoading ? (
@@ -833,57 +888,100 @@ export const AMCDashboard = () => {
                   <div className="text-gray-600">Loading analytics data...</div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {selectedAnalyticsOptions?.includes('status_overview') && amcAnalyticsData && (
-                    <AMCAnalyticsCard
-                      title="Status Overview"
-                      data={amcAnalyticsData}
-                      type="statusOverview"
-                    />
-                  )}
-                  {selectedAnalyticsOptions?.includes('type_distribution') && amcAnalyticsData && (
-                    <AMCAnalyticsCard
-                      title="Type Distribution"
-                      data={amcAnalyticsData}
-                      type="typeDistribution"
-                    />
-                  )}
-                  {selectedAnalyticsOptions?.includes('vendor_performance') && amcAnalyticsData && (
-                    <AMCAnalyticsCard
-                      title="Vendor Performance"
-                      data={amcAnalyticsData}
-                      type="vendorPerformance"
-                    />
-                  )}
-                  {selectedAnalyticsOptions?.includes('expiry_analysis') && amcAnalyticsData && (
-                    <AMCAnalyticsCard
-                      title="Expiry Analysis"
-                      data={amcAnalyticsData}
-                      type="expiryAnalysis"
-                    />
-                  )}
-                  {selectedAnalyticsOptions?.includes('cost_analysis') && amcAnalyticsData && (
-                    <AMCAnalyticsCard
-                      title="Cost Analysis"
-                      data={amcAnalyticsData}
-                      type="costAnalysis"
-                    />
-                  )}
-                  {selectedAnalyticsOptions?.includes('service_tracking') && amcAnalyticsData && (
-                    <AMCAnalyticsCard
-                      title="Service Tracking"
-                      data={amcAnalyticsData}
-                      type="serviceTracking"
-                    />
-                  )}
-                  {selectedAnalyticsOptions?.includes('compliance_report') && amcAnalyticsData && (
-                    <AMCAnalyticsCard
-                      title="Compliance Report"
-                      data={amcAnalyticsData}
-                      type="complianceReport"
-                    />
-                  )}
-                </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAnalyticsDragEnd}>
+                  <SortableContext items={analyticsChartOrder} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {analyticsChartOrder.map(chartType => {
+                        if (!selectedAnalyticsOptions?.includes(chartType) || !amcAnalyticsData) return null;
+
+                        switch (chartType) {
+                          case 'status_overview':
+                            return (
+                              <SortableChartItem key="status_overview" id="status_overview">
+                                <AMCAnalyticsCard
+                                  title="Status Overview"
+                                  data={amcAnalyticsData}
+                                  type="statusOverview"
+                                />
+                              </SortableChartItem>
+                            );
+                          case 'type_distribution':
+                            return (
+                              <SortableChartItem key="type_distribution" id="type_distribution">
+                                <AMCAnalyticsCard
+                                  title="Type Distribution"
+                                  data={amcAnalyticsData}
+                                  type="typeDistribution"
+                                />
+                              </SortableChartItem>
+                            );
+                          case 'vendor_performance':
+                            return (
+                              <SortableChartItem key="vendor_performance" id="vendor_performance">
+                                <AMCAnalyticsCard
+                                  title="Vendor Performance"
+                                  data={amcAnalyticsData}
+                                  type="vendorPerformance"
+                                />
+                              </SortableChartItem>
+                            );
+                          case 'expiry_analysis':
+                            return (
+                              <SortableChartItem key="expiry_analysis" id="expiry_analysis">
+                                <AMCAnalyticsCard
+                                  title="Expiry Analysis"
+                                  data={amcAnalyticsData}
+                                  type="expiryAnalysis"
+                                />
+                              </SortableChartItem>
+                            );
+                          case 'cost_analysis':
+                            return (
+                              <SortableChartItem key="cost_analysis" id="cost_analysis">
+                                <AMCAnalyticsCard
+                                  title="Cost Analysis"
+                                  data={amcAnalyticsData}
+                                  type="costAnalysis"
+                                />
+                              </SortableChartItem>
+                            );
+                          case 'service_tracking':
+                            return (
+                              <SortableChartItem key="service_tracking" id="service_tracking">
+                                <AMCAnalyticsCard
+                                  title="Service Tracking"
+                                  data={amcAnalyticsData}
+                                  type="serviceTracking"
+                                />
+                              </SortableChartItem>
+                            );
+                          case 'compliance_report':
+                            return (
+                              <SortableChartItem key="compliance_report" id="compliance_report">
+                                <AMCAnalyticsCard
+                                  title="Compliance Report"
+                                  data={amcAnalyticsData}
+                                  type="complianceReport"
+                                />
+                              </SortableChartItem>
+                            );
+                          default:
+                            return null;
+                        }
+                      })}
+
+                      {/* No selection message */}
+                      {selectedAnalyticsOptions?.length === 0 && (
+                        <div className="col-span-2 flex items-center justify-center py-12">
+                          <div className="text-center">
+                            <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                            <p className="text-muted-foreground">No analytics selected. Please select at least one report to view.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </SortableContext>
+                </DndContext>
               )}
             </TabsContent>
 
@@ -898,7 +996,7 @@ export const AMCDashboard = () => {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                      {totalAMCs}
+                    {apiData?.total_amcs_count}
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total AMC</div>
                   </div>
@@ -913,7 +1011,7 @@ export const AMCDashboard = () => {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                      {activeAMCs}
+                    {apiData?.active_amcs_count}
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active AMC</div>
                   </div>
@@ -928,7 +1026,7 @@ export const AMCDashboard = () => {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                      {inactiveAMCs}
+                    {apiData?.inactive_amcs_count}
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive AMC</div>
                   </div>
@@ -943,7 +1041,7 @@ export const AMCDashboard = () => {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                      {flaggedAMCs}
+                    {apiData?.flagged_amcs_count}
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Flagged AMC</div>
                   </div>
@@ -955,6 +1053,12 @@ export const AMCDashboard = () => {
 
               {showActionPanel && (
                 <SelectionPanel
+                actions={[
+                  {
+                    label: 'Add Schedule',
+                    icon: Plus,
+                    onClick: () => navigate('/maintenance/schedule/add?type=AMC'),
+                }]}
                   onAdd={handleAddClick}
                   onClearSelection={() => setShowActionPanel(false)}
                   onImport={handleImportClick}

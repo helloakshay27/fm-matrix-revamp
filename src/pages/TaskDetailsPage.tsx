@@ -33,6 +33,10 @@ export const TaskDetailsPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
+  const [showJobSheetModal, setShowJobSheetModal] = useState(false);
+  const [jobSheetData, setJobSheetData] = useState<any>(null);
+  const [jobSheetLoading, setJobSheetLoading] = useState(false);
+  const [jobSheetComments, setJobSheetComments] = useState('');
 
   // Submit form state
   const [formData, setFormData] = useState({
@@ -140,6 +144,26 @@ export const TaskDetailsPage = () => {
   const handleSubmitTask = () => setShowSubmitForm(true);
   const handleTaskReschedule = () => setShowRescheduleDialog(true);
 
+  const handleJobSheetClick = async () => {
+    if (!id) return;
+    try {
+      setJobSheetLoading(true);
+      setShowJobSheetModal(true);
+      const jobSheet = await taskService.getJobSheet(id);
+      setJobSheetData(jobSheet);
+      setJobSheetComments(jobSheet.task_comments || '');
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load job sheet',
+        variant: 'destructive'
+      });
+      setShowJobSheetModal(false);
+    } finally {
+      setJobSheetLoading(false);
+    }
+  };
+
   // File upload handler for form
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, fileKey: string) => {
     const file = event.target.files?.[0];
@@ -199,6 +223,23 @@ export const TaskDetailsPage = () => {
       toast({
         title: 'Error',
         description: 'Failed to reschedule task. Please try again.',
+      });
+    }
+  };
+
+  const handleJobSheetUpdate = async () => {
+    if (!id) return;
+    try {
+      await taskService.updateTaskComments(id, jobSheetComments);
+      setShowJobSheetModal(false);
+      toast({
+        title: 'Success',
+        description: 'Comments updated successfully!'
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update comments. Please try again.',
         variant: 'destructive'
       });
     }
@@ -260,7 +301,18 @@ export const TaskDetailsPage = () => {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-[#1a1a1a]">Task Details</h1>
             <div className="flex gap-3">
-              {taskDetails.actions.can_submit_task && (
+              {taskDetails.task_details.status.value.toLowerCase() === 'closed' && (
+                <Button
+                  onClick={handleJobSheetClick}
+                  style={{
+                    backgroundColor: '#C72030'
+                  }}
+                  className="text-white hover:bg-[#C72030]/90"
+                >
+                  Job Sheet
+                </Button>
+              )}
+              {/* {taskDetails.actions.can_submit_task && (
                 <Button
                   onClick={handleSubmitTask}
                   style={{
@@ -270,7 +322,7 @@ export const TaskDetailsPage = () => {
                 >
                   Submit Task
                 </Button>
-              )}
+              )} */}
               {taskDetails.actions.can_reschedule && (
                 <Button
                   onClick={handleTaskReschedule}
@@ -441,11 +493,11 @@ export const TaskDetailsPage = () => {
                 <tbody>
                   <tr className="bg-blue-50">
                     <td className="p-3 border-b border-r">
-                     {taskDetails?.task_details.associated_with}
+                      {taskDetails?.task_details.associated_with}
                     </td>
                     <td className="p-3 border-b border-r">{taskDetails?.task_details.asset_service_name}</td>
                     <td className="p-3 border-b border-r">
-                       {taskDetails?.task_details.assigned_to}
+                      {taskDetails?.task_details.assigned_to}
                     </td>
                     <td className="p-3 border-b border-r">
                       {taskDetails?.comments.length > 0
@@ -455,7 +507,9 @@ export const TaskDetailsPage = () => {
                     <td className="p-3 border-b border-r">-</td>
                     <td className="p-3 border-b border-r">-</td>
                     <td className="p-3 border-b border-r">
-                      {taskDetails?.activity.total_score ?? '-'}
+                      {typeof taskDetails?.activity?.total_score === 'object'
+                        ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
+                        : taskDetails?.activity?.total_score ?? '-'}
                     </td>
                     <td className="p-3 border-b border-r">
                       <span className={`px-2 py-1 rounded text-white ${taskDetails.task_details.status.display_name}`}>
@@ -694,6 +748,191 @@ export const TaskDetailsPage = () => {
                 Reschedule Task
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Job Sheet Modal */}
+      <Dialog open={showJobSheetModal} onOpenChange={setShowJobSheetModal}>
+        <DialogContent
+          className="max-w-4xl max-h-[80vh] overflow-y-auto"
+          aria-describedby="job-sheet-dialog-description"
+        >
+          <span id="job-sheet-dialog-description" className="sr-only">
+            View and edit job sheet details with comments for the completed task.
+          </span>
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="text-lg font-semibold">
+              Job Sheet
+            </DialogTitle>
+            <button
+              onClick={() => setShowJobSheetModal(false)}
+              className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </button>
+          </DialogHeader>
+
+          <div className="p-4">
+            {jobSheetLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
+                <span className="ml-2">Loading job sheet...</span>
+              </div>
+            ) : jobSheetData ? (
+              <div className="space-y-6">
+                {/* Job Sheet Header Info */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="text-sm text-gray-600">Created Date</label>
+                      <p className="font-medium">{jobSheetData.created_date || taskDetails?.task_details.created_on}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-600">Job Card No</label>
+                      <p className="font-medium">{jobSheetData.job_card_no || taskDetails?.task_details.id}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-600">Scheduled Date</label>
+                      <p className="font-medium">{jobSheetData.scheduled_date || taskDetails?.task_details.scheduled_on}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm text-gray-600">Job ID</label>
+                      <p className="font-medium">{jobSheetData.job_id || taskDetails?.task_details.id}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <input type="radio" disabled checked={jobSheetData.type === 'assets' || taskDetails?.task_details.associated_with === 'Assets'} />
+                        <label className="text-sm">Assets</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input type="radio" disabled checked={jobSheetData.type === 'services' || taskDetails?.task_details.associated_with === 'Services'} />
+                        <label className="text-sm">Services</label>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm">Warranty</label>
+                        <input type="radio" disabled checked={jobSheetData.warranty === 'yes'} />
+                        <label className="text-sm">Yes</label>
+                        <input type="radio" disabled checked={jobSheetData.warranty === 'no'} />
+                        <label className="text-sm">No</label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm">Breakdown</label>
+                        <input type="radio" disabled checked={jobSheetData.breakdown === 'yes'} />
+                        <label className="text-sm">Yes</label>
+                        <input type="radio" disabled checked={jobSheetData.breakdown === 'no'} />
+                        <label className="text-sm">No</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Activities Table */}
+                <div className="border rounded-lg overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="text-left bg-gray-50">
+                          <th className="p-3 border-b border-r">Help Text</th>
+                          <th className="p-3 border-b border-r">Activities</th>
+                          <th className="p-3 border-b border-r">Input</th>
+                          <th className="p-3 border-b border-r">Comments</th>
+                          <th className="p-3 border-b border-r">Weightage</th>
+                          <th className="p-3 border-b border-r">Rating</th>
+                          <th className="p-3 border-b border-r">Score</th>
+                          <th className="p-3 border-b border-r">Status</th>
+                          <th className="p-3 border-b">Attachments</th>
+                        </tr>
+                      </thead>
+                       <tbody>
+                  <tr className="bg-blue-50">
+                    <td className="p-3 border-b border-r">
+                      {taskDetails?.task_details.associated_with}
+                    </td>
+                    <td className="p-3 border-b border-r">{taskDetails?.task_details.asset_service_name}</td>
+                    <td className="p-3 border-b border-r">
+                      {taskDetails?.task_details.assigned_to}
+                    </td>
+                    <td className="p-3 border-b border-r">
+                      {taskDetails?.comments.length > 0
+                        ? taskDetails.comments[0].comment
+                        : 'No comments'}
+                    </td>
+                    <td className="p-3 border-b border-r">-</td>
+                    <td className="p-3 border-b border-r">-</td>
+                    <td className="p-3 border-b border-r">
+                      {typeof taskDetails?.activity?.total_score === 'object'
+                        ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
+                        : taskDetails?.activity?.total_score ?? '-'}
+                    </td>
+                    <td className="p-3 border-b border-r">
+                      <span className={`px-2 py-1 rounded text-white ${taskDetails.task_details.status.display_name}`}>
+                        {taskDetails.task_details.status.display_name}
+                      </span>
+                    </td>
+                    <td className="p-3 border-b">
+                      {taskDetails?.attachments.blob_store_files.length > 0
+                        ? 'Has Attachments'
+                        : 'No attachments'}
+                    </td>
+                  </tr>
+                </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Additional Comments Section */}
+                <div>
+                  <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>
+                    Additional Comments:
+                  </h3>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={4}
+                    value={jobSheetComments}
+                    onChange={(e) => setJobSheetComments(e.target.value)}
+                    variant="outlined"
+                    placeholder="Enter Comments"
+                    sx={{
+                      mb: 2,
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'white'
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={handleJobSheetUpdate}
+                    style={{ backgroundColor: '#22c55e' }}
+                    className="text-white hover:bg-green-600"
+                  >
+                    Update
+                  </Button>
+                </div>
+
+                {/* Performed By and Supplier */}
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                  <div>
+                    <label className="text-sm text-gray-600">Performed By (Internal/External)</label>
+                    <p className="font-medium">{jobSheetData.performed_by || taskDetails?.task_details.performed_by || 'a'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-600">Supplier</label>
+                    <p className="font-medium">{jobSheetData.supplier || taskDetails?.task_details.supplier}</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p>No job sheet data available</p>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

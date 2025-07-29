@@ -1212,9 +1212,12 @@ const UpdateTicketsPage: React.FC = () => {
       const result = await response.json();
       console.log("API Response:", result);
 
+      // Extract ticket number from response or use the one from original ticket data
+      const ticketNumber = result?.ticket_number || result?.complaint?.ticket_number || ticketApiData?.ticket_number || `#${ticketId}`;
+
       toast({
         title: "Success",
-        description: `Successfully updated ticket ${ticketId}.`,
+        description: `Successfully updated ticket ${ticketNumber}.`,
       });
 
       // Redirect to ticket details page
@@ -2167,7 +2170,7 @@ const UpdateTicketsPage: React.FC = () => {
                     Cost<span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="text"
+                    type="number"
                     value={costPopupData.cost}
                     onChange={(e) =>
                       setCostPopupData((prev) => ({

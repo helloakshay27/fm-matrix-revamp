@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { LocationSelector } from '@/components/service/LocationSelector';
@@ -16,7 +16,7 @@ export const AddServicePage = () => {
   const [formData, setFormData] = useState({
     serviceName: '',
     executionType: '',
-    umo: '', // Added UMO field
+    umo: '',
     serviceDescription: '',
     siteId: null as number | null,
     buildingId: null as number | null,
@@ -31,11 +31,12 @@ export const AddServicePage = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [resetLocationFields, setResetLocationFields] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingAction, setSubmittingAction] = useState<'show' | 'new' | null>(null);
 
   const [errors, setErrors] = useState({
     serviceName: false,
     executionType: false,
-    umo: false, // Added UMO error field
+    umo: false,
     siteId: false,
     buildingId: false,
     wingId: false,
@@ -48,14 +49,13 @@ export const AddServicePage = () => {
   const handleInputChange = (field: string, value: string | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
-    // Clear errors for the field being updated
     if (field === 'serviceName' && value.toString().trim() !== '') {
       setErrors(prev => ({ ...prev, serviceName: false }));
     }
     if (field === 'executionType' && value !== '') {
       setErrors(prev => ({ ...prev, executionType: false }));
     }
-    if (field === 'umo' && value.toString().trim() !== '') { // Added UMO error clearing
+    if (field === 'umo' && value.toString().trim() !== '') {
       setErrors(prev => ({ ...prev, umo: false }));
     }
     if (field === 'siteId' && value !== null) {
@@ -114,11 +114,11 @@ export const AddServicePage = () => {
   const handleSubmit = async (action: 'show' | 'new') => {
     if (isSubmitting) return;
     setIsSubmitting(true);
+    setSubmittingAction(action);
 
-    // Validation
     const hasServiceNameError = formData.serviceName.trim() === '';
     const hasExecutionTypeError = formData.executionType === '';
-    const hasUmoError = formData.umo.trim() === ''; // Added UMO validation
+    const hasUmoError = formData.umo.trim() === '';
     const hasSiteIdError = formData.siteId === null;
     const hasBuildingIdError = formData.buildingId === null;
     const hasWingIdError = formData.wingId === null;
@@ -130,7 +130,7 @@ export const AddServicePage = () => {
     if (
       hasServiceNameError ||
       hasExecutionTypeError ||
-      hasUmoError || // Added UMO error check
+      hasUmoError ||
       hasSiteIdError ||
       hasBuildingIdError ||
       hasWingIdError ||
@@ -142,7 +142,7 @@ export const AddServicePage = () => {
       setErrors({
         serviceName: hasServiceNameError,
         executionType: hasExecutionTypeError,
-        umo: hasUmoError, // Added UMO error setting
+        umo: hasUmoError,
         siteId: hasSiteIdError,
         buildingId: hasBuildingIdError,
         wingId: hasWingIdError,
@@ -155,7 +155,7 @@ export const AddServicePage = () => {
       const errorFields = [];
       if (hasServiceNameError) errorFields.push('Service Name');
       if (hasExecutionTypeError) errorFields.push('Execution Type');
-      if (hasUmoError) errorFields.push('UMO'); // Added UMO error field
+      if (hasUmoError) errorFields.push('UMO');
       if (hasSiteIdError) errorFields.push('Site');
       if (hasBuildingIdError) errorFields.push('Building');
       if (hasWingIdError) errorFields.push('Wing');
@@ -169,13 +169,14 @@ export const AddServicePage = () => {
       });
 
       setIsSubmitting(false);
+      setSubmittingAction(null);
       return;
     }
 
     setErrors({
       serviceName: false,
       executionType: false,
-      umo: false, // Added UMO error reset
+      umo: false,
       siteId: false,
       buildingId: false,
       wingId: false,
@@ -233,7 +234,7 @@ export const AddServicePage = () => {
           setFormData({
             serviceName: '',
             executionType: '',
-            umo: '', // Reset UMO field
+            umo: '',
             serviceDescription: '',
             siteId: null,
             buildingId: null,
@@ -258,6 +259,7 @@ export const AddServicePage = () => {
       });
     } finally {
       setIsSubmitting(false);
+      setSubmittingAction(null);
     }
   };
 
@@ -269,7 +271,12 @@ export const AddServicePage = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 relative">
+      {isSubmitting && (
+        <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
+          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+        </div>
+      )}
       <div className="mb-6">
         <div className="flex items-center mb-2">
           <Button
@@ -488,18 +495,32 @@ export const AddServicePage = () => {
         <Button
           onClick={() => handleSubmit('show')}
           style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="text-white hover:bg-[#C72030]/90 flex items-center"
           disabled={isSubmitting}
         >
-          Save & show details
+          {isSubmitting && submittingAction === 'show' ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Save & show details'
+          )}
         </Button>
         <Button
           onClick={() => handleSubmit('new')}
           style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
+          className="text-white hover:bg-[#C72030]/90 flex items-center"
           disabled={isSubmitting}
         >
-          Save & Create New Service
+          {isSubmitting && submittingAction === 'new' ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            'Save & Create New Service'
+          )}
         </Button>
       </div>
     </div>

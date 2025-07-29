@@ -41,36 +41,44 @@ const SortableChartItem = ({
   } = useSortable({
     id
   });
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1
   };
-  
+
+  // Handle pointer down to prevent drag on button/icon clicks
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const target = e.target as HTMLElement;
+    // Check if the click is on a button, icon, or download element
+    if (
+      target.closest('button') ||
+      target.closest('[data-download]') ||
+      target.closest('svg') ||
+      target.tagName === 'BUTTON' ||
+      target.tagName === 'SVG' ||
+      target.closest('.download-btn') ||
+      target.closest('[data-download-button]')
+    ) {
+      e.stopPropagation();
+      return;
+    }
+    // For other elements, proceed with drag
+    if (listeners?.onPointerDown) {
+      listeners.onPointerDown(e);
+    }
+  };
+
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      {...attributes} 
-      className="relative group"
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      onPointerDown={handlePointerDown}
+      className="cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group"
     >
-      {/* Drag area - everywhere except buttons */}
-      <div 
-        {...listeners}
-        className="absolute inset-0 cursor-move"
-        onPointerDown={(e) => {
-          // Prevent drag when clicking on buttons or download icons
-          const target = e.target as HTMLElement;
-          if (target.closest('button') || target.closest('[data-download-button]') || target.tagName === 'svg' || target.tagName === 'path') {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-        }}
-      />
-      {/* Content */}
-      <div className="relative">
-        {children}
-      </div>
+      {children}
     </div>
   );
 };
@@ -265,10 +273,10 @@ export const TicketDashboard = () => {
   }, []);
 
   // Use ticket summary data from API
-  const openTickets = statusAnalyticsData?.overall.total_open || ticketSummary.open_tickets;
-  const inProgressTickets = statusAnalyticsData?.overall.total_wip || ticketSummary.in_progress_tickets;
-  const closedTickets = statusAnalyticsData?.overall.total_closed || ticketSummary.closed_tickets;
-  const totalSummaryTickets = (openTickets + inProgressTickets + closedTickets) || ticketSummary.total_tickets;
+  const openTickets = ticketSummary.open_tickets;
+  const inProgressTickets = ticketSummary.in_progress_tickets;
+  const closedTickets = ticketSummary.closed_tickets;
+  const totalSummaryTickets = ticketSummary.total_tickets;
   const pendingTickets = ticketSummary.pending_tickets; // Use ticket summary for pending as it's not in analytics
   const totalTicketsCount = initialTotalTickets || totalSummaryTickets;
   const displayTotalTickets = totalTicketsCount.toLocaleString();
@@ -338,7 +346,7 @@ export const TicketDashboard = () => {
   }
   ];
 
-  // Calculate category data from API analytics data or fallback to tickets
+  // Calculate category data from API analytics data only
   const categoryChartData = categoryAnalyticsData.length > 0
     ? categoryAnalyticsData.map(item => ({
       name: item.category,
@@ -346,20 +354,7 @@ export const TicketDashboard = () => {
       reactive: item.reactive.Open + item.reactive.Closed,
       value: item.proactive.Open + item.proactive.Closed + item.reactive.Open + item.reactive.Closed
     }))
-    : (() => {
-      const safeTickets = tickets || [];
-      const categoryData = safeTickets.reduce((acc, ticket) => {
-        const category = ticket.category_type;
-        if (category) {
-          acc[category] = (acc[category] || 0) + 1;
-        }
-        return acc;
-      }, {});
-      return Object.entries(categoryData).map(([name, value]) => ({
-        name,
-        value
-      }));
-    })();
+    : []; // No fallback to tickets data
 
   // Aging matrix data from API or fallback
   const agingMatrixData = agingMatrixAnalyticsData?.response.matrix
@@ -631,17 +626,17 @@ export const TicketDashboard = () => {
     if (cardType !== 'total') {
       // Use the correct API parameter format for status filtering
       if (cardType === 'open') {
-        newFilters.complaint_status_name_eq = 'Open';
-        // console.log('Setting Open filter with complaint_status_name_eq=Open');
+        newFilters.complaint_status_fixed_state_not_eq = 'Open';
+        // console.log('Setting Open filter with complaint_status_fixed_state_eq=Open');
       } else if (cardType === 'pending') {
-        newFilters.complaint_status_name_eq = 'Pending';
-        //  console.log('Setting Pending filter with complaint_status_name_eq=Pending');
+        newFilters.complaint_status_fixed_state_eq = 'Pending';
+        //  console.log('Setting Pending filter with complaint_status_fixed_state_eq=Pending');
       } else if (cardType === 'in_progress') {
-        newFilters.complaint_status_name_eq = 'In Progress';
-        //  console.log('Setting In Progress filter with complaint_status_name_eq=In Progress');
+        newFilters.complaint_status_fixed_state_eq = 'In Progress';
+        //  console.log('Setting In Progress filter with complaint_status_fixed_state_eq=In Progress');
       } else if (cardType === 'closed') {
-        newFilters.complaint_status_name_eq = 'Closed';
-        console.log('Setting Closed filter with complaint_status_name_eq=Closed');
+        newFilters.complaint_status_fixed_state_eq = 'Closed';
+        console.log('Setting Closed filter with complaint_status_fixed_state_eq=Closed');
       }
     }
 
@@ -653,8 +648,8 @@ export const TicketDashboard = () => {
     const testParams = new URLSearchParams();
     testParams.append('page', '1');
     testParams.append('per_page', '20');
-    if (newFilters.complaint_status_name_eq) {
-      testParams.append('q[complaint_status_name_eq]', newFilters.complaint_status_name_eq);
+    if (newFilters.complaint_status_fixed_state_eq) {
+      testParams.append('q[complaint_status_fixed_state_eq]', newFilters.complaint_status_fixed_state_eq);
     }
     console.log('Expected API URL will be:', `/pms/admin/complaints.json?${testParams.toString()}`);
   };
@@ -664,13 +659,13 @@ export const TicketDashboard = () => {
     if (cardType === 'total') return false;
 
     if (cardType === 'open') {
-      return filters.complaint_status_name_eq === 'Open';
+      return filters.complaint_status_fixed_state_not_eq === 'Open';
     } else if (cardType === 'pending') {
-      return filters.complaint_status_name_eq === 'Pending';
+      return filters.complaint_status_fixed_state_eq === 'Pending';
     } else if (cardType === 'in_progress') {
-      return filters.complaint_status_name_eq === 'In Progress';
+      return filters.complaint_status_fixed_state_eq === 'In Progress';
     } else if (cardType === 'closed') {
-      return filters.complaint_status_name_eq === 'Closed';
+      return filters.complaint_status_fixed_state_eq === 'Closed';
     }
 
     return false;
@@ -1023,7 +1018,11 @@ export const TicketDashboard = () => {
                       {chartOrder.filter(id => ['statusChart', 'reactiveChart', 'unitCategoryWise', 'responseTat'].includes(id)).map(chartId => {
                         if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
                           return <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
+                              {/* Drag indicator */}
+                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
+                                <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
+                              </div>
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets Status</h3>
                                 {/* <Download
@@ -1050,15 +1049,15 @@ export const TicketDashboard = () => {
                                   }}
                                 /> */}
                               </div>
-                              <div className="grid grid-cols-3 gap-4">
+                              <div className="flex grid-cols-3 gap-4">
                                 <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                                   <div className="text-2xl font-bold text-yellow-600">{openTickets}</div>
                                   <div className="text-sm text-yellow-700 font-medium">Open</div>
                                 </div>
-                                <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                                {/* <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
                                   <div className="text-2xl font-bold text-orange-600">{inProgressTickets}</div>
                                   <div className="text-sm text-orange-700 font-medium">In Progress</div>
-                                </div>
+                                </div> */}
                                 <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
                                   <div className="text-2xl font-bold text-green-600">{closedTickets}</div>
                                   <div className="text-sm text-green-700 font-medium">Closed</div>
@@ -1069,7 +1068,11 @@ export const TicketDashboard = () => {
                         }
                         if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
                           return <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
+                              {/* Drag indicator */}
+                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
+                                <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
+                              </div>
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Proactive/Reactive Tickets</h3>
                                 {/* <Download
@@ -1127,7 +1130,7 @@ export const TicketDashboard = () => {
                         if (chartId === 'unitCategoryWise' && visibleSections.includes('unitCategoryWise')) {
                           return <SortableChartItem key={chartId} id={chartId}>
                             <TicketAnalyticsCard
-                              title="Unit Category Wise"
+                              title=" Category Wise"
                               data={unitCategorywiseData}
                               type="unitCategoryWise"
                               className="h-full"
@@ -1160,7 +1163,11 @@ export const TicketDashboard = () => {
                     {chartOrder.filter(id => ['categoryChart', 'agingMatrix', 'resolutionTat'].includes(id)).map(chartId => {
                       if (chartId === 'categoryChart' && visibleSections.includes('categoryChart')) {
                         return <SortableChartItem key={chartId} id={chartId}>
-                          <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
+                          <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
+                            {/* Drag indicator */}
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
+                              <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
+                            </div>
                             <div className="flex items-center justify-between mb-4">
                               <h3 className="text-base sm:text-lg font-bold" style={{
                                 color: '#C72030'
@@ -1212,7 +1219,11 @@ export const TicketDashboard = () => {
                       }
                       if (chartId === 'agingMatrix' && visibleSections.includes('agingMatrix')) {
                         return <SortableChartItem key={chartId} id={chartId}>
-                          <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
+                          <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
+                            {/* Drag indicator */}
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
+                              <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
+                            </div>
                             <div className="flex items-center justify-between mb-4 sm:mb-6">
                               <h3 className="text-base sm:text-lg font-bold" style={{
                                 color: '#C72030'
@@ -1285,7 +1296,7 @@ export const TicketDashboard = () => {
                                   backgroundColor: '#EDE4D8'
                                 }}>
                                   <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">
-                                    {agingMatrixAnalyticsData?.average_days || 569} Days
+                                    {agingMatrixAnalyticsData?.average_days } Days
                                   </div>
                                   <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
                                 </div>
@@ -1299,7 +1310,7 @@ export const TicketDashboard = () => {
                       if (chartId === 'unitCategoryWise' && visibleSections.includes('unitCategoryWise')) {
                         return <SortableChartItem key={chartId} id={chartId}>
                           <TicketAnalyticsCard
-                            title="Unit Category Wise"
+                            title=" Category Wise"
                             data={unitCategorywiseData}
                             type="unitCategoryWise"
                             className="bg-white border border-gray-200 rounded-lg"
@@ -1357,30 +1368,18 @@ export const TicketDashboard = () => {
 
         <TabsContent value="tickets" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Ticket Statistics Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {[{
               label: 'Total Tickets',
               value: displayTotalTickets,
               icon: Settings,
               type: 'total',
-              clickable: true // Make total tickets clickable to clear filters
+              clickable: true
             }, {
               label: 'Open',
               value: openTickets,
               icon: Settings,
               type: 'open',
-              clickable: true
-            }, {
-              label: 'In Progress',
-              value: inProgressTickets,
-              icon: Settings,
-              type: 'in_progress',
-              clickable: true
-            }, {
-              label: 'Pending',
-              value: pendingTickets,
-              icon: Settings,
-              type: 'pending',
               clickable: true
             }, {
               label: 'Closed',
@@ -1394,28 +1393,31 @@ export const TicketDashboard = () => {
               return (
                 <div
                   key={i}
-                  className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 transition-all ${isActive
-                      ? ""
-                      : "bg-[#f6f4ee]"
-                    } ${item.clickable ? "cursor-pointer hover:bg-[#edeae3] hover:shadow-lg" : ""
-                    }`}
-                  onClick={() => {
-                    if (item.clickable) {
-                      handleStatusCardClick(item.type);
-                    }
-                  }}
+                  className={`flex items-center justify-center p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] gap-2 sm:gap-4 transition-all 
+          ${isActive ? "" : "bg-[#f6f4ee]"} 
+          ${item.clickable ? "cursor-pointer hover:bg-[#edeae3] hover:shadow-lg" : ""}`}
+                  onClick={() => item.clickable && handleStatusCardClick(item.type)}
                 >
                   <div className="w-[52px] h-[36px] sm:w-[62px] sm:h-[62px] rounded-lg flex items-center justify-center flex-shrink-0 bg-[rgba(199,32,48,0.08)]">
                     <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-gray-600 mb-1">{item.value}</div>
-                    <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">{item.label}</div>
+                    <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-gray-600 mb-1">
+                      {item.value}
+                    </div>
+                    <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">
+                      {item.label}
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
+
+
+
+
+
 
 
           {/* Tickets Table */}
