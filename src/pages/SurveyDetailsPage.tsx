@@ -165,6 +165,33 @@ export const SurveyDetailsPage = () => {
               </Button>
             </div>
           </div>
+
+          {/* Asset Mapping List Table */}
+          <div className="mt-8">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+                6
+              </div>
+              <h3 className="text-lg font-medium text-red-600">Asset Mapping List</h3>
+            </div>
+            
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              {/* Table Header */}
+              <div className="grid grid-cols-2 bg-gray-100">
+                <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
+                  Service Name
+                </div>
+                <div className="p-4 font-medium text-gray-700">
+                  Tasks
+                </div>
+              </div>
+              
+              {/* Table Body - Empty State */}
+              <div className="p-8 text-center text-gray-500">
+                No service mappings found
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
