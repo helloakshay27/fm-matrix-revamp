@@ -190,6 +190,13 @@ export const SurveyDetailsPage = () => {
               </label>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
+                  <input 
+                    type="text" 
+                    placeholder="Answer Option"
+                    className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                    defaultValue="Working"
+                    disabled
+                  />
                   <Select defaultValue="P" disabled>
                     <SelectTrigger className="w-16 h-10 bg-gray-50">
                       <SelectValue />
@@ -199,15 +206,35 @@ export const SurveyDetailsPage = () => {
                       <SelectItem value="N">N</SelectItem>
                     </SelectContent>
                   </Select>
-                  <input 
-                    type="text" 
-                    placeholder="Answer Option"
-                    className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
-                    defaultValue="Very Satisfied"
-                    disabled
-                  />
+                  <X className="w-4 h-4 text-gray-400" />
                 </div>
                 <div className="flex items-center gap-3">
+                  <input 
+                    type="text" 
+                    placeholder="Answer Option"
+                    className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                    defaultValue="Not Working"
+                    disabled
+                  />
+                  <Select defaultValue="N" disabled>
+                    <SelectTrigger className="w-16 h-10 bg-gray-50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="P">P</SelectItem>
+                      <SelectItem value="N">N</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <X className="w-4 h-4 text-gray-400" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <input 
+                    type="text" 
+                    placeholder="Answer Option"
+                    className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                    defaultValue="NA"
+                    disabled
+                  />
                   <Select defaultValue="P" disabled>
                     <SelectTrigger className="w-16 h-10 bg-gray-50">
                       <SelectValue />
@@ -217,13 +244,7 @@ export const SurveyDetailsPage = () => {
                       <SelectItem value="N">N</SelectItem>
                     </SelectContent>
                   </Select>
-                  <input 
-                    type="text" 
-                    placeholder="Answer Option"
-                    className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
-                    defaultValue="Satisfied"
-                    disabled
-                  />
+                  <X className="w-4 h-4 text-gray-400" />
                 </div>
               </div>
             </div>
