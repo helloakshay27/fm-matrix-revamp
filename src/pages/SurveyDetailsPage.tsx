@@ -45,6 +45,9 @@ export const SurveyDetailsPage = () => {
     selectedFloors: [],
     selectedZones: [],
     selectedRooms: [],
+    selectedBuildingIds: [], // Add this to track building IDs
+    selectedWingIds: [], // Add this to track wing IDs
+    selectedFloorIds: [], // Add this to track floor IDs
     selectedRoomIds: [] // Add this to track room IDs
   });
 
@@ -296,6 +299,9 @@ export const SurveyDetailsPage = () => {
       // Prepare the API request
       const requestData = {
         survey_id: parseInt(id!), // Convert to number as required by API
+        building_ids: locationConfig.selectedBuildingIds,
+        wing_ids: locationConfig.selectedWingIds,
+        floor_ids: locationConfig.selectedFloorIds,
         room_ids: locationConfig.selectedRoomIds
       };
 
@@ -352,6 +358,9 @@ export const SurveyDetailsPage = () => {
         selectedFloors: [],
         selectedZones: [],
         selectedRooms: [],
+        selectedBuildingIds: [],
+        selectedWingIds: [],
+        selectedFloorIds: [],
         selectedRoomIds: []
       });
     } catch (error) {
@@ -613,15 +622,19 @@ export const SurveyDetailsPage = () => {
                   {locationConfig.building && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Buildings</h4>
-                      <Select onValueChange={(value) => {
-                        // value contains the building ID, find the building name for display
-                        const selectedBuilding = buildings.find(b => b.id.toString() === value)
-                        if (selectedBuilding && !locationConfig.selectedBuildings.includes(selectedBuilding.name)) {
-                          addSelectedItem('building', selectedBuilding.name);
-                          // You can also store the ID separately if needed for backend
-                          console.log('Selected building ID:', value, 'Name:', selectedBuilding.name)
-                        }
-                      }}>
+                       <Select onValueChange={(value) => {
+                         // value contains the building ID, find the building name for display
+                         const selectedBuilding = buildings.find(b => b.id.toString() === value)
+                         if (selectedBuilding && !locationConfig.selectedBuildings.includes(selectedBuilding.name)) {
+                           addSelectedItem('building', selectedBuilding.name);
+                           // Also store the building ID for the API call
+                           setLocationConfig(prev => ({
+                             ...prev,
+                             selectedBuildingIds: [...prev.selectedBuildingIds, selectedBuilding.id]
+                           }));
+                           console.log('Selected building ID:', value, 'Name:', selectedBuilding.name)
+                         }
+                       }}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder={`${locationConfig.selectedBuildings.length} building(s) selected`} />
                         </SelectTrigger>
@@ -645,15 +658,19 @@ export const SurveyDetailsPage = () => {
                   {locationConfig.wing && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Wings</h4>
-                      <Select onValueChange={(value) => {
-                        // value contains the wing ID, find the wing name for display
-                        const selectedWing = wings.find(w => w.id.toString() === value);
-                        if (selectedWing && !locationConfig.selectedWings.includes(selectedWing.name)) {
-                          addSelectedItem('wing', selectedWing.name);
-                          // You can also store the ID separately if needed for backend
-                          console.log('Selected wing ID:', value, 'Name:', selectedWing.name);
-                        }
-                      }}>
+                       <Select onValueChange={(value) => {
+                         // value contains the wing ID, find the wing name for display
+                         const selectedWing = wings.find(w => w.id.toString() === value);
+                         if (selectedWing && !locationConfig.selectedWings.includes(selectedWing.name)) {
+                           addSelectedItem('wing', selectedWing.name);
+                           // Also store the wing ID for the API call
+                           setLocationConfig(prev => ({
+                             ...prev,
+                             selectedWingIds: [...prev.selectedWingIds, selectedWing.id]
+                           }));
+                           console.log('Selected wing ID:', value, 'Name:', selectedWing.name);
+                         }
+                       }}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder={`${locationConfig.selectedWings.length} wing(s) selected`} />
                         </SelectTrigger>
@@ -692,15 +709,19 @@ export const SurveyDetailsPage = () => {
                   {locationConfig.floor && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Floors</h4>
-                       <Select onValueChange={(value) => {
-                         // value contains the floor ID, find the floor name for display
-                         const selectedFloor = floors.find(f => f.id.toString() === value);
-                         if (selectedFloor && !locationConfig.selectedFloors.includes(selectedFloor.name)) {
-                           addSelectedItem('floor', selectedFloor.name);
-                           // You can also store the ID separately if needed for backend
-                           console.log('Selected floor ID:', value, 'Name:', selectedFloor.name);
-                         }
-                       }}>
+                        <Select onValueChange={(value) => {
+                          // value contains the floor ID, find the floor name for display
+                          const selectedFloor = floors.find(f => f.id.toString() === value);
+                          if (selectedFloor && !locationConfig.selectedFloors.includes(selectedFloor.name)) {
+                            addSelectedItem('floor', selectedFloor.name);
+                            // Also store the floor ID for the API call
+                            setLocationConfig(prev => ({
+                              ...prev,
+                              selectedFloorIds: [...prev.selectedFloorIds, selectedFloor.id]
+                            }));
+                            console.log('Selected floor ID:', value, 'Name:', selectedFloor.name);
+                          }
+                        }}>
                          <SelectTrigger className="w-full">
                            <SelectValue placeholder={`${locationConfig.selectedFloors.length} floor(s) selected`} />
                          </SelectTrigger>
