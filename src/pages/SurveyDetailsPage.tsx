@@ -283,65 +283,12 @@ export const SurveyDetailsPage = () => {
               </DialogHeader>
               
               <div className="space-y-6">
-                {/* Checkboxes Row */}
+                {/* Selection Dropdowns Row */}
                 <div className="grid grid-cols-3 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="building" 
-                      checked={locationConfig.building}
-                      onCheckedChange={(checked) => setLocationConfig({...locationConfig, building: !!checked})}
-                    />
-                    <label htmlFor="building" className="text-sm font-medium">Building</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="wing" 
-                      checked={locationConfig.wing}
-                      onCheckedChange={(checked) => setLocationConfig({...locationConfig, wing: !!checked})}
-                    />
-                    <label htmlFor="wing" className="text-sm font-medium">Wing</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="floor" 
-                      checked={locationConfig.floor}
-                      onCheckedChange={(checked) => setLocationConfig({...locationConfig, floor: !!checked})}
-                    />
-                    <label htmlFor="floor" className="text-sm font-medium">Floor</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="zone" 
-                      checked={locationConfig.zone}
-                      onCheckedChange={(checked) => setLocationConfig({...locationConfig, zone: !!checked})}
-                    />
-                    <label htmlFor="zone" className="text-sm font-medium">Zone</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="room" 
-                      checked={locationConfig.room}
-                      onCheckedChange={(checked) => setLocationConfig({...locationConfig, room: !!checked})}
-                    />
-                    <label htmlFor="room" className="text-sm font-medium">Room</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="customerEnabled" 
-                      checked={locationConfig.customerEnabled}
-                      onCheckedChange={(checked) => setLocationConfig({...locationConfig, customerEnabled: !!checked})}
-                    />
-                    <label htmlFor="customerEnabled" className="text-sm font-medium">Customer Enabled</label>
-                  </div>
-                </div>
-
-                {/* Dropdowns */}
-                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Buildings</label>
                     <Select value={locationConfig.selectedBuilding} onValueChange={(value) => setLocationConfig({...locationConfig, selectedBuilding: value})}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select Building" />
+                        <SelectValue placeholder="Building" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Gophygital">Gophygital</SelectItem>
@@ -350,12 +297,11 @@ export const SurveyDetailsPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Wings</label>
                     <Select value={locationConfig.selectedWing} onValueChange={(value) => setLocationConfig({...locationConfig, selectedWing: value})}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select Wing" />
+                        <SelectValue placeholder="Wing" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="A Wing">A Wing</SelectItem>
@@ -364,12 +310,11 @@ export const SurveyDetailsPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Floors</label>
                     <Select value={locationConfig.selectedFloor} onValueChange={(value) => setLocationConfig({...locationConfig, selectedFloor: value})}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select Floor" />
+                        <SelectValue placeholder="Floor" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Ground Floor">Ground Floor</SelectItem>
@@ -378,12 +323,11 @@ export const SurveyDetailsPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Zones</label>
                     <Select value={locationConfig.selectedZone} onValueChange={(value) => setLocationConfig({...locationConfig, selectedZone: value})}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select zones" />
+                        <SelectValue placeholder="Zone" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Zone A">Zone A</SelectItem>
@@ -392,17 +336,28 @@ export const SurveyDetailsPage = () => {
                       </SelectContent>
                     </Select>
                   </div>
-
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Rooms</label>
                     <Select value={locationConfig.selectedRoom} onValueChange={(value) => setLocationConfig({...locationConfig, selectedRoom: value})}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select rooms" />
+                        <SelectValue placeholder="Room" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Room 101">Room 101</SelectItem>
                         <SelectItem value="Room 102">Room 102</SelectItem>
                         <SelectItem value="Room 103">Room 103</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Select value={locationConfig.customerEnabled ? "Yes" : "No"} onValueChange={(value) => setLocationConfig({...locationConfig, customerEnabled: value === "Yes"})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Customer Enabled" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Yes">Yes</SelectItem>
+                        <SelectItem value="No">No</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
