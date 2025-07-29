@@ -59,14 +59,11 @@ export const EditServicePage = () => {
   const [errors, setErrors] = useState({
     serviceName: false,
     executionType: false,
-    umo: false,
     siteId: false,
     buildingId: false,
     wingId: false,
     areaId: false,
     floorId: false,
-    groupId: false,
-    subGroupId: false,
   });
 
   useEffect(() => {
@@ -166,9 +163,6 @@ export const EditServicePage = () => {
     if (field === 'executionType' && value !== '') {
       setErrors(prev => ({ ...prev, executionType: false }));
     }
-    if (field === 'umo' && value && String(value).trim() !== '') {
-      setErrors(prev => ({ ...prev, umo: false }));
-    }
     if (field === 'siteId' && value !== null) {
       setErrors(prev => ({ ...prev, siteId: false }));
       dispatch(fetchBuildings(Number(value)));
@@ -198,12 +192,8 @@ export const EditServicePage = () => {
       setFormData(prev => ({ ...prev, roomId: null }));
     }
     if (field === 'groupId' && value !== null) {
-      setErrors(prev => ({ ...prev, groupId: false }));
       dispatch(fetchSubGroups(Number(value)));
       setFormData(prev => ({ ...prev, subGroupId: null, subGroupName: '' }));
-    }
-    if (field === 'subGroupId' && value !== null) {
-      setErrors(prev => ({ ...prev, subGroupId: false }));
     }
   };
 
@@ -226,51 +216,39 @@ export const EditServicePage = () => {
 
     const hasServiceNameError = formData.serviceName.trim() === '';
     const hasExecutionTypeError = formData.executionType === '';
-    const hasUmoError = formData.umo.trim() === '';
     const hasSiteIdError = formData.siteId === null;
     const hasBuildingIdError = formData.buildingId === null;
     const hasWingIdError = formData.wingId === null;
     const hasAreaIdError = formData.areaId === null;
     const hasFloorIdError = formData.floorId === null;
-    const hasGroupIdError = formData.groupId === null;
-    const hasSubGroupIdError = formData.subGroupId === null;
 
     if (
       hasServiceNameError ||
       hasExecutionTypeError ||
-      hasUmoError ||
       hasSiteIdError ||
       hasBuildingIdError ||
       hasWingIdError ||
       hasAreaIdError ||
-      hasFloorIdError ||
-      hasGroupIdError ||
-      hasSubGroupIdError
+      hasFloorIdError
     ) {
       setErrors({
         serviceName: hasServiceNameError,
         executionType: hasExecutionTypeError,
-        umo: hasUmoError,
         siteId: hasSiteIdError,
         buildingId: hasBuildingIdError,
         wingId: hasWingIdError,
         areaId: hasAreaIdError,
         floorId: hasFloorIdError,
-        groupId: hasGroupIdError,
-        subGroupId: hasSubGroupIdError,
       });
 
       const errorFields = [];
       if (hasServiceNameError) errorFields.push('Service Name');
       if (hasExecutionTypeError) errorFields.push('Execution Type');
-      if (hasUmoError) errorFields.push('UMO');
       if (hasSiteIdError) errorFields.push('Site');
       if (hasBuildingIdError) errorFields.push('Building');
       if (hasWingIdError) errorFields.push('Wing');
       if (hasAreaIdError) errorFields.push('Area');
       if (hasFloorIdError) errorFields.push('Floor');
-      if (hasGroupIdError) errorFields.push('Group');
-      if (hasSubGroupIdError) errorFields.push('Sub-Group');
 
       toast({
         title: "Validation Error",
@@ -286,14 +264,11 @@ export const EditServicePage = () => {
     setErrors({
       serviceName: false,
       executionType: false,
-      umo: false,
       siteId: false,
       buildingId: false,
       wingId: false,
       areaId: false,
       floorId: false,
-      groupId: false,
-      subGroupId: false,
     });
 
     const sendData = new FormData();
@@ -413,15 +388,12 @@ export const EditServicePage = () => {
               )}
             </FormControl>
             <TextField
-              required
               label="UMO"
               placeholder="Enter UMO"
               value={formData.umo}
               onChange={(e) => handleInputChange('umo', e.target.value)}
               fullWidth
               variant="outlined"
-              error={errors.umo}
-              helperText={errors.umo ? 'UMO is required' : ''}
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               disabled={isSubmitting}
@@ -598,7 +570,7 @@ export const EditServicePage = () => {
               )}
             </FormControl>
 
-            <FormControl fullWidth variant="outlined" error={errors.groupId}>
+            <FormControl fullWidth variant="outlined">
               <InputLabel id="group-select-label" shrink>Group</InputLabel>
               <MuiSelect
                 labelId="group-select-label"
@@ -623,7 +595,6 @@ export const EditServicePage = () => {
                   </MenuItem>
                 ))}
               </MuiSelect>
-              {errors.groupId && <FormHelperText>Group is required</FormHelperText>}
               {locationLoading.groups && (
                 <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
                   <CircularProgress size={16} />
@@ -631,7 +602,7 @@ export const EditServicePage = () => {
               )}
             </FormControl>
 
-            <FormControl fullWidth variant="outlined" error={errors.subGroupId}>
+            <FormControl fullWidth variant="outlined">
               <InputLabel id="subgroup-select-label" shrink>Sub-Group</InputLabel>
               <MuiSelect
                 labelId="subgroup-select-label"
@@ -656,7 +627,6 @@ export const EditServicePage = () => {
                   </MenuItem>
                 ))}
               </MuiSelect>
-              {errors.subGroupId && <FormHelperText>Sub-Group is required</FormHelperText>}
               {locationLoading.subGroups && (
                 <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
                   <CircularProgress size={16} />

@@ -45,19 +45,25 @@ const transformFMUserData = (apiUser: FMUser) => ({
   gender: apiUser.gender,
   mobile: apiUser.mobile,
   email: apiUser.email,
-  vendorCompany: apiUser.company_name || 'N/A',
+  vendorCompany: apiUser.company_name,
   entityName: `Entity ${apiUser.entity_id}`,
   unit: `Unit ${apiUser.unit_id}`,
-  role: apiUser.role_id || 'N/A',
-  employeeId: apiUser.employee_id || 'N/A',
+  role: apiUser.lock_user_permission?.role_for,
+  employeeId: apiUser.employee_id,
   createdBy: `User ${apiUser.created_by_id}`,
-  accessLevel: apiUser.lock_user_permission?.access_level || 'N/A',
-  type: apiUser.user_type === 'pms_admin' ? 'Internal' : 'External',
-  status: apiUser?.lock_user_permission?.status === 'approved' ? 'Active' : 'Inactive',
+  accessLevel: apiUser.lock_user_permission?.access_level,
+  type: apiUser.user_type
+    ? apiUser.user_type
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+    : '',
+  status: apiUser?.lock_user_permission?.status,
   faceRecognition: apiUser.face_added,
   appDownloaded: apiUser.app_downloaded === 'Yes',
   active: apiUser.active
 });
+
 
 export const FMUserMasterDashboard = () => {
   const { setCurrentSection } = useLayout();
@@ -811,40 +817,17 @@ export const FMUserMasterDashboard = () => {
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent className="bg-white border shadow-lg z-50">
-                      <SelectItem value="mahendra-lungare">Mahendra Lungare</SelectItem>
-                      <SelectItem value="security-ho-1">Security HO 1</SelectItem>
-                      <SelectItem value="security-ho-2">Security HO 2</SelectItem>
-                      <SelectItem value="kshitij-rasal">Kshitij Rasal</SelectItem>
-                      <SelectItem value="vinayak-mane">Vinayak Mane</SelectItem>
-                      <SelectItem value="demo-site1">Demo Site1</SelectItem>
-                      <SelectItem value="gaurav-mane">Gaurav Mane</SelectItem>
-                      <SelectItem value="abhishek-sharma">Abhishek Sharma</SelectItem>
-                      <SelectItem value="tejas-chaudhari">Tejas Chaudhari</SelectItem>
-                      <SelectItem value="sohail-ansari">Sohail Ansari</SelectItem>
-                      <SelectItem value="sagar-singh">Sagar Singh</SelectItem>
-                      <SelectItem value="rohit-sharma">Rohit Sharma</SelectItem>
-                      <SelectItem value="aquil-husain">Aquil Husain</SelectItem>
-                      <SelectItem value="samira-merchant">Samira Merchant</SelectItem>
-                      <SelectItem value="vidhya-balota">Vidhya Balota</SelectItem>
-                      <SelectItem value="akshay-mugale">Akshay Mugale</SelectItem>
-                      <SelectItem value="varsha-soni">Varsha Soni</SelectItem>
-                      <SelectItem value="prathmesh-kharate">Prathmesh Kharate</SelectItem>
-                      <SelectItem value="dev-j">Dev J</SelectItem>
-                      <SelectItem value="riya-sharma">riya sharma</SelectItem>
-                      <SelectItem value="anamika-chandel">Anamika Chandel</SelectItem>
-                      <SelectItem value="nidhi-ghag">Nidhi Ghag</SelectItem>
-                      <SelectItem value="yukta-dhanawade">Yukta Dhanawade</SelectItem>
-                      <SelectItem value="aishwarya-galgale">Aishwarya Galgale</SelectItem>
-                      <SelectItem value="sanjay-santhanamahalingam">Sanjay Santhanamahalingam</SelectItem>
-                      <SelectItem value="adhip-shetty">Adhip Shetty</SelectItem>
-                      <SelectItem value="fardeen-shaikh">Fardeen Shaikh</SelectItem>
-                      <SelectItem value="jyoti-dubey">Jyoti Dubey</SelectItem>
-                      <SelectItem value="ravi-sampat">Ravi Sampat</SelectItem>
-                      <SelectItem value="dhananjay-bhoyar">Dhananjay Bhoyar</SelectItem>
-                      <SelectItem value="sadanand-gupta">Sadanand Gupta</SelectItem>
-                      <SelectItem value="sameer-kumar">sameer kumar</SelectItem>
-                      <SelectItem value="sureshdatt-shukla">Sureshdatt Shukla</SelectItem>
-                      <SelectItem value="demo-user">Demo User</SelectItem>
+                      {fmUsersData.length > 0 ? (
+                        fmUsersData.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.userName}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled className="text-gray-400">
+                          No users available
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -856,40 +839,17 @@ export const FMUserMasterDashboard = () => {
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent className="bg-white border shadow-lg z-50">
-                      <SelectItem value="mahendra-lungare">Mahendra Lungare</SelectItem>
-                      <SelectItem value="security-ho-1">Security HO 1</SelectItem>
-                      <SelectItem value="security-ho-2">Security HO 2</SelectItem>
-                      <SelectItem value="kshitij-rasal">Kshitij Rasal</SelectItem>
-                      <SelectItem value="vinayak-mane">Vinayak Mane</SelectItem>
-                      <SelectItem value="demo-site1">Demo Site1</SelectItem>
-                      <SelectItem value="gaurav-mane">Gaurav Mane</SelectItem>
-                      <SelectItem value="abhishek-sharma">Abhishek Sharma</SelectItem>
-                      <SelectItem value="tejas-chaudhari">Tejas Chaudhari</SelectItem>
-                      <SelectItem value="sohail-ansari">Sohail Ansari</SelectItem>
-                      <SelectItem value="sagar-singh">Sagar Singh</SelectItem>
-                      <SelectItem value="rohit-sharma">Rohit Sharma</SelectItem>
-                      <SelectItem value="aquil-husain">Aquil Husain</SelectItem>
-                      <SelectItem value="samira-merchant">Samira Merchant</SelectItem>
-                      <SelectItem value="vidhya-balota">Vidhya Balota</SelectItem>
-                      <SelectItem value="akshay-mugale">Akshay Mugale</SelectItem>
-                      <SelectItem value="varsha-soni">Varsha Soni</SelectItem>
-                      <SelectItem value="prathmesh-kharate">Prathmesh Kharate</SelectItem>
-                      <SelectItem value="dev-j">Dev J</SelectItem>
-                      <SelectItem value="riya-sharma">riya sharma</SelectItem>
-                      <SelectItem value="anamika-chandel">Anamika Chandel</SelectItem>
-                      <SelectItem value="nidhi-ghag">Nidhi Ghag</SelectItem>
-                      <SelectItem value="yukta-dhanawade">Yukta Dhanawade</SelectItem>
-                      <SelectItem value="aishwarya-galgale">Aishwarya Galgale</SelectItem>
-                      <SelectItem value="sanjay-santhanamahalingam">Sanjay Santhanamahalingam</SelectItem>
-                      <SelectItem value="adhip-shetty">Adhip Shetty</SelectItem>
-                      <SelectItem value="fardeen-shaikh">Fardeen Shaikh</SelectItem>
-                      <SelectItem value="jyoti-dubey">Jyoti Dubey</SelectItem>
-                      <SelectItem value="ravi-sampat">Ravi Sampat</SelectItem>
-                      <SelectItem value="dhananjay-bhoyar">Dhananjay Bhoyar</SelectItem>
-                      <SelectItem value="sadanand-gupta">Sadanand Gupta</SelectItem>
-                      <SelectItem value="sameer-kumar">sameer kumar</SelectItem>
-                      <SelectItem value="sureshdatt-shukla">Sureshdatt Shukla</SelectItem>
-                      <SelectItem value="demo-user">Demo User</SelectItem>
+                      {fmUsersData.length > 0 ? (
+                        fmUsersData.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.userName}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled className="text-gray-400">
+                          No users available
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -903,40 +863,17 @@ export const FMUserMasterDashboard = () => {
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent className="bg-white border shadow-lg z-50">
-                      <SelectItem value="mahendra-lungare">Mahendra Lungare</SelectItem>
-                      <SelectItem value="security-ho-1">Security HO 1</SelectItem>
-                      <SelectItem value="security-ho-2">Security HO 2</SelectItem>
-                      <SelectItem value="kshitij-rasal">Kshitij Rasal</SelectItem>
-                      <SelectItem value="vinayak-mane">Vinayak Mane</SelectItem>
-                      <SelectItem value="demo-site1">Demo Site1</SelectItem>
-                      <SelectItem value="gaurav-mane">Gaurav Mane</SelectItem>
-                      <SelectItem value="abhishek-sharma">Abhishek Sharma</SelectItem>
-                      <SelectItem value="tejas-chaudhari">Tejas Chaudhari</SelectItem>
-                      <SelectItem value="sohail-ansari">Sohail Ansari</SelectItem>
-                      <SelectItem value="sagar-singh">Sagar Singh</SelectItem>
-                      <SelectItem value="rohit-sharma">Rohit Sharma</SelectItem>
-                      <SelectItem value="aquil-husain">Aquil Husain</SelectItem>
-                      <SelectItem value="samira-merchant">Samira Merchant</SelectItem>
-                      <SelectItem value="vidhya-balota">Vidhya Balota</SelectItem>
-                      <SelectItem value="akshay-mugale">Akshay Mugale</SelectItem>
-                      <SelectItem value="varsha-soni">Varsha Soni</SelectItem>
-                      <SelectItem value="prathmesh-kharate">Prathmesh Kharate</SelectItem>
-                      <SelectItem value="dev-j">Dev J</SelectItem>
-                      <SelectItem value="riya-sharma">riya sharma</SelectItem>
-                      <SelectItem value="anamika-chandel">Anamika Chandel</SelectItem>
-                      <SelectItem value="nidhi-ghag">Nidhi Ghag</SelectItem>
-                      <SelectItem value="yukta-dhanawade">Yukta Dhanawade</SelectItem>
-                      <SelectItem value="aishwarya-galgale">Aishwarya Galgale</SelectItem>
-                      <SelectItem value="sanjay-santhanamahalingam">Sanjay Santhanamahalingam</SelectItem>
-                      <SelectItem value="adhip-shetty">Adhip Shetty</SelectItem>
-                      <SelectItem value="fardeen-shaikh">Fardeen Shaikh</SelectItem>
-                      <SelectItem value="jyoti-dubey">Jyoti Dubey</SelectItem>
-                      <SelectItem value="ravi-sampat">Ravi Sampat</SelectItem>
-                      <SelectItem value="dhananjay-bhoyar">Dhananjay Bhoyar</SelectItem>
-                      <SelectItem value="sadanand-gupta">Sadanand Gupta</SelectItem>
-                      <SelectItem value="sameer-kumar">sameer kumar</SelectItem>
-                      <SelectItem value="sureshdatt-shukla">Sureshdatt Shukla</SelectItem>
-                      <SelectItem value="demo-user">Demo User</SelectItem>
+                      {fmUsersData.length > 0 ? (
+                        fmUsersData.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.userName}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled className="text-gray-400">
+                          No users available
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
