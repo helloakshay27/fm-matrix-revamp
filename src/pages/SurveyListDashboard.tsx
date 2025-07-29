@@ -103,9 +103,9 @@ export const SurveyListDashboard = () => {
     { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     { key: 'name', label: 'Survey Name', sortable: true, draggable: true },
     { key: 'snag_audit_category', label: 'Ticket Category', sortable: true, draggable: true },
-    { key: 'snag_audit_sub_category', label: 'Sub Category', sortable: true, draggable: true },
+    // { key: 'snag_audit_sub_category', label: 'Sub Category', sortable: true, draggable: true }, // Hidden
     { key: 'questions_count', label: 'No. of Associations', sortable: true, draggable: true },
-    { key: 'status', label: 'Status', sortable: true, draggable: true }
+    // { key: 'status', label: 'Status', sortable: true, draggable: true } // Hidden
   ];
 
   const renderCell = (item: SurveyItem, columnKey: string) => {
