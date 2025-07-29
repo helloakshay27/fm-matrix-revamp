@@ -267,7 +267,7 @@ export const BookingSetupDetailPage = () => {
           breakTimeStart: { hour: slot.facility_slot.break_start_hour, minute: slot.facility_slot.break_start_min },
           breakTimeEnd: { hour: slot.facility_slot.break_end_hour, minute: slot.facility_slot.break_end_min },
           endTime: { hour: slot.facility_slot.end_hour, minute: slot.facility_slot.end_min },
-          concurrentSlots: "",
+          concurrentSlots: slot.facility_slot.max_bookings,
           slotBy: slot.facility_slot.breakminutes_label,
           wrapTime: slot.facility_slot.wrap_time,
         })),
@@ -998,7 +998,7 @@ export const BookingSetupDetailPage = () => {
                               key={i}
                               value={i}
                             >
-                              {i.toString().padStart(2, "0")}
+                              {i}
                             </MenuItem>
                           ))}
                         </Select>
