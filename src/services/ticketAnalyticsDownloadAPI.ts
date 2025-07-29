@@ -2,7 +2,11 @@ import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
 // Utility function to format date for API
 const formatDateForAPI = (date: Date): string => {
-  return date.toISOString().split('T')[0];
+  // Use UTC methods to avoid timezone issues
+  const year = date.getUTCFullYear();
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+  const day = date.getUTCDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 // Utility function to get current site ID
