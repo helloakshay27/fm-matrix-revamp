@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus, ChevronDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
 export const SurveyDetailsPage = () => {
-  const { id } = useParams();
+  const {
+    id
+  } = useParams();
   const navigate = useNavigate();
 
   // Mock data - in real app, this would be fetched based on the id
@@ -15,37 +16,27 @@ export const SurveyDetailsPage = () => {
     id: id,
     title: "Customer Satisfaction Survey",
     category: "Feedback",
-    questions: [
-      {
-        id: "1",
-        text: "How satisfied are you with our service?",
-        type: "Multiple Choice",
-        mandatory: true,
-        options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"]
-      },
-      {
-        id: "2", 
-        text: "What improvements would you suggest?",
-        type: "Text Area",
-        mandatory: false,
-        options: []
-      }
-    ]
+    questions: [{
+      id: "1",
+      text: "How satisfied are you with our service?",
+      type: "Multiple Choice",
+      mandatory: true,
+      options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"]
+    }, {
+      id: "2",
+      text: "What improvements would you suggest?",
+      type: "Text Area",
+      mandatory: false,
+      options: []
+    }]
   };
-
   const handleBack = () => {
     navigate('/maintenance/survey/list');
   };
-
-  return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+  return <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={handleBack}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
-        >
+        <Button variant="ghost" onClick={handleBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-800">
           <ArrowLeft className="w-4 h-4" />
           Back to Survey List
         </Button>
@@ -86,11 +77,7 @@ export const SurveyDetailsPage = () => {
                     <SelectItem value="02">02</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button 
-                  size="sm" 
-                  className="w-8 h-8 p-0 bg-red-100 hover:bg-red-200 text-red-600"
-                  disabled
-                >
+                <Button size="sm" className="w-8 h-8 p-0 bg-red-100 hover:bg-red-200 text-red-600" disabled>
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
@@ -101,8 +88,7 @@ export const SurveyDetailsPage = () => {
 
             {/* Questions Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {surveyData.questions.map((question, index) => (
-                <Card key={question.id} className="border border-gray-200">
+              {surveyData.questions.map((question, index) => <Card key={question.id} className="border border-gray-200">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <CardTitle className="text-base font-medium">
                       New Question
@@ -112,12 +98,7 @@ export const SurveyDetailsPage = () => {
                   <CardContent className="space-y-4">
                     {/* Question Text */}
                     <div>
-                      <textarea 
-                        className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-500 min-h-[80px] resize-none"
-                        placeholder="Enter your Question"
-                        value={question.text}
-                        disabled
-                      />
+                      <textarea className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-500 min-h-[80px] resize-none" placeholder="Enter your Question" value={question.text} disabled />
                     </div>
 
                     {/* Answer Type */}
@@ -138,28 +119,18 @@ export const SurveyDetailsPage = () => {
 
                     {/* Mandatory Checkbox */}
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`mandatory-${question.id}`}
-                        checked={question.mandatory}
-                        disabled
-                        className="data-[state=checked]:bg-gray-400"
-                      />
+                      <Checkbox id={`mandatory-${question.id}`} checked={question.mandatory} disabled className="data-[state=checked]:bg-gray-400" />
                       <label htmlFor={`mandatory-${question.id}`} className="text-sm text-gray-700">
                         Mandatory
                       </label>
                     </div>
                   </CardContent>
-                </Card>
-              ))}
+                </Card>)}
             </div>
 
             {/* Add More Questions Button */}
             <div className="flex justify-center">
-              <Button 
-                variant="outline" 
-                className="border-2 border-dashed border-red-300 text-red-600 hover:bg-red-50 px-6 py-3"
-                disabled
-              >
+              <Button variant="outline" className="border-2 border-dashed border-red-300 text-red-600 hover:bg-red-50 px-6 py-3" disabled>
                 <Plus className="w-4 h-4 mr-2" />
                 Add More Questions
               </Button>
@@ -169,10 +140,8 @@ export const SurveyDetailsPage = () => {
           {/* Asset Mapping List Table */}
           <div className="mt-8">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                6
-              </div>
-              <h3 className="text-lg font-medium text-red-600">Asset Mapping List</h3>
+              
+              <h3 className="text-lg font-medium text-red-600">Survey Mapping List</h3>
             </div>
             
             <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -194,6 +163,5 @@ export const SurveyDetailsPage = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
