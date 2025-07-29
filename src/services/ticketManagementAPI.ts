@@ -452,7 +452,7 @@ export const ticketManagementAPI = {
       });
     }
 
-    const url = `/pms/admin/complaints.json?&q[complaint_status_fixed_state_null]=1&q[m]=or&${queryParams.toString()}`;
+    const url = `/pms/admin/complaints.json?${queryParams.toString()}`;
     console.log('API URL:', url);
     console.log('Query parameters:', Object.fromEntries(queryParams.entries()));
     const response = await apiClient.get(url);
