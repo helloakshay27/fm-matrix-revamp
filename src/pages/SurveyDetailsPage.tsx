@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { fetchSnagChecklistById, fetchSnagChecklistCategories, SnagChecklist } from '@/services/snagChecklistAPI';
 import { useToast } from '@/components/ui/use-toast';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { SearchableDropdown } from '@/components/SearchableDropdown';
 export const SurveyDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ export const SurveyDetailsPage = () => {
     customerEnabled: false,
     selectedBuildings: ['Gophygital'],
     selectedWings: ['A Wing'],
-    selectedFloors: ['Ground Floor'],
+    selectedFloors: [],
     selectedZones: [],
     selectedRooms: []
   });
@@ -547,31 +548,37 @@ export const SurveyDetailsPage = () => {
                   {locationConfig.floor && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Floors</h4>
-                      <Select onValueChange={(value) => {
-                        // value contains the floor ID, find the floor name for display
-                        const selectedFloor = floors.find(f => f.id.toString() === value);
-                        if (selectedFloor && !locationConfig.selectedFloors.includes(selectedFloor.name)) {
-                          addSelectedItem('floor', selectedFloor.name);
-                          // You can also store the ID separately if needed for backend
-                          console.log('Selected floor ID:', value, 'Name:', selectedFloor.name);
-                        }
-                      }}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select floor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {loadingFloors ? (
-                            <SelectItem value="loading" disabled>Loading floors...</SelectItem>
-                          ) : (
-                            floors.map((floor) => (
-                              <SelectItem key={floor.id} value={floor.id.toString()}>
-                                {floor.name}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                       {/* Selected floors */}
+                      <SearchableDropdown
+                        placeholder={`${locationConfig.selectedFloors.length} floor(s) selected`}
+                        options={floors.map(floor => ({ value: floor.id.toString(), label: floor.name }))}
+                        value={null}
+                        onChange={(selectedOption) => {
+                          if (selectedOption && !locationConfig.selectedFloors.includes(selectedOption.label)) {
+                            addSelectedItem('floor', selectedOption.label);
+                            console.log('Selected floor ID:', selectedOption.value, 'Name:', selectedOption.label);
+                          }
+                        }}
+                        isLoading={loadingFloors}
+                        isSearchable={true}
+                        isClearable={true}
+                        noOptionsMessage="No floors found"
+                      />
+                      {/* Selected floors */}
+                      {locationConfig.selectedFloors.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {locationConfig.selectedFloors.map((floor) => (
+                            <span key={floor} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
+                              {floor}
+                              <button
+                                onClick={() => removeSelectedItem('floor', floor)}
+                                className="ml-1 text-gray-500 hover:text-gray-700"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
