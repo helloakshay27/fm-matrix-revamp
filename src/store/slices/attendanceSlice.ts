@@ -13,8 +13,9 @@ export interface AttendanceRecord {
 export const fetchAttendanceData = createAsyncThunk(
   'attendance/fetchAttendanceData',
   async (_, { rejectWithValue }) => {
+    const baseUrl = localStorage.getItem('baseUrl');
     try {
-      const response = await apiClient.get('https://fm-uat-api.lockated.com/pms/attendances.json')
+      const response = await apiClient.get(`https://${baseUrl}/pms/attendances.json`)
       
       // Map API response to our AttendanceRecord interface
       const mappedData: AttendanceRecord[] = response.data.map((item: any, index: number) => ({
