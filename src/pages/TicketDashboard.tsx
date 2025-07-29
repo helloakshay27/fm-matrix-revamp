@@ -273,10 +273,10 @@ export const TicketDashboard = () => {
   }, []);
 
   // Use ticket summary data from API
-  const openTickets = statusAnalyticsData?.overall.total_open || ticketSummary.open_tickets;
-  const inProgressTickets = statusAnalyticsData?.overall.total_wip || ticketSummary.in_progress_tickets;
-  const closedTickets = statusAnalyticsData?.overall.total_closed || ticketSummary.closed_tickets;
-  const totalSummaryTickets = (openTickets + inProgressTickets + closedTickets) || ticketSummary.total_tickets;
+  const openTickets = ticketSummary.open_tickets;
+  const inProgressTickets = ticketSummary.in_progress_tickets;
+  const closedTickets = ticketSummary.closed_tickets;
+  const totalSummaryTickets = ticketSummary.total_tickets;
   const pendingTickets = ticketSummary.pending_tickets; // Use ticket summary for pending as it's not in analytics
   const totalTicketsCount = initialTotalTickets || totalSummaryTickets;
   const displayTotalTickets = totalTicketsCount.toLocaleString();
