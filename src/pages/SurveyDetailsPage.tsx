@@ -109,7 +109,7 @@ export const SurveyDetailsPage = () => {
       </div>
 
       {/* Main Survey Content Card */}
-      <Card className="border border-gray-200">
+      <Card className="border border-gray-200 bg-gray-50">
         <CardContent className="p-6">
           {/* Top Section - Category and Title */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
