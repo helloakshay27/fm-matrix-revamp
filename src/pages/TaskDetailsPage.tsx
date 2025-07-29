@@ -312,7 +312,7 @@ export const TaskDetailsPage = () => {
                   Job Sheet
                 </Button>
               )}
-              {taskDetails.actions.can_submit_task && (
+              {/* {taskDetails.actions.can_submit_task && (
                 <Button
                   onClick={handleSubmitTask}
                   style={{
@@ -322,7 +322,7 @@ export const TaskDetailsPage = () => {
                 >
                   Submit Task
                 </Button>
-              )}
+              )} */}
               {taskDetails.actions.can_reschedule && (
                 <Button
                   onClick={handleTaskReschedule}
@@ -850,237 +850,39 @@ export const TaskDetailsPage = () => {
                           <th className="p-3 border-b">Attachments</th>
                         </tr>
                       </thead>
-                      <tbody>
-                        {jobSheetData.activities && jobSheetData.activities.length > 0 ? (
-                          jobSheetData.activities.map((activity: any, index: number) => (
-                            <tr key={index} className="bg-blue-50">
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value={activity.help_text || ''}
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value={activity.name || activity.activities || ''}
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value={activity.input || 'Yes'}
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value={activity.comments || ''}
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value={activity.weightage || '2'}
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value={activity.rating || '0'}
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value={activity.score || 'Completed'}
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value={activity.status || 'Completed'}
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b">
-                                <input
-                                  type="text"
-                                  value={activity.attachments || ''}
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <>
-                            <tr className="bg-blue-50">
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="task 1"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="task 1"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="Yes"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value=""
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="2"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="0"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="Completed"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="Completed"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b">
-                                <input
-                                  type="text"
-                                  value=""
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                            </tr>
-                            <tr className="bg-blue-50">
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="task 2"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="task 2"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="Yes"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value=""
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="1"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="0"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="Completed"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <input
-                                  type="text"
-                                  value="Completed"
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                              <td className="p-3 border-b">
-                                <input
-                                  type="text"
-                                  value=""
-                                  disabled
-                                  className="w-full border-0 bg-transparent"
-                                />
-                              </td>
-                            </tr>
-                          </>
-                        )}
-                      </tbody>
+                       <tbody>
+                  <tr className="bg-blue-50">
+                    <td className="p-3 border-b border-r">
+                      {taskDetails?.task_details.associated_with}
+                    </td>
+                    <td className="p-3 border-b border-r">{taskDetails?.task_details.asset_service_name}</td>
+                    <td className="p-3 border-b border-r">
+                      {taskDetails?.task_details.assigned_to}
+                    </td>
+                    <td className="p-3 border-b border-r">
+                      {taskDetails?.comments.length > 0
+                        ? taskDetails.comments[0].comment
+                        : 'No comments'}
+                    </td>
+                    <td className="p-3 border-b border-r">-</td>
+                    <td className="p-3 border-b border-r">-</td>
+                    <td className="p-3 border-b border-r">
+                      {typeof taskDetails?.activity?.total_score === 'object'
+                        ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
+                        : taskDetails?.activity?.total_score ?? '-'}
+                    </td>
+                    <td className="p-3 border-b border-r">
+                      <span className={`px-2 py-1 rounded text-white ${taskDetails.task_details.status.display_name}`}>
+                        {taskDetails.task_details.status.display_name}
+                      </span>
+                    </td>
+                    <td className="p-3 border-b">
+                      {taskDetails?.attachments.blob_store_files.length > 0
+                        ? 'Has Attachments'
+                        : 'No attachments'}
+                    </td>
+                  </tr>
+                </tbody>
                     </table>
                   </div>
                 </div>
