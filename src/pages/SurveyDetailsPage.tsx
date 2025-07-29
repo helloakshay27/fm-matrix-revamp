@@ -149,7 +149,7 @@ export const SurveyDetailsPage = () => {
       </div>
 
       {/* Questions Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 gap-6 mb-6">
         {/* Question 1 */}
         <Card className="border border-gray-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
