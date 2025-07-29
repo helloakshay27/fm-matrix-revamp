@@ -286,7 +286,7 @@ export const SurveyListDashboard = () => {
               <Copy className="w-4 h-4" />
             </button>
             <button 
-              onClick={() => handleAction('View', item.id)}
+              onClick={() => navigate(`/maintenance/survey/details/${item.id}`)}
               className="p-1 text-gray-600 hover:text-gray-800"
             >
               <Eye className="w-4 h-4" />

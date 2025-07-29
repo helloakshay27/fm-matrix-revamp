@@ -90,6 +90,7 @@ import AddWasteGenerationPage from './pages/AddWasteGenerationPage';
 import { SurveyListDashboard } from './pages/SurveyListDashboard';
 import { AddSurveyPage } from './pages/AddSurveyPage';
 import { EditSurveyPage } from './pages/EditSurveyPage';
+import { SurveyDetailsPage } from './pages/SurveyDetailsPage';
 import { SurveyMappingDashboard } from './pages/SurveyMappingDashboard';
 import { SurveyResponseDashboard } from './pages/SurveyResponseDashboard';
 import { SurveyResponsePage } from './pages/SurveyResponsePage';
@@ -673,6 +674,7 @@ function App() {
                 <Route path="/maintenance/survey/list" element={<SurveyListDashboard />} />
                 <Route path="/maintenance/survey/add" element={<AddSurveyPage />} />
                 <Route path="/maintenance/survey/edit/:id" element={<EditSurveyPage />} />
+                <Route path="/maintenance/survey/details/:id" element={<SurveyDetailsPage />} />
                 <Route path="/maintenance/survey/mapping" element={<SurveyMappingDashboard />} />
                 <Route path="/maintenance/survey/response" element={<SurveyResponsePage />} />
                 <Route path="/maintenance/survey/response/dashboard" element={<SurveyResponseDashboard />} />
