@@ -324,27 +324,17 @@ export const SurveyDetailsPage = () => {
       const result = await response.json();
       console.log('Survey mapping created successfully:', result);
 
-      // Create a local mapping for display
-      const newMapping = {
-        id: Date.now(),
-        building: locationConfig.selectedBuildings.join(', '),
-        wing: locationConfig.selectedWings.join(', '),
-        floor: locationConfig.selectedFloors.join(', '),
-        zone: locationConfig.selectedZones.join(', '),
-        room: locationConfig.selectedRooms.join(', ')
-      };
-      
-      setLocationMappings([...locationMappings, newMapping]);
-      setIsDialogOpen(false);
-
       // Show success message
       toast({
         title: "Success",
         description: "Survey mapping created successfully",
       });
 
-      // Refresh survey mappings data
-      fetchSurveyMappings();
+      // Immediately refresh survey mappings data to show the new entry
+      await fetchSurveyMappings();
+
+      // Close the dialog
+      setIsDialogOpen(false);
 
       // Reset form
       setLocationConfig({
