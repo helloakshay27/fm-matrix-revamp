@@ -228,8 +228,8 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
             }}
           >
             {buildings.map((building) => (
-              <MenuItem key={building.building.id} value={building.building.id}>
-                {building.building.name}
+              <MenuItem key={building.id} value={building.id}>
+                {building.name}
               </MenuItem>
             ))}
           </TextField>

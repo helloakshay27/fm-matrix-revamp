@@ -55,10 +55,10 @@ interface LocationSelectorProps {
   };
 }
 
-export const LocationSelector: React.FC<LocationSelectorProps> = ({ 
-  fieldStyles, 
-  onLocationChange, 
-  resetTrigger, 
+export const LocationSelector: React.FC<LocationSelectorProps> = ({
+  fieldStyles,
+  onLocationChange,
+  resetTrigger,
   errors = {
     siteId: false,
     buildingId: false,
@@ -67,7 +67,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     floorId: false,
     groupId: false,
     subGroupId: false,
-  }, 
+  },
   helperTexts = {
     siteId: '',
     buildingId: '',
@@ -76,7 +76,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     floorId: '',
     groupId: '',
     subGroupId: '',
-  } 
+  }
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const {
@@ -98,6 +98,8 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     selectedSubGroupId,
     loading,
   } = useSelector((state: RootState) => state.serviceLocation);
+
+  console.log(buildings)
 
   // Load sites and groups on component mount
   useEffect(() => {

@@ -50,7 +50,7 @@ export const useLocationData = () => {
   const [areas, setAreas] = useState<Area[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
-  
+
   const [loading, setLoading] = useState({
     sites: false,
     buildings: false,
@@ -86,7 +86,7 @@ export const useLocationData = () => {
       setBuildings([]);
       return;
     }
-    
+
     setLoading(prev => ({ ...prev, buildings: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/sites/${siteId}/buildings.json`, {
@@ -111,7 +111,7 @@ export const useLocationData = () => {
       setWings([]);
       return;
     }
-    
+
     setLoading(prev => ({ ...prev, wings: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/wings.json`, {
@@ -136,7 +136,7 @@ export const useLocationData = () => {
       setAreas([]);
       return;
     }
-    
+
     setLoading(prev => ({ ...prev, areas: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/wings/${wingId}/areas.json`, {
@@ -161,7 +161,7 @@ export const useLocationData = () => {
       setFloors([]);
       return;
     }
-    
+
     setLoading(prev => ({ ...prev, floors: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/areas/${areaId}/floors.json`, {
@@ -186,7 +186,7 @@ export const useLocationData = () => {
       setRooms([]);
       return;
     }
-    
+
     setLoading(prev => ({ ...prev, rooms: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/floors/${floorId}/rooms.json`, {
