@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CheckSquare, Square, ChevronDown, Package, BarChart, Activity, FileText, AlertTriangle, Database, Settings } from 'lucide-react';
+import { CheckSquare, Square, ChevronDown, Package, BarChart, Activity, AlertTriangle, Settings } from 'lucide-react';
 
 const amcAnalyticsOptions = [
   { 
@@ -19,40 +19,26 @@ const amcAnalyticsOptions = [
     icon: BarChart 
   },
   { 
+    id: 'expiry_analysis', 
+    label: 'Expiry Analysis', 
+    checked: true, 
+    endpoint: 'expiry_analysis',
+    icon: AlertTriangle 
+  },
+  { 
+    id: 'service_tracking', 
+    label: 'Service Tracking', 
+    checked: true, 
+    endpoint: 'service_tracking',
+    icon: Settings 
+  },
+  { 
     id: 'vendor_performance', 
     label: 'Vendor Performance', 
     checked: true, 
     endpoint: 'vendor_performance',
     icon: Activity 
-  },
-  { 
-    id: 'expiry_analysis', 
-    label: 'Expiry Analysis', 
-    checked: false, 
-    endpoint: 'expiry_analysis',
-    icon: AlertTriangle 
-  },
-  { 
-    id: 'cost_analysis', 
-    label: 'Cost Analysis', 
-    checked: false, 
-    endpoint: 'cost_analysis',
-    icon: FileText 
-  },
-  { 
-    id: 'service_tracking', 
-    label: 'Service Tracking', 
-    checked: false, 
-    endpoint: 'service_tracking',
-    icon: Settings 
-  },
-  { 
-    id: 'compliance_report', 
-    label: 'Compliance Report', 
-    checked: false, 
-    endpoint: 'compliance_report',
-    icon: Database 
-  },
+  }
 ];
 
 interface AMCAnalyticsSelectorProps {
