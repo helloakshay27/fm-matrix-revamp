@@ -152,11 +152,11 @@ export const SurveyDetailsPage = () => {
                       <SelectValue placeholder="Select Category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((category) => (
+                      {categories?.map((category) => (
                         <SelectItem key={category.id} value={category.name}>
                           {category.name}
                         </SelectItem>
-                      ))}
+                      )) || []}
                     </SelectContent>
                   </Select>
                 </div>
@@ -188,7 +188,7 @@ export const SurveyDetailsPage = () => {
           {/* Questions Grid */}
           {!loading && snagChecklist && (
             <div className="grid grid-cols-1 gap-6">
-              {snagChecklist.questions.map((question, index) => (
+              {snagChecklist.questions?.map((question, index) => (
                 <Card key={question.id} className="border border-gray-200 bg-gray-100">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <CardTitle className="text-base font-medium">
@@ -223,16 +223,16 @@ export const SurveyDetailsPage = () => {
                       </Select>
                     </div>
 
-                    {question.options.length > 0 && (
+                    {question.options && question.options.length > 0 && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-3">
                           Answer Options
                         </label>
                         <div className="space-y-3">
-                          {question.options.map((option) => (
+                          {question.options?.map((option) => (
                             <div key={option.id} className="flex items-center gap-3">
                               <input 
-                                type="text" 
+                                type="text"
                                 placeholder="Answer Option"
                                 className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
                                 value={option.qname}
@@ -250,7 +250,7 @@ export const SurveyDetailsPage = () => {
                               </Select>
                               <X className="w-4 h-4 text-gray-400" />
                             </div>
-                          ))}
+                          )) || []}
                         </div>
                       </div>
                     )}
@@ -263,7 +263,7 @@ export const SurveyDetailsPage = () => {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              )) || []}
             </div>
           )}
         </CardContent>
