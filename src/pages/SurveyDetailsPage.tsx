@@ -2,8 +2,9 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X } from 'lucide-react';
+import { ArrowLeft, X, Plus, ChevronDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export const SurveyDetailsPage = () => {
   const { id } = useParams();
@@ -73,31 +74,50 @@ export const SurveyDetailsPage = () => {
 
           {/* Questions Section */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                No. of Questions: {surveyData.questions.length}
-              </h3>
+            {/* Add Questions Header */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-700 font-medium">Add No. of Questions</span>
+                <Select disabled defaultValue="02">
+                  <SelectTrigger className="w-16 h-8 bg-gray-50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="02">02</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button 
+                  size="sm" 
+                  className="w-8 h-8 p-0 bg-red-100 hover:bg-red-200 text-red-600"
+                  disabled
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              <div className="text-gray-600">
+                No. of Questions <span className="font-medium">2</span>
+              </div>
             </div>
 
-            {/* Questions Display */}
-            <div className="space-y-4">
+            {/* Questions Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {surveyData.questions.map((question, index) => (
                 <Card key={question.id} className="border border-gray-200">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <CardTitle className="text-base font-medium">
-                      Question {index + 1}
+                      New Question
                     </CardTitle>
                     <X className="w-4 h-4 text-gray-400" />
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Question Text */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Enter your Question
-                      </label>
-                      <div className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 min-h-[80px]">
-                        {question.text}
-                      </div>
+                      <textarea 
+                        className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-500 min-h-[80px] resize-none"
+                        placeholder="Enter your Question"
+                        value={question.text}
+                        disabled
+                      />
                     </div>
 
                     {/* Answer Type */}
@@ -105,26 +125,16 @@ export const SurveyDetailsPage = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Select Answer Type
                       </label>
-                      <div className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700">
-                        {question.type}
-                      </div>
+                      <Select disabled defaultValue={question.type}>
+                        <SelectTrigger className="w-full bg-gray-50">
+                          <SelectValue placeholder="Choose Answer Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
+                          <SelectItem value="Text Area">Text Area</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-
-                    {/* Options for Multiple Choice */}
-                    {question.options.length > 0 && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Answer Options
-                        </label>
-                        <div className="space-y-2">
-                          {question.options.map((option, optionIndex) => (
-                            <div key={optionIndex} className="p-2 border border-gray-200 rounded bg-gray-50 text-gray-700">
-                              {option}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
 
                     {/* Mandatory Checkbox */}
                     <div className="flex items-center space-x-2">
@@ -141,6 +151,18 @@ export const SurveyDetailsPage = () => {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+
+            {/* Add More Questions Button */}
+            <div className="flex justify-center">
+              <Button 
+                variant="outline" 
+                className="border-2 border-dashed border-red-300 text-red-600 hover:bg-red-50 px-6 py-3"
+                disabled
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add More Questions
+              </Button>
             </div>
           </div>
         </CardContent>
