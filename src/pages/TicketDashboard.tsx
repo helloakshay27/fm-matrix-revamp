@@ -1143,7 +1143,7 @@ export const TicketDashboard = () => {
                         if (chartId === 'unitCategoryWise' && visibleSections.includes('unitCategoryWise')) {
                           return <SortableChartItem key={chartId} id={chartId}>
                             <TicketAnalyticsCard
-                              title="Unit Category Wise"
+                              title=" Category Wise"
                               data={unitCategorywiseData}
                               type="unitCategoryWise"
                               className="h-full"
@@ -1323,7 +1323,7 @@ export const TicketDashboard = () => {
                       if (chartId === 'unitCategoryWise' && visibleSections.includes('unitCategoryWise')) {
                         return <SortableChartItem key={chartId} id={chartId}>
                           <TicketAnalyticsCard
-                            title="Unit Category Wise"
+                            title=" Category Wise"
                             data={unitCategorywiseData}
                             type="unitCategoryWise"
                             className="bg-white border border-gray-200 rounded-lg"
