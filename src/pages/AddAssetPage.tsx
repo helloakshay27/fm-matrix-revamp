@@ -1048,10 +1048,14 @@ const AddAssetPage = () => {
     // Standard extra fields (dynamic)
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
       if (fieldObj?.value !== undefined && fieldObj?.value !== '' && fieldObj?.value !== null) {
-        // Convert date objects to ISO string
+        // Convert date objects to date-only string (YYYY-MM-DD format)
         let processedValue = fieldObj.value;
         if (fieldObj.value && (fieldObj.value as any) instanceof Date) {
-          processedValue = ((fieldObj.value as unknown) as Date).toISOString();
+          // Format as YYYY-MM-DD without time
+          const date = (fieldObj.value as unknown) as Date;
+          processedValue = date.getFullYear() + '-' + 
+                          String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(date.getDate()).padStart(2, '0');
         }
 
         extraFields.push({
