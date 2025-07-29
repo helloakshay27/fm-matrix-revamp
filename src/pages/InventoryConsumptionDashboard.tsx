@@ -339,6 +339,7 @@ const InventoryConsumptionDashboard = () => {
                     id="group-label"
                     shrink={true}
                     sx={{
+                      backgroundColor: 'white', px: 1,
                       color: '#374151',
                       fontSize: '14px',
                       fontWeight: 500,
@@ -354,6 +355,7 @@ const InventoryConsumptionDashboard = () => {
                     value={filterValues.group}
                     onChange={(e) => handleGroupChange(e.target.value)}
                     sx={{
+                      backgroundColor: 'white', px: 1,
                       height: '48px',
                       borderRadius: '8px',
                       '& .MuiOutlinedInput-root': {
@@ -382,6 +384,7 @@ const InventoryConsumptionDashboard = () => {
                     shrink={true}
                     sx={{
                       color: '#374151',
+                      backgroundColor: 'white', px: 1,
                       fontSize: '14px',
                       fontWeight: 500,
                       '&.Mui-focused': { color: '#C72030' },
@@ -399,7 +402,7 @@ const InventoryConsumptionDashboard = () => {
                     sx={{
                       height: '48px',
                       borderRadius: '8px',
-                      backgroundColor: !filterValues.group ? '#F9FAFB' : 'white',
+                      backgroundColor: 'white', px: 1,
                       '& .MuiOutlinedInput-root': {
                         '& fieldset': { borderColor: '#D1D5DB' },
                         '&:hover fieldset': { borderColor: '#9CA3AF' },
@@ -425,6 +428,7 @@ const InventoryConsumptionDashboard = () => {
                     id="criticality-label"
                     shrink={true}
                     sx={{
+                      backgroundColor: 'white', px: 1,
                       color: '#374151',
                       fontSize: '14px',
                       fontWeight: 500,
