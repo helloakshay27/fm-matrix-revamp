@@ -153,6 +153,27 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
     return items?.reduce((total, item) => total + (item.quantity || 0), 0) || 0;
   };
 
+  const getStatusMessage = (status: string) => {
+    const lowerStatus = status.toLowerCase();
+    if (lowerStatus.includes('pending') || lowerStatus.includes('waiting')) {
+      return 'Your Order is being prepared';
+    } else if (lowerStatus.includes('accepted') || lowerStatus.includes('approved') || lowerStatus.includes('confirmed')) {
+      return 'Your Order has been accepted';
+    } else if (lowerStatus.includes('preparing') || lowerStatus.includes('cooking')) {
+      return 'Your Order is being prepared';
+    } else if (lowerStatus.includes('ready') || lowerStatus.includes('prepared')) {
+      return 'Your Order is ready';
+    } else if (lowerStatus.includes('delivery') || lowerStatus.includes('transit')) {
+      return 'Your Order is on the way';
+    } else if (lowerStatus.includes('delivered') || lowerStatus.includes('completed')) {
+      return 'Your Order has been delivered';
+    } else if (lowerStatus.includes('cancelled') || lowerStatus.includes('rejected')) {
+      return 'Your Order was cancelled';
+    } else {
+      return `Order status: ${status}`;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -320,7 +341,7 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
 
                   <div className="flex items-center text-gray-600 text-sm">
                     <Package className="w-4 h-4 mr-2" />
-                    <span>Your Order is being prepared</span>
+                    <span>{getStatusMessage(order.order_status)}</span>
                     <span className="ml-auto text-gray-500">
                       {formatOrderDate(order.created_at)}
                     </span>
