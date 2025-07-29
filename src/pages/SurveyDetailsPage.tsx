@@ -163,10 +163,6 @@ export const SurveyDetailsPage = () => {
                     disabled
                   />
                 </div>
-                <Button variant="outline" className="w-full border-dashed border-gray-300 text-gray-400" disabled>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Answer Option
-                </Button>
               </div>
             </div>
 
