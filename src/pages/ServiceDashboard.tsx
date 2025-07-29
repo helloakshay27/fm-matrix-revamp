@@ -113,6 +113,7 @@ export const ServiceDashboard = () => {
 
 
   const handleAddClick = () => navigate('/maintenance/service/add');
+  const handleAddSchedule = () => navigate('/maintenance/schedule/add?type=Service');
   const handleImportClick = () => {
     setShowBulkUploadModal(true);
     setShowActionPanel(false);
@@ -632,7 +633,9 @@ export const ServiceDashboard = () => {
 
           {showActionPanel && (
             <SelectionPanel
-              actions={[]}
+              actions={[
+                { label: 'Add Schedule', icon: Plus, onClick: handleAddSchedule },
+              ]}
               onAdd={handleAddClick}
               onImport={handleImportClick}
               onClearSelection={() => setShowActionPanel(false)}

@@ -1032,7 +1032,7 @@ export const AssetDashboard = () => {
                 stroke-linejoin="round"
               />
             </svg>
-            Asset List
+            Asset Listmkmk
           </TabsTrigger>
           <TabsTrigger
             value="analytics"

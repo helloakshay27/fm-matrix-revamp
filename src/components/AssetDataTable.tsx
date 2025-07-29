@@ -17,6 +17,7 @@ interface AssetDataTableProps {
   onSelectAsset: (assetId: string, checked: boolean) => void;
   onViewAsset: (assetId: string) => void;
   handleAddAsset: () => void;
+  handleAddSchedule: () => void;
   handleImport: () => void;
   onFilterOpen: () => void;
   onSearch: (searchTerm: string) => void;
@@ -31,6 +32,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   onSelectAsset,
   onViewAsset,
   handleAddAsset,
+  handleAddSchedule,
   handleImport,
   onFilterOpen,
   onSearch,
@@ -98,6 +100,12 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
     //   // onClick: () => handleBulkDelete(selectedAMCObjects),
     //   variant: 'destructive' as const,
     // },
+    {
+      label: "Add Schedule",
+      icon: Plus,
+      onClick: handleAddSchedule,
+      variant: "primary" as const,
+    },
   ];
 
   const columns: ColumnConfig[] = [
