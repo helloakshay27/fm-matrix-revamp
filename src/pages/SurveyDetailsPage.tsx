@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { fetchSnagChecklistById, fetchSnagChecklistCategories, SnagChecklist } from '@/services/snagChecklistAPI';
 import { useToast } from '@/components/ui/use-toast';
+import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 export const SurveyDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -17,6 +18,8 @@ export const SurveyDetailsPage = () => {
   const [snagChecklist, setSnagChecklist] = useState<SnagChecklist | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [buildings, setBuildings] = useState<Array<{id: number, name: string}>>([]);
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
   
   // State for location configuration
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -51,6 +54,33 @@ export const SurveyDetailsPage = () => {
     }));
   };
 
+  // Fetch buildings
+  const fetchBuildings = async () => {
+    try {
+      setLoadingBuildings(true);
+      const response = await fetch(getFullUrl('/buildings.json'), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch buildings');
+      }
+      
+      const buildingsData = await response.json();
+      setBuildings(buildingsData.map((building: any) => ({
+        id: building.id,
+        name: building.name
+      })));
+    } catch (error) {
+      console.error('Error fetching buildings:', error);
+    } finally {
+      setLoadingBuildings(false);
+    }
+  };
+
   // Load data on component mount
   useEffect(() => {
     const loadData = async () => {
@@ -77,6 +107,7 @@ export const SurveyDetailsPage = () => {
     };
 
     loadData();
+    fetchBuildings();
   }, [id, toast]);
 
   // Get category name by ID
@@ -378,17 +409,27 @@ export const SurveyDetailsPage = () => {
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Buildings</h4>
                       <Select onValueChange={(value) => {
-                        if (!locationConfig.selectedBuildings.includes(value)) {
-                          addSelectedItem('building', value);
+                        // value contains the building ID, find the building name for display
+                        const selectedBuilding = buildings.find(b => b.id.toString() === value)
+                        if (selectedBuilding && !locationConfig.selectedBuildings.includes(selectedBuilding.name)) {
+                          addSelectedItem('building', selectedBuilding.name);
+                          // You can also store the ID separately if needed for backend
+                          console.log('Selected building ID:', value, 'Name:', selectedBuilding.name)
                         }
                       }}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder={`${locationConfig.selectedBuildings.length} building(s) selected`} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Gophygital">Gophygital</SelectItem>
-                          <SelectItem value="Building A">Building A</SelectItem>
-                          <SelectItem value="Building B">Building B</SelectItem>
+                          {loadingBuildings ? (
+                            <SelectItem value="loading" disabled>Loading buildings...</SelectItem>
+                          ) : (
+                            buildings.map((building) => (
+                              <SelectItem key={building.id} value={building.id.toString()}>
+                                {building.name}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                       {/* Selected buildings */}
