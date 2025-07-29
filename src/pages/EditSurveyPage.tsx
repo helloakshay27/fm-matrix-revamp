@@ -62,9 +62,27 @@ export const EditSurveyPage = () => {
 
   const fetchSurveyData = async () => {
     try {
-      // Fetch survey data - you'll need to implement the GET endpoint
-      // const response = await apiClient.get(`/pms/admin/snag_checklists/${id}.json`);
-      // For now, using mock data structure
+      const response = await apiClient.get(`/pms/admin/snag_checklists/${id}.json`);
+      const surveyData = response.data;
+      
+      // Populate form fields with fetched data
+      setTitle(surveyData.name);
+      setSelectedCategory(surveyData.snag_audit_category_id.toString());
+      
+      // Map snag_questions to component questions format
+      const mappedQuestions = surveyData.snag_questions.map((q: any) => ({
+        id: q.id.toString(),
+        descr: q.descr,
+        qtype: q.qtype,
+        quest_mandatory: q.quest_mandatory,
+        image_mandatory: q.img_mandatory,
+        quest_options: q.snag_quest_options.map((option: any) => ({
+          option_name: option.qname,
+          option_type: option.option_type
+        }))
+      }));
+      
+      setQuestions(mappedQuestions);
       setInitialLoading(false);
     } catch (error) {
       console.error('Error fetching survey data:', error);
