@@ -177,7 +177,8 @@ export const EditSurveyPage = () => {
       const requestData = {
         snag_checklist: {
           name: title,
-          snag_audit_category_id: parseInt(selectedCategory)
+          snag_audit_category_id: parseInt(selectedCategory),
+          check_type: "project_snag"
         },
         question: questions.map(question => ({
           descr: question.descr,
@@ -188,9 +189,8 @@ export const EditSurveyPage = () => {
         }))
       };
 
-      // You'll need to implement the PUT endpoint for updating
-      // const response = await apiClient.put(`/pms/admin/snag_checklists/${id}.json`, requestData);
-      console.log('Survey updated successfully:', requestData);
+      const response = await apiClient.put(`/pms/admin/snag_checklists/${id}.json`, requestData);
+      console.log('Survey updated successfully:', response.data);
       
       toast({
         title: "Success",
