@@ -179,7 +179,7 @@ export const SurveyDetailsPage = () => {
               <div className="flex items-center gap-4 mb-6">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">No. of Questions</span>
-                  <span className="text-sm font-medium">{snagChecklist.questions.length}</span>
+                  <span className="text-sm font-medium">{snagChecklist?.questions?.length || 0}</span>
                 </div>
               </div>
             </>
