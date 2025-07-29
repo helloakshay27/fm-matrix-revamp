@@ -9,6 +9,8 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAMCDetails } from '@/store/slices/amcDetailsSlice';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Eye } from 'lucide-react';
+
 
 interface AMCDetailsData {
   id: number;
@@ -477,6 +479,7 @@ export const AMCDetailsPage = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Action</TableHead>
                         <TableHead>Name</TableHead>
                         <TableHead>Code</TableHead>
                         <TableHead>Under Warranty</TableHead>
@@ -487,6 +490,15 @@ export const AMCDetailsPage = () => {
                       {amcDetails.amc_assets?.length > 0 ? (
                         amcDetails.amc_assets.map((asset) => (
                           <TableRow key={asset.id} className="bg-white">
+                            <TableCell>
+                              <a
+                                href={`/maintenance/asset/details/${asset.asset_id}`}
+                                className="text-gray-600 hover:text-black"
+                                title="View Details"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </a>
+                            </TableCell>
                             <TableCell>{asset.asset_name || '—'}</TableCell>
                             <TableCell>{asset.asset_id || '—'}</TableCell>
                             <TableCell>No</TableCell>
@@ -497,7 +509,7 @@ export const AMCDetailsPage = () => {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center text-sm text-gray-500">
+                          <TableCell colSpan={5} className="text-center text-sm text-gray-500">
                             No assets found
                           </TableCell>
                         </TableRow>
