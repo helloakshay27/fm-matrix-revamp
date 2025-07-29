@@ -103,9 +103,9 @@ export function RecentTicketsSidebar() {
           <h2 className="text-lg font-semibold text-red-600 mb-2">
             Recent Tickets
           </h2>
-          <div className="text-sm font-medium text-gray-800">
+          {/* <div className="text-sm font-medium text-gray-800">
             14/07/2025
-          </div>
+          </div> */}
         </div>
         
         {/* Tickets List */}
