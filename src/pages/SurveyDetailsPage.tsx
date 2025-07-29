@@ -147,7 +147,7 @@ export const SurveyDetailsPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category*
                   </label>
-                  <Select value={getCategoryName(snagChecklist.snag_audit_category_id)} disabled>
+                  <Select value={snagChecklist.snag_audit_category} disabled>
                     <SelectTrigger className="w-full bg-gray-50">
                       <SelectValue placeholder="Select Category" />
                     </SelectTrigger>
