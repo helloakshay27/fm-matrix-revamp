@@ -746,7 +746,7 @@ export const SurveyDetailsPage = () => {
         
         <div className="border border-gray-200 rounded-lg overflow-hidden">
           {/* Table Header */}
-          <div className="grid grid-cols-5 bg-gray-100">
+          <div className="grid grid-cols-6 bg-gray-100">
             <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
               Building
             </div>
@@ -759,21 +759,25 @@ export const SurveyDetailsPage = () => {
             <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
               Zone
             </div>
-            <div className="p-4 font-medium text-gray-700">
+            <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
               Room
+            </div>
+            <div className="p-4 font-medium text-gray-700">
+              QR Code
             </div>
           </div>
           
           {/* Table Body */}
           {locationMappings.length > 0 ? (
             locationMappings.map((mapping) => (
-              <div key={mapping.id} className="grid grid-cols-5 border-b border-gray-200 last:border-b-0">
-                <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.building}</div>
-                <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.wing}</div>
-                <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor}</div>
-                <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.zone}</div>
-                <div className="p-4 text-gray-700">{mapping.room}</div>
-              </div>
+               <div key={mapping.id} className="grid grid-cols-6 border-b border-gray-200 last:border-b-0">
+                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.building}</div>
+                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.wing}</div>
+                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor}</div>
+                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.zone}</div>
+                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.room}</div>
+                 <div className="p-4 text-gray-700">-</div>
+               </div>
             ))
           ) : (
             <div className="p-8 text-center text-gray-500">
