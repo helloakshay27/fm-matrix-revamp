@@ -274,7 +274,7 @@ export const SurveyListDashboard = () => {
         return (
           <div className="flex space-x-1">
             <button 
-              onClick={() => handleAction('Edit', item.id)}
+              onClick={() => navigate(`/maintenance/survey/edit/${item.id}`)}
               className="p-1 text-gray-600 hover:text-gray-800"
             >
               <Edit className="w-4 h-4" />
