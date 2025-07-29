@@ -236,7 +236,7 @@ export const ServiceDashboard = () => {
   };
 
   const handleStatusToggle = async (id: number) => {
-    const baseUrl = 'fm-uat-api.lockated.com';
+    const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
     const siteId = localStorage.getItem('siteId') || '2189';
     try {
