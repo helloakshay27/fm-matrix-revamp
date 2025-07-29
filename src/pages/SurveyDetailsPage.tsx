@@ -179,7 +179,7 @@ export const SurveyDetailsPage = () => {
               <div className="flex items-center gap-4 mb-6">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">No. of Questions</span>
-                  <span className="text-sm font-medium">{snagChecklist?.questions?.length || 0}</span>
+                  <span className="text-sm font-medium">{snagChecklist?.questions_count || 0}</span>
                 </div>
               </div>
             </>
@@ -188,7 +188,7 @@ export const SurveyDetailsPage = () => {
           {/* Questions Grid */}
           {!loading && snagChecklist && (
             <div className="grid grid-cols-1 gap-6">
-              {snagChecklist.questions?.map((question, index) => (
+              {snagChecklist.snag_questions?.map((question, index) => (
                 <Card key={question.id} className="border border-gray-200 bg-gray-100">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <CardTitle className="text-base font-medium">
@@ -223,13 +223,13 @@ export const SurveyDetailsPage = () => {
                       </Select>
                     </div>
 
-                    {question.options && question.options.length > 0 && (
+                    {question.snag_quest_options && question.snag_quest_options.length > 0 && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-3">
                           Answer Options
                         </label>
                         <div className="space-y-3">
-                          {question.options?.map((option) => (
+                          {question.snag_quest_options?.map((option) => (
                             <div key={option.id} className="flex items-center gap-3">
                               <input 
                                 type="text"

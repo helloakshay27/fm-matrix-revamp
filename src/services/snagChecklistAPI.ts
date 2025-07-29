@@ -9,8 +9,17 @@ export interface SnagChecklistOption {
 
 export interface SnagChecklistQuestion {
   id: number;
+  qtype: string;
   descr: string;
-  options: SnagChecklistOption[];
+  checklist_id: number;
+  img_mandatory: boolean;
+  quest_mandatory: boolean;
+  snag_quest_options: SnagChecklistOption[];
+  stage_id: number | null;
+  level_id: number | null;
+  quest_stage: string;
+  quest_level: string;
+  quest_map_id: number | null;
 }
 
 export interface SnagChecklist {
@@ -18,8 +27,19 @@ export interface SnagChecklist {
   name: string;
   snag_audit_category_id: number;
   snag_audit_sub_category_id: number | null;
+  active: number;
+  project_id: number | null;
+  company_id: number;
+  created_at: string;
+  updated_at: string;
   check_type: string;
-  questions: SnagChecklistQuestion[];
+  user_id: number | null;
+  resource_id: number;
+  resource_type: string;
+  snag_audit_category: string;
+  snag_audit_sub_category: string | null;
+  questions_count: number;
+  snag_questions: SnagChecklistQuestion[];
 }
 
 export interface SnagChecklistResponse {
@@ -28,12 +48,8 @@ export interface SnagChecklistResponse {
 
 export const fetchSnagChecklistById = async (id: string): Promise<SnagChecklist | null> => {
   try {
-    const response = await apiClient.get('/pms/admin/snag_checklists.json');
-    const data: SnagChecklist[] = response.data;
-    
-    // Find the checklist by id
-    const checklist = data.find(item => item.id.toString() === id);
-    return checklist || null;
+    const response = await apiClient.get(`/pms/admin/snag_checklists/${id}.json`);
+    return response.data || null;
   } catch (error) {
     console.error('Error fetching snag checklist:', error);
     throw error;
