@@ -1129,11 +1129,8 @@ export const TicketDashboard = () => {
 
                     {/* Third Row - Category Wise ProActive/Reactive (Dual-bar chart) */}
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                      {/* {visibleSections.includes('categoryWiseProactiveReactive') && (
-                       
-                      )} */}
-
-                       <SortableChartItem key="categoryWiseProactiveReactive" id="categoryWiseProactiveReactive">
+                      {visibleSections.includes('categoryWiseProactiveReactive') && (
+                                              <SortableChartItem key="categoryWiseProactiveReactive" id="categoryWiseProactiveReactive">
                           <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
                             {/* Drag indicator */}
                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
@@ -1243,6 +1240,9 @@ export const TicketDashboard = () => {
                             </div>
                           </div>
                         </SortableChartItem>
+                      )}
+
+
                     </div>
 
                     {/* Fourth Row - Unit Category-wise Tickets */}

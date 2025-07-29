@@ -13,7 +13,6 @@ const ticketOptions = [
   { id: 'reactive-proactive', label: 'Tickets Categorywise Proactive', checked: true, chartSection: 'reactiveChart' },
   { id: 'unitCategoryWise', label: 'Unit Category Wise', checked: true, chartSection: 'unitCategoryWise' },
   { id: 'statusChart', label: 'Status Chart', checked: true, chartSection: 'statusChart' },
-  { id: 'unitCategoryWise', label: 'Unit Category Wise', checked: true, chartSection: 'unitCategoryWise' },
   { id: 'response-tat', label: 'Response TAT', checked: true, chartSection: 'responseTat' },
   { id: 'category-wise-proactive-reactive', label: 'Category-wise Proactive/Reactive', checked: true, chartSection: 'categoryWiseProactiveReactive' },
   { id: 'category-wise', label: 'Unit Category-wise Tickets', checked: true, chartSection: 'categoryChart' },
