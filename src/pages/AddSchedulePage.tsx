@@ -1730,7 +1730,47 @@ export const AddSchedulePage = () => {
       if (hasReadingTasks) {
         // Fetch checklist mappings when moving to mapping step
         if (result?.custom_form_code) {
-          await fetchChecklistMappings(result.custom_form_code);
+          const mappingsData = await (async () => {
+            try {
+              const response = await fetch(`${API_CONFIG.BASE_URL}/pms/custom_forms/checklist_mappings.json?id=${result.custom_form_code}`, {
+                method: 'GET',
+                headers: {
+                  'Authorization': getAuthHeader(),
+                  'Content-Type': 'application/json',
+                },
+              });
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              const data = await response.json();
+              setChecklistMappings(data);
+              return data;
+            } catch (error) {
+              console.error('Failed to load checklist mappings:', error);
+              toast.error("Failed to load checklist mappings.", {
+                position: 'top-right',
+                duration: 4000,
+                style: {
+                  background: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                },
+              });
+              return null;
+            }
+          })();
+
+          // If mappingsData exists and all assets' measures arrays are empty, skip mapping
+          if (
+            mappingsData &&
+            Array.isArray(mappingsData.assets) &&
+            mappingsData.assets.length > 0 &&
+            mappingsData.assets.every((asset: any) => Array.isArray(asset.measures) && asset.measures.length === 0)
+          ) {
+            clearAllFromLocalStorage();
+            navigate('/maintenance/schedule');
+            return;
+          }
         }
 
         // Move to next step (Mapping) after successful submission
