@@ -524,30 +524,13 @@ export const SurveyDetailsPage = () => {
                       }}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder={`${locationConfig.selectedFloors.length} floor(s) selected`} />
-                          <ChevronDown className="h-4 w-4" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Ground Floor">Ground Floor</SelectItem>
                           <SelectItem value="First Floor">First Floor</SelectItem>
                           <SelectItem value="Second Floor">Second Floor</SelectItem>
                         </SelectContent>
                       </Select>
-                      {/* Selected floors */}
-                      {locationConfig.selectedFloors.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {locationConfig.selectedFloors.map((floor) => (
-                            <span key={floor} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
-                              {floor}
-                              <button
-                                onClick={() => removeSelectedItem('floor', floor)}
-                                className="ml-1 text-gray-500 hover:text-gray-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                       {/* Selected floors */}
                     </div>
                   )}
 
