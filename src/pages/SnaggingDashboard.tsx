@@ -45,10 +45,14 @@ export const SnaggingDashboard = () => {
   const fetchSnaggingData = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/pms/admin/snag_checklists.json');
-      setSnaggingData(response.data);
+      // Get the site_id from localStorage or use a default value
+      const siteId = localStorage.getItem('site_id') || '2189';
+      const response = await apiClient.get(`/pms/admin/snag_checklists.json?site_id=${siteId}`);
+      console.log('Snagging data response:', response.data);
+      setSnaggingData(response.data || []);
     } catch (error) {
       console.error('Error fetching snagging data:', error);
+      setSnaggingData([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
