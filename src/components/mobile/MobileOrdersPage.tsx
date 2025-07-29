@@ -201,7 +201,7 @@ export const MobileOrdersPage: React.FC = () => {
               setError("No restaurants available for your location");
             }
           } else {
-            setError("Please log in to view restaurants");
+            setError("Please Scan QR to view restaurants");
           }
         }
       } catch (err) {
@@ -271,7 +271,7 @@ export const MobileOrdersPage: React.FC = () => {
             setError("No restaurants available for your location");
           }
         } else {
-          setError("Please log in to view restaurants");
+          setError("Failed to load Scanner");
         }
       }
     } catch (err) {
