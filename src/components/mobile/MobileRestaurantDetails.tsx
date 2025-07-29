@@ -8,7 +8,7 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Restaurant as ApiRestaurant } from "@/services/restaurantApi";
 
@@ -49,6 +49,7 @@ export const MobileRestaurantDetails: React.FC<
   MobileRestaurantDetailsProps
 > = ({ restaurant }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   
   // 🔍 Check if user is from external scan (Google Lens, etc.)
@@ -72,6 +73,29 @@ export const MobileRestaurantDetails: React.FC<
   const [selectedMenuImage, setSelectedMenuImage] = useState<string | null>(
     null
   );
+
+  // Restore preserved cart when coming back from items details
+  useEffect(() => {
+    // Get preserved cart from navigation state (when coming back from items details)
+    const preservedCart = (location.state as { preservedCart?: MenuItem[] })?.preservedCart || [];
+    
+    if (preservedCart.length > 0) {
+      console.log("🔄 RESTORING PRESERVED CART:", preservedCart);
+      
+      // Create a map of preserved items for quick lookup
+      const preservedItemsMap = new Map(
+        preservedCart.map(item => [item.id, item.quantity || 0])
+      );
+      
+      // Update menu items with preserved quantities
+      setMenuItems(prevItems => 
+        prevItems.map(item => ({
+          ...item,
+          quantity: preservedItemsMap.get(item.id) || 0
+        }))
+      );
+    }
+  }, [location.state]);
 
   // Get all available images (cover images + fallback)
   const availableImages =
@@ -292,23 +316,30 @@ export const MobileRestaurantDetails: React.FC<
                   {item.description || "Delicious & fresh"}
                 </p>
                 {/* Price */}
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-base font-semibold text-white bg-red-600 px-2 py-1 rounded">
+                {item.price != null && item.price !== undefined && item.price > 0 && (
+                  <>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-base font-semibold text-white bg-red-600 px-2 py-1 rounded">
                     ₹{item.price}
-                  </span>
-                  {/* Optional original price if discount */}
-                  {/* <span className="text-sm text-gray-400 line-through">₹{item.originalPrice}</span> */}
-                </div>
-
-                <div className="text-xs text-gray-500">Price per item</div>
+                    </span>
+                    {/* Optional original price if discount */}
+                    {/* <span className="text-sm text-gray-400 line-through">₹{item.originalPrice}</span> */}
+                  </div>
+                  <div className="text-xs text-gray-500">Price per item</div>
+                  </>
+                )}
               </div>
 
               {/* Item Image */}
               <div className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden relative">
                 <img
-                  src="https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=300&h=200"
+                  src={item.image || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=300&h=200"}
                   alt={item.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback to placeholder if image fails to load
+                    e.currentTarget.src = "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=300&h=200";
+                  }}
                 />
 
                 {/* Add Button - Fully visible below image */}

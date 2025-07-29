@@ -89,8 +89,8 @@ export const TicketDashboard = () => {
   } = useToast();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
-  const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix', 'unitCategoryWise', 'responseTat', 'resolutionTat']);
-  const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix', 'unitCategoryWise', 'responseTat', 'resolutionTat']);
+  const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'responseTat', 'categoryWiseProactiveReactive', 'categoryChart', 'agingMatrix', 'resolutionTat']);
+  const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'responseTat', 'categoryWiseProactiveReactive', 'categoryChart', 'agingMatrix', 'resolutionTat']);
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -120,6 +120,7 @@ export const TicketDashboard = () => {
 
   const [analyticsDateRange, setAnalyticsDateRange] = useState<{ startDate: string; endDate: string }>(getDefaultDateRange());
   const [categoryAnalyticsData, setCategoryAnalyticsData] = useState<TicketCategoryData[]>([]);
+  const [categorywiseTicketsData, setCategorywiseTicketsData] = useState<TicketCategoryData[]>([]);
   const [statusAnalyticsData, setStatusAnalyticsData] = useState<TicketStatusData | null>(null);
   const [agingMatrixAnalyticsData, setAgingMatrixAnalyticsData] = useState<TicketAgingMatrix | null>(null);
   const [unitCategorywiseData, setUnitCategorywiseData] = useState<UnitCategorywiseData | null>(null);
@@ -132,12 +133,41 @@ export const TicketDashboard = () => {
   const convertDateStringToDate = (dateString: string): Date => {
     try {
       const [day, month, year] = dateString.split('/');
-      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      // Create date at noon UTC to avoid timezone issues
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0, 0);
+      console.log('convertDateStringToDate:', { input: dateString, output: date, formatted: date.toISOString() });
+      return date;
     } catch (error) {
       console.error('Error converting date string:', dateString, error);
       return new Date(); // Fallback to current date
     }
   };
+
+  // Test case for date conversion
+  React.useEffect(() => {
+    // Test the date conversion with your example
+    const testStartDate = '28/07/2025';
+    const testEndDate = '29/07/2025';
+    const convertedStart = convertDateStringToDate(testStartDate);
+    const convertedEnd = convertDateStringToDate(testEndDate);
+    
+    const formatDateForAPI = (date: Date): string => {
+      // Use UTC methods to avoid timezone issues
+      const year = date.getUTCFullYear();
+      const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+      const day = date.getUTCDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
+    console.log('Date Conversion Test:', {
+      input: { start: testStartDate, end: testEndDate },
+      converted: { start: convertedStart, end: convertedEnd },
+      apiFormat: { 
+        start: formatDateForAPI(convertedStart), 
+        end: formatDateForAPI(convertedEnd) 
+      }
+    });
+  }, []);
 
   const [ticketSummary, setTicketSummary] = useState({
     total_tickets: 0,
@@ -182,6 +212,7 @@ export const TicketDashboard = () => {
       ]);
 
       setCategoryAnalyticsData(categoryData);
+      setCategorywiseTicketsData(categoryData); // Set the same data for the new category-wise section
       setStatusAnalyticsData(statusData);
       setAgingMatrixAnalyticsData(agingData);
       setUnitCategorywiseData(unitCategoryData);
@@ -659,7 +690,7 @@ export const TicketDashboard = () => {
     if (cardType === 'total') return false;
 
     if (cardType === 'open') {
-      return filters.complaint_status_fixed_state_not_eq === 'Open';
+      return filters.complaint_status_fixed_state_eq === 'Open';
     } else if (cardType === 'pending') {
       return filters.complaint_status_fixed_state_eq === 'Pending';
     } else if (cardType === 'in_progress') {
@@ -1013,9 +1044,9 @@ export const TicketDashboard = () => {
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
                   <div className="space-y-4 sm:space-y-6">
-                    {/* Top Row - Charts */}
+                    {/* First Row - Ticket Status and ProActive/Reactive */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                      {chartOrder.filter(id => ['statusChart', 'reactiveChart', 'unitCategoryWise', 'responseTat'].includes(id)).map(chartId => {
+                      {chartOrder.filter(id => ['statusChart', 'reactiveChart'].includes(id)).map(chartId => {
                         if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
                           return <SortableChartItem key={chartId} id={chartId}>
                             <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
@@ -1025,39 +1056,12 @@ export const TicketDashboard = () => {
                               </div>
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets Status</h3>
-                                {/* <Download
-                                  className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer"
-                                  onClick={async () => {
-                                    if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
-                                      try {
-                                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                        await ticketAnalyticsDownloadAPI.downloadTicketStatusData(startDate, endDate);
-                                        toast({
-                                          title: "Success",
-                                          description: "Ticket status data downloaded successfully"
-                                        });
-                                      } catch (error) {
-                                        console.error('Error downloading status chart data:', error);
-                                        toast({
-                                          title: "Error",
-                                          description: "Failed to download ticket status data",
-                                          variant: "destructive"
-                                        });
-                                      }
-                                    }
-                                  }}
-                                /> */}
                               </div>
                               <div className="flex grid-cols-3 gap-4">
                                 <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                                   <div className="text-2xl font-bold text-yellow-600">{openTickets}</div>
                                   <div className="text-sm text-yellow-700 font-medium">Open</div>
                                 </div>
-                                {/* <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-                                  <div className="text-2xl font-bold text-orange-600">{inProgressTickets}</div>
-                                  <div className="text-sm text-orange-700 font-medium">In Progress</div>
-                                </div> */}
                                 <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
                                   <div className="text-2xl font-bold text-green-600">{closedTickets}</div>
                                   <div className="text-sm text-green-700 font-medium">Closed</div>
@@ -1075,29 +1079,6 @@ export const TicketDashboard = () => {
                               </div>
                               <div className="flex items-center justify-between mb-4 sm:mb-6">
                                 <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Proactive/Reactive Tickets</h3>
-                                {/* <Download
-                                  className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer"
-                                  onClick={async () => {
-                                    if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
-                                      try {
-                                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                        await ticketAnalyticsDownloadAPI.downloadTicketsCategorywiseData(startDate, endDate);
-                                        toast({
-                                          title: "Success",
-                                          description: "Proactive/Reactive data downloaded successfully"
-                                        });
-                                      } catch (error) {
-                                        console.error('Error downloading reactive proactive chart data:', error);
-                                        toast({
-                                          title: "Error",
-                                          description: "Failed to download proactive/reactive data",
-                                          variant: "destructive"
-                                        });
-                                      }
-                                    }
-                                  }}
-                                /> */}
                               </div>
                               <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-3">
@@ -1126,55 +1107,157 @@ export const TicketDashboard = () => {
                             </div>
                           </SortableChartItem>;
                         }
-
-                        if (chartId === 'unitCategoryWise' && visibleSections.includes('unitCategoryWise')) {
-                          return <SortableChartItem key={chartId} id={chartId}>
-                            <TicketAnalyticsCard
-                              title=" Category Wise"
-                              data={unitCategorywiseData}
-                              type="unitCategoryWise"
-                              className="h-full"
-                              dateRange={{
-                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                              }}
-                            />
-                          </SortableChartItem>
-                        }
-
-                        if (chartId === 'responseTat' && visibleSections.includes('responseTat')) {
-                          return <SortableChartItem key={chartId} id={chartId}>
-                            <ResponseTATCard
-                              data={responseTATData}
-                              className="h-full"
-                              dateRange={{
-                                startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                                endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                              }}
-                            />
-                          </SortableChartItem>
-                        }
-
                         return null;
                       })}
                     </div>
 
-                    {/* Bottom Charts - Category and Aging Matrix */}
-                    {chartOrder.filter(id => ['categoryChart', 'agingMatrix', 'resolutionTat'].includes(id)).map(chartId => {
-                      if (chartId === 'categoryChart' && visibleSections.includes('categoryChart')) {
-                        return <SortableChartItem key={chartId} id={chartId}>
+                    {/* Second Row - Response TAT */}
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                      {visibleSections.includes('responseTat') && (
+                        <SortableChartItem key="responseTat" id="responseTat">
+                          <ResponseTATCard
+                            data={responseTATData}
+                            className="h-full"
+                            dateRange={{
+                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                            }}
+                          />
+                        </SortableChartItem>
+                      )}
+                    </div>
+
+                    {/* Third Row - Category Wise ProActive/Reactive (Dual-bar chart) */}
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                      {/* {visibleSections.includes('categoryWiseProactiveReactive') && (
+                       
+                      )} */}
+
+                       <SortableChartItem key="categoryWiseProactiveReactive" id="categoryWiseProactiveReactive">
                           <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
                             {/* Drag indicator */}
                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
                               <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
                             </div>
                             <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-base sm:text-lg font-bold" style={{
-                                color: '#C72030'
-                              }}>Unit Category-wise Tickets</h3>
+                              <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Category Wise ProActive / Reactive</h3>
                               <Download
-                                className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer"
-                                style={{ color: '#C72030' }}
+                                className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer text-[#C72030]"
+                                onClick={async () => {
+                                  if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
+                                    try {
+                                      const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                                      const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                                      await ticketAnalyticsDownloadAPI.downloadTicketsCategorywiseData(startDate, endDate);
+                                      toast({
+                                        title: "Success",
+                                        description: "Category-wise proactive/reactive data downloaded successfully"
+                                      });
+                                    } catch (error) {
+                                      console.error('Error downloading category-wise proactive/reactive data:', error);
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to download category-wise data",
+                                        variant: "destructive"
+                                      });
+                                    }
+                                  }
+                                }}
+                              />
+                            </div>
+                            <div className="w-full overflow-x-auto">
+                              <div className="space-y-4">
+                                {/* Category-wise Proactive/Reactive Data as Bar Chart */}
+                                {categorywiseTicketsData && categorywiseTicketsData.length > 0 ? (
+                                  <div className="h-80">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                      <BarChart 
+                                        data={categorywiseTicketsData.slice(0, 10).map(categoryData => ({
+                                          category: categoryData.category || 'Unknown',
+                                          proactiveOpen: categoryData.proactive?.Open || 0,
+                                          proactiveClosed: categoryData.proactive?.Closed || 0,
+                                          reactiveOpen: categoryData.reactive?.Open || 0,
+                                          reactiveClosed: categoryData.reactive?.Closed || 0,
+                                          proactiveTotal: (categoryData.proactive?.Open || 0) + (categoryData.proactive?.Closed || 0),
+                                          reactiveTotal: (categoryData.reactive?.Open || 0) + (categoryData.reactive?.Closed || 0)
+                                        }))}
+                                        margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                                      >
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
+                                        <XAxis 
+                                          dataKey="category" 
+                                          angle={-45}
+                                          textAnchor="end"
+                                          height={100}
+                                          fontSize={10}
+                                          tick={{ fill: '#374151' }}
+                                        />
+                                        <YAxis 
+                                          fontSize={12}
+                                          tick={{ fill: '#374151' }}
+                                        />
+                                        <Tooltip 
+                                          content={({ active, payload, label }) => {
+                                            if (active && payload && payload.length) {
+                                              const data = payload[0].payload;
+                                              return (
+                                                <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                                                  <p className="font-semibold text-gray-800 mb-2">{label}</p>
+                                                  <div className="space-y-1">
+                                                    <div className="flex justify-between items-center">
+                                                      <span className="text-blue-600 font-medium">Proactive:</span>
+                                                      <span className="text-gray-700">
+                                                        Open: {data.proactiveOpen}, Closed: {data.proactiveClosed}
+                                                      </span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                      <span className="text-red-600 font-medium">Reactive:</span>
+                                                      <span className="text-gray-700">
+                                                        Open: {data.reactiveOpen}, Closed: {data.reactiveClosed}
+                                                      </span>
+                                                    </div>
+                                                    <div className="pt-1 border-t border-gray-200">
+                                                      <div className="flex justify-between items-center font-semibold">
+                                                        <span>Total:</span>
+                                                        <span>{data.proactiveTotal + data.reactiveTotal}</span>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              );
+                                            }
+                                            return null;
+                                          }}
+                                        />
+                                        <Bar dataKey="proactiveTotal" fill="#3b82f6" name="Proactive" />
+                                        <Bar dataKey="reactiveTotal" fill="#ef4444" name="Reactive" />
+                                      </BarChart>
+                                    </ResponsiveContainer>
+                                  </div>
+                                ) : (
+                                  <div className="text-center py-8 text-gray-500">
+                                    No category-wise data available for the selected date range
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </SortableChartItem>
+                    </div>
+
+                    {/* Fourth Row - Unit Category-wise Tickets */}
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                      {visibleSections.includes('categoryChart') && (
+                        <SortableChartItem key="categoryChart" id="categoryChart">
+                          <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
+                            {/* Drag indicator */}
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
+                              <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
+                            </div>
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Unit Category-wise Tickets</h3>
+                              <Download
+                                className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer text-[#C72030]"
                                 onClick={async () => {
                                   if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
                                     try {
@@ -1215,22 +1298,23 @@ export const TicketDashboard = () => {
                               </ResponsiveContainer>
                             </div>
                           </div>
-                        </SortableChartItem>;
-                      }
-                      if (chartId === 'agingMatrix' && visibleSections.includes('agingMatrix')) {
-                        return <SortableChartItem key={chartId} id={chartId}>
+                        </SortableChartItem>
+                      )}
+                    </div>
+
+                    {/* Fifth Row - Tickets Aging Matrix */}
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                      {visibleSections.includes('agingMatrix') && (
+                        <SortableChartItem key="agingMatrix" id="agingMatrix">
                           <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
                             {/* Drag indicator */}
                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
                               <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
                             </div>
                             <div className="flex items-center justify-between mb-4 sm:mb-6">
-                              <h3 className="text-base sm:text-lg font-bold" style={{
-                                color: '#C72030'
-                              }}>Tickets Ageing Matrix</h3>
+                              <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets Ageing Matrix</h3>
                               <Download
-                                className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer"
-                                style={{ color: '#C72030' }}
+                                className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer text-[#C72030]"
                                 onClick={async () => {
                                   try {
                                     const startDate = convertDateStringToDate(analyticsDateRange.startDate);
@@ -1296,51 +1380,21 @@ export const TicketDashboard = () => {
                                   backgroundColor: '#EDE4D8'
                                 }}>
                                   <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">
-                                    {agingMatrixAnalyticsData?.average_days } Days
+                                    {agingMatrixAnalyticsData?.average_days} Days
                                   </div>
                                   <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        </SortableChartItem>;
-                      }
+                        </SortableChartItem>
+                      )}
+                    </div>
 
-                      // Unit Category Wise Chart
-                      if (chartId === 'unitCategoryWise' && visibleSections.includes('unitCategoryWise')) {
-                        return <SortableChartItem key={chartId} id={chartId}>
-                          <TicketAnalyticsCard
-                            title=" Category Wise"
-                            data={unitCategorywiseData}
-                            type="unitCategoryWise"
-                            className="bg-white border border-gray-200 rounded-lg"
-                            dateRange={{
-                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                            }}
-                          />
-                        </SortableChartItem>;
-                      }
-
-                      // Response TAT Chart
-                      if (chartId === 'responseTat' && visibleSections.includes('responseTat')) {
-                        return <SortableChartItem key={chartId} id={chartId}>
-                          <TicketAnalyticsCard
-                            title="Response & Resolution TAT"
-                            data={responseTATData}
-                            type="tatResponse"
-                            className="bg-white border border-gray-200 rounded-lg"
-                            dateRange={{
-                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
-                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
-                            }}
-                          />
-                        </SortableChartItem>;
-                      }
-
-                      // Resolution TAT Chart
-                      if (chartId === 'resolutionTat' && visibleSections.includes('resolutionTat')) {
-                        return <SortableChartItem key={chartId} id={chartId}>
+                    {/* Sixth Row - Resolution TAT Report */}
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                      {visibleSections.includes('resolutionTat') && (
+                        <SortableChartItem key="resolutionTat" id="resolutionTat">
                           <ResolutionTATCard
                             data={resolutionTATReportData}
                             className="bg-white border border-gray-200 rounded-lg"
@@ -1349,11 +1403,9 @@ export const TicketDashboard = () => {
                               endDate: convertDateStringToDate(analyticsDateRange.endDate)
                             }}
                           />
-                        </SortableChartItem>;
-                      }
-
-                      return null;
-                    })}
+                        </SortableChartItem>
+                      )}
+                    </div>
                   </div>
                 </SortableContext>
               </DndContext>

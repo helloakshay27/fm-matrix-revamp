@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Star, Clock, Tag } from 'lucide-react';
+import { ArrowLeft, Clock, User, Star, Tag } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { restaurantApi, FoodOrder, RestaurantsBySiteResponse, RestaurantBysite } from '@/services/restaurantApi';
+import { restaurantApi, FoodOrder, RestaurantsBySiteResponse, RestaurantBysite, Restaurant } from '@/services/restaurantApi';
 
 interface Order {
   id: string;
   itemName: string;
   restaurantName: string;
-  status: 'Approved' | 'Pending' | 'Delivered' | 'Cancelled';
+  status: string; // Changed to string to accept any status from API
+  statusColor: string; // Added for dynamic status color
   statusMessage: string;
   timeAgo: string;
   totalAmount: number;
@@ -37,42 +38,48 @@ const convertFoodOrderToOrder = (foodOrder: FoodOrder): Order => {
     ? `${diffInMinutes} min. Ago`
     : `${Math.floor(diffInMinutes / 60)} hour${Math.floor(diffInMinutes / 60) > 1 ? 's' : ''} ago`;
 
-  // Map status
-  const statusMap: Record<string, 'Approved' | 'Pending' | 'Delivered' | 'Cancelled'> = {
-    'Pending': 'Pending',
-    'Approved': 'Approved', 
-    'Delivered': 'Delivered',
-    'Cancelled': 'Cancelled',
-    'Confirmed': 'Approved',
-    'Preparing': 'Approved',
-    'Ready': 'Approved',
-    'Out for Delivery': 'Approved',
+  // Use actual API status instead of mapping
+  const status = foodOrder.order_status || 'Pending';
+  const statusColor = foodOrder.order_status_color || '#6b7280'; // Default gray color
+
+  // Create status message based on actual status
+  const getStatusMessage = (status: string) => {
+    const lowerStatus = status.toLowerCase();
+    if (lowerStatus.includes('pending') || lowerStatus.includes('waiting')) {
+      return 'Your Order is being prepared';
+    } else if (lowerStatus.includes('accepted') || lowerStatus.includes('approved') || lowerStatus.includes('confirmed')) {
+      return 'Your Order has been accepted';
+    } else if (lowerStatus.includes('preparing') || lowerStatus.includes('cooking')) {
+      return 'Your Order is being prepared';
+    } else if (lowerStatus.includes('ready') || lowerStatus.includes('prepared')) {
+      return 'Your Order is ready';
+    } else if (lowerStatus.includes('delivery') || lowerStatus.includes('transit')) {
+      return 'Your Order is on the way';
+    } else if (lowerStatus.includes('delivered') || lowerStatus.includes('completed')) {
+      return 'Your Order has been delivered';
+    } else if (lowerStatus.includes('cancelled') || lowerStatus.includes('rejected')) {
+      return 'Your Order was cancelled';
+    } else {
+      return `Order status: ${status}`;
+    }
   };
 
-  const status = statusMap[foodOrder.order_status] || 'Pending';
-
-  // Create status message
-  const statusMessage = status === 'Pending' 
-    ? 'Your Order is being prepared'
-    : status === 'Approved'
-    ? 'Your Order is on the way'
-    : status === 'Delivered'
-    ? 'Your Order has been delivered'
-    : 'Your Order was cancelled';
+  const statusMessage = getStatusMessage(status);
 
   return {
     id: foodOrder.id.toString(),
     itemName,
     restaurantName: foodOrder.restaurant_name,
     status,
+    statusColor,
     statusMessage,
     timeAgo,
-    totalAmount: foodOrder.total_amount,
+    totalAmount: foodOrder.total_amount || 0,
     items: foodOrder.items.map(item => ({
       id: item.id.toString(),
       name: item.menu_name,
       quantity: item.quantity,
-      price: item.rate,
+      price: item.rate || 0,
     })),
     restaurantId: foodOrder.restaurant_id.toString(),
     orderQrCode: foodOrder.order_qr_code,
@@ -84,6 +91,7 @@ export const MobileOrdersPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'restaurant' | 'orders'>('restaurant'); // Default to restaurant for external users
   const [orders, setOrders] = useState<Order[]>([]);
+  const [originalFoodOrders, setOriginalFoodOrders] = useState<FoodOrder[]>([]); // Store original API data
   const [restaurants, setRestaurants] = useState<RestaurantBysite[]>([]);
   const [loading, setLoading] = useState(true);
   const [restaurantLoading, setRestaurantLoading] = useState(false);
@@ -129,6 +137,9 @@ export const MobileOrdersPage: React.FC = () => {
         const foodOrders = await restaurantApi.getUserOrders(userId);
         console.log("📦 RECEIVED ORDERS:", foodOrders);
         
+        // Store original API data
+        setOriginalFoodOrders(foodOrders);
+        
         // Convert to Order format and sort by created_at (newest first)
         const convertedOrders = foodOrders
           .map(convertFoodOrderToOrder)
@@ -164,9 +175,38 @@ export const MobileOrdersPage: React.FC = () => {
           console.log("🍽️ RESTAURANTS FOUND:", restaurantsList.length);
           setRestaurants(restaurantsList);
         } else {
-          // Fallback for app users - use default restaurant
-          console.log("📱 APP USER: using default restaurant");
-          setError("Please scan a QR code to view restaurants");
+          // For app users without facilityId, use token-based approach
+          console.log("📱 APP USER: fetching restaurants by token");
+          const token = sessionStorage.getItem('authToken');
+          
+          if (token) {
+            const tokenResponse = await restaurantApi.getRestaurantsByToken(token);
+            if (tokenResponse.success && tokenResponse.restaurants) {
+              // Convert Restaurant[] to RestaurantBysite[] format
+              const convertedRestaurants: RestaurantBysite[] = tokenResponse.restaurants.map(restaurant => ({
+                id: parseInt(restaurant.id),
+                name: restaurant.name,
+                location: restaurant.location,
+                rating: restaurant.rating,
+                delivery_time: restaurant.timeRange,
+                discount: restaurant.discount,
+                cover_image: restaurant.image,
+                cover_images: restaurant.images?.map((img, index) => ({
+                  id: index,
+                  relation: 'restaurant',
+                  relation_id: parseInt(restaurant.id),
+                  document: img
+                }))
+              }));
+              
+              console.log("🍽️ TOKEN RESTAURANTS FOUND:", convertedRestaurants.length);
+              setRestaurants(convertedRestaurants);
+            } else {
+              setError("No restaurants available for your location");
+            }
+          } else {
+            setError("Please Scan QR to view restaurants");
+          }
         }
       } catch (err) {
         console.error("❌ ERROR FETCHING RESTAURANTS:", err);
@@ -205,9 +245,38 @@ export const MobileOrdersPage: React.FC = () => {
         console.log("🍽️ RESTAURANTS FOUND:", restaurantsList.length);
         setRestaurants(restaurantsList);
       } else {
-        // Fallback for app users - use default restaurant
-        console.log("📱 APP USER: using default restaurant");
-        setError("Please scan a QR code to view restaurants");
+        // For app users without facilityId, use token-based approach
+        console.log("📱 APP USER: fetching restaurants by token");
+        const token = localStorage.getItem('authToken');
+        
+        if (token) {
+          const tokenResponse = await restaurantApi.getRestaurantsByToken(token);
+          if (tokenResponse.success && tokenResponse.restaurants) {
+            // Convert Restaurant[] to RestaurantBysite[] format
+            const convertedRestaurants: RestaurantBysite[] = tokenResponse.restaurants.map(restaurant => ({
+              id: parseInt(restaurant.id),
+              name: restaurant.name,
+              location: restaurant.location,
+              rating: restaurant.rating,
+              delivery_time: restaurant.timeRange,
+              discount: restaurant.discount,
+              cover_image: restaurant.image,
+              cover_images: restaurant.images?.map((img, index) => ({
+                id: index,
+                relation: 'restaurant',
+                relation_id: parseInt(restaurant.id),
+                document: img
+              }))
+            }));
+            
+            console.log("🍽️ TOKEN RESTAURANTS FOUND:", convertedRestaurants.length);
+            setRestaurants(convertedRestaurants);
+          } else {
+            setError("No restaurants available for your location");
+          }
+        } else {
+          setError("Failed to load Scanner");
+        }
       }
     } catch (err) {
       console.error("❌ ERROR FETCHING RESTAURANTS:", err);
@@ -221,21 +290,6 @@ export const MobileOrdersPage: React.FC = () => {
     navigate(-1);
   };
 
-  const getStatusBadgeColor = (status: Order['status']) => {
-    switch (status) {
-      case 'Approved':
-        return 'bg-orange-200 text-orange-800';
-      case 'Pending':
-        return 'bg-blue-200 text-blue-800';
-      case 'Delivered':
-        return 'bg-orange-200 text-orange-800';
-      case 'Cancelled':
-        return 'bg-red-200 text-red-800';
-      default:
-        return 'bg-gray-200 text-gray-800';
-    }
-  };
-
   const handleOrderClick = (orderId: string) => {
     // Find the order to get its details
     const order = orders.find(o => o.id === orderId);
@@ -245,7 +299,7 @@ export const MobileOrdersPage: React.FC = () => {
         id: item.id,
         name: item.name,
         description: 'Food item',
-        price: item.price,
+        price: item.price > 0 ? item.price : 0,
         image: '',
         quantity: item.quantity
       }));
@@ -260,16 +314,26 @@ export const MobileOrdersPage: React.FC = () => {
         image: ''
       };
       
-      // Navigate to order review page with order data and flag indicating it's already placed
+      // Find the original FoodOrder data to pass complete API response
+      const originalFoodOrder = originalFoodOrders.find(fo => fo.id.toString() === orderId);
+      
+      // Navigate to order review page with complete order data
       navigate(`/mobile/restaurant/${order.restaurantId}/order-review`, {
         state: {
           items: mockItems,
           restaurant: mockRestaurant,
-          note: 'Previous order details',
+          note: originalFoodOrder?.requests || 'Previous order details',
           isExistingOrder: true,
           totalPrice: order.totalAmount,
           totalItems: order.items.reduce((sum, item) => sum + item.quantity, 0),
-          orderData: { id: order.id }
+          orderData: originalFoodOrder || {
+            id: order.id,
+            order_status: order.status,
+            order_status_color: order.statusColor,
+            restaurant_name: order.restaurantName,
+            total_amount: order.totalAmount,
+            requests: 'Previous order details'
+          }
         }
       });
     }
@@ -377,14 +441,15 @@ export const MobileOrdersPage: React.FC = () => {
                       <p className="text-gray-600 text-base">
                         {order.restaurantName}
                       </p>
-                      <p className="text-gray-800 font-medium text-sm mt-1">
-                        ₹{order.totalAmount}
-                      </p>
+                      {order.totalAmount > 0 && (
+                        <p className="text-gray-800 font-medium text-sm mt-1">
+                          ₹{order.totalAmount}
+                        </p>
+                      )}
                     </div>
                     <span
-                      className={`px-3 py-1 rounded text-sm font-medium ${getStatusBadgeColor(
-                        order.status
-                      )}`}
+                      className="px-3 py-1 rounded text-sm font-medium text-white"
+                      style={{ backgroundColor: order.statusColor }}
                     >
                       {order.status}
                     </span>

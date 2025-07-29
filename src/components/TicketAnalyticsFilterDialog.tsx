@@ -20,7 +20,7 @@ export const TicketAnalyticsFilterDialog: React.FC<TicketAnalyticsFilterDialogPr
   const getDefaultDates = () => {
     const today = new Date();
     const lastYear = new Date();
-    lastYear.setFullYear(today.getFullYear() - 1);
+    lastYear.setFullYear(today.getFullYear());
     
     const formatDate = (date: Date) => {
       const day = date.getDate().toString().padStart(2, '0');

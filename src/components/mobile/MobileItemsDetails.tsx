@@ -95,7 +95,13 @@ export const MobileItemsDetails: React.FC = () => {
   };
 
   const getTotalPrice = () => {
-    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+    return items.reduce((total, item) => {
+      // Only add to total if item has a valid price
+      if (item.price != null && item.price !== undefined && item.price > 0) {
+        return total + item.price * item.quantity;
+      }
+      return total;
+    }, 0);
   };
 
   const addMoreItems = () => {
@@ -108,19 +114,28 @@ export const MobileItemsDetails: React.FC = () => {
     console.log("  - finalSourceParam:", finalSourceParam);
     console.log("  - finalIsExternalScan:", finalIsExternalScan);
     console.log("  - Back URL:", backUrl);
+    console.log("  - Current items to preserve:", items);
 
-    navigate(backUrl);
+    // Navigate back with current cart state preserved
+    navigate(backUrl, {
+      state: {
+        preservedCart: items, // Pass current items to preserve selection
+        restaurant,
+        isExternalScan: finalIsExternalScan,
+        sourceParam: finalSourceParam,
+      }
+    });
   };
 
   // Retrieve user from local storage
-  // ✅ Safely get user from localStorage
-  const storedUser = localStorage.getItem("user");
+  // ✅ Safely get user from sessionStorage
+  const storedUser = sessionStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
   const userId = user?.id;
 
   // ✅ Optional guard: user must be logged in
   // if (!userId) {
-  //   console.error("User not found in localStorage. Please log in.");
+  //   console.error("User not found in sessionStorage. Please log in.");
   //   return null; // or navigate to login
   // }
 
@@ -174,8 +189,8 @@ export const MobileItemsDetails: React.FC = () => {
     console.log("  - Order data:", orderData);
 
     try {
-      // const result = await restaurantApi.placeOrder(orderData);
-      const result = await restaurantApi.createQROrder(orderData);
+      const result = await restaurantApi.placeOrder(orderData);
+      // const result = await restaurantApi.createQROrder(orderData);
       console.log("📡 API Response:", result);
 
       if (result.success) {
@@ -251,10 +266,12 @@ export const MobileItemsDetails: React.FC = () => {
             <div key={item.id} className="flex justify-between items-center">
               <div className="flex-1">
                 <span className="text-gray-900 font-medium">{item.name}</span>
-                <div className="text-sm text-gray-600 mt-1">
-                  ₹{item.price} × {item.quantity} = ₹
-                  {item.price * item.quantity}
-                </div>
+                {item.price != null && item.price !== undefined && item.price > 0 && (
+                  <div className="text-sm text-gray-600 mt-1">
+                    ₹{item.price} × {item.quantity} = ₹
+                    {item.price * item.quantity}
+                  </div>
+                )}
               </div>
               <div className="flex items-center border-2 border-red-600 rounded-lg bg-white ml-3">
                 <button
@@ -277,7 +294,7 @@ export const MobileItemsDetails: React.FC = () => {
           ))}
 
           {/* Total Price Section */}
-          {items.length > 0 && (
+          {items.length > 0 && getTotalPrice() > 0 && (
             <div className="pt-4 border-t border-gray-400">
               <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold text-gray-900">

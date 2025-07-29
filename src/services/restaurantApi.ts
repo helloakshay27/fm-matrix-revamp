@@ -53,6 +53,33 @@ export interface RestaurantsBySiteResponse {
   restaurants: RestaurantBysite[];
 }
 
+export interface UserInfo {
+  id: number;
+  name: string;
+  email?: string;
+  mobile?: string;
+  [key: string]: unknown;
+}
+
+export interface CoverImage {
+  id: number;
+  relation: string;
+  relation_id: number;
+  document: string;
+}
+
+export interface RestaurantTokenResponse {
+  id: number;
+  name: string;
+  location?: string;
+  address?: string;
+  rating?: number;
+  delivery_time?: string;
+  discount?: string;
+  cover_image?: string;
+  cover_images?: CoverImage[];
+}
+
 export interface OrderRequest {
   restaurantId: string;
   items: {
@@ -157,7 +184,7 @@ export const restaurantApi = {
   async getRestaurantsBySite(siteId: string | number): Promise<RestaurantsBySiteResponse> {
     try {
       const response = await baseClient.get(
-        `/pms/admin/restaurants/get_restaurants_by_site.json`,
+        `/pms/admin/restaurants/get_restaurants_by_site.json?skp_dr=true`,
         {
           params: { site_id: siteId }
         }
@@ -173,7 +200,7 @@ export const restaurantApi = {
   async getRestaurantById(restaurantId: string): Promise<Restaurant> {
     try {
       const response = await baseClient.get(
-        `/pms/admin/restaurants/${restaurantId}.json`
+        `/pms/admin/restaurants/${restaurantId}.json?skp_dr=true`
       );
       const restaurant = response.data;
       console.log("restaurant respo:", restaurant)
@@ -192,7 +219,7 @@ export const restaurantApi = {
           price: parseFloat(item.display_price || item.master_price) || 0,
           image:
             item.images && item.images.length > 0
-              ? item.images[0]
+              ? item.images[0].document || item.images[0]
               : "/placeholder.svg",
           quantity: 0,
           categoryName: "General", // If you want, extract category_name if available
@@ -242,7 +269,7 @@ export const restaurantApi = {
   async getMenuItems(restaurantId: string): Promise<MenuItem[]> {
     try {
       const response = await baseClient.get(
-        `/pms/admin/restaurants/${restaurantId}/menu_items.json`
+        `/pms/admin/restaurants/${restaurantId}/menu_items.json?skp_dr=true`
       );
       const menuItems = response.data;
 
@@ -279,7 +306,17 @@ export const restaurantApi = {
   }): Promise<{ success: boolean; data?: unknown; message?: string }> {
     try {
       console.log("Sending order data to API:", orderData);
-      const response = await baseClient.post("/pms/food_orders.json", orderData);
+      
+      // Get token from localStorage
+      const token = localStorage.getItem("app_token") || localStorage.getItem("token");
+      
+      const response = await baseClient.post("/pms/food_orders.json", orderData, {
+        headers: token ? {
+          'Authorization': `Bearer ${token}`,
+        } : {},
+        params: token ? { token } : {},
+      });
+      
       console.log("API Response:", response);
 
       // Check if response indicates success
@@ -327,10 +364,12 @@ export const restaurantApi = {
   },
 
   // Get user food orders
-  async getUserOrders(userId?: string): Promise<FoodOrder[]> {
+  async getUserOrders(userId?: string, token?: string): Promise<FoodOrder[]> {
     try {
+      const token = localStorage.getItem("app_token") || localStorage.getItem("token");
       const response = await baseClient.get("/pms/food_orders.json", {
-        params: userId ? { user_id: userId } : {},
+        params: userId ? { user_id: userId, ...(token ? { token } : {}) } : (token ? { token } : {}),
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       });
       
       const data: FoodOrdersResponse = response.data;
@@ -358,12 +397,77 @@ export const restaurantApi = {
   async getFacilitySetup(facilityId: string): Promise<FacilityResponse> {
     try {
       const response = await baseClient.get(
-        `/pms/admin/facility_setups/${facilityId}.json`
+        `/pms/admin/facility_setups/${facilityId}.json?skp_dr=true`
       );
       return response.data;
     } catch (error) {
       console.error("Error fetching facility setup:", error);
       throw new Error("Failed to fetch facility setup");
+    }
+  },
+
+  // Get restaurants by token for application users
+  async getRestaurantsByToken(token: string): Promise<{
+    success: boolean;
+    restaurants?: Restaurant[];
+    user_info?: UserInfo;
+    message?: string;
+  }> {
+    try {
+      console.log("🔑 FETCHING RESTAURANTS BY TOKEN:", token);
+      
+      const response = await baseClient.get(
+        `/pms/admin/restaurants/get_restaurants_by_site_mobile.json`,
+        {
+          params: { token },
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      
+      console.log("🔑 TOKEN RESPONSE:", response.data);
+      
+      if (response.data && response.data.restaurants) {
+        // Convert API restaurants to local Restaurant format
+        const restaurants: Restaurant[] = response.data.restaurants.map((r: RestaurantTokenResponse) => ({
+          id: r.id.toString(),
+          name: r.name,
+          location: r.location || r.address || "Location not specified",
+          rating: r.rating || 4.0,
+          timeRange: r.delivery_time || "30-45 mins",
+          discount: r.discount || "10% OFF",
+          image: r.cover_image || r.cover_images?.[0]?.document || "/placeholder.svg",
+          images: r.cover_images?.map((img: CoverImage) => img.document) || [],
+          menuItems: [], // Will be loaded when restaurant is selected
+        }));
+        
+        return {
+          success: true,
+          restaurants,
+          user_info: response.data.user_info || null,
+        };
+      }
+      
+      return {
+        success: false,
+        message: "No restaurants found for this token",
+      };
+    } catch (error) {
+      console.error("Error fetching restaurants by token:", error);
+      
+      if (error && typeof error === "object" && "response" in error) {
+        const apiError = error as { response: { status: number; data?: { message?: string } } };
+        return {
+          success: false,
+          message: apiError.response.data?.message || `Authentication failed: ${apiError.response.status}`,
+        };
+      }
+      
+      return {
+        success: false,
+        message: "Failed to authenticate token. Please try again.",
+      };
     }
   },
 
@@ -407,6 +511,62 @@ export const restaurantApi = {
       return response.data;
     } catch (error) {
       console.error("Error creating QR order:", error);
+      
+      if (error && typeof error === "object" && "response" in error) {
+        const apiError = error as { response: { status: number; data?: { message?: string } } };
+        return {
+          success: false,
+          message: apiError.response.data?.message || `Server error: ${apiError.response.status}`,
+        };
+      }
+      
+      return {
+        success: false,
+        message: "Failed to create order. Please try again.",
+      };
+    }
+  },
+
+  // Create order for authenticated app users with token
+  async createTokenOrder(orderData: {
+    token: string;
+    food_order: {
+      restaurant_id: number;
+      preferred_time?: string;
+      requests?: string;
+      items_attributes: Array<{
+        menu_id: number;
+        quantity: number;
+      }>;
+    };
+  }): Promise<{
+    success: boolean;
+    data?: {
+      order_id: number;
+      restaurant_name: string;
+      customer_name: string;
+      total_amount: number;
+      message: string;
+    };
+    message?: string;
+  }> {
+    try {
+      console.log("📡 CREATING TOKEN ORDER:", orderData);
+      
+      const response = await baseClient.post(
+        `/pms/admin/restaurants/api_create_token_order.json`,
+        orderData,
+        {
+          headers: {
+            'Authorization': `Bearer ${orderData.token}`,
+          }
+        }
+      );
+      
+      console.log("📡 TOKEN ORDER RESPONSE:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating token order:", error);
       
       if (error && typeof error === "object" && "response" in error) {
         const apiError = error as { response: { status: number; data?: { message?: string } } };

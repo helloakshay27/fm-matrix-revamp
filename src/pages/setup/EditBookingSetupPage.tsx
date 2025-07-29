@@ -1645,9 +1645,9 @@ export const EditBookingSetupPage = () => {
         gstPercentage: "",
         sgstPercentage: "",
         perSlotCharge: "",
-        bookingAllowedBefore: { day: "", hour: "", minute: "" },
-        advanceBooking: { day: "", hour: "", minute: "" },
-        canCancelBefore: { day: "", hour: "", minute: "" },
+        bookingAllowedBefore: { d: "", h: "", m: "" },
+        advanceBooking: { d: "", h: "", m: "" },
+        canCancelBefore: { d: "", h: "", m: "" },
         allowMultipleSlots: false,
         maximumSlots: "",
         facilityBookedTimes: "",
@@ -1727,86 +1727,6 @@ export const EditBookingSetupPage = () => {
         }
     };
 
-    // const fetchFacilityBookingDetails = async () => {
-    //     try {
-    //         const response = await axios.get(
-    //             `https://${baseUrl}/pms/admin/facility_setups/${id}.json`,
-    //             {
-    //                 headers: {
-    //                     Authorization: `Bearer ${token}`,
-    //                     "Content-Type": "application/json",
-    //                 },
-    //             }
-    //         );
-    //         const responseData = response.data.facility_setup;
-
-    //         console.log(responseData)
-    //         setFormData({
-    //             facilityName: responseData.fac_name,
-    //             isBookable: responseData.fac_type === "bookable" ? true : false,
-    //             isRequest: responseData.fac_type === "request" ? true : false,
-    //             active: responseData.active,
-    //             department: responseData.department_id,
-    //             appKey: responseData.app_key,
-    //             postpaid: responseData.postpaid,
-    //             prepaid: responseData.prepaid,
-    //             payOnFacility: responseData.pay_on_facility,
-    //             complimentary: responseData.complementary,
-    //             gstPercentage: responseData.gst,
-    //             sgstPercentage: responseData.sgst,
-    //             perSlotCharge: responseData?.facility_charge?.per_slot_charge,
-    //             bookingAllowedBefore: {
-    //                 day: responseData.bb_dhm.d,
-    //                 hour: responseData.bb_dhm.h,
-    //                 minute: responseData.bb_dhm.m,
-    //             },
-    //             advanceBooking: {
-    //                 day: responseData.ab_dhm.d,
-    //                 hour: responseData.ab_dhm.h,
-    //                 minute: responseData.ab_dhm.m,
-    //             },
-    //             canCancelBefore: {
-    //                 day: responseData.cb_dhm.d,
-    //                 hour: responseData.cb_dhm.h,
-    //                 minute: responseData.cb_dhm.m,
-    //             },
-    //             allowMultipleSlots: responseData.multi_slot,
-    //             maximumSlots: responseData.max_slots,
-    //             facilityBookedTimes: "",
-    //             description: responseData.description,
-    //             termsConditions: responseData.terms,
-    //             cancellationText: responseData.cancellation_policy,
-    //             amenities: {
-    //                 tv: false,
-    //                 whiteboard: false,
-    //                 casting: false,
-    //                 smartPenForTV: false,
-    //                 wirelessCharging: false,
-    //                 meetingRoomInventory: false,
-    //             },
-    //             seaterInfo: responseData.seater_info,
-    //             floorInfo: responseData.location_info,
-    //             sharedContentInfo: responseData.shared_content,
-    //             slots: responseData.facility_slots.map((slot) => ({
-    //                 startTime: { hour: slot.facility_slot.start_hour, minute: slot.facility_slot.start_min },
-    //                 breakTimeStart: { hour: slot.facility_slot.break_start_hour, minute: slot.facility_slot.break_start_min },
-    //                 breakTimeEnd: { hour: slot.facility_slot.break_end_hour, minute: slot.facility_slot.break_end_min },
-    //                 endTime: { hour: slot.facility_slot.end_hour, minute: slot.facility_slot.end_min },
-    //                 concurrentSlots: "",
-    //                 slotBy: slot.facility_slot.breakminutes_label,
-    //                 wrapTime: slot.facility_slot.wrap_time,
-    //             })),
-    //         });
-    //         setSelectedFile(responseData?.cover_image?.document);
-    //         setSelectedBookingFiles(
-    //             responseData?.documents.map((doc) => doc.document.document)
-    //         );
-    //     } catch (error) {
-    //         console.error("Error fetching facility details:", error);
-    //         toast.error("Failed to fetch facility details");
-    //     }
-    // };
-
     const fetchFacilityBookingDetails = async () => {
         try {
             const response = await axios.get(
@@ -1820,24 +1740,24 @@ export const EditBookingSetupPage = () => {
             );
             const responseData = response.data.facility_setup;
 
-            const amenitiesMap = {
-                TV: "tv",
-                Whiteboard: "whiteboard",
-                Casting: "casting",
-                "Smart Pen for TV": "smartPenForTV",
-                "Wireless Charging": "wirelessCharging",
-                "Meeting Room Inventory": "meetingRoomInventory",
-            };
+            // const amenitiesMap = {
+            //     TV: "tv",
+            //     Whiteboard: "whiteboard",
+            //     Casting: "casting",
+            //     "Smart Pen for TV": "smartPenForTV",
+            //     "Wireless Charging": "wirelessCharging",
+            //     "Meeting Room Inventory": "meetingRoomInventory",
+            // };
 
-            const amenitiesState = Object.values(amenitiesMap).reduce((acc, key) => {
-                acc[key] = false;
-                return acc;
-            }, {});
+            // const amenitiesState = Object.values(amenitiesMap).reduce((acc, key) => {
+            //     acc[key] = false;
+            //     return acc;
+            // }, {});
 
-            responseData.generic_tags?.forEach((tag) => {
-                const mappedKey = amenitiesMap[tag.category_name];
-                if (mappedKey) amenitiesState[mappedKey] = true;
-            });
+            // responseData.generic_tags?.forEach((tag) => {
+            //     const mappedKey = amenitiesMap[tag.category_name];
+            //     if (mappedKey) amenitiesState[mappedKey] = true;
+            // });
 
             setFormData({
                 facilityName: responseData.fac_name,
@@ -1862,7 +1782,14 @@ export const EditBookingSetupPage = () => {
                 description: responseData.description,
                 termsConditions: responseData.terms,
                 cancellationText: responseData.cancellation_policy,
-                amenities: amenitiesState,
+                amenities: {
+                    tv: responseData.amenity_info[0].selected,
+                    whiteboard: responseData.amenity_info[1].selected,
+                    casting: responseData.amenity_info[2].selected,
+                    smartPenForTV: responseData.amenity_info[3].selected,
+                    wirelessCharging: responseData.amenity_info[4].selected,
+                    meetingRoomInventory: responseData.amenity_info[5].selected,
+                },
                 seaterInfo: responseData.seater_info,
                 floorInfo: responseData.location_info,
                 sharedContentInfo: responseData.shared_content,
@@ -1989,20 +1916,21 @@ export const EditBookingSetupPage = () => {
             formDataToSend.append("facility_setup[create_by]", JSON.parse(localStorage.getItem("user")).id);
 
             // Generic Tags (Amenities)
-            const amenities = [];
-            if (formData.amenities.tv) amenities.push("TV");
-            if (formData.amenities.whiteboard) amenities.push("Whiteboard");
-            if (formData.amenities.casting) amenities.push("Casting");
-            if (formData.amenities.smartPenForTV) amenities.push("Smart Pen for TV");
-            if (formData.amenities.wirelessCharging) amenities.push("Wireless Charging");
-            if (formData.amenities.meetingRoomInventory) amenities.push("Meeting Room Inventory");
+            // const amenities = [];
+            // if (formData.amenities.tv) amenities.push("TV");
+            // if (formData.amenities.whiteboard) amenities.push("Whiteboard");
+            // if (formData.amenities.casting) amenities.push("Casting");
+            // if (formData.amenities.smartPenForTV) amenities.push("Smart Pen for TV");
+            // if (formData.amenities.wirelessCharging) amenities.push("Wireless Charging");
+            // if (formData.amenities.meetingRoomInventory) amenities.push("Meeting Room Inventory");
 
-            amenities.forEach((name, index) => {
-                formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, "amenity_things");
-                formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, name);
-                formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, "0");
-                formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, "1");
-            });
+            // amenities.forEach((name, index) => {
+            //     console.log(name)
+            //     formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, "amenity_things");
+            //     formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, name);
+            //     formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, "0");
+            //     formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, "1");
+            // });
 
             // Facility Slots
             formData.slots.forEach((slot, index) => {
@@ -2025,15 +1953,15 @@ export const EditBookingSetupPage = () => {
             });
 
             // Booking Window Configs
-            formDataToSend.append("book_before_day", formData.bookingAllowedBefore.day);
-            formDataToSend.append("book_before_hour", formData.bookingAllowedBefore.hour);
-            formDataToSend.append("book_before_min", formData.bookingAllowedBefore.minute);
-            formDataToSend.append("advance_booking_day", formData.advanceBooking.day);
-            formDataToSend.append("advance_booking_hour", formData.advanceBooking.hour);
-            formDataToSend.append("advance_booking_min", formData.advanceBooking.minute);
-            formDataToSend.append("cancel_day", formData.canCancelBefore.day);
-            formDataToSend.append("cancel_hour", formData.canCancelBefore.hour);
-            formDataToSend.append("cancel_min", formData.canCancelBefore.minute);
+            formDataToSend.append("book_before_day", formData.bookingAllowedBefore.d);
+            formDataToSend.append("book_before_hour", formData.bookingAllowedBefore.h);
+            formDataToSend.append("book_before_min", formData.bookingAllowedBefore.m);
+            formDataToSend.append("advance_booking_day", formData.advanceBooking.d);
+            formDataToSend.append("advance_booking_hour", formData.advanceBooking.h);
+            formDataToSend.append("advance_booking_min", formData.advanceBooking.m);
+            formDataToSend.append("cancel_day", formData.canCancelBefore.d);
+            formDataToSend.append("cancel_hour", formData.canCancelBefore.h);
+            formDataToSend.append("cancel_min", formData.canCancelBefore.m);
 
             // Extra Info
             formDataToSend.append("seater_info", formData.seaterInfo !== "Select a seater" ? formData.seaterInfo : "");
@@ -2207,6 +2135,8 @@ export const EditBookingSetupPage = () => {
         setFormData({ ...formData, slots: [...formData.slots, newSlot] });
     };
 
+    console.log(formData)
+
     return (
         <ThemeProvider theme={muiTheme}>
             <div className="px-5 bg-white min-h-screen">
@@ -2354,7 +2284,7 @@ export const EditBookingSetupPage = () => {
                                                     }}
                                                 >
                                                     {Array.from({ length: 24 }, (_, i) => (
-                                                        <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -2370,7 +2300,7 @@ export const EditBookingSetupPage = () => {
                                                     }}
                                                 >
                                                     {Array.from({ length: 60 }, (_, i) => (
-                                                        <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -2388,7 +2318,7 @@ export const EditBookingSetupPage = () => {
                                                     }}
                                                 >
                                                     {Array.from({ length: 24 }, (_, i) => (
-                                                        <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -2404,7 +2334,7 @@ export const EditBookingSetupPage = () => {
                                                     }}
                                                 >
                                                     {Array.from({ length: 60 }, (_, i) => (
-                                                        <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -2422,7 +2352,7 @@ export const EditBookingSetupPage = () => {
                                                     }}
                                                 >
                                                     {Array.from({ length: 24 }, (_, i) => (
-                                                        <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -2438,7 +2368,7 @@ export const EditBookingSetupPage = () => {
                                                     }}
                                                 >
                                                     {Array.from({ length: 60 }, (_, i) => (
-                                                        <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -2456,7 +2386,7 @@ export const EditBookingSetupPage = () => {
                                                     }}
                                                 >
                                                     {Array.from({ length: 24 }, (_, i) => (
-                                                        <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -2472,7 +2402,7 @@ export const EditBookingSetupPage = () => {
                                                     }}
                                                 >
                                                     {Array.from({ length: 60 }, (_, i) => (
-                                                        <MenuItem key={i} value={i.toString().padStart(2, "0")}>
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -2482,8 +2412,12 @@ export const EditBookingSetupPage = () => {
                                         <TextField
                                             size="small"
                                             value={slot.concurrentSlots}
+                                            onChange={(e) => {
+                                                const newSlots = [...formData.slots];
+                                                newSlots[index].concurrentSlots = e.target.value;
+                                                setFormData({ ...formData, slots: newSlots });
+                                            }}
                                             variant="outlined"
-                                            InputProps={{ readOnly: true }}
                                         />
                                         <FormControl size="small">
                                             <Select
@@ -2494,11 +2428,11 @@ export const EditBookingSetupPage = () => {
                                                     setFormData({ ...formData, slots: newSlots });
                                                 }}
                                             >
-                                                <MenuItem value={15}>15 Minutes</MenuItem>
-                                                <MenuItem value={30}>Half hour</MenuItem>
-                                                <MenuItem value={45}>45 Minutes</MenuItem>
-                                                <MenuItem value={60}>1 hour</MenuItem>
-                                                <MenuItem value={90}>1 and a half hours</MenuItem>
+                                                <MenuItem value={"15 Minutes"}>15 Minutes</MenuItem>
+                                                <MenuItem value={"30 Minutes"}>Half hour</MenuItem>
+                                                <MenuItem value={"45 Minutes"}>45 Minutes</MenuItem>
+                                                <MenuItem value={"60 Minutes"}>1 hour</MenuItem>
+                                                <MenuItem value={"90 Minutes"}>1 and a half hours</MenuItem>
                                             </Select>
                                         </FormControl>
                                         <TextField
@@ -2527,13 +2461,13 @@ export const EditBookingSetupPage = () => {
                                                 size="small"
                                                 style={{ width: "80px" }}
                                                 variant="outlined"
-                                                value={formData.bookingAllowedBefore.day}
+                                                value={formData.bookingAllowedBefore.d}
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
                                                         bookingAllowedBefore: {
                                                             ...formData.bookingAllowedBefore,
-                                                            day: e.target.value,
+                                                            d: e.target.value,
                                                         },
                                                     })
                                                 }
@@ -2544,13 +2478,13 @@ export const EditBookingSetupPage = () => {
                                                 size="small"
                                                 style={{ width: "80px" }}
                                                 variant="outlined"
-                                                value={formData.bookingAllowedBefore.hour}
+                                                value={formData.bookingAllowedBefore.h}
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
                                                         bookingAllowedBefore: {
                                                             ...formData.bookingAllowedBefore,
-                                                            hour: e.target.value,
+                                                            h: e.target.value,
                                                         },
                                                     })
                                                 }
@@ -2561,13 +2495,13 @@ export const EditBookingSetupPage = () => {
                                                 size="small"
                                                 style={{ width: "80px" }}
                                                 variant="outlined"
-                                                value={formData.bookingAllowedBefore.minute}
+                                                value={formData.bookingAllowedBefore.m}
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
                                                         bookingAllowedBefore: {
                                                             ...formData.bookingAllowedBefore,
-                                                            minute: e.target.value,
+                                                            m: e.target.value,
                                                         },
                                                     })
                                                 }
@@ -2585,13 +2519,13 @@ export const EditBookingSetupPage = () => {
                                                 size="small"
                                                 style={{ width: "80px" }}
                                                 variant="outlined"
-                                                value={formData.advanceBooking.day}
+                                                value={formData.advanceBooking.d}
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
                                                         advanceBooking: {
                                                             ...formData.advanceBooking,
-                                                            day: e.target.value,
+                                                            d: e.target.value,
                                                         },
                                                     })
                                                 }
@@ -2602,13 +2536,13 @@ export const EditBookingSetupPage = () => {
                                                 size="small"
                                                 style={{ width: "80px" }}
                                                 variant="outlined"
-                                                value={formData.advanceBooking.hour}
+                                                value={formData.advanceBooking.h}
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
                                                         advanceBooking: {
                                                             ...formData.advanceBooking,
-                                                            hour: e.target.value,
+                                                            h: e.target.value,
                                                         },
                                                     })
                                                 }
@@ -2619,13 +2553,13 @@ export const EditBookingSetupPage = () => {
                                                 size="small"
                                                 style={{ width: "80px" }}
                                                 variant="outlined"
-                                                value={formData.advanceBooking.minute}
+                                                value={formData.advanceBooking.m}
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
                                                         advanceBooking: {
                                                             ...formData.advanceBooking,
-                                                            minute: e.target.value,
+                                                            m: e.target.value,
                                                         },
                                                     })
                                                 }
@@ -2643,13 +2577,13 @@ export const EditBookingSetupPage = () => {
                                                 size="small"
                                                 style={{ width: "80px" }}
                                                 variant="outlined"
-                                                value={formData.canCancelBefore.day}
+                                                value={formData.canCancelBefore.d}
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
                                                         canCancelBefore: {
                                                             ...formData.canCancelBefore,
-                                                            day: e.target.value,
+                                                            d: e.target.value,
                                                         },
                                                     })
                                                 }
@@ -2660,13 +2594,13 @@ export const EditBookingSetupPage = () => {
                                                 size="small"
                                                 style={{ width: "80px" }}
                                                 variant="outlined"
-                                                value={formData.canCancelBefore.hour}
+                                                value={formData.canCancelBefore.h}
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
                                                         canCancelBefore: {
                                                             ...formData.canCancelBefore,
-                                                            hour: e.target.value,
+                                                            h: e.target.value,
                                                         },
                                                     })
                                                 }
@@ -2677,13 +2611,13 @@ export const EditBookingSetupPage = () => {
                                                 size="small"
                                                 style={{ width: "80px" }}
                                                 variant="outlined"
-                                                value={formData.canCancelBefore.minute}
+                                                value={formData.canCancelBefore.m}
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
                                                         canCancelBefore: {
                                                             ...formData.canCancelBefore,
-                                                            minute: e.target.value,
+                                                            m: e.target.value,
                                                         },
                                                     })
                                                 }
@@ -3055,8 +2989,8 @@ export const EditBookingSetupPage = () => {
                                                     }}
                                                 >
                                                     {Array.from({ length: 24 }, (_, i) => (
-                                                        <MenuItem key={i} value={i.toString().padStart(2, "0")}>
-                                                            {i.toString().padStart(2, "0")}
+                                                        <MenuItem key={i} value={i.toString()}>
+                                                            {i.toString()}
                                                         </MenuItem>
                                                     ))}
                                                 </Select>

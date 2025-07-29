@@ -11,11 +11,14 @@ import {
 const ticketOptions = [
   { id: 'tickets', label: 'Overall Tickets First 2 chart', checked: true, chartSection: 'statusChart' },
   { id: 'reactive-proactive', label: 'Tickets Categorywise Proactive', checked: true, chartSection: 'reactiveChart' },
-  { id: 'category-wise', label: 'Category-wise Tickets', checked: true, chartSection: 'categoryChart' },
-  { id: 'aging-matrix', label: 'Ticket ageing matrix', checked: true, chartSection: 'agingMatrix' },
   { id: 'unitCategoryWise', label: 'Unit Category Wise', checked: true, chartSection: 'unitCategoryWise' },
-  { id: 'responseTat', label: 'Response Tat', checked: true, chartSection: 'responseTat' },
-  { id: 'resolutionTat', label: 'Resolution tat', checked: true, chartSection: 'resolutionTat' },
+  { id: 'statusChart', label: 'Status Chart', checked: true, chartSection: 'statusChart' },
+  { id: 'unitCategoryWise', label: 'Unit Category Wise', checked: true, chartSection: 'unitCategoryWise' },
+  { id: 'response-tat', label: 'Response TAT', checked: true, chartSection: 'responseTat' },
+  { id: 'category-wise-proactive-reactive', label: 'Category-wise Proactive/Reactive', checked: true, chartSection: 'categoryWiseProactiveReactive' },
+  { id: 'category-wise', label: 'Unit Category-wise Tickets', checked: true, chartSection: 'categoryChart' },
+  { id: 'aging-matrix', label: 'Ticket ageing matrix', checked: true, chartSection: 'agingMatrix' },
+  { id: 'resolutionTat', label: 'Resolution TAT', checked: true, chartSection: 'resolutionTat' },
 ];
 
 interface TicketSelectorProps {
