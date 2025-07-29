@@ -251,7 +251,7 @@ export interface TicketFilters {
   user_firstname_or_user_lastname_cont?: string;
   search_all_fields_cont?: string;
   assigned_to_in?: number[];
-  complaint_status_name_eq?: string;
+  complaint_status_fixed_state_eq?: string;
 }
 
 // Helper function to format date for API (DD/MM/YYYY)
@@ -452,7 +452,7 @@ export const ticketManagementAPI = {
       });
     }
 
-    const url = `/pms/admin/complaints.json?${queryParams.toString()}`;
+    const url = `/pms/admin/complaints.json?&q[complaint_status_fixed_state_null]=1&q[m]=or&${queryParams.toString()}`;
     console.log('API URL:', url);
     console.log('Query parameters:', Object.fromEntries(queryParams.entries()));
     const response = await apiClient.get(url);
