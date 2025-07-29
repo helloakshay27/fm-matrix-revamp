@@ -108,180 +108,185 @@ export const SurveyDetailsPage = () => {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Survey Details</h1>
       </div>
 
-      {/* Top Section - Category and Title */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Category*
-          </label>
-          <Select defaultValue={surveyData.category} disabled>
-            <SelectTrigger className="w-full bg-gray-50">
-              <SelectValue placeholder="Select Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Feedback">Feedback</SelectItem>
-              <SelectItem value="Research">Research</SelectItem>
-              <SelectItem value="Satisfaction">Satisfaction</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Title*
-          </label>
-          <input 
-            type="text" 
-            placeholder="Enter the title"
-            className="w-full h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-gray-300"
-            value={surveyData.title}
-            disabled
-            readOnly
-          />
-        </div>
-      </div>
-
-      {/* Questions Counter Section */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">No. of Questions</span>
-          <span className="text-sm font-medium">2</span>
-        </div>
-      </div>
-
-      {/* Questions Grid */}
-      <div className="grid grid-cols-1 gap-6 mb-6">
-        {/* Question 1 */}
-        <Card className="border border-gray-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle className="text-base font-medium">
-              New Question
-            </CardTitle>
-            <X className="w-4 h-4 text-gray-400" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <textarea 
-                className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 min-h-[80px] resize-none" 
-                placeholder="Enter your Question"
-                defaultValue={surveyData.questions[0]?.text}
-                disabled
-              />
-            </div>
-
+      {/* Main Survey Content Card */}
+      <Card className="border border-gray-200">
+        <CardContent className="p-6">
+          {/* Top Section - Category and Title */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Answer Type
+                Category*
               </label>
-              <Select defaultValue="Multiple Choice" disabled>
+              <Select defaultValue={surveyData.category} disabled>
                 <SelectTrigger className="w-full bg-gray-50">
-                  <SelectValue />
+                  <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
-                  <SelectItem value="Text Area">Text Area</SelectItem>
-                  <SelectItem value="Short Answer">Short Answer</SelectItem>
+                  <SelectItem value="Feedback">Feedback</SelectItem>
+                  <SelectItem value="Research">Research</SelectItem>
+                  <SelectItem value="Satisfaction">Satisfaction</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Answer Options
-              </label>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <input 
-                    type="text" 
-                    placeholder="Answer Option"
-                    className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
-                    defaultValue="Very Satisfied"
-                    disabled
-                  />
-                  <Select defaultValue="P" disabled>
-                    <SelectTrigger className="w-16 h-10 bg-gray-50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="P">P</SelectItem>
-                      <SelectItem value="N">N</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <X className="w-4 h-4 text-gray-400" />
-                </div>
-                <div className="flex items-center gap-3">
-                  <input 
-                    type="text" 
-                    placeholder="Answer Option"
-                    className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
-                    defaultValue="Satisfied"
-                    disabled
-                  />
-                  <Select defaultValue="P" disabled>
-                    <SelectTrigger className="w-16 h-10 bg-gray-50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="P">P</SelectItem>
-                      <SelectItem value="N">N</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <X className="w-4 h-4 text-gray-400" />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox id="mandatory-1" defaultChecked disabled className="data-[state=checked]:bg-gray-400" />
-              <label htmlFor="mandatory-1" className="text-sm text-gray-700">
-                Mandatory
-              </label>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Question 2 */}
-        <Card className="border border-gray-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <CardTitle className="text-base font-medium">
-              New Question
-            </CardTitle>
-            <X className="w-4 h-4 text-gray-400" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <textarea 
-                className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 min-h-[80px] resize-none" 
-                placeholder="Enter your Question"
-                defaultValue={surveyData.questions[1]?.text}
-                disabled
-              />
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Answer Type
+                Title*
               </label>
-              <Select defaultValue="Text Area" disabled>
-                <SelectTrigger className="w-full bg-gray-50">
-                  <SelectValue placeholder="Choose Answer Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
-                  <SelectItem value="Text Area">Text Area</SelectItem>
-                  <SelectItem value="Short Answer">Short Answer</SelectItem>
-                </SelectContent>
-              </Select>
+              <input 
+                type="text" 
+                placeholder="Enter the title"
+                className="w-full h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-gray-300"
+                value={surveyData.title}
+                disabled
+                readOnly
+              />
             </div>
+          </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox id="mandatory-2" disabled />
-              <label htmlFor="mandatory-2" className="text-sm text-gray-700">
-                Mandatory
-              </label>
+          {/* Questions Counter Section */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">No. of Questions</span>
+              <span className="text-sm font-medium">2</span>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+
+          {/* Questions Grid */}
+          <div className="grid grid-cols-1 gap-6">
+            {/* Question 1 */}
+            <Card className="border border-gray-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <CardTitle className="text-base font-medium">
+                  New Question
+                </CardTitle>
+                <X className="w-4 h-4 text-gray-400" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <textarea 
+                    className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 min-h-[80px] resize-none" 
+                    placeholder="Enter your Question"
+                    defaultValue={surveyData.questions[0]?.text}
+                    disabled
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Answer Type
+                  </label>
+                  <Select defaultValue="Multiple Choice" disabled>
+                    <SelectTrigger className="w-full bg-gray-50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
+                      <SelectItem value="Text Area">Text Area</SelectItem>
+                      <SelectItem value="Short Answer">Short Answer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Answer Options
+                  </label>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="text" 
+                        placeholder="Answer Option"
+                        className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                        defaultValue="Very Satisfied"
+                        disabled
+                      />
+                      <Select defaultValue="P" disabled>
+                        <SelectTrigger className="w-16 h-10 bg-gray-50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="P">P</SelectItem>
+                          <SelectItem value="N">N</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <X className="w-4 h-4 text-gray-400" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="text" 
+                        placeholder="Answer Option"
+                        className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                        defaultValue="Satisfied"
+                        disabled
+                      />
+                      <Select defaultValue="P" disabled>
+                        <SelectTrigger className="w-16 h-10 bg-gray-50">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="P">P</SelectItem>
+                          <SelectItem value="N">N</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <X className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="mandatory-1" defaultChecked disabled className="data-[state=checked]:bg-gray-400" />
+                  <label htmlFor="mandatory-1" className="text-sm text-gray-700">
+                    Mandatory
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Question 2 */}
+            <Card className="border border-gray-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <CardTitle className="text-base font-medium">
+                  New Question
+                </CardTitle>
+                <X className="w-4 h-4 text-gray-400" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <textarea 
+                    className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 min-h-[80px] resize-none" 
+                    placeholder="Enter your Question"
+                    defaultValue={surveyData.questions[1]?.text}
+                    disabled
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Answer Type
+                  </label>
+                  <Select defaultValue="Text Area" disabled>
+                    <SelectTrigger className="w-full bg-gray-50">
+                      <SelectValue placeholder="Choose Answer Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
+                      <SelectItem value="Text Area">Text Area</SelectItem>
+                      <SelectItem value="Short Answer">Short Answer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="mandatory-2" disabled />
+                  <label htmlFor="mandatory-2" className="text-sm text-gray-700">
+                    Mandatory
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Survey Mapping List Table */}
       <div className="mt-8">
