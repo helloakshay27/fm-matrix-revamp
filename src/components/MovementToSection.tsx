@@ -222,8 +222,8 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
                 if (!selected) {
                   return <span style={{ color: '#9CA3AF' }}>Select Building</span>;
                 }
-                const building = buildings.find(b => b.building.id === Number(selected));
-                return building?.building.name || 'Select Building';
+                const building = buildings.find(b => b.id === Number(selected));
+                return building?.name || 'Select Building';
               },
             }}
           >
