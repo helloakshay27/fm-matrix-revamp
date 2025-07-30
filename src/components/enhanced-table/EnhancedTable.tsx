@@ -486,19 +486,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                     {renderActions && (
                       <TableHead className="bg-[#f6f4ee] text-center" data-actions>Actions</TableHead>
                     )}
-                    {selectable && (
-                      <TableHead className="bg-[#f6f4ee] w-12 text-center" data-checkbox>
-                        <div className="flex justify-center">
-                          <Checkbox
-                            checked={isAllSelected}
-                            onCheckedChange={handleSelectAllChange}
-                            aria-label={selectAllLabel}
-                            {...(isIndeterminate && { 'data-state': 'indeterminate' })}
-                          />
-                        </div>
-                      </TableHead>
-                    )}
-                    {visibleColumns.map((column) => (
+                     {visibleColumns.map((column) => (
                       <SortableColumnHeader
                         key={column.key}
                         id={column.key}
@@ -517,12 +505,11 @@ export function EnhancedTable<T extends Record<string, any>>({
               <TableBody>
                 {loading && (
                   <TableRow>
-                    <TableCell
-                      colSpan={
-                        visibleColumns.length +
-                        (renderActions ? 1 : 0) +
-                        (selectable ? 1 : 0)
-                      }
+                     <TableCell
+                       colSpan={
+                         visibleColumns.length +
+                         (renderActions ? 1 : 0)
+                       }
                       className="h-24 text-center"
                     >
                       <div className="flex items-center justify-center">
@@ -534,12 +521,11 @@ export function EnhancedTable<T extends Record<string, any>>({
                 )}
                 {!loading && sortedData.length === 0 && (
                   <TableRow>
-                    <TableCell
-                      colSpan={
-                        visibleColumns.length +
-                        (renderActions ? 1 : 0) +
-                        (selectable ? 1 : 0)
-                      }
+                     <TableCell
+                       colSpan={
+                         visibleColumns.length +
+                         (renderActions ? 1 : 0)
+                       }
                       className="text-center py-8 text-gray-500"
                     >
                       {emptyMessage}
@@ -565,19 +551,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                           {renderActions(item)}
                         </TableCell>
                       )}
-                      {selectable && (
-                        <TableCell className="p-4 w-12 text-center" data-checkbox>
-                          <div className="flex justify-center">
-                            <Checkbox
-                              checked={isSelected}
-                              onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
-                              aria-label={`Select row ${index + 1}`}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-                        </TableCell>
-                      )}
-                      {visibleColumns.map((column) => {
+                       {visibleColumns.map((column) => {
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
