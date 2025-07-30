@@ -206,10 +206,12 @@ export const AddSurveyPage = () => {
             <div className="flex items-center gap-4 mb-6">
               <h2 className="text-lg font-medium text-gray-900">Add No. of Questions</h2>
               <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{numberOfQuestions.toString().padStart(2, '0')}</span>
                 <Button
                   onClick={handleAddQuestion}
                   size="sm"
-                  className="w-8 h-8 rounded-full bg-green-600 hover:bg-green-700 p-0"
+                  variant="ghost"
+                  className="w-6 h-6 p-0 text-black hover:bg-gray-100"
                 >
                   <Plus className="w-4 h-4" />
                 </Button>
