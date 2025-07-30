@@ -273,7 +273,7 @@ export const EditSurveyPage = () => {
               <div className="flex items-center gap-4">
                 <span className="text-sm font-medium">Add No. of Questions</span>
                 <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded">
-                  <span className="text-sm">02</span>
+                  <span className="text-sm">{questions.length.toString().padStart(2, '0')}</span>
                   <Button
                     size="sm"
                     variant="ghost"
