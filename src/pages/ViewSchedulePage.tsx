@@ -860,7 +860,7 @@ export const ViewSchedulePage = () => {
               <div className="space-y-2">
                 <TextField
                   label="Email Trigger Rule"
-                  value={customForm?.rule_ids?.[0] || 'No rules'}
+                  value={emailRules?.[0]?.rule_name || 'No rules'}
                   InputProps={{ readOnly: true, disabled: true }}
                   fullWidth
                   variant="outlined"
@@ -868,6 +868,17 @@ export const ViewSchedulePage = () => {
                   sx={muiFieldStyles}
                 />
               </div>
+              {/* {customForm?.backup_assigned.name !== "" && (<div className="space-y-2">
+                <TextField
+                  label="Backup Assigned to"
+                  value={customForm?.backup_assigned.name || 'No backkup assigned'}
+                  InputProps={{ readOnly: true, disabled: true }}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={muiFieldStyles}
+                />
+              </div>)} */}
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Supervisors</InputLabel>
@@ -1224,6 +1235,7 @@ export const ViewSchedulePage = () => {
                 {customForm?.sch_type === 'Service' ? (
                   assetTask?.services && assetTask.services.length > 0 ? (
                     assetTask.services.map((service, index) => (
+                      
                       <TableRow key={index}>
                         <TableCell>{service.service_name}</TableCell>
                         <TableCell>
@@ -1246,7 +1258,7 @@ export const ViewSchedulePage = () => {
                   assetTask?.assets && assetTask.assets.length > 0 ? (
                     assetTask.assets.map((asset, index) => (
                       <TableRow key={index}>
-                        <TableCell>{asset.asset_name || 'N/A'}</TableCell>
+                        <TableCell>{asset.name || asset.asset_name || 'N/A'}</TableCell>
                         <TableCell>
                           {customForm?.content?.map((task, taskIndex) => (
                             <span key={taskIndex} className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs mr-1 mb-1">

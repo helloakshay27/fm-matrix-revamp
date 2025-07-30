@@ -265,11 +265,12 @@ export const fetchCustomFormById = async (id: string): Promise<CustomForm> => {
 
 export const transformCustomFormsData = (forms: CustomForm[]): TransformedScheduleData[] => {
   return forms.map(form => {
-    // Split checklist_for to get type and schedule type
-    const checklistParts = form.checklist_for.split('::');
+    // Safely handle null/undefined checklist_for
+    const checklistFor = typeof form.checklist_for === 'string' ? form.checklist_for : '';
+    const checklistParts = checklistFor.split('::');
     const type = form.schedule_type || '';
     const scheduleType = checklistParts[1] || '';
-    
+
     // Format dates
     const formatDate = (dateStr: string | null) => {
       if (!dateStr) return '';
@@ -293,7 +294,7 @@ export const transformCustomFormsData = (forms: CustomForm[]): TransformedSchedu
       validFrom: formatDate(form.start_date),
       validTill: formatDate(form.end_date),
       category: type === 'PPM' ? 'Technical' : 'Non Technical',
-      active: form.active === true || form.active === null,
+      active: form.active === true || form.active === 1 || form.active === null,
       createdOn: formatDate(form.created_at),
       custom_form_code: form.custom_form_code
     };
