@@ -448,7 +448,7 @@ export const SurveyDetailsPage = () => {
                 <Card key={question.id} className="border border-gray-200 bg-gray-100">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <CardTitle className="text-base font-medium">
-                      New Question
+                      Question
                     </CardTitle>
                     <X className="w-4 h-4 text-gray-400" />
                   </CardHeader>
