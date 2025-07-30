@@ -45,9 +45,9 @@ export const MobileSurveyThankYou: React.FC = () => {
     } else {
       return {
         title: "Thank You for Your Feedback!",
-        message: state?.submitted 
-          ? "Your feedback has been submitted successfully. We'll work on improving your experience."
-          : "We appreciate your honesty and will work to improve.",
+        // message: state?.submitted 
+        //   ? "Your feedback has been submitted successfully. We'll work on improving your experience."
+        //   : "We appreciate your honesty and will work to improve.",
         emoji: "🙏",
         bgColor: "bg-blue-50",
         textColor: "text-blue-800"
@@ -103,17 +103,17 @@ export const MobileSurveyThankYou: React.FC = () => {
       </div>
 
       {/* Manual Navigation */}
-      <button
+      {/* <button
         onClick={() => navigate(`/mobile/survey/${mappingId}`, { replace: true })}
         className="mt-6 text-teal-600 hover:text-teal-700 text-sm font-medium underline"
       >
         Take Another Survey
-      </button>
+      </button> */}
 
       {/* Survey Info */}
       <div className="mt-8 text-center">
         <div className="text-xs text-gray-500">Survey ID: {mappingId}</div>
-        <div className="text-xs text-gray-400 mt-1">Powered by Lockated</div>
+        {/* <div className="text-xs text-gray-400 mt-1">Powered by Lockated</div> */}
       </div>
     </div>
   );
