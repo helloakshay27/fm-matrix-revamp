@@ -135,7 +135,7 @@ export const ticketAnalyticsDownloadAPI = {
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
 
-    const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/chart_unit_categorywise_downloads.json`;
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/admin/complaints/tickets_categorywise_proactive_reactive_export.json`;
     const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
 
     try {
@@ -154,7 +154,7 @@ export const ticketAnalyticsDownloadAPI = {
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `unit-categorywise-tickets-${fromDateStr}-to-${toDateStr}.xlsx`;
+      link.download = `categorywise_proactive_reactiv-${fromDateStr}-to-${toDateStr}.xlsx`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

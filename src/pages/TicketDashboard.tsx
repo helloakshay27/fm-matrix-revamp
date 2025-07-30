@@ -1137,7 +1137,7 @@ export const TicketDashboard = () => {
                               <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
                             </div>
                             <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Category Wise ProActive / Reactive</h3>
+                              <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Category Wise ProActive / Reactives</h3>
                               <Download
                                 className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer text-[#C72030]"
                                 onClick={async () => {
@@ -1145,7 +1145,7 @@ export const TicketDashboard = () => {
                                     try {
                                       const startDate = convertDateStringToDate(analyticsDateRange.startDate);
                                       const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                      await ticketAnalyticsDownloadAPI.downloadTicketsCategorywiseData(startDate, endDate);
+                                      await ticketAnalyticsDownloadAPI.downloadProactiveCategorywiseData(startDate, endDate);
                                       toast({
                                         title: "Success",
                                         description: "Category-wise proactive/reactive data downloaded successfully"

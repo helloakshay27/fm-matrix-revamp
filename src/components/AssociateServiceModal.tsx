@@ -36,7 +36,9 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
 
   const fetchAssetData = async () => {
     const token = localStorage.getItem('token');
-  
+    const baseUrl = localStorage.getItem('baseUrl');
+
+
     if (!token) {
       toast({
         title: "Error",
@@ -45,7 +47,7 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
       });
       return;
     }
-  
+
     if (!assetGroupId) {
       toast({
         title: "Error",
@@ -54,26 +56,26 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
       });
       return;
     }
-  
+
     setLoading(true);
     try {
       const response = await axios.get(
-        `https://fm-uat-api.lockated.com/pms/assets.json?q[pms_asset_group_id_eq]=${assetGroupId}`,
+        `https://${baseUrl}/pms/assets.json?q[pms_asset_group_id_eq]=${assetGroupId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       // Debug: Log the response
       console.log('Asset API response:', response.data);
-  
+
       // Fix: Set the correct array from the response
       const assetsArray = Array.isArray(response.data)
         ? response.data
         : Array.isArray(response.data.assets)
-        ? response.data.assets
-        : [];
-  
+          ? response.data.assets
+          : [];
+
       setAssets(assetsArray);
     } catch (error) {
       console.error('Failed to fetch asset data:', error);
@@ -86,7 +88,7 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
       setLoading(false);
     }
   };
-  
+
   const handleAssociate = async () => {
     if (!selectedAsset) {
       toast({
@@ -201,7 +203,7 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId
         </div>
 
         <div className="flex justify-center">
-          <Button 
+          <Button
             onClick={handleAssociate}
             className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8"
             disabled={loading}
