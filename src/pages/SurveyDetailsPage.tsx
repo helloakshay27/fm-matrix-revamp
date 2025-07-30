@@ -239,12 +239,22 @@ export const SurveyDetailsPage = () => {
   };
 
   // Fetch survey mappings
-  const fetchSurveyMappings = async () => {
+  const fetchSurveyMappings = async (mappingId?: string) => {
     if (!id) return;
     
     try {
       setLoadingSurveyMappings(true);
-      const apiUrl = `/survey_mappings.json?q[survey_id_eq]=${id}`;
+      
+      // Build API URL based on parameters
+      let apiUrl;
+      if (mappingId) {
+        // Fetch by specific mapping ID and survey ID
+        apiUrl = `/survey_mappings.json?q[id_eq]=${mappingId}&q[survey_id_eq]=${id}`;
+      } else {
+        // Fetch all mappings for the survey ID
+        apiUrl = `/survey_mappings.json?q[survey_id_eq]=${id}`;
+      }
+      
       console.log('Fetching survey mappings from:', getFullUrl(apiUrl));
       
       const response = await fetch(getFullUrl(apiUrl), {
@@ -260,7 +270,10 @@ export const SurveyDetailsPage = () => {
       
       const mappingsData = await response.json();
       console.log('Survey mappings response:', mappingsData);
-      setSurveyMappings(mappingsData);
+      
+      // Handle the response structure - extract survey_mappings array
+      const surveyMappingsArray = mappingsData.survey_mappings || mappingsData || [];
+      setSurveyMappings(surveyMappingsArray);
     } catch (error) {
       console.error('Error fetching survey mappings:', error);
       toast({
@@ -270,6 +283,42 @@ export const SurveyDetailsPage = () => {
       });
     } finally {
       setLoadingSurveyMappings(false);
+    }
+  };
+
+  // Fetch survey mapping by specific mapping ID
+  const fetchSurveyMappingById = async (mappingId: string) => {
+    if (!id) return null;
+    
+    try {
+      const apiUrl = `/survey_mappings.json?q[id_eq]=${mappingId}&q[survey_id_eq]=${id}`;
+      console.log('Fetching specific survey mapping from:', getFullUrl(apiUrl));
+      
+      const response = await fetch(getFullUrl(apiUrl), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch survey mapping: ${response.status}`);
+      }
+      
+      const mappingData = await response.json();
+      console.log('Survey mapping response:', mappingData);
+      
+      // Handle the response structure - extract survey_mappings array
+      const surveyMappingsArray = mappingData.survey_mappings || mappingData || [];
+      return surveyMappingsArray.length > 0 ? surveyMappingsArray[0] : null;
+    } catch (error) {
+      console.error('Error fetching survey mapping by ID:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load survey mapping",
+        variant: "destructive"
+      });
+      return null;
     }
   };
 
@@ -942,11 +991,11 @@ export const SurveyDetailsPage = () => {
           ) : surveyMappings.length > 0 ? (
             surveyMappings.map((mapping) => (
                 <div key={mapping.id} className="grid grid-cols-6 border-b border-gray-200 last:border-b-0">
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.building_name || '-'}</div>
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.wing_name || '-'}</div>
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor_name || '-'}</div>
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.area_name || '-'}</div>
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.room_name || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.building_name || mapping.building_id || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.wing_name || mapping.wing_id || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor_name || mapping.floor_id || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.area_name || mapping.area_id || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.room_name || mapping.room_id || '-'}</div>
                   <div className="p-4 text-gray-700">{mapping.qr_code || '-'}</div>
                 </div>
             ))
