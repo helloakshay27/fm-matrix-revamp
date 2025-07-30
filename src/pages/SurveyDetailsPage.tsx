@@ -526,31 +526,38 @@ export const SurveyDetailsPage = () => {
                     <X className="w-4 h-4 text-gray-400" />
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div>
-                      <textarea 
-                        className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 min-h-[80px] resize-none" 
-                        placeholder="Enter your Question"
-                        value={question.descr}
-                        disabled
-                        readOnly
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Question
+                        </label>
+                        <input 
+                          type="text"
+                          className="w-full h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700" 
+                          placeholder="Enter your Question"
+                          value={question.descr}
+                          disabled
+                          readOnly
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Select Answer Type
+                        </label>
+                        <Select value="Multiple Choice" disabled>
+                          <SelectTrigger className="w-full h-10 bg-gray-50">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
+                            <SelectItem value="Text Area">Text Area</SelectItem>
+                            <SelectItem value="Short Answer">Short Answer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Select Answer Type
-                      </label>
-                      <Select value="Multiple Choice" disabled>
-                        <SelectTrigger className="w-full bg-gray-50">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
-                          <SelectItem value="Text Area">Text Area</SelectItem>
-                          <SelectItem value="Short Answer">Short Answer</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
 
                     {question.snag_quest_options && question.snag_quest_options.length > 0 && (
                       <div>
@@ -603,7 +610,7 @@ export const SurveyDetailsPage = () => {
         <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-medium text-red-600">Survey Mapping List</h3>
+            <h3 className="text-lg font-medium text-gray-900">Survey Mapping List</h3>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

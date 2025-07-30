@@ -77,9 +77,17 @@ export const AddSurveyPage = () => {
   };
 
   const handleQuestionChange = (id: string, field: keyof Question, value: string | boolean | string[]) => {
-    setQuestions(questions.map(q => 
-      q.id === id ? { ...q, [field]: value } : q
-    ));
+    setQuestions(questions.map(q => {
+      if (q.id === id) {
+        const updatedQuestion = { ...q, [field]: value };
+        // Initialize answerOptions when switching to multiple-choice
+        if (field === 'answerType' && value === 'multiple-choice' && !updatedQuestion.answerOptions) {
+          updatedQuestion.answerOptions = ['', ''];
+        }
+        return updatedQuestion;
+      }
+      return q;
+    }));
   };
 
   const handleAddAnswerOption = (questionId: string) => {
@@ -197,26 +205,13 @@ export const AddSurveyPage = () => {
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-6">
               <h2 className="text-lg font-medium text-gray-900">Add No. of Questions</h2>
-              <div className="flex items-center gap-2">
-                <Select 
-                  value={numberOfQuestions.toString().padStart(2, '0')} 
-                  onValueChange={(value) => setNumberOfQuestions(parseInt(value))}
-                >
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
-                      <SelectItem key={num} value={num.toString().padStart(2, '0')}>
-                        {num.toString().padStart(2, '0')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center gap-2 border border-gray-300 rounded px-3 py-1 bg-white">
+                <span className="text-sm font-medium">{numberOfQuestions.toString().padStart(2, '0')}</span>
                 <Button
                   onClick={handleAddQuestion}
                   size="sm"
-                  className="w-8 h-8 rounded-full bg-green-600 hover:bg-green-700 p-0"
+                  variant="ghost"
+                  className="w-6 h-6 p-0 text-black hover:bg-gray-100"
                 >
                   <Plus className="w-4 h-4" />
                 </Button>
@@ -273,14 +268,20 @@ export const AddSurveyPage = () => {
                     {/* Multiple Choice Answer Options */}
                     {question.answerType === 'multiple-choice' && (
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between">
+                        <div className="mb-3">
                           <span className="text-sm font-medium text-gray-700">Answer Options</span>
                         </div>
                         
-                        {(question.answerOptions || ['', '']).map((option, index) => (
-                          <div key={index} className="flex items-center gap-2">
+                        {(question.answerOptions || []).map((option, index) => (
+                          <div key={index} className="flex items-center gap-2 mb-2">
+                            <Input
+                              placeholder="Enter option"
+                              value={option || ''}
+                              onChange={(e) => handleAnswerOptionChange(question.id, index, e.target.value)}
+                              className="flex-1 h-10 border border-gray-300 rounded px-3"
+                            />
                             <Select defaultValue="P">
-                              <SelectTrigger className="w-16">
+                              <SelectTrigger className="w-16 h-10 border border-gray-300 rounded">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -288,33 +289,48 @@ export const AddSurveyPage = () => {
                                 <SelectItem value="N">N</SelectItem>
                               </SelectContent>
                             </Select>
-                            <Input
-                              placeholder="Answer Option"
-                              value={option}
-                              onChange={(e) => handleAnswerOptionChange(question.id, index, e.target.value)}
-                              className="flex-1"
-                            />
-                            {(question.answerOptions?.length || 0) > 2 && (
-                              <Button
-                                onClick={() => handleRemoveAnswerOption(question.id, index)}
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-500 hover:text-red-700 p-1"
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            )}
+                            <Button
+                              onClick={() => handleRemoveAnswerOption(question.id, index)}
+                              variant="ghost"
+                              size="sm"
+                              className="text-gray-400 hover:text-red-500 p-1 h-10 w-10"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
                           </div>
                         ))}
+                        
+                        {(!question.answerOptions || question.answerOptions.length === 0) && (
+                          <div className="flex items-center gap-2 mb-2">
+                            <Input
+                              placeholder="Enter option"
+                              value=""
+                              onChange={(e) => {
+                                const newOptions = [e.target.value];
+                                handleQuestionChange(question.id, 'answerOptions', newOptions);
+                              }}
+                              className="flex-1 h-10 border border-gray-300 rounded px-3"
+                            />
+                            <Select defaultValue="P">
+                              <SelectTrigger className="w-16 h-10 border border-gray-300 rounded">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="P">P</SelectItem>
+                                <SelectItem value="N">N</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
                         
                         <Button
                           onClick={() => handleAddAnswerOption(question.id)}
                           variant="ghost"
                           size="sm"
-                          className="text-green-600 hover:text-green-700 p-0 h-auto font-medium"
+                          className="text-red-500 hover:text-red-600 p-0 h-auto font-medium flex items-center"
                         >
                           <Plus className="w-4 h-4 mr-1" />
-                          Add Answer Option
+                          Add Option
                         </Button>
                       </div>
                     )}
