@@ -8,7 +8,12 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
-import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
+import {
+  useNavigate,
+  useParams,
+  useSearchParams,
+  useLocation,
+} from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Restaurant as ApiRestaurant } from "@/services/restaurantApi";
 
@@ -51,11 +56,11 @@ export const MobileRestaurantDetails: React.FC<
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  
+
   // 🔍 Check if user is from external scan (Google Lens, etc.)
   const sourceParam = searchParams.get("source");
   const isExternalScan = sourceParam === "external";
-  
+
   // 🔍 Debug logging for external detection in Restaurant Details
   useEffect(() => {
     console.log("🏪 RESTAURANT DETAILS - EXTERNAL DETECTION:");
@@ -63,7 +68,7 @@ export const MobileRestaurantDetails: React.FC<
     console.log("  - isExternalScan:", isExternalScan);
     console.log("  - Current URL:", window.location.href);
   }, [searchParams, sourceParam, isExternalScan]);
-  
+
   const [menuItems, setMenuItems] = useState<MenuItem[]>(
     restaurant.menuItems || []
   );
@@ -77,21 +82,22 @@ export const MobileRestaurantDetails: React.FC<
   // Restore preserved cart when coming back from items details
   useEffect(() => {
     // Get preserved cart from navigation state (when coming back from items details)
-    const preservedCart = (location.state as { preservedCart?: MenuItem[] })?.preservedCart || [];
-    
+    const preservedCart =
+      (location.state as { preservedCart?: MenuItem[] })?.preservedCart || [];
+
     if (preservedCart.length > 0) {
       console.log("🔄 RESTORING PRESERVED CART:", preservedCart);
-      
+
       // Create a map of preserved items for quick lookup
       const preservedItemsMap = new Map(
-        preservedCart.map(item => [item.id, item.quantity || 0])
+        preservedCart.map((item) => [item.id, item.quantity || 0])
       );
-      
+
       // Update menu items with preserved quantities
-      setMenuItems(prevItems => 
-        prevItems.map(item => ({
+      setMenuItems((prevItems) =>
+        prevItems.map((item) => ({
           ...item,
-          quantity: preservedItemsMap.get(item.id) || 0
+          quantity: preservedItemsMap.get(item.id) || 0,
         }))
       );
     }
@@ -192,13 +198,16 @@ export const MobileRestaurantDetails: React.FC<
       console.log("🛒 NAVIGATING TO ITEMS:");
       console.log("  - sourceParam:", sourceParam);
       console.log("  - isExternalScan:", isExternalScan);
-      console.log("  - Will navigate with source param:", sourceParam || "none");
-      
+      console.log(
+        "  - Will navigate with source param:",
+        sourceParam || "none"
+      );
+
       // Construct URL with source parameter if any source exists
-      const itemsUrl = sourceParam 
+      const itemsUrl = sourceParam
         ? `/mobile/restaurant/${restaurant.id}/items?source=${sourceParam}`
         : `/mobile/restaurant/${restaurant.id}/items`;
-      
+
       navigate(itemsUrl, {
         state: { selectedItems, restaurant, isExternalScan, sourceParam },
       });
@@ -282,7 +291,7 @@ export const MobileRestaurantDetails: React.FC<
           <h2 className="text-xl font-bold text-gray-900">{restaurant.name}</h2>
           <div className="flex items-center bg-orange-100 px-2 py-1 rounded-lg">
             <span className="text-sm font-semibold text-gray-900 mr-1">
-              {restaurant.rating ? Number(restaurant.rating).toFixed(1) : '4.0'}
+              {restaurant.rating ? Number(restaurant.rating).toFixed(1) : "4.0"}
             </span>
             <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
           </div>
@@ -316,29 +325,37 @@ export const MobileRestaurantDetails: React.FC<
                   {item.description || "Delicious & fresh"}
                 </p>
                 {/* Price */}
-                {item.price != null && item.price !== undefined && item.price > 0 && (
-                  <>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-base font-semibold text-white bg-red-600 px-2 py-1 rounded">
-                    ₹{item.price}
-                    </span>
-                    {/* Optional original price if discount */}
-                    {/* <span className="text-sm text-gray-400 line-through">₹{item.originalPrice}</span> */}
-                  </div>
-                  <div className="text-xs text-gray-500">Price per item</div>
-                  </>
-                )}
+                {item.price != null &&
+                  item.price !== undefined &&
+                  item.price > 0 && (
+                    <>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-base font-semibold text-white bg-red-600 px-2 py-1 rounded">
+                          ₹{item.price}
+                        </span>
+                        {/* Optional original price if discount */}
+                        {/* <span className="text-sm text-gray-400 line-through">₹{item.originalPrice}</span> */}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Price per item
+                      </div>
+                    </>
+                  )}
               </div>
 
               {/* Item Image */}
               <div className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden relative">
                 <img
-                  src={item.image || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=300&h=200"}
+                  src={
+                    item.image ||
+                    "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=300&h=200"
+                  }
                   alt={item.name}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     // Fallback to placeholder if image fails to load
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=300&h=200";
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=300&h=200";
                   }}
                 />
 
