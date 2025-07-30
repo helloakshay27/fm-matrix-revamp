@@ -153,7 +153,7 @@ export const ticketAnalyticsDownloadAPI = {
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = `categorywise_proactive_reactiv-${fromDateStr}-to-${toDateStr}.xlsx`;
+      link.download = `categorywise_proactive_reactive-${fromDateStr}-to-${toDateStr}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
