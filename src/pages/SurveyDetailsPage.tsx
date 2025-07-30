@@ -453,30 +453,71 @@ export const SurveyDetailsPage = () => {
                     <X className="w-4 h-4 text-gray-400" />
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div>
-                      <textarea 
-                        className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 min-h-[80px] resize-none" 
-                        placeholder="Enter your Question"
-                        value={question.descr}
-                        disabled
-                        readOnly
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Question
+                        </label>
+                         <input 
+                           type="text"
+                           className="w-full p-3 border border-gray-300 rounded-md bg-gray-100 text-gray-700" 
+                           placeholder="Enter your Question"
+                           value={question.descr}
+                           disabled
+                           readOnly
+                         />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Select Answer Type
+                        </label>
+                         <Select value="Multiple Choice" disabled>
+                           <SelectTrigger className="w-full bg-gray-100">
+                             <SelectValue />
+                           </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
+                            <SelectItem value="Text Area">Text Area</SelectItem>
+                            <SelectItem value="Short Answer">Short Answer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
+                    {/* Selected Section */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Select Answer Type
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        Selected
                       </label>
-                      <Select value="Multiple Choice" disabled>
-                        <SelectTrigger className="w-full bg-gray-50">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
-                          <SelectItem value="Text Area">Text Area</SelectItem>
-                          <SelectItem value="Short Answer">Short Answer</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="space-y-3">
+                        {question.snag_quest_options?.map((option, optionIndex) => (
+                          <div key={option.id} className="flex items-center gap-3">
+                            <div className="flex items-center space-x-2">
+                              <input 
+                                type="radio" 
+                                id={`option-${question.id}-${option.id}`}
+                                name={`question-${question.id}`}
+                                className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
+                                defaultChecked={optionIndex === 0}
+                                disabled
+                              />
+                              <label htmlFor={`option-${question.id}-${option.id}`} className="text-sm text-gray-700">
+                                {option.qname}
+                              </label>
+                            </div>
+                            <Select value={option.option_type.toUpperCase()} disabled>
+                              <SelectTrigger className="w-16 h-10 bg-gray-100">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="P">P</SelectItem>
+                                <SelectItem value="N">N</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )) || []}
+                      </div>
                     </div>
 
                     {question.snag_quest_options && question.snag_quest_options.length > 0 && (
