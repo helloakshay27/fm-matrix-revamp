@@ -236,7 +236,7 @@ export const AssetDashboard = () => {
     const today = new Date();
     const lastYear = new Date();
     lastYear.setFullYear(today.getFullYear() - 1);
-    
+
     return {
       fromDate: lastYear,
       toDate: today
@@ -1250,18 +1250,6 @@ export const AssetDashboard = () => {
           ) : (
             <>
               <AssetStats stats={data} onCardClick={handleStatCardClick} />
-
-              {/* <AssetActions
-                searchTerm={searchTerm}
-                onSearch={handleSearch}
-                onAddAsset={handleAddAsset}
-                onImport={handleImport}
-                onUpdate={handleUpdate}
-                onFilterOpen={() => setIsFilterOpen(true)}
-                onRefresh={handleRefresh}
-                visibleColumns={visibleColumns}
-                onColumnChange={handleColumnChange}
-              /> */}
 
               <div className="relative">
                 <AssetDataTable
