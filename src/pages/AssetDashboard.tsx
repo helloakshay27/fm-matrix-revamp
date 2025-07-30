@@ -317,7 +317,7 @@ export const AssetDashboard = () => {
 
   // Function to get selected site ID from localStorage
   const getSelectedSiteId = () => {
-    return localStorage.getItem("selectedSiteId") || "2189"; // Default to 2189 if not found
+    return localStorage.getItem("selectedSiteId"); // Default to 2189 if not found
   };
 
   // Function to fetch asset statistics from API

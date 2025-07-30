@@ -63,6 +63,62 @@ import { IncidentListDashboard } from "./pages/IncidentListDashboard";
 import { AddIncidentPage } from "./pages/AddIncidentPage";
 import { IncidentDetailsPage } from "./pages/IncidentDetailsPage";
 import { EditIncidentDetailsPage } from "./pages/EditIncidentDetailsPage";
+// import { IncidentListDashboard } from './pages/IncidentListDashboard';
+// import { AddIncidentPage } from './pages/AddIncidentPage';
+// import { IncidentDetailsPage } from './pages/IncidentDetailsPage';
+// import { EditIncidentDetailsPage } from './pages/EditIncidentDetailsPage';
+
+// Import Inventory pages
+import { InventoryDashboard } from './pages/InventoryDashboard';
+import { InventoryDetailsPage } from './pages/InventoryDetailsPage';
+import { InventoryFeedsPage } from './pages/InventoryFeedsPage';
+import { EditInventoryPage } from './pages/EditInventoryPage';
+import InventoryConsumptionDashboard from './pages/InventoryConsumptionDashboard';
+import InventoryConsumptionViewPage from './pages/InventoryConsumptionViewPage';
+import EcoFriendlyListPage from './pages/EcoFriendlyListPage';
+
+// Import Task pages
+import { ScheduledTaskDashboard } from './pages/maintenance/ScheduledTaskDashboard';
+import { TaskDetailsPage } from './pages/TaskDetailsPage';
+
+// Import Utility pages
+import { UtilityDashboard } from './pages/UtilityDashboard';
+import { AddAssetDashboard } from './pages/AddAssetDashboard';
+import { AddEnergyAssetDashboard } from './pages/AddEnergyAssetDashboard';
+import { UtilityWaterDashboard } from './pages/UtilityWaterDashboard';
+import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
+import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
+import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
+import UtilityEVConsumptionDashboard from './pages/UtilityEVConsumptionDashboard';
+import UtilitySolarGeneratorDashboard from './pages/UtilitySolarGeneratorDashboard';
+
+// Import Waste Generation pages
+import UtilityWasteGenerationDashboard from './pages/UtilityWasteGenerationDashboard';
+import { UtilityWasteGenerationSetupDashboard } from './pages/UtilityWasteGenerationSetupDashboard';
+import AddWasteGenerationPage from './pages/AddWasteGenerationPage';
+
+// Import Survey pages
+import { SurveyListDashboard } from './pages/SurveyListDashboard';
+import { AddSurveyPage } from './pages/AddSurveyPage';
+import { EditSurveyPage } from './pages/EditSurveyPage';
+import { SurveyDetailsPage } from './pages/SurveyDetailsPage';
+import { SurveyMappingDashboard } from './pages/SurveyMappingDashboard';
+import { SurveyResponseDashboard } from './pages/SurveyResponseDashboard';
+import { SurveyResponsePage } from './pages/SurveyResponsePage';
+
+// Import Schedule pages
+import { ScheduleListDashboard } from './pages/ScheduleListDashboard';
+import { AddSchedulePage } from './pages/AddSchedulePage';
+import { ScheduleExportPage } from './pages/ScheduleExportPage';
+import { EditSchedulePage } from './pages/EditSchedulePage';
+import { CopySchedulePage } from './pages/CopySchedulePage';
+import { ViewSchedulePage } from './pages/ViewSchedulePage';
+
+// Import Visitors pages
+import { VisitorsDashboard } from './pages/VisitorsDashboard';
+import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
+import { PatrollingDashboard } from './pages/PatrollingDashboard';
+import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
 
 // Import new dashboard pages
 import { IncidentDashboard } from "./pages/IncidentDashboard";
@@ -70,56 +126,56 @@ import { PermitToWorkDashboard } from "./pages/PermitToWorkDashboard";
 import { LeadDashboard } from "./pages/LeadDashboard";
 import { EnergyDashboard } from "./pages/EnergyDashboard";
 
-// Import Inventory pages
-import { InventoryDashboard } from "./pages/InventoryDashboard";
-import { InventoryDetailsPage } from "./pages/InventoryDetailsPage";
-import { InventoryFeedsPage } from "./pages/InventoryFeedsPage";
-import { EditInventoryPage } from "./pages/EditInventoryPage";
-import InventoryConsumptionDashboard from "./pages/InventoryConsumptionDashboard";
-import InventoryConsumptionViewPage from "./pages/InventoryConsumptionViewPage";
-import EcoFriendlyListPage from "./pages/EcoFriendlyListPage";
+// // Import Inventory pages
+// import { InventoryDashboard } from "./pages/InventoryDashboard";
+// import { InventoryDetailsPage } from "./pages/InventoryDetailsPage";
+// import { InventoryFeedsPage } from "./pages/InventoryFeedsPage";
+// import { EditInventoryPage } from "./pages/EditInventoryPage";
+// import InventoryConsumptionDashboard from "./pages/InventoryConsumptionDashboard";
+// import InventoryConsumptionViewPage from "./pages/InventoryConsumptionViewPage";
+// import EcoFriendlyListPage from "./pages/EcoFriendlyListPage";
 
-// Import Task pages
-import { ScheduledTaskDashboard } from "./pages/maintenance/ScheduledTaskDashboard";
-import { TaskDetailsPage } from "./pages/TaskDetailsPage";
+// // Import Task pages
+// import { ScheduledTaskDashboard } from "./pages/maintenance/ScheduledTaskDashboard";
+// import { TaskDetailsPage } from "./pages/TaskDetailsPage";
 
-// Import Utility pages
-import { UtilityDashboard } from "./pages/UtilityDashboard";
-import { AddAssetDashboard } from "./pages/AddAssetDashboard";
-import { AddEnergyAssetDashboard } from "./pages/AddEnergyAssetDashboard";
-import { UtilityWaterDashboard } from "./pages/UtilityWaterDashboard";
-import { AddWaterAssetDashboard } from "./pages/AddWaterAssetDashboard";
-import UtilitySTPDashboard from "./pages/UtilitySTPDashboard";
-import AddSTPAssetDashboard from "./pages/AddSTPAssetDashboard";
-import UtilityEVConsumptionDashboard from "./pages/UtilityEVConsumptionDashboard";
-import UtilitySolarGeneratorDashboard from "./pages/UtilitySolarGeneratorDashboard";
+// // Import Utility pages
+// import { UtilityDashboard } from "./pages/UtilityDashboard";
+// import { AddAssetDashboard } from "./pages/AddAssetDashboard";
+// import { AddEnergyAssetDashboard } from "./pages/AddEnergyAssetDashboard";
+// import { UtilityWaterDashboard } from "./pages/UtilityWaterDashboard";
+// import { AddWaterAssetDashboard } from "./pages/AddWaterAssetDashboard";
+// import UtilitySTPDashboard from "./pages/UtilitySTPDashboard";
+// import AddSTPAssetDashboard from "./pages/AddSTPAssetDashboard";
+// import UtilityEVConsumptionDashboard from "./pages/UtilityEVConsumptionDashboard";
+// import UtilitySolarGeneratorDashboard from "./pages/UtilitySolarGeneratorDashboard";
 
-// Import Waste Generation pages
-import UtilityWasteGenerationDashboard from "./pages/UtilityWasteGenerationDashboard";
-import { UtilityWasteGenerationSetupDashboard } from "./pages/UtilityWasteGenerationSetupDashboard";
-import AddWasteGenerationPage from "./pages/AddWasteGenerationPage";
+// // Import Waste Generation pages
+// import UtilityWasteGenerationDashboard from "./pages/UtilityWasteGenerationDashboard";
+// import { UtilityWasteGenerationSetupDashboard } from "./pages/UtilityWasteGenerationSetupDashboard";
+// import AddWasteGenerationPage from "./pages/AddWasteGenerationPage";
 
-// Import Survey pages
-import { SurveyListDashboard } from "./pages/SurveyListDashboard";
-import { AddSurveyPage } from "./pages/AddSurveyPage";
-import { SurveyMappingDashboard } from "./pages/SurveyMappingDashboard";
-import { SurveyResponseDashboard } from "./pages/SurveyResponseDashboard";
-import { SurveyResponsePage } from "./pages/SurveyResponsePage";
+// // Import Survey pages
+// import { SurveyListDashboard } from "./pages/SurveyListDashboard";
+// import { AddSurveyPage } from "./pages/AddSurveyPage";
+// import { SurveyMappingDashboard } from "./pages/SurveyMappingDashboard";
+// import { SurveyResponseDashboard } from "./pages/SurveyResponseDashboard";
+// import { SurveyResponsePage } from "./pages/SurveyResponsePage";
 
-// Import Schedule pages
-import { ScheduleListDashboard } from "./pages/ScheduleListDashboard";
-import { AddSchedulePage } from "./pages/AddSchedulePage";
-import { ScheduleExportPage } from "./pages/ScheduleExportPage";
-import { EditSchedulePage } from "./pages/EditSchedulePage";
-import { CopySchedulePage } from "./pages/CopySchedulePage";
-import { ViewSchedulePage } from "./pages/ViewSchedulePage";
+// // Import Schedule pages
+// import { ScheduleListDashboard } from "./pages/ScheduleListDashboard";
+// import { AddSchedulePage } from "./pages/AddSchedulePage";
+// import { ScheduleExportPage } from "./pages/ScheduleExportPage";
+// import { EditSchedulePage } from "./pages/EditSchedulePage";
+// import { CopySchedulePage } from "./pages/CopySchedulePage";
+// import { ViewSchedulePage } from "./pages/ViewSchedulePage";
 import { ViewPerformancePage } from "./pages/ViewPerformancePage";
 
-// Import Visitors pages
-import { VisitorsDashboard } from "./pages/VisitorsDashboard";
-import { VisitorsHistoryDashboard } from "./pages/VisitorsHistoryDashboard";
-import { PatrollingDashboard } from "./pages/PatrollingDashboard";
-import { PatrollingDetailsPage } from "./pages/PatrollingDetailsPage";
+// // Import Visitors pages
+// import { VisitorsDashboard } from "./pages/VisitorsDashboard";
+// import { VisitorsHistoryDashboard } from "./pages/VisitorsHistoryDashboard";
+// import { PatrollingDashboard } from "./pages/PatrollingDashboard";
+// import { PatrollingDetailsPage } from "./pages/PatrollingDetailsPage";
 
 // Import Staff pages
 import { StaffsDashboard } from "./pages/StaffsDashboard";
@@ -1013,6 +1069,13 @@ function App() {
                   path="/maintenance/survey/response/dashboard"
                   element={<SurveyResponseDashboard />}
                 />
+                <Route path="/maintenance/survey/list" element={<SurveyListDashboard />} />
+                <Route path="/maintenance/survey/add" element={<AddSurveyPage />} />
+                <Route path="/maintenance/survey/edit/:id" element={<EditSurveyPage />} />
+                <Route path="/maintenance/survey/details/:id" element={<SurveyDetailsPage />} />
+                <Route path="/maintenance/survey/mapping" element={<SurveyMappingDashboard />} />
+                <Route path="/maintenance/survey/response" element={<SurveyResponsePage />} />
+                <Route path="/maintenance/survey/response/dashboard" element={<SurveyResponseDashboard />} />
 
                 {/* Finance Routes */}
                 <Route
