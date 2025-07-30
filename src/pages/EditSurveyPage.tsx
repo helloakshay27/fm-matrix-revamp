@@ -368,7 +368,8 @@ export const EditSurveyPage = () => {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleAddAnswerOption(index)}
-                          className="text-blue-600 hover:text-blue-700 p-0 h-auto font-medium"
+                          className="p-0 h-auto font-medium"
+                          style={{ color: '#C72030' }}
                         >
                           <Plus className="w-4 h-4 mr-1" />
                           Add Option
