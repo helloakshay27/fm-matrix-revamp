@@ -46,6 +46,14 @@ interface PaginationData {
   total_pages: number;
 }
 
+interface ServicesApiData {
+  pms_services: ServiceRecord[];
+  pagination: PaginationData;
+  total_services_count: number;
+  active_services_count: number;
+  inactive_services_count: number;
+}
+
 interface ServiceActionPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -73,7 +81,6 @@ const ServiceActionPanel: React.FC<ServiceActionPanelProps> = ({ isOpen, onClose
             <FileText className="w-4 h-4 mr-2" />
             Download QR Code
           </Button>
-          {/* Add more actions here as needed */}
         </div>
       </div>
     </div>
@@ -95,6 +102,7 @@ export const ServiceDashboard = () => {
   const [showServiceActionPanel, setShowServiceActionPanel] = useState(false);
   const [selectedService, setSelectedService] = useState<ServiceRecord | null>(null);
   const [appliedFilters, setAppliedFilters] = useState({});
+  const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const siteId = localStorage.getItem('siteId');
@@ -110,8 +118,6 @@ export const ServiceDashboard = () => {
   const servicesData = apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData;
   const paginationData: PaginationData = apiData?.pagination || { current_page: 1, total_count: 0, total_pages: 1 };
 
-
-
   const handleAddClick = () => navigate('/maintenance/service/add');
   const handleAddSchedule = () => navigate('/maintenance/schedule/add?type=Service');
   const handleImportClick = () => {
@@ -124,58 +130,10 @@ export const ServiceDashboard = () => {
     setShowActionPanel(false);
   };
 
-  // const handleApplyFilters = async (filters) => {
-  //   const baseUrl = localStorage.getItem('baseUrl');
-  //   const token = localStorage.getItem('token');
-  //   const siteId = localStorage.getItem('siteId') || '2189'; // Ensure siteId is included
-  //   setShowFilterModal(false);
-
-  //   const queryParams = {};
-
-  //   if (filters.serviceName) {
-  //     queryParams['q[service_name_cont]'] = filters.serviceName;
-  //   }
-  //   if (filters.buildingId) {
-  //     queryParams['q[building_id_eq]'] = filters.buildingId;
-  //   }
-  //   if (filters.areaId) {
-  //     queryParams['q[area_id_eq]'] = filters.areaId;
-  //   }
-
-  //   // Include active filter and page if needed
-  //   if (activeFilter !== undefined) {
-  //     queryParams['q[active_eq]'] = activeFilter;
-  //   }
-  //   queryParams['page'] = 1; // Start from page 1 for filtered results
-
-  //   const queryString = new URLSearchParams(queryParams).toString();
-  //   const url = `https://${baseUrl}/pms/services.json${queryString ? `?${queryString}` : ''}`;
-
-  //   try {
-  //     const response = await axios.get(url, {
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-
-  //     console.log('Filter Response:', response.data);
-
-  //     // Dispatch the filtered data to the Redux store
-  //     dispatch(fetchServicesData.fulfilled(response.data, 'fetchServicesData', { active: activeFilter, page: 1 }));
-
-  //     // Optionally, store the applied filters to maintain them for pagination
-  //     setAppliedFilters(filters); // Add a new state to store filters (see below)
-  //   } catch (error) {
-  //     console.error('Error fetching filtered services:', error);
-  //     toast.error('Failed to fetch filtered services');
-  //   }
-  // };
-
-  const handleApplyFilters = (filters: FilterState) => {
+  const handleApplyFilters = (filters: any) => {
     setAppliedFilters(filters);
     setShowFilterModal(false);
-  }
-
+  };
 
   const handleCloseFilter = () => {
     setShowFilterModal(false);
@@ -237,13 +195,21 @@ export const ServiceDashboard = () => {
   };
 
   const handleStatusToggle = async (id: number) => {
+    if (togglingIds.has(id)) return;
+
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
     const siteId = localStorage.getItem('siteId') || '2189';
+
     try {
       if (!token) {
         toast.error('Authentication token missing. Please log in again.');
         navigate('/login');
+        return;
+      }
+
+      if (!apiData) {
+        toast.error('No service data available');
         return;
       }
 
@@ -253,12 +219,26 @@ export const ServiceDashboard = () => {
         return;
       }
 
+      setTogglingIds((prev) => new Set(prev).add(id));
+
       const updatedStatus = !service.active;
+      const updatedServicesData = servicesData.map((item) =>
+        item.id === id ? { ...item, active: updatedStatus } : item
+      );
+
+      dispatch(fetchServicesData.fulfilled(
+        { ...apiData, pms_services: updatedServicesData },
+        'fetchServicesData',
+        { active: activeFilter, page: paginationData.current_page }
+      ));
+      toast.dismiss();
+      toast.success(`Status ${updatedStatus ? 'Active' : 'Inactive'}`);
+
       const url = `https://${baseUrl}/pms/services/${id}.json?site_id=${siteId}`;
       const response = await axios.put(
         url,
         {
-          pms_service: { active: updatedStatus }
+          pms_service: { active: updatedStatus },
         },
         {
           headers: {
@@ -268,15 +248,45 @@ export const ServiceDashboard = () => {
       );
 
       if (response.status === 200) {
-        dispatch(fetchServicesData({ active: activeFilter, page: paginationData.current_page }));
-        toast.success(`Service ID ${id} status updated`);
+        // Optionally update counts
+        const updatedApiData = {
+          ...apiData,
+          pms_services: updatedServicesData,
+          active_services_count: updatedStatus
+            ? apiData.active_services_count + 1
+            : apiData.active_services_count - 1,
+          inactive_services_count: updatedStatus
+            ? apiData.inactive_services_count - 1
+            : apiData.inactive_services_count + 1,
+        };
+        dispatch(fetchServicesData.fulfilled(
+          updatedApiData,
+          'fetchServicesData',
+          { active: activeFilter, page: paginationData.current_page }
+        ));
       } else {
+        dispatch(fetchServicesData.fulfilled(
+          apiData,
+          'fetchServicesData',
+          { active: activeFilter, page: paginationData.current_page }
+        ));
         toast.error('Failed to update service status');
       }
     } catch (error) {
       console.error('Error updating service status:', error);
+      dispatch(fetchServicesData.fulfilled(
+        apiData,
+        'fetchServicesData',
+        { active: activeFilter, page: paginationData.current_page }
+      ));
       const errorMessage = error.response?.data?.message || 'Failed to update service status';
       toast.error(errorMessage);
+    } finally {
+      setTogglingIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
     }
   };
 
@@ -309,7 +319,7 @@ export const ServiceDashboard = () => {
   const handleSingleAmcFlag = async (serviceItem: ServiceRecord) => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
-    const siteId = localStorage.getItem('siteId') || '2189'; // Ensure siteId is included
+    const siteId = localStorage.getItem('siteId') || '2189';
     try {
       if (!baseUrl || !token || !siteId) {
         toast.error('Missing base URL, token, or site ID');
@@ -318,7 +328,7 @@ export const ServiceDashboard = () => {
 
       const updatedFlag = !serviceItem.is_flagged;
       const response = await axios.put(
-        `https://${baseUrl}/pms/services/${serviceItem.id}.json?site_id=${siteId}`, // Updated endpoint
+        `https://${baseUrl}/pms/services/${serviceItem.id}.json?site_id=${siteId}`,
         {
           pms_service: {
             is_flagged: updatedFlag,
@@ -332,15 +342,15 @@ export const ServiceDashboard = () => {
       );
 
       if (response.status === 200) {
-        console.log('Flag update response:', response.data); // Debug response
+        console.log('Flag update response:', response.data);
         dispatch(fetchServicesData({ active: activeFilter, page: paginationData.current_page }));
         toast.success(`Service ID ${serviceItem.id} flag updated`);
       } else {
-        toast.error('Failed to update AMC flag');
+        toast.error('Failed to update service flag');
       }
     } catch (error) {
       console.error('Flag update error:', error.response?.data || error.message);
-      toast.error('Failed to update AMC flag');
+      toast.error('Failed to update service flag');
     }
   };
 
@@ -352,10 +362,9 @@ export const ServiceDashboard = () => {
             <Button variant="ghost" size="sm" onClick={() => handleViewService(item.id)}>
               <Eye className="w-4 h-4" />
             </Button>
-            <div title="Flag AMC">
+            <div title="Flag Service">
               <Flag
-                className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'
-                  }`}
+                className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleSingleAmcFlag(item);
@@ -366,13 +375,7 @@ export const ServiceDashboard = () => {
         );
       case 'serviceName':
         return (
-          <span
-            // className="cursor-pointer hover:underline"
-            // onClick={() => {
-            //   setSelectedService(item);
-            //   setShowServiceActionPanel(true);
-            // }}
-          >
+          <span>
             {item.service_name || '-'}
           </span>
         );
@@ -402,13 +405,15 @@ export const ServiceDashboard = () => {
         return (
           <div className="flex items-center">
             <div
-              onClick={() => handleStatusToggle(item.id)}
-              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-400'
-                }`}
+              onClick={() => !togglingIds.has(item.id) && handleStatusToggle(item.id)}
+              className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${
+                item.active ? 'bg-green-500' : 'bg-gray-400'
+              } ${togglingIds.has(item.id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <span
-                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'
-                  }`}
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                  item.active ? 'translate-x-6' : 'translate-x-1'
+                }`}
               />
             </div>
           </div>
@@ -477,7 +482,7 @@ export const ServiceDashboard = () => {
             items.push(
               <PaginationItem key={i}>
                 <PaginationLink onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: i }))} isActive={currentPage === i}>
-                  {i}
+                {i}
                 </PaginationLink>
               </PaginationItem>
             );
@@ -594,7 +599,7 @@ export const ServiceDashboard = () => {
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                  {apiData.total_services_count}
+                  {apiData?.total_services_count ?? 0}
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Services</div>
               </div>
@@ -609,7 +614,7 @@ export const ServiceDashboard = () => {
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                  {apiData.active_services_count}
+                  {apiData?.active_services_count ?? 0}
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active Services</div>
               </div>
@@ -624,7 +629,7 @@ export const ServiceDashboard = () => {
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                  {apiData.inactive_services_count}
+                  {apiData?.inactive_services_count ?? 0}
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive Services</div>
               </div>

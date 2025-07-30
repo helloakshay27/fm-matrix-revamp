@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, File } from 'lucide-react';
+import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, File, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText } from '@mui/material';
@@ -32,8 +32,12 @@ export const AddAMCPage = () => {
   const { data: assetsData, loading: assetsLoading } = useAppSelector(state => state.assets);
   const { data: suppliersData, loading: suppliersLoading } = useAppSelector(state => state.suppliers);
   const { data: servicesData, loading: servicesLoading } = useAppSelector(state => state.services);
-  const { loading: amcCreateLoading, success: amcCreateSuccess, error: amcCreateError } = useAppSelector(state => state.amcCreate);
+  const { success: amcCreateSuccess, error: amcCreateError } = useAppSelector(state => state.amcCreate);
   const [services, setServices] = useState<Service[]>([]);
+
+  // Local state for submission tracking
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingAction, setSubmittingAction] = useState<'show' | 'schedule' | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -49,7 +53,7 @@ export const AddAMCPage = () => {
     startDate: '',
     endDate: '',
     cost: '',
-    contractName: '', // Added new field
+    contractName: '',
     paymentTerms: '',
     firstService: '',
     noOfVisits: '',
@@ -66,7 +70,7 @@ export const AddAMCPage = () => {
     startDate: '',
     endDate: '',
     cost: '',
-    contractName: '', // Added new error field
+    contractName: '',
     paymentTerms: '',
     firstService: '',
     noOfVisits: ''
@@ -82,14 +86,12 @@ export const AddAMCPage = () => {
   const { assets, loading: AssetsLoading } = inventoryAssetsState as unknown as { assets: Array<{ id: number; name: string }> | null, loading: boolean };
   const [loading, setLoading] = useState(false);
 
-  // Extract data from Redux state
   const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
   const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
-      // Clear the assetName when switching between Asset and Service
       if (field === 'details' && prev.details !== value) {
         return {
           ...prev,
@@ -103,7 +105,6 @@ export const AddAMCPage = () => {
           supplier: ''
         };
       }
-      // Clear group-related fields when switching between Individual and Group
       if (field === 'type' && prev.type !== value) {
         return {
           ...prev,
@@ -121,7 +122,6 @@ export const AddAMCPage = () => {
         [field]: value
       };
     });
-    // Clear error for the field being updated
     setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
@@ -142,7 +142,6 @@ export const AddAMCPage = () => {
     }));
   };
 
-  // Fetch data using Redux slices
   useEffect(() => {
     dispatch(fetchAssetsData({ page: 1 }));
     dispatch(fetchInventoryAssets());
@@ -191,24 +190,26 @@ export const AddAMCPage = () => {
     fetchAssetGroups();
   }, [dispatch]);
 
-  // Handle AMC creation success
   useEffect(() => {
     if (amcCreateSuccess) {
-      toast.success("AMC has been successfully created.");
       dispatch(resetAmcCreate());
-      navigate('/maintenance/amc');
+      setIsSubmitting(false);
+      setSubmittingAction(null);
+      // navigate('/maintenance/amc');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
     }
   }, [amcCreateSuccess, dispatch, navigate]);
 
-  // Handle AMC creation error
   useEffect(() => {
     if (amcCreateError) {
       toast.error(amcCreateError);
       dispatch(resetAmcCreate());
+      setIsSubmitting(false);
+      setSubmittingAction(null);
     }
   }, [amcCreateError, dispatch]);
 
-  // Update sub-groups when group changes
   const handleGroupChange = async (groupId: string) => {
     handleInputChange('group', groupId);
     handleInputChange('subgroup', '');
@@ -326,17 +327,22 @@ export const AddAMCPage = () => {
     return isValid;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (action: 'show' | 'schedule') => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setSubmittingAction(action);
+
     if (!validateForm()) {
       toast.error("Please fill all required fields.");
+      setIsSubmitting(false);
+      setSubmittingAction(null);
       return;
     }
 
     const sendData = new FormData();
     sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ? formData.asset_ids[0] : '');
     sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
-    sendData.append('pms_asset_amc[pms_site_id]', '1');
+    sendData.append('pms_asset_amc[pms_site_id]', localStorage.getItem('selectedSiteId') || '1');
     sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
     sendData.append('pms_asset_amc[checklist_type]', formData.details);
     sendData.append('pms_asset_amc[amc_cost]', formData.cost);
@@ -349,6 +355,9 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[remarks]', formData.remarks);
     sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
     sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
+    if (action === 'schedule') {
+      sendData.append('pms_asset_amc[schedule_immediately]', 'true');
+    }
 
     if (formData.type === 'Group') {
       sendData.append('group_id', formData.group);
@@ -367,100 +376,61 @@ export const AddAMCPage = () => {
       sendData.append('amc_invoices[content][]', file);
     });
 
-    const result = await dispatch(createAMC(sendData));
+    try {
+      const result = await dispatch(createAMC(sendData)).unwrap();
 
-    if (createAMC.fulfilled.match(result)) {
-      setFormData({
-        details: 'Asset',
-        type: 'Individual',
-        assetName: '',
-        asset_ids: [],
-        vendor: '',
-        group: '',
-        subgroup: '',
-        service: '',
-        supplier: '',
-        startDate: '',
-        endDate: '',
-        cost: '',
-        contractName: '',
-        paymentTerms: '',
-        firstService: '',
-        noOfVisits: '',
-        remarks: ''
-      });
-      setAttachments({
-        contracts: [],
-        invoices: []
-      });
-      setErrors({
-        asset_ids: '',
-        vendor: '',
-        group: '',
-        supplier: '',
-        service: '',
-        startDate: '',
-        endDate: '',
-        cost: '',
-        contractName: '',
-        paymentTerms: '',
-        firstService: '',
-        noOfVisits: ''
-      });
-      toast.success("AMC has been successfully created and scheduled.");
-    }
-  };
-
-  const handleSaveAndSchedule = async () => {
-    if (!validateForm()) {
-      toast.error("Please fill all required fields.");
-      return;
-    }
-
-    const sendData = new FormData();
-    sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ? formData.asset_ids[0] : '');
-    sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
-    sendData.append('pms_asset_amc[pms_site_id]', '1');
-    sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
-    sendData.append('pms_asset_amc[checklist_type]', formData.details);
-    sendData.append('pms_asset_amc[amc_cost]', formData.cost);
-    sendData.append('pms_asset_amc[contract_name]', formData.contractName); // Added new field
-    sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
-    sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
-    sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
-    sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
-    sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
-    sendData.append('pms_asset_amc[remarks]', formData.remarks);
-    sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
-    sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
-    sendData.append('pms_asset_amc[schedule_immediately]', 'true');
-
-    if (formData.type === 'Group') {
-      sendData.append('group_id', formData.group);
-      sendData.append('sub_group_id', formData.subgroup);
-    }
-
-    if (formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0) {
-      formData.asset_ids.forEach(id => sendData.append('asset_ids[]', id));
-    }
-
-    attachments.contracts.forEach((file) => {
-      sendData.append('amc_contracts[content][]', file);
-    });
-
-    attachments.invoices.forEach((file) => {
-      sendData.append('amc_invoices[content][]', file);
-    });
-
-    const result = await dispatch(createAMC(sendData));
-
-    if (createAMC.fulfilled.match(result)) {
-      const amcId = result.payload?.id;
-      if (amcId) {
-        navigate(`/maintenance/amc/details/${amcId}`);
-      } else {
-        toast.error("AMC created, but no ID returned for redirection.");
+      if (action === 'show') {
+        const amcId = result?.id;
+        if (amcId) {
+          navigate(`/maintenance/amc/details/${amcId}`);
+        } else {
+          toast.error("AMC created, but no ID returned for redirection.");
+        }
+      } else if (action === 'schedule') {
+        setFormData({
+          details: 'Asset',
+          type: 'Individual',
+          assetName: '',
+          asset_ids: [],
+          vendor: '',
+          group: '',
+          subgroup: '',
+          service: '',
+          supplier: '',
+          startDate: '',
+          endDate: '',
+          cost: '',
+          contractName: '',
+          paymentTerms: '',
+          firstService: '',
+          noOfVisits: '',
+          remarks: ''
+        });
+        setAttachments({
+          contracts: [],
+          invoices: []
+        });
+        setErrors({
+          asset_ids: '',
+          vendor: '',
+          group: '',
+          supplier: '',
+          service: '',
+          startDate: '',
+          endDate: '',
+          cost: '',
+          contractName: '',
+          paymentTerms: '',
+          firstService: '',
+          noOfVisits: ''
+        });
+        toast.success("AMC has been successfully created and scheduled.");
       }
+    } catch (error: any) {
+      toast.error(`Failed to create AMC: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
+      setSubmittingAction(null);
     }
   };
 
@@ -489,7 +459,7 @@ export const AddAMCPage = () => {
         <h1 className="text-2xl font-bold text-[#1a1a1a]">NEW AMC</h1>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit('schedule'); }}>
         {/* AMC Configuration */}
         <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
           <CardHeader className='bg-[#F6F4EE] mb-4'>
@@ -511,6 +481,7 @@ export const AddAMCPage = () => {
                     onChange={e => handleInputChange('details', e.target.value)}
                     className="mr-2"
                     style={{ accentColor: '#C72030' }}
+                    disabled={isSubmitting}
                   />
                   Asset
                 </label>
@@ -523,6 +494,7 @@ export const AddAMCPage = () => {
                     onChange={e => handleInputChange('details', e.target.value)}
                     className="mr-2"
                     style={{ accentColor: '#C72030' }}
+                    disabled={isSubmitting}
                   />
                   Service
                 </label>
@@ -541,6 +513,7 @@ export const AddAMCPage = () => {
                     onChange={e => handleInputChange('type', e.target.value)}
                     className="mr-2"
                     style={{ accentColor: '#C72030' }}
+                    disabled={isSubmitting}
                   />
                   Individual
                 </label>
@@ -553,6 +526,7 @@ export const AddAMCPage = () => {
                     onChange={e => handleInputChange('type', e.target.value)}
                     className="mr-2"
                     style={{ accentColor: '#C72030' }}
+                    disabled={isSubmitting}
                   />
                   Group
                 </label>
@@ -628,7 +602,7 @@ export const AddAMCPage = () => {
                         }}
                       />
                     )}
-                    disabled={loading || AssetsLoading || amcCreateLoading}
+                    disabled={loading || AssetsLoading || isSubmitting}
                   />
                 ) : (
                   <FormControl fullWidth variant="outlined" error={!!errors.service}>
@@ -640,7 +614,7 @@ export const AddAMCPage = () => {
                       value={formData.assetName}
                       onChange={e => handleInputChange('assetName', e.target.value)}
                       sx={fieldStyles}
-                      disabled={loading || servicesLoading || amcCreateLoading}
+                      disabled={loading || servicesLoading || isSubmitting}
                     >
                       <MenuItem value=""><em>Select a Service...</em></MenuItem>
                       {Array.isArray(services) && services.map((service) => (
@@ -663,7 +637,7 @@ export const AddAMCPage = () => {
                       value={formData.vendor}
                       onChange={e => handleInputChange('vendor', e.target.value)}
                       sx={fieldStyles}
-                      disabled={loading || suppliersLoading || amcCreateLoading}
+                      disabled={loading || suppliersLoading || isSubmitting}
                     >
                       <MenuItem value=""><em>Select Supplier</em></MenuItem>
                       {Array.isArray(suppliers) && suppliers.map((supplier) => (
@@ -689,7 +663,7 @@ export const AddAMCPage = () => {
                         value={formData.group}
                         onChange={e => handleGroupChange(e.target.value)}
                         sx={fieldStyles}
-                        disabled={loading || amcCreateLoading}
+                        disabled={loading || isSubmitting}
                       >
                         <MenuItem value=""><em>Select Group</em></MenuItem>
                         {Array.isArray(assetGroups) && assetGroups.map((group) => (
@@ -712,7 +686,7 @@ export const AddAMCPage = () => {
                         value={formData.subgroup}
                         onChange={e => handleInputChange('subgroup', e.target.value)}
                         sx={fieldStyles}
-                        disabled={!formData.group || loading || amcCreateLoading}
+                        disabled={!formData.group || loading || isSubmitting}
                       >
                         <MenuItem value=""><em>Select Sub Group</em></MenuItem>
                         {Array.isArray(subGroups) && subGroups.map((subGroup) => (
@@ -735,6 +709,7 @@ export const AddAMCPage = () => {
                           value={formData.service}
                           onChange={e => handleInputChange('service', e.target.value)}
                           sx={fieldStyles}
+                          disabled={isSubmitting}
                         >
                           <MenuItem value=""><em>Select Service</em></MenuItem>
                           <MenuItem value="preventive-maintenance">Preventive Maintenance</MenuItem>
@@ -757,7 +732,7 @@ export const AddAMCPage = () => {
                         value={formData.supplier}
                         onChange={e => handleInputChange('supplier', e.target.value)}
                         sx={fieldStyles}
-                        disabled={loading || suppliersLoading || amcCreateLoading}
+                        disabled={loading || suppliersLoading || isSubmitting}
                       >
                         <MenuItem value=""><em>Select Supplier</em></MenuItem>
                         {Array.isArray(suppliers) && suppliers.map((supplier) => (
@@ -788,7 +763,11 @@ export const AddAMCPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <TextField
-                  label="Cost*"
+                  label={
+                    <span>
+                      Cost<span style={{ color: 'red' }}>*</span>
+                    </span>
+                  }
                   placeholder="Enter Cost"
                   name="cost"
                   type="number"
@@ -800,12 +779,17 @@ export const AddAMCPage = () => {
                   InputProps={{ sx: fieldStyles }}
                   error={!!errors.cost}
                   helperText={errors.cost}
+                  disabled={isSubmitting}
                 />
               </div>
 
               <div>
                 <TextField
-                  label="Contract Name*"
+                  label={
+                    <span>
+                      Contract Name<span style={{ color: 'red' }}>*</span>
+                    </span>
+                  }
                   placeholder="Enter Contract Name"
                   name="contractName"
                   value={formData.contractName}
@@ -816,13 +800,18 @@ export const AddAMCPage = () => {
                   InputProps={{ sx: fieldStyles }}
                   error={!!errors.contractName}
                   helperText={errors.contractName}
+                  disabled={isSubmitting}
                 />
               </div>
 
               <div>
                 <TextField
                   fullWidth
-                  label="Start Date*"
+                  label={
+                    <span>
+                      Start Date<span style={{ color: 'red' }}>*</span>
+                    </span>
+                  }
                   type="date"
                   value={formData.startDate || ''}
                   onChange={(e) => handleInputChange('startDate', e.target.value)}
@@ -836,13 +825,18 @@ export const AddAMCPage = () => {
                       height: '45px',
                     },
                   }}
+                  disabled={isSubmitting}
                 />
               </div>
 
               <div>
                 <TextField
                   fullWidth
-                  label="First Service Date*"
+                  label={
+                    <span>
+                      First Service Date<span style={{ color: 'red' }}>*</span>
+                    </span>
+                  }
                   type="date"
                   value={formData.firstService || ''}
                   onChange={(e) => handleInputChange('firstService', e.target.value)}
@@ -856,6 +850,7 @@ export const AddAMCPage = () => {
                       height: '45px',
                     },
                   }}
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -864,11 +859,12 @@ export const AddAMCPage = () => {
                   <InputLabel id="payment-terms-select-label" shrink>Payment Terms</InputLabel>
                   <MuiSelect
                     labelId="payment-terms-select-label"
-                    label="Payment Terms*"
+                    label="Payment Terms"
                     displayEmpty
                     value={formData.paymentTerms}
                     onChange={e => handleInputChange('paymentTerms', e.target.value)}
                     sx={fieldStyles}
+                    disabled={isSubmitting}
                   >
                     <MenuItem value=""><em>Select Payment Term</em></MenuItem>
                     <MenuItem value="monthly">Monthly</MenuItem>
@@ -883,7 +879,11 @@ export const AddAMCPage = () => {
               <div>
                 <TextField
                   fullWidth
-                  label="End Date*"
+                  label={
+                    <span>
+                      End Date<span style={{ color: 'red' }}>*</span>
+                    </span>
+                  }
                   type="date"
                   value={formData.endDate || ''}
                   onChange={(e) => handleInputChange('endDate', e.target.value)}
@@ -900,12 +900,17 @@ export const AddAMCPage = () => {
                       height: '45px',
                     },
                   }}
+                  disabled={isSubmitting}
                 />
               </div>
 
               <div>
                 <TextField
-                  label="No. of Visits*"
+                  label={
+                    <span>
+                      No. of Visits<span style={{ color: 'red' }}>*</span>
+                    </span>
+                  }
                   placeholder="Enter No. of Visit"
                   name="noOfVisits"
                   type="number"
@@ -922,6 +927,7 @@ export const AddAMCPage = () => {
                   InputProps={{ sx: fieldStyles }}
                   error={!!errors.noOfVisits}
                   helperText={errors.noOfVisits}
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -929,7 +935,7 @@ export const AddAMCPage = () => {
                 <TextField
                   id="remarks"
                   name="remarks"
-                  label="Remarks*"
+                  label="Remarks"
                   placeholder="Enter Remarks"
                   value={formData.remarks}
                   onChange={(e) => handleInputChange('remarks', e.target.value)}
@@ -954,6 +960,7 @@ export const AddAMCPage = () => {
                       borderColor: '#C72030',
                     },
                   }}
+                  disabled={isSubmitting}
                 />
                 <div className="text-right text-sm text-gray-500 mt-1">
                   {formData.remarks.length}/250
@@ -982,13 +989,10 @@ export const AddAMCPage = () => {
                     className="hidden"
                     id="contracts-upload"
                     onChange={e => handleFileUpload('contracts', e.target.files)}
+                    disabled={isSubmitting}
                   />
                   <div className="flex items-center justify-center gap-2 mb-4">
-                    <span
-                      className="text-[#C72030] font-medium cursor-pointer"
-                      style={{ fontSize: '14px' }}
-                      onClick={() => document.getElementById('contracts-upload')?.click()}
-                    >
+                    <span className="text-[#C72030] font-medium" style={{ fontSize: '14px' }}>
                       Choose File
                     </span>
                     <span className="text-gray-500" style={{ fontSize: '14px' }}>
@@ -999,6 +1003,7 @@ export const AddAMCPage = () => {
                     type="button"
                     onClick={() => document.getElementById('contracts-upload')?.click()}
                     className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center"
+                    disabled={isSubmitting}
                   >
                     <Plus className="w-4 h-4 mr-1" />
                     Upload Files
@@ -1040,6 +1045,7 @@ export const AddAMCPage = () => {
                             size="sm"
                             className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-600"
                             onClick={() => removeFile('contracts', index)}
+                            disabled={isSubmitting}
                           >
                             <X className="w-3 h-3" />
                           </Button>
@@ -1059,13 +1065,10 @@ export const AddAMCPage = () => {
                     className="hidden"
                     id="invoices-upload"
                     onChange={e => handleFileUpload('invoices', e.target.files)}
+                    disabled={isSubmitting}
                   />
                   <div className="flex items-center justify-center gap-2 mb-4">
-                    <span
-                      className="text-[#C72030] font-medium cursor-pointer"
-                      style={{ fontSize: '14px' }}
-                      onClick={() => document.getElementById('invoices-upload')?.click()}
-                    >
+                    <span className="text-[#C72030] font-medium" style={{ fontSize: '14px' }}>
                       Choose File
                     </span>
                     <span className="text-gray-500" style={{ fontSize: '14px' }}>
@@ -1076,6 +1079,7 @@ export const AddAMCPage = () => {
                     type="button"
                     onClick={() => document.getElementById('invoices-upload')?.click()}
                     className="!bg-[#f6f4ee] !text-[#C72030] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
+                    disabled={isSubmitting}
                   >
                     <Plus className="w-4 h-4 mr-1" />
                     Upload Files
@@ -1116,6 +1120,7 @@ export const AddAMCPage = () => {
                             size="sm"
                             className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-500"
                             onClick={() => removeFile("invoices", index)}
+                            disabled={isSubmitting}
                           >
                             <X className="w-3 h-3" />
                           </Button>
@@ -1132,20 +1137,34 @@ export const AddAMCPage = () => {
         <div className="flex gap-4 justify-center">
           <Button
             type="button"
-            onClick={handleSaveAndSchedule}
-            disabled={amcCreateLoading}
+            onClick={() => handleSubmit('show')}
+            disabled={isSubmitting}
             style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="text-white hover:bg-[#C72030]/90 flex items-center"
           >
-            {amcCreateLoading ? 'Saving...' : 'Save & Show Details'}
+            {isSubmitting && submittingAction === 'show' ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save & Show Details'
+            )}
           </Button>
           <Button
             type="submit"
-            disabled={amcCreateLoading}
+            disabled={isSubmitting}
             style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
+            className="text-white hover:bg-[#C72030]/90 flex items-center"
           >
-            {amcCreateLoading ? 'Saving...' : 'Save & Schedule AMC'}
+            {isSubmitting && submittingAction === 'schedule' ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save & Schedule AMC'
+            )}
           </Button>
         </div>
       </form>

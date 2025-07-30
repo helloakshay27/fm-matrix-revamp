@@ -200,6 +200,9 @@ export const AddServicePage = () => {
           duration: 3000,
         });
 
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+
         setTimeout(() => {
           setFormData({
             serviceName: '',

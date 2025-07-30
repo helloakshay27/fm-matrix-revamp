@@ -158,7 +158,7 @@ export const AMCDashboard = () => {
   const [activeTab, setActiveTab] = useState<string>("amclist");
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
-
+  const [isExpiringFilterActive, setIsExpiringFilterActive] = useState(false); // Flag to control useEffect
 
   // Analytics states
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
@@ -172,6 +172,8 @@ export const AMCDashboard = () => {
   const [amcComplianceReport, setAmcComplianceReport] = useState<AMCComplianceReport | null>(null);
   const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview', 'type_distribution', 'expiry_analysis', 'service_tracking', 'vendor_performance']);
   const [analyticsChartOrder, setAnalyticsChartOrder] = useState<string[]>(['status_overview', 'type_distribution', 'expiry_analysis', 'service_tracking', 'vendor_performance']);
+  const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
+
 
   // Set default dates: last year to today for analytics
   const getDefaultDateRange = () => {
@@ -198,6 +200,14 @@ export const AMCDashboard = () => {
   const convertDateStringToDate = (dateString: string): Date => {
     const [day, month, year] = dateString.split('/');
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  };
+
+  // Format date to YYYY-MM-DD for API query
+  const formatDateForAPI = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   // Drag and drop sensors
@@ -278,15 +288,14 @@ export const AMCDashboard = () => {
   const inactiveAMCs = amcAnalyticsData?.inactive_amc ||
     ((apiData && typeof apiData === 'object' && 'inactive_amcs_count' in apiData) ? (apiData as any).inactive_amcs_count : 0);
   const flaggedAMCs = (apiData && typeof apiData === 'object' && 'flagged_amcs_count' in apiData) ? (apiData as any).flagged_amcs_count : 0;
+  const expiringIn90Days = (apiData && typeof apiData === 'object' && 'expiring_in_90_days' in apiData) ? (apiData as any).expiring_in_90_days : 0;
 
   // Service and Asset totals from analytics
   const serviceTotalAMCs = amcAnalyticsData?.service_total || 0;
   const assetTotalAMCs = amcAnalyticsData?.assets_total || 0;
 
   // Filter function to fetch AMC data based on filters
-  // Inside AMCDashboard component
-
-  const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1) => {
+  const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1, expiryFilter?: string) => {
     if (!baseUrl || !token || !siteId) {
       toast.error('Missing base URL, token, or site ID');
       return;
@@ -303,6 +312,11 @@ export const AMCDashboard = () => {
       queryParams.push('q[active_eq]=false');
     } else if (filterValue === 'flagged') {
       queryParams.push('q[is_flagged_eq]=true');
+    }
+
+    // Add expiry filter if provided
+    if (expiryFilter) {
+      queryParams.push(`q[amc_end_date_lteq]=${expiryFilter}`);
     }
 
     // Add other filters (AMC Type, Start Date, End Date)
@@ -342,12 +356,12 @@ export const AMCDashboard = () => {
     }
   };
 
-  // Fetch data on mount and when dependencies change
+  // Fetch data on mount only when baseUrl, token, or siteId change
   useEffect(() => {
-    if (baseUrl && token && siteId) {
+    if (baseUrl && token && siteId && !isExpiringFilterActive) {
       fetchFilteredAMCs(filter, currentPage);
     }
-  }, [baseUrl, token, siteId, filter, amcTypeFilter, startDateFilter, endDateFilter, currentPage]);
+  }, [baseUrl, token, siteId, currentPage]);
 
   // Load analytics data with default date range on component mount
   useEffect(() => {
@@ -366,9 +380,16 @@ export const AMCDashboard = () => {
   };
 
   const handleStatusToggle = async (id: number) => {
+    if (togglingIds.has(id)) return;
+
     try {
       if (!baseUrl || !token || !siteId) {
         toast.error('Missing base URL, token, or site ID');
+        return;
+      }
+
+      if (!apiData || typeof apiData !== 'object' || !('asset_amcs' in apiData)) {
+        toast.error('Invalid AMC data');
         return;
       }
 
@@ -378,7 +399,19 @@ export const AMCDashboard = () => {
         return;
       }
 
+      setTogglingIds((prev) => new Set(prev).add(id));
+
       const updatedStatus = !amcRecord.active;
+      const updatedAmcData = amcData.map((item) =>
+        item.id === id ? { ...item, active: updatedStatus } : item
+      );
+
+      // Spread apiData after confirming it's an object
+      dispatch(fetchAMCData.fulfilled({ ...apiData, asset_amcs: updatedAmcData }, 'fetchAMCData', undefined));
+
+      toast.dismiss();
+      toast.success(`Status ${updatedStatus ? 'Active' : 'Inactive'}`);
+
       const url = `https://${baseUrl}/pms/asset_amcs/${id}.json`;
       const response = await axios.put(
         url,
@@ -395,24 +428,27 @@ export const AMCDashboard = () => {
       );
 
       if (response.status === 200) {
-        // Refresh table data
-        await fetchFilteredAMCs(filter, currentPage);
-
-        // Refresh analytics data
         const { startDate, endDate } = analyticsDateRange;
         const startDateObj = convertDateStringToDate(startDate);
         const endDateObj = convertDateStringToDate(endDate);
         await fetchAMCAnalyticsData(startDateObj, endDateObj);
-
-        toast.success(`AMC ID ${id} status updated`);
       } else {
+        dispatch(fetchAMCData.fulfilled(apiData, 'fetchAMCData', undefined));
         toast.error('Failed to update AMC status');
       }
     } catch (error) {
       console.error('Error updating AMC status:', error);
+      dispatch(fetchAMCData.fulfilled(apiData, 'fetchAMCData', undefined));
       toast.error('Failed to update AMC status');
+    } finally {
+      setTogglingIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
     }
   };
+
 
   const handleImportClick = () => {
     setShowBulkUploadModal(true);
@@ -570,11 +606,13 @@ export const AMCDashboard = () => {
         return (
           <div className="flex items-center">
             <div
-              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-300'}`}
-              onClick={() => handleStatusToggle(item.id)}
+              className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-300'
+                } ${togglingIds.has(item.id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              onClick={() => !togglingIds.has(item.id) && handleStatusToggle(item.id)}
             >
               <span
-                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'}`}
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               />
             </div>
           </div>
@@ -816,7 +854,8 @@ export const AMCDashboard = () => {
     setEndDateFilter(tempEndDateFilter);
     setIsFilterModalOpen(false);
     setCurrentPage(1);
-    // fetchFilteredAMCs(filter, 1);
+    setIsExpiringFilterActive(false); // Reset expiring filter
+    fetchFilteredAMCs(filter, 1);
     toast.success('Filters applied');
   };
 
@@ -830,6 +869,7 @@ export const AMCDashboard = () => {
     setFilter(null);
     setCurrentPage(1);
     setIsFilterModalOpen(false);
+    setIsExpiringFilterActive(false); // Reset expiring filter
     fetchFilteredAMCs(null, 1);
     toast.success('Filters reset');
   };
@@ -840,25 +880,51 @@ export const AMCDashboard = () => {
     setStartDateFilter(null);
     setEndDateFilter(null);
     setCurrentPage(1);
+    setIsExpiringFilterActive(false); // Reset expiring filter
     fetchFilteredAMCs(null, 1);
   };
 
   const handleActiveAMCClick = () => {
     setFilter('active');
+    setAmcTypeFilter(null);
+    setStartDateFilter(null);
+    setEndDateFilter(null);
     setCurrentPage(1);
+    setIsExpiringFilterActive(false); // Reset expiring filter
     fetchFilteredAMCs('active', 1);
   };
 
   const handleInactiveAMCClick = () => {
     setFilter('inactive');
+    setAmcTypeFilter(null);
+    setStartDateFilter(null);
+    setEndDateFilter(null);
     setCurrentPage(1);
+    setIsExpiringFilterActive(false); // Reset expiring filter
     fetchFilteredAMCs('inactive', 1);
   };
 
   const handleFlaggedAMCClick = () => {
     setFilter('flagged');
+    setAmcTypeFilter(null);
+    setStartDateFilter(null);
+    setEndDateFilter(null);
     setCurrentPage(1);
+    setIsExpiringFilterActive(false); // Reset expiring filter
     fetchFilteredAMCs('flagged', 1);
+  };
+
+  const handleExpiringIn90DaysClick = () => {
+    setFilter(null);
+    setAmcTypeFilter(null);
+    setStartDateFilter(null);
+    setEndDateFilter(null);
+    setCurrentPage(1);
+    setIsExpiringFilterActive(true);
+    const ninetyDaysFromNow = new Date();
+    ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
+    const formattedDate = formatDateForAPI(ninetyDaysFromNow);
+    fetchFilteredAMCs(null, 1, formattedDate);
   };
 
   const uniqueAmcTypes = Array.from(new Set(amcData.map(amc => amc.amc_type).filter(type => type))).sort();
@@ -913,8 +979,6 @@ export const AMCDashboard = () => {
               {/* Header Section with Filter and Selector */}
               <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
                 {/* Drag info indicator */}
-
-
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -1026,7 +1090,7 @@ export const AMCDashboard = () => {
             </TabsContent>
 
             <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4">
                 <div
                   className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
                   onClick={handleTotalAMCClick}
@@ -1034,12 +1098,18 @@ export const AMCDashboard = () => {
                   <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                     <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
                   </div>
-                  <div className="flex flex-col min-w-0">
+                  <div className="flex flex-col min-w-0 justify-start">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
                       {(apiData as any)?.total_amcs_count || 0}
                     </div>
-                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total AMC</div>
+                    <span className="text-sm font-medium text-gray-700">
+                      ₹{(apiData as any)?.total_amc_cost?.toLocaleString() || 0}
+                    </span>
+                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                      Total AMC
+                    </div>
                   </div>
+
                 </div>
 
                 <div
@@ -1049,7 +1119,7 @@ export const AMCDashboard = () => {
                   <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                     <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
                   </div>
-                  <div className="flex flex-col min-w-0">
+                  <div className="flex flex-col min-w-0 justify-start">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
                       {(apiData as any)?.active_amcs_count || 0}
                     </div>
@@ -1064,7 +1134,7 @@ export const AMCDashboard = () => {
                   <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                     <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
                   </div>
-                  <div className="flex flex-col min-w-0">
+                  <div className="flex flex-col min-w-0 justify-start">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
                       {(apiData as any)?.inactive_amcs_count || 0}
                     </div>
@@ -1079,17 +1149,31 @@ export const AMCDashboard = () => {
                   <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                     <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
                   </div>
-                  <div className="flex flex-col min-w-0">
+                  <div className="flex flex-col min-w-0 justify-start">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
                       {(apiData as any)?.flagged_amcs_count || 0}
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Flagged AMC</div>
                   </div>
                 </div>
+
+                <div
+                  className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                  onClick={handleExpiringIn90DaysClick}
+                >
+                  <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                    <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                  </div>
+                  <div className="flex flex-col min-w-0 justify-start">
+                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                      {(apiData as any)?.expiring_in_90_days || 0}
+                    </div>
+                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Expiring in 90 Days</div>
+                  </div>
+                </div>
               </div>
 
               <AmcBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
-
 
               {showActionPanel && (
                 <SelectionPanel
