@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, ArrowLeft } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import apiClient from '@/utils/apiClient';
 
@@ -231,7 +231,17 @@ export const EditSurveyPage = () => {
           <p className="text-muted-foreground text-sm mb-2">
             Survey &gt; Edit Survey
           </p>
-          <h1 className="text-3xl font-bold tracking-tight">Edit Survey</h1>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/maintenance/survey/list')}
+              className="p-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-3xl font-bold tracking-tight">Edit Survey</h1>
+          </div>
         </div>
       </div>
 
