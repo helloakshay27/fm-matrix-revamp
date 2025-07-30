@@ -944,10 +944,11 @@ export const EditAMCPage = () => {
                   value={formData.endDate}
                   onChange={(e) => handleInputChange('endDate', e.target.value)}
                   InputLabelProps={{ shrink: true }}
-                  inputProps={{ style: { height: 46 } }}
+                  inputProps={{ style: { height: 46 }, min: formData.startDate || undefined }}
                   sx={{ '& .MuiInputBase-root': { height: 46 } }}
                   error={!!errors.endDate}
-                  helperText={errors.endDate}
+                  helperText={errors.endDate || (!formData.startDate && "Please select a start date first.")}
+                  disabled={!formData.startDate || updateLoading}
                 />
               </div>
 

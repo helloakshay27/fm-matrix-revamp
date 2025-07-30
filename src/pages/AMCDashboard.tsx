@@ -406,8 +406,21 @@ export const AMCDashboard = () => {
         item.id === id ? { ...item, active: updatedStatus } : item
       );
 
-      // Spread apiData after confirming it's an object
-      dispatch(fetchAMCData.fulfilled({ ...apiData, asset_amcs: updatedAmcData }, 'fetchAMCData', undefined));
+      // Update counts for active and inactive AMCs
+      const updatedApiData = {
+        ...apiData,
+        asset_amcs: updatedAmcData,
+        active_amcs_count: updatedStatus
+          ? apiData.active_amcs_count + 1
+          : apiData.active_amcs_count - 1,
+        inactive_amcs_count: updatedStatus
+          ? apiData.inactive_amcs_count - 1
+          : apiData.inactive_amcs_count + 1,
+        total_amcs_count: apiData.total_amcs_count, // Total count remains unchanged
+      };
+
+      // Update Redux store with new data and counts
+      dispatch(fetchAMCData.fulfilled(updatedApiData, 'fetchAMCData', undefined));
 
       toast.dismiss();
       toast.success(`Status ${updatedStatus ? 'Active' : 'Inactive'}`);
@@ -428,11 +441,13 @@ export const AMCDashboard = () => {
       );
 
       if (response.status === 200) {
+        // Fetch analytics data to ensure consistency
         const { startDate, endDate } = analyticsDateRange;
         const startDateObj = convertDateStringToDate(startDate);
         const endDateObj = convertDateStringToDate(endDate);
         await fetchAMCAnalyticsData(startDateObj, endDateObj);
       } else {
+        // Revert to original data if API call fails
         dispatch(fetchAMCData.fulfilled(apiData, 'fetchAMCData', undefined));
         toast.error('Failed to update AMC status');
       }
@@ -665,8 +680,9 @@ export const AMCDashboard = () => {
       );
 
       if (response.status === 200) {
-        dispatch(fetchAMCData())
-        toast.success(`AMC ID ${amcItem.id} flag updated`);
+        dispatch(fetchAMCData());
+        toast.dismiss();
+        toast.success(`Flag ${updatedFlag ? 'Activated' : 'Deactivated'}`);
       } else {
         toast.error('Failed to update AMC flag');
       }
@@ -675,6 +691,7 @@ export const AMCDashboard = () => {
       toast.error('Failed to update AMC flag');
     }
   };
+
 
   const renderPaginationItems = () => {
     const items = [];
