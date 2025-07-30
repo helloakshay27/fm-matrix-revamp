@@ -244,9 +244,9 @@ export const ViewFMUserPage = () => {
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>
+                        <div className="px-2 py-1 text-sm text-gray-500">
                           No sites available
-                        </SelectItem>
+                        </div>
                       )}
                     </SelectContent>
                   </Select>
@@ -266,9 +266,9 @@ export const ViewFMUserPage = () => {
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>
+                        <div className="px-2 py-1 text-sm text-gray-500">
                           No units available
-                        </SelectItem>
+                        </div>
                       )}
                     </SelectContent>
                   </Select>
@@ -309,9 +309,9 @@ export const ViewFMUserPage = () => {
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>
+                        <div className="px-2 py-1 text-sm text-gray-500">
                           No entities available
-                        </SelectItem>
+                        </div>
                       )}
                     </SelectContent>
                   </Select>
@@ -464,9 +464,9 @@ export const ViewFMUserPage = () => {
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>
+                        <div className="px-2 py-1 text-sm text-gray-500">
                           No departments available
-                        </SelectItem>
+                        </div>
                       )}
                     </SelectContent>
                   </Select>
@@ -497,9 +497,9 @@ export const ViewFMUserPage = () => {
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>
+                        <div className="px-2 py-1 text-sm text-gray-500">
                           No roles available
-                        </SelectItem>
+                        </div>
                       )}
                     </SelectContent>
                   </Select>
@@ -518,9 +518,9 @@ export const ViewFMUserPage = () => {
                           </SelectItem>
                         ))
                       ) : (
-                        <SelectItem value="" disabled>
+                        <div className="px-2 py-1 text-sm text-gray-500">
                           No vendors available
-                        </SelectItem>
+                        </div>
                       )}
                     </SelectContent>
                   </Select>
