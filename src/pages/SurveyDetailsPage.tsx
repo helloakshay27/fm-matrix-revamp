@@ -458,24 +458,24 @@ export const SurveyDetailsPage = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Question
                         </label>
-                         <input 
-                           type="text"
-                           className="w-full p-3 border border-gray-300 rounded-md bg-gray-100 text-gray-700" 
-                           placeholder="Enter your Question"
-                           value={question.descr}
-                           disabled
-                           readOnly
-                         />
+                        <input 
+                          type="text"
+                          className="w-full h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700" 
+                          placeholder="Enter your Question"
+                          value={question.descr}
+                          disabled
+                          readOnly
+                        />
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Select Answer Type
                         </label>
-                         <Select value="Multiple Choice" disabled>
-                           <SelectTrigger className="w-full bg-gray-100">
-                             <SelectValue />
-                           </SelectTrigger>
+                        <Select value="Multiple Choice" disabled>
+                          <SelectTrigger className="w-full h-10 bg-gray-50">
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
                             <SelectItem value="Text Area">Text Area</SelectItem>
