@@ -333,6 +333,8 @@ export const EditSurveyPage = () => {
                           <SelectItem value="multiple">Multiple Choice</SelectItem>
                           <SelectItem value="single">Single Choice</SelectItem>
                           <SelectItem value="boolean">Yes/No</SelectItem>
+                          <SelectItem value="input">Input Box</SelectItem>
+                          <SelectItem value="description">Description Box</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
