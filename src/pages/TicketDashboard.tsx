@@ -1281,7 +1281,7 @@ export const TicketDashboard = () => {
                               />
                             </div>
                             <div className="w-full overflow-x-auto">
-                              <ResponsiveContainer width="100%" height="100%" className="sm:h-[250px] min-w-[400px]">
+                              <ResponsiveContainer width="100%" height={300} className="min-w-[400px]">
                                 {unitCategorywiseData && unitCategorywiseData.response ? (
                                   <BarChart 
                                     data={unitCategorywiseData.response.tickets_category.map((category, index) => ({
@@ -1338,7 +1338,6 @@ export const TicketDashboard = () => {
                                     />
                                     <Bar dataKey="open" fill="#f59e0b" name="Open" />
                                     <Bar dataKey="closed" fill="#10b981" name="Closed" />
-                                    <Bar dataKey="total" fill="#6b7280" name="Total" />
                                   </BarChart>
                                 ) : (
                                   <div className="flex items-center justify-center h-full">
