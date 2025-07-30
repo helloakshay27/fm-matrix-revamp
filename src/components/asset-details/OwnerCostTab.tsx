@@ -50,7 +50,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset }) => {
     if (newInUseState) {
       setShowModal(true);
     } else {
-      // User is marking it as "BREAKDOWN"
+      
       try {
         const response = await fetch(`${API_CONFIG.BASE_URL}/pms/assets/${asset?.id}.json`, {
           method: 'PUT',
@@ -68,7 +68,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset }) => {
         }
 
         console.log('Breakdown status updated.');
-        window.location.reload();
+        // window.location.reload();
       } catch (error) {
         console.error('Error updating breakdown status:', error);
         alert('Failed to update asset breakdown status.');
