@@ -1019,6 +1019,22 @@ const AddAssetPage = () => {
     let extraFields = [];
     console.log('Building extra fields attributes...', customFields);
 
+    // Helper function to format dates properly
+    const formatDateValue = (value, fieldType) => {
+      if (fieldType === 'date' && value) {
+        // If it's already a Date object, format it to YYYY-MM-DD
+        if (value instanceof Date) {
+          return value.toISOString().split('T')[0];
+        }
+        // If it's a string, try to parse and format it
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0];
+        }
+      }
+      return value;
+    };
+
     // Custom fields
     Object.keys(customFields).forEach(sectionKey => {
       (customFields[sectionKey] || []).forEach(field => {
@@ -1045,18 +1061,11 @@ const AddAssetPage = () => {
       });
     });
 
-    // Standard extra fields (dynamic)
+    // Standard extra fields (dynamic) - with proper date formatting
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
       if (fieldObj?.value !== undefined && fieldObj?.value !== '' && fieldObj?.value !== null) {
-        // Convert date objects to date-only string (YYYY-MM-DD format)
-        let processedValue = fieldObj.value;
-        if (fieldObj.value && (fieldObj.value as any) instanceof Date) {
-          // Format as YYYY-MM-DD without time
-          const date = (fieldObj.value as unknown) as Date;
-          processedValue = date.getFullYear() + '-' + 
-                          String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-                          String(date.getDate()).padStart(2, '0');
-        }
+        // Format date values properly
+        let processedValue = formatDateValue(fieldObj.value, fieldObj.fieldType);
 
         extraFields.push({
           field_name: key,
@@ -1143,12 +1152,32 @@ const AddAssetPage = () => {
     }
   };
   const handleExtraFieldChange = (key, value, fieldType, groupType, fieldDescription) => {
+    // Helper function to format date values
+    const formatDateForBackend = (dateValue, type) => {
+      if (type !== 'date' || !dateValue) return dateValue;
+      
+      // If it's already a Date object
+      if (dateValue instanceof Date) {
+        return dateValue.toISOString().split('T')[0];
+      }
+      
+      // If it's a string, try to parse it
+      const date = new Date(dateValue);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+      
+      return dateValue; // Return as-is if not a valid date
+    };
+
+    const processedValue = formatDateForBackend(value, fieldType);
+
     setExtraFormFields(prev => ({
       ...prev,
-      [key]: { value, fieldType, groupType, fieldDescription }
+      [key]: { value: processedValue, fieldType, groupType, fieldDescription }
     }));
-    console.log('Extra field updated:', key, value, fieldType, groupType, fieldDescription);
-    console.log("Chnages in the fields ", buildExtraFieldsAttributes())
+    console.log('Extra field updated:', key, processedValue, fieldType, groupType, fieldDescription);
+    console.log("Changes in the fields ", buildExtraFieldsAttributes())
   };
 
   // Handle group change
@@ -1408,78 +1437,7 @@ const AddAssetPage = () => {
       [section]: !prev[section]
     }));
   };
-  // const handleFileUpload = (category, files) => {
-  //   if (files) {
-  //     const fileArray = Array.from(files);
-  //     setAttachments(prev => ({
-  //       ...prev,
-  //       [category]: [...prev[category], ...fileArray]
-  //     }));
-  //   }
-  // };
-  // const removeFile = (category, index) => {
-  //   setAttachments(prev => ({
-  //     ...prev,
-  //     [category]: prev[category].filter((_, i) => i !== index)
-  //   }));
-  // };
-  // const handleSaveAndShow = () => {
-  //   console.log('Save and show details');
-  //   navigate('/maintenance/asset');
-  // };
-  // ...existing code.
-  // ..
-
-
-  // const handleSaveAndShow = () => {
-  //   const payload = {
-  //     pms_asset: {
-  //       ...formData,
-  //       custom_fields: buildCustomFieldsPayload(),
-  //       extra_fields_attributes: buildExtraFieldsAttributes(),
-  //       consumption_pms_asset_measures_attributes: consumptionMeasureFields.map(field => ({
-  //         name: field.name,
-  //         meter_unit_id: field.unitType,
-  //         min_value: field.min,
-  //         max_value: field.max,
-  //         alert_below: field.alertBelowVal,
-  //         alert_above: field.alertAboveVal,
-  //         multiplier_factor: field.multiplierFactor,
-  //         active: true,
-  //         meter_tag: "Consumption",
-  //         check_previous_reading: field.checkPreviousReading || false,
-  //         _destroy: false
-  //       })),
-  //       non_consumption_pms_asset_measures_attributes: nonConsumptionMeasureFields.map(field => ({
-  //         name: field.name,
-  //         meter_unit_id: field.unitType,
-  //         min_value: field.min,
-  //         max_value: field.max,
-  //         alert_below: field.alertBelowVal,
-  //         alert_above: field.alertAboveVal,
-  //         multiplier_factor: field.multiplierFactor,
-  //         active: true,
-  //         meter_tag: "Non Consumption",
-  //         check_previous_reading: field.checkPreviousReading || false,
-  //         _destroy: false
-  //       }))
-  //     }
-  //   };
-  //   // Add top-level fields if needed (allocation_ids, asset_move_to, amc_detail, etc.)
-  //   if (formData.allocation_ids) payload.pms_asset.allocation_ids = formData.allocation_ids;
-  //   if (formData.asset_move_to) payload.pms_asset.asset_move_to = formData.asset_move_to;
-  //   if (formData.amc_detail) payload.pms_asset.amc_detail = formData.amc_detail;
-  //   if (formData.asset_manuals) payload.pms_asset.asset_manuals = formData.asset_manuals;
-  //   if (formData.asset_insurances) payload.pms_asset.asset_insurances = formData.asset_insurances;
-  //   if (formData.asset_purchases) payload.pms_asset.asset_purchases = formData.asset_purchases;
-  //   if (formData.asset_other_uploads) payload.pms_asset.asset_other_uploads = formData.asset_other_uploads;
-
-  //   apiClient.post('pms/assets.json', payload)
-  //     // .then(() => navigate('/maintenance/asset'))
-  //     .catch(err => console.error(err));
-  // };
-
-  // State for validation errors
+  
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
   // Function to check if a field has validation error
@@ -2384,7 +2342,8 @@ const AddAssetPage = () => {
       })
         .then(response => {
           console.log('Asset created successfully:', response.data);
-          navigate('/maintenance/asset');
+          // navigate('/maintenance/asset');
+          location.reload();
         })
         .catch(err => {
           console.error('Error creating asset:', err);
@@ -2409,8 +2368,365 @@ const AddAssetPage = () => {
     );
   };
   // ...existing code...
-  const handleSaveAndCreate = () => {
-    console.log('Save and create new asset');
+
+   const handleSaveAndCreate = () => {
+    // Validate mandatory fields one by one
+    const validationErrors = validateMandatoryFields();
+    setValidationErrors(validationErrors);
+
+    if (validationErrors.length > 0) {
+      // Since we're showing individual toasts in validateMandatoryFields, 
+      // we just need to scroll to the first error field and return
+      setTimeout(() => {
+        const firstErrorField = document.querySelector('.MuiTextField-root .Mui-error input, .MuiFormControl-root .Mui-error, input:invalid');
+        if (firstErrorField) {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Focus the field if it's an input
+          if (firstErrorField instanceof HTMLInputElement || firstErrorField instanceof HTMLSelectElement) {
+            firstErrorField.focus();
+          }
+        }
+      }, 100);
+      return;
+    }
+
+    // Clear validation errors if all fields are valid
+    setValidationErrors([]);
+
+    // Show success message before proceeding
+    toast.success('Validation Complete', {
+      description: 'All required fields are filled. Creating asset...',
+      duration: 2000,
+    });
+    // Build the complete payload
+    const payload = {
+      pms_asset: {
+        // Basic asset fields
+        name: formData.name,
+        asset_number: formData.asset_number,
+        model_number: formData.model_number,
+        serial_number: formData.serial_number,
+        manufacturer: formData.manufacturer,
+        status: formData.status,
+        critical: formData.critical,
+        breakdown: formData.breakdown,
+
+        // Location fields
+        pms_site_id: selectedLocation.site,
+        pms_building_id: selectedLocation.building,
+        pms_wing_id: selectedLocation.wing,
+        pms_area_id: selectedLocation.area,
+        pms_floor_id: selectedLocation.floor,
+        pms_room_id: selectedLocation.room,
+
+        // Vendor and supplier fields
+        loaned_from_vendor_id: formData.loaned_from_vendor_id,
+        pms_supplier_id: formData.pms_supplier_id,
+
+        // Dates
+        agreement_from_date: formData.agreement_from_date,
+        agreement_to_date: formData.agreement_to_date,
+        commisioning_date: formData.commisioning_date,
+        purchased_on: formData.purchased_on,
+        warranty_expiry: formData.warranty_expiry,
+
+        // Asset grouping
+        pms_asset_group_id: formData.pms_asset_group_id,
+        pms_asset_sub_group_id: formData.pms_asset_sub_group_id,
+
+        // Financial fields
+        salvage_value: formData.salvage_value,
+        depreciation_rate: formData.depreciation_rate,
+        depreciation_method: formData.depreciation_method,
+        useful_life: formData.useful_life,
+        purchase_cost: formData.purchase_cost,
+
+        // Asset type flags
+        it_asset: formData.it_asset,
+        it_meter: formData.it_meter,
+        is_meter: formData.is_meter,
+        asset_loaned: formData.asset_loaned,
+        depreciation_applicable: formData.depreciation_applicable,
+
+        // Meter fields
+        meter_tag_type: formData.meter_tag_type,
+        parent_meter_id: formData.parent_meter_id,
+
+        // Warranty
+        warranty: formData.warranty,
+        warranty_period: formData.warranty_period,
+
+        // Other fields
+        depreciation_applicable_for: formData.depreciation_applicable_for,
+        indiv_group: formData.indiv_group,
+        allocation_type: formData.allocation_type,
+
+        // Array fields
+        asset_ids: formData.asset_ids,
+
+        // Single allocation field
+        allocation_id: formData.allocation_id,
+
+        // Nested objects
+        asset_move_to: formData.asset_move_to,
+        amc_detail: formData.amc_detail,
+
+        // IT Asset custom fields (as nested object)
+        custom_fields: buildCustomFieldsPayload(),
+
+        // Extra fields for other categories (as array)
+        extra_fields_attributes: buildExtraFieldsAttributes(),
+
+        // Meter measures
+        consumption_pms_asset_measures_attributes: consumptionMeasureFields.map(field => ({
+          name: field.name,
+          meter_unit_id: field.unitType,
+          min_value: field.min,
+          max_value: field.max,
+          alert_below: field.alertBelowVal,
+          alert_above: field.alertAboveVal,
+          multiplier_factor: field.multiplierFactor,
+          active: true,
+          meter_tag: "Consumption",
+          check_previous_reading: field.checkPreviousReading || false,
+          _destroy: false
+        })),
+
+        non_consumption_pms_asset_measures_attributes: nonConsumptionMeasureFields.map(field => ({
+          name: field.name,
+          meter_unit_id: field.unitType,
+          min_value: field.min,
+          max_value: field.max,
+          alert_below: field.alertBelowVal,
+          alert_above: field.alertAboveVal,
+          multiplier_factor: field.multiplierFactor,
+          active: true,
+          meter_tag: "Non Consumption",
+          check_previous_reading: field.checkPreviousReading || false,
+          _destroy: false
+        })),
+
+        // Category-specific file attachments
+        ...getCategoryAttachments()
+      }
+    };
+
+    console.log('Final payload:', payload);
+    console.log('AMC Detail being sent:', payload.pms_asset.amc_detail);
+    console.log('Loan details - loaned_from_vendor_id:', payload.pms_asset.loaned_from_vendor_id);
+    console.log('Loan details - agreement_from_date:', payload.pms_asset.agreement_from_date);
+    console.log('Loan details - agreement_to_date:', payload.pms_asset.agreement_to_date);
+    console.log('Loan details - asset_loaned flag:', payload.pms_asset.asset_loaned);
+    console.log('Selected Loaned Vendor ID State:', selectedLoanedVendorId);
+    console.log('Asset Loaned Toggle State:', assetLoanedToggle);
+    console.log('Extra fields attributes being sent:', payload.pms_asset.extra_fields_attributes);
+    console.log('Using FormData:', hasFiles());
+
+    // If sending files, use FormData
+    if (hasFiles()) {
+      const formDataObj = new FormData();
+
+      // Add all non-file fields
+      Object.entries(payload.pms_asset).forEach(([key, value]) => {
+        if (!['asset_manuals', 'asset_insurances', 'asset_purchases', 'asset_other_uploads', 'land_attachments', 'extra_fields_attributes', 'consumption_pms_asset_measures_attributes', 'non_consumption_pms_asset_measures_attributes', 'amc_detail', 'asset_move_to'].includes(key)) {
+          if (typeof value === 'object' && value !== null) {
+            formDataObj.append(`pms_asset[${key}]`, JSON.stringify(value));
+          } else {
+            // Ensure value is string or Blob for FormData
+            if (
+              typeof value === 'string' ||
+              value instanceof Blob
+            ) {
+              formDataObj.append(`pms_asset[${key}]`, value);
+            } else if (
+              typeof value === 'boolean' ||
+              typeof value === 'number'
+            ) {
+              formDataObj.append(`pms_asset[${key}]`, value.toString());
+            } else if (value !== null && value !== undefined) {
+              formDataObj.append(`pms_asset[${key}]`, JSON.stringify(value));
+            }
+          }
+        }
+      });
+
+      // Handle nested objects specially for FormData - flatten them
+      // Handle amc_detail
+      if (payload.pms_asset.amc_detail && typeof payload.pms_asset.amc_detail === 'object') {
+        Object.entries(payload.pms_asset.amc_detail).forEach(([fieldKey, fieldValue]) => {
+          if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+            formDataObj.append(`pms_asset[amc_detail][${fieldKey}]`, String(fieldValue));
+          }
+        });
+      }
+
+      // Handle asset_move_to
+      if (payload.pms_asset.asset_move_to && typeof payload.pms_asset.asset_move_to === 'object') {
+        Object.entries(payload.pms_asset.asset_move_to).forEach(([fieldKey, fieldValue]) => {
+          if (fieldValue !== null && fieldValue !== undefined && fieldValue !== '') {
+            formDataObj.append(`pms_asset[asset_move_to][${fieldKey}]`, String(fieldValue));
+          }
+        });
+      }
+
+      // Handle extra_fields_attributes specially for FormData
+      if (payload.pms_asset.extra_fields_attributes && Array.isArray(payload.pms_asset.extra_fields_attributes)) {
+        payload.pms_asset.extra_fields_attributes.forEach((field, index) => {
+          Object.entries(field).forEach(([fieldKey, fieldValue]) => {
+            formDataObj.append(`pms_asset[extra_fields_attributes][${index}][${fieldKey}]`, String(fieldValue));
+          });
+        });
+      }
+
+      // Handle consumption measures
+      if (payload.pms_asset.consumption_pms_asset_measures_attributes && Array.isArray(payload.pms_asset.consumption_pms_asset_measures_attributes)) {
+        payload.pms_asset.consumption_pms_asset_measures_attributes.forEach((measure, index) => {
+          Object.entries(measure).forEach(([measureKey, measureValue]) => {
+            formDataObj.append(`pms_asset[consumption_pms_asset_measures_attributes][${index}][${measureKey}]`, String(measureValue));
+          });
+        });
+      }
+
+      // Handle non-consumption measures
+      if (payload.pms_asset.non_consumption_pms_asset_measures_attributes && Array.isArray(payload.pms_asset.non_consumption_pms_asset_measures_attributes)) {
+        payload.pms_asset.non_consumption_pms_asset_measures_attributes.forEach((measure, index) => {
+          Object.entries(measure).forEach(([measureKey, measureValue]) => {
+            formDataObj.append(`pms_asset[non_consumption_pms_asset_measures_attributes][${index}][${measureKey}]`, String(measureValue));
+          });
+        });
+      }
+
+      // Add category-specific files dynamically
+      if (selectedAssetCategory) {
+        const categoryKey = selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '');
+        const categoryAttachments = getCategoryAttachments();
+
+        // Add asset image
+        if (categoryAttachments.asset_image && categoryAttachments.asset_image.length > 0) {
+          formDataObj.append("pms_asset[asset_image]", categoryAttachments.asset_image[0]);
+        }
+
+        // Add category-specific documents
+        if (categoryAttachments.asset_manuals) {
+          categoryAttachments.asset_manuals.forEach(file =>
+            formDataObj.append("asset_manuals[]", file)
+          );
+        }
+
+        if (categoryAttachments.asset_insurances) {
+          categoryAttachments.asset_insurances.forEach(file =>
+            formDataObj.append("asset_insurances[]", file)
+          );
+        }
+
+        if (categoryAttachments.asset_purchases) {
+          categoryAttachments.asset_purchases.forEach(file =>
+            formDataObj.append("asset_purchases[]", file)
+          );
+        }
+
+        if (categoryAttachments.asset_other_uploads) {
+          categoryAttachments.asset_other_uploads.forEach(file =>
+            formDataObj.append("asset_other_uploads[]", file)
+          );
+        }
+
+        if (categoryAttachments.amc_documents) {
+          categoryAttachments.amc_documents.forEach(file =>
+            formDataObj.append("amc_documents[]", file)
+          );
+        }
+
+        // Add category-specific attachments (if any)
+        if (categoryAttachments.category_attachments) {
+          categoryAttachments.category_attachments.forEach(file =>
+            formDataObj.append(`${categoryKey}_attachments[]`, file)
+          );
+        }
+      }
+      // Debug: Log FormData contents
+      console.log('FormData contents:');
+      const amcKeys = [];
+      const loanKeys = [];
+      for (let [key, value] of formDataObj.entries()) {
+        if (key.includes('amc_detail')) {
+          amcKeys.push(`${key}: ${value}`);
+        }
+        if (key.includes('loaned_from_vendor') || key.includes('agreement_') || key.includes('asset_loaned')) {
+          loanKeys.push(`${key}: ${value}`);
+        }
+        console.log(key, value);
+      }
+      console.log('AMC FormData entries:', amcKeys);
+      console.log('Loan FormData entries:', loanKeys);
+
+      // Submit with FormData
+      apiClient.post('pms/assets.json', formDataObj, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        },
+        timeout: 300000, // 5 minutes timeout for large files
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            console.log(`Upload progress: ${percentCompleted}%`);
+          }
+        }
+      })
+        .then(response => {
+          console.log('Asset created successfully:', response.data);
+          toast.success('Asset Created Successfully', {
+            description: 'The asset has been created and saved.',
+            duration: 3000,
+          });
+          // Small delay to show the toast before redirect
+          setTimeout(() => {
+            window.location.href = "/maintenance/asset";
+          }, 1000);
+        })
+        .catch(err => {
+          console.error('Error creating asset:', err);
+
+          if (err.response?.status === 413) {
+            toast.error('Upload Failed', {
+              description: 'Request too large. Please reduce the number or size of files and try again.',
+              duration: 6000,
+            });
+          } else if (err.response?.status === 422) {
+            toast.error('Validation Error', {
+              description: 'Please check your form data and try again.',
+              duration: 6000,
+            });
+          } else if (err.code === 'ECONNABORTED') {
+            toast.error('Upload Timeout', {
+              description: 'Please try with smaller files or check your internet connection.',
+              duration: 6000,
+            });
+          } else {
+            toast.error('Upload Failed', {
+              description: err.response?.data?.message || err.message || 'An unknown error occurred',
+              duration: 6000,
+            });
+          }
+        });
+    } else {
+      // Submit as JSON
+      apiClient.post('pms/assets.json', payload, {
+        headers: { "Content-Type": "application/json" }
+      })
+        .then(response => {
+          console.log('Asset created successfully:', response.data);
+          // navigate('/maintenance/asset');
+          location.reload(); // Reload to show the new asset in the list
+          toast.success('Asset Created Successfully', {
+            description: 'The asset has been created and saved.',
+            duration: 3000,
+          });
+        })
+        .catch(err => {
+          console.error('Error creating asset:', err);
+        });
+    }
   };
   const fieldStyles = {
     height: {
@@ -2579,7 +2895,16 @@ const AddAssetPage = () => {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
-                    onChange={e => handleFieldChange('asset_number', e.target.value)}
+                    onChange={e => {
+                      handleFieldChange('asset_number', e.target.value);
+                      handleExtraFieldChange(
+                        'asset_number',
+                        e.target.value,
+                        'text',
+                        'basicIdentification',
+                        'Asset Id/Code'
+                      );
+                    }}
                   />
                   <TextField
                     label="Asset Name"
@@ -2591,7 +2916,16 @@ const AddAssetPage = () => {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
-                    onChange={e => handleFieldChange('name', e.target.value)}
+                    onChange={e => {
+                      handleFieldChange('name', e.target.value);
+                      handleExtraFieldChange(
+                        'asset_name',
+                        e.target.value,
+                        'text',
+                        'basicIdentification',
+                        'Asset Name'
+                      );
+                    }}
                   />
                   <FormControl
                     fullWidth
@@ -2909,15 +3243,17 @@ const AddAssetPage = () => {
                         }
                       }
                     }}
-                    onChange={date =>
+                    onChange={date => {
+                      // Format date to YYYY-MM-DD for backend compatibility
+                      const formattedDate = date ? date.toISOString().split('T')[0] : '';
                       handleExtraFieldChange(
                         'date_of_acquisition',
-                        date,
+                        formattedDate,
                         'date',
                         'landSizeValue',
                         'Date of Acquisition'
-                      )
-                    }
+                      );
+                    }}
 
                   />
                   <div className="flex gap-2">
@@ -3322,7 +3658,15 @@ const AddAssetPage = () => {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
-                    onChange={e => handleFieldChange('asset_number', e.target.value)}
+                    onChange={e =>{handleFieldChange('asset_number', e.target.value);
+                      handleExtraFieldChange(
+                        'asset_number',
+                        e.target.value,
+                        'text',
+                        'basicIdentification',
+                        'Asset Id/Code'
+                      );
+                    }}
                   />
                   <TextField
                     label="Improvement Description"
@@ -3524,7 +3868,7 @@ const AddAssetPage = () => {
                         'improvementDetails',
                         'Improvement Description'
                       );
-                      handleFieldChange('improvement_description', value);
+                      // handleFieldChange('improvement_description', value);
                     }}
                   />
                   <FormControl
@@ -3572,7 +3916,7 @@ const AddAssetPage = () => {
                       value={selectedVendorId}
                       onChange={(e) => {
                         setSelectedVendorId(e.target.value);
-                        const selectedVendor = vendors.find(vendor => vendor.id === e.target.value);
+                        const selectedVendor = vendors.find(vendor => vendor.id === Number(e.target.value));
                         if (selectedVendor) {
                           handleExtraFieldChange(
                             'vendor_contractor_name',
@@ -3628,15 +3972,17 @@ const AddAssetPage = () => {
                         }
                       }
                     }}
-                    onChange={(date) =>
+                    onChange={(date) => {
+                      // Format date to YYYY-MM-DD for backend compatibility
+                      const formattedDate = date ? date.toISOString().split('T')[0] : '';
                       handleExtraFieldChange(
                         'improvement_date',
-                        date,
+                        formattedDate,
                         'date',
                         'improvementDetails',
                         'Improvement Date'
-                      )
-                    }
+                      );
+                    }}
                   />
                   <TextField
                     label="Improvement Cost (INR)"
@@ -3906,15 +4252,17 @@ const AddAssetPage = () => {
                         }
                       }
                     }}
-                    onChange={(date) =>
+                    onChange={(date) => {
+                      // Format date to YYYY-MM-DD for backend compatibility
+                      const formattedDate = date ? date.toISOString().split('T')[0] : '';
                       handleExtraFieldChange(
                         'lease_start_date',
-                        date,
+                        formattedDate,
                         'date',
                         'leaseholdLease',
                         'Lease Start Date'
-                      )
-                    }
+                      );
+                    }}
                   />
                   <DatePicker
                     label="Lease End Date"
@@ -3929,15 +4277,17 @@ const AddAssetPage = () => {
                         }
                       }
                     }}
-                    onChange={(date) =>
+                    onChange={(date) => {
+                      // Format date to YYYY-MM-DD for backend compatibility
+                      const formattedDate = date ? date.toISOString().split('T')[0] : '';
                       handleExtraFieldChange(
                         'lease_end_date',
-                        date,
+                        formattedDate,
                         'date',
                         'leaseholdLease',
                         'Lease End Date'
-                      )
-                    }
+                      );
+                    }}
                   />
                   <FormControl
                     fullWidth
@@ -4189,8 +4539,16 @@ const AddAssetPage = () => {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
-                    onChange={e => handleFieldChange('serial_number', e.target.value)}
-
+                    onChange={e => {
+                      handleFieldChange('serial_number', e.target.value);
+                      handleExtraFieldChange(
+                        'asset_number',
+                        e.target.value,
+                        'text',
+                        'basicIdentification',
+                        'Asset Id/Code'
+                      );
+                    }}
                   />
                   <TextField
                     label="Asset Name"
@@ -4629,14 +4987,16 @@ const AddAssetPage = () => {
                       }
                     }}
                     onChange={date => {
+                      // Format date to YYYY-MM-DD for backend compatibility
+                      const formattedDate = date ? date.toISOString().split('T')[0] : '';
                       handleExtraFieldChange(
                         'purchase_date',
-                        date,
+                        formattedDate,
                         'date',
                         'vehicleFinancial',
                         'Date of Purchase'
                       );
-                      handleFieldChange('commisioning_date', date);
+                      handleFieldChange('commisioning_date', formattedDate);
                     }}
                   />
                   <div className="flex gap-2">
@@ -4679,7 +5039,16 @@ const AddAssetPage = () => {
                       InputProps={{
                         startAdornment: <InputAdornment position="start">{localStorage.getItem('currency')}</InputAdornment>,
                       }}
-                      onChange={e => handleFieldChange('purchase_cost', e.target.value)}
+                      onChange={e => {
+                        handleFieldChange('purchase_cost', e.target.value);
+                        handleExtraFieldChange(
+                          'purchase_cost',
+                          (e.target as HTMLInputElement).value,
+                          'number',
+                          'vehicleFinancial',
+                          'Purchase Cost'
+                        );
+                      }}
                     />
                   </div>
                   <DatePicker
@@ -4695,7 +5064,11 @@ const AddAssetPage = () => {
                         }
                       }
                     }}
-                    onChange={(date) => handleFieldChange('warranty_expiry', date)}
+                    onChange={(date) => {
+                      // Format date to YYYY-MM-DD for backend compatibility
+                      const formattedDate = date ? date.toISOString().split('T')[0] : '';
+                      handleFieldChange('warranty_expiry', formattedDate);
+                    }}
                   />
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Under Warranty</label>
@@ -4931,15 +5304,17 @@ const AddAssetPage = () => {
                         }
                       }
                     }}
-                    onChange={(date) =>
+                    onChange={(date) => {
+                      // Format date to YYYY-MM-DD for backend compatibility
+                      const formattedDate = date ? date.toISOString().split('T')[0] : '';
                       handleExtraFieldChange(
                         'last_service_date',
-                        date,
+                        formattedDate,
                         'date',
                         'vehiclePerformance',
                         'Last Service Date'
-                      )
-                    }
+                      );
+                    }}
                   />
                   <FormControl
                     fullWidth
@@ -5068,15 +5443,17 @@ const AddAssetPage = () => {
                         }
                       }
                     }}
-                    onChange={(date) =>
+                    onChange={(date) => {
+                      // Format date to YYYY-MM-DD for backend compatibility
+                      const formattedDate = date ? date.toISOString().split('T')[0] : '';
                       handleExtraFieldChange(
                         'insurance_expiry_date',
-                        date,
+                        formattedDate,
                         'date',
                         'vehicleLegal',
                         'Insurance Expiry Date'
-                      )
-                    }
+                      );
+                    }}
                   />
                   <DatePicker
                     label="Fitness Certificate Expiry"
@@ -5091,15 +5468,17 @@ const AddAssetPage = () => {
                         }
                       }
                     }}
-                    onChange={(date) =>
+                    onChange={(date) => {
+                      // Format date to YYYY-MM-DD for backend compatibility
+                      const formattedDate = date ? date.toISOString().split('T')[0] : '';
                       handleExtraFieldChange(
                         'fitness_certificate_expiry',
-                        date,
+                        formattedDate,
                         'date',
                         'vehicleLegal',
                         'Fitness Certificate Expiry'
-                      )
-                    }
+                      );
+                    }}
                   />
                   <DatePicker
                     label="PUC Expiry Date"
@@ -5114,15 +5493,17 @@ const AddAssetPage = () => {
                         }
                       }
                     }}
-                    onChange={(date) =>
+                    onChange={(date) => {
+                      // Format date to YYYY-MM-DD for backend compatibility
+                      const formattedDate = date ? date.toISOString().split('T')[0] : '';
                       handleExtraFieldChange(
                         'puc_expiry_date',
-                        date,
+                        formattedDate,
                         'date',
                         'vehicleLegal',
                         'PUC Expiry Date'
-                      )
-                    }
+                      );
+                    }}
                   />
 
                   {/* Custom Fields */}
@@ -5317,7 +5698,16 @@ const AddAssetPage = () => {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
-                    onChange={e => handleFieldChange('asset_number', e.target.value)}
+                    onChange={e => {
+                      handleFieldChange('asset_number', e.target.value);
+                      handleExtraFieldChange(
+                        'asset_number',
+                        e.target.value,
+                        'text',
+                        'basicIdentification',
+                        'Asset Id/Code'
+                      );
+                    }}
                   />
                   <TextField
                     label="Asset Name"
@@ -5472,15 +5862,16 @@ const AddAssetPage = () => {
                         height: { xs: '36px', md: '45px' }
                       }
                     }}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       handleExtraFieldChange(
                         'linked_land_asset',
                         (e.target as HTMLInputElement).value,
                         'text',
                         'buildingLocation',
                         'Linked Land Asset'
-                      )
-                    }
+                      );
+                      // handleFieldChange('linked_land_asset', e.target.value);
+                    }}
                   />
 
                   {/* Custom Fields */}
@@ -5839,6 +6230,15 @@ const AddAssetPage = () => {
                           height: { xs: '36px', md: '45px' }
                         }
                       }}
+                      onChange={(e) =>
+                        handleExtraFieldChange(
+                          'current_book_value',
+                          (e.target as HTMLInputElement).value,
+                          'number',
+                          'buildingAcquisition',
+                          'Current Book Value'
+                        )
+                      }
                     />
                   </div>
                   <div className="flex gap-2">
