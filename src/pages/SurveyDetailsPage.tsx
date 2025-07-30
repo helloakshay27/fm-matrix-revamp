@@ -220,7 +220,10 @@ export const SurveyDetailsPage = () => {
     
     try {
       setLoadingSurveyMappings(true);
-      const response = await fetch(getFullUrl(`/survey_mappings.json?q[survey_id_eq]=${id}`), {
+      const apiUrl = `/survey_mappings.json?q[survey_id_eq]=${id}`;
+      console.log('Fetching survey mappings from:', getFullUrl(apiUrl));
+      
+      const response = await fetch(getFullUrl(apiUrl), {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json'
@@ -228,13 +231,19 @@ export const SurveyDetailsPage = () => {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to fetch survey mappings');
+        throw new Error(`Failed to fetch survey mappings: ${response.status}`);
       }
       
       const mappingsData = await response.json();
+      console.log('Survey mappings response:', mappingsData);
       setSurveyMappings(mappingsData);
     } catch (error) {
       console.error('Error fetching survey mappings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load survey mappings",
+        variant: "destructive"
+      });
     } finally {
       setLoadingSurveyMappings(false);
     }
