@@ -437,6 +437,8 @@ export const AMCDetailsPage = () => {
                         <TableHead>Visit No</TableHead>
                         <TableHead>Visit Date</TableHead>
                         <TableHead>Technician</TableHead>
+                        <TableHead>Remarks</TableHead>
+                        <TableHead>Attachment</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody className="bg-white">
@@ -447,11 +449,26 @@ export const AMCDetailsPage = () => {
                             <TableCell>{visit.visit_number}</TableCell>
                             <TableCell>{new Date(visit.visit_date).toLocaleDateString()}</TableCell>
                             <TableCell>{visit.technician ? visit.technician.name : "Not Assigned"}</TableCell>
+                            <TableCell>{visit.remarks || "—"}</TableCell>
+                            <TableCell>
+                              {visit.attachment_url ? (
+                                <a
+                                  href={visit.attachment_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 underline"
+                                >
+                                  View
+                                </a>
+                              ) : (
+                                "—"
+                              )}
+                            </TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center text-gray-600">
+                          <TableCell colSpan={6} className="text-center text-gray-600">
                             No AMC visit logs available.
                           </TableCell>
                         </TableRow>
