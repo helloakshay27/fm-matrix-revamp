@@ -61,9 +61,8 @@ const formatDateForAPI = (date: Date): string => {
 };
 
 const getCurrentSiteId = (): string => {
-  return localStorage.getItem('siteId') || 
-         new URLSearchParams(window.location.search).get('site_id') || 
-         '7';
+  return localStorage.getItem('selectedSiteId') || 
+         new URLSearchParams(window.location.search).get('site_id');
 };
 
 const getAccessToken = (): string => {
