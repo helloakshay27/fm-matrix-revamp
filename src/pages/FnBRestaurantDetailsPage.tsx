@@ -129,10 +129,10 @@ export const FnBRestaurantDetailsPage = () => {
   const [formData, setFormData] = useState<Restaurant>(restaurant || mockRestaurants[0]);
   const [scheduleData, setScheduleData] = useState<DaySchedule[]>([]);
   const [blockedDays, setBlockedDays] = useState<BlockedDay[]>([]);
-  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverImage, setCoverImage] = useState<File[]>([]);
   const [menuImages, setMenuImages] = useState<File[]>([]);
   const [mainImages, setMainImages] = useState<File[]>([]);
-  const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
+  const [coverImagePreview, setCoverImagePreview] = useState<string[]>([]);
   const [menuImagesPreview, setMenuImagesPreview] = useState<string[]>([]);
   const [mainImagesPreview, setMainImagesPreview] = useState<string[]>([]);
 
@@ -145,7 +145,7 @@ export const FnBRestaurantDetailsPage = () => {
     if (file) {
       const imageUrl = URL.createObjectURL(file);
       setCoverImage(file);
-      setCoverImagePreview(imageUrl);
+      setCoverImagePreview(prev => [...prev, imageUrl]);
       console.log('Cover image selected:', file.name);
     }
   };
@@ -177,7 +177,7 @@ export const FnBRestaurantDetailsPage = () => {
         const { restaurant, schedule, coverImages, menuImages, mainImages, blockedDays } = mapRestaurantData(response);
         setFormData(restaurant);
         setScheduleData(schedule);
-        setCoverImagePreview(coverImages[0]?.document || null); // Use first image as cover preview
+        setCoverImagePreview(coverImages.map(img => img?.document)); // Use first image as cover preview
         setMenuImagesPreview(menuImages.map((img) => img?.document));
         setMainImagesPreview(mainImages.map((img) => img?.document));
         setBlockedDays(blockedDays);
@@ -711,9 +711,11 @@ export const FnBRestaurantDetailsPage = () => {
                     onChange={handleCoverChange}
                   />
                 </div>
-                {coverImagePreview && (
-                  <div className="mt-4">
-                    <img src={coverImagePreview} alt="Cover Preview" className="w-24 h-24" />
+                {coverImagePreview.length > 0 && (
+                  <div className="mt-4 flex items-center gap-4">
+                    {coverImagePreview.map((url, index) => (
+                      <img key={index} src={url || url.document} alt={`Menu Preview ${index}`} className="w-24 h-24" />
+                    ))}
                   </div>
                 )}
               </CardContent>

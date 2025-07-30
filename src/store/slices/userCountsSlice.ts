@@ -26,7 +26,7 @@ export const fetchUserCounts = createAsyncThunk(
   'userCounts/fetchUserCounts',
   async () => {
     const response = await axios.get(
-      `${API_CONFIG.BASE_URL}/pms/users/user_counts.json?user_type=a`,
+      `${API_CONFIG.BASE_URL}/pms/users/user_counts.json?user_type=fm`,
       {
         headers: {
           Authorization: getAuthHeader(),

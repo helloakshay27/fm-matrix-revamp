@@ -162,8 +162,8 @@ export const AddRestaurantPage = () => {
     } else if (formData.anotherMobileNumber && !/^\d{10}$/.test(formData.anotherMobileNumber)) {
       toast.error('Alternate number must be 10 digits');
       return false;
-    } else if (!formData.landlineNumber || !/^\d{6}$/.test(formData.landlineNumber)) {
-      toast.error('Please enter a valid 6-digit Landline Number');
+    } else if (!formData.landlineNumber) {
+      toast.error('Please enter a valid Landline Number');
       return false;
     } else if (!formData.deliveryTime) {
       toast.error('Please enter Delivery Time');
