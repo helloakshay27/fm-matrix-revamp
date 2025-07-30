@@ -285,7 +285,7 @@ export const AddSurveyPage = () => {
                           <span className="text-sm font-medium text-gray-700">Answer Options</span>
                         </div>
                         
-                        {(question.answerOptions || ['', '']).map((option, index) => (
+                        {(question.answerOptions || []).map((option, index) => (
                           <div key={index} className="flex items-center gap-2">
                             <Select defaultValue="P">
                               <SelectTrigger className="w-16">
@@ -298,7 +298,7 @@ export const AddSurveyPage = () => {
                             </Select>
                             <Input
                               placeholder="Answer Option"
-                              value={option}
+                              value={option || ''}
                               onChange={(e) => handleAnswerOptionChange(question.id, index, e.target.value)}
                               className="flex-1"
                             />
@@ -314,6 +314,29 @@ export const AddSurveyPage = () => {
                             )}
                           </div>
                         ))}
+                        
+                        {(!question.answerOptions || question.answerOptions.length === 0) && (
+                          <div className="flex items-center gap-2">
+                            <Select defaultValue="P">
+                              <SelectTrigger className="w-16">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="P">P</SelectItem>
+                                <SelectItem value="N">N</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Input
+                              placeholder="Answer Option"
+                              value=""
+                              onChange={(e) => {
+                                const newOptions = [e.target.value];
+                                handleQuestionChange(question.id, 'answerOptions', newOptions);
+                              }}
+                              className="flex-1"
+                            />
+                          </div>
+                        )}
                         
                         <Button
                           onClick={() => handleAddAnswerOption(question.id)}
