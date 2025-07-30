@@ -576,9 +576,9 @@ export const AssetDashboard = () => {
 
   // Fetch initial assets data
   useEffect(() => {
-    if (assets.length === 0) {
-      dispatch(fetchAssetsData({ page: currentPage }));
-    }
+    // if (assets.length === 0) {
+    dispatch(fetchAssetsData({ page: currentPage }));
+    // }
   }, [dispatch, currentPage, assets.length]);
 
   // Fetch asset statistics when component mounts
@@ -772,10 +772,10 @@ export const AssetDashboard = () => {
         filters = { breakdown_eq: true };
         break;
       case "in_store":
-        filters = { status_eq: "in_store" };
+        filters = { status_eq: "in_storage" };
         break;
       case "dispose":
-        filters = { status_eq: "dispose" };
+        filters = { status_eq: "disposed" };
         break;
       default:
         filters = {};
