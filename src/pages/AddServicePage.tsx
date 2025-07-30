@@ -188,7 +188,7 @@ export const AddServicePage = () => {
       console.log('Service creation response:', response);
 
       if (action === 'show') {
-        toast.success('Service has been created and saved with details.', {
+        toast.success('Service create successfully.', {
           duration: 3000,
         });
 
