@@ -204,7 +204,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                   </div>
                 </div>
               )}
-              {Object.entries(asset.extra_fields_grouped).map(
+              {/* {Object.entries(asset.extra_fields_grouped).map(
                 ([groupName, fields]) => (
                   <div className="w-full bg-white rounded-lg shadow-sm border">
                     <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
@@ -233,7 +233,100 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                     </div>
                   </div>
                 )
+              )} */}
+              {Object.entries(asset.extra_fields_grouped).map(
+                ([groupName, fields]) => (
+                  <div
+                    key={groupName}
+                    className="w-full bg-white rounded-lg shadow-sm border"
+                  >
+                    <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                        <CreditCard
+                          className="w-8 h-8"
+                          style={{ color: "#C72030" }}
+                        />
+                      </div>
+                      <h3 className="text-lg font-semibold uppercase text-black">
+                        {groupName}
+                      </h3>
+                    </div>
+
+                    <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6 space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 pl-4">
+                        {fields.map((field, idx) => (
+                          <div key={idx} className="text-sm text-gray-800">
+                            <span className="text-gray-500">
+                              {field.field_name}:
+                            </span>{" "}
+                            {field.field_value}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )
               )}
+             
+              {asset.asset_move_tos?.length > 0 &&
+                asset.asset_move_tos[0]?.from?.location &&
+                asset.asset_move_tos[0]?.to?.location && (
+                  <div className="flex flex-col lg:flex-row gap-6 mt-6">
+                    <div className="w-full bg-white rounded-lg shadow-sm border">
+                      <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                          <TrendingUp
+                            className="w-6 h-6"
+                            style={{ color: "#C72030" }}
+                          />
+                        </div>
+                        <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                          Movement Details
+                        </h3>
+                      </div>
+
+                      <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] px-6">
+                        <div className="relative w-full px-4">
+                          <div
+                            className="flex flex-col items-center w-full relative"
+                            style={{ minHeight: "56px" }}
+                          >
+                            <div className="flex w-full items-center justify-between relative">
+                              {/* From Site */}
+                              <div className="flex flex-col items-center w-1/2 text-left">
+                                <div className="text-xs text-gray-500 mb-2 ml-1">
+                                  From Site
+                                </div>
+                                <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-[2px]" />
+                              </div>
+
+                              {/* Line */}
+                              <div className="absolute top-[32px] left-[25%] right-[25%] h-0.5 bg-[#C72030] z-0" />
+
+                              {/* To Site */}
+                              <div className="flex flex-col items-center w-1/2 text-right">
+                                <div className="text-xs text-gray-500 mb-2 mr-1">
+                                  To Site
+                                </div>
+                                <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
+                              </div>
+                            </div>
+
+                            {/* Values */}
+                            <div className="flex w-[80%] mx-auto justify-between mt-6">
+                              <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-left">
+                                {asset.asset_move_tos[0].from.location || "NA"}
+                              </div>
+                              <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-right">
+                                {asset.asset_move_tos[0].to.location || "NA"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
             </>
           ) : (
             <>
@@ -355,34 +448,6 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                           {asset.allocated_to?.join(", ") || "-"}
                         </span>
                       </div>
-
-                      {/* Dynamic Custom Fields from extra_fields_grouped */}
-                      {asset.extra_fields_grouped &&
-                        Object.entries(asset.extra_fields_grouped).map(
-                          ([groupName, fields]) =>
-                            groupName === "Asset Details"
-                              ? fields.map((field, idx) => (
-                                  <div
-                                    key={`custom-${idx}`}
-                                    className="flex items-start"
-                                  >
-                                    <span className="w-28 text-gray-500 text-sm">
-                                      {field.field_name
-                                        .replace(/_/g, " ")
-                                        .replace(/\b\w/g, (l) =>
-                                          l.toUpperCase()
-                                        )}
-                                    </span>
-                                    <span className="mx-2 text-gray-500">
-                                      :
-                                    </span>
-                                    <span className="font-semibold text-black">
-                                      {field.field_value || "-"}
-                                    </span>
-                                  </div>
-                                ))
-                              : null
-                        )}
                     </div>
 
                     {/* Right Section - Image */}
@@ -421,7 +486,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
 
                   {/* System Details */}
                   <div className="border-t pt-8">
-                    <div className="text-lg font-semibold text-black-600 mb-6">
+                    <div className="text-lg font-semibold text-red-600 mb-6">
                       System Details
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -460,7 +525,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
 
                   {/* Hard Disk Details */}
                   <div className="border-t pt-8">
-                    <div className="text-lg font-semibold text-black-600 mb-6">
+                    <div className="text-lg font-semibold text-red-600 mb-6">
                       Hard Disk Details
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -845,168 +910,6 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                 </div>
               </div>
 
-              {/* Other Custom Field Groups (excluding Asset Details) */}
-              {asset.extra_fields_grouped &&
-                Object.entries(asset.extra_fields_grouped).map(
-                  ([groupName, fields]) =>
-                    groupName !== "Asset Details" ? (
-                      <div
-                        key={groupName}
-                        className="w-full bg-white rounded-lg shadow-sm border mb-6"
-                      >
-                        {/* Header */}
-                        <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                            <Settings
-                              className="w-6 h-6"
-                              style={{ color: "#C72030" }}
-                            />
-                          </div>
-                          <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                            {groupName}
-                          </h3>
-                        </div>
-
-                        {/* Body */}
-                        <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 text-sm text-gray-800">
-                            {fields.map((field, idx) => (
-                              <div key={idx} className="flex">
-                                <span className="text-gray-500 w-32">
-                                  {field.field_name
-                                    .replace(/_/g, " ")
-                                    .replace(/\b\w/g, (l) => l.toUpperCase())}
-                                </span>
-                                <span className="mx-2 text-gray-500">:</span>
-                                <span className="font-medium">
-                                  {field.field_value || "-"}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ) : null
-                )}
-
-              {/* Movement Details */}
-              <div className="flex flex-col lg:flex-row gap-6 mb-6">
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <TrendingUp
-                        className="w-6 h-6"
-                        style={{ color: "#C72030" }}
-                      />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                      Movement Details
-                    </h3>
-                  </div>
-
-                  {/* Body */}
-                  <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] px-6">
-                    <div className="relative w-full px-4">
-                      <div
-                        className="flex flex-col items-center w-full relative"
-                        style={{ minHeight: "56px" }}
-                      >
-                        <div className="flex w-full items-center justify-between relative">
-                          {/* From Site */}
-                          <div className="flex flex-col items-center w-1/2 text-left">
-                            <div className="text-xs text-gray-500 mb-2 ml-1">
-                              From Site
-                            </div>
-                            <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-[2px]" />
-                          </div>
-
-                          {/* Line */}
-                          <div className="absolute top-[32px] left-[25%] right-[25%] h-0.5 bg-[#C72030] z-0" />
-
-                          {/* To Site */}
-                          <div className="flex flex-col items-center w-1/2 text-right">
-                            <div className="text-xs text-gray-500 mb-2 mr-1">
-                              To Site
-                            </div>
-                            <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
-                          </div>
-                        </div>
-
-                        {/* Values */}
-                        <div className="flex w-[80%] mx-auto justify-between mt-6">
-                          <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-left">
-                            {asset.asset_move_tos?.[0]?.from?.location || "NA"}
-                          </div>
-                          <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-right">
-                            {asset.asset_move_tos?.[0]?.to?.location || "NA"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Location Details */}
-              <div className="flex gap-6">
-                <div className="w-full bg-white rounded-lg shadow-sm border">
-                  {/* Header */}
-                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <MapPin
-                        className="w-6 h-6"
-                        style={{ color: "#C72030" }}
-                      />
-                    </div>
-                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                      Location Details
-                    </h3>
-                  </div>
-
-                  {/* Body */}
-                  <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                    <div className="relative w-full px-4">
-                      {/* Connecting Line */}
-                      <div
-                        className="absolute top-[38px] h-0.5 bg-[#C72030] z-0"
-                        style={{ left: "9%", right: "9%" }}
-                      />
-
-                      <div className="flex justify-between items-start relative z-10">
-                        {[
-                          { label: "Site", value: asset.site_name || "NA" },
-                          {
-                            label: "Building",
-                            value: asset.building?.name || "NA",
-                          },
-                          { label: "Wing", value: asset.wing?.name || "NA" },
-                          { label: "Floor", value: asset.floor?.name || "NA" },
-                          { label: "Area", value: asset.area?.name || "NA" },
-                          {
-                            label: "Room",
-                            value: asset.pms_room?.name || "NA",
-                          },
-                        ].map((item, index) => (
-                          <div
-                            key={index}
-                            className="flex flex-col items-center w-full text-center"
-                          >
-                            <div className="text-sm text-gray-500 mb-2 mt-1">
-                              {item.label}
-                            </div>
-                            <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-1" />
-                            <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
-                              {item.value}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Asset Loaned and Vendor Contact Details Side by Side */}
               <div className="flex gap-6">
                 {/* Asset Loaned - 50% width */}
@@ -1076,126 +979,6 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
               </div>
             </>
           )}
-
-          {/* Movement Details - Always visible for all asset types */}
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="w-full bg-white rounded-lg shadow-sm border">
-              {/* Header */}
-              <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                  <TrendingUp
-                    className="w-6 h-6"
-                    style={{ color: "#C72030" }}
-                  />
-                </div>
-                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  Movement Details
-                </h3>
-              </div>
-
-              {/* Body */}
-              <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] px-6">
-                {/* Timeline with two dots */}
-                <div className="relative w-full px-4">
-                  <div
-                    className="flex flex-col items-center w-full relative"
-                    style={{ minHeight: "56px" }}
-                  >
-                    <div className="flex w-full items-center justify-between relative">
-                      {/* From Site */}
-                      <div className="flex flex-col items-center w-1/2 text-left">
-                        <div className="text-xs text-gray-500 mb-2 ml-1">
-                          From Site
-                        </div>
-                        <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-[2px]" />
-                      </div>
-
-                      {/* Line */}
-                      <div className="absolute top-[32px] left-[25%] right-[25%] h-0.5 bg-[#C72030] z-0" />
-
-                      {/* To Site */}
-                      <div className="flex flex-col items-center w-1/2 text-right">
-                        <div className="text-xs text-gray-500 mb-2 mr-1">
-                          To Site
-                        </div>
-                        <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10" />
-                      </div>
-                    </div>
-
-                    {/* Values */}
-                    <div className="flex w-[80%] mx-auto justify-between mt-6">
-                      <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-left">
-                        {asset.asset_move_tos?.[0]?.from?.location || "NA"}
-                      </div>
-                      <div className="text-sm font-medium text-[#1A1A1A] break-words px-2 w-1/2 text-right">
-                        {asset.asset_move_tos?.[0]?.to?.location || "NA"}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Location Details - Always visible for all asset types */}
-          <div className="flex gap-6">
-            <div className="w-full bg-white rounded-lg shadow-sm border">
-              {/* Header */}
-              <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                  <MapPin
-                    className="w-6 h-6"
-                    style={{ color: "#C72030" }}
-                  />
-                </div>
-                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                  Location Details
-                </h3>
-              </div>
-
-              {/* Body */}
-              <div className="py-[31px] bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
-                {/* Timeline */}
-                <div className="relative w-full px-4">
-                  {/* Connecting Line */}
-                  <div
-                    className="absolute top-[38px] h-0.5 bg-[#C72030] z-0"
-                    style={{ left: "9%", right: "9%" }}
-                  />
-
-                  <div className="flex justify-between items-start relative z-10">
-                    {[
-                      { label: "Site", value: asset.site_name || "NA" },
-                      {
-                        label: "Building",
-                        value: asset.building?.name || "NA",
-                      },
-                      { label: "Wing", value: asset.wing?.name || "NA" },
-                      { label: "Floor", value: asset.floor?.name || "NA" },
-                      { label: "Area", value: asset.area?.name || "NA" },
-                      {
-                        label: "Room",
-                        value: asset.pms_room?.name || "NA",
-                      },
-                    ].map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex flex-col items-center w-full text-center"
-                      >
-                        <div className="text-sm text-gray-500 mb-2 mt-1">
-                          {item.label}
-                        </div>
-                        <div className="w-[14px] h-[14px] rounded-full bg-[#C72030] z-10 mt-1" />
-                        <div className="mt-2 text-base font-medium text-[#1A1A1A] break-words px-2">
-                          {item.value}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </TabsContent>
 
         <TabsContent value="analytics">
