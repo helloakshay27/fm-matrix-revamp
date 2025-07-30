@@ -18,7 +18,6 @@ interface AddVisitModalProps {
   onClose: () => void;
   amcId: string;
 }
-
 interface AMCDetailsData {
   id: number;
   asset_id: number | null;
@@ -60,6 +59,7 @@ interface AMCDetailsDataWithVisits extends AMCDetailsData {
   amc_visit_logs: AmcVisitLog[];
 }
 
+
 export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
@@ -74,6 +74,7 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
 
   const [users, setUsers] = useState([]);
   const [attachment, setAttachment] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const { data: amcData, loading, error } = useAppSelector(
     (state) => state.amcDetails as {
@@ -110,6 +111,7 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
 
     const form = new FormData();
     form.append('pms_asset_amc[amc_visit_logs_attributes][0][visit_number]', formData.vendor);
@@ -140,14 +142,9 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
     } catch (error) {
       console.error(error);
       toast.error('Failed to add visit');
+    } finally {
+      setSubmitting(false);
     }
-  };
-
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
   };
 
   const handleClose = () => {
@@ -170,90 +167,112 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-  <TextField
-    required
-    label="Visit Number"
-    placeholder="Enter Visit Number"
-    name="vendor"
-    value={formData.vendor}
-    onChange={(e) => handleInputChange('vendor', e.target.value)}
-    fullWidth
-    variant="outlined"
-    InputLabelProps={{ shrink: true }}
-  />
+          <TextField
+            required
+            label="Visit Number"
+            placeholder="Enter Visit Number"
+            name="vendor"
+            value={formData.vendor}
+            onChange={(e) => handleInputChange('vendor', e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+          />
 
-  <TextField
-    label="Start Date"
-    type="date"
-    name="startDate"
-    value={formData.startDate}
-    onChange={(e) => handleInputChange('startDate', e.target.value)}
-    fullWidth
-    variant="outlined"
-    InputLabelProps={{ shrink: true }}
-  />
+          <TextField
+            label="Start Date"
+            type="date"
+            name="startDate"
+            value={formData.startDate}
+            onChange={(e) => handleInputChange('startDate', e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+          />
 
-  <FormControl fullWidth variant="outlined">
-    <InputLabel id="technician-label" shrink>
-      Technician
-    </InputLabel>
-    <Select
-      labelId="technician-label"
-      name="technician"
-      value={formData.technician || ''}
-      onChange={(e) => handleInputChange('technician', e.target.value)}
-      label="Technician"
-      displayEmpty
-      notched
-    >
-      <MenuItem value="" disabled>
-        <em>Select Technician</em>
-      </MenuItem>
-      {users?.map((user: any) => (
-        <MenuItem key={user.id} value={user.id}>
-          {user.full_name}
-        </MenuItem>
-      ))}
-    </Select>
-  </FormControl>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="technician-label" shrink>
+              Technician
+            </InputLabel>
+            <Select
+              labelId="technician-label"
+              name="technician"
+              value={formData.technician || ''}
+              onChange={(e) => handleInputChange('technician', e.target.value)}
+              label="Technician"
+              displayEmpty
+              notched
+            >
+              <MenuItem value="" disabled>
+                <em>Select Technician</em>
+              </MenuItem>
+              {users?.map((user) => (
+                <MenuItem key={user.id} value={user.id}>
+                  {user.full_name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-  <TextField
-    label="Remarks"
-    placeholder="Enter remarks"
-    name="remarks"
-    value={formData.remarks}
-    onChange={(e) => handleInputChange('remarks', e.target.value)}
-    fullWidth
-    variant="outlined"
-    multiline
-    rows={3}
-    InputLabelProps={{ shrink: true }}
-  />
+          <TextField
+            label="Remarks"
+            placeholder="Enter remarks"
+            name="remarks"
+            value={formData.remarks}
+            onChange={(e) => handleInputChange('remarks', e.target.value)}
+            fullWidth
+            variant="outlined"
+            multiline
+            rows={3}
+            InputLabelProps={{ shrink: true }}
+          />
 
-  <div className="space-y-1">
-    <label className="text-sm font-medium text-gray-700" htmlFor="attachment">
-      Attachment
-    </label>
-    <input
-      id="attachment"
-      type="file"
-      name="attachment"
-      onChange={(e) => setAttachment(e.target.files?.[0] || null)}
-      className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-    />
-  </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700" htmlFor="attachment">
+              Attachment
+            </label>
+            <input
+              id="attachment"
+              type="file"
+              name="attachment"
+              onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+              className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+            />
+          </div>
 
-  <div className="flex justify-center pt-4">
-    <Button
-      type="submit"
-      style={{ backgroundColor: '#C72030' }}
-      className="text-white hover:bg-[#C72030]/90 px-8 py-2 rounded-md"
-    >
-      Submit
-    </Button>
-  </div>
-</form>
-
+          <div className="flex justify-center pt-4">
+            <Button
+              type="submit"
+              disabled={submitting}
+              style={{ backgroundColor: '#C72030' }}
+              className="text-white hover:bg-[#C72030]/90 px-8 py-2 rounded-md flex items-center justify-center gap-2"
+            >
+              {submitting && (
+                <svg
+                  className="animate-spin h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
+                </svg>
+              )}
+              {submitting ? 'Submitting...' : 'Submit'}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

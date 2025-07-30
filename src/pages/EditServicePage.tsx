@@ -332,9 +332,11 @@ export const EditServicePage = () => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <TextField
-              required
-              label="Service Name"
-              value={formData.serviceName}
+              label={
+                <>
+                  Service Name<span className="text-red-600">*</span>
+                </>
+              } value={formData.serviceName}
               onChange={(e) => handleInputChange('serviceName', e.target.value)}
               fullWidth
               variant="outlined"
@@ -344,9 +346,10 @@ export const EditServicePage = () => {
               InputProps={{ sx: fieldStyles }}
               disabled={isSubmitting}
             />
-            <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }} error={errors.executionType}>
-              <InputLabel shrink>Execution Type</InputLabel>
-              <MuiSelect
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={errors.executionType}>
+              <InputLabel shrink>
+                Execution Type<span className="text-red-600">*</span>
+              </InputLabel>              <MuiSelect
                 value={formData.executionType}
                 onChange={(e) => handleInputChange('executionType', e.target.value)}
                 label="Execution Type"
@@ -378,8 +381,9 @@ export const EditServicePage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <FormControl fullWidth variant="outlined" error={errors.siteId}>
-              <InputLabel id="site-select-label" shrink>Site</InputLabel>
-              <MuiSelect
+              <InputLabel id="site-select-label" shrink>
+                Site<span className="text-red-600">*</span>
+              </InputLabel>              <MuiSelect
                 labelId="site-select-label"
                 label="Site"
                 value={formData.siteId || ''}
@@ -406,8 +410,9 @@ export const EditServicePage = () => {
             </FormControl>
 
             <FormControl fullWidth variant="outlined" error={errors.buildingId}>
-              <InputLabel id="building-select-label" shrink>Building</InputLabel>
-              <MuiSelect
+              <InputLabel id="building-select-label" shrink>
+                Building<span className="text-red-600">*</span>
+              </InputLabel>              <MuiSelect
                 labelId="building-select-label"
                 label="Building"
                 displayEmpty
@@ -434,8 +439,9 @@ export const EditServicePage = () => {
             </FormControl>
 
             <FormControl fullWidth variant="outlined" error={errors.wingId}>
-              <InputLabel id="wing-select-label" shrink>Wing</InputLabel>
-              <MuiSelect
+              <InputLabel id="wing-select-label" shrink>
+                Wing<span className="text-red-600">*</span>
+              </InputLabel>              <MuiSelect
                 labelId="wing-select-label"
                 label="Wing"
                 displayEmpty
@@ -462,8 +468,9 @@ export const EditServicePage = () => {
             </FormControl>
 
             <FormControl fullWidth variant="outlined" error={errors.areaId}>
-              <InputLabel id="area-select-label" shrink>Area</InputLabel>
-              <MuiSelect
+              <InputLabel id="area-select-label" shrink>
+                Area<span className="text-red-600">*</span>
+              </InputLabel>              <MuiSelect
                 labelId="area-select-label"
                 label="Area"
                 displayEmpty
@@ -492,8 +499,9 @@ export const EditServicePage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <FormControl fullWidth variant="outlined" error={errors.floorId}>
-              <InputLabel id="floor-select-label" shrink>Floor</InputLabel>
-              <MuiSelect
+              <InputLabel id="floor-select-label" shrink>
+                Floor<span className="text-red-600">*</span>
+              </InputLabel>              <MuiSelect
                 labelId="floor-select-label"
                 label="Floor"
                 displayEmpty
@@ -649,10 +657,7 @@ export const EditServicePage = () => {
             />
 
             <div className="flex items-center justify-center gap-2 mb-4">
-              <span
-                className="text-[#C72030] font-medium cursor-pointer text-sm"
-                onClick={() => document.getElementById('file-upload')?.click()}
-              >
+              <span className="text-[#C72030] font-medium text-sm">
                 Choose File
               </span>
               <span className="text-gray-500 text-sm">
@@ -669,6 +674,7 @@ export const EditServicePage = () => {
               <Upload className="w-4 h-4 mr-1" />
               Upload Files
             </Button>
+
           </div>
 
           {(existingFiles.length > 0 || selectedFile.length > 0) && (

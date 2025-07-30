@@ -204,7 +204,9 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         {/* Site */}
         <FormControl fullWidth variant="outlined" error={errors.siteId}>
-          <InputLabel id="site-select-label" shrink>Site*</InputLabel>
+          <InputLabel id="site-select-label" shrink>
+            Site<span className="text-red-600">*</span>
+          </InputLabel>
           <MuiSelect
             labelId="site-select-label"
             label="Site"
@@ -233,7 +235,9 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
         {/* Building */}
         <FormControl fullWidth variant="outlined" error={errors.buildingId}>
-          <InputLabel id="building-select-label" shrink>Building*</InputLabel>
+          <InputLabel id="building-select-label" shrink>
+            Building<span className="text-red-600">*</span>
+          </InputLabel>
           <MuiSelect
             labelId="building-select-label"
             label="Building"
@@ -262,7 +266,9 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
         {/* Wing */}
         <FormControl fullWidth variant="outlined" error={errors.wingId}>
-          <InputLabel id="wing-select-label" shrink>Wing*</InputLabel>
+          <InputLabel id="wing-select-label" shrink>
+            Wing<span className="text-red-600">*</span>
+          </InputLabel>
           <MuiSelect
             labelId="wing-select-label"
             label="Wing"
@@ -291,7 +297,9 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
         {/* Area */}
         <FormControl fullWidth variant="outlined" error={errors.areaId}>
-          <InputLabel id="area-select-label" shrink>Area*</InputLabel>
+          <InputLabel id="area-select-label" shrink>
+            Area<span className="text-red-600">*</span>
+          </InputLabel>
           <MuiSelect
             labelId="area-select-label"
             label="Area"
@@ -323,7 +331,9 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Floor */}
         <FormControl fullWidth variant="outlined" error={errors.floorId}>
-          <InputLabel id="floor-select-label" shrink>Floor*</InputLabel>
+          <InputLabel id="floor-select-label" shrink>
+            Floor<span className="text-red-600">*</span>
+          </InputLabel>
           <MuiSelect
             labelId="floor-select-label"
             label="Floor"
