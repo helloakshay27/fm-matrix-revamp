@@ -181,9 +181,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
             </Button>
           )}
         </div>
-        <p className="text-sm text-gray-500 mt-2">
-          {dateRange.startDate.toLocaleDateString()} - {dateRange.endDate.toLocaleDateString()}
-        </p>
+       
       </CardHeader>
       <CardContent className="px-6 pb-6">
         {data && Array.isArray(data) && data.length > 0 ? (
