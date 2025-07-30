@@ -77,9 +77,17 @@ export const AddSurveyPage = () => {
   };
 
   const handleQuestionChange = (id: string, field: keyof Question, value: string | boolean | string[]) => {
-    setQuestions(questions.map(q => 
-      q.id === id ? { ...q, [field]: value } : q
-    ));
+    setQuestions(questions.map(q => {
+      if (q.id === id) {
+        const updatedQuestion = { ...q, [field]: value };
+        // Initialize answerOptions when switching to multiple-choice
+        if (field === 'answerType' && value === 'multiple-choice' && !updatedQuestion.answerOptions) {
+          updatedQuestion.answerOptions = ['', ''];
+        }
+        return updatedQuestion;
+      }
+      return q;
+    }));
   };
 
   const handleAddAnswerOption = (questionId: string) => {
