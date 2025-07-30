@@ -289,16 +289,14 @@ export const AddSurveyPage = () => {
                                 <SelectItem value="N">N</SelectItem>
                               </SelectContent>
                             </Select>
-                            {(question.answerOptions?.length || 0) > 2 && (
-                              <Button
-                                onClick={() => handleRemoveAnswerOption(question.id, index)}
-                                variant="ghost"
-                                size="sm"
-                                className="text-gray-400 hover:text-red-500 p-1 h-10 w-10"
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            )}
+                            <Button
+                              onClick={() => handleRemoveAnswerOption(question.id, index)}
+                              variant="ghost"
+                              size="sm"
+                              className="text-gray-400 hover:text-red-500 p-1 h-10 w-10"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
                           </div>
                         ))}
                         
