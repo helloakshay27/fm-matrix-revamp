@@ -1281,20 +1281,72 @@ export const TicketDashboard = () => {
                               />
                             </div>
                             <div className="w-full overflow-x-auto">
-                              <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
-                                <BarChart data={categoryChartData}>
-                                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
-                                  <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} tick={{
-                                    fill: 'hsl(var(--analytics-text))',
-                                    fontSize: 10
-                                  }} className="text-xs" />
-                                  <YAxis tick={{
-                                    fill: 'hsl(var(--analytics-text))',
-                                    fontSize: 10
-                                  }} />
-                                  <Tooltip />
-                                  <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
-                                </BarChart>
+                              <ResponsiveContainer width="100%" height="100%" className="sm:h-[250px] min-w-[400px]">
+                                {unitCategorywiseData && unitCategorywiseData.response ? (
+                                  <BarChart 
+                                    data={unitCategorywiseData.response.tickets_category.map((category, index) => ({
+                                      name: category,
+                                      open: unitCategorywiseData.response.open_tickets[index] || 0,
+                                      closed: unitCategorywiseData.response.closed_tickets[index] || 0,
+                                      total: unitCategorywiseData.response.total_tickets[index] || 0
+                                    }))}
+                                    margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                                  >
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
+                                    <XAxis 
+                                      dataKey="name" 
+                                      angle={-45} 
+                                      textAnchor="end" 
+                                      height={80} 
+                                      tick={{
+                                        fill: '#374151',
+                                        fontSize: 10
+                                      }} 
+                                      className="text-xs" 
+                                    />
+                                    <YAxis tick={{
+                                      fill: '#374151',
+                                      fontSize: 10
+                                    }} />
+                                    <Tooltip 
+                                      content={({ active, payload, label }) => {
+                                        if (active && payload && payload.length) {
+                                          return (
+                                            <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                                              <p className="font-semibold text-gray-800 mb-2">{label}</p>
+                                              <div className="space-y-1">
+                                                <div className="flex justify-between items-center">
+                                                  <span className="text-yellow-600 font-medium">Open:</span>
+                                                  <span className="text-gray-700">{payload.find(p => p.dataKey === 'open')?.value || 0}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                  <span className="text-green-600 font-medium">Closed:</span>
+                                                  <span className="text-gray-700">{payload.find(p => p.dataKey === 'closed')?.value || 0}</span>
+                                                </div>
+                                                <div className="pt-1 border-t border-gray-200">
+                                                  <div className="flex justify-between items-center font-semibold">
+                                                    <span>Total:</span>
+                                                    <span>{payload.find(p => p.dataKey === 'total')?.value || 0}</span>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                        }
+                                        return null;
+                                      }}
+                                    />
+                                    <Bar dataKey="open" fill="#f59e0b" name="Open" />
+                                    <Bar dataKey="closed" fill="#10b981" name="Closed" />
+                                    <Bar dataKey="total" fill="#6b7280" name="Total" />
+                                  </BarChart>
+                                ) : (
+                                  <div className="flex items-center justify-center h-full">
+                                    <div className="text-center py-8 text-gray-500">
+                                      No unit category-wise data available for the selected date range
+                                    </div>
+                                  </div>
+                                )}
                               </ResponsiveContainer>
                             </div>
                           </div>
