@@ -205,7 +205,7 @@ export const AddSurveyPage = () => {
           <div className="mb-8">
             <div className="flex items-center gap-4 mb-6">
               <h2 className="text-lg font-medium text-gray-900">Add No. of Questions</h2>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 border border-gray-300 rounded px-3 py-1 bg-white">
                 <span className="text-sm font-medium">{numberOfQuestions.toString().padStart(2, '0')}</span>
                 <Button
                   onClick={handleAddQuestion}
