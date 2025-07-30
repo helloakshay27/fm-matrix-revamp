@@ -58,13 +58,37 @@ export const SurveyDetailsPage = () => {
       [key]: prev[key].filter(selected => selected !== item)
     }));
     
-    // Also remove from selectedRoomIds if removing a room
+    // Also remove from corresponding ID arrays
     if (type === 'room') {
       const room = rooms.find(r => r.name === item);
       if (room) {
         setLocationConfig(prev => ({
           ...prev,
           selectedRoomIds: prev.selectedRoomIds.filter(id => id !== room.id)
+        }));
+      }
+    } else if (type === 'building') {
+      const building = buildings.find(b => b.name === item);
+      if (building) {
+        setLocationConfig(prev => ({
+          ...prev,
+          selectedBuildingIds: prev.selectedBuildingIds.filter(id => id !== building.id)
+        }));
+      }
+    } else if (type === 'wing') {
+      const wing = wings.find(w => w.name === item);
+      if (wing) {
+        setLocationConfig(prev => ({
+          ...prev,
+          selectedWingIds: prev.selectedWingIds.filter(id => id !== wing.id)
+        }));
+      }
+    } else if (type === 'floor') {
+      const floor = floors.find(f => f.name === item);
+      if (floor) {
+        setLocationConfig(prev => ({
+          ...prev,
+          selectedFloorIds: prev.selectedFloorIds.filter(id => id !== floor.id)
         }));
       }
     }
@@ -296,14 +320,14 @@ export const SurveyDetailsPage = () => {
   const handleSubmitLocation = async () => {
     try {
       // Validate that we have room IDs selected
-      if (locationConfig.selectedRoomIds.length === 0) {
-        toast({
-          title: "Error",
-          description: "Please select at least one room",
-          variant: "destructive"
-        });
-        return;
-      }
+      // if (locationConfig.selectedRoomIds.length === 0) {
+      //   toast({
+      //     title: "Error",
+      //     description: "Please select at least one room",
+      //     variant: "destructive"
+      //   });
+      //   return;
+      // }
 
       // Prepare the API request
       const requestData = {
@@ -541,8 +565,16 @@ export const SurveyDetailsPage = () => {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
+              <DialogHeader className="flex flex-row items-center justify-between">
                 <DialogTitle>Location Configuration</DialogTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsDialogOpen(false)}
+                  className="h-6 w-6 p-0 hover:bg-gray-100"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </DialogHeader>
               
               <div className="space-y-6">
@@ -650,6 +682,21 @@ export const SurveyDetailsPage = () => {
                         </SelectContent>
                       </Select>
                        {/* Selected buildings */}
+                      {locationConfig.selectedBuildings.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {locationConfig.selectedBuildings.map((building) => (
+                            <span key={building} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
+                              {building}
+                              <button
+                                onClick={() => removeSelectedItem('building', building)}
+                                className="ml-1 text-gray-500 hover:text-gray-700"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
