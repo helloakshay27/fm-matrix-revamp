@@ -5,7 +5,6 @@ import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, File } from 'lucide-reac
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText } from '@mui/material';
-import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
 import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
@@ -34,7 +33,7 @@ export const AddAMCPage = () => {
   const { data: suppliersData, loading: suppliersLoading } = useAppSelector(state => state.suppliers);
   const { data: servicesData, loading: servicesLoading } = useAppSelector(state => state.services);
   const { loading: amcCreateLoading, success: amcCreateSuccess, error: amcCreateError } = useAppSelector(state => state.amcCreate);
-  const [services, setServices] = useState<Service[]>([]); // [newServices]
+  const [services, setServices] = useState<Service[]>([]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -50,6 +49,7 @@ export const AddAMCPage = () => {
     startDate: '',
     endDate: '',
     cost: '',
+    contractName: '', // Added new field
     paymentTerms: '',
     firstService: '',
     noOfVisits: '',
@@ -66,6 +66,7 @@ export const AddAMCPage = () => {
     startDate: '',
     endDate: '',
     cost: '',
+    contractName: '', // Added new error field
     paymentTerms: '',
     firstService: '',
     noOfVisits: ''
@@ -83,11 +84,8 @@ export const AddAMCPage = () => {
 
   // Extract data from Redux state
   const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
-  // const services = Array.isArray(servicesData) ? servicesData : [];
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
   const checkedIcon = <CheckBoxIcon fontSize="small" />;
-
-
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
@@ -149,7 +147,6 @@ export const AddAMCPage = () => {
     dispatch(fetchAssetsData({ page: 1 }));
     dispatch(fetchInventoryAssets());
     dispatch(fetchSuppliersData());
-    // dispatch(fetchServicesData());
 
     const fetchAssetGroups = async () => {
       setLoading(true);
@@ -183,19 +180,16 @@ export const AddAMCPage = () => {
           console.warn('API response is not an array:', response.data);
           setServices([]);
         }
-      }
-      catch (error) {
+      } catch (error) {
         console.error('Error fetching services:', error);
         setServices([]);
         toast.error("Failed to fetch services.");
       }
-    }
+    };
 
     fetchService();
     fetchAssetGroups();
   }, [dispatch]);
-
-  // console.log("service,", s)
 
   // Handle AMC creation success
   useEffect(() => {
@@ -257,6 +251,7 @@ export const AddAMCPage = () => {
       startDate: '',
       endDate: '',
       cost: '',
+      contractName: '',
       paymentTerms: '',
       firstService: '',
       noOfVisits: ''
@@ -311,6 +306,10 @@ export const AddAMCPage = () => {
       newErrors.cost = 'Please enter the cost.';
       isValid = false;
     }
+    if (!formData.contractName) {
+      newErrors.contractName = 'Please enter the contract name.';
+      isValid = false;
+    }
     if (!formData.paymentTerms) {
       newErrors.paymentTerms = 'Please select payment terms.';
       isValid = false;
@@ -323,10 +322,10 @@ export const AddAMCPage = () => {
       isValid = false;
     }
 
-
     setErrors(newErrors);
     return isValid;
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
@@ -341,6 +340,7 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
     sendData.append('pms_asset_amc[checklist_type]', formData.details);
     sendData.append('pms_asset_amc[amc_cost]', formData.cost);
+    sendData.append('pms_asset_amc[contract_name]', formData.contractName);
     sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
     sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
     sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
@@ -367,11 +367,9 @@ export const AddAMCPage = () => {
       sendData.append('amc_invoices[content][]', file);
     });
 
-    // Dispatch the createAMC action and wait for the result
     const result = await dispatch(createAMC(sendData));
 
     if (createAMC.fulfilled.match(result)) {
-      // Clear form fields after successful submission
       setFormData({
         details: 'Asset',
         type: 'Individual',
@@ -385,6 +383,7 @@ export const AddAMCPage = () => {
         startDate: '',
         endDate: '',
         cost: '',
+        contractName: '',
         paymentTerms: '',
         firstService: '',
         noOfVisits: '',
@@ -403,6 +402,7 @@ export const AddAMCPage = () => {
         startDate: '',
         endDate: '',
         cost: '',
+        contractName: '',
         paymentTerms: '',
         firstService: '',
         noOfVisits: ''
@@ -424,6 +424,7 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
     sendData.append('pms_asset_amc[checklist_type]', formData.details);
     sendData.append('pms_asset_amc[amc_cost]', formData.cost);
+    sendData.append('pms_asset_amc[contract_name]', formData.contractName); // Added new field
     sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
     sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
     sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
@@ -451,109 +452,18 @@ export const AddAMCPage = () => {
       sendData.append('amc_invoices[content][]', file);
     });
 
-    // Dispatch the createAMC action and wait for the result
     const result = await dispatch(createAMC(sendData));
 
     if (createAMC.fulfilled.match(result)) {
-      const amcId = result.payload?.id; // Assuming the API returns the created AMC ID
+      const amcId = result.payload?.id;
       if (amcId) {
-        navigate(`/maintenance/amc/details/${amcId}`); // Redirect to the details page
+        navigate(`/maintenance/amc/details/${amcId}`);
       } else {
         toast.error("AMC created, but no ID returned for redirection.");
       }
     }
   };
 
-
-
-
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   if (!validateForm()) {
-  //     toast.error("Please fill all required fields.");
-  //     return;
-  //   }
-
-  //   const sendData = new FormData();
-  //   sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ? formData.asset_ids[0] : '');
-  //   sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
-  //   sendData.append('pms_asset_amc[pms_site_id]', '1');
-  //   sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
-  //   sendData.append('pms_asset_amc[checklist_type]', formData.details);
-  //   sendData.append('pms_asset_amc[amc_cost]', formData.cost);
-  //   sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
-  //   sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
-  //   sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
-  //   sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
-  //   sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
-  //   sendData.append('pms_asset_amc[remarks]', formData.remarks);
-  //   sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
-  //   sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
-
-  //   if (formData.type === 'Group') {
-  //     sendData.append('group_id', formData.group);
-  //     sendData.append('sub_group_id', formData.subgroup);
-  //   }
-
-  //   if (formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0) {
-  //     formData.asset_ids.forEach(id => sendData.append('asset_ids[]', id));
-  //   }
-
-  //   attachments.contracts.forEach((file) => {
-  //     sendData.append('amc_contracts[content][]', file);
-  //   });
-
-  //   attachments.invoices.forEach((file) => {
-  //     sendData.append('amc_invoices[content][]', file);
-  //   });
-
-  //   dispatch(createAMC(sendData));
-  // };
-
-  // const handleSaveAndSchedule = async () => {
-  //   if (!validateForm()) {
-  //     toast.error("Please fill all required fields.");
-  //     return;
-  //   }
-
-  //   const sendData = new FormData();
-  //   sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ? formData.asset_ids[0] : '');
-  //   sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
-  //   sendData.append('pms_asset_amc[pms_site_id]', '1');
-  //   sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
-  //   sendData.append('pms_asset_amc[checklist_type]', formData.details);
-  //   sendData.append('pms_asset_amc[amc_cost]', formData.cost);
-  //   sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
-  //   sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
-  //   sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
-  //   sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
-  //   sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
-  //   sendData.append('pms_asset_amc[remarks]', formData.remarks);
-  //   sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
-  //   sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
-  //   sendData.append('pms_asset_amc[schedule_immediately]', 'true');
-
-  //   if (formData.type === 'Group') {
-  //     sendData.append('group_id', formData.group);
-  //     sendData.append('sub_group_id', formData.subgroup);
-  //   }
-
-  //   if (formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0) {
-  //     formData.asset_ids.forEach(id => sendData.append('asset_ids[]', id));
-  //   }
-
-  //   attachments.contracts.forEach((file) => {
-  //     sendData.append('amc_contracts[content][]', file);
-  //   });
-
-  //   attachments.invoices.forEach((file) => {
-  //     sendData.append('amc_invoices[content][]', file);
-  //   });
-
-  //   dispatch(createAMC(sendData));
-  // };
-
-  // Responsive styles for TextField and Select
   const fieldStyles = {
     height: {
       xs: 28,
@@ -583,7 +493,7 @@ export const AddAMCPage = () => {
         {/* AMC Configuration */}
         <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
           <CardHeader className='bg-[#F6F4EE] mb-4'>
-            <CardTitle className="text-lg text-[#C72030] flex items-center">
+            <CardTitle className="text-lg text-black flex items-center">
               <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
               AMC CONFIGURATION
             </CardTitle>
@@ -868,7 +778,7 @@ export const AddAMCPage = () => {
         {/* AMC Details */}
         <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
           <CardHeader className='bg-[#F6F4EE] mb-4'>
-            <CardTitle className="text-lg text-[#C72030] flex items-center">
+            <CardTitle className="text-lg text-black flex items-center">
               <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
               AMC DETAILS
             </CardTitle>
@@ -890,6 +800,22 @@ export const AddAMCPage = () => {
                   InputProps={{ sx: fieldStyles }}
                   error={!!errors.cost}
                   helperText={errors.cost}
+                />
+              </div>
+
+              <div>
+                <TextField
+                  label="Contract Name*"
+                  placeholder="Enter Contract Name"
+                  name="contractName"
+                  value={formData.contractName}
+                  onChange={e => handleInputChange('contractName', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  error={!!errors.contractName}
+                  helperText={errors.contractName}
                 />
               </div>
 
@@ -966,7 +892,7 @@ export const AddAMCPage = () => {
                   error={!!errors.endDate}
                   helperText={errors.endDate}
                   inputProps={{
-                    min: formData.startDate || undefined, // enforce minDate
+                    min: formData.startDate || undefined,
                   }}
                   sx={{
                     height: '45px',
@@ -997,7 +923,6 @@ export const AddAMCPage = () => {
                   error={!!errors.noOfVisits}
                   helperText={errors.noOfVisits}
                 />
-
               </div>
 
               <div className="md:col-span-3">
@@ -1041,7 +966,7 @@ export const AddAMCPage = () => {
         {/* Attachments */}
         <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
           <CardHeader className='bg-[#F6F4EE] mb-4'>
-            <CardTitle className="text-lg text-[#C72030] flex items-center">
+            <CardTitle className="text-lg text-black flex items-center">
               <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
               ATTACHMENTS
             </CardTitle>

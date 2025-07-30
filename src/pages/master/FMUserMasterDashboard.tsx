@@ -1,42 +1,45 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useLayout } from '@/contexts/LayoutContext';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store/store';
-import { fetchFMUsers, FMUser } from '@/store/slices/fmUserSlice';
-import { fetchUserCounts } from '@/store/slices/userCountsSlice';
-import { StatsCard } from '@/components/StatsCard';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Plus, Upload, Download, Filter, Eye, Search, Users, X } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useLayout } from "@/contexts/LayoutContext";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { fetchFMUsers, FMUser } from "@/store/slices/fmUserSlice";
+import { fetchUserCounts } from "@/store/slices/userCountsSlice";
+import { StatsCard } from "@/components/StatsCard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
+  Plus,
+  Upload,
+  Download,
+  Filter,
+  Eye,
+  Search,
+  Users,
+  X,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from "@/components/ui/dialog";
 import {
-  TextField,
-  Box
-} from '@mui/material';
-import { BulkUploadDialog } from '@/components/BulkUploadDialog';
-import { ImportFmUsers } from '@/components/ImportFmUsers';
-import axios from 'axios';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TextField, Box } from "@mui/material";
+import { ImportFmUsers } from "@/components/ImportFmUsers";
+import axios from "axios";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 
 // Transform API data to table format
 const transformFMUserData = (apiUser: FMUser) => ({
@@ -45,49 +48,57 @@ const transformFMUserData = (apiUser: FMUser) => ({
   gender: apiUser.gender,
   mobile: apiUser.mobile,
   email: apiUser.email,
-  vendorCompany: apiUser.company_name,
-  entityName: `Entity ${apiUser.entity_id}`,
-  unit: `Unit ${apiUser.unit_id}`,
+  vendorCompany: apiUser.vendor_name,
+  entityName: apiUser.entity_name,
+  unit: apiUser.unit_name,
   role: apiUser.lock_user_permission?.role_for,
-  employeeId: apiUser.employee_id,
-  createdBy: `User ${apiUser.created_by_id}`,
+  employeeId: apiUser.lock_user_permission?.employee_id,
+  createdBy: apiUser.created_by_name,
   accessLevel: apiUser.lock_user_permission?.access_level,
   type: apiUser.user_type
     ? apiUser.user_type
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
-    : '',
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
+    : "",
   status: apiUser?.lock_user_permission?.status,
   faceRecognition: apiUser.face_added,
-  appDownloaded: apiUser.app_downloaded === 'Yes',
-  active: apiUser.active
+  appDownloaded: apiUser.app_downloaded === "Yes",
+  active: apiUser.lock_user_permission?.active,
+  lockUserId: apiUser.lock_user_permission?.id
 });
 
-
 export const FMUserMasterDashboard = () => {
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { data: fmUsersResponse, loading, error } = useSelector((state: RootState) => state.fmUsers);
-  const { data: userCounts, loading: countsLoading } = useSelector((state: RootState) => state.userCounts);
+  const {
+    data: fmUsersResponse,
+    loading,
+    error,
+  } = useSelector((state: RootState) => state.fmUsers);
+  const { data: userCounts, loading: countsLoading } = useSelector(
+    (state: RootState) => state.userCounts
+  );
   const { toast } = useToast();
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [cloneRoleDialogOpen, setCloneRoleDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [activeTab, setActiveTab] = useState('handover');
-  const [fromUser, setFromUser] = useState('');
-  const [toUser, setToUser] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [activeTab, setActiveTab] = useState("handover");
+  const [fromUser, setFromUser] = useState("");
+  const [toUser, setToUser] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showImportModal, setShowImportModal] = useState(false);
-  const pageSize = 5;
+  const pageSize = 10;
   const [filters, setFilters] = useState({
-    name: '',
-    email: ''
+    name: "",
+    email: "",
   });
 
   // Transform API data to table format
@@ -98,40 +109,80 @@ export const FMUserMasterDashboard = () => {
     if (fmUsersResponse?.fm_users) {
       const transformedData = fmUsersResponse.fm_users.map(transformFMUserData);
       setFmUsersData(transformedData);
-      setFilteredFMUsersData(transformedData); // Initialize filtered data with all users
+      setFilteredFMUsersData(transformedData);
     }
   }, [fmUsersResponse]);
 
   useEffect(() => {
-    setCurrentSection('Master');
+    setCurrentSection("Master");
     dispatch(fetchFMUsers());
     dispatch(fetchUserCounts());
   }, [setCurrentSection, dispatch]);
 
-  // Apply local search filter
-  const filteredUsers = filteredFMUsersData.filter(user => {
-    const matchesSearch = user.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.mobile.includes(searchTerm) ||
-      user.vendorCompany.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return matchesSearch;
-  });
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredUsers.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + pageSize);
+  // Define columns for EnhancedTable
+  const columns: ColumnConfig[] = [
+    { key: "active", label: "Active", sortable: true, draggable: true },
+    { key: "id", label: "ID", sortable: true, draggable: true },
+    { key: "userName", label: "User Name", sortable: true, draggable: true },
+    { key: "gender", label: "Gender", sortable: true, draggable: true },
+    { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
+    { key: "email", label: "Email", sortable: true, draggable: true },
+    {
+      key: "vendorCompany",
+      label: "Vendor Company Name",
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: "entityName",
+      label: "Entity Name",
+      sortable: true,
+      draggable: true,
+    },
+    { key: "unit", label: "Unit", sortable: true, draggable: true },
+    { key: "role", label: "Role", sortable: true, draggable: true },
+    {
+      key: "employeeId",
+      label: "Employee ID",
+      sortable: true,
+      draggable: true,
+    },
+    { key: "createdBy", label: "Created By", sortable: true, draggable: true },
+    {
+      key: "accessLevel",
+      label: "Access Level",
+      sortable: true,
+      draggable: true,
+    },
+    { key: "type", label: "Type", sortable: true, draggable: true },
+    { key: "status", label: "Status", sortable: true, draggable: true },
+    {
+      key: "faceRecognition",
+      label: "Face Recognition",
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: "appDownloaded",
+      label: "App Downloaded",
+      sortable: true,
+      draggable: true,
+    },
+  ];
 
   // Use API data for stats if available, otherwise fallback to calculated values
   const totalUsers = userCounts?.total_users ?? fmUsersData.length;
-  const approvedUsers = userCounts?.approved ?? fmUsersData.filter(user => user.active).length;
+  const approvedUsers =
+    userCounts?.approved ?? fmUsersData.filter((user) => user.active).length;
   const pendingUsers = userCounts?.pending ?? 0;
-  const rejectedUsers = userCounts?.rejected ?? fmUsersData.filter(user => !user.active).length;
-  const appDownloaded = userCounts?.app_downloaded_count ?? fmUsersData.filter(user => user.appDownloaded).length;
+  const rejectedUsers =
+    userCounts?.rejected ?? fmUsersData.filter((user) => !user.active).length;
+  const appDownloaded =
+    userCounts?.app_downloaded_count ??
+    fmUsersData.filter((user) => user.appDownloaded).length;
 
   const handleAddUser = () => {
-    navigate('/master/user/fm-users/add');
+    navigate("/master/user/fm-users/add");
   };
 
   const handleEditUser = (id: string) => {
@@ -144,40 +195,52 @@ export const FMUserMasterDashboard = () => {
 
   const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
     try {
-      setFmUsersData(prevUsers =>
-        prevUsers.map(user =>
-          user.id === userId
-            ? { ...user, active: isActive, status: isActive ? 'Active' : 'Inactive' }
+      // Make PUT request to update user status
+      const response = await fetch(
+        `https://${baseUrl}/pms/users/status_update.jsong?id=${userId}&active=${isActive}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`, // Ensure token is in scope
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update status");
+      }
+
+      // Update local UI state
+      setFmUsersData((prevUsers) =>
+        prevUsers.map((user) =>
+          user.lockUserId === userId
+            ? {
+              ...user,
+              active: isActive,
+              status: isActive ? "Active" : "Inactive",
+            }
             : user
         )
       );
-      setFilteredFMUsersData(prevUsers =>
-        prevUsers.map(user =>
-          user.id === userId
-            ? { ...user, active: isActive, status: isActive ? 'Active' : 'Inactive' }
+      setFilteredFMUsersData((prevUsers) =>
+        prevUsers.map((user) =>
+          user.lockUserId === userId
+            ? {
+              ...user,
+              active: isActive,
+              status: isActive ? "Active" : "Inactive",
+            }
             : user
         )
       );
 
       toast({
         title: "Status Updated",
-        description: `User ${isActive ? 'activated' : 'deactivated'} successfully!`,
+        description: `User ${isActive ? "activated" : "deactivated"} successfully!`,
       });
     } catch (error) {
-      setFmUsersData(prevUsers =>
-        prevUsers.map(user =>
-          user.id === userId
-            ? { ...user, active: !isActive, status: !isActive ? 'Active' : 'Inactive' }
-            : user
-        )
-      );
-      setFilteredFMUsersData(prevUsers =>
-        prevUsers.map(user =>
-          user.id === userId
-            ? { ...user, active: !isActive, status: !isActive ? 'Active' : 'Inactive' }
-            : user
-        )
-      );
+      console.error("Status toggle failed:", error);
 
       toast({
         title: "Error",
@@ -187,6 +250,7 @@ export const FMUserMasterDashboard = () => {
     }
   };
 
+
   const handleStatusClick = (user: any) => {
     setSelectedUser(user);
     setSelectedStatus(user.status);
@@ -195,6 +259,22 @@ export const FMUserMasterDashboard = () => {
 
   const handleStatusUpdate = async () => {
     try {
+      // Call the PUT API to update the user status
+      const response = await fetch(
+        `https://${baseUrl}/pms/users/status_update?id=${selectedUser?.lockUserId}&status=${selectedStatus}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`, // make sure token is defined
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update user status");
+      }
+
       toast({
         title: "Status Updated",
         description: `User status updated to ${selectedStatus} successfully!`,
@@ -202,10 +282,12 @@ export const FMUserMasterDashboard = () => {
 
       setStatusDialogOpen(false);
       setSelectedUser(null);
-      setSelectedStatus('');
+      setSelectedStatus("");
 
       dispatch(fetchFMUsers());
     } catch (error) {
+      console.error("Error updating user status:", error);
+
       toast({
         title: "Error",
         description: "Failed to update user status. Please try again.",
@@ -216,17 +298,22 @@ export const FMUserMasterDashboard = () => {
 
   const handleExportUser = async () => {
     try {
-      const response = await axios.get(`https://${localStorage.getItem('baseUrl')}/pms/account_setups/export_users.json`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        responseType: 'blob',
-      });
+      const response = await axios.get(
+        `https://${localStorage.getItem(
+          "baseUrl"
+        )}/pms/account_setups/export_users.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          responseType: "blob",
+        }
+      );
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', 'fm_users.csv');
+      link.setAttribute("download", "fm_users.csv");
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -242,20 +329,25 @@ export const FMUserMasterDashboard = () => {
       const newFilterParams = {
         "q[firstname_cont]": firstName,
         "q[lastname_cont]": lastName,
-        "q[email_cont]": filters.email
+        "q[email_cont]": filters.email,
       };
 
       const queryString = new URLSearchParams(newFilterParams).toString();
-      const response = await axios.get(`https://${localStorage.getItem('baseUrl')}/pms/account_setups/fm_users.json?${queryString}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      const response = await axios.get(
+        `https://${localStorage.getItem(
+          "baseUrl"
+        )}/pms/account_setups/fm_users.json?${queryString}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
-      // Transform and set filtered data
-      const transformedFilteredData = response.data.fm_users.map(transformFMUserData);
+      const transformedFilteredData =
+        response.data.fm_users.map(transformFMUserData);
       setFilteredFMUsersData(transformedFilteredData);
-      setCurrentPage(1); // Reset to first page after filtering
+      setCurrentPage(1);
       setFilterDialogOpen(false);
 
       toast({
@@ -273,20 +365,21 @@ export const FMUserMasterDashboard = () => {
   };
 
   const getStatusBadgeProps = (status: string) => {
-    if (status === 'Active' || status === 'Approved') {
+    if (status === "active" || status === "approved") {
       return {
-        className: 'bg-green-600 text-white hover:bg-green-700 cursor-pointer',
-        children: 'Approved'
+        className: "bg-green-600 text-white hover:bg-green-700 cursor-pointer",
+        children: "Approved",
       };
-    } else if (status === 'Pending') {
+    } else if (status === "pending") {
       return {
-        className: 'bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer',
-        children: 'Pending'
+        className:
+          "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
+        children: "Pending",
       };
     } else {
       return {
-        className: 'bg-red-600 text-white hover:bg-red-700 cursor-pointer',
-        children: 'Rejected'
+        className: "bg-red-600 text-white hover:bg-red-700 cursor-pointer",
+        children: "Rejected",
       };
     }
   };
@@ -297,7 +390,7 @@ export const FMUserMasterDashboard = () => {
 
   const handleCloneRoleSubmit = async () => {
     try {
-      if (activeTab === 'handover') {
+      if (activeTab === "handover") {
         toast({
           title: "Handover Successful",
           description: `Role handover from ${fromUser} to ${toUser} completed successfully!`,
@@ -310,10 +403,9 @@ export const FMUserMasterDashboard = () => {
       }
 
       setCloneRoleDialogOpen(false);
-      setFromUser('');
-      setToUser('');
-      setActiveTab('handover');
-
+      setFromUser("");
+      setToUser("");
+      setActiveTab("handover");
     } catch (error) {
       toast({
         title: "Error",
@@ -325,10 +417,9 @@ export const FMUserMasterDashboard = () => {
 
   const handleResetFilters = () => {
     setFilters({
-      name: '',
-      email: ''
+      name: "",
+      email: "",
     });
-    // Restore original data
     setFilteredFMUsersData(fmUsersData);
     setCurrentPage(1);
     setFilterDialogOpen(false);
@@ -339,120 +430,94 @@ export const FMUserMasterDashboard = () => {
   };
 
   const handleFilterChange = (field: string, value: string) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  // Render actions for each row
+  const renderActions = (user: any) => (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => handleViewUser(user.id)}
+      className="hover:bg-gray-100"
+    >
+      <Eye className="w-4 h-4" />
+    </Button>
+  );
 
-  const renderPaginationItems = () => {
-    const items = [];
-    const showEllipsis = totalPages > 7;
-
-    if (showEllipsis) {
-      items.push(
-        <PaginationItem key={1}>
-          <PaginationLink
-            onClick={() => setCurrentPage(1)}
-            isActive={currentPage === 1}
-          >
-            1
-          </PaginationLink>
-        </PaginationItem>
-      );
-
-      if (currentPage > 4) {
-        items.push(
-          <PaginationItem key="ellipsis1">
-            <PaginationEllipsis />
-          </PaginationItem>
+  // Render custom cells for specific columns
+  const renderCell = (user: any, columnKey: string) => {
+    switch (columnKey) {
+      case "active":
+        return (
+          <Switch
+            checked={user.active}
+            onCheckedChange={(checked) =>
+              handleToggleUserStatus(user.lockUserId, checked)
+            }
+            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+          />
         );
-      } else {
-        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink
-                onClick={() => setCurrentPage(i)}
-                isActive={currentPage === i}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      if (currentPage > 3 && currentPage < totalPages - 2) {
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink
-                onClick={() => setCurrentPage(i)}
-                isActive={currentPage === i}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      if (currentPage < totalPages - 3) {
-        items.push(
-          <PaginationItem key="ellipsis2">
-            <PaginationEllipsis />
-          </PaginationItem>
+      case "type":
+        return (
+          <Badge variant={user.type === "Internal" ? "default" : "secondary"}>
+            {user.type}
+          </Badge>
         );
-      } else {
-        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-          if (!items.find(item => item.key === i)) {
-            items.push(
-              <PaginationItem key={i}>
-                <PaginationLink
-                  onClick={() => setCurrentPage(i)}
-                  isActive={currentPage === i}
-                >
-                  {i}
-                </PaginationLink>
-              </PaginationItem>
-            );
-          }
-        }
-      }
-
-      if (totalPages > 1) {
-        items.push(
-          <PaginationItem key={totalPages}>
-            <PaginationLink
-              onClick={() => setCurrentPage(totalPages)}
-              isActive={currentPage === totalPages}
-            >
-              {totalPages}
-            </PaginationLink>
-          </PaginationItem>
+      case "status":
+        return (
+          <Badge
+            {...getStatusBadgeProps(user.status)}
+            onClick={() => handleStatusClick(user)}
+          />
         );
-      }
-    } else {
-      for (let i = 1; i <= totalPages; i++) {
-        items.push(
-          <PaginationItem key={i}>
-            <PaginationLink
-              onClick={() => setCurrentPage(i)}
-              isActive={currentPage === i}
-            >
-              {i}
-            </PaginationLink>
-          </PaginationItem>
+      case "faceRecognition":
+        return (
+          <Badge variant={user.faceRecognition ? "default" : "secondary"}>
+            {user.faceRecognition ? "Yes" : "No"}
+          </Badge>
         );
-      }
+      case "appDownloaded":
+        return (
+          <Badge variant={user.appDownloaded ? "default" : "secondary"}>
+            {user.appDownloaded ? "Yes" : "No"}
+          </Badge>
+        );
+      default:
+        return user[columnKey];
     }
-
-    return items;
   };
+
+  // Left actions for the table
+  const leftActions = (
+    <>
+      <Button
+        onClick={handleAddUser}
+        className="bg-[#C72030] hover:bg-[#a91b29] text-white"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add FM User
+      </Button>
+      <Button
+        variant="outline"
+        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+        onClick={() => setShowImportModal(true)}
+      >
+        <Upload className="w-4 h-4 mr-2" />
+        Import
+      </Button>
+      <Button
+        variant="outline"
+        className="border-gray-300 text-gray-700 hover:bg-gray-50"
+        onClick={() => setCloneRoleDialogOpen(true)}
+      >
+        Clone Role
+      </Button>
+    </>
+  );
 
   if (loading) {
     return (
@@ -477,7 +542,9 @@ export const FMUserMasterDashboard = () => {
   return (
     <div className="w-full p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-[#1a1a1a]">FM User Master</h1>
+        <h1 className="text-2xl font-semibold text-[#1a1a1a]">
+          FM User Master
+        </h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -508,154 +575,25 @@ export const FMUserMasterDashboard = () => {
         />
       </div>
 
-      <div className="flex flex-wrap gap-3 items-center">
-        <Button onClick={handleAddUser} className="bg-[#C72030] hover:bg-[#a91b29] text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          Add FM User
-        </Button>
-        <Button variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white" onClick={() => setShowImportModal(true)}>
-          <Upload className="w-4 h-4 mr-2" />
-          Import
-        </Button>
-        <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50" onClick={handleExportUser}>
-          <Download className="w-4 h-4 mr-2" />
-          Export
-        </Button>
-        <Button
-          variant="outline"
-          className="border-gray-300 text-gray-700 hover:bg-gray-50"
-          onClick={() => setFilterDialogOpen(true)}
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
-        <Button
-          variant="outline"
-          className="border-gray-300 text-gray-700 hover:bg-gray-50"
-          onClick={() => setCloneRoleDialogOpen(true)}
-        >
-          Clone Role
-        </Button>
-
-        <div className="relative ml-auto">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Search users..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-64"
-          />
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-[#1a1a1a]">Actions</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Active</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">ID</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">User Name</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Gender</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Mobile Number</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Email</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Vendor Company Name</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Entity Name</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Unit</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Role</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Employee ID</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Created By</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Access Level</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Type</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">Face Recognition</TableHead>
-                <TableHead className="font-semibold text-[#1a1a1a]">App Downloaded</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedUsers.map((user) => (
-                <TableRow key={user.id} className="hover:bg-gray-50">
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleViewUser(user.id)}
-                      className="hover:bg-gray-100"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={user.active}
-                      onCheckedChange={(checked) => handleToggleUserStatus(user.id, checked)}
-                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium">{user.id}</TableCell>
-                  <TableCell>{user.userName}</TableCell>
-                  <TableCell>{user.gender}</TableCell>
-                  <TableCell>{user.mobile}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.vendorCompany}</TableCell>
-                  <TableCell>{user.entityName}</TableCell>
-                  <TableCell>{user.unit}</TableCell>
-                  <TableCell>{user.role}</TableCell>
-                  <TableCell>{user.employeeId}</TableCell>
-                  <TableCell>{user.createdBy}</TableCell>
-                  <TableCell>{user.accessLevel}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.type === 'Internal' ? 'default' : 'secondary'}>
-                      {user.type}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      {...getStatusBadgeProps(user.status)}
-                      onClick={() => handleStatusClick(user)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.faceRecognition ? 'default' : 'secondary'}>
-                      {user.faceRecognition ? 'Yes' : 'No'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.appDownloaded ? 'default' : 'secondary'}>
-                      {user.appDownloaded ? 'Yes' : 'No'}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-6">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                />
-              </PaginationItem>
-
-              {renderPaginationItems()}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
+      <EnhancedTable
+        data={filteredFMUsersData}
+        columns={columns}
+        renderActions={renderActions}
+        renderCell={renderCell}
+        storageKey="fm-user-master-table"
+        pagination={true}
+        pageSize={pageSize}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search users..."
+        enableExport={true}
+        exportFileName="fm_users"
+        handleExport={handleExportUser}
+        onFilterClick={() => setFilterDialogOpen(true)}
+        leftActions={leftActions}
+        loading={loading}
+        selectable={false}
+      />
 
       <ImportFmUsers
         open={showImportModal}
@@ -668,7 +606,9 @@ export const FMUserMasterDashboard = () => {
         <DialogContent className="sm:max-w-[600px] p-0">
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-semibold">Filter</DialogTitle>
+              <DialogTitle className="text-xl font-semibold">
+                Filter
+              </DialogTitle>
               <Button
                 variant="ghost"
                 size="sm"
@@ -689,7 +629,7 @@ export const FMUserMasterDashboard = () => {
                   variant="outlined"
                   placeholder="Enter Name"
                   value={filters.name}
-                  onChange={(e) => handleFilterChange('name', e.target.value)}
+                  onChange={(e) => handleFilterChange("name", e.target.value)}
                   InputLabelProps={{ shrink: true }}
                 />
                 <TextField
@@ -698,7 +638,7 @@ export const FMUserMasterDashboard = () => {
                   variant="outlined"
                   placeholder="Enter Email"
                   value={filters.email}
-                  onChange={(e) => handleFilterChange('email', e.target.value)}
+                  onChange={(e) => handleFilterChange("email", e.target.value)}
                   InputLabelProps={{ shrink: true }}
                 />
               </div>
@@ -727,7 +667,9 @@ export const FMUserMasterDashboard = () => {
         <DialogContent className="sm:max-w-[400px] p-0 bg-white">
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-semibold">Update</DialogTitle>
+              <DialogTitle className="text-xl font-semibold">
+                Update
+              </DialogTitle>
               <Button
                 variant="ghost"
                 size="sm"
@@ -740,24 +682,25 @@ export const FMUserMasterDashboard = () => {
           </DialogHeader>
 
           <div className="p-6 space-y-6">
-            <Select
-              value={selectedStatus}
-              onValueChange={setSelectedStatus}
-            >
-              <SelectTrigger className="w-full bg-white">
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="w-full bg-white" value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
                 <SelectValue placeholder="Select Status" />
               </SelectTrigger>
               <SelectContent className="bg-white border shadow-lg z-50">
-                <SelectItem value="Select Status" disabled className="text-gray-400">
+                <SelectItem
+                  value="Select Status"
+                  disabled
+                  className="text-gray-400"
+                >
                   Select Status
                 </SelectItem>
-                <SelectItem value="Approved" className="hover:bg-blue-50">
+                <SelectItem value="approved" className="hover:bg-blue-50">
                   Approved
                 </SelectItem>
-                <SelectItem value="Rejected" className="hover:bg-blue-50">
+                <SelectItem value="rejected" className="hover:bg-blue-50">
                   Rejected
                 </SelectItem>
-                <SelectItem value="Pending" className="hover:bg-blue-50">
+                <SelectItem value="pending" className="hover:bg-blue-50">
                   Pending
                 </SelectItem>
               </SelectContent>
@@ -767,7 +710,7 @@ export const FMUserMasterDashboard = () => {
               <Button
                 onClick={handleStatusUpdate}
                 className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2 rounded-md"
-                disabled={!selectedStatus || selectedStatus === 'Select Status'}
+                disabled={!selectedStatus || selectedStatus === "Select Status"}
               >
                 Submit
               </Button>
@@ -780,7 +723,9 @@ export const FMUserMasterDashboard = () => {
         <DialogContent className="sm:max-w-[500px] p-0 bg-white">
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-semibold">Clone Role</DialogTitle>
+              <DialogTitle className="text-xl font-semibold">
+                Clone Role
+              </DialogTitle>
               <Button
                 variant="ghost"
                 size="sm"
@@ -793,7 +738,11 @@ export const FMUserMasterDashboard = () => {
           </DialogHeader>
 
           <div className="p-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
+            >
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger
                   value="handover"
@@ -811,7 +760,9 @@ export const FMUserMasterDashboard = () => {
 
               <TabsContent value="handover" className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">From User</label>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    From User
+                  </label>
                   <Select value={fromUser} onValueChange={setFromUser}>
                     <SelectTrigger className="w-full bg-white">
                       <SelectValue placeholder="Select..." />
@@ -833,7 +784,9 @@ export const FMUserMasterDashboard = () => {
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">To User</label>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    To User
+                  </label>
                   <Select value={toUser} onValueChange={setToUser}>
                     <SelectTrigger className="w-full bg-white">
                       <SelectValue placeholder="Select..." />
@@ -857,7 +810,9 @@ export const FMUserMasterDashboard = () => {
 
               <TabsContent value="clone" className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">To User</label>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    To User
+                  </label>
                   <Select value={toUser} onValueChange={setToUser}>
                     <SelectTrigger className="w-full bg-white">
                       <SelectValue placeholder="Select..." />
@@ -884,7 +839,7 @@ export const FMUserMasterDashboard = () => {
               <Button
                 onClick={handleCloneRoleSubmit}
                 className="bg-[#C72030] hover:bg-[#a91b29] text-white px-8 py-2 rounded-md"
-                disabled={!toUser || (activeTab === 'handover' && !fromUser)}
+                disabled={!toUser || (activeTab === "handover" && !fromUser)}
               >
                 Submit
               </Button>
