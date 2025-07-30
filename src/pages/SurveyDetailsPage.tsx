@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus, ChevronDown } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { fetchSnagChecklistById, fetchSnagChecklistCategories, SnagChecklist } from '@/services/snagChecklistAPI';
@@ -385,8 +388,14 @@ export const SurveyDetailsPage = () => {
       </div>
 
       {/* Main Survey Content Card */}
-      <Card className="border border-gray-200 bg-gray-50">
-        <CardContent className="p-6">
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-orange-600 flex items-center gap-2">
+            <div className="w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs">T</div>
+            Task
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="text-gray-500">Loading survey data...</div>
@@ -398,129 +407,86 @@ export const SurveyDetailsPage = () => {
           ) : (
             <>
               {/* Top Section - Category and Title */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="hidden">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category*
-                  </label>
-                  <Select value={snagChecklist.snag_audit_category} disabled>
-                    <SelectTrigger className="w-full bg-gray-50">
-                      <SelectValue placeholder="Select Category" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Checklist Group</Label>
+                  <Select disabled>
+                    <SelectTrigger>
+                      <SelectValue placeholder={snagChecklist.snag_audit_category || "Daily Substation Log"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories?.map((category) => (
-                        <SelectItem key={category.id} value={category.name}>
-                          {category.name}
-                        </SelectItem>
-                      )) || []}
+                      <SelectItem value="daily-log">{snagChecklist.snag_audit_category || "Daily Substation Log"}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Title*
-                  </label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter the title"
-                    className="w-full h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-gray-300"
-                    value={snagChecklist.name}
-                    disabled
-                    readOnly
-                  />
+                  <Label>Checklist Group</Label>
+                  <Select disabled>
+                    <SelectTrigger>
+                      <SelectValue placeholder={snagChecklist.name || "E-Block EMT"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="e-block">{snagChecklist.name || "E-Block EMT"}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              {/* Questions Counter Section */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">No. of Questions</span>
-                  <span className="text-sm font-medium">{snagChecklist?.questions_count || 0}</span>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Questions Grid */}
-          {!loading && snagChecklist && (
-            <div className="grid grid-cols-1 gap-6">
-              {snagChecklist.snag_questions?.map((question, index) => (
-                <Card key={question.id} className="border border-gray-200 bg-gray-100">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                    <CardTitle className="text-base font-medium">
-                      Question
-                    </CardTitle>
-                    <X className="w-4 h-4 text-gray-400" />
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <textarea 
-                        className="w-full p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 min-h-[80px] resize-none" 
-                        placeholder="Enter your Question"
-                        value={question.descr}
-                        disabled
-                        readOnly
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Select Answer Type
-                      </label>
-                      <Select value="Multiple Choice" disabled>
-                        <SelectTrigger className="w-full bg-gray-50">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
-                          <SelectItem value="Text Area">Text Area</SelectItem>
-                          <SelectItem value="Short Answer">Short Answer</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {question.snag_quest_options && question.snag_quest_options.length > 0 && (
+              {/* Questions */}
+              <div className="space-y-4">
+                {snagChecklist.snag_questions?.map((question, index) => (
+                  <div key={question.id} className="border-l-4 border-orange-500 pl-4">
+                    <div className="grid grid-cols-3 gap-4 items-center">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                          Answer Options
-                        </label>
-                        <div className="space-y-3">
-                          {question.snag_quest_options?.map((option) => (
-                            <div key={option.id} className="flex items-center gap-3">
-                              <input 
-                                type="text"
-                                placeholder="Answer Option"
-                                className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
-                                value={option.qname}
-                                disabled
-                                readOnly
-                              />
-                              <Select value={option.option_type.toUpperCase()} disabled>
-                                <SelectTrigger className="w-16 h-10 bg-gray-50">
-                                  <SelectValue />
+                        <Label>Task</Label>
+                        <Input value={question.descr || `Section ${index + 1}`} disabled />
+                      </div>
+                      <div>
+                        <Label>Input Type</Label>
+                        <Input value={question.qtype === 'multiple' ? 'Radio Button' : 'Text Input'} disabled />
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox checked={question.quest_mandatory} disabled />
+                          <Label>Mandatory</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox checked={question.img_mandatory} disabled />
+                          <Label>Reading</Label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {question.snag_quest_options && question.snag_quest_options.length > 0 && (
+                      <div className="mt-4">
+                        <Label>Selected Enter Value</Label>
+                        <div className="grid grid-cols-2 gap-4 mt-2">
+                          {question.snag_quest_options.map((option, optionIndex) => (
+                            <div key={option.id} className="flex items-center space-x-2">
+                              <RadioGroup value={optionIndex === 0 ? "yes" : "no"} disabled>
+                                <div className="flex items-center space-x-2">
+                                  <RadioGroupItem value={optionIndex === 0 ? "yes" : "no"} id={`${option.id}-${optionIndex}`} />
+                                  <Label htmlFor={`${option.id}-${optionIndex}`}>{option.qname || (optionIndex === 0 ? "Yes" : "No")}</Label>
+                                </div>
+                              </RadioGroup>
+                              <Select disabled>
+                                <SelectTrigger className="w-20">
+                                  <SelectValue placeholder={option.option_type.toUpperCase()} />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="P">P</SelectItem>
                                   <SelectItem value="N">N</SelectItem>
                                 </SelectContent>
                               </Select>
-                              <X className="w-4 h-4 text-gray-400" />
                             </div>
-                          )) || []}
+                          ))}
                         </div>
                       </div>
                     )}
-
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id={`mandatory-${question.id}`} defaultChecked disabled className="data-[state=checked]:bg-gray-400" />
-                      <label htmlFor={`mandatory-${question.id}`} className="text-sm text-gray-700">
-                        Mandatory
-                      </label>
-                    </div>
-                  </CardContent>
-                </Card>
-              )) || []}
-            </div>
+                  </div>
+                )) || []}
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
