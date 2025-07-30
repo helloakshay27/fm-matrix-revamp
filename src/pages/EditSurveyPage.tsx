@@ -330,16 +330,6 @@ export const EditSurveyPage = () => {
                       </Select>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`mandatory-${index}`}
-                        checked={question.quest_mandatory}
-                        onCheckedChange={(checked) => handleQuestionChange(index, 'quest_mandatory', checked)}
-                      />
-                      <Label htmlFor={`mandatory-${index}`} className="text-sm text-blue-600">
-                        Mandatory
-                      </Label>
-                    </div>
 
                     {(question.qtype === 'multiple' || question.qtype === 'single') && (
                       <div className="space-y-3">
@@ -384,7 +374,18 @@ export const EditSurveyPage = () => {
                           Add Option
                         </Button>
                       </div>
-                    )}
+                     )}
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`mandatory-${index}`}
+                        checked={question.quest_mandatory}
+                        onCheckedChange={(checked) => handleQuestionChange(index, 'quest_mandatory', checked)}
+                      />
+                      <Label htmlFor={`mandatory-${index}`} className="text-sm text-blue-600">
+                        Mandatory
+                      </Label>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
