@@ -376,9 +376,9 @@ export const EditSurveyPage = () => {
                         ))}
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
                           onClick={() => handleAddAnswerOption(index)}
-                          className="text-blue-600 border-blue-600"
+                          className="text-blue-600 hover:text-blue-700 p-0 h-auto font-medium"
                         >
                           <Plus className="w-4 h-4 mr-1" />
                           Add Option
