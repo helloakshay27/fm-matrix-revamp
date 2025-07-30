@@ -293,7 +293,7 @@ export const EditSurveyPage = () => {
                 <Card key={index} className="relative">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-medium text-blue-600">New Question</CardTitle>
+                      <CardTitle className="text-sm font-medium text-black">New Question</CardTitle>
                       <Button
                         size="sm"
                         variant="ghost"
