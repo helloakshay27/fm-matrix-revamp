@@ -206,21 +206,6 @@ export const AddSurveyPage = () => {
             <div className="flex items-center gap-4 mb-6">
               <h2 className="text-lg font-medium text-gray-900">Add No. of Questions</h2>
               <div className="flex items-center gap-2">
-                <Select 
-                  value={numberOfQuestions.toString().padStart(2, '0')} 
-                  onValueChange={(value) => setNumberOfQuestions(parseInt(value))}
-                >
-                  <SelectTrigger className="w-20">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => (
-                      <SelectItem key={num} value={num.toString().padStart(2, '0')}>
-                        {num.toString().padStart(2, '0')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
                 <Button
                   onClick={handleAddQuestion}
                   size="sm"
