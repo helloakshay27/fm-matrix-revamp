@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileIcon, FileSpreadsheet, FileText, Loader2, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { LocationSelector } from '@/components/service/LocationSelector';
@@ -32,6 +32,7 @@ export const AddServicePage = () => {
   const [resetLocationFields, setResetLocationFields] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittingAction, setSubmittingAction] = useState<'show' | 'new' | null>(null);
+
 
   const [errors, setErrors] = useState({
     serviceName: false,
@@ -189,7 +190,6 @@ export const AddServicePage = () => {
       if (action === 'show') {
         toast.success('Service has been created and saved with details.', {
           duration: 3000,
-          style: { background: '#4caf50', color: '#fff' },
         });
 
         setTimeout(() => {
@@ -198,7 +198,6 @@ export const AddServicePage = () => {
       } else if (action === 'new') {
         toast.success('Service created successfully! Ready to add a new service.', {
           duration: 3000,
-          style: { background: '#4caf50', color: '#fff' },
         });
 
         setTimeout(() => {
@@ -241,6 +240,12 @@ export const AddServicePage = () => {
     },
   };
 
+  const removeSelectedFile = (index: number) => {
+    const updatedFiles = [...selectedFiles];
+    updatedFiles.splice(index, 1);
+    setSelectedFiles(updatedFiles);
+  };
+
   return (
     <div className="p-6 relative">
       {isSubmitting && (
@@ -265,16 +270,20 @@ export const AddServicePage = () => {
 
       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
         <CardHeader className='bg-[#F6F4EE] mb-4'>
-          <CardTitle className="text-lg text-[#C72030] flex items-center">
+          <CardTitle className="text-lg text-black flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
             BASIC DETAILS
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            {/* Service Name Field */}
             <TextField
-              required
-              label="Service Name"
+              label={
+                <>
+                  Service Name<span className="text-red-600">*</span>
+                </>
+              }
               placeholder="Enter Service Name"
               value={formData.serviceName}
               onChange={(e) => handleInputChange('serviceName', e.target.value)}
@@ -292,14 +301,17 @@ export const AddServicePage = () => {
               }}
               disabled={isSubmitting}
             />
+
+            {/* Execution Type Select */}
             <FormControl
               fullWidth
               variant="outlined"
-              required
               error={errors.executionType}
               sx={{ '& .MuiInputBase-root': fieldStyles }}
             >
-              <InputLabel shrink>Execution Type</InputLabel>
+              <InputLabel shrink>
+                Execution Type<span className="text-red-600">*</span>
+              </InputLabel>
               <MuiSelect
                 value={formData.executionType}
                 onChange={(e) => handleInputChange('executionType', e.target.value)}
@@ -317,6 +329,8 @@ export const AddServicePage = () => {
                 <p className="text-red-600 text-xs mt-1">Execution Type is required</p>
               )}
             </FormControl>
+
+            {/* UMO Field (Not required, no red asterisk) */}
             <TextField
               label="UMO"
               placeholder="Enter UMO"
@@ -335,6 +349,7 @@ export const AddServicePage = () => {
               disabled={isSubmitting}
             />
           </div>
+
           <LocationSelector
             fieldStyles={fieldStyles}
             onLocationChange={handleLocationChange}
@@ -360,7 +375,7 @@ export const AddServicePage = () => {
 
       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
         <CardHeader className='bg-[#F6F4EE] mb-4'>
-          <CardTitle className="text-lg text-[#C72030] flex items-center">
+          <CardTitle className="text-lg text-black flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
             SERVICE DESCRIPTION
           </CardTitle>
@@ -387,73 +402,98 @@ export const AddServicePage = () => {
         </CardContent>
       </Card>
 
-      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-        <CardHeader className='bg-[#F6F4EE] mb-4'>
-          <CardTitle className="text-lg text-[#C72030] flex items-center">
+      <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+        <CardHeader className="bg-[#F6F4EE] mb-4">
+          <CardTitle className="text-lg text-black flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
             FILES UPLOAD
           </CardTitle>
         </CardHeader>
+
         <CardContent>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8">
-            <div className="text-center">
-              <input
-                type="file"
-                multiple
-                className="hidden"
-                id="file-upload"
-                onChange={handleFileUpload}
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
-                disabled={isSubmitting}
-              />
-              <label
-                htmlFor="file-upload"
-                className={`text-[#C72030] ${isSubmitting ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
+            <input
+              type="file"
+              multiple
+              className="hidden"
+              id="file-upload"
+              onChange={handleFileUpload}
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
+              disabled={isSubmitting}
+            />
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <span
+                className="text-[#C72030] font-medium"
+                style={{ fontSize: '14px' }}
               >
                 Choose File
-              </label>
-              <span className="ml-2 text-gray-500">
+              </span>
+              <span className="text-gray-500" style={{ fontSize: '14px' }}>
                 {selectedFiles.length > 0 ? `${selectedFiles.length} file(s) selected` : 'No file chosen'}
               </span>
-              <div className="mt-4">
-                <button
-                  type="button"
-                  onClick={() => document.getElementById('file-upload')?.click()}
-                  className={`bg-[#f6f4ee] text-[#C72030] px-6 py-2 rounded flex items-center justify-center mx-auto ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={isSubmitting}
-                >
-                  <span className="text-lg mr-2">+</span> Upload Files
-                </button>
-              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => document.getElementById('file-upload')?.click()}
+              className={`bg-[#f6f4ee] text-[#C72030] px-4 py-2 rounded text-sm flex items-center justify-center ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isSubmitting}
+            >
+              <span className="text-lg mr-2">+</span> Upload Files
+            </button>
+
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
-            {selectedFiles.map((file, index) => {
-              const isImage = file.type.startsWith('image/');
-              const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
-              return (
-                <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50">
-                  {isImage ? (
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt={file.name}
-                      className="h-32 w-full object-contain rounded"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-32 w-full">
-                      <div className="text-gray-600 text-5xl">📄</div>
-                      <div className="mt-2 text-xs break-words">{file.name}</div>
-                    </div>
-                  )}
-                  {isExcel && (
-                    <p className="text-green-700 text-xs mt-1">Excel file</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+
+          {selectedFiles.length > 0 && (
+            <div className="flex flex-wrap gap-3 mt-4">
+              {selectedFiles.map((file, index) => {
+                const isImage = file.type.startsWith('image/');
+                const isPdf = file.type === 'application/pdf';
+                const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                const fileURL = URL.createObjectURL(file);
+
+                return (
+                  <div
+                    key={`${file.name}-${file.lastModified}`}
+                    className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
+                  >
+                    {isImage ? (
+                      <img
+                        src={fileURL}
+                        alt={file.name}
+                        className="w-[40px] h-[40px] object-cover rounded border mb-1"
+                      />
+                    ) : isPdf ? (
+                      <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                    ) : isExcel ? (
+                      <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                        <FileSpreadsheet className="w-5 h-5" />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
+                        <FileIcon className="w-5 h-5" />
+                      </div>
+                    )}
+
+                    <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
+                    <button
+                      type="button"
+                      className="absolute top-1 right-1 text-gray-600 hover:text-red-600 p-0"
+                      onClick={() => removeSelectedFile(index)}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
+
+
 
       <div className="flex gap-4 flex-wrap justify-center">
         <Button

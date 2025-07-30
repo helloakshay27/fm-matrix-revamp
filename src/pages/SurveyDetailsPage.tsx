@@ -58,13 +58,37 @@ export const SurveyDetailsPage = () => {
       [key]: prev[key].filter(selected => selected !== item)
     }));
     
-    // Also remove from selectedRoomIds if removing a room
+    // Also remove from corresponding ID arrays
     if (type === 'room') {
       const room = rooms.find(r => r.name === item);
       if (room) {
         setLocationConfig(prev => ({
           ...prev,
           selectedRoomIds: prev.selectedRoomIds.filter(id => id !== room.id)
+        }));
+      }
+    } else if (type === 'building') {
+      const building = buildings.find(b => b.name === item);
+      if (building) {
+        setLocationConfig(prev => ({
+          ...prev,
+          selectedBuildingIds: prev.selectedBuildingIds.filter(id => id !== building.id)
+        }));
+      }
+    } else if (type === 'wing') {
+      const wing = wings.find(w => w.name === item);
+      if (wing) {
+        setLocationConfig(prev => ({
+          ...prev,
+          selectedWingIds: prev.selectedWingIds.filter(id => id !== wing.id)
+        }));
+      }
+    } else if (type === 'floor') {
+      const floor = floors.find(f => f.name === item);
+      if (floor) {
+        setLocationConfig(prev => ({
+          ...prev,
+          selectedFloorIds: prev.selectedFloorIds.filter(id => id !== floor.id)
         }));
       }
     }
@@ -215,12 +239,22 @@ export const SurveyDetailsPage = () => {
   };
 
   // Fetch survey mappings
-  const fetchSurveyMappings = async () => {
+  const fetchSurveyMappings = async (mappingId?: string) => {
     if (!id) return;
     
     try {
       setLoadingSurveyMappings(true);
-      const apiUrl = `/survey_mappings.json?q[survey_id_eq]=${id}`;
+      
+      // Build API URL based on parameters
+      let apiUrl;
+      if (mappingId) {
+        // Fetch by specific mapping ID and survey ID
+        apiUrl = `/survey_mappings.json?q[id_eq]=${mappingId}&q[survey_id_eq]=${id}`;
+      } else {
+        // Fetch all mappings for the survey ID
+        apiUrl = `/survey_mappings.json?q[survey_id_eq]=${id}`;
+      }
+      
       console.log('Fetching survey mappings from:', getFullUrl(apiUrl));
       
       const response = await fetch(getFullUrl(apiUrl), {
@@ -236,7 +270,10 @@ export const SurveyDetailsPage = () => {
       
       const mappingsData = await response.json();
       console.log('Survey mappings response:', mappingsData);
-      setSurveyMappings(mappingsData);
+      
+      // Handle the response structure - extract survey_mappings array
+      const surveyMappingsArray = mappingsData.survey_mappings || mappingsData || [];
+      setSurveyMappings(surveyMappingsArray);
     } catch (error) {
       console.error('Error fetching survey mappings:', error);
       toast({
@@ -246,6 +283,42 @@ export const SurveyDetailsPage = () => {
       });
     } finally {
       setLoadingSurveyMappings(false);
+    }
+  };
+
+  // Fetch survey mapping by specific mapping ID
+  const fetchSurveyMappingById = async (mappingId: string) => {
+    if (!id) return null;
+    
+    try {
+      const apiUrl = `/survey_mappings.json?q[id_eq]=${mappingId}&q[survey_id_eq]=${id}`;
+      console.log('Fetching specific survey mapping from:', getFullUrl(apiUrl));
+      
+      const response = await fetch(getFullUrl(apiUrl), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch survey mapping: ${response.status}`);
+      }
+      
+      const mappingData = await response.json();
+      console.log('Survey mapping response:', mappingData);
+      
+      // Handle the response structure - extract survey_mappings array
+      const surveyMappingsArray = mappingData.survey_mappings || mappingData || [];
+      return surveyMappingsArray.length > 0 ? surveyMappingsArray[0] : null;
+    } catch (error) {
+      console.error('Error fetching survey mapping by ID:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load survey mapping",
+        variant: "destructive"
+      });
+      return null;
     }
   };
 
@@ -296,14 +369,14 @@ export const SurveyDetailsPage = () => {
   const handleSubmitLocation = async () => {
     try {
       // Validate that we have room IDs selected
-      if (locationConfig.selectedRoomIds.length === 0) {
-        toast({
-          title: "Error",
-          description: "Please select at least one room",
-          variant: "destructive"
-        });
-        return;
-      }
+      // if (locationConfig.selectedRoomIds.length === 0) {
+      //   toast({
+      //     title: "Error",
+      //     description: "Please select at least one room",
+      //     variant: "destructive"
+      //   });
+      //   return;
+      // }
 
       // Prepare the API request
       const requestData = {
@@ -541,8 +614,16 @@ export const SurveyDetailsPage = () => {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
+              <DialogHeader className="flex flex-row items-center justify-between">
                 <DialogTitle>Location Configuration</DialogTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsDialogOpen(false)}
+                  className="h-6 w-6 p-0 hover:bg-gray-100"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </DialogHeader>
               
               <div className="space-y-6">
@@ -650,6 +731,21 @@ export const SurveyDetailsPage = () => {
                         </SelectContent>
                       </Select>
                        {/* Selected buildings */}
+                      {locationConfig.selectedBuildings.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {locationConfig.selectedBuildings.map((building) => (
+                            <span key={building} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
+                              {building}
+                              <button
+                                onClick={() => removeSelectedItem('building', building)}
+                                className="ml-1 text-gray-500 hover:text-gray-700"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -895,11 +991,11 @@ export const SurveyDetailsPage = () => {
           ) : surveyMappings.length > 0 ? (
             surveyMappings.map((mapping) => (
                 <div key={mapping.id} className="grid grid-cols-6 border-b border-gray-200 last:border-b-0">
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.building_name || '-'}</div>
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.wing_name || '-'}</div>
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor_name || '-'}</div>
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.area_name || '-'}</div>
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.room_name || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.building_name || mapping.building_id || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.wing_name || mapping.wing_id || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor_name || mapping.floor_id || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.area_name || mapping.area_id || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.room_name || mapping.room_id || '-'}</div>
                   <div className="p-4 text-gray-700">{mapping.qr_code || '-'}</div>
                 </div>
             ))

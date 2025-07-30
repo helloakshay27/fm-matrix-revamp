@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus, FileText, FileSpreadsheet, File, Eye } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText } from '@mui/material';
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
@@ -30,6 +30,7 @@ export const EditAMCPage = () => {
   const { data: servicesData, loading: servicesLoading } = useAppSelector(state => state.services);
   const { data: amcData, loading: amcLoading, error: amcError } = useAppSelector(state => state.amcDetails);
 
+  // Form state
   const [formData, setFormData] = useState({
     details: '',
     type: 'Individual',
@@ -43,11 +44,29 @@ export const EditAMCPage = () => {
     startDate: '',
     endDate: '',
     cost: '',
+    contractName: '', // Added new field
     paymentTerms: '',
     firstService: '',
     noOfVisits: '',
     remarks: ''
   });
+
+  // Error state for validation
+  const [errors, setErrors] = useState({
+    asset_ids: '',
+    vendor: '',
+    group: '',
+    supplier: '',
+    service: '',
+    startDate: '',
+    endDate: '',
+    cost: '',
+    contractName: '', // Added new error field
+    paymentTerms: '',
+    firstService: '',
+    noOfVisits: ''
+  });
+
   const [attachments, setAttachments] = useState({
     contracts: [] as File[],
     invoices: [] as File[]
@@ -62,13 +81,11 @@ export const EditAMCPage = () => {
   const [subGroups, setSubGroups] = useState<Array<{ id: number, name: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
-  const [services, setServices] = useState<Service[]>([]); // [newServices]
-
+  const [services, setServices] = useState<Service[]>([]);
 
   // Extract data from Redux state
   const assets = Array.isArray((assetsData as any)?.assets) ? (assetsData as any).assets : Array.isArray(assetsData) ? assetsData : [];
   const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
-  // const services = Array.isArray(servicesData) ? servicesData : [];
 
   // Fetch AMC data when component mounts
   useEffect(() => {
@@ -148,6 +165,7 @@ export const EditAMCPage = () => {
         startDate: data.amc_start_date || '',
         endDate: data.amc_end_date || '',
         cost: data.amc_cost?.toString() || '',
+        contractName: data.contract_name || '', // Added new field
         paymentTerms: data.payment_term || '',
         firstService: data.amc_first_service || '',
         noOfVisits: data.no_of_visits?.toString() || '',
@@ -186,6 +204,8 @@ export const EditAMCPage = () => {
         [field]: value
       };
     });
+    // Clear error for the field being updated
+    setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
   const handleFileUpload = (type: 'contracts' | 'invoices', files: FileList | null) => {
@@ -209,7 +229,6 @@ export const EditAMCPage = () => {
   useEffect(() => {
     dispatch(fetchAssetsData({ page: 1 }));
     dispatch(fetchSuppliersData());
-    // dispatch(fetchServicesData());
 
     const fetchAssetGroups = async () => {
       setLoading(true);
@@ -235,6 +254,7 @@ export const EditAMCPage = () => {
         setLoading(false);
       }
     };
+
     const fetchService = async () => {
       try {
         const response = await apiClient.get('/pms/services/get_services.json');
@@ -246,20 +266,18 @@ export const EditAMCPage = () => {
           console.warn('API response is not an array:', response.data);
           setServices([]);
         }
-      }
-      catch (error) {
+      } catch (error) {
         console.error('Error fetching services:', error);
         setServices([]);
         toast({
           title: "Error",
           description: "Failed to fetch services.",
-          variant: "destructive", // this styles it as an error
+          variant: "destructive",
         });
       }
-    }
+    };
 
     fetchService();
-
     fetchAssetGroups();
   }, [dispatch, toast]);
 
@@ -302,8 +320,102 @@ export const EditAMCPage = () => {
     }
   };
 
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {
+      asset_ids: '',
+      vendor: '',
+      group: '',
+      supplier: '',
+      service: '',
+      startDate: '',
+      endDate: '',
+      cost: '',
+      contractName: '',
+      paymentTerms: '',
+      firstService: '',
+      noOfVisits: ''
+    };
+
+    if (formData.details === 'Asset' && formData.type === 'Individual') {
+      if (formData.asset_ids.length === 0) {
+        newErrors.asset_ids = 'Please select at least one asset.';
+        isValid = false;
+      }
+      if (!formData.vendor) {
+        newErrors.vendor = 'Please select a supplier.';
+        isValid = false;
+      }
+    } else if (formData.details === 'Service' && formData.type === 'Individual') {
+      if (!formData.assetName) {
+        newErrors.service = 'Please select a service.';
+        isValid = false;
+      }
+      if (!formData.vendor) {
+        newErrors.vendor = 'Please select a supplier.';
+        isValid = false;
+      }
+    } else if (formData.type === 'Group') {
+      if (!formData.group) {
+        newErrors.group = 'Please select a group.';
+        isValid = false;
+      }
+      if (!formData.supplier) {
+        newErrors.supplier = 'Please select a supplier.';
+        isValid = false;
+      }
+      if (formData.details === 'Service' && !formData.service) {
+        newErrors.service = 'Please select a service.';
+        isValid = false;
+      }
+    }
+
+    if (!formData.startDate) {
+      newErrors.startDate = 'Please select a start date.';
+      isValid = false;
+    }
+    if (!formData.endDate) {
+      newErrors.endDate = 'Please select an end date.';
+      isValid = false;
+    }
+    if (!formData.firstService) {
+      newErrors.firstService = 'Please select a first service date.';
+      isValid = false;
+    }
+    if (!formData.cost) {
+      newErrors.cost = 'Please enter the cost.';
+      isValid = false;
+    }
+    if (!formData.contractName) {
+      newErrors.contractName = 'Please enter the contract name.';
+      isValid = false;
+    }
+    if (!formData.paymentTerms) {
+      newErrors.paymentTerms = 'Please select payment terms.';
+      isValid = false;
+    }
+    if (!formData.noOfVisits) {
+      newErrors.noOfVisits = 'Please enter the number of visits.';
+      isValid = false;
+    } else if (!Number.isInteger(Number(formData.noOfVisits))) {
+      newErrors.noOfVisits = 'Please enter a whole number.';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleSubmit = useCallback(async (action: string) => {
     if (!id) return;
+    if (!validateForm()) {
+      toast({
+        title: "Error",
+        description: "Please fill all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
     setUpdateLoading(true);
 
     try {
@@ -311,6 +423,7 @@ export const EditAMCPage = () => {
 
       // Append form data
       sendData.append('pms_asset_amc[amc_cost]', (parseFloat(formData.cost) || '0').toString());
+      sendData.append('pms_asset_amc[contract_name]', formData.contractName); // Added new field
       sendData.append('pms_asset_amc[amc_start_date]', formData.startDate || '');
       sendData.append('pms_asset_amc[amc_end_date]', formData.endDate || '');
       sendData.append('pms_asset_amc[amc_first_service]', formData.firstService || '');
@@ -360,8 +473,6 @@ export const EditAMCPage = () => {
 
       // Add subaction to indicate save action
       sendData.append('subaction', 'save');
-
-      // Debug FormData
 
       // Make API call
       const response = await apiClient.put(`/pms/asset_amcs/${id}.json`, sendData, {
@@ -457,7 +568,7 @@ export const EditAMCPage = () => {
         {/* AMC Configuration */}
         <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
           <CardHeader className='bg-[#F6F4EE] mb-4'>
-            <CardTitle className="text-lg text-[#C72030] flex items-center">
+            <CardTitle className="text-lg text-black flex items-center">
               <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
               AMC CONFIGURATION
             </CardTitle>
@@ -529,7 +640,7 @@ export const EditAMCPage = () => {
             {formData.type === 'Individual' ? (
               <>
                 {formData.details === 'Asset' ? (
-                  <FormControl fullWidth variant="outlined">
+                  <FormControl fullWidth variant="outlined" error={!!errors.asset_ids}>
                     <InputLabel id="asset-select-label" shrink>Assets</InputLabel>
                     <MuiSelect
                       labelId="asset-select-label"
@@ -543,6 +654,7 @@ export const EditAMCPage = () => {
                           ...prev,
                           asset_ids: typeof value === 'string' ? value.split(',') : value
                         }));
+                        setErrors(prev => ({ ...prev, asset_ids: '' }));
                       }}
                       sx={fieldStyles}
                       disabled={true}
@@ -568,9 +680,10 @@ export const EditAMCPage = () => {
                         </MenuItem>
                       ))}
                     </MuiSelect>
+                    {errors.asset_ids && <FormHelperText>{errors.asset_ids}</FormHelperText>}
                   </FormControl>
                 ) : (
-                  <FormControl fullWidth variant="outlined">
+                  <FormControl fullWidth variant="outlined" error={!!errors.service}>
                     <InputLabel id="service-select-label" shrink>Service</InputLabel>
                     <MuiSelect
                       labelId="service-select-label"
@@ -595,11 +708,12 @@ export const EditAMCPage = () => {
                         </MenuItem>
                       ))}
                     </MuiSelect>
+                    {errors.service && <FormHelperText>{errors.service}</FormHelperText>}
                   </FormControl>
                 )}
 
                 <div>
-                  <FormControl fullWidth variant="outlined">
+                  <FormControl fullWidth variant="outlined" error={!!errors.vendor}>
                     <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
                     <MuiSelect
                       labelId="vendor-select-label"
@@ -624,6 +738,7 @@ export const EditAMCPage = () => {
                         </MenuItem>
                       ))}
                     </MuiSelect>
+                    {errors.vendor && <FormHelperText>{errors.vendor}</FormHelperText>}
                   </FormControl>
                 </div>
               </>
@@ -631,7 +746,7 @@ export const EditAMCPage = () => {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <FormControl fullWidth variant="outlined">
+                    <FormControl fullWidth variant="outlined" error={!!errors.group}>
                       <InputLabel id="group-select-label" shrink>Group</InputLabel>
                       <MuiSelect
                         labelId="group-select-label"
@@ -649,6 +764,7 @@ export const EditAMCPage = () => {
                           </MenuItem>
                         ))}
                       </MuiSelect>
+                      {errors.group && <FormHelperText>{errors.group}</FormHelperText>}
                     </FormControl>
                   </div>
 
@@ -676,7 +792,7 @@ export const EditAMCPage = () => {
 
                   {formData.details === 'Service' && (
                     <div>
-                      <FormControl fullWidth variant="outlined">
+                      <FormControl fullWidth variant="outlined" error={!!errors.service}>
                         <InputLabel id="group-service-select-label" shrink>Service</InputLabel>
                         <MuiSelect
                           labelId="group-service-select-label"
@@ -692,12 +808,13 @@ export const EditAMCPage = () => {
                           <MenuItem value="emergency-service">Emergency Service</MenuItem>
                           <MenuItem value="inspection-service">Inspection Service</MenuItem>
                         </MuiSelect>
+                        {errors.service && <FormHelperText>{errors.service}</FormHelperText>}
                       </FormControl>
                     </div>
                   )}
 
                   <div>
-                    <FormControl fullWidth variant="outlined">
+                    <FormControl fullWidth variant="outlined" error={!!errors.supplier}>
                       <InputLabel id="group-supplier-select-label" shrink>Supplier</InputLabel>
                       <MuiSelect
                         labelId="group-supplier-select-label"
@@ -715,6 +832,7 @@ export const EditAMCPage = () => {
                           </MenuItem>
                         ))}
                       </MuiSelect>
+                      {errors.supplier && <FormHelperText>{errors.supplier}</FormHelperText>}
                     </FormControl>
                   </div>
                 </div>
@@ -726,7 +844,7 @@ export const EditAMCPage = () => {
         {/* AMC Details */}
         <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
           <CardHeader className='bg-[#F6F4EE] mb-4'>
-            <CardTitle className="text-lg text-[#C72030] flex items-center">
+            <CardTitle className="text-lg text-black flex items-center">
               <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
               AMC DETAILS
             </CardTitle>
@@ -736,7 +854,7 @@ export const EditAMCPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <TextField
-                  label="Cost"
+                  label="Cost*"
                   placeholder="Enter Cost"
                   name="cost"
                   type="number"
@@ -746,6 +864,24 @@ export const EditAMCPage = () => {
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
+                  error={!!errors.cost}
+                  helperText={errors.cost}
+                />
+              </div>
+
+              <div>
+                <TextField
+                  label="Contract Name*"
+                  placeholder="Enter Contract Name"
+                  name="contractName"
+                  value={formData.contractName}
+                  onChange={e => handleInputChange('contractName', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  error={!!errors.contractName}
+                  helperText={errors.contractName}
                 />
               </div>
 
@@ -753,12 +889,14 @@ export const EditAMCPage = () => {
                 <TextField
                   fullWidth
                   type="date"
-                  label="Start Date"
+                  label="Start Date*"
                   value={formData.startDate}
                   onChange={(e) => handleInputChange('startDate', e.target.value)}
                   InputLabelProps={{ shrink: true }}
                   inputProps={{ style: { height: 46 } }}
                   sx={{ '& .MuiInputBase-root': { height: 46 } }}
+                  error={!!errors.startDate}
+                  helperText={errors.startDate}
                 />
               </div>
 
@@ -766,23 +904,23 @@ export const EditAMCPage = () => {
                 <TextField
                   fullWidth
                   type="date"
-                  label="First Service Date"
+                  label="First Service Date*"
                   value={formData.firstService}
                   onChange={(e) => handleInputChange('firstService', e.target.value)}
                   InputLabelProps={{ shrink: true }}
                   inputProps={{ style: { height: 46 } }}
                   sx={{ '& .MuiInputBase-root': { height: 46 } }}
+                  error={!!errors.firstService}
+                  helperText={errors.firstService}
                 />
               </div>
 
               <div>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel id="payment-terms-select-label" shrink>
-                    Payment Terms
-                  </InputLabel>
+                <FormControl fullWidth variant="outlined" error={!!errors.paymentTerms}>
+                  <InputLabel id="payment-terms-select-label" shrink>Payment Terms*</InputLabel>
                   <MuiSelect
                     labelId="payment-terms-select-label"
-                    label="Payment Terms"
+                    label="Payment Terms*"
                     displayEmpty
                     value={formData.paymentTerms}
                     onChange={e => handleInputChange('paymentTerms', e.target.value)}
@@ -794,6 +932,7 @@ export const EditAMCPage = () => {
                     <MenuItem value="half-yearly">Half Yearly</MenuItem>
                     <MenuItem value="yearly">Yearly</MenuItem>
                   </MuiSelect>
+                  {errors.paymentTerms && <FormHelperText>{errors.paymentTerms}</FormHelperText>}
                 </FormControl>
               </div>
 
@@ -801,18 +940,20 @@ export const EditAMCPage = () => {
                 <TextField
                   fullWidth
                   type="date"
-                  label="End Date"
+                  label="End Date*"
                   value={formData.endDate}
                   onChange={(e) => handleInputChange('endDate', e.target.value)}
                   InputLabelProps={{ shrink: true }}
                   inputProps={{ style: { height: 46 } }}
                   sx={{ '& .MuiInputBase-root': { height: 46 } }}
+                  error={!!errors.endDate}
+                  helperText={errors.endDate}
                 />
               </div>
 
               <div>
                 <TextField
-                  label="No. of Visits"
+                  label="No. of Visits*"
                   placeholder="Enter No. of Visit"
                   name="noOfVisits"
                   type="number"
@@ -822,6 +963,8 @@ export const EditAMCPage = () => {
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
+                  error={!!errors.noOfVisits}
+                  helperText={errors.noOfVisits}
                 />
               </div>
 
@@ -866,14 +1009,14 @@ export const EditAMCPage = () => {
         {/* Attachments */}
         <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
           <CardHeader className='bg-[#F6F4EE] mb-4'>
-            <CardTitle className="text-lg text-[#C72030] flex items-center">
+            <CardTitle className="text-lg text-black flex items-center">
               <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
               ATTACHMENTS
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* ------------------- AMC Contracts ------------------- */}
+              {/* AMC Contracts */}
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Contracts</label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
@@ -964,7 +1107,7 @@ export const EditAMCPage = () => {
                 )}
               </div>
 
-              {/* ------------------- AMC Invoices ------------------- */}
+              {/* AMC Invoices */}
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Invoices</label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
@@ -1056,8 +1199,6 @@ export const EditAMCPage = () => {
               </div>
             </div>
           </CardContent>
-
-
         </Card>
 
         <div className="flex gap-4 justify-center">
