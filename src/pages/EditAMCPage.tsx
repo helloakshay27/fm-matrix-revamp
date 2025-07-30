@@ -1209,15 +1209,7 @@ export const EditAMCPage = () => {
             style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90"
           >
-            {updateLoading ? 'Updating...' : 'Update'}
-          </Button>
-          <Button
-            onClick={() => navigate(`/maintenance/amc/details/${id}`)}
-            disabled={updateLoading}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
-          >
-            {updateLoading ? 'Cancel' : 'Cancel'}
+            {updateLoading ? 'Submiting...' : 'Submit'}
           </Button>
         </div>
       </form>

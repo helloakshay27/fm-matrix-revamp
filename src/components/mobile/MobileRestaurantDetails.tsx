@@ -114,7 +114,7 @@ export const MobileRestaurantDetails: React.FC<
     if (availableImages.length > 1) {
       const interval = setInterval(() => {
         setCurrentImageIndex((prev) => (prev + 1) % availableImages.length);
-      }, 5000); // 5 seconds
+      }, 5000); 
 
       return () => clearInterval(interval);
     }

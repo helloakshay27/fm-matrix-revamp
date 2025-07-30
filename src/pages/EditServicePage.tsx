@@ -755,14 +755,6 @@ export const EditServicePage = () => {
         >
           Update Save & Show Details
         </Button>
-        <Button
-          onClick={() => handleSubmit('updated new service')}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90"
-          disabled={isSubmitting}
-        >
-          Update Save & Create New Service
-        </Button>
       </div>
     </div>
   );

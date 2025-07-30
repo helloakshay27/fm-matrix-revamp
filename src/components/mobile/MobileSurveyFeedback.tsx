@@ -20,14 +20,14 @@ export const MobileSurveyFeedback: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const issueOptions = [
-    { id: 'tap_faulty', icon: '🚰', label: 'Tap Faulty' },
-    { id: 'wc_choked', icon: '🚽', label: 'Wc Choked' },
-    { id: 'foul_smell', icon: '👃', label: 'Foul Smell' },
-    { id: 'soap_missing', icon: '🧼', label: 'Soap Missing' },
-    { id: 'hand_dryer_faulty', icon: '🌬️', label: 'Hand Dryer Faulty' },
-    { id: 'tissue_paper_missing', icon: '🧻', label: 'Tissue Paper Missing' },
-    { id: 'dirty_floor', icon: '🧽', label: 'Dirty Floor' },
-    { id: 'toilet_paper_missing', icon: '🧻', label: 'Toilet Paper Missing' }
+    { id: 'Tap Faulty', icon: '🚰', label: 'Tap Faulty' },
+    { id: 'Wc Choked', icon: '🚽', label: 'Wc Choked' },
+    { id: 'Foul Smell', icon: '👃', label: 'Foul Smell' },
+    { id: 'Soap Missing', icon: '🧼', label: 'Soap Missing' },
+    { id: 'Hand Dryer Faulty', icon: '🌬️', label: 'Hand Dryer Faulty' },
+    { id: 'Tissue Paper Missing', icon: '🧻', label: 'Tissue Paper Missing' },
+    { id: 'Dirty Floor', icon: '🧽', label: 'Dirty Floor' },
+    { id: 'Toilet Paper Missing', icon: '🧻', label: 'Toilet Paper Missing' }
   ];
 
   const handleIssueToggle = (issueId: string) => {

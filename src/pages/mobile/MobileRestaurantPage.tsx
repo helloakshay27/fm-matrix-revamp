@@ -160,7 +160,6 @@ export const MobileRestaurantPage: React.FC = () => {
         
         if (tokenResponse.success && tokenResponse.restaurants) {
           console.log("🔑 TOKEN SUCCESS: restaurants found:", tokenResponse.restaurants.length);
-          setRestaurants(tokenResponse.restaurants);
           setUserInfo(tokenResponse.user_info || null);
           
           // Store token, user info, and source for order placement
@@ -168,6 +167,24 @@ export const MobileRestaurantPage: React.FC = () => {
           sessionStorage.setItem("app_source", "app");
           if (tokenResponse.user_info) {
             sessionStorage.setItem("app_user_info", JSON.stringify(tokenResponse.user_info));
+          }
+          
+          // If there's only one restaurant, load its menu items immediately
+          if (tokenResponse.restaurants.length === 1) {
+            console.log("🔑🍽️ SINGLE RESTAURANT: Loading menu items for", tokenResponse.restaurants[0].id);
+            try {
+              const apiRestaurant = await restaurantApi.getRestaurantById(tokenResponse.restaurants[0].id);
+              const restaurantWithMenus = {
+                ...tokenResponse.restaurants[0],
+                menuItems: apiRestaurant.menuItems || [],
+              };
+              setRestaurants([restaurantWithMenus]);
+            } catch (error) {
+              console.error("❌ ERROR LOADING MENU ITEMS:", error);
+              setRestaurants(tokenResponse.restaurants);
+            }
+          } else {
+            setRestaurants(tokenResponse.restaurants);
           }
           
           return; // Exit early on success
@@ -213,7 +230,7 @@ export const MobileRestaurantPage: React.FC = () => {
 
         console.log("🍽️ RESTAURANTS FOUND:", restaurantsList.length);
 
-        // Convert to Restaurant format
+        // Convert to Restaurant format and load menu items if there's only one restaurant
         const convertedRestaurants: Restaurant[] = restaurantsList.map((r) => ({
           id: r.id.toString(),
           name: r.name,
@@ -226,10 +243,26 @@ export const MobileRestaurantPage: React.FC = () => {
             r.cover_images?.[0]?.document ||
             "/placeholder.svg",
           images: r.cover_images?.map((img) => img.document) || [],
-          menuItems: [], // Initialize empty menu items, will be loaded when restaurant is selected
+          menuItems: [], // Will be loaded if there's only one restaurant
         }));
 
         setRestaurants(convertedRestaurants);
+
+        // If there's only one restaurant, load its menu items immediately
+        if (convertedRestaurants.length === 1) {
+          console.log("🍽️ SINGLE RESTAURANT: Loading menu items for", convertedRestaurants[0].id);
+          try {
+            const apiRestaurant = await restaurantApi.getRestaurantById(convertedRestaurants[0].id);
+            console.log("APIRESP", apiRestaurant);
+            const restaurantWithMenus = {
+              ...convertedRestaurants[0],
+              menuItems: apiRestaurant.menuItems || [],
+            };
+            setRestaurants([restaurantWithMenus]);
+          } catch (error) {
+            console.error("❌ ERROR LOADING MENU ITEMS:", error);
+          }
+        }
       } else if (restaurantId && action === "details") {
         // Priority 3: Direct restaurant access (existing flow)
         console.log("🍽️ DIRECT RESTAURANT ACCESS:", restaurantId);
