@@ -361,7 +361,7 @@ export const AMCDashboard = () => {
     if (baseUrl && token && siteId && !isExpiringFilterActive) {
       fetchFilteredAMCs(filter, currentPage);
     }
-  }, [baseUrl, token, siteId, currentPage]);
+  }, [baseUrl, token, siteId, currentPage, filter, startDateFilter, endDateFilter, amcTypeFilter]);
 
   // Load analytics data with default date range on component mount
   useEffect(() => {
@@ -872,7 +872,7 @@ export const AMCDashboard = () => {
     setIsFilterModalOpen(false);
     setCurrentPage(1);
     setIsExpiringFilterActive(false); // Reset expiring filter
-    fetchFilteredAMCs(filter, 1);
+    // fetchFilteredAMCs(filter, 1);
     toast.success('Filters applied');
   };
 
