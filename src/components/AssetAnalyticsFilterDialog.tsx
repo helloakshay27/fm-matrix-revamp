@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -22,8 +22,33 @@ export const AssetAnalyticsFilterDialog: React.FC<AssetAnalyticsFilterDialogProp
   onClose,
   onApplyFilters,
 }) => {
+  // Function to get default date range (today to last year)
+  const getDefaultDates = () => {
+    const today = new Date();
+    const lastYear = new Date();
+    lastYear.setFullYear(today.getFullYear() - 1);
+    
+    const formatDate = (date: Date) => {
+      return date.toISOString().split('T')[0]; // YYYY-MM-DD format for input[type="date"]
+    };
+    
+    return {
+      startDate: formatDate(lastYear),
+      endDate: formatDate(today)
+    };
+  };
+
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  // Set default dates when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      const defaults = getDefaultDates();
+      setStartDate(defaults.startDate);
+      setEndDate(defaults.endDate);
+    }
+  }, [isOpen]);
 
   const handleSubmit = () => {
     if (!startDate || !endDate) {
@@ -42,8 +67,9 @@ export const AssetAnalyticsFilterDialog: React.FC<AssetAnalyticsFilterDialogProp
   };
 
   const handleReset = () => {
-    setStartDate('');
-    setEndDate('');
+    const defaults = getDefaultDates();
+    setStartDate(defaults.startDate);
+    setEndDate(defaults.endDate);
   };
 
   return (
