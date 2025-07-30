@@ -223,8 +223,8 @@ export const ScheduledTaskDashboard = () => {
   // Analytics states
   const [showAnalyticsFilter, setShowAnalyticsFilter] = useState(false);
   const [analyticsDateRange, setAnalyticsDateRange] = useState({
-    startDate: new Date(new Date().getFullYear() - 1, 0, 1),
-    endDate: new Date()
+    startDate: new Date('2024-07-30'),
+    endDate: new Date('2025-07-30')
   });
   const [technicalData, setTechnicalData] = useState<TechnicalChecklistResponse | null>(null);
   const [nonTechnicalData, setNonTechnicalData] = useState<NonTechnicalChecklistResponse | null>(null);
