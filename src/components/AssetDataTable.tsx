@@ -76,30 +76,10 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
 
 
     } catch (error) {
-
       console.error("Error exporting assets to Excel:", error);
-
     }
   };
   const selectionActions = [
-    // {
-    //   label: 'Update',
-    //   icon: Clock,
-    //   // onClick: handleUpdateSelected,
-    //   variant: 'outline' as const,
-    // },
-    // {
-    //   label: 'Flag',
-    //   icon: AlertCircle,
-    //   // onClick: handleFlagSelected,
-    //   variant: 'outline' as const,
-    // },
-    // {
-    //   label: 'Delete',
-    //   icon: Trash2,
-    //   // onClick: () => handleBulkDelete(selectedAMCObjects),
-    //   variant: 'destructive' as const,
-    // },
     {
       label: "Add Schedule",
       icon: Plus,
@@ -124,35 +104,35 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       defaultVisible: visibleColumns.serialNumber,
     },
     {
-      key: "assetName",
+      key: "name",
       label: "Asset Name",
       sortable: true,
       hideable: true,
       defaultVisible: visibleColumns.assetName,
     },
     {
-      key: "assetId",
+      key: "id",
       label: "Asset ID",
       sortable: true,
       hideable: true,
       defaultVisible: visibleColumns.assetId,
     },
     {
-      key: "assetNo",
+      key: "assetNumber",
       label: "Asset No.",
       sortable: true,
       hideable: true,
       defaultVisible: visibleColumns.assetNo,
     },
     {
-      key: "assetStatus",
+      key: "status",
       label: "Asset Status",
       sortable: true,
       hideable: true,
       defaultVisible: visibleColumns.assetStatus,
     },
     {
-      key: "site",
+      key: "siteName",
       label: "Site",
       sortable: true,
       hideable: true,
@@ -187,21 +167,21 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       defaultVisible: visibleColumns.area,
     },
     {
-      key: "room",
+      key: "pmsRoom",
       label: "Room",
       sortable: true,
       hideable: true,
       defaultVisible: visibleColumns.room,
     },
     {
-      key: "group",
+      key: "assetGroup",
       label: "Group",
       sortable: true,
       hideable: true,
       defaultVisible: visibleColumns.asset_group,
     },
     {
-      key: "subGroup",
+      key: "assetSubGroup",
       label: "Sub-Group",
       sortable: true,
       hideable: true,
@@ -236,19 +216,19 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         return (
           <span className="text-sm text-gray-600">{asset.serialNumber}</span>
         );
-      case "assetName":
+      case "name":
         return (
           <span className="text-sm font-medium text-gray-900">
             {asset.name}
           </span>
         );
-      case "assetId":
+      case "id":
         return <span className="text-sm text-[#1a1a1a]">{asset.id}</span>;
-      case "assetNo":
+      case "assetNumber":
         return (
           <span className="text-sm text-gray-600">{asset.assetNumber}</span>
         );
-      case "assetStatus":
+      case "status":
         return (
           <StatusBadge
             status={asset.status}
@@ -256,7 +236,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
             onStatusUpdate={onRefreshData}
           />
         );
-      case "site":
+      case "siteName":
         return <span className="text-sm text-gray-600">{asset.siteName}</span>;
       case "building":
         return (
@@ -281,19 +261,19 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
             {asset.area?.name || "NA"}
           </span>
         );
-      case "room":
+      case "pmsRoom":
         return (
           <span className="text-sm text-gray-600">
             {asset.pmsRoom?.name || "NA"}
           </span>
         );
-      case "group":
+      case "assetGroup":
         return (
           <span className="text-sm text-gray-600">
             {asset.assetGroup || "N/A"}
           </span>
         );
-      case "subGroup":
+      case "assetSubGroup":
         return (
           <span className="text-sm text-gray-600">
             {asset.assetSubGroup || "N/A"}
@@ -329,7 +309,6 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         data={assets}
         columns={columns}
         renderCell={renderCell}
-        onRowClick={(asset) => onViewAsset(asset.id)}
         storageKey="asset-data-table"
         emptyMessage="No assets found"
         selectable={true}

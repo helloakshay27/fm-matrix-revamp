@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Eye, Plus } from "lucide-react";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { editRestaurant, fetchRestaurants } from "@/store/slices/f&bSlice";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -37,6 +37,8 @@ export const FnBRestaurantDashboard = () => {
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
+
+  const { loading } = useAppSelector(state => state.fetchRestaurants)
 
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [showActionPanel, setShowActionPanel] = useState(false);
@@ -262,6 +264,7 @@ export const FnBRestaurantDashboard = () => {
       )}
 
       <EnhancedTable
+        loading={loading}
         data={restaurants}
         columns={columns}
         renderCell={renderCell}

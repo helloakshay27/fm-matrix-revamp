@@ -519,16 +519,6 @@ export const FMUserMasterDashboard = () => {
     </>
   );
 
-  if (loading) {
-    return (
-      <div className="w-full p-6 space-y-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading FM Users...</div>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="w-full p-6 space-y-6">
