@@ -33,6 +33,7 @@ import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Search, Download, Loader2, Grid3x3, Plus, X, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAuthHeader, API_CONFIG } from '@/config/apiConfig';
 
 // Excel export utility function
 const exportToExcel = <T extends Record<string, any>>(
@@ -72,6 +73,41 @@ const exportToExcel = <T extends Record<string, any>>(
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+};
+
+// Ticket export function for API integration
+const exportTicketRecords = async () => {
+  try {
+    const url = `${API_CONFIG.BASE_URL}/pms/admin/complaints.xlsx`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: getAuthHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Get the blob from the response
+    const blob = await response.blob();
+
+    // Create download link
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = 'ticket_records.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+
+  } catch (error) {
+    console.error('Error exporting tickets:', error);
+    alert('Failed to export ticket records');
+  }
 };
 
 interface BulkAction<T> {
@@ -368,51 +404,6 @@ export function EnhancedTable<T extends Record<string, any>>({
     return pages;
   };
 
-  // Custom export handler for schedules table
-  const handleSchedulesExport = async () => {
-    // Dynamically import toast to avoid circular dependency
-    const { toast } = await import('sonner');
-    try {
-      const { API_CONFIG } = await import('@/config/apiConfig');
-      const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/checklist.xlsx`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': API_CONFIG.TOKEN ? `Bearer ${API_CONFIG.TOKEN}` : '',
-        },
-      });
-      if (!response.ok) throw new Error('Failed to download checklist export');
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = 'checklist.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(downloadUrl);
-      document.body.removeChild(a);
-      toast.success('Checklist export downloaded successfully.', {
-        position: 'top-right',
-        duration: 4000,
-        style: {
-          background: '#10b981',
-          color: 'white',
-          border: 'none',
-        },
-      });
-    } catch (error) {
-      toast.error('Failed to download checklist export. Please try again.', {
-        position: 'top-right',
-        duration: 4000,
-        style: {
-          background: '#ef4444',
-          color: 'white',
-          border: 'none',
-        },
-      });
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
@@ -466,12 +457,11 @@ export function EnhancedTable<T extends Record<string, any>>({
             />
           )}
 
-          {/* Schedules export button: use API if exportFileName === 'schedules' */}
           {!hideTableExport && enableExport && (
             <Button
               variant="outline"
               size="sm"
-              onClick={exportFileName === 'schedules' ? handleSchedulesExport : (handleExport || (() => exportToExcel(filteredData, visibleColumns, exportFileName)))}
+              onClick={handleExport || (() => exportTicketRecords())}
               className="flex items-center gap-2"
             >
               <Download className="w-4 h-4" />
@@ -496,7 +486,19 @@ export function EnhancedTable<T extends Record<string, any>>({
                     {renderActions && (
                       <TableHead className="bg-[#f6f4ee] text-center" data-actions>Actions</TableHead>
                     )}
-                     {visibleColumns.map((column) => (
+                    {selectable && (
+                      <TableHead className="bg-[#f6f4ee] w-12 text-center" data-checkbox>
+                        <div className="flex justify-center">
+                          <Checkbox
+                            checked={isAllSelected}
+                            onCheckedChange={handleSelectAllChange}
+                            aria-label={selectAllLabel}
+                            {...(isIndeterminate && { 'data-state': 'indeterminate' })}
+                          />
+                        </div>
+                      </TableHead>
+                    )}
+                    {visibleColumns.map((column) => (
                       <SortableColumnHeader
                         key={column.key}
                         id={column.key}
@@ -515,11 +517,12 @@ export function EnhancedTable<T extends Record<string, any>>({
               <TableBody>
                 {loading && (
                   <TableRow>
-                     <TableCell
-                       colSpan={
-                         visibleColumns.length +
-                         (renderActions ? 1 : 0)
-                       }
+                    <TableCell
+                      colSpan={
+                        visibleColumns.length +
+                        (renderActions ? 1 : 0) +
+                        (selectable ? 1 : 0)
+                      }
                       className="h-24 text-center"
                     >
                       <div className="flex items-center justify-center">
@@ -531,11 +534,12 @@ export function EnhancedTable<T extends Record<string, any>>({
                 )}
                 {!loading && sortedData.length === 0 && (
                   <TableRow>
-                     <TableCell
-                       colSpan={
-                         visibleColumns.length +
-                         (renderActions ? 1 : 0)
-                       }
+                    <TableCell
+                      colSpan={
+                        visibleColumns.length +
+                        (renderActions ? 1 : 0) +
+                        (selectable ? 1 : 0)
+                      }
                       className="text-center py-8 text-gray-500"
                     >
                       {emptyMessage}
@@ -561,7 +565,19 @@ export function EnhancedTable<T extends Record<string, any>>({
                           {renderActions(item)}
                         </TableCell>
                       )}
-                       {visibleColumns.map((column) => {
+                      {selectable && (
+                        <TableCell className="p-4 w-12 text-center" data-checkbox>
+                          <div className="flex justify-center">
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={(checked) => handleSelectItemChange(itemId, !!checked)}
+                              aria-label={`Select row ${index + 1}`}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        </TableCell>
+                      )}
+                      {visibleColumns.map((column) => {
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
