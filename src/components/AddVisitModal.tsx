@@ -69,9 +69,11 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
     vendor: '',
     startDate: '',
     technician: '',
+    remarks: '',
   });
+
   const [users, setUsers] = useState([]);
-  const [attachment, setAttachment] = useState(null)
+  const [attachment, setAttachment] = useState<File | null>(null);
 
   const { data: amcData, loading, error } = useAppSelector(
     (state) => state.amcDetails as {
@@ -106,36 +108,39 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const payload = {
-      pms_asset_amc: {
-        amc_visit_logs_attributes: [
-          {
-            visit_number: formData.vendor,
-            technician_id: formData.technician,
-            visit_date: formData.startDate,
-          },
-        ],
-      },
-    };
+    const form = new FormData();
+    form.append('pms_asset_amc[amc_visit_logs_attributes][0][visit_number]', formData.vendor);
+    form.append('pms_asset_amc[amc_visit_logs_attributes][0][technician_id]', formData.technician);
+    form.append('pms_asset_amc[amc_visit_logs_attributes][0][visit_date]', formData.startDate);
+    form.append('pms_asset_amc[amc_visit_logs_attributes][0][remarks]', formData.remarks);
 
-    axios
-      .patch(`https://${baseUrl}/pms/asset_amcs/${amcId}.json`, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then(() => {
-        toast.success('Visit added successfully');
-        setFormData({ vendor: '', startDate: '', technician: '' });
-        dispatch(fetchAMCDetails(amcId)); // ✅ Re-fetch updated data
-        handleClose();
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    if (attachment) {
+      form.append('pms_asset_amc[amc_visit_logs_attributes][0][document]', attachment);
+    }
+
+    try {
+      await axios.patch(
+        `https://${baseUrl}/pms/asset_amcs/${amcId}.json`,
+        form,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      toast.success('Visit added successfully');
+      setFormData({ vendor: '', startDate: '', technician: '', remarks: '' });
+      setAttachment(null);
+      dispatch(fetchAMCDetails(amcId));
+      handleClose();
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to add visit');
+    }
   };
 
   const fieldStyles = {
@@ -146,7 +151,8 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
   };
 
   const handleClose = () => {
-    setFormData({ vendor: '', startDate: '', technician: '' });
+    setFormData({ vendor: '', startDate: '', technician: '', remarks: '' });
+    setAttachment(null);
     onClose();
   };
 
@@ -163,80 +169,91 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="space-y-4">
-            <TextField
-              required
-              label="Visit Number"
-              placeholder="Enter Visit Number"
-              name="vendor"
-              value={formData.vendor}
-              onChange={(e) => handleInputChange('vendor', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-            />
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+  <TextField
+    required
+    label="Visit Number"
+    placeholder="Enter Visit Number"
+    name="vendor"
+    value={formData.vendor}
+    onChange={(e) => handleInputChange('vendor', e.target.value)}
+    fullWidth
+    variant="outlined"
+    InputLabelProps={{ shrink: true }}
+  />
 
-            <TextField
-              label="Start Date"
-              placeholder="Select Date"
-              name="startDate"
-              type="date"
-              value={formData.startDate}
-              onChange={(e) => handleInputChange('startDate', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-            />
+  <TextField
+    label="Start Date"
+    type="date"
+    name="startDate"
+    value={formData.startDate}
+    onChange={(e) => handleInputChange('startDate', e.target.value)}
+    fullWidth
+    variant="outlined"
+    InputLabelProps={{ shrink: true }}
+  />
 
-            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-              <InputLabel id="technician-label" shrink>
-                Type
-              </InputLabel>
-              <Select
-                labelId="technician-label"
-                name="technician"
-                value={formData.technician || ''}
-                onChange={(e) => handleInputChange('technician', e.target.value)}
-                label="Type"
-                displayEmpty
-                notched
-              >
-                <MenuItem value="" disabled>
-                  <em>Select Technician</em>
-                </MenuItem>
-                {users?.map((user: any) => (
-                  <MenuItem key={user.id} value={user.id}>
-                    {user.full_name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+  <FormControl fullWidth variant="outlined">
+    <InputLabel id="technician-label" shrink>
+      Technician
+    </InputLabel>
+    <Select
+      labelId="technician-label"
+      name="technician"
+      value={formData.technician || ''}
+      onChange={(e) => handleInputChange('technician', e.target.value)}
+      label="Technician"
+      displayEmpty
+      notched
+    >
+      <MenuItem value="" disabled>
+        <em>Select Technician</em>
+      </MenuItem>
+      {users?.map((user: any) => (
+        <MenuItem key={user.id} value={user.id}>
+          {user.full_name}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
 
-            <TextField
-              label="Attachment"
-              type="file"
-              name="attachment"
-              onChange={(e) => setAttachment(e.target.files?.[0] || null)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-            />
-          </div>
+  <TextField
+    label="Remarks"
+    placeholder="Enter remarks"
+    name="remarks"
+    value={formData.remarks}
+    onChange={(e) => handleInputChange('remarks', e.target.value)}
+    fullWidth
+    variant="outlined"
+    multiline
+    rows={3}
+    InputLabelProps={{ shrink: true }}
+  />
 
-          <div className="flex justify-center mt-6">
-            <Button
-              type="submit"
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90 px-8"
-            >
-              Submit
-            </Button>
-          </div>
-        </form>
+  <div className="space-y-1">
+    <label className="text-sm font-medium text-gray-700" htmlFor="attachment">
+      Attachment
+    </label>
+    <input
+      id="attachment"
+      type="file"
+      name="attachment"
+      onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+      className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+    />
+  </div>
+
+  <div className="flex justify-center pt-4">
+    <Button
+      type="submit"
+      style={{ backgroundColor: '#C72030' }}
+      className="text-white hover:bg-[#C72030]/90 px-8 py-2 rounded-md"
+    >
+      Submit
+    </Button>
+  </div>
+</form>
+
       </div>
     </div>
   );

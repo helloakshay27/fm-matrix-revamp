@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Upload } from 'lucide-react';
+import { ArrowLeft, File, FileSpreadsheet, FileText, Upload, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, CircularProgress, FormHelperText } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { fetchService, updateService, clearError, resetServiceState } from '@/store/slices/serviceSlice';
 import { fetchSites, fetchBuildings, fetchWings, fetchAreas, fetchFloors, fetchRooms, fetchGroups, fetchSubGroups } from '@/store/slices/serviceLocationSlice';
+import { toast } from 'sonner';
 
 export const EditServicePage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { toast } = useToast();
   const dispatch = useAppDispatch();
   const { loading, error, fetchedService, updatedService } = useAppSelector(state => state.serviceEdit);
   const {
@@ -46,8 +45,6 @@ export const EditServicePage = () => {
     serviceCode: '',
     extCode: '',
     rateContractVendorCode: '',
-    groupName: '', // Added to store group_name for display
-    subGroupName: '', // Added to store sub_group_name for display
   });
 
   const [selectedFile, setSelectedFile] = useState<File[]>([]);
@@ -90,16 +87,14 @@ export const EditServicePage = () => {
         areaId: fetchedService.area_id || null,
         floorId: fetchedService.floor_id || null,
         roomId: fetchedService.room_id || null,
-        groupId: fetchedService.pms_asset_group_id || null,
-        subGroupId: fetchedService.pms_asset_sub_group_id || null,
+        groupId: fetchedService.group_id || null,
+        subGroupId: fetchedService.sub_group_id || null,
         description: fetchedService.description || '',
         serviceCategory: fetchedService.service_category || '',
         serviceGroup: fetchedService.service_group || '',
         serviceCode: fetchedService.service_code || '',
         extCode: fetchedService.ext_code || '',
         rateContractVendorCode: fetchedService.rate_contract_vendor_code || '',
-        groupName: fetchedService.group_name || '',
-        subGroupName: fetchedService.sub_group_name || '',
       });
 
       if (Array.isArray(fetchedService.documents)) {
@@ -112,45 +107,29 @@ export const EditServicePage = () => {
         );
       }
 
-      if (fetchedService.site_id) {
-        dispatch(fetchBuildings(fetchedService.site_id));
+      // Fetch sub-groups when groupId is available from fetchedService
+      if (fetchedService.group_id) {
+        dispatch(fetchSubGroups(fetchedService.group_id));
       }
-      if (fetchedService.building_id) {
-        dispatch(fetchWings(fetchedService.building_id));
-      }
-      if (fetchedService.wing_id) {
-        dispatch(fetchAreas(fetchedService.wing_id));
-      }
-      if (fetchedService.area_id) {
-        dispatch(fetchFloors(fetchedService.area_id));
-      }
-      if (fetchedService.floor_id) {
-        dispatch(fetchRooms(fetchedService.floor_id));
-      }
-      if (fetchedService.pms_asset_group_id) {
-        dispatch(fetchSubGroups(fetchedService.pms_asset_group_id));
-      }
+
+      if (fetchedService.site_id) dispatch(fetchBuildings(fetchedService.site_id));
+      if (fetchedService.building_id) dispatch(fetchWings(fetchedService.building_id));
+      if (fetchedService.wing_id) dispatch(fetchAreas(fetchedService.wing_id));
+      if (fetchedService.area_id) dispatch(fetchFloors(fetchedService.area_id));
+      if (fetchedService.floor_id) dispatch(fetchRooms(fetchedService.floor_id));
     }
   }, [fetchedService, dispatch]);
-
   useEffect(() => {
     if (error) {
-      toast({
-        title: "Error",
-        description: error,
-        variant: "destructive"
-      });
+      toast("error");
       dispatch(clearError());
     }
   }, [error, toast, dispatch]);
 
   useEffect(() => {
     if (updatedService) {
-      toast({
-        title: "Service Updated",
-        description: "Service has been updated successfully.",
-      });
-      navigate('/maintenance/service');
+      toast.success('Service updated successfully!');
+      navigate('/maintenance/service/details/' + id);
     }
   }, [updatedService, toast, navigate]);
 
@@ -250,12 +229,7 @@ export const EditServicePage = () => {
       if (hasAreaIdError) errorFields.push('Area');
       if (hasFloorIdError) errorFields.push('Floor');
 
-      toast({
-        title: "Validation Error",
-        description: `Please fill in the following required fields: ${errorFields.join(', ')}`,
-        variant: "destructive",
-        duration: 5000,
-      });
+      toast(`Please fill in the following required fields: ${errorFields.join(', ')}`);
 
       setIsSubmitting(false);
       return;
@@ -300,11 +274,7 @@ export const EditServicePage = () => {
       await dispatch(updateService({ id, serviceData: sendData })).unwrap();
     } catch (error) {
       console.error('Error updating service:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update service.",
-        variant: "destructive"
-      });
+      toast("Failed to update service.");
     } finally {
       setIsSubmitting(false);
     }
@@ -328,6 +298,12 @@ export const EditServicePage = () => {
       </div>
     );
   }
+
+  const removeSelectedFile = (index: number) => {
+    const updatedFiles = [...selectedFile];
+    updatedFiles.splice(index, 1);
+    setSelectedFile(updatedFiles);
+  };
 
   return (
     <div className="p-6">
@@ -584,11 +560,6 @@ export const EditServicePage = () => {
                 <MenuItem value="">
                   <em>Select Group</em>
                 </MenuItem>
-                {formData.groupName && !groups.find(g => g.id === formData.groupId) && (
-                  <MenuItem value={formData.groupId || ''}>
-                    {formData.groupName}
-                  </MenuItem>
-                )}
                 {Array.isArray(groups) && groups.map((group) => (
                   <MenuItem key={group.id} value={group.id}>
                     {group.name}
@@ -616,11 +587,6 @@ export const EditServicePage = () => {
                 <MenuItem value="">
                   <em>Select Sub-Group</em>
                 </MenuItem>
-                {formData.subGroupName && !subGroups.find(sg => sg.id === formData.subGroupId) && (
-                  <MenuItem value={formData.subGroupId || ''}>
-                    {formData.subGroupName}
-                  </MenuItem>
-                )}
                 {Array.isArray(subGroups) && subGroups.map((subGroup) => (
                   <MenuItem key={subGroup.id} value={subGroup.id}>
                     {subGroup.name}
@@ -669,8 +635,9 @@ export const EditServicePage = () => {
             FILES UPLOAD
           </CardTitle>
         </CardHeader>
+
         <CardContent>
-          <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8 text-center">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
             <input
               type="file"
               className="hidden"
@@ -680,56 +647,98 @@ export const EditServicePage = () => {
               multiple
               disabled={isSubmitting}
             />
+
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <span
+                className="text-[#C72030] font-medium cursor-pointer text-sm"
+                onClick={() => document.getElementById('file-upload')?.click()}
+              >
+                Choose File
+              </span>
+              <span className="text-gray-500 text-sm">
+                {selectedFile.length > 0 ? `${selectedFile.length} file(s) selected` : 'No file chosen'}
+              </span>
+            </div>
+
             <Button
               type="button"
-              variant="outline"
               onClick={() => document.getElementById('file-upload')?.click()}
-              className={`text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center"
               disabled={isSubmitting}
             >
-              Choose Files
+              <Upload className="w-4 h-4 mr-1" />
+              Upload Files
             </Button>
-            <span className="ml-2 text-gray-500">
-              {selectedFile.length > 0 ? `${selectedFile.length} file(s) selected` : 'No new file chosen'}
-            </span>
           </div>
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-left">
-            {existingFiles.map((file) => (
-              <div key={file.id}>
-                {file.doctype.startsWith('image') ? (
-                  <img
-                    src={file.document}
-                    alt="Existing"
-                    className="h-32 w-full object-cover border rounded"
-                  />
-                ) : (
-                  <a
-                    href={file.document}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm underline text-blue-600"
+
+          {(existingFiles.length > 0 || selectedFile.length > 0) && (
+            <div className="flex flex-wrap gap-3 mt-4">
+              {existingFiles.map((file) => {
+                const isImage = file.doctype.startsWith('image');
+                return (
+                  <div
+                    key={file.id}
+                    className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
                   >
-                    {file.document.split('/').pop()}
-                  </a>
-                )}
-              </div>
-            ))}
-            {selectedFile.map((file, index) => (
-              <div key={`${file.name}-${file.lastModified}`}>
-                {file.type.startsWith('image') ? (
-                  <img
-                    src={URL.createObjectURL(file)}
-                    alt="Selected"
-                    className="h-32 w-full object-cover border rounded"
-                  />
-                ) : (
-                  <p className="text-sm truncate">{file.name}</p>
-                )}
-              </div>
-            ))}
-          </div>
+                    {isImage ? (
+                      <img src={file.document} alt="Existing" className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                    ) : (
+                      <div className="w-10 h-10 flex items-center justify-center border rounded text-blue-600 bg-white mb-1">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                    )}
+                    <span className="text-[10px] text-center truncate max-w-[100px] mb-1">
+                      {file.document.split('/').pop()}
+                    </span>
+                  </div>
+                );
+              })}
+
+              {selectedFile.map((file, index) => {
+                const isImage = file.type.startsWith('image');
+                const isPdf = file.type === 'application/pdf';
+                const isExcel =
+                  file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                const fileURL = URL.createObjectURL(file);
+
+                return (
+                  <div
+                    key={`${file.name}-${file.lastModified}`}
+                    className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
+                  >
+                    {isImage ? (
+                      <img src={fileURL} alt={file.name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                    ) : isPdf ? (
+                      <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                    ) : isExcel ? (
+                      <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                        <FileSpreadsheet className="w-4 h-4" />
+                      </div>
+                    ) : (
+                      <div className="w-[40px] h-[40px] flex items-center justify-center bg-gray-100 border rounded text-gray-500 mb-1">
+                        <File className="w-4 h-4" />
+                      </div>
+                    )}
+                    <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-600"
+                      onClick={() => removeSelectedFile(index)} // Optional if implemented
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
+
 
       <div className="flex gap-4 flex-wrap justify-center">
         <Button

@@ -5,17 +5,15 @@ import {
   DialogTitle,
   IconButton,
   CircularProgress,
-} from '@mui/material';
-import { Button } from "@/components/ui/button";
-import { X } from 'lucide-react';
-import {
   FormControl,
   InputLabel,
-  Select as MuiSelect,
   MenuItem,
+  Select as MuiSelect,
 } from '@mui/material';
-import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 import axios from 'axios';
+import { useToast } from '@/hooks/use-toast';
 
 interface Asset {
   id: number;
@@ -27,36 +25,56 @@ interface AssociateServiceModalProps {
   isOpen: boolean;
   onClose: () => void;
   serviceId: string;
+  assetGroupId: string; // 👈 new prop
 }
 
-export const AssociateServiceModal = ({ isOpen, onClose, serviceId }: AssociateServiceModalProps) => {
+export const AssociateServiceModal = ({ isOpen, onClose, serviceId, assetGroupId }: AssociateServiceModalProps) => {
   const { toast } = useToast();
   const [selectedAsset, setSelectedAsset] = useState('');
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchAssetData = async () => {
-    const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
-
-    if (!baseUrl || !token) {
+  
+    if (!token) {
       toast({
         title: "Error",
-        description: "Missing base URL or token",
+        description: "Missing token",
         variant: "destructive",
       });
       return;
     }
-
+  
+    if (!assetGroupId) {
+      toast({
+        title: "Error",
+        description: "Missing asset group ID",
+        variant: "destructive",
+      });
+      return;
+    }
+  
     setLoading(true);
     try {
-      const response = await axios.get(`https://${baseUrl}/pms/assets/get_assets.json`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setAssets(response.data || []);
+      const response = await axios.get(
+        `https://fm-uat-api.lockated.com/pms/assets.json?q[pms_asset_group_id_eq]=${assetGroupId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      // Debug: Log the response
+      console.log('Asset API response:', response.data);
+  
+      // Fix: Set the correct array from the response
+      const assetsArray = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data.assets)
+        ? response.data.assets
+        : [];
+  
+      setAssets(assetsArray);
     } catch (error) {
       console.error('Failed to fetch asset data:', error);
       toast({
@@ -68,7 +86,7 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId }: AssociateS
       setLoading(false);
     }
   };
-
+  
   const handleAssociate = async () => {
     if (!selectedAsset) {
       toast({
@@ -141,15 +159,12 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId }: AssociateS
       '& .MuiSelect-select': {
         fontSize: { xs: '11px', sm: '12px', md: '13px' },
       },
-      '& .MuiMenuItem-root': {
-        fontSize: { xs: '11px', sm: '12px', md: '13px' },
-      },
     },
   };
 
   return (
     <Dialog open={isOpen} onClose={onClose} maxWidth="sm" fullWidth>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px 0' }}>
+      <div className="flex items-center justify-between px-6 pt-4">
         <DialogTitle style={{ padding: 0, fontSize: '1.2rem', fontWeight: 600 }}>
           Associate Services To Asset
         </DialogTitle>
@@ -185,7 +200,7 @@ export const AssociateServiceModal = ({ isOpen, onClose, serviceId }: AssociateS
           )}
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div className="flex justify-center">
           <Button 
             onClick={handleAssociate}
             className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8"

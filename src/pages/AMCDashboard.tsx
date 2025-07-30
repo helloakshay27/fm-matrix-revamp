@@ -114,6 +114,7 @@ interface AMCRecord {
   created_at: string;
   active: boolean;
   is_flagged?: boolean;
+  contract_name?: string;
 }
 
 const initialAmcData: AMCRecord[] = [];
@@ -124,6 +125,7 @@ const columns: ColumnConfig[] = [
   { key: 'asset_name', label: 'Asset Name', sortable: true, defaultVisible: true },
   { key: 'amc_type', label: 'AMC Type', sortable: true, defaultVisible: true },
   { key: 'vendor_name', label: 'Vendor Name', sortable: true, defaultVisible: true },
+  { key: 'contract_name', label: 'Contract Name', sortable: true, defaultVisible: true },
   { key: 'amc_start_date', label: 'Start Date', sortable: true, defaultVisible: true },
   { key: 'amc_end_date', label: 'End Date', sortable: true, defaultVisible: true },
   { key: 'amc_first_service', label: 'First Service', sortable: true, defaultVisible: true },
@@ -237,7 +239,7 @@ export const AMCDashboard = () => {
         amcAnalyticsAPI.getAMCVendorPerformance(startDate, endDate),
         amcAnalyticsAPI.getAMCComplianceReport(startDate, endDate)
       ]);
-      
+
       setAmcAnalyticsData(statusData);
       setAmcStatusSummary(statusSummary);
       setAmcTypeDistribution(typeDistribution);
@@ -369,13 +371,13 @@ export const AMCDashboard = () => {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
-  
+
       const amcRecord = amcData.find((item) => item.id === id);
       if (!amcRecord) {
         toast.error('AMC record not found');
         return;
       }
-  
+
       const updatedStatus = !amcRecord.active;
       const url = `https://${baseUrl}/pms/asset_amcs/${id}.json`;
       const response = await axios.put(
@@ -391,17 +393,17 @@ export const AMCDashboard = () => {
           },
         }
       );
-  
+
       if (response.status === 200) {
         // Refresh table data
         await fetchFilteredAMCs(filter, currentPage);
-  
+
         // Refresh analytics data
         const { startDate, endDate } = analyticsDateRange;
         const startDateObj = convertDateStringToDate(startDate);
         const endDateObj = convertDateStringToDate(endDate);
         await fetchAMCAnalyticsData(startDateObj, endDateObj);
-  
+
         toast.success(`AMC ID ${id} status updated`);
       } else {
         toast.error('Failed to update AMC status');
@@ -556,6 +558,8 @@ export const AMCDashboard = () => {
         return item.amc_type || '-';
       case 'vendor_name':
         return item.vendor_name || '-';
+      case 'contract_name':
+        return item.contract_name || '-';
       case 'amc_start_date':
         return item.amc_start_date ? new Date(item.amc_start_date).toLocaleDateString() : '-';
       case 'amc_end_date':
@@ -909,7 +913,7 @@ export const AMCDashboard = () => {
               {/* Header Section with Filter and Selector */}
               <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
                 {/* Drag info indicator */}
-               
+
 
                 <div className="flex items-center gap-2">
                   <Button
@@ -1032,7 +1036,7 @@ export const AMCDashboard = () => {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {(apiData as any)?.total_amcs_count || 0}
+                      {(apiData as any)?.total_amcs_count || 0}
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total AMC</div>
                   </div>
@@ -1047,7 +1051,7 @@ export const AMCDashboard = () => {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {(apiData as any)?.active_amcs_count || 0}
+                      {(apiData as any)?.active_amcs_count || 0}
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active AMC</div>
                   </div>
@@ -1062,7 +1066,7 @@ export const AMCDashboard = () => {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {(apiData as any)?.inactive_amcs_count || 0}
+                      {(apiData as any)?.inactive_amcs_count || 0}
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive AMC</div>
                   </div>
@@ -1077,7 +1081,7 @@ export const AMCDashboard = () => {
                   </div>
                   <div className="flex flex-col min-w-0">
                     <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {(apiData as any)?.flagged_amcs_count || 0}
+                      {(apiData as any)?.flagged_amcs_count || 0}
                     </div>
                     <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Flagged AMC</div>
                   </div>
@@ -1089,12 +1093,12 @@ export const AMCDashboard = () => {
 
               {showActionPanel && (
                 <SelectionPanel
-                actions={[
-                  {
-                    label: 'Add Schedule',
-                    icon: Plus,
-                    onClick: () => navigate('/maintenance/schedule/add?type=AMC'),
-                }]}
+                  actions={[
+                    {
+                      label: 'Add Schedule',
+                      icon: Plus,
+                      onClick: () => navigate('/maintenance/schedule/add?type=AMC'),
+                    }]}
                   onAdd={handleAddClick}
                   onClearSelection={() => setShowActionPanel(false)}
                   onImport={handleImportClick}
