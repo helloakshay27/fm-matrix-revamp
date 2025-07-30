@@ -383,7 +383,7 @@ export const EditSurveyPage = () => {
                         checked={question.quest_mandatory}
                         onCheckedChange={(checked) => handleQuestionChange(index, 'quest_mandatory', checked)}
                       />
-                      <Label htmlFor={`mandatory-${index}`} className="text-sm text-blue-600">
+                      <Label htmlFor={`mandatory-${index}`} className="text-sm text-black">
                         Mandatory
                       </Label>
                     </div>
