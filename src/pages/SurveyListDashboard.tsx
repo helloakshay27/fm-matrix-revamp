@@ -211,9 +211,8 @@ export const SurveyListDashboard = () => {
             </div>
           }
           rightActions={
-            <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
+            <Button variant="outline" className="h-[36px] w-[36px] p-0 border-gray-300 text-gray-700 flex items-center justify-center">
               <Filter className="w-4 h-4" />
-              <span className="hidden sm:inline">Filter</span>
             </Button>
           }
         />

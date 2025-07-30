@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, ArrowLeft } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import apiClient from '@/utils/apiClient';
 
@@ -228,10 +228,17 @@ export const EditSurveyPage = () => {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <p className="text-muted-foreground text-sm mb-2">
-            Survey &gt; Edit Survey
-          </p>
-          <h1 className="text-3xl font-bold tracking-tight">Edit Survey</h1>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/maintenance/survey/list')}
+              className="p-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-3xl font-bold tracking-tight">Edit Survey</h1>
+          </div>
         </div>
       </div>
 
@@ -273,7 +280,7 @@ export const EditSurveyPage = () => {
               <div className="flex items-center gap-4">
                 <span className="text-sm font-medium">Add No. of Questions</span>
                 <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded">
-                  <span className="text-sm">02</span>
+                  <span className="text-sm">{questions.length.toString().padStart(2, '0')}</span>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -293,7 +300,7 @@ export const EditSurveyPage = () => {
                 <Card key={index} className="relative">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-medium text-blue-600">New Question</CardTitle>
+                      <CardTitle className="text-sm font-medium text-black">New Question</CardTitle>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -324,22 +331,12 @@ export const EditSurveyPage = () => {
                         <SelectContent>
                           <SelectItem value="text">Text</SelectItem>
                           <SelectItem value="multiple">Multiple Choice</SelectItem>
-                          <SelectItem value="single">Single Choice</SelectItem>
-                          <SelectItem value="boolean">Yes/No</SelectItem>
+                          <SelectItem value="input">Input Box</SelectItem>
+                          <SelectItem value="description">Description Box</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`mandatory-${index}`}
-                        checked={question.quest_mandatory}
-                        onCheckedChange={(checked) => handleQuestionChange(index, 'quest_mandatory', checked)}
-                      />
-                      <Label htmlFor={`mandatory-${index}`} className="text-sm text-blue-600">
-                        Mandatory
-                      </Label>
-                    </div>
 
                     {(question.qtype === 'multiple' || question.qtype === 'single') && (
                       <div className="space-y-3">
@@ -376,15 +373,27 @@ export const EditSurveyPage = () => {
                         ))}
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
                           onClick={() => handleAddAnswerOption(index)}
-                          className="text-blue-600 border-blue-600"
+                          className="p-0 h-auto font-medium"
+                          style={{ color: '#C72030' }}
                         >
                           <Plus className="w-4 h-4 mr-1" />
                           Add Option
                         </Button>
                       </div>
-                    )}
+                     )}
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`mandatory-${index}`}
+                        checked={question.quest_mandatory}
+                        onCheckedChange={(checked) => handleQuestionChange(index, 'quest_mandatory', checked)}
+                      />
+                      <Label htmlFor={`mandatory-${index}`} className="text-sm text-black">
+                        Mandatory
+                      </Label>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
