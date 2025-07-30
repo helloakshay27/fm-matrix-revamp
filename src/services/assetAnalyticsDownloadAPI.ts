@@ -7,7 +7,8 @@ const formatDateForAPI = (date: Date): string => {
 
 // Utility function to get current site ID
 const getCurrentSiteId = (): string => {
-  return localStorage.getItem('selectedSiteId') || '2189';
+  return localStorage.getItem('selectedSiteId') || 
+         new URLSearchParams(window.location.search).get('site_id');
 };
 
 // Utility function to get access token

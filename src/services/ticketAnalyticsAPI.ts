@@ -171,8 +171,7 @@ const formatDateForAPI = (date: Date): string => {
 // Get current site ID dynamically from localStorage or header
 const getCurrentSiteId = (): string => {
   return localStorage.getItem('selectedSiteId') ||
-    new URLSearchParams(window.location.search).get('site_id') ||
-    '7';
+    new URLSearchParams(window.location.search).get('site_id') ;
 };
 
 export const ticketAnalyticsAPI = {
