@@ -485,40 +485,6 @@ export const SurveyDetailsPage = () => {
                       </div>
                     </div>
 
-                    {/* Selected Section */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">
-                        Selected
-                      </label>
-                      <div className="space-y-3">
-                        {question.snag_quest_options?.map((option, optionIndex) => (
-                          <div key={option.id} className="flex items-center gap-3">
-                            <div className="flex items-center space-x-2">
-                              <input 
-                                type="radio" 
-                                id={`option-${question.id}-${option.id}`}
-                                name={`question-${question.id}`}
-                                className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
-                                defaultChecked={optionIndex === 0}
-                                disabled
-                              />
-                              <label htmlFor={`option-${question.id}-${option.id}`} className="text-sm text-gray-700">
-                                {option.qname}
-                              </label>
-                            </div>
-                            <Select value={option.option_type.toUpperCase()} disabled>
-                              <SelectTrigger className="w-16 h-10 bg-gray-100">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="P">P</SelectItem>
-                                <SelectItem value="N">N</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )) || []}
-                      </div>
-                    </div>
 
                     {question.snag_quest_options && question.snag_quest_options.length > 0 && (
                       <div>
