@@ -885,14 +885,14 @@ export const SurveyDetailsPage = () => {
             </div>
           ) : surveyMappings.length > 0 ? (
             surveyMappings.map((mapping) => (
-               <div key={mapping.id} className="grid grid-cols-6 border-b border-gray-200 last:border-b-0">
-                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.building_name || '-'}</div>
-                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.wing_name || '-'}</div>
-                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor_name || '-'}</div>
-                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor_name || '-'}</div>
-                 <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.room_name || '-'}</div>
-                 <div className="p-4 text-gray-700">{mapping.qr_code || '-'}</div>
-               </div>
+                <div key={mapping.id} className="grid grid-cols-6 border-b border-gray-200 last:border-b-0">
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.building_name || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.wing_name || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor_name || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.area_name || '-'}</div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.room_name || '-'}</div>
+                  <div className="p-4 text-gray-700">{mapping.qr_code || '-'}</div>
+                </div>
             ))
           ) : (
             <div className="p-8 text-center text-gray-500">
