@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Upload, FileText, Filter, Eye, Settings, AlertCircle, Trash2, Clock, Download, X, Flag } from 'lucide-react';
@@ -35,6 +34,7 @@ interface ServiceRecord {
   room: string;
   created_at: string;
   qr_code?: string;
+  qr_code_id?: number;
   group_name?: string;
   sub_group_name?: string;
   base_uom?: string;
@@ -108,24 +108,18 @@ export const ServiceDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [currentPage, setCurrentPage] = useState(1);
+  const [downloadedQRCodes, setDownloadedQRCodes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const filtersWithSearch = {
       ...appliedFilters,
-      // Only include serviceName from debouncedSearchQuery if appliedFilters.serviceName is not set
       serviceName: appliedFilters.serviceName || debouncedSearchQuery || undefined,
     };
-    console.log('useEffect triggered with:', {
-      active: activeFilter,
-      page: currentPage,
-      filters: filtersWithSearch,
-    });
     dispatch(fetchServicesData({ active: activeFilter, page: currentPage, filters: filtersWithSearch }));
   }, [dispatch, activeFilter, currentPage, appliedFilters, debouncedSearchQuery]);
+
   const servicesData = apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData;
   const paginationData: PaginationData = apiData?.pagination || { current_page: 1, total_count: 0, total_pages: 1 };
-
-  console.log('Services data:', servicesData);
 
   const handleAddClick = () => navigate('/maintenance/service/add');
   const handleAddSchedule = () => navigate('/maintenance/schedule/add?type=Service');
@@ -140,9 +134,8 @@ export const ServiceDashboard = () => {
   };
 
   const handleApplyFilters = (filters: any) => {
-    console.log('Applied filters:', filters);
     setAppliedFilters(filters);
-    setSearchQuery(''); // Clear search query to avoid overriding
+    setSearchQuery('');
     setCurrentPage(1);
     setShowFilterModal(false);
   };
@@ -153,7 +146,6 @@ export const ServiceDashboard = () => {
   };
 
   const handleSearch = (query: string) => {
-    console.log('Search query entered in handleSearch:', query);
     setSearchQuery(query);
     setCurrentPage(1);
   };
@@ -174,25 +166,114 @@ export const ServiceDashboard = () => {
     }
   };
 
-  const handleQRDownload = (serviceId?: string) => {
+  const downloadAttachment = async (file: { attachment_id: number; document_name: string }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+
+      if (!token || !baseUrl) {
+        console.error('Missing token or baseUrl');
+        toast.error('Missing token or baseUrl');
+        return;
+      }
+
+      const apiUrl = `https://${baseUrl}/attachfiles/${file.attachment_id}?show_file=true`;
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Download failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.document_name || `document_${file.attachment_id}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading file:', err);
+      toast.error('Error downloading file');
+    }
+  };
+
+  const handleQRDownload = async (serviceId?: string) => {
     const servicesToDownload = serviceId
       ? servicesData.filter((service) => service.id.toString() === serviceId)
       : servicesData.filter((service) => selectedItems.includes(service.id.toString()));
 
-    servicesToDownload.forEach((service) => {
-      const qrUrl = service.qr_code;
-      if (qrUrl) {
-        const link = document.createElement('a');
-        link.href = qrUrl;
-        link.download = `${service.service_name || 'service'}_${service.id}_qr.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    for (const service of servicesToDownload) {
+      if (service.qr_code && service.qr_code_id) {
+        const serviceIdStr = service.id.toString();
+        if (downloadedQRCodes.has(serviceIdStr)) {
+          // Show toast with confirmation buttons
+          const downloadPromise = new Promise<void>((resolve) => {
+            toast.custom((t) => (
+              <div
+                className="bg-white p-5 rounded-xl shadow-none w-full max-w-sm border-0 ring-0"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-6 h-6 text-yellow-500 mt-1" />
+                  <div className="flex-1 text-sm text-gray-800">
+                    <p className="font-semibold mb-1">QR Code Already Downloaded</p>
+                    <p className="text-sm text-gray-800">
+                      QR for <span className="font-medium text-gray-900">"{service.service_name}"</span> (ID: {service.id}) already downloaded. Download again?
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 border-red-500 hover:bg-red-50"
+                    onClick={() => {
+                      toast.dismiss(t);
+                      resolve();
+                    }}
+                  >
+                    No
+                  </Button>
+                  <Button
+                    className="bg-primary text-white hover:bg-primary/90"
+                    size="sm"
+                    onClick={async () => {
+                      toast.dismiss(t);
+                      await downloadAttachment({
+                        attachment_id: service.qr_code_id!,
+                        document_name: `${service.service_name || 'service'}_${service.id}_qr.png`,
+                      });
+                      setDownloadedQRCodes((prev) => new Set(prev).add(serviceIdStr));
+                      resolve();
+                    }}
+                  >
+                    Yes
+                  </Button>
+                </div>
+              </div>
+            ));
+
+          });
+
+          await downloadPromise;
+        } else {
+          await downloadAttachment({
+            attachment_id: service.qr_code_id,
+            document_name: `${service.service_name || 'service'}_${service.id}_qr.png`,
+          });
+          setDownloadedQRCodes((prev) => new Set(prev).add(serviceIdStr));
+        }
       } else {
         console.warn(`QR code not available for service ID ${service.id}`);
         toast.error(`QR code not available for service ID ${service.id}`);
       }
-    });
+    }
   };
 
   const handleViewService = (id: number) => navigate(`/maintenance/service/details/${id}`);
@@ -332,7 +413,7 @@ export const ServiceDashboard = () => {
 
   const bulkActions = [
     {
-      label: 'Print QR Codes',
+      label: 'Print QR',
       icon: FileText,
       onClick: () => handleQRDownload(),
     },
@@ -434,7 +515,6 @@ export const ServiceDashboard = () => {
             </div>
           </div>
         );
-
       case 'createdOn':
         return item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB') : '-';
       default:
@@ -540,6 +620,14 @@ export const ServiceDashboard = () => {
       <Button onClick={handleActionClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Plus className="w-4 h-4" /> Action
       </Button>
+      {selectedItems.length > 0 && (
+        <Button
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+          onClick={() => handleQRDownload()}
+        >
+          <FileText className="w-4 h-4 mr-2" /> Print QR
+        </Button>
+      )}
     </div>
   );
 
@@ -662,7 +750,7 @@ export const ServiceDashboard = () => {
           columns={columns}
           renderCell={renderCell}
           bulkActions={bulkActions}
-          showBulkActions={true}
+          showBulkActions={selectedItems.length > 0}
           selectable={true}
           selectedItems={selectedItems}
           onSelectItem={handleSelectItem}
@@ -673,11 +761,8 @@ export const ServiceDashboard = () => {
           getItemId={(item) => item.id.toString()}
           storageKey="services-table"
           leftActions={renderCustomActions()}
-          searchPlaceholder="Search by service ID or name..."
-          onSearchChange={(query) => {
-            console.log('EnhancedTable search change:', query);
-            handleSearch(query);
-          }}
+          searchPlaceholder="Search..."
+          onSearchChange={(query) => handleSearch(query)}
           searchTerm={searchQuery}
           enableSearch={true}
           onFilterClick={handleFiltersClick}
