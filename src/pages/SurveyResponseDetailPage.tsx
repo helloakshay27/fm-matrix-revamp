@@ -199,24 +199,22 @@ export const SurveyResponseDetailPage = () => {
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200">
                       <th className="p-3 text-left text-sm font-medium text-gray-700">Sr. No.</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700">User Name</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700">Timestamp</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700">What is your age group?</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700">What is your annual household income?</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700">How much would you like to spend on a...</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">Survey ID</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">Survey Title</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">No. Of Responses</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">No. Of Tickets</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">Expiry Date</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {Array.from({ length: Math.min(6, surveyData.totalResponses) }).map((_, index) => (
-                      <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="p-3 text-sm text-gray-700">{index + 1}</td>
-                        <td className="p-3 text-sm text-gray-700">Abhidhya Tapal</td>
-                        <td className="p-3 text-sm text-gray-700">17/09/2024 15:38:31</td>
-                        <td className="p-3 text-sm text-gray-700">18-24</td>
-                        <td className="p-3 text-sm text-gray-700">Over ₹7,00,000</td>
-                        <td className="p-3 text-sm text-gray-700">₹1,000 - ₹2,500</td>
-                      </tr>
-                    ))}
+                    <tr className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="p-3 text-sm text-gray-700">1</td>
+                      <td className="p-3 text-sm text-gray-700">{surveyData.id}</td>
+                      <td className="p-3 text-sm text-gray-700">{surveyData.surveyTitle}</td>
+                      <td className="p-3 text-sm text-gray-700 text-center">{surveyData.totalResponses}</td>
+                      <td className="p-3 text-sm text-gray-700 text-center">{surveyData.tickets}</td>
+                      <td className="p-3 text-sm text-gray-700">{surveyData.expiryDate}</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
