@@ -238,16 +238,10 @@ export const SurveyResponsePage = () => {
           pageSize={10}
           leftActions={
             <div className="flex flex-wrap gap-2">
-              <Button 
-                variant="outline" 
-                className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
-                onClick={handleFilterClick}
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </Button>
+              {/* Filter button is now positioned next to search input in EnhancedTable */}
             </div>
           }
+          onFilterClick={handleFilterClick}
         />
       </div>
 
