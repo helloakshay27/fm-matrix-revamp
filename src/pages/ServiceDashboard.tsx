@@ -343,7 +343,7 @@ export const ServiceDashboard = () => {
     const token = localStorage.getItem('token');
 
     try {
-      if (!baseUrl || !token ) {
+      if (!baseUrl || !token) {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
@@ -421,7 +421,7 @@ export const ServiceDashboard = () => {
         return item.sub_group_name || '-';
       case 'status':
         return (
-          <div className="flex items-center">
+          <div className="flex justify-center items-center h-full w-full">
             <div
               onClick={() => !togglingIds.has(item.id) && handleStatusToggle(item.id)}
               className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-400'
@@ -434,6 +434,7 @@ export const ServiceDashboard = () => {
             </div>
           </div>
         );
+
       case 'createdOn':
         return item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB') : '-';
       default:
@@ -546,7 +547,7 @@ export const ServiceDashboard = () => {
     const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
     const token = localStorage.getItem('token');
     try {
-      if (!baseUrl || !token ) {
+      if (!baseUrl || !token) {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
