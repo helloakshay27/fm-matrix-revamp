@@ -119,11 +119,10 @@ export const SurveyResponseDetailPage = () => {
                 </div>
               </div>
               
-              {/* Tabs in the center - now properly within Tabs component */}
               <div className="flex items-center gap-8">
-                <TabsList className="grid grid-cols-2 w-48 bg-transparent border-0">
-                  <TabsTrigger value="summary" className="text-gray-700 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none">Summary</TabsTrigger>
-                  <TabsTrigger value="tabular" className="text-gray-700 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none">Tabular</TabsTrigger>
+                <TabsList className="bg-transparent border-0 p-0 h-auto">
+                  <TabsTrigger value="summary" className="bg-transparent border-0 text-gray-600 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-400 rounded-none pb-1">Summary</TabsTrigger>
+                  <TabsTrigger value="tabular" className="bg-transparent border-0 text-gray-600 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-400 rounded-none pb-1 ml-6">Tabular</TabsTrigger>
                 </TabsList>
               </div>
               
@@ -193,30 +192,29 @@ export const SurveyResponseDetailPage = () => {
             ))}
           </TabsContent>
 
-          <TabsContent value="tabular" className="space-y-6">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-medium text-gray-800 mb-4">Tabular View</h3>
+          <TabsContent value="tabular" className="mt-6">
+            <div className="bg-white">
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-300">
+                <table className="w-full">
                   <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border border-gray-300 p-2 text-left">Response #</th>
-                      {surveyData.questions.map((question: any) => (
-                        <th key={question.id} className="border border-gray-300 p-2 text-left">
-                          {question.question}
-                        </th>
-                      ))}
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">Sr. No.</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">User Name</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">Timestamp</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">What is your age group?</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">What is your annual household income?</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">How much would you like to spend on a...</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {Array.from({ length: Math.min(5, surveyData.totalResponses) }).map((_, index) => (
-                      <tr key={index}>
-                        <td className="border border-gray-300 p-2">{index + 1}</td>
-                        {surveyData.questions.map((question: any) => (
-                          <td key={question.id} className="border border-gray-300 p-2">
-                            {question.responses[index] || 'No response'}
-                          </td>
-                        ))}
+                    {Array.from({ length: Math.min(6, surveyData.totalResponses) }).map((_, index) => (
+                      <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="p-3 text-sm text-gray-700">{index + 1}</td>
+                        <td className="p-3 text-sm text-gray-700">Abhidhya Tapal</td>
+                        <td className="p-3 text-sm text-gray-700">17/09/2024 15:38:31</td>
+                        <td className="p-3 text-sm text-gray-700">18-24</td>
+                        <td className="p-3 text-sm text-gray-700">Over ₹7,00,000</td>
+                        <td className="p-3 text-sm text-gray-700">₹1,000 - ₹2,500</td>
                       </tr>
                     ))}
                   </tbody>
