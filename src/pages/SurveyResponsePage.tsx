@@ -116,6 +116,7 @@ export const SurveyResponsePage = () => {
   const [responseData, setResponseData] = useState(mockResponseData);
 
   const handleViewDetails = (item: any) => {
+    console.log('Eye button clicked - item data:', JSON.stringify(item, null, 2));
     navigate(`/maintenance/survey/response/details/${item.id}`, {
       state: { surveyData: item }
     });
