@@ -445,7 +445,6 @@ export function EnhancedTable<T extends Record<string, any>>({
               onClick={onFilterClick}
             >
               <Filter className="w-4 h-4" />
-              Filter
             </Button>
           )}
 
