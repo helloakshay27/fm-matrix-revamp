@@ -441,6 +441,12 @@ const AddAssetPage = () => {
   // const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('');
   // const [selectedUserId, setSelectedUserId] = useState<string>('');
 
+  // Depreciation similar product states
+  const [assets, setAssets] = useState<{ id: number; name: string }[]>([]);
+  const [assetsLoading, setAssetsLoading] = useState(false);
+  const [subGroups, setSubGroups] = useState<{ id: number; name: string }[]>([]);
+  const [subGroupsLoading, setSubGroupsLoading] = useState(false);
+
   const [itAssetsToggle, setItAssetsToggle] = useState(false);
   const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
   const [assetLoanedToggle, setAssetLoanedToggle] = useState(false);
@@ -519,6 +525,10 @@ const AddAssetPage = () => {
     warranty_expiry: "",
     depreciation_applicable_for: "",
     indiv_group: "",
+    similar_product_type: "",
+    selected_asset_id: "",
+    selected_group_id: "",
+    selected_sub_group_id: "",
     allocation_type: "department",
     asset_ids: [],
     // Leasehold Improvement specific fields
@@ -1156,6 +1166,73 @@ const AddAssetPage = () => {
       }
     }
 
+    // Agreement end date validation - ensure agreement end date is not before agreement start date
+    if (field === "agreement_to_date" && value) {
+      const startDate = new Date(formData.agreement_from_date);
+      const endDate = new Date(value);
+
+      if (formData.agreement_from_date && endDate < startDate) {
+        setAgreementDateError("Agreement end date cannot be before the agreement start date.");
+        toast.error("Invalid Agreement End Date", {
+          description:
+            "Agreement end date cannot be before the agreement start date.",
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
+      } else {
+        setAgreementDateError(""); // Clear error if validation passes
+      }
+    }
+
+    // Agreement start date validation - ensure agreement end date is not before agreement start date
+    if (field === "agreement_from_date" && value) {
+      const startDate = new Date(value);
+      const endDate = new Date(formData.agreement_to_date);
+
+      if (formData.agreement_to_date && endDate < startDate) {
+        setFormData((prev) => ({
+          ...prev,
+          agreement_to_date: "", // Reset agreement end date if start date is updated
+        }));
+        setAgreementDateError(""); // Clear error since we're resetting the end date
+
+        toast.error("Invalid Agreement Start Date", {
+          description:
+            "Agreement start date cannot be after the agreement end date.",
+          duration: 4000,
+        });
+        return; // Don't update the field if validation fails
+      } else {
+        setAgreementDateError(""); // Clear error if validation passes
+      }
+    }
+
+    // Commissioning date validation - ensure AMC First Service is not before commissioning date
+    if (field === "commisioning_date" && value) {
+      if (formData.amc_detail.amc_first_service) {
+        const commissioningDate = new Date(value);
+        const firstServiceDate = new Date(formData.amc_detail.amc_first_service);
+
+        if (firstServiceDate < commissioningDate) {
+          setFormData((prev) => ({
+            ...prev,
+            amc_detail: {
+              ...prev.amc_detail,
+              amc_first_service: "", // Reset first service date
+            },
+          }));
+          setAmcDateError(""); // Clear error since we're resetting the first service date
+
+          toast.error("Invalid Commissioning Date", {
+            description:
+              "Commissioning date cannot be after the AMC First Service date. First Service date has been reset.",
+            duration: 4000,
+          });
+          // Continue to update the commissioning date since it's the primary field being changed
+        }
+      }
+    }
+
     // Provide instant positive feedback when required fields are filled
     if (value && value.toString().trim()) {
       const fieldDisplayNames = {
@@ -1198,6 +1275,74 @@ const AddAssetPage = () => {
 
   // --- For nested fields like asset_move_to, amc_detail ---
   const handleNestedFieldChange = (section, field, value) => {
+    // AMC First Service date validation - ensure it's on or after commissioning date
+    if (section === "amc_detail" && field === "amc_first_service" && value) {
+      if (formData.commisioning_date) {
+        const commissioningDate = new Date(formData.commisioning_date);
+        const firstServiceDate = new Date(value);
+
+        if (firstServiceDate < commissioningDate) {
+          setAmcDateError("AMC First Service date cannot be before the commissioning date.");
+          toast.error("Invalid AMC First Service Date", {
+            description:
+              "AMC First Service date cannot be before the commissioning date.",
+            duration: 4000,
+          });
+          return; // Don't update the field if validation fails
+        } else {
+          setAmcDateError(""); // Clear error if validation passes
+        }
+      }
+    }
+
+    // AMC End Date validation - ensure it's not before AMC Start Date
+    if (section === "amc_detail" && field === "amc_end_date" && value) {
+      if (formData.amc_detail.amc_start_date) {
+        const startDate = new Date(formData.amc_detail.amc_start_date);
+        const endDate = new Date(value);
+
+        if (endDate < startDate) {
+          setAmcDateError("AMC End date cannot be before the AMC start date.");
+          toast.error("Invalid AMC End Date", {
+            description:
+              "AMC End date cannot be before the AMC start date.",
+            duration: 4000,
+          });
+          return; // Don't update the field if validation fails
+        } else {
+          setAmcDateError(""); // Clear error if validation passes
+        }
+      }
+    }
+
+    // AMC Start Date validation - reset end date if start date is changed to after current end date
+    if (section === "amc_detail" && field === "amc_start_date" && value) {
+      if (formData.amc_detail.amc_end_date) {
+        const startDate = new Date(value);
+        const endDate = new Date(formData.amc_detail.amc_end_date);
+
+        if (startDate > endDate) {
+          setFormData((prev) => ({
+            ...prev,
+            amc_detail: {
+              ...prev.amc_detail,
+              amc_end_date: "", // Reset end date
+              [field]: value,
+            },
+          }));
+          setAmcDateError(""); // Clear error since we're resetting the end date
+          toast.error("Invalid AMC Start Date", {
+            description:
+              "AMC Start date cannot be after the AMC end date. End date has been reset.",
+            duration: 4000,
+          });
+          return; // Exit early since we've manually updated the state
+        } else {
+          setAmcDateError(""); // Clear error if validation passes
+        }
+      }
+    }
+
     setFormData((prev) => ({
       ...prev,
       [section]: {
@@ -1436,6 +1581,8 @@ const AddAssetPage = () => {
     fetchDepartments();
     fetchUsers();
     fetchMeterUnitTypes();
+    fetchAssets();
+    fetchDepreciationGroups();
   }, []);
 
   // Fetch meter unit types
@@ -1529,6 +1676,55 @@ const AddAssetPage = () => {
       setUsers([]);
     } finally {
       setUsersLoading(false);
+    }
+  };
+
+  // Fetch assets function for depreciation similar product
+  const fetchAssets = async () => {
+    setAssetsLoading(true);
+    try {
+      const response = await apiClient.get("/pms/assets/get_assets.json");
+      // Handle the array response format
+      const assetsData = Array.isArray(response.data) ? response.data : [];
+      setAssets(assetsData);
+    } catch (error) {
+      console.error("Error fetching assets:", error);
+      setAssets([]);
+    } finally {
+      setAssetsLoading(false);
+    }
+  };
+
+  // Fetch groups function for depreciation similar product
+  const fetchDepreciationGroups = async () => {
+    setGroupsLoading(true);
+    try {
+      const response = await apiClient.get("/pms/assets/get_asset_group_sub_group.json");
+      // Handle the asset_groups array in response
+      const groupsData = response.data?.asset_groups || [];
+      setGroups(groupsData);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+      setGroups([]);
+    } finally {
+      setGroupsLoading(false);
+    }
+  };
+
+  // Fetch sub groups function for depreciation similar product
+  const fetchSubGroups = async (groupId: string) => {
+    if (!groupId) return;
+    setSubGroupsLoading(true);
+    try {
+      const response = await apiClient.get(`/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`);
+      // Handle the asset_groups array in response for sub groups
+      const subGroupsData = response.data?.asset_groups || [];
+      setSubGroups(subGroupsData);
+    } catch (error) {
+      console.error("Error fetching sub groups:", error);
+      setSubGroups([]);
+    } finally {
+      setSubGroupsLoading(false);
     }
   };
 
@@ -1720,6 +1916,8 @@ const AddAssetPage = () => {
   };
 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [agreementDateError, setAgreementDateError] = useState<string>("");
+  const [amcDateError, setAmcDateError] = useState<string>("");
 
   // Function to check if a field has validation error
   const hasValidationError = (fieldName: string) => {
@@ -2385,6 +2583,21 @@ const AddAssetPage = () => {
         });
         return ["AMC Cost is required"];
       }
+
+      // AMC First Service date validation - ensure it's on or after commissioning date
+      if (formData.amc_detail.amc_first_service && formData.commisioning_date) {
+        const commissioningDate = new Date(formData.commisioning_date);
+        const firstServiceDate = new Date(formData.amc_detail.amc_first_service);
+
+        if (firstServiceDate < commissioningDate) {
+          toast.error("Invalid AMC First Service Date", {
+            description:
+              "AMC First Service date cannot be before the commissioning date.",
+            duration: 4000,
+          });
+          return ["AMC First Service date cannot be before commissioning date"];
+        }
+      }
     }
 
     // Warranty date validation - ensure warranty expiry is not before purchase date
@@ -2498,6 +2711,7 @@ const AddAssetPage = () => {
         is_meter: formData.is_meter,
         asset_loaned: formData.asset_loaned,
         depreciation_applicable: formData.depreciation_applicable,
+        it_asset_eq: selectedAssetCategory === "IT Equipment",
 
         // Meter fields
         meter_tag_type: formData.meter_tag_type,
@@ -2993,6 +3207,7 @@ const AddAssetPage = () => {
         is_meter: formData.is_meter,
         asset_loaned: formData.asset_loaned,
         depreciation_applicable: formData.depreciation_applicable,
+        it_asset_eq: selectedAssetCategory === "IT Equipment",
 
         // Meter fields
         meter_tag_type: formData.meter_tag_type,
@@ -4861,20 +5076,41 @@ const AddAssetPage = () => {
                           <InputAdornment position="end">%</InputAdornment>
                         ),
                       }}
+                      inputProps={{
+                        min: 0,
+                        max: 100,
+                        step: 0.1,
+                        onKeyDown: (e) => {
+                          if (e.key === "-" || e.key === "e" || e.key === "E") {
+                            e.preventDefault(); // prevent negative or exponent
+                          }
+                        },
+                      }}
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           height: { xs: "36px", md: "45px" },
                         },
                       }}
                       onChange={(e) => {
+                        let value = parseFloat(e.target.value);
+                        
+                        // Validate range 0-100
+                        if (value < 0) {
+                          value = 0;
+                          e.target.value = "0";
+                        } else if (value > 100) {
+                          value = 100;
+                          e.target.value = "100";
+                        }
+                        
                         handleExtraFieldChange(
                           "depreciation_rate",
-                          (e.target as HTMLInputElement).value,
+                          value.toString(),
                           "number",
                           "leaseholdFinancial",
                           "Depreciation Rate"
                         );
-                        handleFieldChange("depreciation_rate", e.target.value);
+                        handleFieldChange("depreciation_rate", value.toString());
                       }}
                     />
                     <TextField
@@ -5918,10 +6154,19 @@ const AddAssetPage = () => {
                         placeholder="e.g. 24 months"
                         variant="outlined"
                         fullWidth
+                        type="number"
                         value={formData.warranty_period}
-                        onChange={(e) =>
-                          handleFieldChange("warranty_period", e.target.value)
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // Only allow positive numbers
+                          if (value === '' || (Number(value) >= 0 && !value.includes('-'))) {
+                            handleFieldChange("warranty_period", value);
+                          }
+                        }}
+                        inputProps={{
+                          min: 0,
+                          step: 1
+                        }}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             height: { xs: "36px", md: "45px" },
@@ -9154,10 +9399,19 @@ const AddAssetPage = () => {
                             label="Warranty Period"
                             placeholder="e.g. 24 months"
                             fullWidth
+                            type="number"
                             value={formData.warranty_period}
-                            onChange={(e) =>
-                              handleFieldChange("warranty_period", e.target.value)
-                            }
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // Only allow positive numbers
+                              if (value === '' || (Number(value) >= 0 && !value.includes('-'))) {
+                                handleFieldChange("warranty_period", value);
+                              }
+                            }}
+                            inputProps={{
+                              min: 0,
+                              step: 1
+                            }}
                             sx={{
                               "& .MuiOutlinedInput-root": {
                                 height: { xs: "36px", md: "45px" },
@@ -9468,6 +9722,168 @@ const AddAssetPage = () => {
                         </div>
                       </div>
 
+                      {/* Similar Product Sub Options */}
+                      {formData.depreciation_applicable_for === "similar_product" && (
+                        <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-l-gray-300">
+                          <div className="mb-4">
+                            <label className="text-sm font-medium text-gray-700 mb-3 block">
+                              Choose Configuration Type
+                            </label>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                              <div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id="individual-asset"
+                                    name="similar_product_type"
+                                    value="individual"
+                                    disabled={!depreciationToggle}
+                                    className="w-4 h-4 text-[#C72030] border-gray-300"
+                                    style={{
+                                      accentColor: "#C72030",
+                                    }}
+                                    onChange={(e) =>
+                                      handleFieldChange(
+                                        "similar_product_type",
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                  <label 
+                                    htmlFor="individual-asset" 
+                                    className={`text-sm font-medium ${!depreciationToggle ? "text-gray-400" : "text-gray-700"}`}
+                                  >
+                                    Individual Asset
+                                  </label>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id="group-asset"
+                                    name="similar_product_type"
+                                    value="group"
+                                    disabled={!depreciationToggle}
+                                    className="w-4 h-4 text-[#C72030] border-gray-300"
+                                    style={{
+                                      accentColor: "#C72030",
+                                    }}
+                                    onChange={(e) =>
+                                      handleFieldChange(
+                                        "similar_product_type",
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                  <label 
+                                    htmlFor="group-asset" 
+                                    className={`text-sm font-medium ${!depreciationToggle ? "text-gray-400" : "text-gray-700"}`}
+                                  >
+                                    Asset Group
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Individual Asset Dropdown */}
+                          {formData.similar_product_type === "individual" && (
+                            <div className="mt-6">
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Select Asset <span className="text-red-500">*</span>
+                              </label>
+                              <Select
+                                value={formData.selected_asset_id || ""}
+                                onValueChange={(value) =>
+                                  handleFieldChange("selected_asset_id", value)
+                                }
+                                disabled={!depreciationToggle || assetsLoading}
+                              >
+                                <SelectTrigger className="w-full h-[45px] bg-white">
+                                  <SelectValue 
+                                    placeholder={assetsLoading ? "Loading assets..." : "Select an asset"} 
+                                  />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {assets.map((asset) => (
+                                    <SelectItem key={asset.id} value={asset.id.toString()}>
+                                      {asset.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+
+                          {/* Group and Sub Group Dropdowns */}
+                          {formData.similar_product_type === "group" && (
+                            <div className="mt-6 space-y-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Select Group <span className="text-red-500">*</span>
+                                  </label>
+                                  <Select
+                                    value={formData.selected_group_id || ""}
+                                    onValueChange={(value) => {
+                                      handleFieldChange("selected_group_id", value);
+                                      handleFieldChange("selected_sub_group_id", ""); // Reset sub group
+                                      fetchSubGroups(value);
+                                    }}
+                                    disabled={!depreciationToggle || groupsLoading}
+                                  >
+                                    <SelectTrigger className="w-full h-[45px] bg-white">
+                                      <SelectValue 
+                                        placeholder={groupsLoading ? "Loading groups..." : "Select a group"} 
+                                      />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {groups.map((group) => (
+                                        <SelectItem key={group.id} value={group.id.toString()}>
+                                          {group.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Select Sub Group
+                                  </label>
+                                  <Select
+                                    value={formData.selected_sub_group_id || ""}
+                                    onValueChange={(value) =>
+                                      handleFieldChange("selected_sub_group_id", value)
+                                    }
+                                    disabled={!depreciationToggle || !formData.selected_group_id || subGroupsLoading}
+                                  >
+                                    <SelectTrigger className="w-full h-[45px] bg-white">
+                                      <SelectValue 
+                                        placeholder={
+                                          !formData.selected_group_id 
+                                            ? "Select group first" 
+                                            : subGroupsLoading 
+                                            ? "Loading sub groups..." 
+                                            : "Select a sub group"
+                                        } 
+                                      />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {subGroups.map((subGroup) => (
+                                        <SelectItem key={subGroup.id} value={subGroup.id.toString()}>
+                                          {subGroup.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* Custom Fields */}
                       {(customFields.depreciationRule || []).map((field) => (
                         <div
@@ -9774,6 +10190,13 @@ const AddAssetPage = () => {
                         fullWidth
                         variant="outlined"
                         disabled={!assetLoanedToggle}
+                        value={formData.agreement_from_date || ""}
+                        error={!!agreementDateError && agreementDateError.includes("start")}
+                        helperText={
+                          agreementDateError && agreementDateError.includes("start")
+                            ? agreementDateError
+                            : ""
+                        }
                         InputLabelProps={{
                           shrink: true,
                         }}
@@ -9793,11 +10216,17 @@ const AddAssetPage = () => {
                         fullWidth
                         variant="outlined"
                         disabled={!assetLoanedToggle}
+                        value={formData.agreement_to_date || ""}
+                        error={!!agreementDateError}
+                        helperText={agreementDateError || ""}
                         InputLabelProps={{
                           shrink: true,
                         }}
                         InputProps={{
                           sx: fieldStyles,
+                        }}
+                        inputProps={{
+                          min: formData.agreement_from_date || undefined,
                         }}
                         onChange={(e) =>
                           handleFieldChange("agreement_to_date", e.target.value)
@@ -9880,6 +10309,13 @@ const AddAssetPage = () => {
                           type="date"
                           fullWidth
                           variant="outlined"
+                          value={formData.amc_detail.amc_start_date || ""}
+                          error={!!amcDateError && amcDateError.includes("start")}
+                          helperText={
+                            amcDateError && amcDateError.includes("start")
+                              ? amcDateError
+                              : ""
+                          }
                           InputLabelProps={{
                             shrink: true,
                           }}
@@ -9902,11 +10338,21 @@ const AddAssetPage = () => {
                           type="date"
                           fullWidth
                           variant="outlined"
+                          value={formData.amc_detail.amc_end_date || ""}
+                          error={!!amcDateError && amcDateError.includes("End")}
+                          helperText={
+                            amcDateError && amcDateError.includes("End")
+                              ? amcDateError
+                              : ""
+                          }
                           InputLabelProps={{
                             shrink: true,
                           }}
                           InputProps={{
                             sx: fieldStyles,
+                          }}
+                          inputProps={{
+                            min: formData.amc_detail.amc_start_date || undefined,
                           }}
                           onChange={(e) =>
                             handleNestedFieldChange(
@@ -9924,11 +10370,21 @@ const AddAssetPage = () => {
                           type="date"
                           fullWidth
                           variant="outlined"
+                          value={formData.amc_detail.amc_first_service || ""}
+                          error={!!amcDateError && amcDateError.includes("First Service")}
+                          helperText={
+                            amcDateError && amcDateError.includes("First Service")
+                              ? amcDateError
+                              : ""
+                          }
                           InputLabelProps={{
                             shrink: true,
                           }}
                           InputProps={{
                             sx: fieldStyles,
+                          }}
+                          inputProps={{
+                            min: formData.commisioning_date || undefined,
                           }}
                           onChange={(e) =>
                             handleNestedFieldChange(
@@ -9984,13 +10440,21 @@ const AddAssetPage = () => {
                           InputProps={{
                             sx: fieldStyles,
                           }}
-                          onChange={(e) =>
-                            handleNestedFieldChange(
-                              "amc_detail",
-                              "no_of_visits",
-                              Number(e.target.value)
-                            )
-                          }
+                          inputProps={{
+                            min: 0,
+                            step: 1
+                          }}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Only allow positive numbers
+                            if (value === '' || (Number(value) >= 0 && !value.includes('-'))) {
+                              handleNestedFieldChange(
+                                "amc_detail",
+                                "no_of_visits",
+                                value === '' ? 0 : Number(value)
+                              );
+                            }
+                          }}
                         />
                       </div>
 
