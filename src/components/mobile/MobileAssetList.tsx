@@ -149,7 +149,7 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
               onClick={handleBack}
               className="p-2 hover:bg-gray-100 rounded-full"
             >
-              <ArrowLeft className="h-5 w-5 text-black" />
+              {/* <ArrowLeft className="h-5 w-5 text-black" /> */}
             </button>
             <h1 className="text-lg font-semibold text-[#4B003F]">Assets</h1>
           </div>

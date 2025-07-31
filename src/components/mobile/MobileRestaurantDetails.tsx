@@ -331,10 +331,10 @@ export const MobileRestaurantDetails: React.FC<
                     <>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-base font-semibold text-white bg-red-600 px-2 py-1 rounded">
-                          ₹{item.price}
+                          ORM{item.price}
                         </span>
                         {/* Optional original price if discount */}
-                        {/* <span className="text-sm text-gray-400 line-through">₹{item.originalPrice}</span> */}
+                        {/* <span className="text-sm text-gray-400 line-through">ORM{item.originalPrice}</span> */}
                       </div>
                       <div className="text-xs text-gray-500">
                         Price per item

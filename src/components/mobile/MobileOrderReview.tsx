@@ -464,7 +464,7 @@ export const MobileOrderReview: React.FC = () => {
         <div className="bg-white border-b border-gray-200 px-4 py-4">
           <div className="flex items-center">
             <button onClick={handleBack} className="mr-4">
-              <ArrowLeft className="w-6 h-6 text-gray-600" />
+              {/* <ArrowLeft className="w-6 h-6 text-gray-600" /> */}
             </button>
             <h1 className="text-lg font-semibold text-gray-900">
               Order Review

@@ -11,6 +11,7 @@ interface Restaurant {
   timeRange: string;
   discount: string;
   image: string;
+  status: number;
 }
 
 interface MobileRestaurantDashboardProps {
@@ -181,13 +182,16 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
     }
   };
 
+  // Filter active restaurants (status = 1)
+  const activeRestaurants = restaurants.filter(restaurant => restaurant.status === 1);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="flex items-center">
           <button onClick={handleBack} className="mr-4">
-            <ArrowLeft className="w-6 h-6 text-gray-600" />
+            {/* <ArrowLeft className="w-6 h-6 text-gray-600" /> */}
           </button>
           <h1 className="text-lg font-semibold text-gray-900">F&B</h1>
         </div>
@@ -225,7 +229,7 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
       <div className="p-4">
         {activeTab === 'restaurant' && (
           <div className="space-y-4">
-            {restaurants.length === 0 ? (
+            {activeRestaurants.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🍽️</div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">No Restaurants Available</h3>
@@ -236,12 +240,12 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
                 {/* Restaurant count header */}
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-semibold text-gray-900">
-                    Available Restaurants ({restaurants.length})
+                    Available Restaurants ({activeRestaurants.length})
                   </h2>
                 </div>
                 
                 {/* Restaurants List */}
-                {restaurants.map((restaurant) => (
+                {activeRestaurants.map((restaurant) => (
                   <div 
                     key={restaurant.id}
                     className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer transition-transform hover:scale-[1.02]"
