@@ -2,16 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, MapPin, Star, Users, Percent, Clock, Package } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { restaurantApi, FoodOrder } from '@/services/restaurantApi';
+import { DeliveryDining } from '@mui/icons-material';
 
 interface Restaurant {
-  id: string;
+  id: number;
   name: string;
-  location: string;
-  rating: number;
-  timeRange: string;
-  discount: string;
-  image: string;
+  address?: string;
+  cuisines?: string;
+  cost_for_two?: number;
+  contact1?: string;
+  contact2?: string;
+  contact3?: string;
+  terms?: string;
+  disclaimer?: string;
+  booking_allowed?: number;
+  booking_closed?: string;
   status: number;
+  // Optional properties for UI display
+  location?: string;
+  rating?: number;
+  timeRange?: string;
+  discount?: string;
+  image?: string;
 }
 
 interface MobileRestaurantDashboardProps {
@@ -82,7 +94,7 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
     navigate(-1);
   };
 
-  const handleRestaurantClick = (restaurantId: string) => {
+  const handleRestaurantClick = (restaurantId: string | number) => {
     // Preserve source parameter when navigating
     const currentParams = new URLSearchParams(window.location.search);
     const queryString = currentParams.toString();
@@ -182,8 +194,8 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
     }
   };
 
-  // Filter active restaurants (status = 1)
-  const activeRestaurants = restaurants.filter(restaurant => restaurant.status === 1);
+  // Show all restaurants (remove status filtering)
+  const activeRestaurants = restaurants;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -255,7 +267,7 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
                       {/* Restaurant Image */}
                       <div className="w-20 h-20 bg-gray-200 rounded-lg m-4 overflow-hidden">
                         <img 
-                          src={restaurant.image} 
+                          src={restaurant.image || '/placeholder.svg'} 
                           alt={restaurant.name}
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -268,28 +280,47 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
                       <div className="flex-1 p-4 pl-0">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="text-lg font-semibold text-gray-900">{restaurant.name}</h3>
-                          <div className="flex items-center bg-orange-100 px-2 py-1 rounded-lg">
-                            <span className="text-sm font-semibold text-gray-900 mr-1">{restaurant.rating}</span>
-                            <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
-                          </div>
+                          {restaurant.rating && (
+                            <div className="flex items-center bg-orange-100 px-2 py-1 rounded-lg">
+                              <span className="text-sm font-semibold text-gray-900 mr-1">{restaurant.rating}</span>
+                              <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
+                            </div>
+                          )}
                         </div>
 
                         <div className="flex items-center text-gray-500 text-sm mb-2">
                           <MapPin className="w-4 h-4 mr-1" />
-                          <span>{restaurant.location}</span>
+                          <span>{restaurant.location || restaurant.address || 'Location not specified'}</span>
                         </div>
 
-                        <div className="flex items-center text-gray-500 text-sm mb-3">
-                          <Users className="w-4 h-4 mr-1" />
-                          <span>{restaurant.timeRange}</span>
-                        </div>
-
-                        <div className="flex items-center">
-                          <div className="bg-red-100 rounded-full p-1 mr-2">
-                            <Percent className="w-3 h-3 text-red-600" />
+                        {restaurant.cuisines && (
+                          <div className="flex items-center text-gray-500 text-sm mb-2">
+                            <Users className="w-4 h-4 mr-1" />
+                            <span>{restaurant.cuisines}</span>
                           </div>
-                          <span className="text-sm font-semibold text-red-600">{restaurant.discount}</span>
-                        </div>
+                        )}
+
+                        {restaurant.cost_for_two > 0 && (
+                          <div className="flex items-center text-gray-500 text-sm mb-3">
+                            <span>₹{restaurant.cost_for_two} for two</span>
+                          </div>
+                        )}
+
+                        {restaurant.timeRange && (
+                          <div className="flex items-center text-gray-500 text-sm mb-3">
+                            <Users className="w-4 h-4 mr-1" />
+                            <span>{restaurant.timeRange}</span>
+                          </div>
+                        )}
+
+                        {restaurant.discount && (
+                          <div className="flex items-center">
+                            <div className="bg-red-100 rounded-full p-1 mr-2">
+                              <Percent className="w-3 h-3 text-red-600" />
+                            </div>
+                            <span className="text-sm font-semibold text-red-600">{restaurant.discount}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -351,7 +382,7 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
                   </div>
 
                   <div className="flex items-center text-gray-600 text-sm">
-                    <Package className="w-4 h-4 mr-2" />
+                    <DeliveryDining className="w-4 h-4 mr-2" />
                     <span>{getStatusMessage(order.order_status)}</span>
                     <span className="ml-auto text-gray-500">
                       {formatOrderDate(order.created_at)}

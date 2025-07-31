@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, User, Star, Tag } from 'lucide-react';
+import { ArrowLeft, Clock, User, Star, Tag, ListOrdered } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { restaurantApi, FoodOrder, RestaurantsBySiteResponse, RestaurantBysite, Restaurant } from '@/services/restaurantApi';
+import { DeliveryDining } from '@mui/icons-material';
 
 interface Order {
   id: string;
@@ -96,6 +97,7 @@ export const MobileOrdersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [restaurantLoading, setRestaurantLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const token= sessionStorage.getItem("app_token")
 
   // Get facility ID from URL params or localStorage (for app users)
   const facilityId = searchParams.get('facilityId') || localStorage.getItem('currentFacilityId');
@@ -354,11 +356,24 @@ export const MobileOrdersPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4">
-        <div className="flex items-center justify-center relative">
-          <button onClick={handleBack} className="absolute left-0">
-            <ArrowLeft className="w-6 h-6 text-gray-600" />
-          </button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <button onClick={handleBack} className="mr-4">
+              {/* <ArrowLeft className="w-6 h-6 text-gray-600" /> */}
+            </button>
+            {/* Order Again Button - Only show for orders tab and when orders exist */}
+            {activeTab === 'orders' && !isExternalScan && orders.length > 0 && (
+              <button
+                onClick={() => navigate(`/mobile/restaurant?token=${token}`)}
+                className="flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors mr-4"
+              >
+                <ListOrdered className="w-4 h-4 mr-2" />
+                Order Again
+              </button>
+            )}
+          </div>
           <h1 className="text-lg font-semibold text-gray-900">F&B</h1>
+          <div className="w-6"></div> {/* Spacer for centering */}
         </div>
       </div>
 
@@ -457,7 +472,7 @@ export const MobileOrdersPage: React.FC = () => {
 
                   <div className="flex items-center justify-between mt-3">
                     <div className="flex items-center text-gray-600">
-                      <User className="w-4 h-4 mr-2" />
+                      <DeliveryDining className="w-4 h-4 mr-2" />
                       <span className="text-sm">{order.statusMessage}</span>
                     </div>
                     <span className="text-gray-500 text-sm">{order.timeAgo}</span>
