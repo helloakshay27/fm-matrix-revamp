@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
@@ -108,6 +109,7 @@ const mockResponseData = [
 
 export const SurveyResponsePage = () => {
   console.log('SurveyResponsePage component loaded successfully with EnhancedTable');
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
@@ -115,6 +117,7 @@ export const SurveyResponsePage = () => {
 
   const handleViewDetails = (item: any) => {
     console.log('Viewing details for survey:', item.id);
+    navigate(`/maintenance/survey/response/details/${item.id}`);
   };
 
   const handleFilterClick = () => {
