@@ -499,7 +499,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
 
                   {/* System Details */}
                   <div className="border-t pt-8">
-                    <div className="text-lg font-semibold text-red-600 mb-6">
+                    <div className="text-lg font-semibold text-black-600 mb-6">
                       System Details
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -538,7 +538,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
 
                   {/* Hard Disk Details */}
                   <div className="border-t pt-8">
-                    <div className="text-lg font-semibold text-red-600 mb-6">
+                    <div className="text-lg font-semibold text-black-600 mb-6">
                       Hard Disk Details
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -295,10 +295,21 @@ export const AssetDashboard = () => {
     totalCount: totalCount || 0,
   };
 
-  // Fetch initial assets data
+  // Fetch initial assets data only on component mount
   useEffect(() => {
-    dispatch(fetchAssetsData({ page: currentPage }));
-  }, [dispatch, currentPage, assets.length]);
+    // Only fetch if we don't have any filters applied and no assets loaded
+    if (Object.keys(filters).length === 0 && assets.length === 0) {
+      dispatch(fetchAssetsData({ page: currentPage }));
+    }
+  }, [dispatch]); // Remove currentPage and assets.length from dependencies
+
+  // Handle page changes separately when filters are applied
+  useEffect(() => {
+    // Only fetch for page changes if we have filters applied
+    if (Object.keys(filters).length > 0) {
+      dispatch(fetchAssetsData({ page: currentPage, filters }));
+    }
+  }, [currentPage, filters, dispatch]);
 
   // Analytics data is now handled by AssetAnalyticsComponents
   // Removed duplicate useEffect hooks to prevent multiple API calls
@@ -483,6 +494,9 @@ export const AssetDashboard = () => {
         filters = {};
     }
 
+    // Clear search term when applying filters
+    setSearchTerm("");
+    
     // Dispatch the filter to fetch filtered assets
     dispatch(fetchAssetsData({ page: 1, filters }));
     setCurrentPage(1);
@@ -498,6 +512,7 @@ export const AssetDashboard = () => {
 
   // Handle refresh - fetch assets from Redux
   const handleRefresh = () => {
+    // Maintain current filters when refreshing
     dispatch(fetchAssetsData({ page: currentPage, filters }));
     // AssetAnalyticsComponents will handle analytics data refreshing automatically
   };
@@ -505,6 +520,7 @@ export const AssetDashboard = () => {
   // Handle pagination
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    // Don't call dispatch here as it's handled by useEffect
     dispatch(fetchAssetsData({ page, filters }));
   };
 
@@ -756,11 +772,7 @@ export const AssetDashboard = () => {
         </TabsContent>
 
         <TabsContent value="list" className="space-y-6 mt-6">
-          {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="text-lg">Loading assets...</div>
-            </div>
-          ) : error ? (
+          {error ? (
             <div className="flex justify-center items-center py-8">
               <div className="text-red-500">Error: {error}</div>
             </div>
@@ -782,6 +794,7 @@ export const AssetDashboard = () => {
                   onSearch={handleSearch}
                   onRefreshData={handleRefresh}
                   handleAddSchedule={handleAddSchedule}
+                  loading={loading}
                 />
 
                 {/* Empty state when no data and filters are applied */}
@@ -814,7 +827,7 @@ export const AssetDashboard = () => {
 
               {/* API-driven Pagination */}
               <div className="mt-6">
-                <Pagination>
+                {/* <Pagination>
                   <PaginationContent>
                     <PaginationItem>
                       <PaginationPrevious
@@ -845,7 +858,7 @@ export const AssetDashboard = () => {
                       </PaginationItem>
                     ))}
 
-                    {pagination.totalPages > 10 && (
+                    {pagination.totalPages > 5 && (
                       <PaginationItem>
                         <PaginationEllipsis />
                       </PaginationItem>
@@ -866,7 +879,100 @@ export const AssetDashboard = () => {
                       />
                     </PaginationItem>
                   </PaginationContent>
-                </Pagination>
+                </Pagination> */}
+
+                <Pagination>
+  <PaginationContent>
+    {/* Previous Button */}
+    <PaginationItem>
+      <PaginationPrevious
+        onClick={() => {
+          if (pagination.currentPage > 1) {
+            handlePageChange(pagination.currentPage - 1);
+          }
+        }}
+        className={
+          pagination.currentPage === 1
+            ? "pointer-events-none opacity-50"
+            : ""
+        }
+      />
+    </PaginationItem>
+
+    {/* First Page */}
+    <PaginationItem>
+      <PaginationLink
+        onClick={() => handlePageChange(1)}
+        isActive={pagination.currentPage === 1}
+      >
+        1
+      </PaginationLink>
+    </PaginationItem>
+
+    {/* Ellipsis before current range */}
+    {pagination.currentPage > 4 && (
+      <PaginationItem>
+        <PaginationEllipsis />
+      </PaginationItem>
+    )}
+
+    {/* Dynamic middle pages */}
+    {Array.from(
+      { length: 3 },
+      (_, i) => pagination.currentPage - 1 + i
+    )
+      .filter(
+        (page) =>
+          page > 1 && page < pagination.totalPages
+      )
+      .map((page) => (
+        <PaginationItem key={page}>
+          <PaginationLink
+            onClick={() => handlePageChange(page)}
+            isActive={pagination.currentPage === page}
+          >
+            {page}
+          </PaginationLink>
+        </PaginationItem>
+      ))}
+
+    {/* Ellipsis after current range */}
+    {pagination.currentPage < pagination.totalPages - 3 && (
+      <PaginationItem>
+        <PaginationEllipsis />
+      </PaginationItem>
+    )}
+
+    {/* Last Page (if not same as first) */}
+    {pagination.totalPages > 1 && (
+      <PaginationItem>
+        <PaginationLink
+          onClick={() => handlePageChange(pagination.totalPages)}
+          isActive={pagination.currentPage === pagination.totalPages}
+        >
+          {pagination.totalPages}
+        </PaginationLink>
+      </PaginationItem>
+    )}
+
+    {/* Next Button */}
+    <PaginationItem>
+      <PaginationNext
+        onClick={() => {
+          if (pagination.currentPage < pagination.totalPages) {
+            handlePageChange(pagination.currentPage + 1);
+          }
+        }}
+        className={
+          pagination.currentPage === pagination.totalPages
+            ? "pointer-events-none opacity-50"
+            : ""
+        }
+      />
+    </PaginationItem>
+  </PaginationContent>
+</Pagination>
+
 
                 <div className="text-center mt-2 text-sm text-gray-600">
                   Showing page {pagination.currentPage} of{" "}
