@@ -471,18 +471,65 @@ export const ServiceDetailsPage = () => {
                       />
                     </div>
                     <Button
-                      onClick={() => {
-                        const imgElement = document.getElementById('qrImage') as HTMLImageElement;
-                        if (!imgElement) return alert('QR image not found.');
+                      onClick={async () => {
+                        if (!details?.qr_code_id) {
+                          console.error('Attachment ID is undefined', details);
+                          const link = document.createElement('a');
+                          link.href = details.document;
+                          link.download = `Document_${details.qr_code_id || details.filename || 'unknown'}`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          return;
+                        }
 
-                        const imageURL = imgElement.src;
-                        window.open(imageURL, '_blank');
+                        try {
+                          const token = localStorage.getItem('token');
+                          const baseUrl = localStorage.getItem('baseUrl');
+                          if (!token) {
+                            console.error('No token found in localStorage');
+                            return;
+                          }
+
+                          const apiUrl = `https://${baseUrl}/attachfiles/${details.qr_code_id}?show_file=true`;
+
+                          const response = await fetch(apiUrl, {
+                            method: 'GET',
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              'Content-Type': 'application/json',
+                            },
+                          });
+
+                          if (!response.ok) {
+                            throw new Error('Failed to fetch the file');
+                          }
+
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `Document_${details.id}`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(url);
+                        } catch (error) {
+                          console.error('Error downloading file:', error);
+                          const fallbackLink = document.createElement('a');
+                          fallbackLink.href = details.document;
+                          fallbackLink.download = `Document_${details.id || details.filename || 'unknown'}`;
+                          document.body.appendChild(fallbackLink);
+                          fallbackLink.click();
+                          document.body.removeChild(fallbackLink);
+                        }
                       }}
                       className="bg-[#C72030] mb-4 text-white hover:bg-[#C72030]/90"
                     >
                       <Download className="w-4 h-4 mr-1" />
                       Download
                     </Button>
+
                   </>
                 ) : (
                   <div className="text-sm text-gray-600">No QR code available</div>
