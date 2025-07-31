@@ -110,7 +110,7 @@ export const SurveyResponseDetailPage = () => {
         
         {/* Tabs wrapper encompasses everything that needs tab context */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="border border-gray-200 bg-gray-50 p-4 mb-6">
+          <div className="bg-[#F5F3EF] p-4 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold text-sm">
