@@ -125,9 +125,6 @@ export const SurveyResponseDetailPage = () => {
                 >
                   <Download className="w-4 h-4" />
                 </Button>
-                <div className="bg-blue-500 text-white px-3 py-1 rounded text-sm">
-                  1529 x 75
-                </div>
               </div>
             </div>
           </div>
