@@ -106,6 +106,8 @@ export const SurveyResponseDetailPage = () => {
           Back to Response List
         </Button>
         
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-6">Response Detail</h1>
+        
         {/* Tabs wrapper encompasses everything that needs tab context */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="border border-gray-200 bg-gray-50 p-4 mb-6">
@@ -142,7 +144,6 @@ export const SurveyResponseDetailPage = () => {
             </div>
           </div>
 
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-6">Response Detail</h1>
 
           <TabsContent value="summary" className="space-y-6">
             {surveyData.questions.map((question: any) => (
