@@ -75,12 +75,33 @@ export const SurveyResponseDetailPage = () => {
     console.log('Download survey responses');
   };
 
-  const handleCopyQuestion = (questionId: number) => {
-    console.log('Copy question responses:', questionId);
+  const handleCopyQuestion = async (questionId: number) => {
+    const question = surveyData?.questions.find((q: any) => q.id === questionId);
+    if (question) {
+      const textToCopy = `${question.question}\n${question.responses.join('\n')}`;
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        console.log('Question responses copied to clipboard');
+      } catch (err) {
+        console.error('Failed to copy to clipboard:', err);
+      }
+    }
   };
 
   const handleDownloadQuestion = (questionId: number) => {
-    console.log('Download question responses:', questionId);
+    const question = surveyData?.questions.find((q: any) => q.id === questionId);
+    if (question) {
+      const content = `${question.question}\n${question.responses.join('\n')}`;
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `question_${questionId}_responses.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   };
 
   if (!surveyData) {
