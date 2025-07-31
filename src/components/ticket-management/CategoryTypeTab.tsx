@@ -63,6 +63,14 @@ interface CategoryApiResponse {
       created_at: string;
       updated_at: string;
     }>;
+    complaint_faqs?: Array<{
+      id: number;
+      helpdesk_category_id: number;
+      question: string;
+      answer: string;
+      created_at: string;
+      updated_at: string;
+    }>;
   }>;
   statuses: Array<{
     id: number;
@@ -79,8 +87,13 @@ interface Site {
 }
 
 interface FAQ {
+  id?: number;
+  helpdesk_category_id?: number;
   question: string;
   answer: string;
+  created_at?: string;
+  updated_at?: string;
+  _destroy?: boolean;
 }
 
 interface SitesApiResponse {
@@ -107,6 +120,7 @@ export const CategoryTypeTab: React.FC = () => {
   const [editIconFile, setEditIconFile] = useState<File | null>(null);
   const [editVendorEmailEnabled, setEditVendorEmailEnabled] = useState(false);
   const [editVendorEmails, setEditVendorEmails] = useState<string[]>(['']);
+  const [editSelectedSiteId, setEditSelectedSiteId] = useState<string>('');
 
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
@@ -331,28 +345,103 @@ export const CategoryTypeTab: React.FC = () => {
 
   const handleEdit = (category: CategoryApiResponse['helpdesk_categories'][0]) => {
     setEditingCategory(category);
-    setEditFaqItems([{ question: '', answer: '' }]); // Reset FAQ items for edit
+    
+    // Populate FAQ items if available, otherwise default empty FAQ
+    if (category.complaint_faqs && category.complaint_faqs.length > 0) {
+      setEditFaqItems(category.complaint_faqs.map(faq => ({
+        id: faq.id,
+        question: faq.question || '',
+        answer: faq.answer || ''
+      })));
+    } else {
+      setEditFaqItems([{ question: '', answer: '' }]);
+    }
+    
     setEditIconFile(null);
     setEditVendorEmailEnabled(category.category_email?.length > 0);
     setEditVendorEmails(category.category_email?.length > 0 ? category.category_email.map(e => e.email) : ['']);
+    
+    // Set the selected site ID (default to the current selected site or first available site)
+    setEditSelectedSiteId(selectedSite?.id.toString() || sites[0]?.id.toString() || '');
+    
     setIsEditModalOpen(true);
   };
 
   const handleEditSubmit = async (formData: any) => {
     if (!editingCategory) return;
     
+    setIsSubmitting(true);
     try {
-      // TODO: Implement actual API call for updating category
-      console.log('Updating category:', editingCategory.id, formData);
+      const submitFormData = new FormData();
       
-      // Simulate successful update
-      toast.success('Category updated successfully!');
-      setIsEditModalOpen(false);
-      setEditingCategory(null);
-      fetchCategories(); // Refresh the list
+      // Get form values from the edit modal inputs
+      const categoryNameInput = document.querySelector('#edit-category-name') as HTMLInputElement;
+      const responseTimeInput = document.querySelector('#edit-response-time') as HTMLInputElement;
+      const customerEnabledInput = document.querySelector('#edit-customer-enabled') as HTMLInputElement;
+      
+      // Helpdesk category data
+      submitFormData.append('helpdesk_category[name]', categoryNameInput?.value || editingCategory.name);
+      submitFormData.append('helpdesk_category[customer_enabled]', customerEnabledInput?.checked ? '1' : '0');
+      submitFormData.append('helpdesk_category[tat]', responseTimeInput?.value || editingCategory.tat);
+      
+      // Add icon if a new one is selected
+      if (editIconFile) {
+        submitFormData.append('helpdesk_category[icon]', editIconFile);
+      }
+      
+      // FAQ attributes
+      editFaqItems.forEach((item, index) => {
+        // Include all FAQs (both existing and new) in the submission
+        submitFormData.append(`helpdesk_category[complaint_faqs_attributes][${index}][question]`, item.question);
+        submitFormData.append(`helpdesk_category[complaint_faqs_attributes][${index}][answer]`, item.answer);
+        submitFormData.append(`helpdesk_category[complaint_faqs_attributes][${index}][_destroy]`, item._destroy ? 'true' : 'false');
+        
+        // Add existing FAQ id if available
+        if (item.id) {
+          submitFormData.append(`helpdesk_category[complaint_faqs_attributes][${index}][id]`, item.id.toString());
+        }
+      });
+      
+      // Vendor email
+      if (editVendorEmailEnabled && editVendorEmails.length > 0) {
+        const validEmails = editVendorEmails.filter(email => email.trim());
+        validEmails.forEach(email => {
+          submitFormData.append('category_email[email]', email);
+        });
+      }
+      
+      // Location data (only the selected site)
+      if (editSelectedSiteId) {
+        submitFormData.append('location_data[site_ids][]', editSelectedSiteId);
+      }
+      
+      // Add category ID
+      submitFormData.append('id', editingCategory.id.toString());
+
+      const response = await fetch(getFullUrl(`/pms/admin/modify_helpdesk_category/${editingCategory.id}.json`), {
+        method: 'PATCH',
+        headers: {
+          'Authorization': getAuthHeader(),
+          // Don't set Content-Type header when using FormData
+        },
+        body: submitFormData,
+      });
+
+      if (response.ok) {
+        toast.success('Category updated successfully!');
+        setIsEditModalOpen(false);
+        setEditingCategory(null);
+        fetchCategories(); // Refresh the list
+      } else {
+        const errorData = await response.json().catch(() => null);
+        console.error('API Response Error:', errorData);
+        toast.error(errorData?.message || 'Failed to update category');
+      }
     } catch (error) {
       console.error('Error updating category:', error);
       toast.error('Failed to update category');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -368,8 +457,19 @@ export const CategoryTypeTab: React.FC = () => {
   };
 
   const removeEditFaqItem = (index: number) => {
-    if (editFaqItems.length > 1) {
-      setEditFaqItems(editFaqItems.filter((_, i) => i !== index));
+    const faqToRemove = editFaqItems[index];
+    
+    // If the FAQ has an ID (existing FAQ), mark it for destruction
+    if (faqToRemove.id) {
+      const updated = editFaqItems.map((item, i) => 
+        i === index ? { ...item, _destroy: true } : item
+      );
+      setEditFaqItems(updated);
+    } else {
+      // If it's a new FAQ (no ID), just remove it from the array
+      if (editFaqItems.length > 1) {
+        setEditFaqItems(editFaqItems.filter((_, i) => i !== index));
+      }
     }
   };
 
@@ -492,9 +592,9 @@ export const CategoryTypeTab: React.FC = () => {
 
   const renderActions = (item: CategoryApiResponse['helpdesk_categories'][0]) => (
     <div className="flex gap-2">
-      {/* <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
+      <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
         <Edit className="h-4 w-4" />
-      </Button> */}
+      </Button>
       <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
         <Trash2 className="h-4 w-4" />
       </Button>
@@ -560,7 +660,7 @@ export const CategoryTypeTab: React.FC = () => {
                   )}
                 </div>
 
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name="customerEnabled"
                   render={({ field }) => (
@@ -574,7 +674,7 @@ export const CategoryTypeTab: React.FC = () => {
                       <FormLabel>Customer Enabled</FormLabel>
                     </FormItem>
                   )}
-                />
+                /> */}
 
                 <FormField
                   control={form.control}
@@ -735,18 +835,18 @@ export const CategoryTypeTab: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium mb-2">Category</label>
                   <Input
+                    id="edit-category-name"
                     defaultValue={editingCategory.name}
                     placeholder="Category Name"
                     className="w-full"
                   />
                 </div>
 
-
                 <div>
                   <label className="block text-sm font-medium mb-2">Selected Site</label>
-                  <Select>
+                  <Select value={editSelectedSiteId} onValueChange={setEditSelectedSiteId}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder={selectedSite?.name || "Select Site"} />
+                      <SelectValue placeholder="Select Site" />
                     </SelectTrigger>
                     <SelectContent className="bg-white z-50">
                       {sites.map((site) => (
@@ -761,6 +861,7 @@ export const CategoryTypeTab: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium mb-2">Response Time(min)</label>
                   <Input
+                    id="edit-response-time"
                     defaultValue={editingCategory.tat}
                     placeholder="Response Time"
                     type="number"
@@ -769,10 +870,10 @@ export const CategoryTypeTab: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <Checkbox id="customer-enabled" />
-                <label htmlFor="customer-enabled" className="text-sm font-medium">Customer Enabled</label>
-              </div>
+              {/* <div className="flex items-center space-x-3">
+                <Checkbox id="edit-customer-enabled" />
+                <label htmlFor="edit-customer-enabled" className="text-sm font-medium">Customer Enabled</label>
+              </div> */}
 
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
@@ -838,6 +939,31 @@ export const CategoryTypeTab: React.FC = () => {
                       {editIconFile ? editIconFile.name : 'No file chosen'}
                     </span>
                   </div>
+                  {/* Display current icon if available */}
+                  {editingCategory.icon_url && !editIconFile && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-600 mb-1">Current Icon:</p>
+                      <img 
+                        src={editingCategory.icon_url} 
+                        alt="Current Icon" 
+                        className="w-12 h-12 object-cover rounded border"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                  {/* Preview new icon if selected */}
+                  {editIconFile && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-600 mb-1">New Icon Preview:</p>
+                      <img 
+                        src={URL.createObjectURL(editIconFile)} 
+                        alt="New Icon Preview" 
+                        className="w-12 h-12 object-cover rounded border"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -850,48 +976,51 @@ export const CategoryTypeTab: React.FC = () => {
                 </div>
 
                 {editFaqItems.map((item, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Question</label>
-                      <textarea
-                        placeholder="Question"
-                        value={item.question}
-                        onChange={(e) => updateEditFaqItem(index, 'question', e.target.value)}
-                        className="w-full p-2 border rounded-md resize-none h-20"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Answer</label>
-                      <div className="flex gap-2">
+                  !item._destroy && (
+                    <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Question</label>
                         <textarea
-                          placeholder="Answer"
-                          value={item.answer}
-                          onChange={(e) => updateEditFaqItem(index, 'answer', e.target.value)}
+                          placeholder="Question"
+                          value={item.question}
+                          onChange={(e) => updateEditFaqItem(index, 'question', e.target.value)}
                           className="w-full p-2 border rounded-md resize-none h-20"
                         />
-                        {editFaqItems.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeEditFaqItem(index)}
-                            className="h-fit mt-1"
-                          >
-                            <X className="h-4 w-4 text-red-500" />
-                          </Button>
-                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Answer</label>
+                        <div className="flex gap-2">
+                          <textarea
+                            placeholder="Answer"
+                            value={item.answer}
+                            onChange={(e) => updateEditFaqItem(index, 'answer', e.target.value)}
+                            className="w-full p-2 border rounded-md resize-none h-20"
+                          />
+                          {(editFaqItems.filter(faq => !faq._destroy).length > 1 || !item.id) && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeEditFaqItem(index)}
+                              className="h-fit mt-1"
+                            >
+                              <X className="h-4 w-4 text-red-500" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )
                 ))}
               </div>
 
               <div className="flex justify-end pt-4">
                 <Button 
                   onClick={() => handleEditSubmit({})}
+                  disabled={isSubmitting}
                   className="bg-purple-600 hover:bg-purple-700 text-white px-8"
                 >
-                  Submit
+                  {isSubmitting ? 'Updating...' : 'Submit'}
                 </Button>
               </div>
             </div>

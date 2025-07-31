@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Edit2 } from 'lucide-react';
+import { ArrowLeft, Edit2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAppSelector } from '@/store/hooks';
 import { fetchAllowedSites } from '@/store/slices/siteSlice';
@@ -46,6 +46,7 @@ interface FormData {
   company_cluster: string;
   last_working_day: string;
   email_preference: string;
+  access: string[]
 }
 
 export const ViewFMUserPage = () => {
@@ -91,7 +92,8 @@ export const ViewFMUserPage = () => {
     vendor_company: '',
     company_cluster: '',
     last_working_day: '',
-    email_preference: ''
+    email_preference: '',
+    access: []
   });
 
   const userId = JSON.parse(localStorage.getItem('user'))?.id;
@@ -136,16 +138,17 @@ export const ViewFMUserPage = () => {
         face_added: userData.face_added || false,
         app_downloaded: userData.app_downloaded || 'No',
         access_level: userData.lock_user_permission?.access_level || 'Site',
-        daily_helpdesk_report: false,
-        site: userData.lock_user_permission.site_id || '',
+        daily_helpdesk_report: userData.lock_user_permission.daily_pms_report,
+        site: userData.site_id || '',
         base_unit: userData.unit_id,
         system_user_type: userData.user_type,
         department: userData.department_id,
-        role: formData.lock_role_id,
-        vendor_company: '',
+        role: userData.role_id,
+        vendor_company: userData.supplier_id,
         company_cluster: '',
-        last_working_day: 'Last Working Day',
-        email_preference: userData.urgency_email_enabled
+        last_working_day: userData.lock_user_permission.last_working_date,
+        email_preference: userData.urgency_email_enabled?.toString(),
+        access: userData.access_to_array
       });
     } else {
       console.log('userData not found for id:', id);
@@ -193,19 +196,11 @@ export const ViewFMUserPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span>Users</span>
-          <span>&gt;</span>
-          <span>FM Users</span>
-          <span>&gt;</span>
-          <span className="font-medium">Edit Details</span>
+          <button onClick={() => navigate('/master/user/fm-users')} className='flex items-center gap-2'>
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2 border-gray-300"
-        >
-          <Edit2 className="w-4 h-4" />
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -381,8 +376,7 @@ export const ViewFMUserPage = () => {
                       <SelectValue placeholder="Select Cluster" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="cluster1">Cluster 1</SelectItem>
-                      <SelectItem value="cluster2">Cluster 2</SelectItem>
+                      <SelectItem value="Select Cluster" disabled>Select Cluster</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -536,18 +530,21 @@ export const ViewFMUserPage = () => {
                       <SelectValue placeholder="Select Access Level" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="site">Site</SelectItem>
-                      <SelectItem value="building">Building</SelectItem>
-                      <SelectItem value="floor">Floor</SelectItem>
+                      <SelectItem value="Company">Company</SelectItem>
+                      <SelectItem value="Site">Site</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Access</Label>
-                  <div className="mt-2">
-                    <Badge variant="secondary" className="bg-red-100 text-red-800 border-red-200">
-                      Lockated ×
-                    </Badge>
+                  <div className="mt-2 flex items-center gap-1 flex-wrap">
+                    {
+                      formData.access.map((access, index) => (
+                        <Badge key={index} variant="secondary" className="bg-red-100 text-red-800 border-red-200">
+                          {access}
+                        </Badge>
+                      ))
+                    }
                   </div>
                 </div>
               </div>

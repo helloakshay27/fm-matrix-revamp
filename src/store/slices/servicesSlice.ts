@@ -11,7 +11,7 @@ export const fetchServicesData = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const params: any = { page: page.toString(), 'site_id': localStorage.getItem('siteId') || '2189' };
+      const params: any = { page: page.toString() }; // Removed site_id
 
       if (active !== undefined) {
         params['q[active_eq]'] = active.toString();
@@ -19,7 +19,7 @@ export const fetchServicesData = createAsyncThunk(
 
       // Add filter parameters
       if (filters.serviceName) {
-        params['q[service_name_cont]'] = filters.serviceName;
+        params['q[service_name_or_service_code_cont]'] = filters.serviceName;
       }
       if (filters.building) {
         params['q[building_id_eq]'] = filters.building;

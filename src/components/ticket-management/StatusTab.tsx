@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManagementAPI';
+import { EditStatusModal } from './modals/EditStatusModal';
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -63,6 +64,8 @@ export const StatusTab: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [allowReopen, setAllowReopen] = useState(false);
   const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<StatusType | null>(null);
 
   const currentSiteId =
     accounts && accounts.length > 0
@@ -146,6 +149,21 @@ export const StatusTab: React.FC = () => {
     setAllowReopen(checked === true);
   };
 
+  const handleEdit = (status: StatusType) => {
+    setSelectedStatus(status);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedStatus(null);
+  };
+
+  const handleStatusUpdated = () => {
+    fetchStatuses();
+    handleEditModalClose();
+  };
+
   const handleDelete = async (status: StatusType) => {
     if (!confirm('Are you sure you want to delete this status?')) {
       return;
@@ -212,9 +230,9 @@ export const StatusTab: React.FC = () => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center gap-2">
-      {/* <Button variant="ghost" size="sm">
+      <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
         <Edit className="h-4 w-4" />
-      </Button> */}
+      </Button>
       <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
         <Trash2 className="h-4 w-4" />
       </Button>
@@ -357,6 +375,13 @@ export const StatusTab: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      <EditStatusModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        status={selectedStatus}
+        onUpdate={handleStatusUpdated}
+      />
     </div>
   );
 };

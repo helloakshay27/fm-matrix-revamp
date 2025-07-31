@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Download, Eye, Loader2 } from "lucide-react";
 import { toast } from 'sonner';
-import { useAppDispatch } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { exportOrders, fetchRestaurantOrders, fetchRestaurants } from '@/store/slices/f&bSlice';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import axios from 'axios';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from './ui/pagination';
 
 interface RestaurantOrder {
   id: number;
@@ -51,9 +52,16 @@ export const RestaurantOrdersTable = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
 
+  const { loading } = useAppSelector(state => state.fetchRestaurantOrders)
+
   const [orders, setOrders] = useState<RestaurantOrder[]>([]);
   const [restoId, setRestoId] = useState<number | undefined>();
   const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
 
   useEffect(() => {
     const fetchRestaurant = async () => {
@@ -73,8 +81,13 @@ export const RestaurantOrdersTable = () => {
     const fetchOrders = async () => {
       if (restoId) {
         try {
-          const response = await dispatch(fetchRestaurantOrders({ baseUrl, token, id: Number(restoId) })).unwrap();
-          setOrders(response);
+          const response = await dispatch(fetchRestaurantOrders({ baseUrl, token, id: Number(restoId), pageSize: 10, currentPage: pagination.current_page })).unwrap();
+          setOrders(response.food_orders);
+          setPagination({
+            current_page: response.current_page,
+            total_count: response.total_records,
+            total_pages: response.total_pages
+          })
         } catch (error) {
           console.error('Error fetching orders:', error);
           toast.error('Failed to fetch orders');
@@ -145,6 +158,135 @@ export const RestaurantOrdersTable = () => {
   const handleViewOrder = (order: RestaurantOrder) => {
     const restoId = orders.find((o) => o.id === order.id)?.restaurant_id;
     navigate(`/vas/fnb/details/${restoId}/restaurant-order/${order.id}`);
+  };
+
+  const handlePageChange = async (page: number) => {
+    setPagination((prev) => ({
+      ...prev,
+      current_page: page,
+    }));
+    try {
+      const response = await dispatch(fetchRestaurantOrders({ baseUrl, token, id: Number(restoId), pageSize: 10, currentPage: page })).unwrap();
+      setOrders(response.food_orders);
+    } catch (error) {
+      toast.error('Failed to fetch bookings');
+    }
+  };
+
+  const renderPaginationItems = () => {
+    if (!pagination.total_pages || pagination.total_pages <= 0) {
+      return null;
+    }
+    const items = [];
+    const totalPages = pagination.total_pages;
+    const currentPage = pagination.current_page;
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      items.push(
+        <PaginationItem key={1} className='cursor-pointer'>
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+            disabled={loading}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1" >
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                disabled={loading}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                disabled={loading}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find((item) => item.key === i.toString())) {
+            items.push(
+              <PaginationItem key={i} className='cursor-pointer'>
+                <PaginationLink
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                  disabled={loading}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+              disabled={loading}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+              disabled={loading}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
   };
 
   const columns: ColumnConfig[] = [
@@ -361,7 +503,28 @@ export const RestaurantOrdersTable = () => {
         hideTableExport={true}
         pagination={true}
         pageSize={10}
+        loading={loading}
       />
+
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                className={pagination.current_page === 1 || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            {renderPaginationItems()}
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                className={pagination.current_page === pagination.total_pages || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
     </div>
   );
 };

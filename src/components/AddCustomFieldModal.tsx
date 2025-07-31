@@ -38,14 +38,15 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
   const handleAddField = () => {
     const trimmedName = fieldName.trim();
     if (!trimmedName) return;
-    
     if (isItAsset && selectedSection) {
       onAddField(trimmedName, selectedSection);
     } else {
       onAddField(trimmedName);
     }
-    
-    handleCancel();
+    // Only close if field was actually added
+    setFieldName("");
+    setSelectedSection("system_details");
+    onClose();
   };
 
   const handleCancel = () => {

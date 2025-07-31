@@ -124,9 +124,12 @@ export const AddStatusModal: React.FC<AddStatusModalProps> = ({ isOpen, onClose,
                 <MenuItem value="" disabled>
                   <span style={{ color: '#999' }}>Select Fixed State</span>
                 </MenuItem>
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
                 <MenuItem value="pending">Pending</MenuItem>
+                <MenuItem value="completed">Completed</MenuItem>
+                <MenuItem value="confirmed">Confirmed</MenuItem>
+                <MenuItem value="Cancelled">Cancelled</MenuItem>
+                <MenuItem value="booking_accepted">Table Booking Accepted</MenuItem>
+                <MenuItem value="booking_denied">Table Booking Denied</MenuItem>
               </Select>
             </FormControl>
 

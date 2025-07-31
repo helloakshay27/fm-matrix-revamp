@@ -112,13 +112,13 @@ export const SurveyListDashboard = () => {
     switch (columnKey) {
       case 'actions':
         return (
-          <div className="flex space-x-1">
-            <button 
+          <div className="flex space-x-1 ml-4">
+            {/* <button 
               onClick={() => handleAction('Edit', item.id)}
               className="p-1 text-gray-600 hover:text-gray-800"
             >
               <Edit className="w-4 h-4" />
-            </button>
+            </button> */}
             <button 
               onClick={() => handleAction('View', item.id)}
               className="p-1 text-gray-600 hover:text-gray-800"
@@ -189,7 +189,7 @@ export const SurveyListDashboard = () => {
         <EnhancedTable
           data={filteredSurveys}
           columns={columns}
-          selectable={true}
+          // selectable={true}
           renderCell={renderCell}
           storageKey="survey-list-table"
           enableExport={true}

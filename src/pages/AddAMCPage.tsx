@@ -892,7 +892,7 @@ export const AddAMCPage = () => {
                   error={!!errors.endDate}
                   helperText={errors.endDate}
                   inputProps={{
-                    min: formData.startDate || undefined,
+                    min: formData.startDate || undefined, 
                   }}
                   sx={{
                     height: '45px',
@@ -900,7 +900,7 @@ export const AddAMCPage = () => {
                       height: '45px',
                     },
                   }}
-                  disabled={isSubmitting}
+                  disabled={!formData.startDate || isSubmitting} 
                 />
               </div>
 

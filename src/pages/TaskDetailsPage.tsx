@@ -409,6 +409,22 @@ export const TaskDetailsPage = () => {
                     {taskDetails.task_details.status.display_name}
                   </Badge>
                 </div>
+                {taskDetails.task_details.completed_on && (
+                  <div>
+                    <label className="text-sm text-gray-600">Completed on</label>
+                    <p className="font-medium">
+                      {taskDetails.task_details.completed_on}
+                    </p>
+                  </div>
+                )}
+                {taskDetails.task_details.start_time && (
+                  <div>
+                    <label className="text-sm text-gray-600">Start time</label>
+                    <p className="font-medium">
+                      {taskDetails.task_details.start_time}
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="space-y-4">
                 <div>
@@ -449,6 +465,14 @@ export const TaskDetailsPage = () => {
                     {taskDetails.task_details.location.full_location}
                   </p>
                 </div>
+                {taskDetails.task_details.performed_by && (
+                  <div>
+                    <label className="text-sm text-gray-600">Performed by</label>
+                    <p className="font-medium">
+                      {taskDetails.task_details.performed_by}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -491,37 +515,85 @@ export const TaskDetailsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="bg-blue-50">
-                    <td className="p-3 border-b border-r">
-                      {taskDetails?.task_details.associated_with}
-                    </td>
-                    <td className="p-3 border-b border-r">{taskDetails?.task_details.asset_service_name}</td>
-                    <td className="p-3 border-b border-r">
-                      {taskDetails?.task_details.assigned_to}
-                    </td>
-                    <td className="p-3 border-b border-r">
-                      {taskDetails?.comments.length > 0
-                        ? taskDetails.comments[0].comment
-                        : 'No comments'}
-                    </td>
-                    <td className="p-3 border-b border-r">-</td>
-                    <td className="p-3 border-b border-r">-</td>
-                    <td className="p-3 border-b border-r">
-                      {typeof taskDetails?.activity?.total_score === 'object'
-                        ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
-                        : taskDetails?.activity?.total_score ?? '-'}
-                    </td>
-                    <td className="p-3 border-b border-r">
-                      <span className={`px-2 py-1 rounded text-white ${taskDetails.task_details.status.display_name}`}>
-                        {taskDetails.task_details.status.display_name}
-                      </span>
-                    </td>
-                    <td className="p-3 border-b">
-                      {taskDetails?.attachments.blob_store_files.length > 0
-                        ? 'Has Attachments'
-                        : 'No attachments'}
-                    </td>
-                  </tr>
+                  {taskDetails?.activity?.resp && taskDetails.activity.resp.length > 0 ? (
+                    taskDetails.activity.resp.map((activity, index) => (
+                      <tr key={index} className={index % 2 === 0 ? "bg-blue-50" : "bg-white"}>
+                        <td className="p-3 border-b border-r">
+                          {activity.hint || '-'}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {activity.label}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {activity.userData && activity.userData.length > 0 
+                            ? activity.userData.join(', ') 
+                            : '-'}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {activity.comment || '-'}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {activity.weightage || '-'}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {activity.rating || '-'}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {index === 0 ? (
+                            typeof taskDetails?.activity?.total_score === 'object'
+                              ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
+                              : taskDetails?.activity?.total_score ?? '-'
+                          ) : '-'}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {index === 0 ? (
+                            <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
+                              {taskDetails.task_details.status.display_name}
+                            </Badge>
+                          ) : '-'}
+                        </td>
+                        <td className="p-3 border-b">
+                          {index === 0 ? (
+                            taskDetails?.attachments.blob_store_files.length > 0
+                              ? 'Has Attachments'
+                              : 'No attachments'
+                          ) : '-'}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr className="bg-blue-50">
+                      <td className="p-3 border-b border-r">
+                        {taskDetails?.task_details.associated_with}
+                      </td>
+                      <td className="p-3 border-b border-r">{taskDetails?.task_details.asset_service_name}</td>
+                      <td className="p-3 border-b border-r">
+                        {taskDetails?.task_details.assigned_to}
+                      </td>
+                      <td className="p-3 border-b border-r">
+                        {taskDetails?.comments.length > 0
+                          ? taskDetails.comments[0].comment
+                          : 'No comments'}
+                      </td>
+                      <td className="p-3 border-b border-r">-</td>
+                      <td className="p-3 border-b border-r">-</td>
+                      <td className="p-3 border-b border-r">
+                        {typeof taskDetails?.activity?.total_score === 'object'
+                          ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
+                          : taskDetails?.activity?.total_score ?? '-'}
+                      </td>
+                      <td className="p-3 border-b border-r">
+                        <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
+                          {taskDetails.task_details.status.display_name}
+                        </Badge>
+                      </td>
+                      <td className="p-3 border-b">
+                        {taskDetails?.attachments.blob_store_files.length > 0
+                          ? 'Has Attachments'
+                          : 'No attachments'}
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
 
               </table>
@@ -851,37 +923,85 @@ export const TaskDetailsPage = () => {
                         </tr>
                       </thead>
                        <tbody>
-                  <tr className="bg-blue-50">
-                    <td className="p-3 border-b border-r">
-                      {taskDetails?.task_details.associated_with}
-                    </td>
-                    <td className="p-3 border-b border-r">{taskDetails?.task_details.asset_service_name}</td>
-                    <td className="p-3 border-b border-r">
-                      {taskDetails?.task_details.assigned_to}
-                    </td>
-                    <td className="p-3 border-b border-r">
-                      {taskDetails?.comments.length > 0
-                        ? taskDetails.comments[0].comment
-                        : 'No comments'}
-                    </td>
-                    <td className="p-3 border-b border-r">-</td>
-                    <td className="p-3 border-b border-r">-</td>
-                    <td className="p-3 border-b border-r">
-                      {typeof taskDetails?.activity?.total_score === 'object'
-                        ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
-                        : taskDetails?.activity?.total_score ?? '-'}
-                    </td>
-                    <td className="p-3 border-b border-r">
-                      <span className={`px-2 py-1 rounded text-white ${taskDetails.task_details.status.display_name}`}>
-                        {taskDetails.task_details.status.display_name}
-                      </span>
-                    </td>
-                    <td className="p-3 border-b">
-                      {taskDetails?.attachments.blob_store_files.length > 0
-                        ? 'Has Attachments'
-                        : 'No attachments'}
-                    </td>
-                  </tr>
+                  {taskDetails?.activity?.resp && taskDetails.activity.resp.length > 0 ? (
+                    taskDetails.activity.resp.map((activity, index) => (
+                      <tr key={index} className={index % 2 === 0 ? "bg-blue-50" : "bg-white"}>
+                        <td className="p-3 border-b border-r">
+                          {activity.hint || '-'}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {activity.label}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {activity.userData && activity.userData.length > 0 
+                            ? activity.userData.join(', ') 
+                            : '-'}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {activity.comment || '-'}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {activity.weightage || '-'}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {activity.rating || '-'}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {index === 0 ? (
+                            typeof taskDetails?.activity?.total_score === 'object'
+                              ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
+                              : taskDetails?.activity?.total_score ?? '-'
+                          ) : '-'}
+                        </td>
+                        <td className="p-3 border-b border-r">
+                          {index === 0 ? (
+                            <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
+                              {taskDetails.task_details.status.display_name}
+                            </Badge>
+                          ) : '-'}
+                        </td>
+                        <td className="p-3 border-b">
+                          {index === 0 ? (
+                            taskDetails?.attachments.blob_store_files.length > 0
+                              ? 'Has Attachments'
+                              : 'No attachments'
+                          ) : '-'}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr className="bg-blue-50">
+                      <td className="p-3 border-b border-r">
+                        {taskDetails?.task_details.associated_with}
+                      </td>
+                      <td className="p-3 border-b border-r">{taskDetails?.task_details.asset_service_name}</td>
+                      <td className="p-3 border-b border-r">
+                        {taskDetails?.task_details.assigned_to}
+                      </td>
+                      <td className="p-3 border-b border-r">
+                        {taskDetails?.comments.length > 0
+                          ? taskDetails.comments[0].comment
+                          : 'No comments'}
+                      </td>
+                      <td className="p-3 border-b border-r">-</td>
+                      <td className="p-3 border-b border-r">-</td>
+                      <td className="p-3 border-b border-r">
+                        {typeof taskDetails?.activity?.total_score === 'object'
+                          ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
+                          : taskDetails?.activity?.total_score ?? '-'}
+                      </td>
+                      <td className="p-3 border-b border-r">
+                        <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
+                          {taskDetails.task_details.status.display_name}
+                        </Badge>
+                      </td>
+                      <td className="p-3 border-b">
+                        {taskDetails?.attachments.blob_store_files.length > 0
+                          ? 'Has Attachments'
+                          : 'No attachments'}
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
                     </table>
                   </div>

@@ -44,6 +44,20 @@ export const fetchFMUsers = createAsyncThunk(
   }
 )
 
+export const getFMUsers = createAsyncThunk("getFMUsers", async ({ baseUrl, token, perPage, currentPage }: { baseUrl: string, token: string, perPage: number, currentPage: number }, { rejectWithValue }) => {
+  try {
+    const response = await axios.get(`https://${baseUrl}/pms/account_setups/fm_users.json?per_page=${perPage}&page=${currentPage}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    return response.data
+  } catch (error) {
+    const message = error.response?.data?.message || error.message || 'Failed to fetch fm users'
+    return rejectWithValue(message)
+  }
+})
+
 export const fetchSuppliers = createAsyncThunk("fetchSuppliers", async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
   try {
     const response = await axios.get(`https://${baseUrl}/pms/suppliers/get_suppliers.json`, {
@@ -97,7 +111,7 @@ export const createFmUser = createAsyncThunk(
       })
       return response.data
     } catch (error) {
-      const message = error.response?.data?.message || error.message || 'Failed to create FM user'
+      const message = error.response?.data?.error || error.error || 'Failed to create FM user'
       return rejectWithValue(message)
     }
   }
@@ -109,11 +123,13 @@ const fetchSuppliersSlice = createApiSlice('fetchSuppliers', fetchSuppliers)
 const fetchUnitsSlice = createApiSlice('fetchUnits', fetchUnits)
 const fetchRolesSlice = createApiSlice('fetchRoles', fetchRoles)
 const createFmUserSlice = createApiSlice('createFmUser', createFmUser)
+const getFMUsersSlice = createApiSlice('getFMUsers', getFMUsers)
 
 export const fetchSuppliersReducer = fetchSuppliersSlice.reducer
 export const fetchUnitsReducer = fetchUnitsSlice.reducer
 export const fetchRolesReducer = fetchRolesSlice.reducer
 export const createFmUserReducer = createFmUserSlice.reducer
+export const getFMUsersReducer = getFMUsersSlice.reducer
 
 export default fmUserSlice.reducer
 

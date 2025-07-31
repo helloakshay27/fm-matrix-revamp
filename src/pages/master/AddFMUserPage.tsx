@@ -102,9 +102,40 @@ export const AddFMUserPage = () => {
     }));
   };
 
-  console.log(selectedCompany)
+  const validateForm = () => {
+    if (!formData.firstName) {
+      toast.error('Please enter first name')
+      return false
+    } else if (!formData.lastName) {
+      toast.error('Please enter last name')
+      return false
+    } else if (!formData.mobileNumber) {
+      toast.error('Please enter mobile number')
+      return false
+    } else if (!formData.emailAddress) {
+      toast.error('Please enter email address')
+      return false
+    } else if (!formData.selectUserType) {
+      toast.error('Please select user type')
+      return false
+    } else if (!formData.selectRole) {
+      toast.error('Please select role')
+      return false
+    } else if (!formData.selectAccessLevel) {
+      toast.error('Please select access level')
+      return false
+    } else if (formData.selectAccessLevel === 'Site' && formData.selectedSites.length === 0) {
+      toast.error('Please select at least one site')
+      return false
+    } else if (formData.selectAccessLevel === 'Company' && formData.selectedCompanies.length === 0) {
+      toast.error('Please select at least one company')
+      return false
+    }
+    return true
+  }
 
   const handleSubmit = async () => {
+    if (!validateForm()) return
     setLoadingSubmitting(true)
     const payload = {
       user: {
@@ -138,7 +169,7 @@ export const AddFMUserPage = () => {
       navigate('/master/user/fm-users');
     } catch (error) {
       console.log(error)
-      toast.error('Failed to add user');
+      toast.error(error);
     } finally {
       setLoadingSubmitting(false)
     }
@@ -376,7 +407,7 @@ export const AddFMUserPage = () => {
                 </div>
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select User Type</InputLabel>
+                    <InputLabel shrink>Select User Type*</InputLabel>
                     <Select
                       value={formData.selectUserType}
                       onChange={(e) => handleInputChange('selectUserType', e.target.value)}
@@ -400,7 +431,7 @@ export const AddFMUserPage = () => {
                 </div>
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Role</InputLabel>
+                    <InputLabel shrink>Select Role*</InputLabel>
                     <Select
                       value={formData.selectRole}
                       onChange={(e) => handleInputChange('selectRole', e.target.value)}
@@ -423,7 +454,7 @@ export const AddFMUserPage = () => {
                 {/* Row 6 */}
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Access Level</InputLabel>
+                    <InputLabel shrink>Select Access Level*</InputLabel>
                     <Select
                       value={formData.selectAccessLevel}
                       onChange={(e) => {
@@ -459,7 +490,7 @@ export const AddFMUserPage = () => {
                           {...params}
                           label={
                             <span>
-                              Select Sites <span style={{ color: 'red' }}>*</span>
+                              Select Sites*
                             </span>
                           }
                           placeholder="Search and select sites..."
@@ -501,7 +532,7 @@ export const AddFMUserPage = () => {
                           {...params}
                           label={
                             <span>
-                              Select Companies <span style={{ color: 'red' }}>*</span>
+                              Select Companies*
                             </span>
                           }
                           placeholder="Search and select companies..."
@@ -527,7 +558,7 @@ export const AddFMUserPage = () => {
               </div>
             </Box>
             {/* Action Buttons */}
-            <div className="flex justify-end gap-4 pt-6">
+            <div className="flex justify-center gap-4 pt-6">
               <Button
                 variant="outline"
                 onClick={handleCancel}

@@ -49,13 +49,16 @@ import { AssetSelectionPanel } from "@/components/AssetSelectionPanel";
 import { AssetSelector } from "@/components/AssetSelector";
 import { RecentAssetsSidebar } from "@/components/RecentAssetsSidebar";
 import { DonutChartGrid } from "@/components/DonutChartGrid";
-import { AssetAnalyticsSelector } from "@/components/AssetAnalyticsSelector";
+import { AssetAnalyticsComponents } from "@/components/AssetAnalyticsComponents";
 import { AssetAnalyticsFilterDialog } from "@/components/AssetAnalyticsFilterDialog";
-import { AssetAnalyticsCard } from "@/components/AssetAnalyticsCard";
 import { assetAnalyticsDownloadAPI } from "@/services/assetAnalyticsDownloadAPI";
-import { assetAnalyticsAPI } from "@/services/assetAnalyticsAPI";
 import { useAssetSearch } from "@/hooks/useAssetSearch";
-import { API_CONFIG, getFullUrl, getAuthHeader, ENDPOINTS } from "@/config/apiConfig";
+import {
+  API_CONFIG,
+  getFullUrl,
+  getAuthHeader,
+  ENDPOINTS,
+} from "@/config/apiConfig";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -73,71 +76,10 @@ import {
 } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import AssetStatisticsSelector from "@/components/AssetStatisticsSelector";
+import { AssetAnalyticsSelector } from "@/components/AssetAnalyticsSelector";
 
-// Interface for asset statistics API response
-interface AssetStatistics {
-  total_assets_count?: {
-    info: string;
-    total_assets_count: number;
-  };
-  assets_in_use?: {
-    info: string;
-    total_assets_in_use: number;
-  };
-  assets_in_breakdown?: {
-    info: string;
-    total_assets_in_breakdown: number;
-  };
-  critical_assets_in_breakdown?: {
-    info: string;
-    total_assets_in_breakdown: number;
-  };
-  ppm_conduct_assets_count?: {
-    info: string;
-    overdue_assets: string;
-    total: number;
-  };
-  average_customer_rating?: {
-    info: string;
-    avg_rating: number;
-  };
-}
-
-// Interface for asset status API response
-interface AssetStatus {
-  // Add proper typing based on the actual API response structure
-  [key: string]: any;
-}
-
-// Interface for asset distributions API response
-interface AssetDistributions {
-  success: number;
-  message: string;
-  info: {
-    info: string;
-    total_it_assets: number;
-    total_non_it_assets: number;
-  };
-}
-
-// Interface for group-wise assets API response
-interface GroupWiseAssets {
-  info: string;
-  group_wise_assets: {
-    group_name: string;
-    asset_count: number;
-  }[];
-}
-
-// Interface for category-wise assets API response
-interface CategoryWiseAssets {
-  asset_type_category_counts: {
-    [key: string]: number;
-  };
-  info: {
-    description: string;
-  };
-}
+// Analytics data interfaces are now handled by AssetAnalyticsComponents
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -167,12 +109,12 @@ const SortableChartItem = ({
     const target = e.target as HTMLElement;
     // Check if the click is on a button, icon, or download element
     if (
-      target.closest('button') ||
-      target.closest('[data-download]') ||
-      target.closest('svg') ||
-      target.tagName === 'BUTTON' ||
-      target.tagName === 'SVG' ||
-      target.closest('.download-btn')
+      target.closest("button") ||
+      target.closest("[data-download]") ||
+      target.closest("svg") ||
+      target.tagName === "BUTTON" ||
+      target.tagName === "SVG" ||
+      target.closest(".download-btn")
     ) {
       e.stopPropagation();
       return;
@@ -212,7 +154,7 @@ export const AssetDashboard = () => {
     totalValue,
   } = useSelector((state: RootState) => state.assets);
 
-  console.log(assets)
+  console.log(assets);
 
   console.log(data);
   // Local state
@@ -236,50 +178,23 @@ export const AssetDashboard = () => {
     const today = new Date();
     const lastYear = new Date();
     lastYear.setFullYear(today.getFullYear() - 1);
-    
+
     return {
       fromDate: lastYear,
-      toDate: today
+      toDate: today,
     };
   };
 
-  const [analyticsDateRange, setAnalyticsDateRange] = useState(getDefaultDateRange());
+  const [analyticsDateRange, setAnalyticsDateRange] = useState(
+    getDefaultDateRange()
+  );
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
-  const [selectedAnalyticsTypes, setSelectedAnalyticsTypes] = useState<string[]>([
-    'groupWise',
-    'categoryWise',
-    'statusDistribution',
-    'assetDistributions'
-  ]);
+  const [selectedAnalyticsTypes, setSelectedAnalyticsTypes] = useState<
+    string[]
+  >(["groupWise", "categoryWise", "statusDistribution", "assetDistributions"]);
   const [analyticsData, setAnalyticsData] = useState<any>({});
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  // Asset statistics state
-  const [assetStatistics, setAssetStatistics] = useState<AssetStatistics>({});
-  const [statisticsLoading, setStatisticsLoading] = useState(false);
-  const [statisticsError, setStatisticsError] = useState<string | null>(null);
-  // Asset status state
-  const [assetStatus, setAssetStatus] = useState<AssetStatus>({});
-  const [statusLoading, setStatusLoading] = useState(false);
-  const [statusError, setStatusError] = useState<string | null>(null);
-  // Asset distributions state
-  const [assetDistributions, setAssetDistributions] =
-    useState<AssetDistributions | null>(null);
-  const [distributionsLoading, setDistributionsLoading] = useState(false);
-  const [distributionsError, setDistributionsError] = useState<string | null>(
-    null
-  );
-  // Group-wise assets state
-  const [groupWiseAssets, setGroupWiseAssets] =
-    useState<GroupWiseAssets | null>(null);
-  const [groupWiseLoading, setGroupWiseLoading] = useState(false);
-  const [groupWiseError, setGroupWiseError] = useState<string | null>(null);
-  // Category-wise assets state
-  const [categoryWiseAssets, setCategoryWiseAssets] =
-    useState<CategoryWiseAssets | null>(null);
-  const [categoryWiseLoading, setCategoryWiseLoading] = useState(false);
-  const [categoryWiseError, setCategoryWiseError] = useState<string | null>(
-    null
-  );
+  // Analytics data state is now handled by AssetAnalyticsComponents
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
     serialNumber: true,
@@ -329,205 +244,18 @@ export const AssetDashboard = () => {
     return localStorage.getItem("selectedSiteId"); // Default to 2189 if not found
   };
 
-  // Function to fetch asset statistics from API
-  const fetchAssetStatistics = async () => {
-    setStatisticsLoading(true);
-    setStatisticsError(null);
-
-    try {
-      const fromDate = analyticsDateRange.fromDate;
-      const toDate = analyticsDateRange.toDate;
-
-      console.log("Fetching asset statistics with dates:", { fromDate, toDate });
-
-      const data = await assetAnalyticsAPI.getAssetStatistics(fromDate, toDate);
-      console.log("Asset statistics response:", data);
-
-      // Transform the data to match the expected interface
-      const transformedData: AssetStatistics = {
-        total_assets_count: {
-          info: "Total number of assets",
-          total_assets_count: data.total_assets
-        },
-        assets_in_use: {
-          info: "Assets currently in use",
-          total_assets_in_use: data.critical_assets || 0
-        },
-        assets_in_breakdown: {
-          info: "Assets in breakdown",
-          total_assets_in_breakdown: 0 // This data isn't in the API response
-        },
-        critical_assets_in_breakdown: {
-          info: "Critical assets in breakdown",
-          total_assets_in_breakdown: 0
-        },
-        ppm_conduct_assets_count: {
-          info: "PPM conduct assets",
-          overdue_assets: "0",
-          total: data.ppm_assets || 0
-        },
-        average_customer_rating: {
-          info: "Average customer rating",
-          avg_rating: 4.5 // Default value since not in API
-        }
-      };
-
-      setAssetStatistics(transformedData);
-    } catch (error) {
-      console.error("Error fetching asset statistics:", error);
-      setStatisticsError(
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch asset statistics"
-      );
-    } finally {
-      setStatisticsLoading(false);
-    }
-  };
-
-  // Function to fetch asset status from API
-  const fetchAssetStatus = async () => {
-    setStatusLoading(true);
-    setStatusError(null);
-
-    try {
-      const fromDate = analyticsDateRange.fromDate;
-      const toDate = analyticsDateRange.toDate;
-
-      console.log("Fetching asset status with dates:", { fromDate, toDate });
-
-      const data = await assetAnalyticsAPI.getAssetStatus(fromDate, toDate);
-      setAssetStatus(data);
-      console.log("Asset status data:", data);
-    } catch (error) {
-      console.error("Error fetching asset status:", error);
-      setStatusError(
-        error instanceof Error ? error.message : "Failed to fetch asset status"
-      );
-    } finally {
-      setStatusLoading(false);
-    }
-  };
-
-  // Function to fetch asset distributions from API
-  const fetchAssetDistributions = async () => {
-    setDistributionsLoading(true);
-    setDistributionsError(null);
-
-    try {
-      const fromDate = analyticsDateRange.fromDate;
-      const toDate = analyticsDateRange.toDate;
-
-      console.log("Fetching asset distributions with dates:", { fromDate, toDate });
-
-      const data = await assetAnalyticsAPI.getAssetDistribution(fromDate, toDate);
-      console.log("Asset distributions response:", data);
-
-      // Transform the data to match the expected interface
-      const transformedData: AssetDistributions = {
-        success: 1,
-        message: "Asset distribution data retrieved successfully",
-        info: {
-          info: "Asset distribution across sites",
-          total_it_assets: 0, // This would need to be calculated if needed
-          total_non_it_assets: 0 // This would need to be calculated if needed
-        }
-      };
-
-      setAssetDistributions(transformedData);
-    } catch (error) {
-      console.error("Error fetching asset distributions:", error);
-      setDistributionsError(
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch asset distributions"
-      );
-    } finally {
-      setDistributionsLoading(false);
-    }
-  };
-
-  // Function to fetch group-wise assets from API
-  const fetchGroupWiseAssets = async () => {
-    setGroupWiseLoading(true);
-    setGroupWiseError(null);
-
-    try {
-      const fromDate = analyticsDateRange.fromDate;
-      const toDate = analyticsDateRange.toDate;
-
-      console.log("Fetching group-wise assets from:", fromDate, "to", toDate);
-
-      const data = await assetAnalyticsAPI.getGroupWiseAssets(fromDate, toDate);
-      console.log("Group-wise assets response:", data);
-
-      setGroupWiseAssets(data);
-    } catch (error) {
-      console.error("Error fetching group-wise assets:", error);
-      setGroupWiseError(
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch group-wise assets"
-      );
-    } finally {
-      setGroupWiseLoading(false);
-    }
-  };
-
-  // Function to fetch category-wise assets from API
-  const fetchCategoryWiseAssets = async () => {
-    setCategoryWiseLoading(true);
-    setCategoryWiseError(null);
-
-    try {
-      const fromDate = analyticsDateRange.fromDate;
-      const toDate = analyticsDateRange.toDate;
-
-      console.log("Fetching category-wise assets with dates:", { fromDate, toDate });
-
-      const data = await assetAnalyticsAPI.getCategoryWiseAssets(fromDate, toDate);
-      console.log("Category-wise assets response:", data);
-
-      // Transform the data to match the expected interface
-      const transformedData: CategoryWiseAssets = {
-        asset_type_category_counts: {},
-        info: {
-          description: "Category-wise asset distribution"
-        }
-      };
-
-      // Map the categories array to the expected format
-      if (data.categories) {
-        data.categories.forEach(category => {
-          transformedData.asset_type_category_counts[category.category_name] = category.asset_count;
-        });
-      }
-
-      setCategoryWiseAssets(transformedData);
-    } catch (error) {
-      console.error("Error fetching category-wise assets:", error);
-      setCategoryWiseError(
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch category-wise assets"
-      );
-    } finally {
-      setCategoryWiseLoading(false);
-    }
-  };
+  // Analytics data will be handled by AssetAnalyticsComponents
+  // Removed duplicate fetch functions to prevent multiple API calls
 
   // Analytics handler functions
-  const handleAnalyticsFilterApply = (startDateStr: string, endDateStr: string) => {
+  const handleAnalyticsFilterApply = (
+    startDateStr: string,
+    endDateStr: string
+  ) => {
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
     setAnalyticsDateRange({ fromDate: startDate, toDate: endDate });
-
-    // Refresh all analytics data with new date range
-    fetchAssetStatistics();
-    fetchAssetStatus();
-    fetchAssetDistributions();
-    fetchGroupWiseAssets();
-    fetchCategoryWiseAssets();
+    // AssetAnalyticsComponents will handle the data fetching automatically
   };
 
   const handleAnalyticsSelectionChange = (selectedTypes: string[]) => {
@@ -542,29 +270,41 @@ export const AssetDashboard = () => {
       toast.info("Preparing download...");
 
       switch (type) {
-        case 'groupWise':
-          await assetAnalyticsDownloadAPI.downloadGroupWiseAssetsData(fromDate, toDate);
+        case "groupWise":
+          await assetAnalyticsDownloadAPI.downloadGroupWiseAssetsData(
+            fromDate,
+            toDate
+          );
           toast.success("Group-wise assets data downloaded successfully!");
           break;
-        case 'categoryWise':
-          await assetAnalyticsDownloadAPI.downloadCategoryWiseAssetsData(fromDate, toDate);
+        case "categoryWise":
+          await assetAnalyticsDownloadAPI.downloadCategoryWiseAssetsData(
+            fromDate,
+            toDate
+          );
           toast.success("Category-wise assets data downloaded successfully!");
           break;
-        case 'assetDistribution':
-          await assetAnalyticsDownloadAPI.downloadAssetDistributionsData(fromDate, toDate);
+        case "assetDistribution":
+          await assetAnalyticsDownloadAPI.downloadAssetDistributionsData(
+            fromDate,
+            toDate
+          );
           toast.success("Asset distribution data downloaded successfully!");
           break;
-        case 'assetsInUse':
-          await assetAnalyticsDownloadAPI.downloadAssetsInUseData(fromDate, toDate);
+        case "assetsInUse":
+          await assetAnalyticsDownloadAPI.downloadAssetsInUseData(
+            fromDate,
+            toDate
+          );
           toast.success("Assets in use data downloaded successfully!");
           break;
         default:
-          console.warn('Unknown analytics download type:', type);
-          toast.error('Unknown analytics download type.');
+          console.warn("Unknown analytics download type:", type);
+          toast.error("Unknown analytics download type.");
       }
     } catch (error) {
-      console.error('Error downloading analytics:', error);
-      toast.error('Failed to download analytics data. Please try again.');
+      console.error("Error downloading analytics:", error);
+      toast.error("Failed to download analytics data. Please try again.");
     }
   };
 
@@ -574,32 +314,24 @@ export const AssetDashboard = () => {
     totalCount: totalCount || 0,
   };
 
-  // Fetch initial assets data
+  // Fetch initial assets data only on component mount
   useEffect(() => {
-    if (assets.length === 0) {
+    // Only fetch if we don't have any filters applied and no assets loaded
+    if (Object.keys(filters).length === 0 && assets.length === 0) {
       dispatch(fetchAssetsData({ page: currentPage }));
     }
-  }, [dispatch, currentPage, assets.length]);
+  }, [dispatch]); // Remove currentPage and assets.length from dependencies
 
-  // Fetch asset statistics when component mounts
+  // Handle page changes separately when filters are applied
   useEffect(() => {
-    fetchAssetStatistics();
-    fetchAssetStatus();
-    fetchAssetDistributions();
-    fetchGroupWiseAssets();
-    fetchCategoryWiseAssets();
-  }, []);
-
-  // Refresh analytics data when date range changes
-  useEffect(() => {
-    if (analyticsDateRange.fromDate && analyticsDateRange.toDate) {
-      fetchAssetStatistics();
-      fetchAssetStatus();
-      fetchAssetDistributions();
-      fetchGroupWiseAssets();
-      fetchCategoryWiseAssets();
+    // Only fetch for page changes if we have filters applied
+    if (Object.keys(filters).length > 0) {
+      dispatch(fetchAssetsData({ page: currentPage, filters }));
     }
-  }, [analyticsDateRange]);
+  }, [currentPage, filters, dispatch]);
+
+  // Analytics data is now handled by AssetAnalyticsComponents
+  // Removed duplicate useEffect hooks to prevent multiple API calls
 
   // Transform Redux assets to match the expected Asset interface
   const transformedAssets = assets.map((asset, index) => ({
@@ -618,7 +350,7 @@ export const AssetDashboard = () => {
     assetType: asset.asset_type,
     purchaseCost: asset.purchase_cost,
     currentBookValue: asset.current_book_value,
-    floor: asset.pms_floor
+    floor: asset.pms_floor || null,
   }));
 
   const transformedSearchedAssets = searchAssets.map((asset, index) => ({
@@ -635,7 +367,7 @@ export const AssetDashboard = () => {
     assetGroup: asset.assetGroup || "",
     assetSubGroup: asset.assetSubGroup || "",
     assetType: asset.assetType,
-    floor: asset.pms_floor
+    floor: null, // Search results don't include floor data
   }));
 
   // Use search results if search term exists, otherwise use Redux assets
@@ -721,7 +453,7 @@ export const AssetDashboard = () => {
     // Ideally, the API should return aggregated stats for all filtered results
     return {
       total: totalCount || totalAssets, // Use total count from API if available
-      total_value: `${localStorage.getItem('currency')}0.00`,
+      total_value: `${localStorage.getItem("currency")}0.00`,
       nonItAssets: Math.floor((totalCount || totalAssets) * 0.6),
       itAssets: Math.floor((totalCount || totalAssets) * 0.4),
       inUse: inUseAssets,
@@ -738,7 +470,7 @@ export const AssetDashboard = () => {
     total_value:
       totalValue !== undefined && totalValue !== null
         ? String(totalValue)
-        : `${localStorage.getItem('currency')}0.00`,
+        : `${localStorage.getItem("currency")}0.00`,
   };
 
   console.log("Final stats object:", stats);
@@ -760,7 +492,7 @@ export const AssetDashboard = () => {
         filters = {};
         break;
       case "non_it":
-        filters = { it_asset_eq: false };
+        filters = { it_asset_eq: [false, null] };
         break;
       case "it":
         filters = { it_asset_eq: true };
@@ -772,14 +504,17 @@ export const AssetDashboard = () => {
         filters = { breakdown_eq: true };
         break;
       case "in_store":
-        filters = { status_eq: "in_store" };
+        filters = { status_eq: "in_storage" };
         break;
       case "dispose":
-        filters = { status_eq: "dispose" };
+        filters = { status_eq: "disposed" };
         break;
       default:
         filters = {};
     }
+
+    // Clear search term when applying filters
+    setSearchTerm("");
 
     // Dispatch the filter to fetch filtered assets
     dispatch(fetchAssetsData({ page: 1, filters }));
@@ -796,18 +531,15 @@ export const AssetDashboard = () => {
 
   // Handle refresh - fetch assets from Redux
   const handleRefresh = () => {
+    // Maintain current filters when refreshing
     dispatch(fetchAssetsData({ page: currentPage, filters }));
-    // Also refresh asset statistics and status
-    fetchAssetStatistics();
-    fetchAssetStatus();
-    fetchAssetDistributions();
-    fetchGroupWiseAssets();
-    fetchCategoryWiseAssets();
+    // AssetAnalyticsComponents will handle analytics data refreshing automatically
   };
 
   // Handle pagination
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    // Don't call dispatch here as it's handled by useEffect
     dispatch(fetchAssetsData({ page, filters }));
   };
 
@@ -836,7 +568,7 @@ export const AssetDashboard = () => {
       name: asset.name,
     }));
 
-  console.log(selectedAssetObjects)
+  console.log(selectedAssetObjects);
 
   const handleAddAsset = () => {
     navigate("/maintenance/asset/add");
@@ -881,7 +613,7 @@ export const AssetDashboard = () => {
     const selectedAssetObjects = displayAssets.filter((asset) =>
       selectedAssets.includes(asset.id)
     );
-    console.log(selectedAssetObjects)
+    console.log(selectedAssetObjects);
     navigate("/maintenance/asset/dispose", {
       state: { selectedAssets: selectedAssetObjects },
     });
@@ -935,72 +667,42 @@ export const AssetDashboard = () => {
     },
   ];
 
-  // Process asset status data for donut charts
+  // Process asset status data for donut charts - simplified version using calculated stats
   const processAssetStatusForCharts = () => {
-    // If we have asset status data from API, use it, otherwise use stats
     const chartStatusData = [
       {
         name: "In Use",
-        value:
-          assetStatistics.assets_in_use?.total_assets_in_use || stats.inUse,
+        value: stats.inUse,
         color: "#c6b692",
       },
       {
         name: "Breakdown",
-        value:
-          assetStatistics.assets_in_breakdown?.total_assets_in_breakdown ||
-          stats.breakdown,
+        value: stats.breakdown,
         color: "#d8dcdd",
       },
     ];
 
-    // Use API data for asset type distribution if available
-    const chartTypeData = assetDistributions
-      ? [
-        {
-          name: "IT Equipment",
-          value: assetDistributions.info.total_it_assets,
-          color: "#d8dcdd",
-        },
-        {
-          name: "Non-IT Equipment",
-          value: assetDistributions.info.total_non_it_assets,
-          color: "#c6b692",
-        },
-      ]
-      : [
-        {
-          name: "IT Equipment",
-          value: stats.itAssets,
-          color: "#d8dcdd",
-        },
-        {
-          name: "Non-IT Equipment",
-          value: stats.nonItAssets,
-          color: "#c6b692",
-        },
-      ];
+    const chartTypeData = [
+      {
+        name: "IT Equipment",
+        value: stats.itAssets,
+        color: "#d8dcdd",
+      },
+      {
+        name: "Non-IT Equipment",
+        value: stats.nonItAssets,
+        color: "#c6b692",
+      },
+    ];
 
     return { chartStatusData, chartTypeData };
   };
 
   const { chartStatusData, chartTypeData } = processAssetStatusForCharts();
 
-  // Process category-wise assets data for category chart
-  const categoryData = categoryWiseAssets?.asset_type_category_counts
-    ? Object.entries(categoryWiseAssets.asset_type_category_counts).map(
-      ([name, value]) => ({
-        name,
-        value,
-      })
-    )
-    : [{ name: "Loading...", value: 0 }];
-
-  // Process group-wise assets data for group chart
-  const groupData = groupWiseAssets?.group_wise_assets?.map((item) => ({
-    name: item.group_name,
-    value: item.asset_count,
-  })) || [{ name: "Loading...", value: 0 }];
+  // Simplified data for charts when analytics data is not available
+  const categoryData = [{ name: "Loading...", value: 0 }];
+  const groupData = [{ name: "Loading...", value: 0 }];
 
   const agingMatrixData = [
     { priority: "P1", "0-1Y": 15, "1-2Y": 8, "2-3Y": 5, "3-4Y": 3, "4-5Y": 2 },
@@ -1061,207 +763,41 @@ export const AssetDashboard = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="analytics" className="space-y-6 mt-6">
-          {/* Analytics Cards */}
+        <TabsContent value="analytics" className="space-y-6 mt-5">
+          {/* Row 1: Filter and Selector - Justify End */}
+          {/* <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
 
 
 
-          {/* Error message for statistics */}
-          {statisticsError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              <p className="text-sm">
-                Failed to load asset statistics: {statisticsError}
-              </p>
-              <button
-                onClick={fetchAssetStatistics}
-                className="text-red-800 underline text-sm mt-1 hover:text-red-900"
-              >
-                Retry
-              </button>
-            </div>
-          )}
-
-          {/* Error message for status */}
-          {statusError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              <p className="text-sm">
-                Failed to load asset status: {statusError}
-              </p>
-              <button
-                onClick={fetchAssetStatus}
-                className="text-red-800 underline text-sm mt-1 hover:text-red-900"
-              >
-                Retry
-              </button>
-            </div>
-          )}
-
-          {/* Error message for distributions */}
-          {distributionsError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              <p className="text-sm">
-                Failed to load asset distributions: {distributionsError}
-              </p>
-              <button
-                onClick={fetchAssetDistributions}
-                className="text-red-800 underline text-sm mt-1 hover:text-red-900"
-              >
-                Retry
-              </button>
-            </div>
-          )}
-
-          {/* Error message for group-wise assets */}
-          {groupWiseError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              <p className="text-sm">
-                Failed to load group-wise assets: {groupWiseError}
-              </p>
-              <button
-                onClick={fetchGroupWiseAssets}
-                className="text-red-800 underline text-sm mt-1 hover:text-red-900"
-              >
-                Retry
-              </button>
-            </div>
-          )}
-
-          {/* Error message for category-wise assets */}
-          {categoryWiseError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              <p className="text-sm">
-                Failed to load category-wise assets: {categoryWiseError}
-              </p>
-              <button
-                onClick={fetchCategoryWiseAssets}
-                className="text-red-800 underline text-sm mt-1 hover:text-red-900"
-              >
-                Retry
-              </button>
-            </div>
-          )}
-
-          {/* Header with Analytics Filter and Selector */}
-          <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
-            <Button
-              onClick={() => setIsAnalyticsFilterOpen(true)}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Filter className="w-4 h-4" />
-            </Button>
-
-            <AssetAnalyticsSelector
-              onSelectionChange={handleAnalyticsSelectionChange}
+            <AssetStatisticsSelector
               dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+              onDownload={handleAnalyticsDownload}
+              layout="horizontal"
             />
-          </div>
+          </div> */}
 
-          {/* Main Analytics Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Left Section - Analytics Cards (3 columns) */}
-            <div className="lg:col-span-3 space-y-6">
-              {/* Analytics Cards with Custom Layout */}
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
-                  <div className="space-y-6">
-                    {/* First Row - Status and Asset Distribution */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {selectedAnalyticsTypes.includes('statusDistribution') && (
-                        <SortableChartItem key="statusDistribution" id="statusDistribution">
-                          <AssetAnalyticsCard
-                            title="Asset Status"
-                            type="statusDistribution"
-                            data={chartStatusData}
-                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                            onDownload={() => handleAnalyticsDownload('assetsInUse')}
-                          />
-                        </SortableChartItem>
-                      )}
-
-                      {selectedAnalyticsTypes.includes('assetDistributions') && (
-                        <SortableChartItem key="assetDistributions" id="assetDistributions">
-                          <AssetAnalyticsCard
-                            title="Asset Type Distribution"
-                            type="assetDistributions"
-                            data={chartTypeData}
-                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                            onDownload={() => handleAnalyticsDownload('assetDistribution')}
-                          />
-                        </SortableChartItem>
-                      )}
-                    </div>
-
-                    {/* Second Row - Category-wise and Group-wise (col-6 each) */}
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mt-8">
-                      {selectedAnalyticsTypes.includes('categoryWise') && (
-                        <SortableChartItem key="categoryWise" id="categoryWise">
-                          <AssetAnalyticsCard
-                            title="Category-wise Assets"
-                            type="categoryWise"
-                            data={categoryData}
-                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                            onDownload={() => handleAnalyticsDownload('categoryWise')}
-                          />
-                        </SortableChartItem>
-                      )}
-
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mt-8">
-
-
-                      {selectedAnalyticsTypes.includes('groupWise') && (
-                        <SortableChartItem key="groupWise" id="groupWise">
-                          <AssetAnalyticsCard
-                            title="Group-wise Assets"
-                            type="groupWise"
-                            data={groupData}
-                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                            onDownload={() => handleAnalyticsDownload('groupWise')}
-                          />
-                        </SortableChartItem>
-                      )}
-                    </div>
-                  </div>
-                </SortableContext>
-              </DndContext>
-            </div>
-
-            {/* Right Sidebar - Recent Assets (1 column) */}
-            <div className="lg:col-span-1">
-              <RecentAssetsSidebar />
-            </div>
-          </div>
+          {/* Row 2: Charts and Recent Tickets */}
+          <AssetAnalyticsComponents
+            defaultDateRange={analyticsDateRange}
+            selectedAnalyticsTypes={selectedAnalyticsTypes}
+            onAnalyticsChange={(data) => {
+              // Analytics data is managed internally by AssetAnalyticsComponents
+              console.log("Analytics data updated:", data);
+            }}
+            showFilter={true}
+            showSelector={true}
+            layout="grid"
+          />
         </TabsContent>
 
         <TabsContent value="list" className="space-y-6 mt-6">
-          {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="text-lg">Loading assets...</div>
-            </div>
-          ) : error ? (
+          {error ? (
             <div className="flex justify-center items-center py-8">
               <div className="text-red-500">Error: {error}</div>
             </div>
           ) : (
             <>
               <AssetStats stats={data} onCardClick={handleStatCardClick} />
-
-              {/* <AssetActions
-                searchTerm={searchTerm}
-                onSearch={handleSearch}
-                onAddAsset={handleAddAsset}
-                onImport={handleImport}
-                onUpdate={handleUpdate}
-                onFilterOpen={() => setIsFilterOpen(true)}
-                onRefresh={handleRefresh}
-                visibleColumns={visibleColumns}
-                onColumnChange={handleColumnChange}
-              /> */}
 
               <div className="relative">
                 <AssetDataTable
@@ -1277,6 +813,7 @@ export const AssetDashboard = () => {
                   onSearch={handleSearch}
                   onRefreshData={handleRefresh}
                   handleAddSchedule={handleAddSchedule}
+                  loading={loading}
                 />
 
                 {/* Empty state when no data and filters are applied */}
@@ -1309,8 +846,11 @@ export const AssetDashboard = () => {
 
               {/* API-driven Pagination */}
               <div className="mt-6">
+               
+
                 <Pagination>
                   <PaginationContent>
+                    {/* Previous Button */}
                     <PaginationItem>
                       <PaginationPrevious
                         onClick={() => {
@@ -1326,26 +866,66 @@ export const AssetDashboard = () => {
                       />
                     </PaginationItem>
 
-                    {Array.from(
-                      { length: Math.min(pagination.totalPages, 10) },
-                      (_, i) => i + 1
-                    ).map((page) => (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => handlePageChange(page)}
-                          isActive={pagination.currentPage === page}
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
+                    {/* First Page */}
+                    <PaginationItem>
+                      <PaginationLink
+                        onClick={() => handlePageChange(1)}
+                        isActive={pagination.currentPage === 1}
+                      >
+                        1
+                      </PaginationLink>
+                    </PaginationItem>
 
-                    {pagination.totalPages > 10 && (
+                    {/* Ellipsis before current range */}
+                    {pagination.currentPage > 4 && (
                       <PaginationItem>
                         <PaginationEllipsis />
                       </PaginationItem>
                     )}
 
+                    {/* Dynamic middle pages */}
+                    {Array.from(
+                      { length: 3 },
+                      (_, i) => pagination.currentPage - 1 + i
+                    )
+                      .filter(
+                        (page) => page > 1 && page < pagination.totalPages
+                      )
+                      .map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => handlePageChange(page)}
+                            isActive={pagination.currentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+
+                    {/* Ellipsis after current range */}
+                    {pagination.currentPage < pagination.totalPages - 3 && (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+
+                    {/* Last Page (if not same as first) */}
+                    {pagination.totalPages > 1 && (
+                      <PaginationItem>
+                        <PaginationLink
+                          onClick={() =>
+                            handlePageChange(pagination.totalPages)
+                          }
+                          isActive={
+                            pagination.currentPage === pagination.totalPages
+                          }
+                        >
+                          {pagination.totalPages}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )}
+
+                    {/* Next Button */}
                     <PaginationItem>
                       <PaginationNext
                         onClick={() => {

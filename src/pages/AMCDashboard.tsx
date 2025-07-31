@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,7 +17,6 @@ import { AMCExpiryAnalysisCard } from '@/components/AMCExpiryAnalysisCard';
 import { AMCServiceTrackingCard } from '@/components/AMCServiceTrackingCard';
 import { AMCVendorPerformanceCard } from '@/components/AMCVendorPerformanceCard';
 import { AMCComplianceReportCard } from '@/components/AMCComplianceReportCard';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -46,6 +45,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { AmcBulkUploadModal } from '@/components/water-asset-details/AmcBulkUploadModal';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -64,10 +64,8 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Handle pointer down to prevent drag on button/icon clicks
   const handlePointerDown = (e: React.PointerEvent) => {
     const target = e.target as HTMLElement;
-    // Check if the click is on a button, icon, or download element
     if (
       target.closest('button') ||
       target.closest('[data-download]') ||
@@ -80,7 +78,6 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
       e.stopPropagation();
       return;
     }
-    // For other elements, proceed with drag
     if (listeners?.onPointerDown) {
       listeners.onPointerDown(e);
     }
@@ -94,7 +91,6 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
       onPointerDown={handlePointerDown}
       className="cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group relative"
     >
-      {/* Drag indicator */}
       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200 z-10">
         <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
       </div>
@@ -115,6 +111,7 @@ interface AMCRecord {
   active: boolean;
   is_flagged?: boolean;
   contract_name?: string;
+  total_days_remaining?: number;
 }
 
 const initialAmcData: AMCRecord[] = [];
@@ -129,16 +126,18 @@ const columns: ColumnConfig[] = [
   { key: 'amc_start_date', label: 'Start Date', sortable: true, defaultVisible: true },
   { key: 'amc_end_date', label: 'End Date', sortable: true, defaultVisible: true },
   { key: 'amc_first_service', label: 'First Service', sortable: true, defaultVisible: true },
+  { key: 'total_days_remaining', label: 'Days Remaining', sortable: true, defaultVisible: true },
   { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
   { key: 'active', label: 'Status', sortable: true, defaultVisible: true },
 ];
+
+
 
 export const AMCDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
-  const siteId = localStorage.getItem('selectedSiteId');
   const { data: apiData, loading: reduxLoading, error } = useAppSelector((state) => state.amc);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -146,19 +145,21 @@ export const AMCDashboard = () => {
     'statusChart', 'typeChart', 'resourceChart', 'agingMatrix'
   ]);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'typeChart', 'resourceChart', 'agingMatrix']);
-  const [filter, setFilter] = useState<string | null>(null); // For active/inactive/flagged
-  const [amcTypeFilter, setAmcTypeFilter] = useState<string | null>(null); // For AMC Type filter
-  const [startDateFilter, setStartDateFilter] = useState<string | null>(null); // For Start Date filter
-  const [endDateFilter, setEndDateFilter] = useState<string | null>(null); // For End Date filter
-  const [tempAmcTypeFilter, setTempAmcTypeFilter] = useState<string | null>(null); // Temporary state for modal
-  const [tempStartDateFilter, setTempStartDateFilter] = useState<string | null>(null); // Temporary state for modal
-  const [tempEndDateFilter, setTempEndDateFilter] = useState<string | null>(null); // Temporary state for modal
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false); // For filter modal
-  const [loading, setLoading] = useState(false); // Local loading state
+  const [filter, setFilter] = useState<string | null>(null);
+  const [amcTypeFilter, setAmcTypeFilter] = useState<string | null>(null);
+  const [startDateFilter, setStartDateFilter] = useState<string | null>(null);
+  const [endDateFilter, setEndDateFilter] = useState<string | null>(null);
+  const [tempAmcTypeFilter, setTempAmcTypeFilter] = useState<string | null>(null);
+  const [tempStartDateFilter, setTempStartDateFilter] = useState<string | null>(null);
+  const [tempEndDateFilter, setTempEndDateFilter] = useState<string | null>(null);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("amclist");
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
-  const [isExpiringFilterActive, setIsExpiringFilterActive] = useState(false); // Flag to control useEffect
+  const [isExpiringFilterActive, setIsExpiringFilterActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 600); // Reduced debounce time for quicker response
 
   // Analytics states
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
@@ -174,8 +175,6 @@ export const AMCDashboard = () => {
   const [analyticsChartOrder, setAnalyticsChartOrder] = useState<string[]>(['status_overview', 'type_distribution', 'expiry_analysis', 'service_tracking', 'vendor_performance']);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
 
-
-  // Set default dates: last year to today for analytics
   const getDefaultDateRange = () => {
     const today = new Date();
     const lastYear = new Date();
@@ -196,13 +195,11 @@ export const AMCDashboard = () => {
 
   const [analyticsDateRange, setAnalyticsDateRange] = useState<{ startDate: string; endDate: string }>(getDefaultDateRange());
 
-  // Convert date string from DD/MM/YYYY to Date object
   const convertDateStringToDate = (dateString: string): Date => {
     const [day, month, year] = dateString.split('/');
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   };
 
-  // Format date to YYYY-MM-DD for API query
   const formatDateForAPI = (date: Date): string => {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -210,7 +207,6 @@ export const AMCDashboard = () => {
     return `${year}-${month}-${day}`;
   };
 
-  // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -218,7 +214,6 @@ export const AMCDashboard = () => {
     })
   );
 
-  // Initialize temporary filters when modal opens
   useEffect(() => {
     if (isFilterModalOpen) {
       setTempAmcTypeFilter(amcTypeFilter);
@@ -227,11 +222,9 @@ export const AMCDashboard = () => {
     }
   }, [isFilterModalOpen, amcTypeFilter, startDateFilter, endDateFilter]);
 
-  // Fetch AMC analytics data
   const fetchAMCAnalyticsData = async (startDate: Date, endDate: Date) => {
     setAnalyticsLoading(true);
     try {
-      // Fetch all analytics data in parallel
       const [
         statusData,
         statusSummary,
@@ -265,22 +258,16 @@ export const AMCDashboard = () => {
     }
   };
 
-  // Handle analytics filter apply
   const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
     setAnalyticsDateRange(filters);
-
-    // Convert date strings to Date objects
     const startDate = convertDateStringToDate(filters.startDate);
     const endDate = convertDateStringToDate(filters.endDate);
-
     fetchAMCAnalyticsData(startDate, endDate);
   };
 
-  // Use API data if available, otherwise fallback to initial data
   const amcData = apiData && typeof apiData === 'object' && 'asset_amcs' in apiData && Array.isArray((apiData as any).asset_amcs) ? (apiData as any).asset_amcs : initialAmcData;
   const pagination = (apiData && typeof apiData === 'object' && 'pagination' in apiData) ? (apiData as any).pagination : { current_page: 1, total_count: 0, total_pages: 1 };
 
-  // Extract counts from API response - use analytics data if available
   const totalAMCs = amcAnalyticsData ? (amcAnalyticsData.active_amc + amcAnalyticsData.inactive_amc) :
     ((apiData && typeof apiData === 'object' && 'total_amcs_count' in apiData) ? (apiData as any).total_amcs_count : pagination.total_count || 0);
   const activeAMCs = amcAnalyticsData?.active_amc ||
@@ -289,23 +276,19 @@ export const AMCDashboard = () => {
     ((apiData && typeof apiData === 'object' && 'inactive_amcs_count' in apiData) ? (apiData as any).inactive_amcs_count : 0);
   const flaggedAMCs = (apiData && typeof apiData === 'object' && 'flagged_amcs_count' in apiData) ? (apiData as any).flagged_amcs_count : 0;
   const expiringIn90Days = (apiData && typeof apiData === 'object' && 'expiring_in_90_days' in apiData) ? (apiData as any).expiring_in_90_days : 0;
-
-  // Service and Asset totals from analytics
   const serviceTotalAMCs = amcAnalyticsData?.service_total || 0;
   const assetTotalAMCs = amcAnalyticsData?.assets_total || 0;
 
-  // Filter function to fetch AMC data based on filters
-  const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1, expiryFilter?: string) => {
-    if (!baseUrl || !token || !siteId) {
+  const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1, expiryFilter?: string, searchTerm: string = '') => {
+    if (!baseUrl || !token) {
       toast.error('Missing base URL, token, or site ID');
       return;
     }
 
     setLoading(true);
-    let url = `https://${baseUrl}/pms/asset_amcs.json?site_id=${siteId}&page=${page}`;
+    let url = `https://${baseUrl}/pms/asset_amcs.json?page=${page}`;
     const queryParams: string[] = [];
 
-    // Add filter for active/inactive/flagged
     if (filterValue === 'active') {
       queryParams.push('q[active_eq]=true');
     } else if (filterValue === 'inactive') {
@@ -314,29 +297,32 @@ export const AMCDashboard = () => {
       queryParams.push('q[is_flagged_eq]=true');
     }
 
-    // Add expiry filter if provided
     if (expiryFilter) {
       queryParams.push(`q[amc_end_date_lteq]=${expiryFilter}`);
     }
 
-    // Add other filters (AMC Type, Start Date, End Date)
     if (amcTypeFilter) {
       queryParams.push(`q[amc_type_eq]=${encodeURIComponent(amcTypeFilter)}`);
     }
-
     if (startDateFilter) {
       queryParams.push(`q[amc_start_date_eq]=${startDateFilter}`);
     }
-
     if (endDateFilter) {
       queryParams.push(`q[amc_end_date_eq]=${endDateFilter}`);
+    }
+
+    if (searchTerm && searchTerm.trim()) {
+      if (!isNaN(Number(searchTerm))) {
+        queryParams.push(`q[id_eq]=${encodeURIComponent(searchTerm.trim())}`);
+      }
+      queryParams.push(`q[asset_name_cont]=${encodeURIComponent(searchTerm.trim())}`);
     }
 
     if (queryParams.length > 0) {
       url += `&${queryParams.join('&')}`;
     }
 
-    console.log('Request URL:', url); // Debug the URL
+    console.log('Request URL:', url);
     try {
       const response = await axios.get(url, {
         headers: {
@@ -344,7 +330,6 @@ export const AMCDashboard = () => {
         },
       });
       const fetchedData = response.data;
-      // Dispatch to Redux store
       dispatch(fetchAMCData.fulfilled(fetchedData, 'fetchAMCData', undefined));
       setCurrentPage(fetchedData.pagination.current_page);
     } catch (error) {
@@ -356,14 +341,24 @@ export const AMCDashboard = () => {
     }
   };
 
-  // Fetch data on mount only when baseUrl, token, or siteId change
   useEffect(() => {
-    if (baseUrl && token && siteId && !isExpiringFilterActive) {
-      fetchFilteredAMCs(filter, currentPage);
+    if (baseUrl && token) {
+      fetchFilteredAMCs(
+        filter,
+        currentPage,
+        isExpiringFilterActive ? formatDateForAPI(new Date(new Date().setDate(new Date().getDate() + 90))) : undefined,
+        debouncedSearchQuery
+      );
     }
-  }, [baseUrl, token, siteId, currentPage]);
+  }, [baseUrl, token, currentPage, filter, amcTypeFilter, debouncedSearchQuery]);
 
-  // Load analytics data with default date range on component mount
+  // Handle search input changes
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1); // Reset to first page for new search
+    // Rely on useEffect to handle API call via debouncedSearchQuery
+  };
+
   useEffect(() => {
     const defaultRange = getDefaultDateRange();
     const startDate = convertDateStringToDate(defaultRange.startDate);
@@ -383,7 +378,7 @@ export const AMCDashboard = () => {
     if (togglingIds.has(id)) return;
 
     try {
-      if (!baseUrl || !token || !siteId) {
+      if (!baseUrl || !token) {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
@@ -406,8 +401,19 @@ export const AMCDashboard = () => {
         item.id === id ? { ...item, active: updatedStatus } : item
       );
 
-      // Spread apiData after confirming it's an object
-      dispatch(fetchAMCData.fulfilled({ ...apiData, asset_amcs: updatedAmcData }, 'fetchAMCData', undefined));
+      const updatedApiData = {
+        ...apiData,
+        asset_amcs: updatedAmcData,
+        active_amcs_count: updatedStatus
+          ? apiData.active_amcs_count + 1
+          : apiData.active_amcs_count - 1,
+        inactive_amcs_count: updatedStatus
+          ? apiData.inactive_amcs_count - 1
+          : apiData.inactive_amcs_count + 1,
+        total_amcs_count: apiData.total_amcs_count,
+      };
+
+      dispatch(fetchAMCData.fulfilled(updatedApiData, 'fetchAMCData', undefined));
 
       toast.dismiss();
       toast.success(`Status ${updatedStatus ? 'Active' : 'Inactive'}`);
@@ -449,7 +455,6 @@ export const AMCDashboard = () => {
     }
   };
 
-
   const handleImportClick = () => {
     setShowBulkUploadModal(true);
     setShowActionPanel(false);
@@ -475,7 +480,7 @@ export const AMCDashboard = () => {
     const selectedIds = selectedItems.map(item => item.id);
     setSelectedItems([]);
     toast.success(`Selected AMCs (${selectedIds.length}) deleted`);
-    fetchFilteredAMCs(filter, currentPage);
+    fetchFilteredAMCs(filter, currentPage, isExpiringFilterActive ? formatDateForAPI(new Date(new Date().setDate(new Date().getDate() + 90))) : undefined, debouncedSearchQuery);
   };
 
   const handleSelectionChange = (selectedSections: string[]) => {
@@ -484,12 +489,12 @@ export const AMCDashboard = () => {
 
   const handleExport = async () => {
     try {
-      if (!baseUrl || !token || !siteId) {
+      if (!baseUrl || !token) {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
 
-      let url = `https://${baseUrl}/pms/asset_amcs/export.xlsx?site_id=${siteId}`;
+      let url = `https://${baseUrl}/pms/asset_amcs/export.xlsx`;
       if (selectedItems.length > 0) {
         const ids = selectedItems.join(',');
         url += `&ids=${ids}`;
@@ -528,7 +533,6 @@ export const AMCDashboard = () => {
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-
     if (active.id !== over.id) {
       setChartOrder((items) => {
         const oldIndex = items.indexOf(active.id);
@@ -538,10 +542,8 @@ export const AMCDashboard = () => {
     }
   };
 
-  // Handle drag end for analytics charts
   const handleAnalyticsDragEnd = (event: any) => {
     const { active, over } = event;
-
     if (active.id !== over.id) {
       setAnalyticsChartOrder((items) => {
         const oldIndex = items.indexOf(active.id);
@@ -551,13 +553,10 @@ export const AMCDashboard = () => {
     }
   };
 
-  // Handle analytics selection change and update chart order
   const handleAnalyticsSelectionChange = (options: string[]) => {
     setSelectedAnalyticsOptions(options);
-    // Update chart order to only include selected options in the existing order
     setAnalyticsChartOrder(prevOrder => {
       const newOrder = prevOrder.filter(chartType => options.includes(chartType));
-      // Add any new selections that weren't in the previous order
       const newCharts = options.filter(chartType => !prevOrder.includes(chartType));
       return [...newOrder, ...newCharts];
     });
@@ -602,9 +601,11 @@ export const AMCDashboard = () => {
         return item.amc_end_date ? new Date(item.amc_end_date).toLocaleDateString() : '-';
       case 'amc_first_service':
         return item.amc_first_service ? new Date(item.amc_first_service).toLocaleDateString() : '-';
+      case 'total_days_remaining':
+        return item.total_days_remaining || '-';
       case 'active':
         return (
-          <div className="flex items-center">
+          <div className="flex justify-center items-center h-full w-full">
             <div
               className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-300'
                 } ${togglingIds.has(item.id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
@@ -617,6 +618,7 @@ export const AMCDashboard = () => {
             </div>
           </div>
         );
+
       case 'created_at':
         return item.created_at
           ? new Date(item.created_at).toLocaleString('en-IN', {
@@ -665,8 +667,9 @@ export const AMCDashboard = () => {
       );
 
       if (response.status === 200) {
-        dispatch(fetchAMCData())
-        toast.success(`AMC ID ${amcItem.id} flag updated`);
+        dispatch(fetchAMCData());
+        toast.dismiss();
+        toast.success(`Flag ${updatedFlag ? 'Activated' : 'Deactivated'}`);
       } else {
         toast.error('Failed to update AMC flag');
       }
@@ -785,22 +788,19 @@ export const AMCDashboard = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    fetchFilteredAMCs(filter, page);
+    fetchFilteredAMCs(filter, page, isExpiringFilterActive ? formatDateForAPI(new Date(new Date().setDate(new Date().getDate() + 90))) : undefined, debouncedSearchQuery);
   };
 
-  // Analytics data calculations
   const statusData = [
     { name: 'Active', value: activeAMCs, color: '#c6b692' },
     { name: 'Inactive', value: inactiveAMCs, color: '#d8dcdd' }
   ];
 
-  // Resource type data using analytics API data
   const resourceTypeData = [
     { name: 'Services', value: serviceTotalAMCs, color: '#c6b692' },
     { name: 'Assets', value: assetTotalAMCs, color: '#d8dcdd' }
   ];
 
-  // AMC Type data for unit resource-wise chart
   const amcTypeData = amcData.reduce((acc, amc) => {
     const type = amc.amc_type || 'Unknown';
     acc[type] = (acc[type] || 0) + 1;
@@ -854,8 +854,8 @@ export const AMCDashboard = () => {
     setEndDateFilter(tempEndDateFilter);
     setIsFilterModalOpen(false);
     setCurrentPage(1);
-    setIsExpiringFilterActive(false); // Reset expiring filter
-    fetchFilteredAMCs(filter, 1);
+    setIsExpiringFilterActive(false);
+    fetchFilteredAMCs(filter, 1, undefined, debouncedSearchQuery);
     toast.success('Filters applied');
   };
 
@@ -868,9 +868,8 @@ export const AMCDashboard = () => {
     setEndDateFilter(null);
     setFilter(null);
     setCurrentPage(1);
-    setIsFilterModalOpen(false);
-    setIsExpiringFilterActive(false); // Reset expiring filter
-    fetchFilteredAMCs(null, 1);
+    setIsExpiringFilterActive(false);
+    fetchFilteredAMCs(null, 1, undefined, debouncedSearchQuery);
     toast.success('Filters reset');
   };
 
@@ -880,8 +879,8 @@ export const AMCDashboard = () => {
     setStartDateFilter(null);
     setEndDateFilter(null);
     setCurrentPage(1);
-    setIsExpiringFilterActive(false); // Reset expiring filter
-    fetchFilteredAMCs(null, 1);
+    setIsExpiringFilterActive(false);
+    fetchFilteredAMCs(null, 1, undefined, debouncedSearchQuery);
   };
 
   const handleActiveAMCClick = () => {
@@ -890,8 +889,8 @@ export const AMCDashboard = () => {
     setStartDateFilter(null);
     setEndDateFilter(null);
     setCurrentPage(1);
-    setIsExpiringFilterActive(false); // Reset expiring filter
-    fetchFilteredAMCs('active', 1);
+    setIsExpiringFilterActive(false);
+    fetchFilteredAMCs('active', 1, undefined, debouncedSearchQuery);
   };
 
   const handleInactiveAMCClick = () => {
@@ -900,8 +899,8 @@ export const AMCDashboard = () => {
     setStartDateFilter(null);
     setEndDateFilter(null);
     setCurrentPage(1);
-    setIsExpiringFilterActive(false); // Reset expiring filter
-    fetchFilteredAMCs('inactive', 1);
+    setIsExpiringFilterActive(false);
+    fetchFilteredAMCs('inactive', 1, undefined, debouncedSearchQuery);
   };
 
   const handleFlaggedAMCClick = () => {
@@ -910,8 +909,8 @@ export const AMCDashboard = () => {
     setStartDateFilter(null);
     setEndDateFilter(null);
     setCurrentPage(1);
-    setIsExpiringFilterActive(false); // Reset expiring filter
-    fetchFilteredAMCs('flagged', 1);
+    setIsExpiringFilterActive(false);
+    fetchFilteredAMCs('flagged', 1, undefined, debouncedSearchQuery);
   };
 
   const handleExpiringIn90DaysClick = () => {
@@ -924,414 +923,404 @@ export const AMCDashboard = () => {
     const ninetyDaysFromNow = new Date();
     ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
     const formattedDate = formatDateForAPI(ninetyDaysFromNow);
-    fetchFilteredAMCs(null, 1, formattedDate);
+    fetchFilteredAMCs(null, 1, formattedDate, debouncedSearchQuery);
   };
 
   const uniqueAmcTypes = Array.from(new Set(amcData.map(amc => amc.amc_type).filter(type => type))).sort();
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-      {(loading || reduxLoading) && (
-        <div className="flex justify-center items-center py-8">
-          <div className="text-gray-600">Loading AMC data...</div>
-        </div>
-      )}
       {error && (
         <div className="flex justify-center items-center py-8">
           <div className="text-red-600">Error: {error}</div>
         </div>
       )}
-      {!(loading || reduxLoading) && (
-        <>
-          <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="amclist" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-              <TabsTrigger
-                value="amclist"
-                className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+      <>
+        <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="amclist" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+            <TabsTrigger
+              value="amclist"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              <svg
+                width="18"
+                height="19"
+                viewBox="0 0 18 19"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="stroke-current"
               >
+                <path
+                  d="M1.875 4.25L3 5.375L5.25 3.125M1.875 9.5L3 10.625L5.25 8.375M1.875 14.75L3 15.875L5.25 13.625M7.875 9.5H16.125M7.875 14.75H16.125M7.875 4.25H16.125"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              AMC List
+            </TabsTrigger>
+            <TabsTrigger
+              value="analytics"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              <BarChart3 className="w-4 h-4" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+            <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsAnalyticsFilterOpen(true)}
+                  className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
+                  disabled={analyticsLoading}
+                >
+                  <Filter className="w-4 h-4" />
+                </Button>
+                <AMCAnalyticsSelector onSelectionChange={handleAnalyticsSelectionChange} />
+              </div>
+            </div>
+
+            {analyticsLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <div className="text-gray-600">Loading analytics data...</div>
+              </div>
+            ) : (
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAnalyticsDragEnd}>
+                <SortableContext items={analyticsChartOrder} strategy={rectSortingStrategy}>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {analyticsChartOrder.map(chartType => {
+                      if (!selectedAnalyticsOptions?.includes(chartType)) return null;
+
+                      switch (chartType) {
+                        case 'status_overview':
+                          return (
+                            <SortableChartItem key="status_overview" id="status_overview">
+                              <AMCStatusCard
+                                data={amcStatusSummary}
+                                onDownload={async () => {
+                                  const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                                  const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                                  await amcAnalyticsDownloadAPI.downloadAMCStatusData(startDate, endDate);
+                                }}
+                              />
+                            </SortableChartItem>
+                          );
+                        case 'type_distribution':
+                          return (
+                            <SortableChartItem key="type_distribution" id="type_distribution">
+                              <AMCTypeDistributionCard
+                                data={amcTypeDistribution}
+                                onDownload={async () => {
+                                  const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                                  const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                                  await amcAnalyticsDownloadAPI.downloadAMCTypeDistribution(startDate, endDate);
+                                }}
+                              />
+                            </SortableChartItem>
+                          );
+                        case 'expiry_analysis':
+                          return (
+                            <SortableChartItem key="expiry_analysis" id="expiry_analysis">
+                              <AMCExpiryAnalysisCard
+                                data={amcExpiryAnalysis}
+                                onDownload={async () => {
+                                  const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                                  const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                                  await amcAnalyticsDownloadAPI.downloadAMCExpiryAnalysis(startDate, endDate);
+                                }}
+                              />
+                            </SortableChartItem>
+                          );
+                        case 'service_tracking':
+                          return (
+                            <SortableChartItem key="service_tracking" id="service_tracking">
+                              <AMCServiceTrackingCard
+                                data={amcServiceTracking}
+                                onDownload={async () => {
+                                  const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                                  const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                                  await amcAnalyticsDownloadAPI.downloadAMCServiceTracking(startDate, endDate);
+                                }}
+                              />
+                            </SortableChartItem>
+                          );
+                        case 'vendor_performance':
+                          return (
+                            <SortableChartItem key="vendor_performance" id="vendor_performance">
+                              <AMCVendorPerformanceCard
+                                data={amcVendorPerformance}
+                                onDownload={async () => {
+                                  const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                                  const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                                  await amcAnalyticsDownloadAPI.downloadAMCVendorPerformance(startDate, endDate);
+                                }}
+                              />
+                            </SortableChartItem>
+                          );
+                        default:
+                          return null;
+                      }
+                    })}
+
+                    {selectedAnalyticsOptions?.length === 0 && (
+                      <div className="col-span-2 flex items-center justify-center py-12">
+                        <div className="text-center">
+                          <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                          <p className="text-muted-foreground">No analytics selected. Please select at least one report to view.</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
+          </TabsContent>
+
+          <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4">
+              <div
+                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                onClick={handleTotalAMCClick}
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0 justify-start">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {(apiData as any)?.total_amcs_count || 0}
+                  </div>
+                  <span className="text-sm font-medium text-gray-700">
+                    ₹{(apiData as any)?.total_amc_cost?.toLocaleString() || 0}
+                  </span>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                    Total AMC
+                  </div>
+                </div>
+              </div>
+
+              <div
+                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                onClick={handleActiveAMCClick}
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0 justify-start">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {(apiData as any)?.active_amcs_count || 0}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active AMC</div>
+                </div>
+              </div>
+
+              <div
+                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                onClick={handleInactiveAMCClick}
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0 justify-start">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {(apiData as any)?.inactive_amcs_count || 0}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive AMC</div>
+                </div>
+              </div>
+
+              <div
+                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                onClick={handleFlaggedAMCClick}
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0 justify-start">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {(apiData as any)?.flagged_amcs_count || 0}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Flagged AMC</div>
+                </div>
+              </div>
+
+              <div
+                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                onClick={handleExpiringIn90DaysClick}
+              >
+                <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                  <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+                </div>
+                <div className="flex flex-col min-w-0 justify-start">
+                  <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                    {(apiData as any)?.expiring_in_90_days || 0}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Expiring in 90 Days</div>
+                </div>
+              </div>
+            </div>
+
+            <AmcBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
+
+            {showActionPanel && (
+              <SelectionPanel
+                actions={[
+                  {
+                    label: 'Add Schedule',
+                    icon: Plus,
+                    onClick: () => navigate('/maintenance/schedule/add?type=AMC'),
+                  }]}
+                onAdd={handleAddClick}
+                onClearSelection={() => setShowActionPanel(false)}
+                onImport={handleImportClick}
+              />
+            )}
+
+            <EnhancedTable
+              handleExport={handleExport}
+              data={amcData}
+              columns={columns}
+              renderCell={renderCell}
+              selectable={true}
+              selectedItems={selectedItems}
+              onSelectAll={handleSelectAll}
+              onSelectItem={handleSelectItem}
+              getItemId={(item) => item.id.toString()}
+              storageKey="amc-dashboard-table"
+              emptyMessage="No AMC records found"
+              searchPlaceholder="Search..."
+              enableExport={true}
+              exportFileName="amc-records"
+              bulkActions={bulkActions}
+              showBulkActions={true}
+              pagination={false}
+              onFilterClick={handleFiltersClick}
+              leftActions={
+                <Button
+                  onClick={handleActionClick}
+                  className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+                >
+                  <Plus className="w-4 h-4" />
+                  Action
+                </Button>
+              }
+              enableSearch={true}
+              searchTerm={searchQuery}
+              onSearchChange={handleSearch}
+              loading={loading || reduxLoading}
+            />
+
+            <div className="flex justify-center mt-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                      className={pagination.current_page === 1 ? 'pointer-events-none opacity-50' : ''}
+                    />
+                  </PaginationItem>
+                  {renderPaginationItems()}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                      className={pagination.current_page === pagination.total_pages ? 'pointer-events-none opacity-50' : ''}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Filter AMCs</DialogTitle>
+              <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">
                 <svg
-                  width="18"
-                  height="19"
-                  viewBox="0 0 18 19"
-                  fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="stroke-current"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
                 >
                   <path
-                    d="M1.875 4.25L3 5.375L5.25 3.125M1.875 9.5L3 10.625L5.25 8.375M1.875 14.75L3 15.875L5.25 13.625M7.875 9.5H16.125M7.875 14.75H16.125M7.875 4.25H16.125"
-                    strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
-                AMC List
-              </TabsTrigger>
-              <TabsTrigger
-                value="analytics"
-                className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+              </DialogClose>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              <Label htmlFor="amc-type" className="text-left">
+                AMC Type
+              </Label>
+              <div className="grid grid-cols-4 items-center gap-4 w-full">
+                <Select
+                  value={tempAmcTypeFilter || 'all'}
+                  onValueChange={(value) => setTempAmcTypeFilter(value === 'all' ? null : value)}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select AMC Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    {["Asset", "Service"].map((type) => (
+                      <SelectItem key={String(type)} value={String(type)}>
+                        {String(type)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="start-date">Start Date</Label>
+                  <Input
+                    id="start-date"
+                    type="date"
+                    value={tempStartDateFilter || ''}
+                    onChange={(e) => setTempStartDateFilter(e.target.value || null)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="end-date">End Date</Label>
+                  <Input
+                    id="end-date"
+                    type="date"
+                    value={tempEndDateFilter || ''}
+                    onChange={(e) => setTempEndDateFilter(e.target.value || null)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={handleResetFilters}>
+                Reset
+              </Button>
+              <Button
+                onClick={handleApplyFilters}
+                className="bg-[#C72030] hover:bg-[#C72030]/90"
               >
-                <BarChart3 className="w-4 h-4" />
-                Analytics
-              </TabsTrigger>
-            </TabsList>
+                Apply
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-            <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-              {/* Header Section with Filter and Selector */}
-              <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
-                {/* Drag info indicator */}
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsAnalyticsFilterOpen(true)}
-                    className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
-                    disabled={analyticsLoading}
-                  >
-                    <Filter className="w-4 h-4" />
-                  </Button>
-                  <AMCAnalyticsSelector onSelectionChange={handleAnalyticsSelectionChange} />
-                </div>
-              </div>
-
-              {analyticsLoading ? (
-                <div className="flex justify-center items-center h-64">
-                  <div className="text-gray-600">Loading analytics data...</div>
-                </div>
-              ) : (
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAnalyticsDragEnd}>
-                  <SortableContext items={analyticsChartOrder} strategy={rectSortingStrategy}>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {analyticsChartOrder.map(chartType => {
-                        if (!selectedAnalyticsOptions?.includes(chartType)) return null;
-
-                        switch (chartType) {
-                          case 'status_overview':
-                            return (
-                              <SortableChartItem key="status_overview" id="status_overview">
-                                <AMCStatusCard
-                                  data={amcStatusSummary}
-                                  onDownload={async () => {
-                                    const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                    const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                    await amcAnalyticsDownloadAPI.downloadAMCStatusData(startDate, endDate);
-                                  }}
-                                />
-                              </SortableChartItem>
-                            );
-                          case 'type_distribution':
-                            return (
-                              <SortableChartItem key="type_distribution" id="type_distribution">
-                                <AMCTypeDistributionCard
-                                  data={amcTypeDistribution}
-                                  onDownload={async () => {
-                                    const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                    const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                    await amcAnalyticsDownloadAPI.downloadAMCTypeDistribution(startDate, endDate);
-                                  }}
-                                />
-                              </SortableChartItem>
-                            );
-                          case 'expiry_analysis':
-                            return (
-                              <SortableChartItem key="expiry_analysis" id="expiry_analysis">
-                                <AMCExpiryAnalysisCard
-                                  data={amcExpiryAnalysis}
-                                  onDownload={async () => {
-                                    const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                    const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                    await amcAnalyticsDownloadAPI.downloadAMCExpiryAnalysis(startDate, endDate);
-                                  }}
-                                />
-                              </SortableChartItem>
-                            );
-                          case 'service_tracking':
-                            return (
-                              <SortableChartItem key="service_tracking" id="service_tracking">
-                                <AMCServiceTrackingCard
-                                  data={amcServiceTracking}
-                                  onDownload={async () => {
-                                    const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                    const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                    await amcAnalyticsDownloadAPI.downloadAMCServiceTracking(startDate, endDate);
-                                  }}
-                                />
-                              </SortableChartItem>
-                            );
-                          case 'vendor_performance':
-                            return (
-                              <SortableChartItem key="vendor_performance" id="vendor_performance">
-                                <AMCVendorPerformanceCard
-                                  data={amcVendorPerformance}
-                                  onDownload={async () => {
-                                    const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                    const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                    await amcAnalyticsDownloadAPI.downloadAMCVendorPerformance(startDate, endDate);
-                                  }}
-                                />
-                              </SortableChartItem>
-                            );
-                          default:
-                            return null;
-                        }
-                      })}
-
-                      {/* No selection message */}
-                      {selectedAnalyticsOptions?.length === 0 && (
-                        <div className="col-span-2 flex items-center justify-center py-12">
-                          <div className="text-center">
-                            <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                            <p className="text-muted-foreground">No analytics selected. Please select at least one report to view.</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              )}
-            </TabsContent>
-
-            <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4">
-                <div
-                  className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
-                  onClick={handleTotalAMCClick}
-                >
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                    <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                  </div>
-                  <div className="flex flex-col min-w-0 justify-start">
-                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                      {(apiData as any)?.total_amcs_count || 0}
-                    </div>
-                    <span className="text-sm font-medium text-gray-700">
-                      ₹{(apiData as any)?.total_amc_cost?.toLocaleString() || 0}
-                    </span>
-                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
-                      Total AMC
-                    </div>
-                  </div>
-
-                </div>
-
-                <div
-                  className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
-                  onClick={handleActiveAMCClick}
-                >
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                    <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                  </div>
-                  <div className="flex flex-col min-w-0 justify-start">
-                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                      {(apiData as any)?.active_amcs_count || 0}
-                    </div>
-                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active AMC</div>
-                  </div>
-                </div>
-
-                <div
-                  className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
-                  onClick={handleInactiveAMCClick}
-                >
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                    <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                  </div>
-                  <div className="flex flex-col min-w-0 justify-start">
-                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                      {(apiData as any)?.inactive_amcs_count || 0}
-                    </div>
-                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive AMC</div>
-                  </div>
-                </div>
-
-                <div
-                  className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
-                  onClick={handleFlaggedAMCClick}
-                >
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                    <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                  </div>
-                  <div className="flex flex-col min-w-0 justify-start">
-                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                      {(apiData as any)?.flagged_amcs_count || 0}
-                    </div>
-                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Flagged AMC</div>
-                  </div>
-                </div>
-
-                <div
-                  className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
-                  onClick={handleExpiringIn90DaysClick}
-                >
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                    <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-                  </div>
-                  <div className="flex flex-col min-w-0 justify-start">
-                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                      {(apiData as any)?.expiring_in_90_days || 0}
-                    </div>
-                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Expiring in 90 Days</div>
-                  </div>
-                </div>
-              </div>
-
-              <AmcBulkUploadModal isOpen={showBulkUploadModal} onClose={() => setShowBulkUploadModal(false)} />
-
-              {showActionPanel && (
-                <SelectionPanel
-                  actions={[
-                    {
-                      label: 'Add Schedule',
-                      icon: Plus,
-                      onClick: () => navigate('/maintenance/schedule/add?type=AMC'),
-                    }]}
-                  onAdd={handleAddClick}
-                  onClearSelection={() => setShowActionPanel(false)}
-                  onImport={handleImportClick}
-                />
-              )}
-
-              {!(loading || reduxLoading) && (
-                <EnhancedTable
-                  handleExport={handleExport}
-                  data={amcData}
-                  columns={columns}
-                  renderCell={renderCell}
-                  selectable={true}
-                  selectedItems={selectedItems}
-                  onSelectAll={handleSelectAll}
-                  onSelectItem={handleSelectItem}
-                  getItemId={(item) => item.id.toString()}
-                  storageKey="amc-dashboard-table"
-                  emptyMessage="No AMC records found"
-                  searchPlaceholder="Search..."
-                  enableExport={true}
-                  exportFileName="amc-records"
-                  bulkActions={bulkActions}
-                  showBulkActions={true}
-                  pagination={false}
-                  onFilterClick={handleFiltersClick}
-                  leftActions={
-                    <Button
-                      onClick={handleActionClick}
-                      className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Action
-                    </Button>
-                  }
-                />
-              )}
-
-              <div className="flex justify-center mt-6">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                        className={pagination.current_page === 1 ? 'pointer-events-none opacity-50' : ''}
-                      />
-                    </PaginationItem>
-                    {renderPaginationItems()}
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                        className={pagination.current_page === pagination.total_pages ? 'pointer-events-none opacity-50' : ''}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
-              </div>
-            </TabsContent>
-          </Tabs>
-
-          <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Filter AMCs</DialogTitle>
-                <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </DialogClose>
-              </DialogHeader>
-
-              <div className="grid gap-4 py-4">
-                <Label htmlFor="amc-type" className="text-left">
-                  AMC Type
-                </Label>
-                <div className="grid grid-cols-4 items-center gap-4 w-full">
-                  <Select
-                    value={tempAmcTypeFilter || 'all'}
-                    onValueChange={(value) => setTempAmcTypeFilter(value === 'all' ? null : value)}
-                  >
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select AMC Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      {["Asset", "Service"].map((type) => (
-                        <SelectItem key={String(type)} value={String(type)}>
-                          {String(type)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="start-date">Start Date</Label>
-                    <Input
-                      id="start-date"
-                      type="date"
-                      value={tempStartDateFilter || ''}
-                      onChange={(e) => setTempStartDateFilter(e.target.value || null)}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="end-date">End Date</Label>
-                    <Input
-                      id="end-date"
-                      type="date"
-                      value={tempEndDateFilter || ''}
-                      onChange={(e) => setTempEndDateFilter(e.target.value || null)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button variant="outline" onClick={handleResetFilters}>
-                  Reset
-                </Button>
-                <Button
-                  onClick={handleApplyFilters}
-                  className="bg-[#C72030] hover:bg-[#C72030]/90"
-                >
-                  Apply
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {/* AMC Analytics Filter Dialog */}
-          <AMCAnalyticsFilterDialog
-            isOpen={isAnalyticsFilterOpen}
-            onClose={() => setIsAnalyticsFilterOpen(false)}
-            onApplyFilters={handleAnalyticsFilterApply}
-          />
-        </>
-      )}
+        <AMCAnalyticsFilterDialog
+          isOpen={isAnalyticsFilterOpen}
+          onClose={() => setIsAnalyticsFilterOpen(false)}
+          onApplyFilters={handleAnalyticsFilterApply}
+        />
+      </>
     </div>
   );
 };

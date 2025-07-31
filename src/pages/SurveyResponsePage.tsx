@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
@@ -108,13 +109,17 @@ const mockResponseData = [
 
 export const SurveyResponsePage = () => {
   console.log('SurveyResponsePage component loaded successfully with EnhancedTable');
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [responseData, setResponseData] = useState(mockResponseData);
 
   const handleViewDetails = (item: any) => {
-    console.log('Viewing details for survey:', item.id);
+    console.log('Eye button clicked - item data:', JSON.stringify(item, null, 2));
+    navigate(`/maintenance/survey/response/details/${item.id}`, {
+      state: { surveyData: item }
+    });
   };
 
   const handleFilterClick = () => {
@@ -238,20 +243,10 @@ export const SurveyResponsePage = () => {
           pageSize={10}
           leftActions={
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white">
-                <Upload className="w-4 h-4 mr-2" />
-                Import
-              </Button>
-              <Button 
-                variant="outline" 
-                className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
-                onClick={handleFilterClick}
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </Button>
+              {/* Filter button is now positioned next to search input in EnhancedTable */}
             </div>
           }
+          onFilterClick={handleFilterClick}
         />
       </div>
 

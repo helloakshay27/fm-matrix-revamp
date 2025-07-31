@@ -34,9 +34,10 @@ export interface FacilityBookingResponse {
 // Create async thunk for fetching facility bookings
 export const fetchFacilityBookingsData = createAsyncThunk(
   "facilityBookings/fetchFacilityBookingsData",
-  async (_, { rejectWithValue }) => {
+  async ({ baseUrl, token, pageSize, currentPage }: { baseUrl: string, token: string, pageSize: number, currentPage: number }, { rejectWithValue }) => {
     try {
-      const data = await fetchFacilityBookings();
+      const data = await fetchFacilityBookings({ baseUrl, token, pageSize, currentPage });
+      console.log(data)
       return data;
     } catch (error) {
       return rejectWithValue(

@@ -9,7 +9,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-// import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TextField, MenuItem, createTheme, ThemeProvider, Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { ExportByCentreModal } from '@/components/ExportByCentreModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -23,6 +22,7 @@ import { cn } from '@/lib/utils';
 import axios from 'axios';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
 const exportColumns = [
   { id: 'selectAll', label: 'Select All' },
@@ -137,14 +137,14 @@ const BookingListDashboard = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
 
-  const { data: bookings = [], loading, error } = useAppSelector((state) => state.facilityBookings);
+  const { data: bookings, loading, error } = useAppSelector((state) => state.facilityBookings);
 
-  const [bookingData, setBookingData] = useState(bookings);
+  const [bookingData, setBookingData] = useState([]);
   const [facilities, setFacilities] = useState([]);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportByCentreModalOpen, setIsExportByCentreModalOpen] = useState(false);
-  const [selectedColumns, setSelectedColumns] = useState<string[]>(['id', 'bookedBy']);
   const [exportLoading, setExportLoading] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(false);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
   const [filters, setFilters] = useState({
@@ -159,6 +159,11 @@ const BookingListDashboard = () => {
   const [createdOnDateTo, setCreatedOnDateTo] = useState<Date | undefined>();
   const [isScheduledDatePickerOpen, setIsScheduledDatePickerOpen] = useState(false);
   const [isCreatedOnDatePickerOpen, setIsCreatedOnDatePickerOpen] = useState(false);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
 
   // Fetch facilities
   useEffect(() => {
@@ -179,17 +184,35 @@ const BookingListDashboard = () => {
     fetchFacilities();
   }, [baseUrl, token]);
 
-  // Update booking data when bookings change
+  // Update booking data and pagination when bookings change
   useEffect(() => {
-    if (bookings) {
-      setBookingData(bookings);
+    if (error) {
+      setBookingData([]);
+      setPagination({
+        current_page: 1,
+        total_count: 0,
+        total_pages: 0,
+      });
+    } else if (bookings) {
+      setBookingData(bookings.bookings || []);
+      setPagination({
+        current_page: bookings.pagination?.current_page || 1,
+        total_count: bookings.pagination?.total_count || 0,
+        total_pages: bookings.pagination?.total_pages || 0,
+      });
     }
-  }, [bookings]);
+  }, [bookings, error]);
 
-  // Fetch initial bookings data
+  // Fetch bookings data when page changes
   useEffect(() => {
-    dispatch(fetchFacilityBookingsData());
-  }, [dispatch]);
+    setIsPageLoading(true);
+    dispatch(fetchFacilityBookingsData({ baseUrl, token, pageSize: 10, currentPage: pagination.current_page }))
+      .then(() => setIsPageLoading(false))
+      .catch(() => {
+        setIsPageLoading(false);
+        toast.error('Failed to fetch bookings');
+      });
+  }, [dispatch, baseUrl, token]);
 
   // Handle status change with API call
   const handleStatusChange = async (bookingId: number, newStatus: string) => {
@@ -301,6 +324,11 @@ const BookingListDashboard = () => {
         source: item.source,
       }));
       setBookingData(updatedResponse);
+      setPagination({
+        current_page: 1,
+        total_count: response.pagination?.total_count || 0,
+        total_pages: response.pagination?.total_pages || 0,
+      });
       setIsFilterModalOpen(false);
       toast.success('Filters applied successfully');
     } catch (error) {
@@ -320,11 +348,146 @@ const BookingListDashboard = () => {
     setScheduledDateTo(undefined);
     setCreatedOnDateFrom(undefined);
     setCreatedOnDateTo(undefined);
+    setPagination({
+      ...pagination,
+      current_page: 1,
+    });
     toast.info('Filters reset');
   };
 
   const handleAddBooking = () => {
     navigate('/vas/booking/add');
+  };
+
+  const handlePageChange = async (page: number) => {
+    setIsPageLoading(true);
+    setPagination((prev) => ({
+      ...prev,
+      current_page: page,
+    }));
+    try {
+      await dispatch(fetchFacilityBookingsData({ baseUrl, token, pageSize: 10, currentPage: page })).unwrap();
+    } catch (error) {
+      toast.error('Failed to fetch bookings');
+    } finally {
+      setIsPageLoading(false);
+    }
+  };
+
+  const renderPaginationItems = () => {
+    if (!pagination.total_pages || pagination.total_pages <= 0) {
+      return null;
+    }
+    const items = [];
+    const totalPages = pagination.total_pages;
+    const currentPage = pagination.current_page;
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      items.push(
+        <PaginationItem key={1} className='cursor-pointer'>
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+            disabled={isPageLoading}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1" >
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                disabled={isPageLoading}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                disabled={isPageLoading}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find((item) => item.key === i.toString())) {
+            items.push(
+              <PaginationItem key={i} className='cursor-pointer'>
+                <PaginationLink
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                  disabled={isPageLoading}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+              disabled={isPageLoading}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+              disabled={isPageLoading}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
   };
 
   const renderCell = (item: BookingData, columnKey: string) => {
@@ -354,7 +517,12 @@ const BookingListDashboard = () => {
                 </Badge>
               </SelectValue>
             </SelectTrigger>
-
+            <SelectContent>
+              <SelectItem value="Confirmed">Confirmed</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Cancelled">Cancelled</SelectItem>
+              <SelectItem value="Completed">Completed</SelectItem>
+            </SelectContent>
           </Select>
         );
       default:
@@ -377,22 +545,6 @@ const BookingListDashboard = () => {
       ...prev,
       [field]: value,
     }));
-  };
-
-  const handleColumnToggle = (columnId: string) => {
-    if (columnId === 'selectAll') {
-      if (selectedColumns.length === exportColumns.length - 1) {
-        setSelectedColumns([]);
-      } else {
-        setSelectedColumns(exportColumns.slice(1).map((col) => col.id));
-      }
-    } else {
-      setSelectedColumns((prev) =>
-        prev.includes(columnId)
-          ? prev.filter((id) => id !== columnId)
-          : [...prev, columnId]
-      );
-    }
   };
 
   const handleDownload = async () => {
@@ -432,7 +584,7 @@ const BookingListDashboard = () => {
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
           <p>Error loading bookings: {error}</p>
           <Button
-            onClick={() => dispatch(fetchFacilityBookingsData())}
+            onClick={() => dispatch(fetchFacilityBookingsData({ baseUrl, token, pageSize: 10, currentPage: 1 }))}
             variant="outline"
             size="sm"
             className="mt-2"
@@ -457,11 +609,9 @@ const BookingListDashboard = () => {
         renderCell={renderCell}
         renderActions={renderActions}
         storageKey="booking-list-table"
-        pagination={true}
-        pageSize={5}
-        loading={loading}
+        loading={loading || isPageLoading}
         onFilterClick={() => setIsFilterModalOpen(true)}
-        emptyMessage={loading ? 'Loading bookings...' : 'No bookings found'}
+        emptyMessage={loading || isPageLoading ? 'Loading bookings...' : 'No bookings found'}
         leftActions={
           <div className="flex flex-wrap gap-2">
             <Button
@@ -475,7 +625,27 @@ const BookingListDashboard = () => {
         }
       />
 
-      <Dialog open={isFilterModalOpen} onClose={setIsFilterModalOpen}>
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                className={pagination.current_page === 1 || isPageLoading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            {renderPaginationItems()}
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                className={pagination.current_page === pagination.total_pages || isPageLoading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+
+      <Dialog open={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)}>
         <DialogContent className="sm:max-w-md [&>button]:hidden">
           <ThemeProvider theme={muiTheme}>
             <div>
