@@ -159,10 +159,10 @@ export const SurveyResponseDetailPage = () => {
 
           <TabsContent value="summary" className="space-y-6">
             {surveyData.questions.map((question: any) => (
-              <div key={question.id} className="bg-gray-50 p-4 rounded-lg">
+              <div key={question.id} className="bg-[#F5F3EF] p-4 rounded-lg border">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h3 className="font-medium text-gray-800 mb-1">{question.question}</h3>
+                    <h3 className="font-medium text-gray-800 mb-1 text-base">{question.question}</h3>
                     <p className="text-sm text-gray-600">{question.responseCount} Responses</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -170,7 +170,7 @@ export const SurveyResponseDetailPage = () => {
                       variant="ghost" 
                       size="sm"
                       onClick={() => handleDownloadQuestion(question.id)}
-                      className="text-gray-600 hover:text-[#C72030]"
+                      className="text-gray-600 hover:text-[#C72030] p-1"
                     >
                       <Download className="w-4 h-4" />
                     </Button>
@@ -178,25 +178,25 @@ export const SurveyResponseDetailPage = () => {
                       variant="ghost" 
                       size="sm"
                       onClick={() => handleCopyQuestion(question.id)}
-                      className="text-gray-600 hover:text-[#C72030]"
+                      className="text-[#C72030] hover:text-[#C72030] p-1 font-medium"
                     >
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-4 h-4 mr-1" />
                       Copy
                     </Button>
                   </div>
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
                   {question.responses.map((response: string, index: number) => (
                     <div 
                       key={index} 
-                      className="bg-white p-3 rounded border text-gray-700"
+                      className="bg-white p-3 rounded border border-gray-200 text-gray-700"
                     >
                       {response}
                     </div>
                   ))}
                   {question.responses.length === 0 && (
-                    <div className="bg-white p-3 rounded border text-gray-500 text-center">
+                    <div className="bg-white p-3 rounded border border-gray-200 text-gray-500 text-center">
                       No responses yet
                     </div>
                   )}
