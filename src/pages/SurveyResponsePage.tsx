@@ -116,7 +116,8 @@ export const SurveyResponsePage = () => {
   const [responseData, setResponseData] = useState(mockResponseData);
 
   const handleViewDetails = (item: any) => {
-    console.log('Viewing details for survey:', item.id);
+    console.log('Viewing details for survey:', item);
+    console.log('Navigating with data:', item);
     navigate(`/maintenance/survey/response/details/${item.id}`, {
       state: { surveyData: item }
     });

@@ -100,6 +100,10 @@ export const SurveyResponseDetailPage = () => {
 
   // Get survey data from navigation state or fall back to mock data
   const passedSurveyData = location.state?.surveyData;
+  console.log('Detail page - location.state:', location.state);
+  console.log('Detail page - passedSurveyData:', passedSurveyData);
+  console.log('Detail page - surveyId from params:', surveyId);
+  
   const surveyData = passedSurveyData ? {
     id: passedSurveyData.id,
     surveyTitle: passedSurveyData.surveyTitle,
@@ -134,6 +138,8 @@ export const SurveyResponseDetailPage = () => {
       }
     ]
   } : (surveyId ? mockDetailedResponseData[surveyId as any] : null);
+
+  console.log('Detail page - final surveyData:', surveyData);
 
   if (!surveyData) {
     return (
