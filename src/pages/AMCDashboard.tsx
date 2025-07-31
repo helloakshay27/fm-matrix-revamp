@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,7 +17,6 @@ import { AMCExpiryAnalysisCard } from '@/components/AMCExpiryAnalysisCard';
 import { AMCServiceTrackingCard } from '@/components/AMCServiceTrackingCard';
 import { AMCVendorPerformanceCard } from '@/components/AMCVendorPerformanceCard';
 import { AMCComplianceReportCard } from '@/components/AMCComplianceReportCard';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -46,6 +45,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { AmcBulkUploadModal } from '@/components/water-asset-details/AmcBulkUploadModal';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -64,10 +64,8 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Handle pointer down to prevent drag on button/icon clicks
   const handlePointerDown = (e: React.PointerEvent) => {
     const target = e.target as HTMLElement;
-    // Check if the click is on a button, icon, or download element
     if (
       target.closest('button') ||
       target.closest('[data-download]') ||
@@ -80,7 +78,6 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
       e.stopPropagation();
       return;
     }
-    // For other elements, proceed with drag
     if (listeners?.onPointerDown) {
       listeners.onPointerDown(e);
     }
@@ -94,7 +91,6 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
       onPointerDown={handlePointerDown}
       className="cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group relative"
     >
-      {/* Drag indicator */}
       <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200 z-10">
         <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
       </div>
@@ -133,6 +129,8 @@ const columns: ColumnConfig[] = [
   { key: 'active', label: 'Status', sortable: true, defaultVisible: true },
 ];
 
+
+
 export const AMCDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -146,19 +144,21 @@ export const AMCDashboard = () => {
     'statusChart', 'typeChart', 'resourceChart', 'agingMatrix'
   ]);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'typeChart', 'resourceChart', 'agingMatrix']);
-  const [filter, setFilter] = useState<string | null>(null); // For active/inactive/flagged
-  const [amcTypeFilter, setAmcTypeFilter] = useState<string | null>(null); // For AMC Type filter
-  const [startDateFilter, setStartDateFilter] = useState<string | null>(null); // For Start Date filter
-  const [endDateFilter, setEndDateFilter] = useState<string | null>(null); // For End Date filter
-  const [tempAmcTypeFilter, setTempAmcTypeFilter] = useState<string | null>(null); // Temporary state for modal
-  const [tempStartDateFilter, setTempStartDateFilter] = useState<string | null>(null); // Temporary state for modal
-  const [tempEndDateFilter, setTempEndDateFilter] = useState<string | null>(null); // Temporary state for modal
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false); // For filter modal
-  const [loading, setLoading] = useState(false); // Local loading state
+  const [filter, setFilter] = useState<string | null>(null);
+  const [amcTypeFilter, setAmcTypeFilter] = useState<string | null>(null);
+  const [startDateFilter, setStartDateFilter] = useState<string | null>(null);
+  const [endDateFilter, setEndDateFilter] = useState<string | null>(null);
+  const [tempAmcTypeFilter, setTempAmcTypeFilter] = useState<string | null>(null);
+  const [tempStartDateFilter, setTempStartDateFilter] = useState<string | null>(null);
+  const [tempEndDateFilter, setTempEndDateFilter] = useState<string | null>(null);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("amclist");
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
-  const [isExpiringFilterActive, setIsExpiringFilterActive] = useState(false); // Flag to control useEffect
+  const [isExpiringFilterActive, setIsExpiringFilterActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 600); // Reduced debounce time for quicker response
 
   // Analytics states
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
@@ -174,8 +174,6 @@ export const AMCDashboard = () => {
   const [analyticsChartOrder, setAnalyticsChartOrder] = useState<string[]>(['status_overview', 'type_distribution', 'expiry_analysis', 'service_tracking', 'vendor_performance']);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
 
-
-  // Set default dates: last year to today for analytics
   const getDefaultDateRange = () => {
     const today = new Date();
     const lastYear = new Date();
@@ -196,13 +194,11 @@ export const AMCDashboard = () => {
 
   const [analyticsDateRange, setAnalyticsDateRange] = useState<{ startDate: string; endDate: string }>(getDefaultDateRange());
 
-  // Convert date string from DD/MM/YYYY to Date object
   const convertDateStringToDate = (dateString: string): Date => {
     const [day, month, year] = dateString.split('/');
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   };
 
-  // Format date to YYYY-MM-DD for API query
   const formatDateForAPI = (date: Date): string => {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -210,7 +206,6 @@ export const AMCDashboard = () => {
     return `${year}-${month}-${day}`;
   };
 
-  // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -218,7 +213,6 @@ export const AMCDashboard = () => {
     })
   );
 
-  // Initialize temporary filters when modal opens
   useEffect(() => {
     if (isFilterModalOpen) {
       setTempAmcTypeFilter(amcTypeFilter);
@@ -227,11 +221,9 @@ export const AMCDashboard = () => {
     }
   }, [isFilterModalOpen, amcTypeFilter, startDateFilter, endDateFilter]);
 
-  // Fetch AMC analytics data
   const fetchAMCAnalyticsData = async (startDate: Date, endDate: Date) => {
     setAnalyticsLoading(true);
     try {
-      // Fetch all analytics data in parallel
       const [
         statusData,
         statusSummary,
@@ -265,22 +257,16 @@ export const AMCDashboard = () => {
     }
   };
 
-  // Handle analytics filter apply
   const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
     setAnalyticsDateRange(filters);
-
-    // Convert date strings to Date objects
     const startDate = convertDateStringToDate(filters.startDate);
     const endDate = convertDateStringToDate(filters.endDate);
-
     fetchAMCAnalyticsData(startDate, endDate);
   };
 
-  // Use API data if available, otherwise fallback to initial data
   const amcData = apiData && typeof apiData === 'object' && 'asset_amcs' in apiData && Array.isArray((apiData as any).asset_amcs) ? (apiData as any).asset_amcs : initialAmcData;
   const pagination = (apiData && typeof apiData === 'object' && 'pagination' in apiData) ? (apiData as any).pagination : { current_page: 1, total_count: 0, total_pages: 1 };
 
-  // Extract counts from API response - use analytics data if available
   const totalAMCs = amcAnalyticsData ? (amcAnalyticsData.active_amc + amcAnalyticsData.inactive_amc) :
     ((apiData && typeof apiData === 'object' && 'total_amcs_count' in apiData) ? (apiData as any).total_amcs_count : pagination.total_count || 0);
   const activeAMCs = amcAnalyticsData?.active_amc ||
@@ -289,13 +275,10 @@ export const AMCDashboard = () => {
     ((apiData && typeof apiData === 'object' && 'inactive_amcs_count' in apiData) ? (apiData as any).inactive_amcs_count : 0);
   const flaggedAMCs = (apiData && typeof apiData === 'object' && 'flagged_amcs_count' in apiData) ? (apiData as any).flagged_amcs_count : 0;
   const expiringIn90Days = (apiData && typeof apiData === 'object' && 'expiring_in_90_days' in apiData) ? (apiData as any).expiring_in_90_days : 0;
-
-  // Service and Asset totals from analytics
   const serviceTotalAMCs = amcAnalyticsData?.service_total || 0;
   const assetTotalAMCs = amcAnalyticsData?.assets_total || 0;
 
-  // Filter function to fetch AMC data based on filters
-  const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1, expiryFilter?: string) => {
+  const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1, expiryFilter?: string, searchTerm: string = '') => {
     if (!baseUrl || !token || !siteId) {
       toast.error('Missing base URL, token, or site ID');
       return;
@@ -305,7 +288,6 @@ export const AMCDashboard = () => {
     let url = `https://${baseUrl}/pms/asset_amcs.json?site_id=${siteId}&page=${page}`;
     const queryParams: string[] = [];
 
-    // Add filter for active/inactive/flagged
     if (filterValue === 'active') {
       queryParams.push('q[active_eq]=true');
     } else if (filterValue === 'inactive') {
@@ -314,29 +296,32 @@ export const AMCDashboard = () => {
       queryParams.push('q[is_flagged_eq]=true');
     }
 
-    // Add expiry filter if provided
     if (expiryFilter) {
       queryParams.push(`q[amc_end_date_lteq]=${expiryFilter}`);
     }
 
-    // Add other filters (AMC Type, Start Date, End Date)
     if (amcTypeFilter) {
       queryParams.push(`q[amc_type_eq]=${encodeURIComponent(amcTypeFilter)}`);
     }
-
     if (startDateFilter) {
       queryParams.push(`q[amc_start_date_eq]=${startDateFilter}`);
     }
-
     if (endDateFilter) {
       queryParams.push(`q[amc_end_date_eq]=${endDateFilter}`);
+    }
+
+    if (searchTerm && searchTerm.trim()) {
+      if (!isNaN(Number(searchTerm))) {
+        queryParams.push(`q[id_eq]=${encodeURIComponent(searchTerm.trim())}`);
+      }
+      queryParams.push(`q[asset_name_cont]=${encodeURIComponent(searchTerm.trim())}`);
     }
 
     if (queryParams.length > 0) {
       url += `&${queryParams.join('&')}`;
     }
 
-    console.log('Request URL:', url); // Debug the URL
+    console.log('Request URL:', url);
     try {
       const response = await axios.get(url, {
         headers: {
@@ -344,7 +329,6 @@ export const AMCDashboard = () => {
         },
       });
       const fetchedData = response.data;
-      // Dispatch to Redux store
       dispatch(fetchAMCData.fulfilled(fetchedData, 'fetchAMCData', undefined));
       setCurrentPage(fetchedData.pagination.current_page);
     } catch (error) {
@@ -356,14 +340,24 @@ export const AMCDashboard = () => {
     }
   };
 
-  // Fetch data on mount only when baseUrl, token, or siteId change
   useEffect(() => {
-    if (baseUrl && token && siteId && !isExpiringFilterActive) {
-      fetchFilteredAMCs(filter, currentPage);
+    if (baseUrl && token && siteId) {
+      fetchFilteredAMCs(
+        filter,
+        currentPage,
+        isExpiringFilterActive ? formatDateForAPI(new Date(new Date().setDate(new Date().getDate() + 90))) : undefined,
+        debouncedSearchQuery
+      );
     }
-  }, [baseUrl, token, siteId, currentPage, filter, startDateFilter, endDateFilter, amcTypeFilter]);
+  }, [baseUrl, token, siteId, currentPage, filter, amcTypeFilter, debouncedSearchQuery]);
 
-  // Load analytics data with default date range on component mount
+  // Handle search input changes
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1); // Reset to first page for new search
+    // Rely on useEffect to handle API call via debouncedSearchQuery
+  };
+
   useEffect(() => {
     const defaultRange = getDefaultDateRange();
     const startDate = convertDateStringToDate(defaultRange.startDate);
@@ -406,7 +400,6 @@ export const AMCDashboard = () => {
         item.id === id ? { ...item, active: updatedStatus } : item
       );
 
-      // Update counts for active and inactive AMCs
       const updatedApiData = {
         ...apiData,
         asset_amcs: updatedAmcData,
@@ -416,10 +409,9 @@ export const AMCDashboard = () => {
         inactive_amcs_count: updatedStatus
           ? apiData.inactive_amcs_count - 1
           : apiData.inactive_amcs_count + 1,
-        total_amcs_count: apiData.total_amcs_count, // Total count remains unchanged
+        total_amcs_count: apiData.total_amcs_count,
       };
 
-      // Update Redux store with new data and counts
       dispatch(fetchAMCData.fulfilled(updatedApiData, 'fetchAMCData', undefined));
 
       toast.dismiss();
@@ -441,13 +433,11 @@ export const AMCDashboard = () => {
       );
 
       if (response.status === 200) {
-        // Fetch analytics data to ensure consistency
         const { startDate, endDate } = analyticsDateRange;
         const startDateObj = convertDateStringToDate(startDate);
         const endDateObj = convertDateStringToDate(endDate);
         await fetchAMCAnalyticsData(startDateObj, endDateObj);
       } else {
-        // Revert to original data if API call fails
         dispatch(fetchAMCData.fulfilled(apiData, 'fetchAMCData', undefined));
         toast.error('Failed to update AMC status');
       }
@@ -463,7 +453,6 @@ export const AMCDashboard = () => {
       });
     }
   };
-
 
   const handleImportClick = () => {
     setShowBulkUploadModal(true);
@@ -490,7 +479,7 @@ export const AMCDashboard = () => {
     const selectedIds = selectedItems.map(item => item.id);
     setSelectedItems([]);
     toast.success(`Selected AMCs (${selectedIds.length}) deleted`);
-    fetchFilteredAMCs(filter, currentPage);
+    fetchFilteredAMCs(filter, currentPage, isExpiringFilterActive ? formatDateForAPI(new Date(new Date().setDate(new Date().getDate() + 90))) : undefined, debouncedSearchQuery);
   };
 
   const handleSelectionChange = (selectedSections: string[]) => {
@@ -543,7 +532,6 @@ export const AMCDashboard = () => {
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-
     if (active.id !== over.id) {
       setChartOrder((items) => {
         const oldIndex = items.indexOf(active.id);
@@ -553,10 +541,8 @@ export const AMCDashboard = () => {
     }
   };
 
-  // Handle drag end for analytics charts
   const handleAnalyticsDragEnd = (event: any) => {
     const { active, over } = event;
-
     if (active.id !== over.id) {
       setAnalyticsChartOrder((items) => {
         const oldIndex = items.indexOf(active.id);
@@ -566,13 +552,10 @@ export const AMCDashboard = () => {
     }
   };
 
-  // Handle analytics selection change and update chart order
   const handleAnalyticsSelectionChange = (options: string[]) => {
     setSelectedAnalyticsOptions(options);
-    // Update chart order to only include selected options in the existing order
     setAnalyticsChartOrder(prevOrder => {
       const newOrder = prevOrder.filter(chartType => options.includes(chartType));
-      // Add any new selections that weren't in the previous order
       const newCharts = options.filter(chartType => !prevOrder.includes(chartType));
       return [...newOrder, ...newCharts];
     });
@@ -692,7 +675,6 @@ export const AMCDashboard = () => {
     }
   };
 
-
   const renderPaginationItems = () => {
     const items = [];
     const totalPages = pagination.total_pages;
@@ -802,22 +784,19 @@ export const AMCDashboard = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    fetchFilteredAMCs(filter, page);
+    fetchFilteredAMCs(filter, page, isExpiringFilterActive ? formatDateForAPI(new Date(new Date().setDate(new Date().getDate() + 90))) : undefined, debouncedSearchQuery);
   };
 
-  // Analytics data calculations
   const statusData = [
     { name: 'Active', value: activeAMCs, color: '#c6b692' },
     { name: 'Inactive', value: inactiveAMCs, color: '#d8dcdd' }
   ];
 
-  // Resource type data using analytics API data
   const resourceTypeData = [
     { name: 'Services', value: serviceTotalAMCs, color: '#c6b692' },
     { name: 'Assets', value: assetTotalAMCs, color: '#d8dcdd' }
   ];
 
-  // AMC Type data for unit resource-wise chart
   const amcTypeData = amcData.reduce((acc, amc) => {
     const type = amc.amc_type || 'Unknown';
     acc[type] = (acc[type] || 0) + 1;
@@ -871,8 +850,8 @@ export const AMCDashboard = () => {
     setEndDateFilter(tempEndDateFilter);
     setIsFilterModalOpen(false);
     setCurrentPage(1);
-    setIsExpiringFilterActive(false); // Reset expiring filter
-    // fetchFilteredAMCs(filter, 1);
+    setIsExpiringFilterActive(false);
+    fetchFilteredAMCs(filter, 1, undefined, debouncedSearchQuery);
     toast.success('Filters applied');
   };
 
@@ -885,9 +864,8 @@ export const AMCDashboard = () => {
     setEndDateFilter(null);
     setFilter(null);
     setCurrentPage(1);
-    setIsFilterModalOpen(false);
-    setIsExpiringFilterActive(false); // Reset expiring filter
-    fetchFilteredAMCs(null, 1);
+    setIsExpiringFilterActive(false);
+   fetchFilteredAMCs(null, 1, undefined, debouncedSearchQuery);
     toast.success('Filters reset');
   };
 
@@ -897,8 +875,8 @@ export const AMCDashboard = () => {
     setStartDateFilter(null);
     setEndDateFilter(null);
     setCurrentPage(1);
-    setIsExpiringFilterActive(false); // Reset expiring filter
-    fetchFilteredAMCs(null, 1);
+    setIsExpiringFilterActive(false);
+    fetchFilteredAMCs(null, 1, undefined, debouncedSearchQuery);
   };
 
   const handleActiveAMCClick = () => {
@@ -907,8 +885,8 @@ export const AMCDashboard = () => {
     setStartDateFilter(null);
     setEndDateFilter(null);
     setCurrentPage(1);
-    setIsExpiringFilterActive(false); // Reset expiring filter
-    fetchFilteredAMCs('active', 1);
+    setIsExpiringFilterActive(false);
+    fetchFilteredAMCs('active', 1, undefined, debouncedSearchQuery);
   };
 
   const handleInactiveAMCClick = () => {
@@ -917,8 +895,8 @@ export const AMCDashboard = () => {
     setStartDateFilter(null);
     setEndDateFilter(null);
     setCurrentPage(1);
-    setIsExpiringFilterActive(false); // Reset expiring filter
-    fetchFilteredAMCs('inactive', 1);
+    setIsExpiringFilterActive(false);
+    fetchFilteredAMCs('inactive', 1, undefined, debouncedSearchQuery);
   };
 
   const handleFlaggedAMCClick = () => {
@@ -927,8 +905,8 @@ export const AMCDashboard = () => {
     setStartDateFilter(null);
     setEndDateFilter(null);
     setCurrentPage(1);
-    setIsExpiringFilterActive(false); // Reset expiring filter
-    fetchFilteredAMCs('flagged', 1);
+    setIsExpiringFilterActive(false);
+    fetchFilteredAMCs('flagged', 1, undefined, debouncedSearchQuery);
   };
 
   const handleExpiringIn90DaysClick = () => {
@@ -941,24 +919,18 @@ export const AMCDashboard = () => {
     const ninetyDaysFromNow = new Date();
     ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
     const formattedDate = formatDateForAPI(ninetyDaysFromNow);
-    fetchFilteredAMCs(null, 1, formattedDate);
+    fetchFilteredAMCs(null, 1, formattedDate, debouncedSearchQuery);
   };
 
   const uniqueAmcTypes = Array.from(new Set(amcData.map(amc => amc.amc_type).filter(type => type))).sort();
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-      {(loading || reduxLoading) && (
-        <div className="flex justify-center items-center py-8">
-          <div className="text-gray-600">Loading AMC data...</div>
-        </div>
-      )}
       {error && (
         <div className="flex justify-center items-center py-8">
           <div className="text-red-600">Error: {error}</div>
         </div>
       )}
-      {!(loading || reduxLoading) && (
         <>
           <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="amclist" className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
@@ -993,9 +965,7 @@ export const AMCDashboard = () => {
             </TabsList>
 
             <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-              {/* Header Section with Filter and Selector */}
               <div className="flex flex-col sm:flex-row justify-end items-start sm:items-center gap-4">
-                {/* Drag info indicator */}
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -1091,7 +1061,6 @@ export const AMCDashboard = () => {
                         }
                       })}
 
-                      {/* No selection message */}
                       {selectedAnalyticsOptions?.length === 0 && (
                         <div className="col-span-2 flex items-center justify-center py-12">
                           <div className="text-center">
@@ -1126,7 +1095,6 @@ export const AMCDashboard = () => {
                       Total AMC
                     </div>
                   </div>
-
                 </div>
 
                 <div
@@ -1206,7 +1174,6 @@ export const AMCDashboard = () => {
                 />
               )}
 
-              {!(loading || reduxLoading) && (
                 <EnhancedTable
                   handleExport={handleExport}
                   data={amcData}
@@ -1235,8 +1202,11 @@ export const AMCDashboard = () => {
                       Action
                     </Button>
                   }
+                  enableSearch={true}
+                  searchTerm={searchQuery}
+                  onSearchChange={handleSearch}
+                  loading={loading || reduxLoading}
                 />
-              )}
 
               <div className="flex justify-center mt-6">
                 <Pagination>
@@ -1341,14 +1311,12 @@ export const AMCDashboard = () => {
             </DialogContent>
           </Dialog>
 
-          {/* AMC Analytics Filter Dialog */}
           <AMCAnalyticsFilterDialog
             isOpen={isAnalyticsFilterOpen}
             onClose={() => setIsAnalyticsFilterOpen(false)}
             onApplyFilters={handleAnalyticsFilterApply}
           />
         </>
-      )}
     </div>
   );
 };

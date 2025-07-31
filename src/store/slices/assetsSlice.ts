@@ -19,6 +19,9 @@ export interface Asset {
   asset_type?: boolean
   asset_group?: string; // Ensure this is included
   asset_sub_group?: string;
+  purchase_cost?: number;
+  current_book_value?: number;
+  pms_floor?: { id: number; name: string } | null;
   // Add other asset properties as needed
 }
 
