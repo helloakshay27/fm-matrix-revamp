@@ -100,14 +100,11 @@ export const SurveyResponseDetailPage = () => {
 
   // Get survey data from navigation state or fall back to mock data
   const passedSurveyData = location.state?.surveyData;
-  console.log('Detail page - location.state:', location.state);
-  console.log('Detail page - passedSurveyData:', passedSurveyData);
-  console.log('Detail page - surveyId from params:', surveyId);
   
   const surveyData = passedSurveyData ? {
     id: passedSurveyData.id,
     surveyTitle: passedSurveyData.surveyTitle,
-    totalResponses: passedSurveyData.responses || 20,
+    totalResponses: passedSurveyData.responses || 0,
     type: "Survey",
     tickets: passedSurveyData.tickets || 0,
     expiryDate: passedSurveyData.expiryDate,
@@ -115,31 +112,29 @@ export const SurveyResponseDetailPage = () => {
       {
         id: 1,
         question: "What is your name?",
-        responseCount: passedSurveyData.responses || 20,
+        responseCount: passedSurveyData.responses || 0,
         responses: [
           "Abhidhya Vijay Tapal",
           "Rajesh Kumar", 
           "Priya Sharma",
           "Amit Singh",
           "Neha Patel"
-        ]
+        ].slice(0, passedSurveyData.responses || 5)
       },
       {
         id: 2,
         question: "What is your age group?",
-        responseCount: Math.max(1, (passedSurveyData.responses || 20) - 4),
+        responseCount: Math.max(0, (passedSurveyData.responses || 0) - 1),
         responses: [
           "25-30",
           "18-25",
           "30-35",
           "25-30",
           "18-25"
-        ]
+        ].slice(0, Math.max(0, (passedSurveyData.responses || 0) - 1))
       }
     ]
   } : (surveyId ? mockDetailedResponseData[surveyId as any] : null);
-
-  console.log('Detail page - final surveyData:', surveyData);
 
   if (!surveyData) {
     return (
