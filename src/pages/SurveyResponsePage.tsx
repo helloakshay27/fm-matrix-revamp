@@ -117,7 +117,9 @@ export const SurveyResponsePage = () => {
 
   const handleViewDetails = (item: any) => {
     console.log('Viewing details for survey:', item.id);
-    navigate(`/maintenance/survey/response/details/${item.id}`);
+    navigate(`/maintenance/survey/response/details/${item.id}`, {
+      state: { surveyData: item }
+    });
   };
 
   const handleFilterClick = () => {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Download, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -95,10 +95,45 @@ const mockDetailedResponseData: Record<string, any> = {
 export const SurveyResponseDetailPage = () => {
   const { surveyId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("summary");
 
-  // Get survey data - in real app this would be fetched from API
-  const surveyData = surveyId ? mockDetailedResponseData[surveyId as any] : null;
+  // Get survey data from navigation state or fall back to mock data
+  const passedSurveyData = location.state?.surveyData;
+  const surveyData = passedSurveyData ? {
+    id: passedSurveyData.id,
+    surveyTitle: passedSurveyData.surveyTitle,
+    totalResponses: passedSurveyData.responses || 20,
+    type: "Survey",
+    tickets: passedSurveyData.tickets || 0,
+    expiryDate: passedSurveyData.expiryDate,
+    questions: [
+      {
+        id: 1,
+        question: "What is your name?",
+        responseCount: passedSurveyData.responses || 20,
+        responses: [
+          "Abhidhya Vijay Tapal",
+          "Rajesh Kumar", 
+          "Priya Sharma",
+          "Amit Singh",
+          "Neha Patel"
+        ]
+      },
+      {
+        id: 2,
+        question: "What is your age group?",
+        responseCount: Math.max(1, (passedSurveyData.responses || 20) - 4),
+        responses: [
+          "25-30",
+          "18-25",
+          "30-35",
+          "25-30",
+          "18-25"
+        ]
+      }
+    ]
+  } : (surveyId ? mockDetailedResponseData[surveyId as any] : null);
 
   if (!surveyData) {
     return (
