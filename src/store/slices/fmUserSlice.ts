@@ -111,7 +111,7 @@ export const createFmUser = createAsyncThunk(
       })
       return response.data
     } catch (error) {
-      const message = error.response?.data?.message || error.message || 'Failed to create FM user'
+      const message = error.response?.data?.error || error.error || 'Failed to create FM user'
       return rejectWithValue(message)
     }
   }

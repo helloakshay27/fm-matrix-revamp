@@ -138,7 +138,7 @@ export const AddFMUserPage = () => {
       navigate('/master/user/fm-users');
     } catch (error) {
       console.log(error)
-      toast.error('Failed to add user');
+      toast.error(error);
     } finally {
       setLoadingSubmitting(false)
     }
