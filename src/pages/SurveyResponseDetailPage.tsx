@@ -102,7 +102,27 @@ export const SurveyResponseDetailPage = () => {
                 <div className="text-sm text-gray-600">Total Responses</div>
               </div>
             </div>
+            
+            {/* Tabs in the center */}
+            <div className="flex items-center gap-8">
+              <TabsList className="grid grid-cols-2 w-48">
+                <TabsTrigger value="summary">Summary</TabsTrigger>
+                <TabsTrigger value="tabular">Tabular</TabsTrigger>
+              </TabsList>
+            </div>
+            
             <div className="flex items-center gap-2">
+              <div className="bg-gray-100 px-3 py-1 rounded text-sm">
+                Type: <span className="text-[#C72030] font-medium">{surveyData.type}</span>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleDownload}
+                className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
               <div className="bg-blue-500 text-white px-3 py-1 rounded text-sm">
                 1529 x 75
               </div>
@@ -136,29 +156,9 @@ export const SurveyResponseDetailPage = () => {
         <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">Response Detail</h1>
       </div>
 
-      {/* Tabs */}
+      {/* Tab Content */}
       <div className="mb-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="flex items-center justify-between mb-4">
-            <TabsList className="grid w-48 grid-cols-2">
-              <TabsTrigger value="summary">Summary</TabsTrigger>
-              <TabsTrigger value="tabular">Tabular</TabsTrigger>
-            </TabsList>
-            
-            <div className="flex items-center gap-2">
-              <div className="bg-gray-100 px-3 py-1 rounded text-sm">
-                Type: <span className="text-[#C72030] font-medium">{surveyData.type}</span>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleDownload}
-                className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
-              >
-                <Download className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
 
           <TabsContent value="summary" className="space-y-6">
             {surveyData.questions.map((question: any) => (
