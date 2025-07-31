@@ -397,7 +397,7 @@ export const MobileItemsDetails: React.FC = () => {
               </Button>
               <Button
                 onClick={handleSaveNote}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium shadow-lg"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold shadow-lg border-0 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               >
                 Save
               </Button>
