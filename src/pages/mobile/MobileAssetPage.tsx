@@ -139,6 +139,50 @@ const mobileAssetService = {
       throw error;
     }
   },
+
+  async getAssetById(token: string, assetId: string): Promise<MobileAsset> {
+    try {
+      // Get base URL from sessionStorage or use default
+      let baseUrl =
+        sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
+        // sessionStorage.getItem("baseUrl") || "https://fm-uat-api.lockated.com/";
+
+      // Ensure baseUrl doesn't have trailing slash and starts with https://
+      baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
+      if (!baseUrl.startsWith("http")) {
+        baseUrl = `https://${baseUrl}`;
+      }
+
+      const url = `${baseUrl}/pms/assets/${assetId}.json`;
+
+      console.log("🔍 FETCHING SPECIFIC ASSET:");
+      console.log("  - Base URL from sessionStorage:", sessionStorage.getItem("baseUrl"));
+      console.log("  - Processed Base URL:", baseUrl);
+      console.log("  - Final URL:", url);
+      console.log("  - Asset ID:", assetId);
+      console.log("  - Token:", token?.substring(0, 20) + "...");
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: MobileAsset = await response.json();
+      console.log("📦 SPECIFIC ASSET API Response:", data);
+
+      return data;
+    } catch (error) {
+      console.error("❌ Error fetching specific asset:", error);
+      throw error;
+    }
+  },
 };
 
 export const MobileAssetPage = () => {
@@ -184,13 +228,24 @@ export const MobileAssetPage = () => {
         // Store token in sessionStorage for future use as mobile_token
         sessionStorage.setItem("mobile_token", token);
         console.log("💾 Mobile token stored in sessionStorage");
+      }
 
-        // Fetch assets using the token - only on initial load (no filters)
+      // If assetId is present (QR code scan), skip general asset fetching
+      // The specific asset will be fetched in the separate useEffect
+      if (assetId) {
+        console.log("🎯 AssetId present - skipping general asset fetching");
+        return;
+      }
+
+      // Only fetch all assets if no specific assetId is requested
+      const tokenToUse = token || sessionStorage.getItem("mobile_token");
+      if (tokenToUse) {
+        console.log("📱 Fetching all assets for list view");
         setLoading(true);
         setError(null);
 
         try {
-          const apiResponse = await mobileAssetService.getAssets(token, 1);
+          const apiResponse = await mobileAssetService.getAssets(tokenToUse, 1);
           setAssets(apiResponse.assets || []);
           setCurrentPage(apiResponse.pagination.current_page);
           setTotalPages(apiResponse.pagination.total_pages);
@@ -212,45 +267,8 @@ export const MobileAssetPage = () => {
           setLoading(false);
         }
       } else {
-        // Try to get token from sessionStorage
-        const storedToken = sessionStorage.getItem("mobile_token");
-        if (storedToken) {
-          console.log("📱 Using stored token from sessionStorage");
-          setLoading(true);
-          setError(null);
-
-          try {
-            const apiResponse = await mobileAssetService.getAssets(
-              storedToken,
-              1
-            );
-            setAssets(apiResponse.assets || []);
-            setCurrentPage(apiResponse.pagination.current_page);
-            setTotalPages(apiResponse.pagination.total_pages);
-            setHasMore(
-              apiResponse.pagination.current_page <
-                apiResponse.pagination.total_pages
-            );
-            console.log(
-              "✅ Assets fetched with stored token:",
-              apiResponse.assets?.length || 0,
-              "assets"
-            );
-          } catch (err) {
-            const errorMessage =
-              err instanceof Error ? err.message : "Failed to fetch assets";
-            setError(errorMessage);
-            console.error(
-              "❌ Failed to fetch assets with stored token:",
-              errorMessage
-            );
-          } finally {
-            setLoading(false);
-          }
-        } else {
-          console.log("⚠️ No token available - cannot fetch assets");
-          setError("No authentication token available");
-        }
+        console.log("⚠️ No token available - cannot fetch assets");
+        setError("No authentication token available");
       }
     };
 
@@ -266,24 +284,20 @@ export const MobileAssetPage = () => {
         if (asset) {
           setSelectedAsset(asset);
           console.log("🎯 Selected asset from list:", asset);
-        } else if (assets.length === 0) {
-          // If assets list is empty, we need to fetch the specific asset
+        } else {
+          // Always fetch the specific asset when assetId is present (QR code scenario)
           const tokenToUse = token || sessionStorage.getItem("mobile_token");
           if (tokenToUse) {
             setLoadingAsset(true);
             try {
               console.log("🔍 Fetching specific asset with ID:", assetId);
-              // Fetch assets with a filter for the specific asset ID
-              const apiResponse = await mobileAssetService.getAssets(tokenToUse, 1, { assetId });
-              if (apiResponse.assets && apiResponse.assets.length > 0) {
-                const specificAsset = apiResponse.assets[0];
-                setSelectedAsset(specificAsset);
-                console.log("🎯 Fetched specific asset:", specificAsset);
-                // Also update the assets list to include this asset
+              // Use direct asset endpoint instead of filtering
+              const specificAsset = await mobileAssetService.getAssetById(tokenToUse, assetId);
+              setSelectedAsset(specificAsset);
+              console.log("🎯 Fetched specific asset:", specificAsset);
+              // Only update the assets list if it's empty (don't overwrite existing list)
+              if (assets.length === 0) {
                 setAssets([specificAsset]);
-              } else {
-                console.log("❌ Asset not found with ID:", assetId);
-                setSelectedAsset(null);
               }
             } catch (err) {
               console.error("❌ Failed to fetch specific asset:", err);
@@ -292,10 +306,6 @@ export const MobileAssetPage = () => {
               setLoadingAsset(false);
             }
           }
-        } else {
-          // Asset not found in the loaded list
-          console.log("❌ Asset not found in loaded assets list with ID:", assetId);
-          setSelectedAsset(null);
         }
       } else {
         setSelectedAsset(null);
