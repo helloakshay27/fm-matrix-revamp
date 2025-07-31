@@ -143,29 +143,6 @@ export const SurveyResponseDetailPage = () => {
             </div>
           </div>
 
-          {/* Survey Details Section */}
-          <div className="bg-gray-50 p-4 rounded-lg mb-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Survey Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white p-3 rounded border">
-                <div className="text-sm text-gray-600 mb-1">Survey ID</div>
-                <div className="font-semibold text-gray-800">{surveyData.id}</div>
-              </div>
-              <div className="bg-white p-3 rounded border">
-                <div className="text-sm text-gray-600 mb-1">Survey Title</div>
-                <div className="font-semibold text-gray-800">{surveyData.surveyTitle}</div>
-              </div>
-              <div className="bg-white p-3 rounded border">
-                <div className="text-sm text-gray-600 mb-1">No. of Tickets</div>
-                <div className="font-semibold text-gray-800">{surveyData.tickets}</div>
-              </div>
-              <div className="bg-white p-3 rounded border">
-                <div className="text-sm text-gray-600 mb-1">Expiry Date</div>
-                <div className="font-semibold text-gray-800">{surveyData.expiryDate}</div>
-              </div>
-            </div>
-          </div>
-
           <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-6">Response Detail</h1>
 
           <TabsContent value="summary" className="space-y-6">
