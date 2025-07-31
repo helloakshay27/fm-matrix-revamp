@@ -108,34 +108,34 @@ export const SurveyResponseDetailPage = () => {
         
         {/* Tabs wrapper encompasses everything that needs tab context */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="border-l-4 border-[#C72030] bg-blue-50 p-4 mb-6">
+          <div className="border border-gray-200 bg-gray-50 p-4 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold text-sm">
                   {surveyData.totalResponses}
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">Total Responses</div>
+                  <div className="text-sm text-gray-500">Total Responses</div>
                 </div>
               </div>
               
               {/* Tabs in the center - now properly within Tabs component */}
               <div className="flex items-center gap-8">
-                <TabsList className="grid grid-cols-2 w-48">
-                  <TabsTrigger value="summary">Summary</TabsTrigger>
-                  <TabsTrigger value="tabular">Tabular</TabsTrigger>
+                <TabsList className="grid grid-cols-2 w-48 bg-transparent border-0">
+                  <TabsTrigger value="summary" className="text-gray-700 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none">Summary</TabsTrigger>
+                  <TabsTrigger value="tabular" className="text-gray-700 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none">Tabular</TabsTrigger>
                 </TabsList>
               </div>
               
               <div className="flex items-center gap-2">
-                <div className="bg-gray-100 px-3 py-1 rounded text-sm">
-                  Type: <span className="text-[#C72030] font-medium">{surveyData.type}</span>
+                <div className="text-sm text-gray-700">
+                  Type : <span className="text-[#C72030] font-medium">Survey</span>
                 </div>
                 <Button 
-                  variant="outline" 
+                  variant="ghost" 
                   size="sm"
                   onClick={handleDownload}
-                  className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
+                  className="text-[#C72030] hover:text-[#C72030] hover:bg-transparent p-1"
                 >
                   <Download className="w-4 h-4" />
                 </Button>
