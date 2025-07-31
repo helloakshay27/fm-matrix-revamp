@@ -92,73 +92,70 @@ export const SurveyResponseDetailPage = () => {
           Back to Response List
         </Button>
         
-        <div className="border-l-4 border-[#C72030] bg-blue-50 p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold text-sm">
-                {surveyData.totalResponses}
-              </div>
-              <div>
-                <div className="text-sm text-gray-600">Total Responses</div>
-              </div>
-            </div>
-            
-            {/* Tabs in the center */}
-            <div className="flex items-center gap-8">
-              <TabsList className="grid grid-cols-2 w-48">
-                <TabsTrigger value="summary">Summary</TabsTrigger>
-                <TabsTrigger value="tabular">Tabular</TabsTrigger>
-              </TabsList>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="bg-gray-100 px-3 py-1 rounded text-sm">
-                Type: <span className="text-[#C72030] font-medium">{surveyData.type}</span>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleDownload}
-                className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
-              >
-                <Download className="w-4 h-4" />
-              </Button>
-              <div className="bg-blue-500 text-white px-3 py-1 rounded text-sm">
-                1529 x 75
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Survey Details Section */}
-        <div className="bg-gray-50 p-4 rounded-lg mb-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Survey Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-3 rounded border">
-              <div className="text-sm text-gray-600 mb-1">Survey ID</div>
-              <div className="font-semibold text-gray-800">{surveyData.id}</div>
-            </div>
-            <div className="bg-white p-3 rounded border">
-              <div className="text-sm text-gray-600 mb-1">Survey Title</div>
-              <div className="font-semibold text-gray-800">{surveyData.surveyTitle}</div>
-            </div>
-            <div className="bg-white p-3 rounded border">
-              <div className="text-sm text-gray-600 mb-1">No. of Tickets</div>
-              <div className="font-semibold text-gray-800">{surveyData.tickets}</div>
-            </div>
-            <div className="bg-white p-3 rounded border">
-              <div className="text-sm text-gray-600 mb-1">Expiry Date</div>
-              <div className="font-semibold text-gray-800">{surveyData.expiryDate}</div>
-            </div>
-          </div>
-        </div>
-
-        <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">Response Detail</h1>
-      </div>
-
-      {/* Tab Content */}
-      <div className="mb-6">
+        {/* Tabs wrapper encompasses everything that needs tab context */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="border-l-4 border-[#C72030] bg-blue-50 p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  {surveyData.totalResponses}
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Total Responses</div>
+                </div>
+              </div>
+              
+              {/* Tabs in the center - now properly within Tabs component */}
+              <div className="flex items-center gap-8">
+                <TabsList className="grid grid-cols-2 w-48">
+                  <TabsTrigger value="summary">Summary</TabsTrigger>
+                  <TabsTrigger value="tabular">Tabular</TabsTrigger>
+                </TabsList>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <div className="bg-gray-100 px-3 py-1 rounded text-sm">
+                  Type: <span className="text-[#C72030] font-medium">{surveyData.type}</span>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleDownload}
+                  className="text-[#C72030] border-[#C72030] hover:bg-[#C72030] hover:text-white"
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+                <div className="bg-blue-500 text-white px-3 py-1 rounded text-sm">
+                  1529 x 75
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Survey Details Section */}
+          <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Survey Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-3 rounded border">
+                <div className="text-sm text-gray-600 mb-1">Survey ID</div>
+                <div className="font-semibold text-gray-800">{surveyData.id}</div>
+              </div>
+              <div className="bg-white p-3 rounded border">
+                <div className="text-sm text-gray-600 mb-1">Survey Title</div>
+                <div className="font-semibold text-gray-800">{surveyData.surveyTitle}</div>
+              </div>
+              <div className="bg-white p-3 rounded border">
+                <div className="text-sm text-gray-600 mb-1">No. of Tickets</div>
+                <div className="font-semibold text-gray-800">{surveyData.tickets}</div>
+              </div>
+              <div className="bg-white p-3 rounded border">
+                <div className="text-sm text-gray-600 mb-1">Expiry Date</div>
+                <div className="font-semibold text-gray-800">{surveyData.expiryDate}</div>
+              </div>
+            </div>
+          </div>
+
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-6">Response Detail</h1>
 
           <TabsContent value="summary" className="space-y-6">
             {surveyData.questions.map((question: any) => (
