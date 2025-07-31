@@ -35,10 +35,11 @@ interface Asset {
 interface EBOMTabProps {
   asset: Asset;
   assetId?: string | number;
+  isMobile?: boolean;
 }
 
 // EBOMTab Component
-export const EBOMTab: React.FC<EBOMTabProps> = ({ asset }) => {
+export const EBOMTab: React.FC<EBOMTabProps> = ({ asset, isMobile = false }) => {
   const navigate = useNavigate();
 
   // Table column headers
@@ -68,16 +69,18 @@ export const EBOMTab: React.FC<EBOMTabProps> = ({ asset }) => {
 
   return (
     <div className="space-y-6">
-      {/* Add Button */}
-      <div>
-        <Button
-          onClick={handleAddClick}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
-      </div>
+      {/* Add Button - Hide in mobile view */}
+      {!isMobile && (
+        <div>
+          <Button
+            onClick={handleAddClick}
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        </div>
+      )}
 
       {/* EBOM Table - Styled like PPMTab */}
       <div className="bg-white rounded-lg border overflow-x-auto">

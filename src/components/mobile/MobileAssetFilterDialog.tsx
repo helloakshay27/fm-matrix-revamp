@@ -441,7 +441,6 @@ export const MobileAssetFilterDialog: React.FC<MobileAssetFilterDialogProps> = (
       roomId: room || undefined,
       status: status || undefined,
     };
-
     onApplyFilters(filters);
     onClose();
   };
@@ -686,7 +685,7 @@ export const MobileAssetFilterDialog: React.FC<MobileAssetFilterDialogProps> = (
                   <SelectItem value="breakdown">Breakdown</SelectItem>
                   <SelectItem value="in_storage">In Store</SelectItem>
                   <SelectItem value="disposed">Disposed</SelectItem>
-                  <SelectItem value="under_maintenance">Under Maintenance</SelectItem>
+                  {/* <SelectItem value="under_maintenance">Under Maintenance</SelectItem> */}
                 </SelectContent>
               </Select>
             </div>

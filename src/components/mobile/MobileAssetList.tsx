@@ -26,6 +26,8 @@ interface MobileAssetListProps {
   hasMore?: boolean;
   loadingMore?: boolean;
   onApplyFilters?: (filters: MobileAssetFilters) => void;
+  onStatusUpdate?: (assetId: string, newStatus: string) => Promise<void>;
+  updatingStatus?: boolean;
 }
 
 export const MobileAssetList: React.FC<MobileAssetListProps> = ({ 
@@ -33,11 +35,21 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
   onLoadMore, 
   hasMore = false, 
   loadingMore = false,
-  onApplyFilters
+  onApplyFilters,
+  onStatusUpdate,
+  updatingStatus = false
 }) => {
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [currentFilters, setCurrentFilters] = useState<MobileAssetFilters>({});
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState<number | null>(null);
+
+  const statusOptions = [
+    { value: "in_use", label: "In Use", color: "bg-green-100 text-green-800" },
+    { value: "breakdown", label: "Breakdown", color: "bg-red-100 text-red-800" },
+    { value: "in_storage", label: "In Store", color: "bg-yellow-100 text-yellow-800" },
+    { value: "disposed", label: "Disposed", color: "bg-gray-100 text-gray-800" },
+  ];
 
   // Debug: Log when assets prop changes
   useEffect(() => {
@@ -47,15 +59,38 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
     });
   }, [assets]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setStatusDropdownOpen(null);
+    };
+
+    if (statusDropdownOpen !== null) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [statusDropdownOpen]);
+
   const handleBack = () => {
     navigate(-1);
   };
 
   const handleAssetClick = (assetId: number) => {
-    navigate(`/mobile/assets/${assetId}`);
+    console.log("🎯 Asset clicked:", assetId);
+    navigate(`/mobile/assets/${assetId}${window.location.search}`);
   };
 
-  const handleOpenFilter = () => {
+  const handleStatusClick = (e: React.MouseEvent, assetId: number) => {
+    e.stopPropagation(); // Prevent asset click
+    setStatusDropdownOpen(statusDropdownOpen === assetId ? null : assetId);
+  };
+
+  const handleStatusChange = async (assetId: number, newStatus: string) => {
+    if (onStatusUpdate) {
+      await onStatusUpdate(assetId.toString(), newStatus);
+    }
+    setStatusDropdownOpen(null);
+  };  const handleOpenFilter = () => {
     setIsFilterOpen(true);
   };
 
@@ -142,18 +177,40 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
       {/* Asset Cards */}
       <div className="p-4 space-y-4">
         {assets.map((asset) => (
-          <div key={asset.id}  onClick={() => handleAssetClick(asset.id)} className="bg-[#F2EBE3] rounded-lg p-4 shadow-sm">
+          <div key={asset.id} onClick={() => handleAssetClick(asset.id)} className="bg-[#F2EBE3] rounded-lg p-4 shadow-sm relative">
             {/* Group + Status */}
             <div className="flex items-start justify-between mb-2">
               <div className="text-xs text-gray-600">
                 {asset.assetGroup || "Technical"}
               </div>
-              <div
-                className={`text-xs px-2 py-1 rounded font-medium ${getStatusBadgeColor(
-                  asset.breakdown ? "Breakdown" : asset.status
-                )}`}
-              >
-                {formatStatusText(asset.breakdown ? "Breakdown" : (asset.status || "Breakdown"))}
+              <div className="relative">
+                <button
+                  onClick={(e) => handleStatusClick(e, asset.id)}
+                  disabled={updatingStatus}
+                  className={`text-xs px-2 py-1 rounded font-medium transition-all ${getStatusBadgeColor(
+                    asset.breakdown ? "Breakdown" : asset.status
+                  )} ${updatingStatus ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80 cursor-pointer'}`}
+                >
+                  {updatingStatus ? 'Updating...' : formatStatusText(asset.breakdown ? "Breakdown" : (asset.status || "Breakdown"))}
+                </button>
+                
+                {/* Status Dropdown */}
+                {statusDropdownOpen === asset.id && (
+                  <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[120px]">
+                    {statusOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStatusChange(asset.id, option.value);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${option.color}`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

@@ -71,6 +71,7 @@ interface BreakdownHistory {
   attendeeName: string;
   status?: string;
   warranty_in_month?: string | null;
+  activities?: Activity[];
 }
 
 interface MobileAssetBreakdownProps {
@@ -88,6 +89,7 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
   );
   const [loading, setLoading] = useState(false);
   const [breakdownAge, setBreakdownAge] = useState<string>("");
+  const [expandedActivities, setExpandedActivities] = useState<Set<number>>(new Set());
 
   // Get breakdown date from activities or fallback to breakdown_date
   const getBreakdownDate = useCallback((): string | null => {
@@ -169,34 +171,61 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
           const assetApiData = await assetResponse.json();
           setAssetData(assetApiData.asset);
 
-          // Convert activities to breakdown history format
+          // Convert activities to breakdown history format  
           if (assetApiData.asset.activities && assetApiData.asset.activities.length > 0) {
-            const history = assetApiData.asset.activities
-              .filter((activity: Activity) => 
-                activity.parameters.breakdown && 
-                activity.parameters.breakdown[1] === true &&
-                activity.parameters.breakdown_date &&
-                activity.parameters.breakdown_date[1] // Only activities that have a new breakdown date
-              )
-              .map((activity: Activity) => {
-                const breakdownDate = activity.parameters.breakdown_date?.[1] || activity.created_at; // Use the NEW breakdown date
-                const updatedDate = activity.parameters.updated_at?.[1] || activity.updated_at;
-                
-                return {
-                  id: activity.id,
-                  date: new Date(breakdownDate).toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "2-digit", 
-                    year: "numeric"
-                  }),
-                  time: calculateTimeDifference(breakdownDate, updatedDate),
-                  aging: calculateAging(breakdownDate, updatedDate),
-                  costSpent: "NA", // As requested
-                  attendeeName: "Repair Technician", // Default value
-                  status: "Breakdown"
-                };
+            console.log("All activities:", assetApiData.asset.activities);
+            
+            // Filter breakdown activities only
+            const breakdownActivities = assetApiData.asset.activities
+              .filter((activity: Activity) => {
+                // Look for activities that have breakdown parameter changes
+                return activity.parameters.breakdown && 
+                       activity.trackable_type === "Pms::Asset" && 
+                       activity.trackable_id === assetApiData.asset.id;
               })
-              .sort((a, b) => b.id - a.id); // Sort by activity ID descending (latest first)
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+            console.log("Breakdown activities:", breakdownActivities);
+
+            const history = breakdownActivities.map((activity: Activity, index: number) => {
+              // Use activity creation time as breakdown start
+              const breakdownStartDate = activity.created_at;
+              
+              // For breakdown end, use the next activity's start time or current time if it's the latest
+              let breakdownEndDate = new Date().toISOString(); // Default to now
+              if (index > 0) {
+                breakdownEndDate = breakdownActivities[index - 1].created_at;
+              }
+              
+              // If this is a breakdown resolution, use updated_at as end time
+              if (activity.parameters.breakdown && activity.parameters.breakdown[0] === true && activity.parameters.breakdown[1] === false) {
+                breakdownEndDate = activity.updated_at;
+              }
+              
+              console.log(`Activity ${activity.id}: Start=${breakdownStartDate}, End=${breakdownEndDate}`);
+              
+              // Get all activities related to this breakdown period
+              const relatedActivities = assetApiData.asset.activities.filter((relatedActivity: Activity) => {
+                const activityTime = new Date(relatedActivity.created_at).getTime();
+                const startTime = new Date(breakdownStartDate).getTime();
+                const endTime = new Date(breakdownEndDate).getTime();
+                return activityTime >= startTime && activityTime <= endTime;
+              });
+              
+              return {
+                id: activity.id,
+                date: new Date(breakdownStartDate).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "2-digit", 
+                  year: "numeric"
+                }),
+                time: calculateTimeDifference(breakdownStartDate, breakdownEndDate),
+                aging: calculateAging(breakdownStartDate, breakdownEndDate),
+                attendeeName: "Repair Technician", // Default value
+                status: activity.key || "Activity",
+                activities: relatedActivities
+              };
+            });
 
             setBreakdownHistory(history);
           } else {
@@ -232,18 +261,42 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
     const end = endDateString ? new Date(endDateString) : new Date();
     const diffTime = Math.abs(end.getTime() - start.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
 
-    if (diffDays === 0) return "Today";
+    // If it's very recent (less than an hour), show minutes
+    if (diffDays === 0 && diffHours === 0) {
+      if (diffMinutes === 0) return "Just now";
+      if (diffMinutes === 1) return "1 minute";
+      return `${diffMinutes} minutes`;
+    }
+
+    // If it's today, show hours
+    if (diffDays === 0) {
+      if (diffHours === 1) return "1 hour";
+      return `${diffHours} hours`;
+    }
+
+    // Otherwise show days
     if (diffDays === 1) return "1 day";
     return `${diffDays} days`;
   };
 
   // Helper function to calculate time difference in DD:HH:MM format
   const calculateTimeDifference = (startDateString: string, endDateString: string) => {
-    if (!startDateString || !endDateString) return "00:00:00";
+    if (!startDateString) return "00:00:00";
+    
+    // If no end date provided, use current time
+    const actualEndDate = endDateString || new Date().toISOString();
 
     const start = new Date(startDateString);
-    const end = new Date(endDateString);
+    const end = new Date(actualEndDate);
+    
+    // Ensure we have valid dates
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return "00:00:00";
+    }
+    
     const diffTime = Math.abs(end.getTime() - start.getTime());
     
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -251,6 +304,11 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
     const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
     
     return `${diffDays.toString().padStart(2, "0")}:${diffHours.toString().padStart(2, "0")}:${diffMinutes.toString().padStart(2, "0")}`;
+  };
+
+  // Helper function to format activity key for display
+  const formatActivityKey = (key: string) => {
+    return key.split('.').pop()?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || key;
   };
 
   // Format date for display
@@ -273,6 +331,16 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
   const handleViewAsset = () => {
     const idToUse = assetId || assetData.id;
     navigate(`/mobile/assets/${idToUse}`);
+  };
+
+  const toggleActivities = (breakdownId: number) => {
+    const newExpanded = new Set(expandedActivities);
+    if (newExpanded.has(breakdownId)) {
+      newExpanded.delete(breakdownId);
+    } else {
+      newExpanded.add(breakdownId);
+    }
+    setExpandedActivities(newExpanded);
   };
 
   if (loading) {
@@ -437,14 +505,14 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
                     <p className="text-sm text-gray-600">{breakdown.aging}</p>
                   </div>
 
-                  <div>
+                  {/* <div>
                     <p className="text-sm font-medium text-gray-700">
                       Cost Spend :
                     </p>
                     <p className="text-sm text-gray-600 font-medium">
                       {breakdown.costSpent}
                     </p>
-                  </div>
+                  </div> */}
 
                   <div>
                     <p className="text-sm font-medium text-gray-700">
@@ -454,6 +522,60 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
                       {breakdown.attendeeName}
                     </p>
                   </div>
+
+                  {/* Activities Section */}
+                  {breakdown.activities && breakdown.activities.length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-gray-200">
+                      <button
+                        onClick={() => toggleActivities(breakdown.id)}
+                        className="flex items-center justify-between w-full text-left"
+                      >
+                        <p className="text-sm font-medium text-gray-700">
+                          Activities during this breakdown ({breakdown.activities.length})
+                        </p>
+                        <span className="text-gray-500 text-sm">
+                          {expandedActivities.has(breakdown.id) ? '−' : '+'}
+                        </span>
+                      </button>
+                      
+                      {expandedActivities.has(breakdown.id) && (
+                        <div className="space-y-2 mt-2 max-h-60 overflow-y-auto">
+                          {breakdown.activities.map((activity, index) => (
+                            <div key={activity.id} className="bg-gray-50 p-3 rounded border-l-2 border-blue-200">
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="font-medium text-gray-800 text-xs">
+                                  {formatActivityKey(activity.key)}
+                                </span>
+                                <span className="text-gray-500 text-xs">
+                                  {new Date(activity.created_at).toLocaleDateString("en-GB", {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    hour: "2-digit",
+                                    minute: "2-digit"
+                                  })}
+                                </span>
+                              </div>
+                              <div className="text-gray-600 text-xs space-y-1">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <p><span className="font-medium">ID:</span> #{activity.id}</p>
+                                  <p><span className="font-medium">Type:</span> {activity.trackable_type}</p>
+                                </div>
+                                {activity.parameters.breakdown && (
+                                  <p><span className="font-medium">Breakdown:</span> {activity.parameters.breakdown[1] ? 'Active' : 'Resolved'}</p>
+                                )}
+                                {activity.parameters.created_by && (
+                                  <p><span className="font-medium">Created By:</span> {activity.parameters.created_by[1] || activity.parameters.created_by[0]}</p>
+                                )}
+                                {activity.parameters.updated_at && (
+                                  <p><span className="font-medium">Last Updated:</span> {new Date(activity.parameters.updated_at[1]).toLocaleDateString("en-GB")}</p>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))
