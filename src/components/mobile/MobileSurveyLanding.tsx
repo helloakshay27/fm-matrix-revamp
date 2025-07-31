@@ -230,22 +230,24 @@ export const MobileSurveyLanding: React.FC = () => {
         {/* Rating Options */}
         <div className="w-full max-w-sm mt-2">
           <div className="grid grid-cols-5 gap-4 px-4">
-            {currentQuestion.snag_quest_options.map((option) => {
-              const emojiData = getEmojiForRating(option.qname);
-              return (
-                <button
-                  key={option.id}
-                  className="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => handleRatingClick(option.id, option.qname)}
-                  disabled={isSubmitting}
-                >
-                  <div className="text-4xl mb-2">{emojiData.emoji}</div>
-                  <div className="text-xs text-gray-600 text-center leading-tight">
-                    {emojiData.label}
-                  </div>
-                </button>
-              );
-            })}
+            {currentQuestion.snag_quest_options
+              .sort((a, b) => parseInt(b.qname) - parseInt(a.qname)) // Sort in descending order (5 to 1)
+              .map((option) => {
+                const emojiData = getEmojiForRating(option.qname);
+                return (
+                  <button
+                    key={option.id}
+                    className="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => handleRatingClick(option.id, option.qname)}
+                    disabled={isSubmitting}
+                  >
+                    <div className="text-4xl mb-2">{emojiData.emoji}</div>
+                    <div className="text-xs text-gray-600 text-center leading-tight">
+                      {emojiData.label}
+                    </div>
+                  </button>
+                );
+              })}
           </div>
         </div>
       </div>
