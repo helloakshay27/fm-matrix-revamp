@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Upload, FileText, Filter, Eye, Settings, AlertCircle, Trash2, Clock, Download, X, Flag } from 'lucide-react';
@@ -20,6 +21,7 @@ import {
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface ServiceRecord {
   id: number;
@@ -103,20 +105,27 @@ export const ServiceDashboard = () => {
   const [selectedService, setSelectedService] = useState<ServiceRecord | null>(null);
   const [appliedFilters, setAppliedFilters] = useState({});
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    const siteId = localStorage.getItem('siteId');
-    if (!siteId || siteId === 'null') {
-      console.warn('Invalid siteId in localStorage, setting fallback: 2189');
-      localStorage.setItem('siteId', '2189');
-    }
-    const page = apiData?.pagination?.current_page || 1;
-    console.log('Fetching services with:', { active: activeFilter, page, filters: appliedFilters });
-    dispatch(fetchServicesData({ active: activeFilter, page, filters: appliedFilters }));
-  }, [dispatch, activeFilter, appliedFilters]);
-
+    const filtersWithSearch = {
+      ...appliedFilters,
+      // Only include serviceName from debouncedSearchQuery if appliedFilters.serviceName is not set
+      serviceName: appliedFilters.serviceName || debouncedSearchQuery || undefined,
+    };
+    console.log('useEffect triggered with:', {
+      active: activeFilter,
+      page: currentPage,
+      filters: filtersWithSearch,
+    });
+    dispatch(fetchServicesData({ active: activeFilter, page: currentPage, filters: filtersWithSearch }));
+  }, [dispatch, activeFilter, currentPage, appliedFilters, debouncedSearchQuery]);
   const servicesData = apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData;
   const paginationData: PaginationData = apiData?.pagination || { current_page: 1, total_count: 0, total_pages: 1 };
+
+  console.log('Services data:', servicesData);
 
   const handleAddClick = () => navigate('/maintenance/service/add');
   const handleAddSchedule = () => navigate('/maintenance/schedule/add?type=Service');
@@ -131,13 +140,22 @@ export const ServiceDashboard = () => {
   };
 
   const handleApplyFilters = (filters: any) => {
+    console.log('Applied filters:', filters);
     setAppliedFilters(filters);
+    setSearchQuery(''); // Clear search query to avoid overriding
+    setCurrentPage(1);
     setShowFilterModal(false);
   };
 
   const handleCloseFilter = () => {
     setShowFilterModal(false);
     setSelectedItems([]);
+  };
+
+  const handleSearch = (query: string) => {
+    console.log('Search query entered in handleSearch:', query);
+    setSearchQuery(query);
+    setCurrentPage(1);
   };
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
@@ -181,25 +199,30 @@ export const ServiceDashboard = () => {
 
   const handleTotalServicesClick = () => {
     setActiveFilter(undefined);
-    dispatch(fetchServicesData({ active: undefined, page: 1 }));
+    setSearchQuery('');
+    setAppliedFilters({});
+    setCurrentPage(1);
   };
 
   const handleActiveServicesClick = () => {
     setActiveFilter(true);
-    dispatch(fetchServicesData({ active: true, page: 1 }));
+    setSearchQuery('');
+    setAppliedFilters({});
+    setCurrentPage(1);
   };
 
   const handleInactiveServicesClick = () => {
     setActiveFilter(false);
-    dispatch(fetchServicesData({ active: false, page: 1 }));
+    setSearchQuery('');
+    setAppliedFilters({});
+    setCurrentPage(1);
   };
 
   const handleStatusToggle = async (id: number) => {
     if (togglingIds.has(id)) return;
 
-    const baseUrl = localStorage.getItem('baseUrl');
+    const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
     const token = localStorage.getItem('token');
-    const siteId = localStorage.getItem('siteId') || '2189';
 
     try {
       if (!token) {
@@ -229,12 +252,12 @@ export const ServiceDashboard = () => {
       dispatch(fetchServicesData.fulfilled(
         { ...apiData, pms_services: updatedServicesData },
         'fetchServicesData',
-        { active: activeFilter, page: paginationData.current_page }
+        { active: activeFilter, page: currentPage, filters: appliedFilters }
       ));
       toast.dismiss();
       toast.success(`Status ${updatedStatus ? 'Active' : 'Inactive'}`);
 
-      const url = `https://${baseUrl}/pms/services/${id}.json?site_id=${siteId}`;
+      const url = `https://${baseUrl}/pms/services/${id}.json`;
       const response = await axios.put(
         url,
         {
@@ -248,7 +271,6 @@ export const ServiceDashboard = () => {
       );
 
       if (response.status === 200) {
-        // Optionally update counts
         const updatedApiData = {
           ...apiData,
           pms_services: updatedServicesData,
@@ -262,13 +284,13 @@ export const ServiceDashboard = () => {
         dispatch(fetchServicesData.fulfilled(
           updatedApiData,
           'fetchServicesData',
-          { active: activeFilter, page: paginationData.current_page }
+          { active: activeFilter, page: currentPage, filters: appliedFilters }
         ));
       } else {
         dispatch(fetchServicesData.fulfilled(
           apiData,
           'fetchServicesData',
-          { active: activeFilter, page: paginationData.current_page }
+          { active: activeFilter, page: currentPage, filters: appliedFilters }
         ));
         toast.error('Failed to update service status');
       }
@@ -277,7 +299,7 @@ export const ServiceDashboard = () => {
       dispatch(fetchServicesData.fulfilled(
         apiData,
         'fetchServicesData',
-        { active: activeFilter, page: paginationData.current_page }
+        { active: activeFilter, page: currentPage, filters: appliedFilters }
       ));
       const errorMessage = error.response?.data?.message || 'Failed to update service status';
       toast.error(errorMessage);
@@ -317,20 +339,19 @@ export const ServiceDashboard = () => {
   ];
 
   const handleSingleAmcFlag = async (serviceItem: ServiceRecord) => {
-    const baseUrl = localStorage.getItem('baseUrl');
+    const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
     const token = localStorage.getItem('token');
-    const siteId = localStorage.getItem('selectedSiteId') || '2189';
-  
+
     try {
-      if (!baseUrl || !token || !siteId) {
+      if (!baseUrl || !token ) {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
-  
+
       const updatedFlag = !serviceItem.is_flagged;
-  
+
       const response = await axios.put(
-        `https://${baseUrl}/pms/services/${serviceItem.id}.json?site_id=${siteId}`,
+        `https://${baseUrl}/pms/services/${serviceItem.id}.json`,
         {
           pms_service: {
             is_flagged: updatedFlag,
@@ -342,13 +363,11 @@ export const ServiceDashboard = () => {
           },
         }
       );
-  
+
       if (response.status === 200) {
-        dispatch(fetchServicesData({ active: activeFilter, page: paginationData.current_page }));
-        toast.dismiss()
-        toast.success(
-          `Flag ${updatedFlag ? 'Activated' : 'Deactivated'}`
-        );
+        dispatch(fetchServicesData({ active: activeFilter, page: currentPage, filters: appliedFilters }));
+        toast.dismiss();
+        toast.success(`Flag ${updatedFlag ? 'Activated' : 'Deactivated'}`);
       } else {
         toast.error('Failed to update service flag');
       }
@@ -356,7 +375,6 @@ export const ServiceDashboard = () => {
       toast.error('Failed to update service flag');
     }
   };
-  
 
   const renderCell = (item: ServiceRecord, columnKey: string) => {
     switch (columnKey) {
@@ -378,11 +396,7 @@ export const ServiceDashboard = () => {
           </div>
         );
       case 'serviceName':
-        return (
-          <span>
-            {item.service_name || '-'}
-          </span>
-        );
+        return <span>{item.service_name || '-'}</span>;
       case 'id':
         return <span className="font-medium">{item.id}</span>;
       case 'referenceNumber':
@@ -410,14 +424,12 @@ export const ServiceDashboard = () => {
           <div className="flex items-center">
             <div
               onClick={() => !togglingIds.has(item.id) && handleStatusToggle(item.id)}
-              className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${
-                item.active ? 'bg-green-500' : 'bg-gray-400'
-              } ${togglingIds.has(item.id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-400'
+                } ${togglingIds.has(item.id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <span
-                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                  item.active ? 'translate-x-6' : 'translate-x-1'
-                }`}
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'
+                  }`}
               />
             </div>
           </div>
@@ -438,7 +450,7 @@ export const ServiceDashboard = () => {
     if (showEllipsis) {
       items.push(
         <PaginationItem key={1}>
-          <PaginationLink onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: 1 }))} isActive={currentPage === 1}>
+          <PaginationLink onClick={() => setCurrentPage(1)} isActive={currentPage === 1}>
             1
           </PaginationLink>
         </PaginationItem>
@@ -454,7 +466,7 @@ export const ServiceDashboard = () => {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: i }))} isActive={currentPage === i}>
+              <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
                 {i}
               </PaginationLink>
             </PaginationItem>
@@ -466,7 +478,7 @@ export const ServiceDashboard = () => {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: i }))} isActive={currentPage === i}>
+              <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
                 {i}
               </PaginationLink>
             </PaginationItem>
@@ -485,8 +497,8 @@ export const ServiceDashboard = () => {
           if (!items.find((item) => item.key === i)) {
             items.push(
               <PaginationItem key={i}>
-                <PaginationLink onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: i }))} isActive={currentPage === i}>
-                {i}
+                <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+                  {i}
                 </PaginationLink>
               </PaginationItem>
             );
@@ -497,7 +509,7 @@ export const ServiceDashboard = () => {
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
-            <PaginationLink onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: totalPages }))} isActive={currentPage === totalPages}>
+            <PaginationLink onClick={() => setCurrentPage(totalPages)} isActive={currentPage === totalPages}>
               {totalPages}
             </PaginationLink>
           </PaginationItem>
@@ -507,7 +519,7 @@ export const ServiceDashboard = () => {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
-            <PaginationLink onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: i }))} isActive={currentPage === i}>
+            <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
               {i}
             </PaginationLink>
           </PaginationItem>
@@ -531,16 +543,15 @@ export const ServiceDashboard = () => {
   );
 
   const handleExport = async () => {
-    const baseUrl = localStorage.getItem('baseUrl');
+    const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
     const token = localStorage.getItem('token');
-    const siteId = localStorage.getItem('selectedSiteId');
     try {
-      if (!baseUrl || !token || !siteId) {
+      if (!baseUrl || !token ) {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
 
-      let url = `https://${baseUrl}/pms/services/export.xlsx?site_id=${siteId}`;
+      let url = `https://${baseUrl}/pms/services/export.xlsx`;
       if (selectedItems.length > 0) {
         const ids = selectedItems.join(',');
         url += `&ids=${ids}`;
@@ -579,102 +590,107 @@ export const ServiceDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
-
       {error && (
         <div className="flex justify-center items-center py-8">
           <div className="text-red-600">Error: {error}</div>
         </div>
       )}
 
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3">
-            <div
-              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
-              onClick={handleTotalServicesClick}
-            >
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                  {apiData?.total_services_count ?? 0}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Services</div>
-              </div>
+      <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3">
+          <div
+            className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+            onClick={handleTotalServicesClick}
+          >
+            <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+              <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
             </div>
-
-            <div
-              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
-              onClick={handleActiveServicesClick}
-            >
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+            <div className="flex flex-col min-w-0">
+              <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                {apiData?.total_services_count || 0}
               </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                  {apiData?.active_services_count ?? 0}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active Services</div>
-              </div>
-            </div>
-
-            <div
-              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
-              onClick={handleInactiveServicesClick}
-            >
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                  {apiData?.inactive_services_count ?? 0}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive Services</div>
-              </div>
+              <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Services</div>
             </div>
           </div>
 
-          {showActionPanel && (
-            <SelectionPanel
-              actions={[
-                { label: 'Add Schedule', icon: Plus, onClick: handleAddSchedule },
-              ]}
-              onAdd={handleAddClick}
-              onImport={handleImportClick}
-              onClearSelection={() => setShowActionPanel(false)}
-            />
-          )}
-          <EnhancedTable
-            loading={loading}
-            handleExport={handleExport}
-            data={servicesData}
-            columns={columns}
-            renderCell={renderCell}
-            bulkActions={bulkActions}
-            showBulkActions={true}
-            selectable={true}
-            selectedItems={selectedItems}
-            onSelectItem={handleSelectItem}
-            onSelectAll={handleSelectAll}
-            pagination={false}
-            enableExport={true}
-            exportFileName="services"
-            getItemId={(item) => item.id.toString()}
-            storageKey="services-table"
-            leftActions={renderCustomActions()}
-            searchPlaceholder="Search..."
-            onFilterClick={handleFiltersClick}
+          <div
+            className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+            onClick={handleActiveServicesClick}
+          >
+            <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+              <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                {apiData?.active_services_count || 0}
+              </div>
+              <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active Services</div>
+            </div>
+          </div>
+
+          <div
+            className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+            onClick={handleInactiveServicesClick}
+          >
+            <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+              <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                {apiData?.inactive_services_count || 0}
+              </div>
+              <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive Services</div>
+            </div>
+          </div>
+        </div>
+
+        {showActionPanel && (
+          <SelectionPanel
+            actions={[
+              { label: 'Add Schedule', icon: Plus, onClick: handleAddSchedule },
+            ]}
+            onAdd={handleAddClick}
+            onImport={handleImportClick}
+            onClearSelection={() => setShowActionPanel(false)}
           />
-          <ServiceActionPanel
-            isOpen={showServiceActionPanel}
-            onClose={() => {
-              setShowServiceActionPanel(false);
-              setSelectedService(null);
-            }}
-            service={selectedService}
-            onQRDownload={handleQRDownload}
-          />
-        </>
+        )}
+        <EnhancedTable
+          loading={loading}
+          handleExport={handleExport}
+          data={servicesData}
+          columns={columns}
+          renderCell={renderCell}
+          bulkActions={bulkActions}
+          showBulkActions={true}
+          selectable={true}
+          selectedItems={selectedItems}
+          onSelectItem={handleSelectItem}
+          onSelectAll={handleSelectAll}
+          pagination={false}
+          enableExport={true}
+          exportFileName="services"
+          getItemId={(item) => item.id.toString()}
+          storageKey="services-table"
+          leftActions={renderCustomActions()}
+          searchPlaceholder="Search by service ID or name..."
+          onSearchChange={(query) => {
+            console.log('EnhancedTable search change:', query);
+            handleSearch(query);
+          }}
+          searchTerm={searchQuery}
+          enableSearch={true}
+          onFilterClick={handleFiltersClick}
+        />
+        <ServiceActionPanel
+          isOpen={showServiceActionPanel}
+          onClose={() => {
+            setShowServiceActionPanel(false);
+            setSelectedService(null);
+          }}
+          service={selectedService}
+          onQRDownload={handleQRDownload}
+        />
+      </>
 
       {!loading && (
         <div className="flex justify-center mt-6">
@@ -682,7 +698,7 @@ export const ServiceDashboard = () => {
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: Math.max(1, paginationData.current_page - 1) }))}
+                  onClick={() => setCurrentPage(Math.max(1, paginationData.current_page - 1))}
                   className={paginationData.current_page === 1 ? 'pointer-events-none opacity-50' : ''}
                 />
               </PaginationItem>
@@ -691,7 +707,7 @@ export const ServiceDashboard = () => {
 
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => dispatch(fetchServicesData({ active: activeFilter, page: Math.min(paginationData.total_pages, paginationData.current_page + 1) }))}
+                  onClick={() => setCurrentPage(Math.min(paginationData.total_pages, paginationData.current_page + 1))}
                   className={paginationData.current_page === paginationData.total_pages ? 'pointer-events-none opacity-50' : ''}
                 />
               </PaginationItem>

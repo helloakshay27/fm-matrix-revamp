@@ -74,7 +74,7 @@ export const RestaurantOrdersTable = () => {
       if (restoId) {
         try {
           const response = await dispatch(fetchRestaurantOrders({ baseUrl, token, id: Number(restoId) })).unwrap();
-          setOrders(response);
+          setOrders(response.food_orders);
         } catch (error) {
           console.error('Error fetching orders:', error);
           toast.error('Failed to fetch orders');

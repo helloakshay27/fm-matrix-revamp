@@ -11,7 +11,7 @@ export const fetchServicesData = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const params: any = { page: page.toString(), 'site_id': localStorage.getItem('siteId') || '2189' };
+      const params: any = { page: page.toString() }; // Removed site_id
 
       if (active !== undefined) {
         params['q[active_eq]'] = active.toString();

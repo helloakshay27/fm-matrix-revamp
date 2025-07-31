@@ -111,6 +111,7 @@ interface AMCRecord {
   active: boolean;
   is_flagged?: boolean;
   contract_name?: string;
+  total_days_remaining?: number;
 }
 
 const initialAmcData: AMCRecord[] = [];
@@ -125,6 +126,7 @@ const columns: ColumnConfig[] = [
   { key: 'amc_start_date', label: 'Start Date', sortable: true, defaultVisible: true },
   { key: 'amc_end_date', label: 'End Date', sortable: true, defaultVisible: true },
   { key: 'amc_first_service', label: 'First Service', sortable: true, defaultVisible: true },
+  { key: 'total_days_remaining', label: 'Days Remaining', sortable: true, defaultVisible: true },
   { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
   { key: 'active', label: 'Status', sortable: true, defaultVisible: true },
 ];
@@ -136,7 +138,6 @@ export const AMCDashboard = () => {
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
-  const siteId = localStorage.getItem('selectedSiteId');
   const { data: apiData, loading: reduxLoading, error } = useAppSelector((state) => state.amc);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -279,13 +280,13 @@ export const AMCDashboard = () => {
   const assetTotalAMCs = amcAnalyticsData?.assets_total || 0;
 
   const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1, expiryFilter?: string, searchTerm: string = '') => {
-    if (!baseUrl || !token || !siteId) {
+    if (!baseUrl || !token ) {
       toast.error('Missing base URL, token, or site ID');
       return;
     }
 
     setLoading(true);
-    let url = `https://${baseUrl}/pms/asset_amcs.json?site_id=${siteId}&page=${page}`;
+    let url = `https://${baseUrl}/pms/asset_amcs.json?page=${page}`;
     const queryParams: string[] = [];
 
     if (filterValue === 'active') {
@@ -341,7 +342,7 @@ export const AMCDashboard = () => {
   };
 
   useEffect(() => {
-    if (baseUrl && token && siteId) {
+    if (baseUrl && token) {
       fetchFilteredAMCs(
         filter,
         currentPage,
@@ -349,7 +350,7 @@ export const AMCDashboard = () => {
         debouncedSearchQuery
       );
     }
-  }, [baseUrl, token, siteId, currentPage, filter, amcTypeFilter, debouncedSearchQuery]);
+  }, [baseUrl, token, currentPage, filter, amcTypeFilter, debouncedSearchQuery]);
 
   // Handle search input changes
   const handleSearch = (query: string) => {
@@ -377,7 +378,7 @@ export const AMCDashboard = () => {
     if (togglingIds.has(id)) return;
 
     try {
-      if (!baseUrl || !token || !siteId) {
+      if (!baseUrl || !token ) {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
@@ -488,12 +489,12 @@ export const AMCDashboard = () => {
 
   const handleExport = async () => {
     try {
-      if (!baseUrl || !token || !siteId) {
+      if (!baseUrl || !token ) {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
 
-      let url = `https://${baseUrl}/pms/asset_amcs/export.xlsx?site_id=${siteId}`;
+      let url = `https://${baseUrl}/pms/asset_amcs/export.xlsx`;
       if (selectedItems.length > 0) {
         const ids = selectedItems.join(',');
         url += `&ids=${ids}`;
@@ -600,6 +601,8 @@ export const AMCDashboard = () => {
         return item.amc_end_date ? new Date(item.amc_end_date).toLocaleDateString() : '-';
       case 'amc_first_service':
         return item.amc_first_service ? new Date(item.amc_first_service).toLocaleDateString() : '-';
+        case 'total_days_remaining':
+        return item.total_days_remaining || '-';
       case 'active':
         return (
           <div className="flex items-center">

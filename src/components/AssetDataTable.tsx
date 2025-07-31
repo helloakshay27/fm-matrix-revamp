@@ -22,6 +22,7 @@ interface AssetDataTableProps {
   onFilterOpen: () => void;
   onSearch: (searchTerm: string) => void;
   onRefreshData?: () => void;
+  loading?: boolean;
 }
 
 export const AssetDataTable: React.FC<AssetDataTableProps> = ({
@@ -36,7 +37,8 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   handleImport,
   onFilterOpen,
   onSearch,
-  onRefreshData
+  onRefreshData,
+  loading,
 }) => {
 
   console.log("AssetDataTable rendered with assets:", assets);
@@ -321,6 +323,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         enableExport={true}
         onSearchChange={onSearch}
         handleExport={handleExcelExport}
+        loading={loading}
         leftActions={
           <Button
             size="sm"
