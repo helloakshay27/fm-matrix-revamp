@@ -155,6 +155,7 @@ export const MobileAssetPage = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<MobileAsset | null>(null);
+  const [loadingAsset, setLoadingAsset] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -257,12 +258,52 @@ export const MobileAssetPage = () => {
   }, [token, assetId, isBreakdownPage]); // Removed currentFilters from dependency array
 
   useEffect(() => {
-    if (assetId && assets.length > 0) {
-      const asset = assets.find((a) => a.id.toString() === assetId);
-      setSelectedAsset(asset || null);
-      console.log("🎯 Selected asset:", asset);
-    }
-  }, [assetId, assets]);
+    const findOrFetchAsset = async () => {
+      if (assetId) {
+        // First try to find the asset in the existing assets list
+        const asset = assets.find((a) => a.id.toString() === assetId);
+        
+        if (asset) {
+          setSelectedAsset(asset);
+          console.log("🎯 Selected asset from list:", asset);
+        } else if (assets.length === 0) {
+          // If assets list is empty, we need to fetch the specific asset
+          const tokenToUse = token || sessionStorage.getItem("mobile_token");
+          if (tokenToUse) {
+            setLoadingAsset(true);
+            try {
+              console.log("🔍 Fetching specific asset with ID:", assetId);
+              // Fetch assets with a filter for the specific asset ID
+              const apiResponse = await mobileAssetService.getAssets(tokenToUse, 1, { assetId });
+              if (apiResponse.assets && apiResponse.assets.length > 0) {
+                const specificAsset = apiResponse.assets[0];
+                setSelectedAsset(specificAsset);
+                console.log("🎯 Fetched specific asset:", specificAsset);
+                // Also update the assets list to include this asset
+                setAssets([specificAsset]);
+              } else {
+                console.log("❌ Asset not found with ID:", assetId);
+                setSelectedAsset(null);
+              }
+            } catch (err) {
+              console.error("❌ Failed to fetch specific asset:", err);
+              setSelectedAsset(null);
+            } finally {
+              setLoadingAsset(false);
+            }
+          }
+        } else {
+          // Asset not found in the loaded list
+          console.log("❌ Asset not found in loaded assets list with ID:", assetId);
+          setSelectedAsset(null);
+        }
+      } else {
+        setSelectedAsset(null);
+      }
+    };
+
+    findOrFetchAsset();
+  }, [assetId, assets, token]);
 
   // Load more assets for pagination
   const loadMoreAssets = async () => {
@@ -374,6 +415,15 @@ export const MobileAssetPage = () => {
   // If assetId is present, show details page
   // If no assetId, show asset list
   if (assetId) {
+    // Show loading state while fetching specific asset
+    if (loadingAsset) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      );
+    }
+
     if (isBreakdownPage) {
       // Show breakdown page when URL contains /breakdown
       return selectedAsset ? (
