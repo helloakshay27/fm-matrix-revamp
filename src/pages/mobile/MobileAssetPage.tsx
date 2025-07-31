@@ -183,6 +183,66 @@ const mobileAssetService = {
       throw error;
     }
   },
+
+  async updateAssetStatus(token: string, assetId: string, newStatus: string): Promise<MobileAsset> {
+    try {
+      // Get base URL from sessionStorage or use default
+      let baseUrl =
+        sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
+        // sessionStorage.getItem("baseUrl") || "https://fm-uat-api.lockated.com/";
+
+      // Ensure baseUrl doesn't have trailing slash and starts with https://
+      baseUrl = baseUrl.replace(/\/$/, ""); // Remove trailing slash
+      if (!baseUrl.startsWith("http")) {
+        baseUrl = `https://${baseUrl}`;
+      }
+
+      const url = `${baseUrl}/pms/assets/${assetId}.json`;
+
+      // Prepare the update payload
+      const updatePayload = {
+        pms_asset: {
+          status: newStatus === "breakdown" ? newStatus : newStatus,
+          breakdown:
+            newStatus === "in_use"
+              ? "false"
+              : newStatus === "breakdown"
+              ? "true"
+              : "",
+        },
+      };
+
+      console.log("🔄 UPDATING ASSET STATUS:");
+      console.log("  - Base URL from sessionStorage:", sessionStorage.getItem("baseUrl"));
+      console.log("  - Processed Base URL:", baseUrl);
+      console.log("  - Final URL:", url);
+      console.log("  - Asset ID:", assetId);
+      console.log("  - New Status:", newStatus);
+      console.log("  - Update Payload:", updatePayload);
+      console.log("  - Token:", token?.substring(0, 20) + "...");
+
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatePayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: MobileAsset = await response.json();
+      console.log("📦 UPDATED ASSET API Response:", data);
+
+      return data;
+    } catch (error) {
+      console.error("❌ Error updating asset status:", error);
+      throw error;
+    }
+  },
 };
 
 export const MobileAssetPage = () => {
@@ -200,6 +260,7 @@ export const MobileAssetPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<MobileAsset | null>(null);
   const [loadingAsset, setLoadingAsset] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -399,6 +460,42 @@ export const MobileAssetPage = () => {
     }
   };
 
+  // Handle status update
+  const handleStatusUpdate = async (assetId: string, newStatus: string) => {
+    const tokenToUse = token || sessionStorage.getItem("mobile_token");
+    if (!tokenToUse) {
+      console.error("❌ No token available for status update");
+      return;
+    }
+
+    setUpdatingStatus(true);
+
+    try {
+      console.log("🔄 Updating asset status:", { assetId, newStatus });
+      const updatedAsset = await mobileAssetService.updateAssetStatus(tokenToUse, assetId, newStatus);
+      
+      // Update the selected asset if it's the same asset
+      if (selectedAsset && selectedAsset.id.toString() === assetId) {
+        setSelectedAsset(updatedAsset);
+      }
+
+      // Update the asset in the assets list
+      setAssets(prevAssets => 
+        prevAssets.map(asset => 
+          asset.id.toString() === assetId ? updatedAsset : asset
+        )
+      );
+
+      console.log("✅ Asset status updated successfully:", updatedAsset);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to update asset status";
+      console.error("❌ Failed to update asset status:", errorMessage);
+      // You might want to show a toast or alert here
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -460,6 +557,8 @@ export const MobileAssetPage = () => {
       hasMore={hasMore}
       loadingMore={loadingMore}
       onApplyFilters={handleApplyFilters}
+      onStatusUpdate={handleStatusUpdate}
+      updatingStatus={updatingStatus}
     />
   );
 };

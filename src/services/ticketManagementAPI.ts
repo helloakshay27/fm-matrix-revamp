@@ -593,6 +593,15 @@ export const ticketManagementAPI = {
     return response.data;
   },
 
+  async updateSubCategory(subCategoryId: string | number, formData: FormData) {
+    // Add the ID to the FormData
+    formData.append('id', subCategoryId.toString());
+    formData.append('active', '1');
+    
+    const response = await apiClient.post('/pms/admin/modify_helpdesk_sub_category.json', formData);
+    return response.data;
+  },
+
   async deleteComplaintMode(complaintModeId: number) {
     const response = await apiClient.post('/pms/admin/delete_complaint_mode.json', {
       id: complaintModeId
@@ -681,18 +690,26 @@ export const ticketManagementAPI = {
   async updateOperationalDays(siteId: string, data: OperationalDay[]) {
     const response = await apiClient.patch(`/pms/sites/${siteId}.json`, {
       pms_site: {
-        helpdesk_operations_attributes: data.map(day => ({
-          id: day.id.toString(),
-          op_of: "Pms::Site",
-          op_of_id: siteId,
-          dayofweek: day.dayofweek,
-          of_phase: "pms",
-          is_open: day.is_open ? "1" : "0",
-          start_hour: day.start_hour.toString(),
-          start_min: day.start_min.toString().padStart(2, '0'),
-          end_hour: day.end_hour.toString(),
-          end_min: day.end_min.toString().padStart(2, '0')
-        }))
+        helpdesk_operations_attributes: data.map(day => {
+          const attributes: any = {
+            op_of: "Pms::Site",
+            op_of_id: siteId,
+            dayofweek: day.dayofweek,
+            of_phase: "pms",
+            is_open: day.is_open ? "1" : "0",
+            start_hour: day.start_hour.toString(),
+            start_min: day.start_min.toString().padStart(2, '0'),
+            end_hour: day.end_hour.toString(),
+            end_min: day.end_min.toString().padStart(2, '0')
+          };
+          
+          // Only include id for existing records (id > 0)
+          if (day.id > 0) {
+            attributes.id = day.id.toString();
+          }
+          
+          return attributes;
+        })
       },
       id: siteId
     });

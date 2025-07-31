@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Collapsible,
@@ -25,6 +25,7 @@ import {
   CheckCircle,
   DollarSign,
   Users,
+  MoreVertical,
 } from "lucide-react";
 import { AMCDetailsTab } from "@/components/asset-details/AMCDetailsTab";
 import { PPMTab } from "@/components/asset-details/PPMTab";
@@ -145,6 +146,30 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
   const [assetData, setAssetData] = useState<Asset>(initialAsset);
   const [loading, setLoading] = useState(false);
   const [availableTabs, setAvailableTabs] = useState<TabConfig[]>([]);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const statusOptions = [
+    { value: "in_use", label: "In Use", color: "bg-green-100 text-green-800" },
+    { value: "breakdown", label: "Breakdown", color: "bg-red-100 text-red-800" },
+    { value: "in_storage", label: "In Store", color: "bg-yellow-100 text-yellow-800" },
+    { value: "disposed", label: "Disposed", color: "bg-gray-100 text-gray-800" },
+  ];
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowStatusDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Fetch detailed asset data from API
   useEffect(() => {
@@ -372,6 +397,55 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
     navigate(`/mobile/assets/${idToUse}/breakdown`);
   };
 
+  const handleStatusUpdate = async (newStatus: string) => {
+    const idToUse = assetId || assetData.id;
+    if (!idToUse) return;
+
+    setUpdatingStatus(true);
+    try {
+      const mobileToken = sessionStorage.getItem("mobile_token");
+      if (!mobileToken) {
+        throw new Error("Mobile token not found");
+      }
+
+      let baseUrl = sessionStorage.getItem("baseUrl") || "https://oig-api.gophygital.work";
+      baseUrl = baseUrl.replace(/\/$/, "");
+      if (!baseUrl.startsWith("http")) {
+        baseUrl = `https://${baseUrl}`;
+      }
+
+      const response = await fetch(`${baseUrl}/pms/assets/${idToUse}.json`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${mobileToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          pms_asset: {
+            status: newStatus,
+            breakdown: newStatus === "breakdown" ? "true" : "false"
+          }
+        }),
+      });
+
+      if (response.ok) {
+        setAssetData(prev => ({
+          ...prev,
+          status: newStatus,
+          breakdown: newStatus === "breakdown"
+        }));
+        setShowStatusDropdown(false);
+      } else {
+        throw new Error("Failed to update status");
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Failed to update status. Please try again.");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   // const handleBreakdownClick = () => {
   //   const idToUse = assetId || assetData.id;
   //   navigate(`/mobile/assets/${idToUse}?action=breakdown`);
@@ -409,19 +483,60 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {/* Status Display */}
-              <button
-                onClick={
-                  (assetData.breakdown || assetData.status?.toLowerCase() === "breakdown")
-                    ? handleBreakdownClick
-                    : undefined
-                }
-                className={`px-4 py-1 rounded text-xs font-medium transition-colors ${getStatusButtonColor(
-                  assetData.breakdown ? "Breakdown" : assetData.status
-                )}`}
-              >
-                {formatStatusText(assetData.breakdown ? "Breakdown" : (assetData.status || "In Use"))}
-              </button>
+              {/* Status Display with Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={
+                    assetData.breakdown ||
+                    assetData.status?.toLowerCase() === "breakdown"
+                      ? handleBreakdownClick
+                      : undefined
+                  }
+                  className={`px-4 py-1 rounded text-xs font-medium transition-colors ${getStatusButtonColor(
+                    assetData.breakdown ? "Breakdown" : assetData.status
+                  )}`}
+                >
+                  {formatStatusText(
+                    assetData.breakdown
+                      ? "Breakdown"
+                      : assetData.status || "In Use"
+                  )}
+                </button>
+              </div>
+              
+              {/* Status Change Dropdown */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                  disabled={updatingStatus}
+                >
+                  <MoreVertical className="h-4 w-4 text-gray-600" />
+                </button>
+                
+                {showStatusDropdown && (
+                  <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[150px]">
+                    <div className="p-2">
+                      <p className="text-xs text-gray-500 mb-2 px-2">Change Status</p>
+                      {statusOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => handleStatusUpdate(option.value)}
+                          disabled={updatingStatus}
+                          className={`w-full text-left px-2 py-1 text-xs rounded hover:opacity-80 transition-colors first:rounded-t-lg last:rounded-b-lg ${option.color} ${
+                            (assetData.breakdown && option.value === "breakdown") || 
+                            (!assetData.breakdown && assetData.status === option.value)
+                              ? "ring-2 ring-blue-500 font-medium" 
+                              : ""
+                          }`}
+                        >
+                          {updatingStatus ? "Updating..." : option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -455,7 +570,7 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
               <div className="flex items-center">
                 <span className="text-gray-500 w-32">Owner Cost</span>
                 <span className="text-gray-900">
-                  : ₹{assetData.ownership_total_cost || "0"}
+                  : OMR{assetData.ownership_total_cost || "0"}
                 </span>
               </div>
 
@@ -468,18 +583,15 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
             </div>
           </div>
         </div>
-
         {/* Options Section */}
         <div className="bg-white p-4">
           <h3 className="text-base font-semibold text-gray-900 mb-4">
             Please select below options
           </h3>
-
           <div className="space-y-3">
             {availableTabs.map((tab) => {
               const Icon = tab.icon;
               const isOpen = openSections[tab.key];
-
               return (
                 <Collapsible
                   key={tab.key}
@@ -503,12 +615,12 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
                       )}
                     </div>
                   </CollapsibleTrigger>
-
                   <CollapsibleContent>
                     <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
                       <tab.component
                         asset={assetData}
                         assetId={assetId || assetData.id}
+                        isMobile={true}
                       />
                     </div>
                   </CollapsibleContent>

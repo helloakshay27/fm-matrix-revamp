@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -227,6 +227,15 @@ export const CategoryTypeTab: React.FC = () => {
       return;
     }
 
+    // Validate vendor emails if enabled
+    if (vendorEmailEnabled) {
+      const invalidEmails = vendorEmails.filter(email => email.trim() && !isValidEmail(email));
+      if (invalidEmails.length > 0) {
+        toast.error('Please enter valid email addresses for all vendor emails.');
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       const formData = new FormData();
@@ -337,6 +346,16 @@ export const CategoryTypeTab: React.FC = () => {
     setVendorEmails(updated);
   };
 
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleVendorEmailChange = (index: number, value: string) => {
+    // Allow typing but show validation state
+    updateVendorEmail(index, value);
+  };
+
   const removeVendorEmail = (index: number) => {
     if (vendorEmails.length > 1) {
       setVendorEmails(vendorEmails.filter((_, i) => i !== index));
@@ -369,6 +388,15 @@ export const CategoryTypeTab: React.FC = () => {
 
   const handleEditSubmit = async (formData: any) => {
     if (!editingCategory) return;
+    
+    // Validate vendor emails if enabled
+    if (editVendorEmailEnabled) {
+      const invalidEmails = editVendorEmails.filter(email => email.trim() && !isValidEmail(email));
+      if (invalidEmails.length > 0) {
+        toast.error('Please enter valid email addresses for all vendor emails.');
+        return;
+      }
+    }
     
     setIsSubmitting(true);
     try {
@@ -491,6 +519,11 @@ export const CategoryTypeTab: React.FC = () => {
     setEditVendorEmails(updated);
   };
 
+  const handleEditVendorEmailChange = (index: number, value: string) => {
+    // Allow typing but show validation state
+    updateEditVendorEmail(index, value);
+  };
+
   const removeEditVendorEmail = (index: number) => {
     if (editVendorEmails.length > 1) {
       setEditVendorEmails(editVendorEmails.filter((_, i) => i !== index));
@@ -529,6 +562,16 @@ export const CategoryTypeTab: React.FC = () => {
       toast.error('Failed to delete category');
     }
   };
+
+  // Transform categories data to include searchable email string
+  const transformedCategories = useMemo(() => {
+    return categories.map(category => ({
+      ...category,
+      searchable_emails: category.category_email?.length 
+        ? category.category_email.map(emailObj => emailObj.email).join(', ')
+        : ''
+    }));
+  }, [categories]);
 
   const handleIconChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -720,12 +763,22 @@ export const CategoryTypeTab: React.FC = () => {
 
                     {vendorEmails.map((email, index) => (
                       <div key={index} className="flex gap-2">
-                        <Input
-                          type="email"
-                          placeholder="Enter vendor email"
-                          value={email}
-                          onChange={(e) => updateVendorEmail(index, e.target.value)}
-                        />
+                        <div className="flex-1">
+                          <Input
+                            type="email"
+                            placeholder="Enter vendor email"
+                            value={email}
+                            onChange={(e) => handleVendorEmailChange(index, e.target.value)}
+                            className={`${
+                              email && !isValidEmail(email) 
+                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                                : ''
+                            }`}
+                          />
+                          {email && !isValidEmail(email) && (
+                            <p className="text-red-500 text-xs mt-1">Please enter a valid email address</p>
+                          )}
+                        </div>
                         {vendorEmails.length > 1 && (
                           <Button
                             type="button"
@@ -806,11 +859,13 @@ export const CategoryTypeTab: React.FC = () => {
             </div>
           ) : (
             <EnhancedTable
-              data={categories}
+              data={transformedCategories}
               columns={columns}
               renderCell={renderCell}
               renderActions={renderActions}
               storageKey="category-types-table"
+              enableSearch={true}
+              searchPlaceholder="Search categories..."
             />
           )}
         </CardContent>
@@ -897,12 +952,22 @@ export const CategoryTypeTab: React.FC = () => {
 
                     {editVendorEmails.map((email, index) => (
                       <div key={index} className="flex gap-2">
-                        <Input
-                          type="email"
-                          placeholder="Enter vendor email"
-                          value={email}
-                          onChange={(e) => updateEditVendorEmail(index, e.target.value)}
-                        />
+                        <div className="flex-1">
+                          <Input
+                            type="email"
+                            placeholder="Enter vendor email"
+                            value={email}
+                            onChange={(e) => handleEditVendorEmailChange(index, e.target.value)}
+                            className={`${
+                              email && !isValidEmail(email) 
+                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                                : ''
+                            }`}
+                          />
+                          {email && !isValidEmail(email) && (
+                            <p className="text-red-500 text-xs mt-1">Please enter a valid email address</p>
+                          )}
+                        </div>
                         {editVendorEmails.length > 1 && (
                           <Button
                             type="button"

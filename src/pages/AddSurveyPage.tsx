@@ -126,7 +126,8 @@ export const AddSurveyPage = () => {
       const requestData = {
         snag_checklist: {
           name: title,
-          snag_audit_category_id: parseInt(category)
+          snag_audit_category_id: parseInt(category),
+          check_type: "survey"
         },
         question: questions.map(question => ({
           descr: question.text,

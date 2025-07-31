@@ -347,12 +347,12 @@ export const SubCategoryTab: React.FC = () => {
 
   const renderActions = (item: SubCategoryType) => (
     <div className="flex items-center gap-2">
-      {/* <Button variant="ghost" size="sm" onClick={() => {
+      <Button variant="ghost" size="sm" onClick={() => {
         setEditingSubCategory(item);
         setEditModalOpen(true);
       }}>
         <Edit className="h-4 w-4" />
-      </Button> */}
+      </Button>
       <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
         <Trash2 className="h-4 w-4" />
       </Button>
@@ -449,10 +449,10 @@ export const SubCategoryTab: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Subcategory Tags</h3>
-                  <Button type="button" onClick={addTag} variant="outline" size="sm">
+                  {/* <Button type="button" onClick={addTag} variant="outline" size="sm">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Tag
-                  </Button>
+                  </Button> */}
                 </div>
 
                 {tags.map((tag, index) => (
@@ -615,7 +615,7 @@ export const SubCategoryTab: React.FC = () => {
                     )}
                   />
 
-                  <FormField
+                  {/* <FormField
                     control={form.control}
                     name="customerEnabled"
                     render={({ field }) => (
@@ -629,7 +629,7 @@ export const SubCategoryTab: React.FC = () => {
                         <FormLabel>Customer Enabled</FormLabel>
                       </FormItem>
                     )}
-                  />
+                  /> */}
                 </div>
                 
                 {/* Buildings Dropdown - Only show when building checkbox is checked */}

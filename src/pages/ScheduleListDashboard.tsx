@@ -24,6 +24,7 @@ import { useQuery } from '@tanstack/react-query';
 import { API_CONFIG, ENDPOINTS } from '@/config/apiConfig';
 import { apiClient } from '@/utils/apiClient';
 import { toast, Toaster } from "sonner";
+import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
@@ -659,77 +660,161 @@ export const ScheduleListDashboard = () => {
   const selectionActions = [
   ];
 
-  const renderListTab = () => (
-    <div className="space-y-4">
-      {showActionPanel && (
-        <SelectionPanel
-          actions={selectionActions}
-          onAdd={handleAddSchedule}
-          onClearSelection={() => setShowActionPanel(false)}
-          onImport={() => setShowImportModal(true)}
-        />
-      )}
+  // Pagination state and logic (copied from ScheduledTaskDashboard)
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10;
+    const totalPages = Math.ceil(schedules.length / pageSize);
+    const paginatedSchedules = schedules.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  
+    useEffect(() => {
+      // Reset to first page if schedules change and currentPage is out of range
+      if (currentPage > totalPages) {
+        setCurrentPage(1);
+      }
+    }, [schedules, totalPages]);
+  
+    // Pagination handler for consistent UI
+    const totalCount = schedules.length;
+    const handlePageChange = (page: number) => {
+      setCurrentPage(page);
+    };
 
-      {isLoading ? (
-        <div className="flex items-center justify-center h-32">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-2 text-sm text-muted-foreground">Loading schedules...</p>
+    const renderListTab = () => (
+      <div className="space-y-4">
+        {showActionPanel && (
+          <SelectionPanel
+            actions={selectionActions}
+            onAdd={handleAddSchedule}
+            onClearSelection={() => setShowActionPanel(false)}
+            onImport={() => setShowImportModal(true)}
+          />
+        )}
+  
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-sm text-muted-foreground">Loading schedules...</p>
+            </div>
           </div>
-        </div>
-      ) : error ? (
-        <div className="flex items-center justify-center h-32">
-          <div className="text-center max-w-md">
-            <p className="text-sm text-red-600 mb-2">Error loading schedules</p>
-            <p className="text-xs text-gray-500 mb-3">
-              {error instanceof Error ? error.message : 'Unknown error occurred'}
-            </p>
-            {error instanceof Error && (
-              error.message.includes('Base URL is not configured') || 
-              error.message.includes('Authentication token is not available')
-            ) ? (
-              <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-3">
-                <p className="text-xs text-yellow-800 mb-2">
-                  It appears your session has expired or the application is not properly configured.
-                </p>
+        ) : error ? (
+          <div className="flex items-center justify-center h-32">
+            <div className="text-center max-w-md">
+              <p className="text-sm text-red-600 mb-2">Error loading schedules</p>
+              <p className="text-xs text-gray-500 mb-3">
+                {error instanceof Error ? error.message : 'Unknown error occurred'}
+              </p>
+              {error instanceof Error && (
+                error.message.includes('Base URL is not configured') || 
+                error.message.includes('Authentication token is not available')
+              ) ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-3">
+                  <p className="text-xs text-yellow-800 mb-2">
+                    It appears your session has expired or the application is not properly configured.
+                  </p>
+                  <button 
+                    onClick={() => {
+                      localStorage.clear();
+                      window.location.href = '/login';
+                    }} 
+                    className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200"
+                  >
+                    Go to Login
+                  </button>
+                </div>
+              ) : (
                 <button 
-                  onClick={() => {
-                    localStorage.clear();
-                    window.location.href = '/login';
-                  }} 
-                  className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200"
+                  onClick={() => window.location.reload()} 
+                  className="mt-2 px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
                 >
-                  Go to Login
+                  Retry
                 </button>
-              </div>
-            ) : (
-              <button 
-                onClick={() => window.location.reload()} 
-                className="mt-2 px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
-              >
-                Retry
-              </button>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      ) : (
-        <EnhancedTable 
-          data={schedules} 
-          columns={columns} 
-          renderCell={renderCell} 
-          // selectable={true} 
-          pagination={true} 
-          enableExport={true} 
-          exportFileName="schedules" 
-          storageKey="schedules-table" 
-          enableSearch={true} 
-          searchPlaceholder="Search schedules..." 
-          leftActions={renderCustomActions()} 
-          onFilterClick={() => setShowFilterDialog(true)}
-        />
-      )}
+        ) : (
+          <>
+            <EnhancedTable 
+              data={paginatedSchedules} 
+              columns={columns} 
+              renderCell={renderCell} 
+              // selectable={true} 
+              pagination={false} 
+              enableExport={true} 
+              exportFileName="schedules" 
+              storageKey="schedules-table" 
+              enableSearch={true} 
+              searchPlaceholder="Search schedules..." 
+              leftActions={renderCustomActions()} 
+              onFilterClick={() => setShowFilterDialog(true)}
+            />
+
+{/* Pagination */}
+{totalPages > 1 && (
+  <div className="mt-6">
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            onClick={() => {
+              if (currentPage > 1) {
+                handlePageChange(currentPage - 1);
+              }
+            }}
+            className={
+              currentPage === 1
+                ? "pointer-events-none opacity-50"
+                : ""
+            }
+          />
+        </PaginationItem>
+
+        {Array.from(
+          { length: Math.min(totalPages, 10) },
+          (_, i) => i + 1
+        ).map((page) => (
+          <PaginationItem key={page}>
+            <PaginationLink
+              onClick={() => handlePageChange(page)}
+              isActive={currentPage === page}
+            >
+              {page}
+            </PaginationLink>
+          </PaginationItem>
+        ))}
+
+        {totalPages > 10 && (
+          <PaginationItem>
+            <PaginationEllipsis />
+          </PaginationItem>
+        )}
+
+        <PaginationItem>
+          <PaginationNext
+            onClick={() => {
+              if (currentPage < totalPages) {
+                handlePageChange(currentPage + 1);
+              }
+            }}
+            className={
+              currentPage === totalPages
+                ? "pointer-events-none opacity-50"
+                : ""
+            }
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+
+    <div className="text-center mt-2 text-sm text-gray-600">
+      Showing page {currentPage} of {totalPages} ({totalCount} total tasks)
     </div>
-  );
+  </div>
+)}
+          </>
+        )}
+      </div>
+    );
   function handleApplyFilters(filters: { activityName: string; type: string; category: string; }): void {
     setFilters(filters);
     setShowFilterDialog(false);
