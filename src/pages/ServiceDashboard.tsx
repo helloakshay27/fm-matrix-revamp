@@ -319,14 +319,16 @@ export const ServiceDashboard = () => {
   const handleSingleAmcFlag = async (serviceItem: ServiceRecord) => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
-    const siteId = localStorage.getItem('siteId') || '2189';
+    const siteId = localStorage.getItem('selectedSiteId') || '2189';
+  
     try {
       if (!baseUrl || !token || !siteId) {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
-
+  
       const updatedFlag = !serviceItem.is_flagged;
+  
       const response = await axios.put(
         `https://${baseUrl}/pms/services/${serviceItem.id}.json?site_id=${siteId}`,
         {
@@ -340,19 +342,21 @@ export const ServiceDashboard = () => {
           },
         }
       );
-
+  
       if (response.status === 200) {
-        console.log('Flag update response:', response.data);
         dispatch(fetchServicesData({ active: activeFilter, page: paginationData.current_page }));
-        toast.success(`Service ID ${serviceItem.id} flag updated`);
+        toast.dismiss()
+        toast.success(
+          `Flag ${updatedFlag ? 'Activated' : 'Deactivated'}`
+        );
       } else {
         toast.error('Failed to update service flag');
       }
     } catch (error) {
-      console.error('Flag update error:', error.response?.data || error.message);
       toast.error('Failed to update service flag');
     }
   };
+  
 
   const renderCell = (item: ServiceRecord, columnKey: string) => {
     switch (columnKey) {
@@ -575,11 +579,6 @@ export const ServiceDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      {loading && (
-        <div className="flex justify-center items-center py-8">
-          <div className="text-gray-600">Loading Services data...</div>
-        </div>
-      )}
 
       {error && (
         <div className="flex justify-center items-center py-8">
@@ -587,7 +586,6 @@ export const ServiceDashboard = () => {
         </div>
       )}
 
-      {!loading && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3">
             <div
@@ -647,6 +645,7 @@ export const ServiceDashboard = () => {
             />
           )}
           <EnhancedTable
+            loading={loading}
             handleExport={handleExport}
             data={servicesData}
             columns={columns}
@@ -676,7 +675,6 @@ export const ServiceDashboard = () => {
             onQRDownload={handleQRDownload}
           />
         </>
-      )}
 
       {!loading && (
         <div className="flex justify-center mt-6">
