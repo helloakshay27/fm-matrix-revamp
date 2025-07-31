@@ -1,86 +1,91 @@
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { createTheme, ThemeProvider } from '@mui/material';
-import { DisposalFormFields } from '@/components/DisposalFormFields';
-import { DisposalAssetTable } from '@/components/DisposalAssetTable';
-import { HandedOverToSection } from '@/components/HandedOverToSection';
-import { CommentsAttachmentsSection } from '@/components/CommentsAttachmentsSection';
-import { useToast } from '@/hooks/use-toast';
-import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
-import axios from 'axios';
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { createTheme, ThemeProvider } from "@mui/material";
+import { DisposalFormFields } from "@/components/DisposalFormFields";
+import { DisposalAssetTable } from "@/components/DisposalAssetTable";
+import { HandedOverToSection } from "@/components/HandedOverToSection";
+import { CommentsAttachmentsSection } from "@/components/CommentsAttachmentsSection";
+import { useToast } from "@/hooks/use-toast";
+import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
+import axios from "axios";
+import { fetchAssetsData } from "@/store/slices/assetsSlice";
+import { useAppDispatch } from "@/store/hooks";
 
 const muiTheme = createTheme({
   components: {
     MuiTextField: {
       styleOverrides: {
         root: {
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '6px',
-            backgroundColor: '#FFFFFF',
-            height: '45px',
-            '@media (max-width: 768px)': {
-              height: '36px'
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "6px",
+            backgroundColor: "#FFFFFF",
+            height: "45px",
+            "@media (max-width: 768px)": {
+              height: "36px",
             },
-            '& fieldset': {
-              borderColor: '#E0E0E0'
+            "& fieldset": {
+              borderColor: "#E0E0E0",
             },
-            '&:hover fieldset': {
-              borderColor: '#1A1A1A'
+            "&:hover fieldset": {
+              borderColor: "#1A1A1A",
             },
-            '&.Mui-focused fieldset': {
-              borderColor: '#C72030',
-              borderWidth: 2
-            }
-          }
-        }
-      }
+            "&.Mui-focused fieldset": {
+              borderColor: "#C72030",
+              borderWidth: 2,
+            },
+          },
+        },
+      },
     },
     MuiInputLabel: {
       styleOverrides: {
         root: {
-          color: '#1A1A1A',
+          color: "#1A1A1A",
           fontWeight: 500,
-          '&.Mui-focused': {
-            color: '#C72030'
-          }
-        }
-      }
+          "&.Mui-focused": {
+            color: "#C72030",
+          },
+        },
+      },
     },
     MuiSelect: {
       styleOverrides: {
         root: {
-          borderRadius: '6px',
-          backgroundColor: '#FFFFFF',
-          height: '45px',
-          '@media (max-width: 768px)': {
-            height: '36px'
-          }
-        }
-      }
+          borderRadius: "6px",
+          backgroundColor: "#FFFFFF",
+          height: "45px",
+          "@media (max-width: 768px)": {
+            height: "36px",
+          },
+        },
+      },
     },
     MuiFormControl: {
       styleOverrides: {
         root: {
-          '& .MuiOutlinedInput-root': {
-            borderRadius: '6px',
-            height: '45px',
-            '@media (max-width: 768px)': {
-              height: '36px'
-            }
-          }
-        }
-      }
-    }
-  }
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "6px",
+            height: "45px",
+            "@media (max-width: 768px)": {
+              height: "36px",
+            },
+          },
+        },
+      },
+    },
+  },
 });
 
 export const DisposeAssetPage: React.FC = () => {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const [selectedAssets, setSelectedAssets] = useState(location.state?.selectedAssets || []);
+  const [selectedAssets, setSelectedAssets] = useState(
+    location.state?.selectedAssets || []
+  );
 
   // Per-asset breakdown and sold value states
   const [breakdowns, setBreakdowns] = useState<{ [key: string]: string }>({});
@@ -88,50 +93,60 @@ export const DisposeAssetPage: React.FC = () => {
 
   // Other form states
   const [disposeDate, setDisposeDate] = useState<Date>();
-  const [disposeReason, setDisposeReason] = useState('');
-  const [handedOverTo, setHandedOverTo] = useState<string>('vendor');
-  const [vendor, setVendor] = useState('');
-  const [user, setUser] = useState('');
-  const [comments, setComments] = useState('');
-const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '' }]);
+  const [disposeReason, setDisposeReason] = useState("");
+  const [handedOverTo, setHandedOverTo] = useState<string>("vendor");
+  const [vendor, setVendor] = useState("");
+  const [user, setUser] = useState("");
+  const [comments, setComments] = useState("");
+  const [vendorBids, setVendorBids] = useState([
+    { vendor_name: "", bidding_cost: "" },
+  ]);
   const [attachments, setAttachments] = useState<string[]>([]);
 
   // Function to refresh a specific asset's data
   const handleAssetUpdate = async (assetId: number) => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/assets/${assetId}.json`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': getAuthHeader(),
-        },
-      });
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/pms/assets/${assetId}.json`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: getAuthHeader(),
+          },
+        }
+      );
 
       if (response.ok) {
         const updatedAssetData = await response.json();
-        
+
         // Update the asset in selectedAssets state
-        setSelectedAssets(prevAssets => 
-          prevAssets.map(asset => 
-            asset.id === assetId 
+        setSelectedAssets((prevAssets) =>
+          prevAssets.map((asset) =>
+            asset.id === assetId
               ? { ...asset, status: updatedAssetData.status || asset.status }
               : asset
           )
         );
       }
     } catch (error) {
-      console.error('Error refreshing asset data:', error);
+      console.error("Error refreshing asset data:", error);
     }
   };
 
   const handleSubmit = async () => {
     // Check if any asset is already disposed
-    const alreadyDisposedAssets = selectedAssets.filter((asset: any) => 
-      asset.status && asset.status.toLowerCase() === 'disposed'
+    const alreadyDisposedAssets = selectedAssets.filter(
+      (asset: any) => asset.status && asset.status.toLowerCase() === "disposed"
     );
 
     if (alreadyDisposedAssets.length > 0) {
-      const assetNames = alreadyDisposedAssets.map((asset: any) => asset.name || asset.asset_name || `Asset ID: ${asset.id}`).join(', ');
+      const assetNames = alreadyDisposedAssets
+        .map(
+          (asset: any) =>
+            asset.name || asset.asset_name || `Asset ID: ${asset.id}`
+        )
+        .join(", ");
       toast({
         title: "Validation Error",
         description: `Asset is already disposed: ${assetNames}`,
@@ -160,7 +175,7 @@ const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '
     }
 
     // Validate vendor or user selection based on handedOverTo
-    if (handedOverTo === 'vendor' && !vendor.trim()) {
+    if (handedOverTo === "vendor" && !vendor.trim()) {
       toast({
         title: "Validation Error",
         description: "Please select a vendor.",
@@ -169,7 +184,7 @@ const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '
       return;
     }
 
-    if (handedOverTo === 'user' && !user.trim()) {
+    if (handedOverTo === "user" && !user.trim()) {
       toast({
         title: "Validation Error",
         description: "Please select a user.",
@@ -178,22 +193,25 @@ const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '
       return;
     }
 
-    let handedOverToId = '';
-    let handedOverToType = '';
-    if (handedOverTo === 'vendor') {
-      handedOverToType = 'Vendor';
+    let handedOverToId = "";
+    let handedOverToType = "";
+    if (handedOverTo === "vendor") {
+      handedOverToType = "Vendor";
       handedOverToId = vendor;
-    } else if (handedOverTo === 'user') {
-      handedOverToType = 'User';
+    } else if (handedOverTo === "user") {
+      handedOverToType = "User";
       handedOverToId = user;
     }
 
     // Prepare assets object for backend
-    const assetsObj: Record<string, { id: string | number; sold_value: string | number }> = {};
+    const assetsObj: Record<
+      string,
+      { id: string | number; sold_value: string | number }
+    > = {};
     selectedAssets.forEach((asset: any, idx: number) => {
       assetsObj[idx] = {
         id: asset.id,
-        sold_value: soldValues[asset.id] || ''
+        sold_value: soldValues[asset.id] || "",
       };
     });
 
@@ -202,37 +220,38 @@ const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '
 
     // Prepare payload
     const payload = {
-      dispose_date: disposeDate ? disposeDate.toISOString().split('T')[0] : '',
+      dispose_date: disposeDate ? disposeDate.toISOString().split("T")[0] : "",
       reason: disposeReason,
       handed_over_to_type: handedOverToType,
       handed_over_to_id: handedOverToId,
       comments,
       bidding: biddingStr,
       attachments,
-      assets: assetsObj
+      assets: assetsObj,
     };
 
     try {
-      const baseUrl = localStorage.getItem('baseUrl');
-      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
       await axios.post(`https://${baseUrl}/pms/asset_disposal`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       });
-      
+
       // Show success message
       toast({
         title: "Asset Disposal Successful",
         description: 'Asset is marked as "Disposed" and recorded successfully',
         variant: "default",
       });
-      
-      navigate('/maintenance/asset');
+
+      navigate("/maintenance/asset");
+      dispatch(fetchAssetsData({ page: 1 }));
     } catch (error) {
-      console.error('Dispose Asset API error:', error);
-      
+      console.error("Dispose Asset API error:", error);
+
       // Show error message
       toast({
         title: "Asset Disposal Failed",
@@ -243,19 +262,19 @@ const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '
   };
 
   const handleBack = () => {
-    navigate('/maintenance/asset');
+    navigate("/maintenance/asset");
   };
 
   // Handlers for per-asset breakdown and sold value
   const handleBreakdownChange = (breakdown: string, assetId?: string) => {
     if (assetId) {
-      setBreakdowns(prev => ({ ...prev, [assetId]: breakdown }));
+      setBreakdowns((prev) => ({ ...prev, [assetId]: breakdown }));
     }
   };
 
   const handleSoldValueChange = (value: string, assetId?: string) => {
     if (assetId) {
-      setSoldValues(prev => ({ ...prev, [assetId]: value }));
+      setSoldValues((prev) => ({ ...prev, [assetId]: value }));
     }
   };
 
@@ -267,7 +286,12 @@ const [vendorBids, setVendorBids] = useState([{ vendor_name: '', bidding_cost: '
           <div className="mx-auto px-4 sm:px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleBack}
+                  className="h-8 w-8"
+                >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <h1 className="text-lg sm:text-xl font-bold text-gray-900">

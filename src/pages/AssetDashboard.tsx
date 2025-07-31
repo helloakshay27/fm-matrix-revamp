@@ -53,7 +53,12 @@ import { AssetAnalyticsComponents } from "@/components/AssetAnalyticsComponents"
 import { AssetAnalyticsFilterDialog } from "@/components/AssetAnalyticsFilterDialog";
 import { assetAnalyticsDownloadAPI } from "@/services/assetAnalyticsDownloadAPI";
 import { useAssetSearch } from "@/hooks/useAssetSearch";
-import { API_CONFIG, getFullUrl, getAuthHeader, ENDPOINTS } from "@/config/apiConfig";
+import {
+  API_CONFIG,
+  getFullUrl,
+  getAuthHeader,
+  ENDPOINTS,
+} from "@/config/apiConfig";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -104,12 +109,12 @@ const SortableChartItem = ({
     const target = e.target as HTMLElement;
     // Check if the click is on a button, icon, or download element
     if (
-      target.closest('button') ||
-      target.closest('[data-download]') ||
-      target.closest('svg') ||
-      target.tagName === 'BUTTON' ||
-      target.tagName === 'SVG' ||
-      target.closest('.download-btn')
+      target.closest("button") ||
+      target.closest("[data-download]") ||
+      target.closest("svg") ||
+      target.tagName === "BUTTON" ||
+      target.tagName === "SVG" ||
+      target.closest(".download-btn")
     ) {
       e.stopPropagation();
       return;
@@ -149,7 +154,7 @@ export const AssetDashboard = () => {
     totalValue,
   } = useSelector((state: RootState) => state.assets);
 
-  console.log(assets)
+  console.log(assets);
 
   console.log(data);
   // Local state
@@ -176,18 +181,17 @@ export const AssetDashboard = () => {
 
     return {
       fromDate: lastYear,
-      toDate: today
+      toDate: today,
     };
   };
 
-  const [analyticsDateRange, setAnalyticsDateRange] = useState(getDefaultDateRange());
+  const [analyticsDateRange, setAnalyticsDateRange] = useState(
+    getDefaultDateRange()
+  );
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
-  const [selectedAnalyticsTypes, setSelectedAnalyticsTypes] = useState<string[]>([
-    'groupWise',
-    'categoryWise',
-    'statusDistribution',
-    'assetDistributions'
-  ]);
+  const [selectedAnalyticsTypes, setSelectedAnalyticsTypes] = useState<
+    string[]
+  >(["groupWise", "categoryWise", "statusDistribution", "assetDistributions"]);
   const [analyticsData, setAnalyticsData] = useState<any>({});
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   // Analytics data state is now handled by AssetAnalyticsComponents
@@ -244,7 +248,10 @@ export const AssetDashboard = () => {
   // Removed duplicate fetch functions to prevent multiple API calls
 
   // Analytics handler functions
-  const handleAnalyticsFilterApply = (startDateStr: string, endDateStr: string) => {
+  const handleAnalyticsFilterApply = (
+    startDateStr: string,
+    endDateStr: string
+  ) => {
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
     setAnalyticsDateRange({ fromDate: startDate, toDate: endDate });
@@ -263,29 +270,41 @@ export const AssetDashboard = () => {
       toast.info("Preparing download...");
 
       switch (type) {
-        case 'groupWise':
-          await assetAnalyticsDownloadAPI.downloadGroupWiseAssetsData(fromDate, toDate);
+        case "groupWise":
+          await assetAnalyticsDownloadAPI.downloadGroupWiseAssetsData(
+            fromDate,
+            toDate
+          );
           toast.success("Group-wise assets data downloaded successfully!");
           break;
-        case 'categoryWise':
-          await assetAnalyticsDownloadAPI.downloadCategoryWiseAssetsData(fromDate, toDate);
+        case "categoryWise":
+          await assetAnalyticsDownloadAPI.downloadCategoryWiseAssetsData(
+            fromDate,
+            toDate
+          );
           toast.success("Category-wise assets data downloaded successfully!");
           break;
-        case 'assetDistribution':
-          await assetAnalyticsDownloadAPI.downloadAssetDistributionsData(fromDate, toDate);
+        case "assetDistribution":
+          await assetAnalyticsDownloadAPI.downloadAssetDistributionsData(
+            fromDate,
+            toDate
+          );
           toast.success("Asset distribution data downloaded successfully!");
           break;
-        case 'assetsInUse':
-          await assetAnalyticsDownloadAPI.downloadAssetsInUseData(fromDate, toDate);
+        case "assetsInUse":
+          await assetAnalyticsDownloadAPI.downloadAssetsInUseData(
+            fromDate,
+            toDate
+          );
           toast.success("Assets in use data downloaded successfully!");
           break;
         default:
-          console.warn('Unknown analytics download type:', type);
-          toast.error('Unknown analytics download type.');
+          console.warn("Unknown analytics download type:", type);
+          toast.error("Unknown analytics download type.");
       }
     } catch (error) {
-      console.error('Error downloading analytics:', error);
-      toast.error('Failed to download analytics data. Please try again.');
+      console.error("Error downloading analytics:", error);
+      toast.error("Failed to download analytics data. Please try again.");
     }
   };
 
@@ -331,7 +350,7 @@ export const AssetDashboard = () => {
     assetType: asset.asset_type,
     purchaseCost: asset.purchase_cost,
     currentBookValue: asset.current_book_value,
-    floor: asset.pms_floor || null
+    floor: asset.pms_floor || null,
   }));
 
   const transformedSearchedAssets = searchAssets.map((asset, index) => ({
@@ -348,7 +367,7 @@ export const AssetDashboard = () => {
     assetGroup: asset.assetGroup || "",
     assetSubGroup: asset.assetSubGroup || "",
     assetType: asset.assetType,
-    floor: null // Search results don't include floor data
+    floor: null, // Search results don't include floor data
   }));
 
   // Use search results if search term exists, otherwise use Redux assets
@@ -434,7 +453,7 @@ export const AssetDashboard = () => {
     // Ideally, the API should return aggregated stats for all filtered results
     return {
       total: totalCount || totalAssets, // Use total count from API if available
-      total_value: `${localStorage.getItem('currency')}0.00`,
+      total_value: `${localStorage.getItem("currency")}0.00`,
       nonItAssets: Math.floor((totalCount || totalAssets) * 0.6),
       itAssets: Math.floor((totalCount || totalAssets) * 0.4),
       inUse: inUseAssets,
@@ -451,7 +470,7 @@ export const AssetDashboard = () => {
     total_value:
       totalValue !== undefined && totalValue !== null
         ? String(totalValue)
-        : `${localStorage.getItem('currency')}0.00`,
+        : `${localStorage.getItem("currency")}0.00`,
   };
 
   console.log("Final stats object:", stats);
@@ -473,7 +492,7 @@ export const AssetDashboard = () => {
         filters = {};
         break;
       case "non_it":
-        filters = { it_asset_eq: false };
+        filters = { it_asset_eq: [false, null] };
         break;
       case "it":
         filters = { it_asset_eq: true };
@@ -496,7 +515,7 @@ export const AssetDashboard = () => {
 
     // Clear search term when applying filters
     setSearchTerm("");
-    
+
     // Dispatch the filter to fetch filtered assets
     dispatch(fetchAssetsData({ page: 1, filters }));
     setCurrentPage(1);
@@ -549,7 +568,7 @@ export const AssetDashboard = () => {
       name: asset.name,
     }));
 
-  console.log(selectedAssetObjects)
+  console.log(selectedAssetObjects);
 
   const handleAddAsset = () => {
     navigate("/maintenance/asset/add");
@@ -594,7 +613,7 @@ export const AssetDashboard = () => {
     const selectedAssetObjects = displayAssets.filter((asset) =>
       selectedAssets.includes(asset.id)
     );
-    console.log(selectedAssetObjects)
+    console.log(selectedAssetObjects);
     navigate("/maintenance/asset/dispose", {
       state: { selectedAssets: selectedAssetObjects },
     });
@@ -763,7 +782,7 @@ export const AssetDashboard = () => {
             selectedAnalyticsTypes={selectedAnalyticsTypes}
             onAnalyticsChange={(data) => {
               // Analytics data is managed internally by AssetAnalyticsComponents
-              console.log('Analytics data updated:', data);
+              console.log("Analytics data updated:", data);
             }}
             showFilter={true}
             showSelector={true}
@@ -827,8 +846,11 @@ export const AssetDashboard = () => {
 
               {/* API-driven Pagination */}
               <div className="mt-6">
-                {/* <Pagination>
+               
+
+                <Pagination>
                   <PaginationContent>
+                    {/* Previous Button */}
                     <PaginationItem>
                       <PaginationPrevious
                         onClick={() => {
@@ -844,26 +866,66 @@ export const AssetDashboard = () => {
                       />
                     </PaginationItem>
 
-                    {Array.from(
-                      { length: Math.min(pagination.totalPages, 10) },
-                      (_, i) => i + 1
-                    ).map((page) => (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          onClick={() => handlePageChange(page)}
-                          isActive={pagination.currentPage === page}
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
+                    {/* First Page */}
+                    <PaginationItem>
+                      <PaginationLink
+                        onClick={() => handlePageChange(1)}
+                        isActive={pagination.currentPage === 1}
+                      >
+                        1
+                      </PaginationLink>
+                    </PaginationItem>
 
-                    {pagination.totalPages > 5 && (
+                    {/* Ellipsis before current range */}
+                    {pagination.currentPage > 4 && (
                       <PaginationItem>
                         <PaginationEllipsis />
                       </PaginationItem>
                     )}
 
+                    {/* Dynamic middle pages */}
+                    {Array.from(
+                      { length: 3 },
+                      (_, i) => pagination.currentPage - 1 + i
+                    )
+                      .filter(
+                        (page) => page > 1 && page < pagination.totalPages
+                      )
+                      .map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => handlePageChange(page)}
+                            isActive={pagination.currentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+
+                    {/* Ellipsis after current range */}
+                    {pagination.currentPage < pagination.totalPages - 3 && (
+                      <PaginationItem>
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )}
+
+                    {/* Last Page (if not same as first) */}
+                    {pagination.totalPages > 1 && (
+                      <PaginationItem>
+                        <PaginationLink
+                          onClick={() =>
+                            handlePageChange(pagination.totalPages)
+                          }
+                          isActive={
+                            pagination.currentPage === pagination.totalPages
+                          }
+                        >
+                          {pagination.totalPages}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )}
+
+                    {/* Next Button */}
                     <PaginationItem>
                       <PaginationNext
                         onClick={() => {
@@ -879,100 +941,7 @@ export const AssetDashboard = () => {
                       />
                     </PaginationItem>
                   </PaginationContent>
-                </Pagination> */}
-
-                <Pagination>
-  <PaginationContent>
-    {/* Previous Button */}
-    <PaginationItem>
-      <PaginationPrevious
-        onClick={() => {
-          if (pagination.currentPage > 1) {
-            handlePageChange(pagination.currentPage - 1);
-          }
-        }}
-        className={
-          pagination.currentPage === 1
-            ? "pointer-events-none opacity-50"
-            : ""
-        }
-      />
-    </PaginationItem>
-
-    {/* First Page */}
-    <PaginationItem>
-      <PaginationLink
-        onClick={() => handlePageChange(1)}
-        isActive={pagination.currentPage === 1}
-      >
-        1
-      </PaginationLink>
-    </PaginationItem>
-
-    {/* Ellipsis before current range */}
-    {pagination.currentPage > 4 && (
-      <PaginationItem>
-        <PaginationEllipsis />
-      </PaginationItem>
-    )}
-
-    {/* Dynamic middle pages */}
-    {Array.from(
-      { length: 3 },
-      (_, i) => pagination.currentPage - 1 + i
-    )
-      .filter(
-        (page) =>
-          page > 1 && page < pagination.totalPages
-      )
-      .map((page) => (
-        <PaginationItem key={page}>
-          <PaginationLink
-            onClick={() => handlePageChange(page)}
-            isActive={pagination.currentPage === page}
-          >
-            {page}
-          </PaginationLink>
-        </PaginationItem>
-      ))}
-
-    {/* Ellipsis after current range */}
-    {pagination.currentPage < pagination.totalPages - 3 && (
-      <PaginationItem>
-        <PaginationEllipsis />
-      </PaginationItem>
-    )}
-
-    {/* Last Page (if not same as first) */}
-    {pagination.totalPages > 1 && (
-      <PaginationItem>
-        <PaginationLink
-          onClick={() => handlePageChange(pagination.totalPages)}
-          isActive={pagination.currentPage === pagination.totalPages}
-        >
-          {pagination.totalPages}
-        </PaginationLink>
-      </PaginationItem>
-    )}
-
-    {/* Next Button */}
-    <PaginationItem>
-      <PaginationNext
-        onClick={() => {
-          if (pagination.currentPage < pagination.totalPages) {
-            handlePageChange(pagination.currentPage + 1);
-          }
-        }}
-        className={
-          pagination.currentPage === pagination.totalPages
-            ? "pointer-events-none opacity-50"
-            : ""
-        }
-      />
-    </PaginationItem>
-  </PaginationContent>
-</Pagination>
-
+                </Pagination>
 
                 <div className="text-center mt-2 text-sm text-gray-600">
                   Showing page {pagination.currentPage} of{" "}
