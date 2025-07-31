@@ -110,10 +110,6 @@ export const ServiceDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    const siteId = localStorage.getItem('siteId');
-    if (!siteId || siteId === 'null') {
-      console.warn('Invalid siteId in localStorage, setting fallback: 2189');
-    }
     const filtersWithSearch = {
       ...appliedFilters,
       // Only include serviceName from debouncedSearchQuery if appliedFilters.serviceName is not set
@@ -347,7 +343,7 @@ export const ServiceDashboard = () => {
     const token = localStorage.getItem('token');
 
     try {
-      if (!baseUrl || !token || !siteId) {
+      if (!baseUrl || !token ) {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
@@ -549,14 +545,13 @@ export const ServiceDashboard = () => {
   const handleExport = async () => {
     const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
     const token = localStorage.getItem('token');
-    const siteId = localStorage.getItem('siteId');
     try {
-      if (!baseUrl || !token || !siteId) {
+      if (!baseUrl || !token ) {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
 
-      let url = `https://${baseUrl}/pms/services/export.xlsx?site_id=${siteId}`;
+      let url = `https://${baseUrl}/pms/services/export.xlsx`;
       if (selectedItems.length > 0) {
         const ids = selectedItems.join(',');
         url += `&ids=${ids}`;
