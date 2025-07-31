@@ -32,6 +32,9 @@ interface ServiceDetailsData {
   documents?: Array<{ id?: string; filename: string; url: string; document: string; doctype: string }>;
   qr_code?: string | null;
   group_id?: string;
+  document_type?: string;
+  document: string;
+  qr_code_id?: number;
 }
 
 interface AssetNode {
