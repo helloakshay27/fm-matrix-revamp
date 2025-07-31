@@ -272,39 +272,36 @@ export const MobileAssetPage = () => {
       }
     };
 
-    handleTokenAndFetchAssets();
-  }, [token, assetId, isBreakdownPage]); // Removed currentFilters from dependency array
+    // Only run this effect when there's no assetId initially, or when token changes
+    if (!assetId) {
+      handleTokenAndFetchAssets();
+    } else if (token) {
+      // Just store the token if assetId is present
+      sessionStorage.setItem("mobile_token", token);
+      console.log("💾 Mobile token stored in sessionStorage (QR code scan)");
+    }
+  }, [token, assetId, isBreakdownPage]);
 
   useEffect(() => {
     const findOrFetchAsset = async () => {
       if (assetId) {
-        // First try to find the asset in the existing assets list
-        const asset = assets.find((a) => a.id.toString() === assetId);
+        console.log("🎯 Asset ID detected:", assetId);
         
-        if (asset) {
-          setSelectedAsset(asset);
-          console.log("🎯 Selected asset from list:", asset);
-        } else {
-          // Always fetch the specific asset when assetId is present (QR code scenario)
-          const tokenToUse = token || sessionStorage.getItem("mobile_token");
-          if (tokenToUse) {
-            setLoadingAsset(true);
-            try {
-              console.log("🔍 Fetching specific asset with ID:", assetId);
-              // Use direct asset endpoint instead of filtering
-              const specificAsset = await mobileAssetService.getAssetById(tokenToUse, assetId);
-              setSelectedAsset(specificAsset);
-              console.log("🎯 Fetched specific asset:", specificAsset);
-              // Only update the assets list if it's empty (don't overwrite existing list)
-              if (assets.length === 0) {
-                setAssets([specificAsset]);
-              }
-            } catch (err) {
-              console.error("❌ Failed to fetch specific asset:", err);
-              setSelectedAsset(null);
-            } finally {
-              setLoadingAsset(false);
-            }
+        // For QR code scenario, directly fetch the specific asset
+        const tokenToUse = token || sessionStorage.getItem("mobile_token");
+        if (tokenToUse) {
+          setLoadingAsset(true);
+          try {
+            console.log("🔍 Fetching specific asset with ID:", assetId);
+            // Use direct asset endpoint instead of filtering
+            const specificAsset = await mobileAssetService.getAssetById(tokenToUse, assetId);
+            setSelectedAsset(specificAsset);
+            console.log("🎯 Fetched specific asset:", specificAsset);
+          } catch (err) {
+            console.error("❌ Failed to fetch specific asset:", err);
+            setSelectedAsset(null);
+          } finally {
+            setLoadingAsset(false);
           }
         }
       } else {
@@ -313,7 +310,7 @@ export const MobileAssetPage = () => {
     };
 
     findOrFetchAsset();
-  }, [assetId, assets, token]);
+  }, [assetId, token]);
 
   // Load more assets for pagination
   const loadMoreAssets = async () => {
