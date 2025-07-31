@@ -657,7 +657,7 @@ export const TicketDashboard = () => {
     if (cardType !== 'total') {
       // Use the correct API parameter format for status filtering
       if (cardType === 'open') {
-        newFilters.complaint_status_fixed_state_not_eq = 'Open';
+        newFilters.complaint_status_fixed_state_not_eq = 'Closed';
         // console.log('Setting Open filter with complaint_status_fixed_state_eq=Open');
       } else if (cardType === 'pending') {
         newFilters.complaint_status_fixed_state_eq = 'Pending';
