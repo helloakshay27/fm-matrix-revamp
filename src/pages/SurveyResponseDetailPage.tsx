@@ -32,19 +32,33 @@ export const SurveyResponseDetailPage = () => {
         questions: [
           {
             id: 1,
-            question: "What is your name?",
-            responseCount: passedData.responses || 0,
-            responses: Array.from({ length: passedData.responses || 0 }, (_, i) => 
-              `Response ${i + 1} - Sample Name`
-            )
+            question: "Survey ID",
+            responseCount: 1,
+            responses: [passedData.id.toString()]
           },
           {
             id: 2,
-            question: "What is your age group?",
-            responseCount: Math.max(0, (passedData.responses || 0) - 1),
-            responses: Array.from({ length: Math.max(0, (passedData.responses || 0) - 1) }, (_, i) => 
-              `Age Group ${i + 1}`
-            )
+            question: "Survey Title",
+            responseCount: 1,
+            responses: [passedData.surveyTitle]
+          },
+          {
+            id: 3,
+            question: "Number of Responses",
+            responseCount: 1,
+            responses: [passedData.responses.toString()]
+          },
+          {
+            id: 4,
+            question: "Number of Tickets",
+            responseCount: 1,
+            responses: [passedData.tickets.toString()]
+          },
+          {
+            id: 5,
+            question: "Expiry Date",
+            responseCount: 1,
+            responses: [passedData.expiryDate]
           }
         ]
       };
