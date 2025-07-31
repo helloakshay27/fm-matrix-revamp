@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchFMUsers, FMUser } from "@/store/slices/fmUserSlice";
+import { fetchFMUsers, FMUser, getFMUsers } from "@/store/slices/fmUserSlice";
 import { fetchUserCounts } from "@/store/slices/userCountsSlice";
 import { StatsCard } from "@/components/StatsCard";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,6 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +39,8 @@ import { ImportFmUsers } from "@/components/ImportFmUsers";
 import axios from "axios";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { toast } from "sonner";
 
 // Transform API data to table format
 const transformFMUserData = (apiUser: FMUser) => ({
@@ -75,14 +76,12 @@ export const FMUserMasterDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const {
-    data: fmUsersResponse,
     loading,
     error,
-  } = useSelector((state: RootState) => state.fmUsers);
+  } = useSelector((state: RootState) => state.getFMUsers);
   const { data: userCounts, loading: countsLoading } = useSelector(
     (state: RootState) => state.userCounts
   );
-  const { toast } = useToast();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
@@ -93,9 +92,7 @@ export const FMUserMasterDashboard = () => {
   const [activeTab, setActiveTab] = useState("handover");
   const [fromUser, setFromUser] = useState("");
   const [toUser, setToUser] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [showImportModal, setShowImportModal] = useState(false);
-  const pageSize = 10;
   const [filters, setFilters] = useState({
     name: "",
     email: "",
@@ -104,18 +101,34 @@ export const FMUserMasterDashboard = () => {
   // Transform API data to table format
   const [fmUsersData, setFmUsersData] = useState<any[]>([]);
   const [filteredFMUsersData, setFilteredFMUsersData] = useState<any[]>([]);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
 
   useEffect(() => {
-    if (fmUsersResponse?.fm_users) {
-      const transformedData = fmUsersResponse.fm_users.map(transformFMUserData);
-      setFmUsersData(transformedData);
-      setFilteredFMUsersData(transformedData);
+    const fetchUsers = async () => {
+      try {
+        const response = await dispatch(getFMUsers({ baseUrl, token, perPage: 10, currentPage: pagination.current_page })).unwrap();
+        const transformedData = response.fm_users.map(transformFMUserData);
+        setFmUsersData(transformedData);
+        setFilteredFMUsersData(transformedData);
+        setPagination({
+          current_page: response.current_page,
+          total_count: response.total_count,
+          total_pages: response.total_pages
+        })
+      } catch (error) {
+        console.log(error)
+      }
     }
-  }, [fmUsersResponse]);
+
+    fetchUsers();
+  }, [])
 
   useEffect(() => {
     setCurrentSection("Master");
-    dispatch(fetchFMUsers());
     dispatch(fetchUserCounts());
   }, [setCurrentSection, dispatch]);
 
@@ -185,10 +198,6 @@ export const FMUserMasterDashboard = () => {
     navigate("/master/user/fm-users/add");
   };
 
-  const handleEditUser = (id: string) => {
-    navigate(`/master/user/fm-users/edit/${id}`);
-  };
-
   const handleViewUser = (id: string) => {
     navigate(`/master/user/fm-users/view/${id}`);
   };
@@ -235,18 +244,11 @@ export const FMUserMasterDashboard = () => {
         )
       );
 
-      toast({
-        title: "Status Updated",
-        description: `User ${isActive ? "activated" : "deactivated"} successfully!`,
-      });
+      toast.success("User status updated successfully!");
     } catch (error) {
       console.error("Status toggle failed:", error);
 
-      toast({
-        title: "Error",
-        description: "Failed to update user status. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to update user status.");
     }
   };
 
@@ -275,10 +277,7 @@ export const FMUserMasterDashboard = () => {
         throw new Error("Failed to update user status");
       }
 
-      toast({
-        title: "Status Updated",
-        description: `User status updated to ${selectedStatus} successfully!`,
-      });
+      toast.success("User status updated successfully!");
 
       setStatusDialogOpen(false);
       setSelectedUser(null);
@@ -288,11 +287,7 @@ export const FMUserMasterDashboard = () => {
     } catch (error) {
       console.error("Error updating user status:", error);
 
-      toast({
-        title: "Error",
-        description: "Failed to update user status. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to update user status.");
     }
   };
 
@@ -336,7 +331,7 @@ export const FMUserMasterDashboard = () => {
       const response = await axios.get(
         `https://${localStorage.getItem(
           "baseUrl"
-        )}/pms/account_setups/fm_users.json?${queryString}`,
+        )}/pms/account_setups/fm_users.json?${queryString}&per_page=10&page=${pagination.current_page}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -347,20 +342,17 @@ export const FMUserMasterDashboard = () => {
       const transformedFilteredData =
         response.data.fm_users.map(transformFMUserData);
       setFilteredFMUsersData(transformedFilteredData);
-      setCurrentPage(1);
+      setPagination({
+        current_page: 1,
+        total_pages: response.data.total_pages,
+        total_count: response.data.total_count,
+      });
       setFilterDialogOpen(false);
 
-      toast({
-        title: "Filters Applied",
-        description: "Users filtered successfully!",
-      });
+      toast.success("Filters applied successfully!");
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Error",
-        description: "Failed to apply filters. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to apply filters.");
     }
   };
 
@@ -391,15 +383,9 @@ export const FMUserMasterDashboard = () => {
   const handleCloneRoleSubmit = async () => {
     try {
       if (activeTab === "handover") {
-        toast({
-          title: "Handover Successful",
-          description: `Role handover from ${fromUser} to ${toUser} completed successfully!`,
-        });
+        toast.success("Role handover successful!");
       } else {
-        toast({
-          title: "Clone Successful",
-          description: `Role cloned to ${toUser} successfully!`,
-        });
+        toast.success("Role cloning successful!");
       }
 
       setCloneRoleDialogOpen(false);
@@ -407,11 +393,7 @@ export const FMUserMasterDashboard = () => {
       setToUser("");
       setActiveTab("handover");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to process request. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to clone or handover role.");
     }
   };
 
@@ -421,12 +403,13 @@ export const FMUserMasterDashboard = () => {
       email: "",
     });
     setFilteredFMUsersData(fmUsersData);
-    setCurrentPage(1);
+    setPagination({
+      ...pagination,
+      current_page: 1
+    })
     setFilterDialogOpen(false);
-    toast({
-      title: "Filters Reset",
-      description: "Filters have been reset successfully!",
-    });
+
+    toast.success("Filters reset successfully!");
   };
 
   const handleFilterChange = (field: string, value: string) => {
@@ -434,6 +417,137 @@ export const FMUserMasterDashboard = () => {
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handlePageChange = async (page: number) => {
+    setPagination((prev) => ({
+      ...prev,
+      current_page: page,
+    }));
+    try {
+      const response = await dispatch(getFMUsers({ baseUrl, token, perPage: 10, currentPage: page })).unwrap();
+      const transformedData = response.fm_users.map(transformFMUserData);
+      setFmUsersData(transformedData);
+      setFilteredFMUsersData(transformedData);
+    } catch (error) {
+      toast.error('Failed to fetch bookings');
+    }
+  };
+
+  const renderPaginationItems = () => {
+    if (!pagination.total_pages || pagination.total_pages <= 0) {
+      return null;
+    }
+    const items = [];
+    const totalPages = pagination.total_pages;
+    const currentPage = pagination.current_page;
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      items.push(
+        <PaginationItem key={1} className='cursor-pointer'>
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+            disabled={loading}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1" >
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                disabled={loading}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                disabled={loading}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find((item) => item.key === i.toString())) {
+            items.push(
+              <PaginationItem key={i} className='cursor-pointer'>
+                <PaginationLink
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                  disabled={loading}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+              disabled={loading}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+              disabled={loading}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
   };
 
   // Render actions for each row
@@ -571,8 +685,6 @@ export const FMUserMasterDashboard = () => {
         renderActions={renderActions}
         renderCell={renderCell}
         storageKey="fm-user-master-table"
-        pagination={true}
-        pageSize={pageSize}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search users..."
@@ -584,6 +696,26 @@ export const FMUserMasterDashboard = () => {
         loading={loading}
         selectable={false}
       />
+
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                className={pagination.current_page === 1 || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            {renderPaginationItems()}
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                className={pagination.current_page === pagination.total_pages || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
 
       <ImportFmUsers
         open={showImportModal}
