@@ -1,4 +1,10 @@
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import axios from 'axios';
+export interface PaginationInfo {
+  current_page: number;
+  total_count: number;
+  total_pages: number;
+}
 
 export interface FacilityBookingResponse {
   id: number;
@@ -27,6 +33,12 @@ export interface BookingData {
   createdOn: string;
   source: string;
 }
+
+export interface FacilityBookingsResponse {
+  bookings: BookingData[];
+  pagination: PaginationInfo;
+}
+
 
 // Helper function to format date from ISO string to "9 June 2025" format
 const formatDate = (dateString: string): string => {
@@ -68,31 +80,33 @@ const transformBookingData = (apiData: FacilityBookingResponse): BookingData => 
   };
 };
 
-export const fetchFacilityBookings = async (): Promise<BookingData[]> => {
+export const fetchFacilityBookings = async ({ baseUrl, token, pageSize, currentPage }): Promise<FacilityBookingsResponse[]> => {
   try {
-    const response = await fetch(getFullUrl(API_CONFIG.ENDPOINTS.FACILITY_BOOKINGS), {
-      method: 'GET',
+    const response = await axios.get(`https://${baseUrl}/pms/admin/facility_bookings.json?per_page=${pageSize}&page=${currentPage}`, {
       headers: {
-        'Authorization': getAuthHeader(),
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
-    });
+    })
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    console.log(response)
+
+    const data = response.data;
+
+    const bookingsRaw = data.facility_bookings || [];
+    const pagination = data.pagination || {
+      current_page: 1,
+      total_count: bookingsRaw.length,
+      total_pages: 1,
+    };
+
+    if (!Array.isArray(bookingsRaw)) {
+      console.error('Expected array of bookings, got:', typeof bookingsRaw);
+      return { bookings: [], pagination };
     }
 
-    const data = await response.json();
+    const bookings = bookingsRaw.map(transformBookingData);
 
-    // Handle both direct array and nested structure
-    const bookings = data.facility_bookings || data;
-
-    if (!Array.isArray(bookings)) {
-      console.error('Expected array of bookings, got:', typeof bookings);
-      return [];
-    }
-
-    return bookings.map(transformBookingData);
+    return { bookings, pagination };
   } catch (error) {
     console.error('Error fetching facility bookings:', error);
     throw error;

@@ -19,7 +19,7 @@ export const fetchServicesData = createAsyncThunk(
 
       // Add filter parameters
       if (filters.serviceName) {
-        params['q[service_name_cont]'] = filters.serviceName;
+        params['q[service_name_or_reference_number_cont]'] = filters.serviceName;
       }
       if (filters.building) {
         params['q[building_id_eq]'] = filters.building;
