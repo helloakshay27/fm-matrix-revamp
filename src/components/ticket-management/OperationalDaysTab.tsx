@@ -24,7 +24,7 @@ import { Upload, Download } from 'lucide-react';
 
 const timeOptions = Array.from({ length: 24 }, (_, i) => {
   const hour = i.toString().padStart(2, '0');
-  return [`${hour}:00`, `${hour}:30`];
+  return [`${hour}:00`, `${hour}:15`, `${hour}:30`, `${hour}:45`];
 }).flat();
 
 const daysOfWeek = [

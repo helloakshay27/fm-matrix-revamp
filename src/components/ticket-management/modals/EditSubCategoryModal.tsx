@@ -38,6 +38,7 @@ import { fetchRooms } from '@/store/slices/roomsSlice';
 import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 
 const subCategorySchema = z.object({
+  name: z.string().min(1, 'Subcategory name is required'),
   category: z.string().min(1, 'Category selection is required'),
   customerEnabled: z.boolean(),
   building: z.boolean(),
@@ -50,17 +51,40 @@ const subCategorySchema = z.object({
 type SubCategoryFormData = z.infer<typeof subCategorySchema>;
 
 interface SubCategoryType {
-  id: string;
-  helpdesk_category_name: string;
+  id: string | number;
   name: string;
+  active?: number | null;
+  customer_enabled?: boolean | null;
+  helpdesk_category_id: number;
+  helpdesk_category_name: string;
   icon_url: string;
-  customer_enabled?: boolean;
+  created_at?: string;
+  updated_at?: string;
   location_config: {
     building_enabled: boolean;
     wing_enabled: boolean;
     zone_enabled: boolean;
+    area_enabled?: boolean;
     floor_enabled: boolean;
     room_enabled: boolean;
+    building_ids?: string[];
+    wing_ids?: string[];
+    zone_ids?: string[] | null;
+    area_ids?: string[] | null;
+    floor_ids?: string[];
+    room_ids?: string[];
+  };
+  applicable_locations?: {
+    buildings: Array<{ id: number; name: string }>;
+    wings: Array<{ id: number; name: string }>;
+    zones: Array<{ id: number; name: string }>;
+    areas: Array<{ id: number; name: string }>;
+    floors: Array<{ id: number; name: string }>;
+    rooms: Array<{ id: number; name: string }>;
+  };
+  complaint_worker?: {
+    id: number;
+    assign_to: string[];
   };
 }
 
@@ -106,6 +130,8 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
   );
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadedSubCategory, setLoadedSubCategory] = useState<SubCategoryType | null>(null);
   const [engineers, setEngineers] = useState<Engineer[]>([]);
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [tags, setTags] = useState<string[]>(['']);
@@ -127,6 +153,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
   const form = useForm<SubCategoryFormData>({
     resolver: zodResolver(subCategorySchema),
     defaultValues: {
+      name: '',
       category: '',
       customerEnabled: false,
       building: false,
@@ -146,22 +173,13 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
       dispatch(fetchZones());
       dispatch(fetchRooms());
       fetchEngineers();
+      fetchSubCategoryDetails();
     }
-  }, [open, dispatch]);
+  }, [open, dispatch, subCategory?.id]);
 
   useEffect(() => {
-    if (subCategory && open) {
-      form.reset({
-        category: subCategory.helpdesk_category_name,
-        customerEnabled: subCategory.customer_enabled || false,
-        building: subCategory.location_config?.building_enabled || false,
-        wing: subCategory.location_config?.wing_enabled || false,
-        floor: subCategory.location_config?.floor_enabled || false,
-        zone: subCategory.location_config?.zone_enabled || false,
-        room: subCategory.location_config?.room_enabled || false,
-      });
-      
-      // Reset other state
+    if (subCategory && open && !loadedSubCategory) {
+      // Reset state when opening modal with new subcategory
       setTags(['']);
       setSelectedEngineers([]);
       setSelectedBuildings([]);
@@ -171,7 +189,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
       setSelectedRooms([]);
       setIconFile(null);
     }
-  }, [subCategory, open, form]);
+  }, [subCategory, open, loadedSubCategory]);
 
   const fetchEngineers = async () => {
     try {
@@ -184,6 +202,63 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
       setEngineers(formattedEngineers);
     } catch (error) {
       console.error('Error fetching engineers:', error);
+    }
+  };
+
+  const fetchSubCategoryDetails = async () => {
+    if (!subCategory?.id) return;
+    
+    try {
+      setIsLoading(true);
+      const response = await ticketManagementAPI.getSubCategories();
+      const subCategories = response?.sub_categories || [];
+      const foundSubCategory = subCategories.find((sub: SubCategoryType) => 
+        sub.id.toString() === subCategory.id.toString()
+      );
+      
+      if (foundSubCategory) {
+        setLoadedSubCategory(foundSubCategory);
+        
+        // Update form with actual data
+        form.reset({
+          name: foundSubCategory.name,
+          category: foundSubCategory.helpdesk_category_id.toString(),
+          customerEnabled: foundSubCategory.customer_enabled || false,
+          building: foundSubCategory.location_config?.building_enabled || false,
+          wing: foundSubCategory.location_config?.wing_enabled || false,
+          floor: foundSubCategory.location_config?.floor_enabled || false,
+          zone: foundSubCategory.location_config?.zone_enabled || false,
+          room: foundSubCategory.location_config?.room_enabled || false,
+        });
+
+        // Set selected engineers
+        if (foundSubCategory.complaint_worker?.assign_to) {
+          const engineerIds = foundSubCategory.complaint_worker.assign_to.map(id => parseInt(id));
+          setSelectedEngineers(engineerIds);
+        }
+
+        // Set selected locations
+        if (foundSubCategory.location_config?.building_ids) {
+          setSelectedBuildings(foundSubCategory.location_config.building_ids.map(id => parseInt(id)));
+        }
+        if (foundSubCategory.location_config?.wing_ids) {
+          setSelectedWings(foundSubCategory.location_config.wing_ids.map(id => parseInt(id)));
+        }
+        if (foundSubCategory.location_config?.floor_ids) {
+          setSelectedFloors(foundSubCategory.location_config.floor_ids.map(id => parseInt(id)));
+        }
+        if (foundSubCategory.location_config?.zone_ids) {
+          setSelectedZones(foundSubCategory.location_config.zone_ids.map(id => parseInt(id)));
+        }
+        if (foundSubCategory.location_config?.room_ids) {
+          setSelectedRooms(foundSubCategory.location_config.room_ids.map(id => parseInt(id)));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching sub-category details:', error);
+      toast.error('Failed to load sub-category details');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -219,46 +294,92 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
   };
 
   const handleSubmit = async (data: SubCategoryFormData) => {
-    if (!subCategory) return;
+    const currentSubCategory = loadedSubCategory || subCategory;
+    if (!currentSubCategory) return;
 
     setIsSubmitting(true);
     try {
-      const subCategoryData = {
-        helpdesk_category_id: parseInt(data.category),
-        customer_enabled: data.customerEnabled,
-        icon: iconFile,
-        sub_category_tags: tags.filter(tag => tag.trim()),
-        location_enabled: {
-          building: data.building,
-          wing: data.wing,
-          zone: data.zone,
-          floor: data.floor,
-          room: data.room,
-        },
-        location_data: {
-          building_ids: data.building ? selectedBuildings : [],
-          wing_ids: data.wing ? selectedWings : [],
-          zone_ids: data.zone ? selectedZones : [],
-          floor_ids: data.floor ? selectedFloors : [],
-          room_ids: data.room ? selectedRooms : [],
-        },
-        complaint_worker: {
-          assign_to: selectedEngineers,
-        },
-      };
+      const formData = new FormData();
+      
+      // Required fields according to API specification
+      formData.append('helpdesk_category_id', data.category);
+      formData.append('name', data.name);
+      formData.append('helpdesk_sub_category[customer_enabled]', data.customerEnabled ? '1' : '0');
+      
+      // Location enabled flags
+      formData.append('location_enabled[building]', data.building.toString());
+      formData.append('location_enabled[wing]', data.wing.toString());
+      formData.append('location_enabled[floor]', data.floor.toString());
+      formData.append('location_enabled[zone]', data.zone.toString());
+      formData.append('location_enabled[room]', data.room.toString());
+      
+      // Location data arrays
+      if (data.building && selectedBuildings.length > 0) {
+        selectedBuildings.forEach(id => {
+          formData.append('location_data[building_ids][]', id.toString());
+        });
+      }
+      
+      if (data.wing && selectedWings.length > 0) {
+        selectedWings.forEach(id => {
+          formData.append('location_data[wing_ids][]', id.toString());
+        });
+      }
+      
+      if (data.floor && selectedFloors.length > 0) {
+        selectedFloors.forEach(id => {
+          formData.append('location_data[floor_ids][]', id.toString());
+        });
+      }
+      
+      if (data.zone && selectedZones.length > 0) {
+        selectedZones.forEach(id => {
+          formData.append('location_data[zone_ids][]', id.toString());
+        });
+      }
+      
+      if (data.room && selectedRooms.length > 0) {
+        selectedRooms.forEach(id => {
+          formData.append('location_data[room_ids][]', id.toString());
+        });
+      }
+      
+      // Icon file if provided
+      if (iconFile) {
+        formData.append('helpdesk_sub_category[icon]', iconFile);
+      }
+      
+      // Engineer assignments
+      if (selectedEngineers.length > 0) {
+        selectedEngineers.forEach(id => {
+          formData.append('complaint_worker[assign_to][]', id.toString());
+        });
+      }
 
-      // Here you would call your API to update the subcategory
-      // await ticketManagementAPI.updateSubCategory(subCategory.id, subCategoryData);
+      console.log('Submitting sub-category update:', {
+        id: currentSubCategory.id,
+        formData: Object.fromEntries(formData.entries())
+      });
+
+      // Call the API to update the subcategory
+      await ticketManagementAPI.updateSubCategory(currentSubCategory.id, formData);
       
       const updatedSubCategory: SubCategoryType = {
-        ...subCategory,
+        ...currentSubCategory,
+        name: data.name,
         customer_enabled: data.customerEnabled,
         location_config: {
+          ...currentSubCategory.location_config,
           building_enabled: data.building,
           wing_enabled: data.wing,
           floor_enabled: data.floor,
           zone_enabled: data.zone,
           room_enabled: data.room,
+          building_ids: data.building ? selectedBuildings.map(id => id.toString()) : [],
+          wing_ids: data.wing ? selectedWings.map(id => id.toString()) : [],
+          zone_ids: data.zone ? selectedZones.map(id => id.toString()) : [],
+          floor_ids: data.floor ? selectedFloors.map(id => id.toString()) : [],
+          room_ids: data.room ? selectedRooms.map(id => id.toString()) : [],
         },
       };
 
@@ -280,8 +401,13 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
           <DialogTitle>Edit Sub-Category</DialogTitle>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="text-gray-500">Loading sub-category details...</div>
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -314,7 +440,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
                 )}
               />
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Icon
                 </label>
@@ -334,15 +460,44 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
                     className="hidden"
                     onChange={handleIconChange}
                   />
-                  {iconFile && (
+                  {iconFile ? (
                     <span className="text-sm text-gray-600">{iconFile.name}</span>
+                  ) : loadedSubCategory?.icon_url ? (
+                    <span className="text-sm text-gray-600">Current icon uploaded</span>
+                  ) : (
+                    <span className="text-sm text-gray-400">No icon</span>
                   )}
                 </div>
-              </div>
+                
+                {loadedSubCategory?.icon_url && !iconFile && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600 mb-1">Current Icon:</p>
+                    <img 
+                      src={loadedSubCategory.icon_url} 
+                      alt="Current Icon" 
+                      className="w-12 h-12 object-cover rounded border"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+               
+                {iconFile && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600 mb-1">New Icon Preview:</p>
+                    <img 
+                      src={URL.createObjectURL(iconFile)} 
+                      alt="New Icon Preview" 
+                      className="w-12 h-12 object-cover rounded border"
+                    />
+                  </div>
+                )}
+              </div> */}
             </div>
 
             {/* Tags Section */}
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Subcategory Tags</h3>
                 <Button type="button" onClick={addTag} variant="outline" size="sm">
@@ -370,7 +525,22 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
                   )}
                 </div>
               ))}
-            </div>
+            </div> */}
+
+            {/* Subcategory Name Field */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Subcategory Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter subcategory name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Engineer Assignment */}
             <div>
@@ -511,7 +681,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
                   )}
                 />
 
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name="customerEnabled"
                   render={({ field }) => (
@@ -525,7 +695,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
                       <FormLabel>Customer Enabled</FormLabel>
                     </FormItem>
                   )}
-                />
+                /> */}
               </div>
               
               {/* Buildings Dropdown - Only show when building checkbox is checked */}
@@ -814,6 +984,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
             </div>
           </form>
         </Form>
+        )}
       </DialogContent>
     </Dialog>
   );
