@@ -1,162 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Download, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-// Mock detailed response data - in real app this would come from API
-const mockDetailedResponseData: Record<string, any> = {
-  "12345": {
-    id: 12345,
-    surveyTitle: "Survey Title 123",
-    totalResponses: 20,
-    type: "Survey",
-    questions: [
-      {
-        id: 1,
-        question: "What is your name?",
-        responseCount: 20,
-        responses: [
-          "Abhidhya Vijay Tapal",
-          "Rajesh Kumar", 
-          "Priya Sharma",
-          "Amit Singh",
-          "Neha Patel"
-        ]
-      },
-      {
-        id: 2,
-        question: "What is your age group?",
-        responseCount: 16,
-        responses: [
-          "25-30",
-          "18-25",
-          "30-35",
-          "25-30",
-          "18-25"
-        ]
-      }
-    ]
-  },
-  "12346": {
-    id: 12346,
-    surveyTitle: "Customer Satisfaction Survey",
-    totalResponses: 12,
-    type: "Survey",
-    questions: [
-      {
-        id: 1,
-        question: "How satisfied are you with our service?",
-        responseCount: 12,
-        responses: [
-          "Very Satisfied",
-          "Satisfied",
-          "Very Satisfied",
-          "Neutral",
-          "Satisfied"
-        ]
-      },
-      {
-        id: 2,
-        question: "Rate our customer support",
-        responseCount: 12,
-        responses: [
-          "Excellent",
-          "Good",
-          "Average",
-          "Good",
-          "Excellent"
-        ]
-      }
-    ]
-  },
-  "12347": {
-    id: 12347,
-    surveyTitle: "Employee Feedback Survey",
-    totalResponses: 25,
-    type: "Survey",
-    questions: [
-      {
-        id: 1,
-        question: "How would you rate your work environment?",
-        responseCount: 25,
-        responses: [
-          "Excellent",
-          "Good",
-          "Average",
-          "Good",
-          "Excellent"
-        ]
-      }
-    ]
-  }
-};
 
 export const SurveyResponseDetailPage = () => {
   const { surveyId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("summary");
+  const [surveyData, setSurveyData] = useState<any>(null);
 
-  // Get survey data from navigation state or fall back to mock data
-  const passedSurveyData = location.state?.surveyData;
-  console.log('Detail page - Received navigation state:', JSON.stringify(location.state, null, 2));
-  console.log('Detail page - Using passed data:', passedSurveyData ? 'YES' : 'NO - Using mock data');
-  
-  const surveyData = passedSurveyData ? {
-    id: passedSurveyData.id,
-    surveyTitle: passedSurveyData.surveyTitle,
-    totalResponses: passedSurveyData.responses || 0,
-    type: "Survey",
-    tickets: passedSurveyData.tickets || 0,
-    expiryDate: passedSurveyData.expiryDate,
-    questions: [
-      {
-        id: 1,
-        question: "What is your name?",
-        responseCount: passedSurveyData.responses || 0,
-        responses: [
-          "Abhidhya Vijay Tapal",
-          "Rajesh Kumar", 
-          "Priya Sharma",
-          "Amit Singh",
-          "Neha Patel"
-        ].slice(0, passedSurveyData.responses || 5)
-      },
-      {
-        id: 2,
-        question: "What is your age group?",
-        responseCount: Math.max(0, (passedSurveyData.responses || 0) - 1),
-        responses: [
-          "25-30",
-          "18-25",
-          "30-35",
-          "25-30",
-          "18-25"
-        ].slice(0, Math.max(0, (passedSurveyData.responses || 0) - 1))
-      }
-    ]
-  } : (surveyId ? mockDetailedResponseData[surveyId as any] : null);
-
-  console.log('Detail page - Final survey data:', {
-    id: surveyData?.id,
-    title: surveyData?.surveyTitle,
-    totalResponses: surveyData?.totalResponses
-  });
-
-  if (!surveyData) {
-    return (
-      <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
-        <div className="text-center">
-          <h1 className="text-xl font-semibold text-gray-800 mb-4">Survey not found</h1>
-          <Button onClick={() => navigate('/maintenance/survey/response')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Response List
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    console.log('=== SURVEY DETAIL PAGE DEBUGGING ===');
+    console.log('Survey ID from URL:', surveyId);
+    console.log('Navigation state:', location.state);
+    console.log('Passed survey data:', location.state?.surveyData);
+    
+    // Get data from navigation state
+    const passedData = location.state?.surveyData;
+    
+    if (passedData) {
+      console.log('✅ Using REAL data from table row:', passedData);
+      const processedData = {
+        id: passedData.id,
+        surveyTitle: passedData.surveyTitle,
+        totalResponses: passedData.responses || 0,
+        type: "Survey",
+        tickets: passedData.tickets || 0,
+        expiryDate: passedData.expiryDate,
+        questions: [
+          {
+            id: 1,
+            question: "What is your name?",
+            responseCount: passedData.responses || 0,
+            responses: Array.from({ length: passedData.responses || 0 }, (_, i) => 
+              `Response ${i + 1} - Sample Name`
+            )
+          },
+          {
+            id: 2,
+            question: "What is your age group?",
+            responseCount: Math.max(0, (passedData.responses || 0) - 1),
+            responses: Array.from({ length: Math.max(0, (passedData.responses || 0) - 1) }, (_, i) => 
+              `Age Group ${i + 1}`
+            )
+          }
+        ]
+      };
+      setSurveyData(processedData);
+      console.log('Processed survey data:', processedData);
+    } else {
+      console.log('❌ No data passed - user accessed page directly');
+      // If no data passed, redirect back to response list
+      navigate('/maintenance/survey/response');
+    }
+  }, [surveyId, location.state, navigate]);
 
   const handleDownload = () => {
     console.log('Download survey responses');
@@ -169,6 +68,16 @@ export const SurveyResponseDetailPage = () => {
   const handleDownloadQuestion = (questionId: number) => {
     console.log('Download question responses:', questionId);
   };
+
+  if (!surveyData) {
+    return (
+      <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
+        <div className="text-center">
+          <h1 className="text-xl font-semibold text-gray-800 mb-4">Loading survey details...</h1>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
@@ -229,7 +138,7 @@ export const SurveyResponseDetailPage = () => {
           </div>
 
           <TabsContent value="summary" className="space-y-6">
-            {surveyData.questions.map((question) => (
+            {surveyData.questions.map((question: any) => (
               <div key={question.id} className="bg-gray-50 p-4 rounded-lg">
                 <div className="flex items-center justify-between mb-3">
                   <div>
@@ -258,7 +167,7 @@ export const SurveyResponseDetailPage = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  {question.responses.map((response, index) => (
+                  {question.responses.map((response: string, index: number) => (
                     <div 
                       key={index} 
                       className="bg-white p-3 rounded border text-gray-700"
@@ -266,11 +175,9 @@ export const SurveyResponseDetailPage = () => {
                       {response}
                     </div>
                   ))}
-                  {question.responses.length < question.responseCount && (
-                    <div className="text-center py-2">
-                      <Button variant="ghost" size="sm" className="text-gray-500">
-                        Show {question.responseCount - question.responses.length} more responses...
-                      </Button>
+                  {question.responses.length === 0 && (
+                    <div className="bg-white p-3 rounded border text-gray-500 text-center">
+                      No responses yet
                     </div>
                   )}
                 </div>
@@ -286,7 +193,7 @@ export const SurveyResponseDetailPage = () => {
                   <thead>
                     <tr className="bg-gray-100">
                       <th className="border border-gray-300 p-2 text-left">Response #</th>
-                      {surveyData.questions.map((question) => (
+                      {surveyData.questions.map((question: any) => (
                         <th key={question.id} className="border border-gray-300 p-2 text-left">
                           {question.question}
                         </th>
@@ -297,7 +204,7 @@ export const SurveyResponseDetailPage = () => {
                     {Array.from({ length: Math.min(5, surveyData.totalResponses) }).map((_, index) => (
                       <tr key={index}>
                         <td className="border border-gray-300 p-2">{index + 1}</td>
-                        {surveyData.questions.map((question) => (
+                        {surveyData.questions.map((question: any) => (
                           <td key={question.id} className="border border-gray-300 p-2">
                             {question.responses[index] || 'No response'}
                           </td>
