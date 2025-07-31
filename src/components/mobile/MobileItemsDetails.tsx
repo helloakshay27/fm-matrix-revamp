@@ -268,7 +268,7 @@ export const MobileItemsDetails: React.FC = () => {
                 <span className="text-gray-900 font-medium">{item.name}</span>
                 {item.price != null && item.price !== undefined && item.price > 0 && (
                   <div className="text-sm text-gray-600 mt-1">
-                    ₹{item.price} × {item.quantity} = ₹
+                    ORM{item.price} × {item.quantity} = ORM
                     {item.price * item.quantity}
                   </div>
                 )}
@@ -301,7 +301,7 @@ export const MobileItemsDetails: React.FC = () => {
                   Total Amount
                 </span>
                 <span className="text-xl font-bold text-red-600">
-                  ₹{getTotalPrice()}
+                  ORM{getTotalPrice()}
                 </span>
               </div>
               <div className="text-sm text-gray-600 mt-1">
@@ -391,13 +391,13 @@ export const MobileItemsDetails: React.FC = () => {
               <Button
                 onClick={handleClearNote}
                 variant="outline"
-                className="flex-1 border-2 border-red-600 text-red-600 bg-transparent hover:bg-red-50 py-3 rounded-lg font-medium"
+                className="flex-1 border-2 border-red-600 text-red-600 bg-white hover:bg-red-50 py-3 rounded-lg font-medium"
               >
                 Clear
               </Button>
               <Button
                 onClick={handleSaveNote}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium shadow-lg"
               >
                 Save
               </Button>
