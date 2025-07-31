@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X, Plus, FileText, FileSpreadsheet, File, Eye } from 'lucide-react';
+import { ArrowLeft, X, Plus, FileText, FileSpreadsheet, File, Eye, Download } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText } from '@mui/material';
@@ -554,6 +554,43 @@ export const EditAMCPage = () => {
     );
   }
 
+  const downloadAttachment = async (file) => {
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+
+      if (!token || !baseUrl) {
+        console.error('Missing token or base URL');
+        return;
+      }
+
+      const apiUrl = `https://${baseUrl}/attachfiles/${file.attachment_id}?show_file=true`;
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Download failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.document_name || `document_${file.attachment_id}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading file:', err);
+    }
+  };
+
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -1098,9 +1135,10 @@ export const EditAMCPage = () => {
                             </div>
                           )}
                           <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.document_name}</span>
-                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => window.open(file.document_url, '_blank')}>
-                            <Eye className="w-3 h-3" />
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(file)}>
+                            <Download className="w-3 h-3" />
                           </Button>
+
                         </div>
                       );
                     })}
@@ -1154,9 +1192,10 @@ export const EditAMCPage = () => {
                             </div>
                           )}
                           <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
-                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-600" onClick={() => removeFile('invoices', index)}>
-                            <X className="w-3 h-3" />
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(file)}>
+                            <Download className="w-3 h-3" />
                           </Button>
+
                         </div>
                       );
                     })}

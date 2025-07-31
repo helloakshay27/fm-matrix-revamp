@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { ArrowLeft, File, FileSpreadsheet, FileText, Upload, X } from 'lucide-react';
+import { ArrowLeft, Download, File, FileSpreadsheet, FileText, Upload, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, CircularProgress, FormHelperText } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
@@ -679,15 +679,88 @@ export const EditServicePage = () => {
 
           {(existingFiles.length > 0 || selectedFile.length > 0) && (
             <div className="flex flex-wrap gap-3 mt-4">
+              {/* EXISTING FILES */}
               {existingFiles.map((file) => {
                 const isImage = file.doctype.startsWith('image');
+
+                const handleDownload = async () => {
+                  if (!file?.id) {
+                    console.error('Attachment ID is undefined', file);
+                    const fallbackLink = document.createElement('a');
+                    fallbackLink.href = file.document;
+                    fallbackLink.download = `Document_${file.filename || 'unknown'}`;
+                    document.body.appendChild(fallbackLink);
+                    fallbackLink.click();
+                    document.body.removeChild(fallbackLink);
+                    return;
+                  }
+
+                  try {
+                    const token = localStorage.getItem('token');
+                    const baseUrl = localStorage.getItem('baseUrl');
+                    if (!token || !baseUrl) {
+                      console.error('Missing token or base URL');
+                      return;
+                    }
+
+                    const apiUrl = `https://${baseUrl}/attachfiles/${file.id}?show_file=true`;
+
+                    const response = await fetch(apiUrl, {
+                      method: 'GET',
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                      },
+                    });
+
+                    if (!response.ok) {
+                      throw new Error('Failed to fetch the file');
+                    }
+
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `Document_${file.id}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                  } catch (error) {
+                    console.error('Error downloading file:', error);
+                    const fallbackLink = document.createElement('a');
+                    fallbackLink.href = file.document;
+                    fallbackLink.download = `Document_${file.id || file.filename || 'unknown'}`;
+                    document.body.appendChild(fallbackLink);
+                    fallbackLink.click();
+                    document.body.removeChild(fallbackLink);
+                  }
+                };
+
                 return (
                   <div
                     key={file.id}
-                    className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
+                    className="relative flex flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm hover:shadow-md transition"
                   >
+                    {/* Download Icon (only for existing files) */}
+                    <button
+                      type="button"
+                      className="absolute top-1 right-1 p-1 text-gray-600 hover:text-black"
+                      onClick={(e) => {
+                        e.stopPropagation(); // prevents triggering the entire card click
+                        handleDownload();
+                      }}
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* Image or file icon */}
                     {isImage ? (
-                      <img src={file.document} alt="Existing" className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                      <img
+                        src={file.document}
+                        alt="Existing"
+                        className="w-[40px] h-[40px] object-cover rounded border mb-1"
+                      />
                     ) : (
                       <div className="w-10 h-10 flex items-center justify-center border rounded text-blue-600 bg-white mb-1">
                         <FileText className="w-4 h-4" />
@@ -700,6 +773,7 @@ export const EditServicePage = () => {
                 );
               })}
 
+              {/* SELECTED FILES */}
               {selectedFile.map((file, index) => {
                 const isImage = file.type.startsWith('image');
                 const isPdf = file.type === 'application/pdf';
@@ -713,7 +787,11 @@ export const EditServicePage = () => {
                     className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
                   >
                     {isImage ? (
-                      <img src={fileURL} alt={file.name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                      <img
+                        src={fileURL}
+                        alt={file.name}
+                        className="w-[40px] h-[40px] object-cover rounded border mb-1"
+                      />
                     ) : isPdf ? (
                       <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
                         <FileText className="w-4 h-4" />
@@ -733,7 +811,7 @@ export const EditServicePage = () => {
                       variant="ghost"
                       size="sm"
                       className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-600"
-                      onClick={() => removeSelectedFile(index)} // Optional if implemented
+                      onClick={() => removeSelectedFile(index)}
                     >
                       <X className="w-3 h-3" />
                     </Button>
@@ -742,6 +820,8 @@ export const EditServicePage = () => {
               })}
             </div>
           )}
+
+
         </CardContent>
       </Card>
 
