@@ -3,6 +3,8 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Download, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { surveyApi, SurveyResponseData } from '@/services/surveyApi';
+import { toast } from 'sonner';
 
 export const SurveyResponseDetailPage = () => {
   const { surveyId } = useParams();
@@ -10,66 +12,71 @@ export const SurveyResponseDetailPage = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("summary");
   const [surveyData, setSurveyData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiData, setApiData] = useState<SurveyResponseData | null>(null);
 
   useEffect(() => {
-    console.log('=== SURVEY DETAIL PAGE DEBUGGING ===');
-    console.log('Survey ID from URL:', surveyId);
-    console.log('Navigation state:', location.state);
-    console.log('Passed survey data:', location.state?.surveyData);
-    
-    // Get data from navigation state
-    const passedData = location.state?.surveyData;
-    
-    if (passedData) {
-      console.log('✅ Using REAL data from table row:', passedData);
-      const processedData = {
-        id: passedData.id,
-        surveyTitle: passedData.surveyTitle,
-        totalResponses: passedData.responses || 0,
-        type: "Survey",
-        tickets: passedData.tickets || 0,
-        expiryDate: passedData.expiryDate,
-        questions: [
-          {
-            id: 1,
-            question: "Survey ID",
-            responseCount: 1,
-            responses: [passedData.id.toString()]
-          },
-          {
-            id: 2,
-            question: "Survey Title",
-            responseCount: 1,
-            responses: [passedData.surveyTitle]
-          },
-          {
-            id: 3,
-            question: "Number of Responses",
-            responseCount: 1,
-            responses: [passedData.responses.toString()]
-          },
-          {
-            id: 4,
-            question: "Number of Tickets",
-            responseCount: 1,
-            responses: [passedData.tickets.toString()]
-          },
-          {
-            id: 5,
-            question: "Expiry Date",
-            responseCount: 1,
-            responses: [passedData.expiryDate]
-          }
-        ]
-      };
-      setSurveyData(processedData);
-      console.log('Processed survey data:', processedData);
-    } else {
-      console.log('❌ No data passed - user accessed page directly');
-      // If no data passed, redirect back to response list
-      navigate('/maintenance/survey/response');
-    }
-  }, [surveyId, location.state, navigate]);
+    const fetchSurveyData = async () => {
+      if (!surveyId) {
+        console.error('No survey ID provided');
+        navigate('/maintenance/survey/response');
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        console.log('Fetching survey response for ID:', surveyId);
+        const response = await surveyApi.getSurveyResponseById(surveyId);
+        
+        if (!response) {
+          console.error('Survey response not found for ID:', surveyId);
+          toast.error('Survey response not found');
+          navigate('/maintenance/survey/response');
+          return;
+        }
+
+        console.log('Fetched survey response data:', response);
+        setApiData(response);
+
+        // Process the parsed_response to create questions
+        const questions: any[] = [];
+        if (response.parsed_response) {
+          Object.entries(response.parsed_response).forEach(([key, value], index) => {
+            questions.push({
+              id: index + 1,
+              question: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
+              responseCount: 1,
+              responses: [String(value)]
+            });
+          });
+        }
+
+        const processedData = {
+          id: response.id,
+          surveyTitle: response.survey_title,
+          totalResponses: response.response_count,
+          type: "Survey",
+          tickets: 0, // Not available in API response
+          expiryDate: new Date(response.created_at).toLocaleDateString(),
+          location: response.location,
+          createdBy: response.created_by.full_name,
+          questions: questions
+        };
+
+        setSurveyData(processedData);
+        console.log('Processed survey data:', processedData);
+
+      } catch (error) {
+        console.error('Error fetching survey data:', error);
+        toast.error('Failed to fetch survey data');
+        navigate('/maintenance/survey/response');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSurveyData();
+  }, [surveyId, navigate]);
 
   const handleDownload = () => {
     console.log('Download survey responses');
@@ -104,11 +111,13 @@ export const SurveyResponseDetailPage = () => {
     }
   };
 
-  if (!surveyData) {
+  if (!surveyData || isLoading) {
     return (
       <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
         <div className="text-center">
-          <h1 className="text-xl font-semibold text-gray-800 mb-4">Loading survey details...</h1>
+          <h1 className="text-xl font-semibold text-gray-800 mb-4">
+            {isLoading ? 'Loading survey details...' : 'Survey not found'}
+          </h1>
         </div>
       </div>
     );
@@ -220,21 +229,23 @@ export const SurveyResponseDetailPage = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="p-3 text-left text-sm font-medium text-gray-700">Sr. No.</th>
                       <th className="p-3 text-left text-sm font-medium text-gray-700">Survey ID</th>
                       <th className="p-3 text-left text-sm font-medium text-gray-700">Survey Title</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700">No. Of Responses</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700">No. Of Tickets</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700">Expiry Date</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">Total Questions</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">Response Count</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">Created By</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">Location</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700">Created Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="p-3 text-sm text-gray-700">1</td>
                       <td className="p-3 text-sm text-gray-700">{surveyData.id}</td>
-                      <td className="p-3 text-sm text-gray-700">{surveyData.surveyTitle}</td>
+                      <td className="p-3 text-sm text-gray-700">{surveyData.surveyTitle || "N/A"}</td>
+                      <td className="p-3 text-sm text-gray-700 text-center">{apiData?.question_count || surveyData.questions.length}</td>
                       <td className="p-3 text-sm text-gray-700 text-center">{surveyData.totalResponses}</td>
-                      <td className="p-3 text-sm text-gray-700 text-center">{surveyData.tickets}</td>
+                      <td className="p-3 text-sm text-gray-700">{surveyData.createdBy}</td>
+                      <td className="p-3 text-sm text-gray-700">{surveyData.location}</td>
                       <td className="p-3 text-sm text-gray-700">{surveyData.expiryDate}</td>
                     </tr>
                   </tbody>
