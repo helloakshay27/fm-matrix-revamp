@@ -114,18 +114,18 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
     setSubmitting(true);
 
     const form = new FormData();
-    form.append('pms_asset_amc[amc_visit_logs_attributes][0][visit_number]', formData.vendor);
-    form.append('pms_asset_amc[amc_visit_logs_attributes][0][technician_id]', formData.technician);
-    form.append('pms_asset_amc[amc_visit_logs_attributes][0][visit_date]', formData.startDate);
-    form.append('pms_asset_amc[amc_visit_logs_attributes][0][remarks]', formData.remarks);
+    form.append('visit_number', formData.vendor);
+    form.append('technician_id', formData.technician);
+    form.append('visit_date', formData.startDate);
+    form.append('remarks', formData.remarks);
 
     if (attachment) {
-      form.append('pms_asset_amc[amc_visit_logs_attributes][0][document]', attachment);
+      form.append('document', attachment);
     }
 
     try {
-      await axios.patch(
-        `https://${baseUrl}/pms/asset_amcs/${amcId}.json`,
+      await axios.post(
+        `https://${baseUrl}/pms/asset_amcs/${amcId}/add_visit_log.json`,
         form,
         {
           headers: {
