@@ -1,111 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModal';
-
-const mockResponseData = [
-  {
-    id: 12345,
-    surveyTitle: "Survey Title 123",
-    responses: 1,
-    tickets: 1,
-    expiryDate: "01/07/2025"
-  },
-  {
-    id: 12345,
-    surveyTitle: "Survey Title 123",
-    responses: 2,
-    tickets: 2,
-    expiryDate: "01/07/2025"
-  },
-  {
-    id: 12345,
-    surveyTitle: "Survey Title 123",
-    responses: 2,
-    tickets: 2,
-    expiryDate: "01/07/2025"
-  },
-  {
-    id: 12345,
-    surveyTitle: "Survey Title 123",
-    responses: 4,
-    tickets: 4,
-    expiryDate: "01/07/2025"
-  },
-  {
-    id: 12345,
-    surveyTitle: "Survey Title 123",
-    responses: 5,
-    tickets: 5,
-    expiryDate: "01/07/2025"
-  },
-  {
-    id: 12345,
-    surveyTitle: "Survey Title 123",
-    responses: 7,
-    tickets: 7,
-    expiryDate: "01/07/2025"
-  },
-  {
-    id: 12345,
-    surveyTitle: "Survey Title 123",
-    responses: 8,
-    tickets: 8,
-    expiryDate: "01/07/2025"
-  },
-  {
-    id: 12346,
-    surveyTitle: "Customer Satisfaction Survey",
-    responses: 12,
-    tickets: 3,
-    expiryDate: "15/07/2025"
-  },
-  {
-    id: 12347,
-    surveyTitle: "Employee Feedback Survey",
-    responses: 25,
-    tickets: 8,
-    expiryDate: "20/07/2025"
-  },
-  {
-    id: 12348,
-    surveyTitle: "Product Quality Assessment",
-    responses: 18,
-    tickets: 5,
-    expiryDate: "25/07/2025"
-  },
-  {
-    id: 12349,
-    surveyTitle: "Service Quality Survey",
-    responses: 30,
-    tickets: 12,
-    expiryDate: "30/07/2025"
-  },
-  {
-    id: 12350,
-    surveyTitle: "Market Research Survey",
-    responses: 45,
-    tickets: 15,
-    expiryDate: "05/08/2025"
-  },
-  {
-    id: 12351,
-    surveyTitle: "Training Effectiveness Survey",
-    responses: 22,
-    tickets: 7,
-    expiryDate: "10/08/2025"
-  },
-  {
-    id: 12352,
-    surveyTitle: "Event Feedback Survey",
-    responses: 35,
-    tickets: 10,
-    expiryDate: "15/08/2025"
-  }
-];
+import { surveyApi, SurveyResponseData } from '@/services/surveyApi';
+import { toast } from 'sonner';
 
 export const SurveyResponsePage = () => {
   console.log('SurveyResponsePage component loaded successfully with EnhancedTable');
@@ -113,7 +14,28 @@ export const SurveyResponsePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
-  const [responseData, setResponseData] = useState(mockResponseData);
+  const [responseData, setResponseData] = useState<SurveyResponseData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Fetch survey responses on component mount
+  useEffect(() => {
+    fetchSurveyResponses();
+  }, []);
+
+  const fetchSurveyResponses = async () => {
+    setIsLoading(true);
+    try {
+      const data = await surveyApi.getAllSurveyResponses();
+      console.log('Fetched survey responses:', data);
+      setResponseData(data);
+    } catch (error) {
+      console.error('Error fetching survey responses:', error);
+      toast.error('Failed to fetch survey responses');
+      setResponseData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleViewDetails = (item: any) => {
     console.log('Eye button clicked - item data:', JSON.stringify(item, null, 2));
@@ -140,11 +62,11 @@ export const SurveyResponsePage = () => {
     { key: 'id', label: 'ID', sortable: true, draggable: true },
     { key: 'surveyTitle', label: 'Survey Title', sortable: true, draggable: true },
     { key: 'responses', label: 'No. Of Responses', sortable: true, draggable: true },
-    { key: 'tickets', label: 'No. Of Tickets', sortable: true, draggable: true },
-    { key: 'expiryDate', label: 'Expiry Date', sortable: true, draggable: true }
+    // { key: 'tickets', label: 'No. Of Tickets', sortable: true, draggable: true },
+    // { key: 'expiryDate', label: 'Expiry Date', sortable: true, draggable: true }
   ];
 
-  const renderCell = (item: any, columnKey: string) => {
+  const renderCell = (item: SurveyResponseData, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
         return (
@@ -155,18 +77,24 @@ export const SurveyResponsePage = () => {
             <Eye className="w-4 h-4" />
           </button>
         );
+      case 'id':
+        return item.id;
+      case 'surveyTitle':
+        return item.survey_title || 'N/A';
       case 'responses':
+        return item.response_count || 0;
       case 'tickets':
-        return <div className="text-center">{item[columnKey]}</div>;
+        return String(item[columnKey as keyof SurveyResponseData] || '');
       default:
-        return item[columnKey];
+        const value = item[columnKey as keyof SurveyResponseData];
+        return typeof value === 'object' ? JSON.stringify(value) : String(value || '');
     }
   };
 
 
   // Filter responses based on search term
   const filteredResponses = responseData.filter(item =>
-    item.surveyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.survey_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.id.toString().includes(searchTerm)
   );
 
@@ -228,26 +156,32 @@ export const SurveyResponsePage = () => {
 
       {/* Enhanced Data Table */}
       <div>
-        <EnhancedTable
-          data={filteredResponses}
-          columns={columns}
-          selectable={true}
-          renderCell={renderCell}
-          storageKey="survey-response-table"
-          enableExport={true}
-          exportFileName="survey-response-data"
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          searchPlaceholder="Search responses..."
-          pagination={true}
-          pageSize={10}
-          leftActions={
-            <div className="flex flex-wrap gap-2">
-              {/* Filter button is now positioned next to search input in EnhancedTable */}
-            </div>
-          }
-          onFilterClick={handleFilterClick}
-        />
+        {isLoading ? (
+          <div className="flex justify-center items-center p-8">
+            <div className="text-gray-500">Loading survey responses...</div>
+          </div>
+        ) : (
+          <EnhancedTable
+            data={filteredResponses}
+            columns={columns}
+            // selectable={true}
+            renderCell={renderCell}
+            storageKey="survey-response-table"
+            enableExport={true}
+            exportFileName="survey-response-data"
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search responses..."
+            pagination={true}
+            pageSize={10}
+            leftActions={
+              <div className="flex flex-wrap gap-2">
+                {/* Filter button is now positioned next to search input in EnhancedTable */}
+              </div>
+            }
+            onFilterClick={handleFilterClick}
+          />
+        )}
       </div>
 
       {/* Filter Modal */}
