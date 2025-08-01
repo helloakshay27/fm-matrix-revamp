@@ -44,9 +44,9 @@ export const fetchFMUsers = createAsyncThunk(
   }
 )
 
-export const getFMUsers = createAsyncThunk("getFMUsers", async ({ baseUrl, token, perPage, currentPage, status }: { baseUrl: string, token: string, perPage: number, currentPage: number, status: string }, { rejectWithValue }) => {
+export const getFMUsers = createAsyncThunk("getFMUsers", async ({ baseUrl, token, perPage, currentPage, status }: { baseUrl: string, token: string, perPage: number, currentPage: number, status?: string }, { rejectWithValue }) => {
   try {
-    const response = await axios.get(`https://${baseUrl}/pms/account_setups/fm_users.json?per_page=${perPage}&page=${currentPage}&q[lock_user_permissions_status_eq]=${status}`, {
+    const response = await axios.get(`https://${baseUrl}/pms/account_setups/fm_users.json?per_page=${perPage}&page=${currentPage}&q[lock_user_permission_status_eq]=${status}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
