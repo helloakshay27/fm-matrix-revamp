@@ -45,21 +45,25 @@ const initialState: OccupantUsersState = {
 // Async thunk to fetch occupant users
 export const fetchOccupantUsers = createAsyncThunk(
   'occupantUsers/fetchOccupantUsers',
-  async () => {
-    const response = await apiClient.get<OccupantUsersResponse>('/pms/account_setups/occupant_users.json')
-    
-    // Transform the API response to match our UI format
+  async ({ page, perPage }: { page: number, perPage: number }) => {
+    const response = await apiClient.get<OccupantUsersResponse>(`/pms/account_setups/occupant_users.json?page=${page}&per_page=${perPage}`)
+
     const transformedUsers: OccupantUser[] = response.data.occupant_users.map((user, index) => ({
-      id: index + 1,
-      srNo: index + 1,
+      id: user.id,
       company: user.company,
       name: `${user.firstname} ${user.lastname}`,
-      mobile: `+${user.country_code} ${user.mobile}`,
+      mobile: `${user.mobile}`,
       email: user.email,
       status: user.lock_user_permission.status,
     }))
-    
-    return transformedUsers
+
+    const pagination = {
+      current_page: response.data.current_page,
+      total_pages: response.data.total_pages,
+      total_count: response.data.total_count
+    }
+
+    return { transformedUsers, pagination }
   }
 )
 

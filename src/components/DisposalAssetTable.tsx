@@ -63,15 +63,16 @@ export const DisposalAssetTable: React.FC<DisposalAssetTableProps> = ({
     'Operational',
     'Under Repair',
     'Non-Functional'
-  ];
 
+  ];
+  console.log(DisposalAssetTable)
   return (
     <div className="w-full">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[15%]">Asset Name</TableHead>
-            <TableHead className="w-[20%]">Asset Code</TableHead>
+            <TableHead className="w-[20%]">Asset Number</TableHead>
             <TableHead className="w-[15%]">Asset Status</TableHead>
             <TableHead className="w-[12%]">Site</TableHead>
             <TableHead className="w-[13%]">Purchase Cost</TableHead>

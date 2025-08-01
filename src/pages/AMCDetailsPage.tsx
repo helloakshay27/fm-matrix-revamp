@@ -69,6 +69,9 @@ export const AMCDetailsPage = () => {
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState('amc-information'); // Changed default to 'amc-information'
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
 
   useEffect(() => {
     if (id) {
@@ -123,6 +126,8 @@ export const AMCDetailsPage = () => {
   const hanldeClose = () => {
     setShowAddVisitModal(false);
   };
+
+
 
   return (
     <div className="p-6">
@@ -410,6 +415,36 @@ export const AMCDetailsPage = () => {
                         <Download className="mr-2 w-4 h-4" />
                         Download
                       </Button>
+                      {selectedImage && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+                          <div className="bg-white rounded-lg p-4 max-w-sm w-full relative">
+                            {/* Close Icon */}
+                            <button
+                              className="absolute top-2 right-2 text-gray-700 hover:text-black"
+                              onClick={() => setSelectedImage(null)}
+                            >
+                              <X className="w-5 h-5" />
+                            </button>
+
+                            {/* Image */}
+                            <img
+                              src={selectedImage}
+                              alt="Preview"
+                              className="w-full h-auto object-contain rounded mb-4"
+                            />
+
+                            {/* Download Button */}
+                            <a
+                              href={selectedImage}
+                              download
+                              className="block text-center bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                            >
+                              Download
+                            </a>
+                          </div>
+                        </div>
+                      )}
+
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -447,19 +482,29 @@ export const AMCDetailsPage = () => {
                           <TableRow key={visit.id || index}>
                             <TableCell>{visit.asset_period}</TableCell>
                             <TableCell>{visit.visit_number}</TableCell>
-                            <TableCell>{new Date(visit.visit_date).toLocaleDateString()}</TableCell>
-                            <TableCell>{visit.technician ? visit.technician.name : "Not Assigned"}</TableCell>
+                            <TableCell>
+                              {new Date(visit.visit_date).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              {visit.technician ? visit.technician.name : "Not Assigned"}
+                            </TableCell>
                             <TableCell>{visit.remarks || "—"}</TableCell>
                             <TableCell>
-                              {visit.attachment_url ? (
-                                <a
-                                  href={visit.attachment_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 underline"
-                                >
-                                  View
-                                </a>
+                              {visit.attachment?.document ? (
+                                <div className="relative flex flex-col items-center bg-[#F6F4EE] border rounded-lg p-2 w-[100px] shadow-sm">
+                                  <img
+                                    src={visit.attachment.document}
+                                    alt="QR Code"
+                                    className="w-16 h-16 object-cover rounded border cursor-pointer"
+                                    onClick={() => setSelectedImage(visit.attachment.document)}
+                                  />
+                                  <button
+                                    className="absolute top-1 right-1 p-1 hover:text-black text-gray-600"
+                                    onClick={() => setSelectedImage(visit.attachment.document)}
+                                  >
+                                    {/* <Eye className="w-4 h-4" /> */}
+                                  </button>
+                                </div>
                               ) : (
                                 "—"
                               )}
@@ -477,8 +522,104 @@ export const AMCDetailsPage = () => {
                   </Table>
                 </div>
               </CardContent>
+
+              {/* Modal */}
+              {selectedImage && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+                  <div className="bg-white rounded-lg p-4 max-w-sm w-full relative pt-8">
+                    {/* Close Icon */}
+                    <button
+                      className="absolute top-2 right-2 text-gray-700 hover:text-black z-10"
+                      onClick={() => setSelectedImage(null)}
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+
+                    {/* Image */}
+                    <img
+                      src={selectedImage}
+                      alt="Preview"
+                      className="w-full h-auto object-contain rounded mb-4"
+                    />
+
+                    {/* Download Button with Loader */}
+                    <button
+                      className="block text-center bg-[#f6f4ee] text-[#c72030] py-2 rounded w-full flex items-center justify-center"
+                      disabled={isDownloading}
+                      onClick={async () => {
+                        const visit = amcVisitData.find((v: any) => v.attachment?.document === selectedImage);
+                        if (!visit?.attachment?.id) {
+                          console.error('Attachment ID is undefined for selected image');
+                          return;
+                        }
+
+                        setIsDownloading(true);
+                        try {
+                          const token = localStorage.getItem('token');
+                          const baseUrl = localStorage.getItem('baseUrl');
+                          if (!token || !baseUrl) {
+                            console.error('Token or baseUrl not found in local storage');
+                            return;
+                          }
+
+                          const apiUrl = `https://${baseUrl}/attachfiles/${visit.attachment.id}?show_file=true`;
+
+                          const response = await fetch(apiUrl, {
+                            method: 'GET',
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              'Content-Type': 'application/json',
+                            },
+                          });
+
+                          if (!response.ok) {
+                            throw new Error(`Failed to fetch the file: ${response.statusText}`);
+                          }
+
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.download = `attachment_${visit.attachment.id}.png`; // Fallback name
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          window.URL.revokeObjectURL(url);
+                          setSelectedImage(null); // Close modal after download
+                        } catch (error) {
+                          console.error('Error downloading file:', error);
+                        } finally {
+                          setIsDownloading(false);
+                        }
+                      }}
+                    >
+                      {isDownloading ? (
+                        <span className="loader mr-2"></span>
+                      ) : (
+                        <Download className="mr-2 w-4 h-4" />
+                      )}
+                      {isDownloading ? 'Downloading...' : 'Download'}
+                    </button>
+                    <style>{`
+                  .loader {
+                    border: 2px solid #c72030;
+                    border-top: 2px solid transparent;
+                    border-radius: 50%;
+                    width: 16px;
+                    height: 16px;
+                    animation: spin 1s linear infinite;
+                  }
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}</style>
+                  </div>
+                </div>
+              )}
             </Card>
           </TabsContent>
+
 
           {/* Asset Information */}
           <TabsContent value="asset-information" className="p-3 sm:p-6">

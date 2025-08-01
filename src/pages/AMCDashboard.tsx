@@ -1,8 +1,8 @@
 import React, { useState, useEffect, memo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Eye, Trash2, BarChart3, Download, Settings, Flag, Filter } from 'lucide-react';
+import { Plus, Eye, Trash2, BarChart3, Download, Settings, Flag, Filter, Pencil } from 'lucide-react';
 import { AMCAnalyticsFilterDialog } from '@/components/AMCAnalyticsFilterDialog';
 import { amcAnalyticsAPI, AMCStatusData, AMCStatusSummary, AMCTypeDistribution, AMCExpiryAnalysis, AMCServiceTracking, AMCVendorPerformance, AMCComplianceReport } from '@/services/amcAnalyticsAPI';
 import { amcAnalyticsDownloadAPI } from '@/services/amcAnalyticsDownloadAPI';
@@ -275,9 +275,11 @@ export const AMCDashboard = () => {
   const inactiveAMCs = amcAnalyticsData?.inactive_amc ||
     ((apiData && typeof apiData === 'object' && 'inactive_amcs_count' in apiData) ? (apiData as any).inactive_amcs_count : 0);
   const flaggedAMCs = (apiData && typeof apiData === 'object' && 'flagged_amcs_count' in apiData) ? (apiData as any).flagged_amcs_count : 0;
-  const expiringIn90Days = (apiData && typeof apiData === 'object' && 'expiring_in_90_days' in apiData) ? (apiData as any).expiring_in_90_days : 0;
+  const expiringIn90Days = (apiData && typeof apiData === 'object' && 'expiring_in_fifteen_days' in apiData) ? (apiData as any).expiring_in_fifteen_days : 0;
   const serviceTotalAMCs = amcAnalyticsData?.service_total || 0;
   const assetTotalAMCs = amcAnalyticsData?.assets_total || 0;
+
+  // Inside AMCDashboard component
 
   const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1, expiryFilter?: string, searchTerm: string = '') => {
     if (!baseUrl || !token) {
@@ -297,7 +299,9 @@ export const AMCDashboard = () => {
       queryParams.push('q[is_flagged_eq]=true');
     }
 
-    if (expiryFilter) {
+    if (expiryFilter === 'expiring_in_15_days') {
+      queryParams.push('q[expire_in_15_days_eq]=true'); // Use the specified API parameter
+    } else if (expiryFilter) {
       queryParams.push(`q[amc_end_date_lteq]=${expiryFilter}`);
     }
 
@@ -322,7 +326,6 @@ export const AMCDashboard = () => {
       url += `&${queryParams.join('&')}`;
     }
 
-    console.log('Request URL:', url);
     try {
       const response = await axios.get(url, {
         headers: {
@@ -339,6 +342,16 @@ export const AMCDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleExpiringIn90DaysClick = () => {
+    setFilter(null);
+    setAmcTypeFilter(null);
+    setStartDateFilter(null);
+    setEndDateFilter(null);
+    setCurrentPage(1);
+    setIsExpiringFilterActive(true);
+    fetchFilteredAMCs(null, 1, 'expiring_in_15_days', debouncedSearchQuery);
   };
 
   useEffect(() => {
@@ -566,25 +579,37 @@ export const AMCDashboard = () => {
     switch (columnKey) {
       case 'actions':
         return (
-          <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
+          <div className="flex items-center justify-center gap-1">
+            <div
               onClick={() => handleViewDetails(item.id)}
+              className="p-1 cursor-pointer hover:text-gray-700"
+              title="View"
             >
               <Eye className="w-4 h-4" />
-            </Button>
-            <div title="Flag AMC">
+            </div>
+            <div
+              title="Flag AMC"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSingleAmcFlag(item);
+              }}
+              className="p-1 cursor-pointer hover:text-[#C72030]"
+            >
               <Flag
-                className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSingleAmcFlag(item);
-                }}
+                className={`w-4 h-4 ${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
               />
             </div>
+            <Link
+              to={`/maintenance/amc/edit/${item.id}`}
+              className="p-1 text-gray-600"
+              title="Edit AMC"
+            >
+              <Pencil className="w-4 h-4" />
+            </Link>
           </div>
         );
+
+
       case 'id':
         return <span className="font-medium">{item.id}</span>;
       case 'asset_name':
@@ -618,7 +643,6 @@ export const AMCDashboard = () => {
             </div>
           </div>
         );
-
       case 'created_at':
         return item.created_at
           ? new Date(item.created_at).toLocaleString('en-IN', {
@@ -689,6 +713,7 @@ export const AMCDashboard = () => {
       items.push(
         <PaginationItem key={1}>
           <PaginationLink
+            className='cursor-pointer'
             onClick={() => handlePageChange(1)}
             isActive={currentPage === 1}
           >
@@ -708,6 +733,7 @@ export const AMCDashboard = () => {
           items.push(
             <PaginationItem key={i}>
               <PaginationLink
+                className='cursor-pointer'
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
               >
@@ -723,6 +749,7 @@ export const AMCDashboard = () => {
           items.push(
             <PaginationItem key={i}>
               <PaginationLink
+                className='cursor-pointer'
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
               >
@@ -745,6 +772,7 @@ export const AMCDashboard = () => {
             items.push(
               <PaginationItem key={i}>
                 <PaginationLink
+                  className='cursor-pointer'
                   onClick={() => handlePageChange(i)}
                   isActive={currentPage === i}
                 >
@@ -760,6 +788,7 @@ export const AMCDashboard = () => {
         items.push(
           <PaginationItem key={totalPages}>
             <PaginationLink
+              className='cursor-pointer'
               onClick={() => handlePageChange(totalPages)}
               isActive={currentPage === totalPages}
             >
@@ -773,6 +802,7 @@ export const AMCDashboard = () => {
         items.push(
           <PaginationItem key={i}>
             <PaginationLink
+              className='cursor-pointer'
               onClick={() => handlePageChange(i)}
               isActive={currentPage === i}
             >
@@ -855,7 +885,7 @@ export const AMCDashboard = () => {
     setIsFilterModalOpen(false);
     setCurrentPage(1);
     setIsExpiringFilterActive(false);
-    fetchFilteredAMCs(filter, 1, undefined, debouncedSearchQuery);
+    // fetchFilteredAMCs(filter, 1, undefined, debouncedSearchQuery);
     toast.success('Filters applied');
   };
 
@@ -913,18 +943,18 @@ export const AMCDashboard = () => {
     fetchFilteredAMCs('flagged', 1, undefined, debouncedSearchQuery);
   };
 
-  const handleExpiringIn90DaysClick = () => {
-    setFilter(null);
-    setAmcTypeFilter(null);
-    setStartDateFilter(null);
-    setEndDateFilter(null);
-    setCurrentPage(1);
-    setIsExpiringFilterActive(true);
-    const ninetyDaysFromNow = new Date();
-    ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
-    const formattedDate = formatDateForAPI(ninetyDaysFromNow);
-    fetchFilteredAMCs(null, 1, formattedDate, debouncedSearchQuery);
-  };
+  // const handleExpiringIn90DaysClick = () => {
+  //   setFilter(null);
+  //   setAmcTypeFilter(null);
+  //   setStartDateFilter(null);
+  //   setEndDateFilter(null);
+  //   setCurrentPage(1);
+  //   setIsExpiringFilterActive(true);
+  //   const ninetyDaysFromNow = new Date();
+  //   ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
+  //   const formattedDate = formatDateForAPI(ninetyDaysFromNow);
+  //   fetchFilteredAMCs(null, 1, formattedDate, debouncedSearchQuery);
+  // };
 
   const uniqueAmcTypes = Array.from(new Set(amcData.map(amc => amc.amc_type).filter(type => type))).sort();
 
@@ -1155,9 +1185,9 @@ export const AMCDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0 justify-start">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {(apiData as any)?.expiring_in_90_days || 0}
+                    {(apiData as any)?.expiring_in_fifteen_days || 0}
                   </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Expiring in 90 Days</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Expiring in 15 Days</div>
                 </div>
               </div>
             </div>

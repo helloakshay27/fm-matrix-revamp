@@ -531,7 +531,7 @@ export const ServiceDashboard = () => {
     if (showEllipsis) {
       items.push(
         <PaginationItem key={1}>
-          <PaginationLink onClick={() => setCurrentPage(1)} isActive={currentPage === 1}>
+          <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(1)} isActive={currentPage === 1}>
             1
           </PaginationLink>
         </PaginationItem>
@@ -547,7 +547,7 @@ export const ServiceDashboard = () => {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
                 {i}
               </PaginationLink>
             </PaginationItem>
@@ -559,7 +559,7 @@ export const ServiceDashboard = () => {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
                 {i}
               </PaginationLink>
             </PaginationItem>
@@ -578,7 +578,7 @@ export const ServiceDashboard = () => {
           if (!items.find((item) => item.key === i)) {
             items.push(
               <PaginationItem key={i}>
-                <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+                <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
                   {i}
                 </PaginationLink>
               </PaginationItem>
@@ -590,7 +590,7 @@ export const ServiceDashboard = () => {
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
-            <PaginationLink onClick={() => setCurrentPage(totalPages)} isActive={currentPage === totalPages}>
+            <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(totalPages)} isActive={currentPage === totalPages}>
               {totalPages}
             </PaginationLink>
           </PaginationItem>
@@ -600,7 +600,7 @@ export const ServiceDashboard = () => {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
-            <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+            <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
               {i}
             </PaginationLink>
           </PaginationItem>
@@ -634,13 +634,15 @@ export const ServiceDashboard = () => {
   const handleExport = async () => {
     const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
     const token = localStorage.getItem('token');
+    const siteId = localStorage.getItem('selectedSiteId');
     try {
       if (!baseUrl || !token) {
         toast.error('Missing base URL, token, or site ID');
         return;
       }
+      let url = `https://${baseUrl}/pms/services/export.xlsx?site_id=${siteId}`;
 
-      let url = `https://${baseUrl}/pms/services/export.xlsx`;
+      // let url = `https://${baseUrl}/pms/services/export.xlsx`;
       if (selectedItems.length > 0) {
         const ids = selectedItems.join(',');
         url += `&ids=${ids}`;

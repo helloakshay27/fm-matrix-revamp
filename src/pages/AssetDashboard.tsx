@@ -769,11 +769,7 @@ export const AssetDashboard = () => {
 
 
 
-            <AssetStatisticsSelector
-              dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-              onDownload={handleAnalyticsDownload}
-              layout="horizontal"
-            />
+         
           </div> */}
 
           {/* Row 2: Charts and Recent Tickets */}

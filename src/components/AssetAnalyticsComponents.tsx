@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
 import { AssetAnalyticsSelector } from '@/components/AssetAnalyticsSelector';
+import { AssetStatisticsSelector } from '@/components/AssetStatisticsSelector';
 import { AssetAnalyticsFilterDialog } from '@/components/AssetAnalyticsFilterDialog';
 import { AssetAnalyticsCard } from '@/components/AssetAnalyticsCard';
 import { assetAnalyticsAPI, AssetStatusData } from '@/services/assetAnalyticsAPI';
@@ -139,7 +140,7 @@ const SortableChartItem = ({
 
 export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
     defaultDateRange,
-    selectedAnalyticsTypes = ['groupWise', 'categoryWise', 'statusDistribution', 'assetDistributions'],
+    selectedAnalyticsTypes = ['assetStatistics', 'groupWise', 'categoryWise', 'statusDistribution', 'assetDistributions'],
     onAnalyticsChange,
     showFilter = true,
     showSelector = true,
@@ -183,6 +184,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
 
     // Chart ordering for drag and drop
     const [chartOrder, setChartOrder] = useState<string[]>([
+        'assetStatistics',
         'statusDistribution',
         'assetDistributions',
         'categoryWise',
@@ -248,6 +250,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                 analyticsDateRange.fromDate,
                 analyticsDateRange.toDate
             );
+            console.log('Asset distributions data received:', data);
             setAssetDistributions(data);
         } catch (error) {
             console.error('Error fetching asset distributions:', error);
@@ -377,19 +380,24 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
             ? [
                 {
                     name: 'IT Equipment',
-                    value: assetDistributions.info.total_it_assets,
+                    value: assetDistributions.info.total_it_assets || 0,
                     color: '#d8dcdd',
                 },
                 {
                     name: 'Non-IT Equipment',
-                    value: assetDistributions.info.total_non_it_assets,
+                    value: assetDistributions.info.total_non_it_assets || 0,
                     color: '#c6b692',
                 },
             ]
             : [
-                { name: 'IT Equipment', value: 0, color: '#d8dcdd' },
-                { name: 'Non-IT Equipment', value: 0, color: '#c6b692' },
+                { name: 'No Data Available', value: 1, color: '#e5e7eb' },
             ];
+
+        // If both values are 0, show a placeholder
+        const totalDistributionValue = (assetDistributions?.info?.total_it_assets || 0) + (assetDistributions?.info?.total_non_it_assets || 0);
+        const finalChartTypeData = totalDistributionValue === 0 
+            ? [{ name: 'No Data Available', value: 1, color: '#e5e7eb' }]
+            : chartTypeData;
 
         // Category data
         const categoryData = categoryWiseAssets?.asset_type_category_counts
@@ -397,16 +405,16 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                 name,
                 value,
             }))
-            : [{ name: 'Loading...', value: 0 }];
+            : [{ name: 'No Data', value: 0 }];
 
         // Group data
         const groupData =
             groupWiseAssets?.group_wise_assets?.map((item) => ({
                 name: item.group_name,
                 value: item.asset_count,
-            })) || [{ name: 'Loading...', value: 0 }];
+            })) || [{ name: 'No Data', value: 0 }];
 
-        return { chartStatusData, chartTypeData, categoryData, groupData };
+        return { chartStatusData, chartTypeData: finalChartTypeData, categoryData, groupData };
     };
 
     const { chartStatusData, chartTypeData, categoryData, groupData } = processChartData();
@@ -516,6 +524,17 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
     // Render layout based on layout prop
     const renderLayout = () => {
         const charts = [
+            currentSelectedTypes.includes('assetStatistics') && (
+                <SortableChartItem key="assetStatistics" id="assetStatistics">
+                    <div className="mb-6">
+                        <AssetStatisticsSelector
+                            dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                            onDownload={handleAnalyticsDownload}
+                            layout="grid"
+                        />
+                    </div>
+                </SortableChartItem>
+            ),
             currentSelectedTypes.includes('statusDistribution') && (
                 <SortableChartItem key="statusDistribution" id="statusDistribution">
                     <AssetAnalyticsCard
@@ -573,12 +592,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
         // Default grid layout
         return (
             <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {charts.slice(0, 2)}
-                </div>
-                <div className="grid grid-cols-1 gap-6">
-                    {charts.slice(2)}
-                </div>
+                {charts}
             </div>
         );
     };
@@ -603,6 +617,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                             <AssetAnalyticsSelector
                                 onSelectionChange={handleAnalyticsSelectionChange}
                                 dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                                selectedOptions={currentSelectedTypes}
                             />
                         )}
                     </div>

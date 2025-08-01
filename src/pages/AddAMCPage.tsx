@@ -856,7 +856,9 @@ export const AddAMCPage = () => {
 
               <div>
                 <FormControl fullWidth variant="outlined" error={!!errors.paymentTerms}>
-                  <InputLabel id="payment-terms-select-label" shrink>Payment Terms</InputLabel>
+                  <InputLabel id="payment-terms-select-label" shrink>
+                    Payment Terms <span style={{ color: 'red' }}>*</span>
+                     </InputLabel>
                   <MuiSelect
                     labelId="payment-terms-select-label"
                     label="Payment Terms"
@@ -892,7 +894,7 @@ export const AddAMCPage = () => {
                   error={!!errors.endDate}
                   helperText={errors.endDate}
                   inputProps={{
-                    min: formData.startDate || undefined, 
+                    min: formData.startDate || undefined,
                   }}
                   sx={{
                     height: '45px',
@@ -900,7 +902,7 @@ export const AddAMCPage = () => {
                       height: '45px',
                     },
                   }}
-                  disabled={!formData.startDate || isSubmitting} 
+                  disabled={!formData.startDate || isSubmitting}
                 />
               </div>
 

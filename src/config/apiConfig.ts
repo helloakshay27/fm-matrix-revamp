@@ -116,7 +116,7 @@ export const API_CONFIG = {
     // Checklist sample format download
     CHECKLIST_SAMPLE_FORMAT: '/assets/checklist.xlsx',
     // Bulk upload for custom forms
-    CUSTOM_FORMS_BULK_UPLOAD: '/pms/custom_forms/bulk_upload',
+    CUSTOM_FORMS_BULK_UPLOAD: '/pms/custom_forms/bulk_upload.json',
     // Asset dashboard endpoints
     // ASSET_STATISTICS: '/pms/asset_statistics.json',
     // ASSET_STATUS: '/pms/asset_status.json',
@@ -139,6 +139,7 @@ export const API_CONFIG = {
     TICKET_RESOLUTION_TAT_DOWNLOAD: '/pms/admin/complaints/chart_resolution_tat_downloads.json',
     TICKET_RESPONSE_TAT_DOWNLOAD: '/pms/admin/complaints/chart_response_tat_downloads.json',
     COST_APPROVALS_CREATE: '/pms/create_muliple_cost_Approvals.json',
+    SURVEY_RESPONSES: '/survey_mapping_responses/all_responses.json',
     
   },
 } as const

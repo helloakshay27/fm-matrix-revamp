@@ -605,7 +605,9 @@ export const exportOrders = createAsyncThunk(
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
+                        Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     },
+                    responseType: "blob",
                 }
             );
             return response.data;
