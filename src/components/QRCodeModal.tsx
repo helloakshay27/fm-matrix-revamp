@@ -7,8 +7,8 @@ interface QRCodeModalProps {
   isOpen: boolean;
   onClose: () => void;
   qrCode: string;
-  serviceName: string;
-  site: string;
+  serviceName?: string;
+  site?: string;
 }
 
 export const QRCodeModal: React.FC<QRCodeModalProps> = ({

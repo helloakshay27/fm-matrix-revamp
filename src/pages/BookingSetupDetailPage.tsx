@@ -23,6 +23,7 @@ import {
 import { useAppDispatch } from "@/store/hooks";
 import { facilityBookingSetupDetails } from "@/store/slices/facilityBookingsSlice";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { QRCodeModal } from "@/components/QRCodeModal";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -309,7 +310,6 @@ export const BookingSetupDetailPage = () => {
             <Button
               variant="ghost"
               onClick={() => navigate("/settings/vas/booking/setup")}
-              className="mt-2"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Booking List
@@ -318,16 +318,35 @@ export const BookingSetupDetailPage = () => {
               <Button
                 variant="outline"
                 onClick={() => handleEditClick(id)}
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 mt-2"
+                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
               >
                 Edit
               </Button>
-              <button
+              {/* <button
                 className="bg-[#F6F4EE] py-2 px-4 rounded mt-2 flex items-center gap-2"
                 onClick={() => setShowQr(true)}
               >
                 <QrCode className="w-4 h-4" color="#000" /> QR Code
-              </button>
+              </button> */}
+
+              <Button
+                onClick={() => setShowQr(true)}
+                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+              >
+                <svg
+                  width="14"
+                  height="15"
+                  viewBox="0 0 14 15"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M0.332031 4.20609V0.935059H3.66536V2.24347H1.66536V4.20609H0.332031ZM0.332031 14.0192V10.7481H1.66536V12.7108H3.66536V14.0192H0.332031ZM10.332 14.0192V12.7108H12.332V10.7481H13.6654V14.0192H10.332ZM12.332 4.20609V2.24347H10.332V0.935059H13.6654V4.20609H12.332ZM10.6654 11.0752H11.6654V12.0566H10.6654V11.0752ZM10.6654 9.11263H11.6654V10.0939H10.6654V9.11263ZM9.66536 10.0939H10.6654V11.0752H9.66536V10.0939ZM8.66536 11.0752H9.66536V12.0566H8.66536V11.0752ZM7.66536 10.0939H8.66536V11.0752H7.66536V10.0939ZM9.66536 8.13132H10.6654V9.11263H9.66536V8.13132ZM8.66536 9.11263H9.66536V10.0939H8.66536V9.11263ZM7.66536 8.13132H8.66536V9.11263H7.66536V8.13132ZM11.6654 2.89768V6.82291H7.66536V2.89768H11.6654ZM6.33203 8.13132V12.0566H2.33203V8.13132H6.33203ZM6.33203 2.89768V6.82291H2.33203V2.89768H6.33203ZM5.33203 11.0752V9.11263H3.33203V11.0752H5.33203ZM5.33203 5.8416V3.87898H3.33203V5.8416H5.33203ZM10.6654 5.8416V3.87898H8.66536V5.8416H10.6654Z"
+                    fill="#C72030"
+                  />
+                </svg>
+                View QR
+              </Button>
             </div>
           </div>
           <div className="p-6 space-y-8">
@@ -1259,7 +1278,7 @@ export const BookingSetupDetailPage = () => {
           </div>
         </div>
       </div>
-      <Dialog
+      {/* <Dialog
         open={showQr}
         onClose={() => setShowQr(false)}
         aria-labelledby="qr-code-dialog-title"
@@ -1281,7 +1300,13 @@ export const BookingSetupDetailPage = () => {
             Download
           </button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
+
+      <QRCodeModal
+        isOpen={showQr}
+        onClose={() => setShowQr(false)}
+        qrCode={qrUrl}
+      />
     </ThemeProvider>
   );
 };

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
-import { fetchFMUsers, fetchRoles, fetchSuppliers, fetchUnits, FMUser } from '@/store/slices/fmUserSlice';
+import { fetchFMUsers, fetchRoles, fetchSuppliers, fetchUnits, FMUser, getUserDetails } from '@/store/slices/fmUserSlice';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,12 +13,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Edit2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { useAppSelector } from '@/store/hooks';
 import { fetchAllowedSites } from '@/store/slices/siteSlice';
 import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
 import { fetchDepartmentData } from '@/store/slices/departmentSlice';
 import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
+import { toast } from 'sonner';
 
 interface FormData {
   firstname: string;
@@ -28,11 +28,9 @@ interface FormData {
   email: string;
   company_name: string;
   entity_id: string;
-  unit_id: string;
   designation: string;
   employee_id: string;
   user_type: 'internal' | 'external';
-  lock_user_permission_status: string;
   face_added: boolean;
   app_downloaded: string;
   access_level: string;
@@ -53,19 +51,15 @@ export const ViewFMUserPage = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
 
-  const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
   const { id } = useParams();
-  const { toast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
-  const { data: fmUsersResponse, loading } = useSelector((state: RootState) => state.fmUsers);
   const { data: entitiesData, loading: entitiesLoading } = useAppSelector((state) => state.entities);
   const { data: suppliers, loading: suppliersLoading } = useAppSelector((state) => state.fetchSuppliers);
   const { data: units, loading: unitsLoading } = useAppSelector((state) => state.fetchUnits);
   const { data: department, loading: departmentLoading } = useAppSelector((state) => state.department);
   const { data: roles, loading: roleLoading } = useAppSelector((state) => state.fetchRoles);
   const { sites } = useAppSelector((state) => state.site);
-  const { selectedCompany } = useAppSelector((state: RootState) => state.project);
 
   const [formData, setFormData] = useState<FormData>({
     firstname: '',
@@ -75,11 +69,9 @@ export const ViewFMUserPage = () => {
     email: '',
     company_name: '',
     entity_id: '',
-    unit_id: '',
     designation: '',
     employee_id: '',
     user_type: 'internal',
-    lock_user_permission_status: '',
     face_added: false,
     app_downloaded: 'No',
     access_level: '',
@@ -108,16 +100,19 @@ export const ViewFMUserPage = () => {
     dispatch(fetchAllowedCompanies());
   }, [dispatch, baseUrl, token, userId]);
 
-  const userData = fmUsersResponse?.fm_users?.find(user => user.id.toString() === id);
+  const [userData, setUserData] = useState({})
 
   useEffect(() => {
-    setCurrentSection('Master');
-    if (!fmUsersResponse?.fm_users) {
-      console.log('Fetching FM users...');
-      dispatch(fetchFMUsers());
+    const fetchUser = async () => {
+      try {
+        const response = await dispatch(getUserDetails({ baseUrl, token, id: Number(id) })).unwrap()
+        setUserData(response)
+      } catch (error) {
+        console.log(error)
+      }
     }
-    console.log('fmUsersResponse:', fmUsersResponse);
-  }, [setCurrentSection, dispatch, fmUsersResponse]);
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     if (userData) {
@@ -130,15 +125,13 @@ export const ViewFMUserPage = () => {
         email: userData.email || '',
         company_name: userData.company_name || '',
         entity_id: userData.entity_id || '',
-        unit_id: userData.unit_id || '',
-        designation: userData.lock_user_permission.designation || '',
-        employee_id: userData.lock_user_permission.employee_id || '',
+        designation: userData.lock_user_permission?.designation || '',
+        employee_id: userData.lock_user_permission?.employee_id || '',
         user_type: userData.user_type === 'pms_admin' ? 'internal' : 'external',
-        lock_user_permission_status: userData.lock_user_permission_status || '',
         face_added: userData.face_added || false,
         app_downloaded: userData.app_downloaded || 'No',
         access_level: userData.lock_user_permission?.access_level || 'Site',
-        daily_helpdesk_report: userData.lock_user_permission.daily_pms_report,
+        daily_helpdesk_report: userData.lock_user_permission?.daily_pms_report,
         site: userData.site_id || '',
         base_unit: userData.unit_id,
         system_user_type: userData.user_type,
@@ -146,9 +139,9 @@ export const ViewFMUserPage = () => {
         role: userData.role_id,
         vendor_company: userData.supplier_id,
         company_cluster: '',
-        last_working_day: userData.lock_user_permission.last_working_date,
+        last_working_day: userData.lock_user_permission?.last_working_date,
         email_preference: userData.urgency_email_enabled?.toString(),
-        access: userData.access_to_array
+        access: userData.access_to_array || []
       });
     } else {
       console.log('userData not found for id:', id);
@@ -163,25 +156,7 @@ export const ViewFMUserPage = () => {
     }));
   };
 
-  const handleSubmit = async () => {
-    try {
-      // TODO: Implement updateFMUser action in your Redux slice
-      // await dispatch(updateFMUser({ id, data: formData, baseUrl, token }));
-      toast({
-        title: "Success",
-        description: "User details updated successfully!"
-      });
-      navigate('/master/user/fm-users');
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update user details.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  if (loading || entitiesLoading || suppliersLoading || unitsLoading || departmentLoading || roleLoading) {
+  if (entitiesLoading || suppliersLoading || unitsLoading || departmentLoading || roleLoading) {
     return (
       <div className="w-full p-6 space-y-6">
         <div className="flex items-center justify-center h-64">
@@ -200,7 +175,16 @@ export const ViewFMUserPage = () => {
             <ArrowLeft className="w-4 h-4" />
             Back
           </button>
+
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2 border-gray-300"
+          onClick={() => navigate(`/master/user/fm-users/edit/${id}`)}
+        >
+          <Edit2 className="w-4 h-4" />
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -559,16 +543,6 @@ export const ViewFMUserPage = () => {
                 <Label htmlFor="daily-helpdesk" className="text-sm text-gray-700">
                   Daily Helpdesk Report Email
                 </Label>
-              </div>
-
-              {/* Submit Button */}
-              <div className="flex justify-center pt-6">
-                <Button
-                  onClick={handleSubmit}
-                  className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2 rounded-md"
-                >
-                  Submit
-                </Button>
               </div>
             </CardContent>
           </Card>
