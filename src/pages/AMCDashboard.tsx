@@ -689,6 +689,7 @@ export const AMCDashboard = () => {
       items.push(
         <PaginationItem key={1}>
           <PaginationLink
+            className='cursor-pointer'
             onClick={() => handlePageChange(1)}
             isActive={currentPage === 1}
           >
@@ -708,6 +709,7 @@ export const AMCDashboard = () => {
           items.push(
             <PaginationItem key={i}>
               <PaginationLink
+              className='cursor-pointer'
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
               >
@@ -723,6 +725,7 @@ export const AMCDashboard = () => {
           items.push(
             <PaginationItem key={i}>
               <PaginationLink
+                className='cursor-pointer'
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
               >
@@ -745,6 +748,7 @@ export const AMCDashboard = () => {
             items.push(
               <PaginationItem key={i}>
                 <PaginationLink
+                  className='cursor-pointer'
                   onClick={() => handlePageChange(i)}
                   isActive={currentPage === i}
                 >
@@ -760,6 +764,7 @@ export const AMCDashboard = () => {
         items.push(
           <PaginationItem key={totalPages}>
             <PaginationLink
+              className='cursor-pointer'
               onClick={() => handlePageChange(totalPages)}
               isActive={currentPage === totalPages}
             >
@@ -773,6 +778,7 @@ export const AMCDashboard = () => {
         items.push(
           <PaginationItem key={i}>
             <PaginationLink
+              className='cursor-pointer'
               onClick={() => handlePageChange(i)}
               isActive={currentPage === i}
             >
