@@ -12,6 +12,7 @@ interface Asset {
   id: number;
   name: string;
   // ...other fields...
+  breakdown?: boolean;
 }
 
 interface ConfigStatus {
@@ -26,6 +27,8 @@ interface ConfigStatus {
   tickets: boolean;
   ebom: boolean;
   readings: boolean;
+  asset_breakdown?: boolean;
+  asset_down_time?: string | number;
 }
 
 interface DashboardSummary {
@@ -46,10 +49,56 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
   const [configStatus, setConfigStatus] = useState<ConfigStatus | null>(null);
   const [dashboardSummary, setDashboardSummary] =
     useState<DashboardSummary | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [breakdownStartTime, setBreakdownStartTime] = useState<Date | null>(null);
+
+  // Countdown timer effect
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Reset breakdown start time when breakdown status changes
+  useEffect(() => {
+    if (!asset?.breakdown) {
+      setBreakdownStartTime(null);
+    }
+  }, [asset?.breakdown]);
 
   // Function to format asset down time to DD:HH:MM format
   const formatDownTime = (downTime: string | number | undefined): string => {
     if (!downTime) return "00:00:00";
+    
+    if (typeof downTime === 'string') {
+      // Try to parse as a date-time string first
+      const breakdownDate = new Date(downTime);
+      
+      // Check if it's a valid date
+      if (!isNaN(breakdownDate.getTime())) {
+        // Calculate elapsed time from breakdown date to now
+        const currentTimeMs = Date.now();
+        const elapsedMs = currentTimeMs - breakdownDate.getTime();
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+        
+        // Ensure we don't show negative time
+        const totalSeconds = Math.max(0, elapsedSeconds);
+        
+        // Convert to days, hours, minutes
+        const days = Math.floor(totalSeconds / (24 * 3600));
+        const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        
+        return `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      }
+      
+      // If it's in DD:HH:MM format, return as is
+      if (downTime.includes(':')) {
+        return downTime;
+      }
+    }
     
     // Convert to number if it's a string
     let totalMinutes = typeof downTime === 'string' ? parseInt(downTime) : downTime;
@@ -66,7 +115,93 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
     return `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
-  useEffect(() => {
+  // Function to format countdown timer (live updating)
+  const formatCountdownTime = (downTime: string | number | undefined): string => {
+    if (!downTime) return "00:00:00";
+    
+    if (typeof downTime === 'string') {
+      // Try to parse as a date-time string first
+      const breakdownDate = new Date(downTime);
+      
+      // Check if it's a valid date
+      if (!isNaN(breakdownDate.getTime())) {
+        // Set breakdown start time if not already set
+        if (!breakdownStartTime) {
+          setBreakdownStartTime(breakdownDate);
+        }
+        
+        // Calculate elapsed time since breakdown started
+        const currentTimeMs = currentTime.getTime();
+        const startTimeMs = breakdownStartTime ? breakdownStartTime.getTime() : breakdownDate.getTime();
+        const elapsedMs = currentTimeMs - startTimeMs;
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+        
+        // Ensure we don't show negative time
+        const totalSeconds = Math.max(0, elapsedSeconds);
+        
+        // Convert to DD:HH:MM format
+        const days = Math.floor(totalSeconds / (24 * 3600));
+        const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        
+        return `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      }
+      
+      // If it's in DD:HH:MM format, parse and create live countdown
+      if (downTime.includes(':')) {
+        const timeParts = downTime.split(':');
+        if (timeParts.length === 3) {
+          const initialDays = parseInt(timeParts[0]) || 0;
+          const initialHours = parseInt(timeParts[1]) || 0;
+          const initialMinutes = parseInt(timeParts[2]) || 0;
+          
+          // Convert to total minutes
+          const totalInitialMinutes = (initialDays * 24 * 60) + (initialHours * 60) + initialMinutes;
+          
+          // If we don't have a breakdown start time, set it to now minus the initial time
+          if (!breakdownStartTime) {
+            const startTime = new Date(Date.now() - (totalInitialMinutes * 60 * 1000));
+            setBreakdownStartTime(startTime);
+          }
+          
+          // Calculate elapsed time since breakdown started
+          const currentTimeMs = currentTime.getTime();
+          const startTimeMs = breakdownStartTime ? breakdownStartTime.getTime() : Date.now() - (totalInitialMinutes * 60 * 1000);
+          const elapsedMs = currentTimeMs - startTimeMs;
+          const elapsedMinutes = Math.floor(elapsedMs / (60 * 1000));
+          
+          // Ensure we don't show negative time
+          const totalMinutes = Math.max(0, elapsedMinutes);
+          
+          // Convert back to DD:HH:MM
+          const days = Math.floor(totalMinutes / (24 * 60));
+          const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+          const minutes = totalMinutes % 60;
+          
+          return `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+      }
+    }
+    
+    // Fallback to original logic for number format
+    return formatDownTime(downTime);
+  };
+
+  // Function to render downtime display based on breakdown status
+  const renderDownTimeDisplay = () => {
+    if (asset?.breakdown) {
+      // Show countdown timer when breakdown is true
+      return formatCountdownTime(configStatus?.asset_down_time);
+    } else {
+      // Show static formatted time when breakdown is false
+      return formatDownTime(configStatus?.asset_down_time);
+    }
+  };
+
+  useEffect(() =>
+    
+    
+    {
     const fetchConfigStatus = async () => {
       try {
         const response = await axios.get(
@@ -78,6 +213,7 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
           }
         );
         setConfigStatus(response.data);
+        
       } catch (error) {
         setConfigStatus(null);
       }
@@ -128,6 +264,7 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
     
     "tickets",
   ];
+  console.log(dashboardSummary);
 
   return (
     <div className="space-y-6">
@@ -142,13 +279,26 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
            Asset Down Time
           </span>
           <div
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-red-200"
-            style={{ backgroundColor: "#f6f4ee" }}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${
+              asset?.breakdown 
+                ? 'border-red-400 bg-red-50' 
+                : 'border-red-200'
+            }`}
+            style={{ backgroundColor: asset?.breakdown ? "#fef2f2" : "#f6f4ee" }}
           >
-            <Clock className="w-5 h-5 text-red-600" />
-            <span className="text-red-600 font-medium text-sm">
-              {formatDownTime(dashboardSummary?.asset_down_time)}
+            <Clock className={`w-5 h-5 ${
+              asset?.breakdown ? 'text-red-700' : 'text-red-600'
+            }`} />
+            <span className={`font-medium text-sm ${
+              asset?.breakdown ? 'text-red-700' : 'text-red-600'
+            }`}>
+              {renderDownTimeDisplay()}
             </span>
+            {asset?.breakdown && (
+              <span className="text-xs text-red-500 ml-2 animate-pulse">
+                (Live)
+              </span>
+            )}
           </div>
         </div>
       </div>

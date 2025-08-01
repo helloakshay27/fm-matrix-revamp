@@ -4378,7 +4378,7 @@ const AddAssetPage = () => {
                       />
                     </div>
                     <TextField
-                      label="Current Market Value (INR)"
+                      label="Current Market Value (OMR)"
                       placeholder="Enter current value"
                       variant="outlined"
                       type="number"
@@ -5303,7 +5303,7 @@ const AddAssetPage = () => {
                       }}
                     />
                     <TextField
-                      label="Current Book Value (INR)"
+                      label="Current Book Value (OMR)"
                       placeholder="Enter value"
                       variant="outlined"
                       fullWidth
@@ -6393,7 +6393,7 @@ const AddAssetPage = () => {
                       }
                     />
                     <TextField
-                      label="Current Book Value (INR)"
+                      label="Current Book Value (OMR)"
                       placeholder="Calculated or manually entered"
                       variant="outlined"
                       fullWidth
