@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDispatch, useSelector } from "react-redux";
@@ -41,6 +41,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { toast } from "sonner";
+import debounce from "lodash/debounce";
 
 // Transform API data to table format
 const transformFMUserData = (apiUser: FMUser) => ({
@@ -107,6 +108,56 @@ export const FMUserMasterDashboard = () => {
     total_pages: 0,
   });
 
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce(async (searchQuery: string) => {
+      try {
+        if (searchQuery.trim() === "") {
+          // If search is empty, fetch all users
+          const response = await dispatch(getFMUsers({
+            baseUrl,
+            token,
+            perPage: 10,
+            currentPage: 1
+          })).unwrap();
+          const transformedData = response.fm_users.map(transformFMUserData);
+          setFmUsersData(transformedData);
+          setFilteredFMUsersData(transformedData);
+          setPagination({
+            current_page: response.current_page,
+            total_count: response.total_count,
+            total_pages: response.total_pages
+          });
+          return;
+        }
+
+        // Make API call with search query
+        const response = await axios.get(
+          `https://${baseUrl}/pms/account_setups/fm_users.json?q[search_all_fields_cont]=${encodeURIComponent(searchQuery)}&per_page=10&page=${pagination.current_page}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const transformedData = response.data.fm_users.map(transformFMUserData);
+        setFilteredFMUsersData(transformedData);
+        setPagination({
+          current_page: response.data.current_page,
+          total_count: response.data.total_count,
+          total_pages: response.data.total_pages
+        });
+
+        toast.success("Search completed successfully!");
+      } catch (error) {
+        console.error("Search error:", error);
+        toast.error("Failed to perform search.");
+      }
+    }, 500),
+    [dispatch, baseUrl, token]
+  );
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -118,19 +169,25 @@ export const FMUserMasterDashboard = () => {
           current_page: response.current_page,
           total_count: response.total_count,
           total_pages: response.total_pages
-        })
+        });
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
-    }
+    };
 
     fetchUsers();
-  }, [])
+  }, [dispatch, baseUrl, token]);
 
   useEffect(() => {
     setCurrentSection("Master");
     dispatch(fetchUserCounts());
   }, [setCurrentSection, dispatch]);
+
+  // Handle search input change
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    debouncedSearch(value);
+  };
 
   // Define columns for EnhancedTable
   const columns: ColumnConfig[] = [
@@ -204,13 +261,12 @@ export const FMUserMasterDashboard = () => {
 
   const handleToggleUserStatus = async (userId: string, isActive: boolean) => {
     try {
-      // Make PUT request to update user status
       const response = await fetch(
         `https://${baseUrl}/pms/users/status_update.jsong?id=${userId}&active=${isActive}`,
         {
           method: "PUT",
           headers: {
-            Authorization: `Bearer ${token}`, // Ensure token is in scope
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
@@ -220,7 +276,6 @@ export const FMUserMasterDashboard = () => {
         throw new Error("Failed to update status");
       }
 
-      // Update local UI state
       setFmUsersData((prevUsers) =>
         prevUsers.map((user) =>
           user.lockUserId === userId
@@ -247,11 +302,9 @@ export const FMUserMasterDashboard = () => {
       toast.success("User status updated successfully!");
     } catch (error) {
       console.error("Status toggle failed:", error);
-
       toast.error("Failed to update user status.");
     }
   };
-
 
   const handleStatusClick = (user: any) => {
     setSelectedUser(user);
@@ -261,13 +314,12 @@ export const FMUserMasterDashboard = () => {
 
   const handleStatusUpdate = async () => {
     try {
-      // Call the PUT API to update the user status
       const response = await fetch(
         `https://${baseUrl}/pms/users/status_update?id=${selectedUser?.lockUserId}&status=${selectedStatus}`,
         {
           method: "PUT",
           headers: {
-            Authorization: `Bearer ${token}`, // make sure token is defined
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
@@ -278,15 +330,12 @@ export const FMUserMasterDashboard = () => {
       }
 
       toast.success("User status updated successfully!");
-
       setStatusDialogOpen(false);
       setSelectedUser(null);
       setSelectedStatus("");
-
       dispatch(fetchFMUsers());
     } catch (error) {
       console.error("Error updating user status:", error);
-
       toast.error("Failed to update user status.");
     }
   };
@@ -406,7 +455,7 @@ export const FMUserMasterDashboard = () => {
     setPagination({
       ...pagination,
       current_page: 1
-    })
+    });
     setFilterDialogOpen(false);
 
     toast.success("Filters reset successfully!");
@@ -418,6 +467,23 @@ export const FMUserMasterDashboard = () => {
       [field]: value,
     }));
   };
+
+  const cardFilter = async (status: string) => {
+    try {
+      const response = await dispatch(getFMUsers({ baseUrl, token, perPage: 10, currentPage: 1, status })).unwrap();
+      const transformedData = response.fm_users.map(transformFMUserData);
+      setFmUsersData(transformedData);
+      setFilteredFMUsersData(transformedData);
+      setPagination({
+        current_page: response.current_page,
+        total_count: response.total_count,
+        total_pages: response.total_pages
+      });
+    } catch (error) {
+      console.log(error)
+      toast.error('Failed to filter users')
+    }
+  }
 
   const handlePageChange = async (page: number) => {
     setPagination((prev) => ({
@@ -550,7 +616,6 @@ export const FMUserMasterDashboard = () => {
     return items;
   };
 
-  // Render actions for each row
   const renderActions = (user: any) => (
     <Button
       variant="ghost"
@@ -562,7 +627,6 @@ export const FMUserMasterDashboard = () => {
     </Button>
   );
 
-  // Render custom cells for specific columns
   const renderCell = (user: any, columnKey: string) => {
     switch (columnKey) {
       case "active":
@@ -605,7 +669,6 @@ export const FMUserMasterDashboard = () => {
     }
   };
 
-  // Left actions for the table
   const leftActions = (
     <>
       <Button
@@ -656,21 +719,27 @@ export const FMUserMasterDashboard = () => {
           title="Total Users"
           value={totalUsers}
           icon={<Users className="w-6 h-6" />}
+          className="cursor-pointer"
         />
         <StatsCard
           title="Approved Users"
           value={approvedUsers}
           icon={<Users className="w-6 h-6" />}
+          onClick={() => cardFilter('approved')}
+          className="cursor-pointer"
         />
         <StatsCard
           title="Pending Users"
           value={pendingUsers}
           icon={<Users className="w-6 h-6" />}
+          onClick={() => cardFilter('pending')}
+          className="cursor-pointer"
         />
         <StatsCard
           title="Rejected Users"
           value={rejectedUsers}
           icon={<Users className="w-6 h-6" />}
+          onClick={() => cardFilter('rejected')}
         />
         <StatsCard
           title="App Downloaded"
@@ -686,7 +755,7 @@ export const FMUserMasterDashboard = () => {
         renderCell={renderCell}
         storageKey="fm-user-master-table"
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearchChange={handleSearchChange}
         searchPlaceholder="Search users..."
         enableExport={true}
         exportFileName="fm_users"

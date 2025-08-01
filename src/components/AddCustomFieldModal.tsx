@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { TextField, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { TextField, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { X, Plus } from 'lucide-react';
 
 interface AddCustomFieldModalProps {
@@ -38,6 +37,9 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
   const handleAddField = () => {
     const trimmedName = fieldName.trim();
     if (!trimmedName) return;
+    
+    console.log('Adding field:', trimmedName, 'to section:', selectedSection);
+    
     if (isItAsset && selectedSection) {
       onAddField(trimmedName, selectedSection);
     } else {
@@ -56,17 +58,17 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onClose={onClose} sx={{ width: "30rem", margin:"0 auto" }}>
       <DialogContent 
-        className="sm:max-w-md"
+      sx={{width:"100%" }}
         aria-describedby="custom-field-modal-description"
       >
-        <DialogHeader>
+        <div className="flex justify-between items-center mb-4">
           <DialogTitle>Add Custom Field</DialogTitle>
           <div id="custom-field-modal-description" className="sr-only">
             Add a new custom field to the form with name and section
           </div>
-        </DialogHeader>
+        </div>
         
         <form onSubmit={(e) => {
           e.preventDefault();
@@ -100,6 +102,7 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
                   id="section-select"
                   value={selectedSection}
                   onChange={(e: SelectChangeEvent) => {
+                    console.log('Section dropdown changed to:', e.target.value);
                     setSelectedSection(e.target.value);
                   }}
                   label="Section"
@@ -108,6 +111,10 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
                   <MenuItem value="hardware">Hardware Details</MenuItem>
                 </Select>
               </FormControl>
+              {/* Debug info */}
+              <div className="text-xs text-gray-500 mt-1">
+                Current selection: {selectedSection}
+              </div>
             </div>
           )}
 

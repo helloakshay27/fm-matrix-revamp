@@ -267,7 +267,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                   </div>
                 )
               )}
-             
+
               {asset.asset_move_tos?.length > 0 &&
                 asset.asset_move_tos[0]?.from?.location &&
                 asset.asset_move_tos[0]?.to?.location && (
@@ -450,17 +450,21 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                       </div>
 
                       {/* Asset Details Extra Fields */}
-                      {asset.extra_fields_grouped?.["Asset Details"]?.map((field, idx) => (
-                        <div key={idx} className="flex items-start">
-                          <span className="w-28 text-gray-500 text-sm">
-                            {field.field_name.replace(/_/g, " ").replace(/^./, (str) => str.toUpperCase())}
-                          </span>
-                          <span className="mx-2 text-gray-500">:</span>
-                          <span className="font-semibold text-black">
-                            {field.field_value || "-"}
-                          </span>
-                        </div>
-                      ))}
+                      {asset.extra_fields_grouped?.["Asset Details"]?.map(
+                        (field, idx) => (
+                          <div key={idx} className="flex items-start">
+                            <span className="w-28 text-gray-500 text-sm">
+                              {field.field_name
+                                .replace(/_/g, " ")
+                                .replace(/^./, (str) => str.toUpperCase())}
+                            </span>
+                            <span className="mx-2 text-gray-500">:</span>
+                            <span className="font-semibold text-black">
+                              {field.field_value || "-"}
+                            </span>
+                          </div>
+                        )
+                      )}
                     </div>
 
                     {/* Right Section - Image */}
@@ -515,6 +519,24 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                         </span>
                       </div>
                       <div className="flex items-start">
+                        <span className="w-20 text-gray-500 text-sm">OS</span>
+                        <span className="mx-2 text-gray-500">:</span>
+                        <span className="font-semibold text-black">
+                          {asset.custom_fields?.system_details?.os ||
+                            asset.asset_number ||
+                            "-"}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
+                        <span className="w-20 text-gray-500 text-sm">
+                          Total Memory
+                        </span>
+                        <span className="mx-2 text-gray-500">:</span>
+                        <span className="font-semibold text-black">
+                          {asset.custom_fields?.system_details?.memory || "-"}
+                        </span>
+                      </div>
+                      <div className="flex items-start">
                         <span className="w-20 text-gray-500 text-sm">
                           Processor
                         </span>
@@ -524,15 +546,23 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                             "-"}
                         </span>
                       </div>
-                      <div className="flex items-start">
-                        <span className="w-20 text-gray-500 text-sm">OS</span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-semibold text-black">
-                          {asset.custom_fields?.system_details?.os ||
-                            asset.asset_number ||
-                            "-"}
-                        </span>
-                      </div>
+                      {asset.extra_fields_grouped?.["System Details"] &&
+                        asset.extra_fields_grouped?.["System Details"]?.map(
+                          (field, index) => (
+                            <div
+                              className="flex items-start"
+                              key={`system-detail-${index}`}
+                            >
+                              <span className="w-20 text-gray-500 text-sm">
+                                {field.field_name}
+                              </span>
+                              <span className="mx-2 text-gray-500">:</span>
+                              <span className="font-semibold text-black">
+                                {field.field_value}
+                              </span>
+                            </div>
+                          )
+                        )}
                     </div>
                   </div>
 
@@ -560,15 +590,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                           {asset.custom_fields?.hardware?.capacity || "-"}
                         </span>
                       </div>
-                      <div className="flex items-start">
-                        <span className="w-20 text-gray-500 text-sm">
-                          Total Memory
-                        </span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-semibold text-black">
-                          {asset.custom_fields?.system_details?.memory || "-"}
-                        </span>
-                      </div>
+
                       <div className="flex items-start">
                         <span className="w-20 text-gray-500 text-sm">
                           Serial No.
@@ -578,6 +600,24 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                           {asset.custom_fields?.hardware?.serial_no || "-"}
                         </span>
                       </div>
+
+                      {asset.extra_fields_grouped?.["Hardware Details"] &&
+                        asset.extra_fields_grouped?.["Hardware Details"]?.map(
+                          (field, index) => (
+                            <div
+                              className="flex items-start"
+                              key={`hardware-detail-${index}`}
+                            >
+                              <span className=" text-gray-500 text-sm">
+                                {field.field_name}
+                              </span>
+                              <span className="mx-2 text-gray-500">:</span>
+                              <span className="font-semibold text-black">
+                                {field.field_value}
+                              </span>
+                            </div>
+                          )
+                        )}
                     </div>
                   </div>
                 </div>
@@ -921,17 +961,21 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                     </div>
 
                     {/* Purchase Details Extra Fields */}
-                    {asset.extra_fields_grouped?.["Purchase Details"]?.map((field, idx) => (
-                      <div key={idx} className="flex">
-                        <span className="text-gray-500 w-32">
-                          {field.field_name.replace(/_/g, " ").replace(/^./, (str) => str.toUpperCase())}
-                        </span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-medium">
-                          {field.field_value || "-"}
-                        </span>
-                      </div>
-                    ))}
+                    {asset.extra_fields_grouped?.["Purchase Details"]?.map(
+                      (field, idx) => (
+                        <div key={idx} className="flex">
+                          <span className="text-gray-500 w-32">
+                            {field.field_name
+                              .replace(/_/g, " ")
+                              .replace(/^./, (str) => str.toUpperCase())}
+                          </span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-medium">
+                            {field.field_value || "-"}
+                          </span>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               </div>

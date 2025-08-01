@@ -61,7 +61,7 @@ export const fetchBookingDetails = createAsyncThunk(
           },
         }
       );
-      return response.data.facility_booking;
+      return response.data;
     } catch (error) {
       const message =
         error.response?.data?.message ||
