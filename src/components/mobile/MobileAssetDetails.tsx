@@ -65,8 +65,10 @@ interface Asset {
   breakdown?: boolean;
   assetGroup?: string;
   assetSubGroup?: string;
-  asset_group?: string; // API response field
-  asset_sub_group?: string; // API response field
+  group?: string; // API response field
+  sub_group?: string; // API response field
+  asset_group?: string; // Alternative API response field
+  asset_sub_group?: string; // Alternative API response field
   siteName?: string;
   site_name?: string; // API response field
   building?: { name: string } | null;
@@ -559,8 +561,7 @@ export const MobileAssetDetails: React.FC<MobileAssetDetailsProps> = ({
               <div className="flex items-center">
                 <span className="text-gray-500 w-32">Group/Subgroup</span>
                 <span className="text-gray-900">
-                  : {assetData.asset_group || assetData.assetGroup || "Electrical"}{" "}
-                  / {assetData.asset_sub_group || assetData.assetSubGroup || "Equipments"}
+                  : {assetData.group || assetData.asset_group || assetData.assetGroup || "Electrical"} / {assetData.sub_group || assetData.asset_sub_group || assetData.assetSubGroup || "Equipments"}
                 </span>
               </div>
 
