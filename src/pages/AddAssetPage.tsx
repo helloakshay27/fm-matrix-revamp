@@ -783,107 +783,113 @@ const AddAssetPage = () => {
   // };
 
   const handleFileUpload = async (category: string, files: FileList | null) => {
-  if (!files) return;
+    if (!files) return;
 
-  const maxFileSize = 10 * 1024 * 1024; // 10MB per file
-  const maxTotalSize = 50 * 1024 * 1024; // 50MB total
-  const allowedTypes = [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-  ];
+    const maxFileSize = 10 * 1024 * 1024; // 10MB per file
+    const maxTotalSize = 50 * 1024 * 1024; // 50MB total
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+    ];
 
-  const fileArray = Array.from(files);
-  const processedFiles: File[] = [];
-  let totalSize = 0;
+    const fileArray = Array.from(files);
+    const processedFiles: File[] = [];
+    let totalSize = 0;
 
-  // Calculate current total size
-  Object.values(attachments).forEach((fileList) => {
-    if (Array.isArray(fileList)) {
-      fileList.forEach((file) => {
-        totalSize += file.size || 0;
-      });
-    }
-  });
-
-  // For Asset Image, restrict to only one file
-  if (category.endsWith("AssetImage") && (fileArray.length > 1 || attachments[category]?.length > 0)) {
-    toast.error("Asset Image Limit", {
-      description: "Only one Asset Image is allowed. Please remove the existing image or select a single image.",
+    // Calculate current total size
+    Object.values(attachments).forEach((fileList) => {
+      if (Array.isArray(fileList)) {
+        fileList.forEach((file) => {
+          totalSize += file.size || 0;
+        });
+      }
     });
-    return;
-  }
 
-  // Validate and compress each file
-  for (const file of fileArray) {
-    // Check file type
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Unsupported File Format", {
-        description: `File "${file.name}" is not supported. Please upload PDF, DOC, DOCX, JPG, JPEG, or PNG files only.`,
+    // For Asset Image, restrict to only one file
+    if (
+      category.endsWith("AssetImage") &&
+      (fileArray.length > 1 || attachments[category]?.length > 0)
+    ) {
+      toast.error("Asset Image Limit", {
+        description:
+          "Only one Asset Image is allowed. Please remove the existing image or select a single image.",
       });
-      continue;
+      return;
     }
 
-    // Compress image files
-    let processedFile = file;
-    if (file.type.startsWith("image/")) {
-      try {
-        processedFile = await compressImage(file);
-        console.log(
-          `Compressed ${file.name}: ${(file.size / 1024 / 1024).toFixed(
-            2
-          )}MB → ${(processedFile.size / 1024 / 1024).toFixed(2)}MB`
-        );
-      } catch (error) {
-        console.warn(
-          `Failed to compress ${file.name}, using original file:`,
-          error
-        );
-        processedFile = file;
+    // Validate and compress each file
+    for (const file of fileArray) {
+      // Check file type
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Unsupported File Format", {
+          description: `File "${file.name}" is not supported. Please upload PDF, DOC, DOCX, JPG, JPEG, or PNG files only.`,
+        });
+        continue;
+      }
+
+      // Compress image files
+      let processedFile = file;
+      if (file.type.startsWith("image/")) {
+        try {
+          processedFile = await compressImage(file);
+          console.log(
+            `Compressed ${file.name}: ${(file.size / 1024 / 1024).toFixed(
+              2
+            )}MB → ${(processedFile.size / 1024 / 1024).toFixed(2)}MB`
+          );
+        } catch (error) {
+          console.warn(
+            `Failed to compress ${file.name}, using original file:`,
+            error
+          );
+          processedFile = file;
+        }
+      }
+
+      // Check individual file size (after compression)
+      if (processedFile.size > maxFileSize) {
+        toast.error("File Too Large", {
+          description: `File "${file.name}" is too large (${(
+            processedFile.size /
+            1024 /
+            1024
+          ).toFixed(2)}MB). Maximum file size is 10MB.`,
+        });
+        continue;
+      }
+
+      // Check total size
+      if (totalSize + processedFile.size > maxTotalSize) {
+        toast.error("Upload Limit Exceeded", {
+          description: `Adding "${file.name}" would exceed the total upload limit of 50MB. Please remove some files first.`,
+        });
+        continue;
+      }
+
+      totalSize += processedFile.size;
+      processedFiles.push(processedFile);
+    }
+
+    if (processedFiles.length > 0) {
+      setAttachments((prev) => ({
+        ...prev,
+        [category]: category.endsWith("AssetImage")
+          ? processedFiles
+          : [...(prev[category] || []), ...processedFiles],
+      }));
+
+      // Show success message
+      if (processedFiles.length === 1) {
+        console.log(`Successfully added "${processedFiles[0].name}"`);
+      } else {
+        console.log(`Successfully added ${processedFiles.length} files`);
       }
     }
-
-    // Check individual file size (after compression)
-    if (processedFile.size > maxFileSize) {
-      toast.error("File Too Large", {
-        description: `File "${file.name}" is too large (${(
-          processedFile.size /
-          1024 /
-          1024
-        ).toFixed(2)}MB). Maximum file size is 10MB.`,
-      });
-      continue;
-    }
-
-    // Check total size
-    if (totalSize + processedFile.size > maxTotalSize) {
-      toast.error("Upload Limit Exceeded", {
-        description: `Adding "${file.name}" would exceed the total upload limit of 50MB. Please remove some files first.`,
-      });
-      continue;
-    }
-
-    totalSize += processedFile.size;
-    processedFiles.push(processedFile);
-  }
-
-  if (processedFiles.length > 0) {
-    setAttachments((prev) => ({
-      ...prev,
-      [category]: category.endsWith("AssetImage") ? processedFiles : [...(prev[category] || []), ...processedFiles],
-    }));
-
-    // Show success message
-    if (processedFiles.length === 1) {
-      console.log(`Successfully added "${processedFiles[0].name}"`);
-    } else {
-      console.log(`Successfully added ${processedFiles.length} files`);
-    }
-  }
-};
+  };
 
   const removeFile = (category, index) => {
     setAttachments((prev) => ({
@@ -1938,14 +1944,18 @@ const AddAssetPage = () => {
     fieldName,
     section = "system_details"
   ) => {
-    console.log('handleAddItAssetsCustomField called with:', fieldName, section);
-    
+    console.log(
+      "handleAddItAssetsCustomField called with:",
+      fieldName,
+      section
+    );
+
     const newField = {
       id: Date.now(),
       name: fieldName,
       value: "",
     };
-    
+
     // Map section values from modal to display keys
     let displaySection = "";
     if (section === "system_details") {
@@ -1956,16 +1966,16 @@ const AddAssetPage = () => {
       // fallback for old format
       displaySection = section;
     }
-    
-    console.log('Mapped to displaySection:', displaySection);
-    
+
+    console.log("Mapped to displaySection:", displaySection);
+
     // Add to modal-specific IT asset custom fields (for UI)
     setItAssetsCustomFields((prev) => {
       const updated = {
         ...prev,
         [displaySection]: [...(prev[displaySection] || []), newField],
       };
-      console.log('Updated itAssetsCustomFields:', updated);
+      console.log("Updated itAssetsCustomFields:", updated);
       return updated;
     });
 
@@ -1987,7 +1997,7 @@ const AddAssetPage = () => {
           : field
       ),
     }));
-    
+
     // Also update the main customFields state
     let customFieldSection = "";
     if (section === "System Details") {
@@ -1995,7 +2005,7 @@ const AddAssetPage = () => {
     } else if (section === "Hardware Details") {
       customFieldSection = "hardware";
     }
-    
+
     if (customFieldSection) {
       setCustomFields((prev) => ({
         ...prev,
@@ -2015,7 +2025,7 @@ const AddAssetPage = () => {
       ...prev,
       [section]: (prev[section] || []).filter((field) => field.id !== id),
     }));
-    
+
     // Also remove from main customFields state
     let customFieldSection = "";
     if (section === "System Details") {
@@ -2023,11 +2033,13 @@ const AddAssetPage = () => {
     } else if (section === "Hardware Details") {
       customFieldSection = "hardware";
     }
-    
+
     if (customFieldSection) {
       setCustomFields((prev) => ({
         ...prev,
-        [customFieldSection]: (prev[customFieldSection] || []).filter((field) => field.id !== id),
+        [customFieldSection]: (prev[customFieldSection] || []).filter(
+          (field) => field.id !== id
+        ),
       }));
     }
   };
@@ -8211,7 +8223,7 @@ const AddAssetPage = () => {
                   </div>
 
                   {/* Second row: Group, Subgroup */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                     <FormControl
                       fullWidth
                       variant="outlined"
@@ -8286,6 +8298,45 @@ const AddAssetPage = () => {
                         {subgroups.map((subgroup) => (
                           <MenuItem key={subgroup.id} value={subgroup.id}>
                             {subgroup.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+                    <FormControl
+                      fullWidth
+                      variant="outlined"
+                      sx={{
+                        minWidth: 120,
+                      }}
+                    >
+                      <InputLabel id="vendor-select-label" shrink>
+                        Vendor Name*
+                      </InputLabel>
+                      <MuiSelect
+                        labelId="vendor-select-label"
+                        label="Vendor Name"
+                        displayEmpty
+                        value={formData.pms_supplier_id || ""}
+                        onChange={(e) => {
+                          // setSelectedLoanedVendorId(e.target.value);
+                          handleFieldChange(
+                            "pms_supplier_id",
+                            e.target.value
+                          );
+                        }}
+                        sx={fieldStyles}
+                        required
+                      >
+                        <MenuItem value="">
+                          <em>
+                            {vendorsLoading
+                              ? "Loading vendors..."
+                              : "Select Vendor"}
+                          </em>
+                        </MenuItem>
+                        {vendors.map((vendor) => (
+                          <MenuItem key={vendor.id} value={vendor.id}>
+                            {vendor.name}
                           </MenuItem>
                         ))}
                       </MuiSelect>
@@ -11079,205 +11130,204 @@ const AddAssetPage = () => {
             //   </div>
             // </div>
 
-
             <div className="p-4 sm:p-6">
-  {/* Category-specific Asset Image */}
-  <div className="mb-6">
-    <h3 className="text-sm font-semibold text-gray-700 mb-4">
-      Asset Image
-    </h3>
-    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-      <input
-        type="file"
-        accept=".jpg,.jpeg,.png,.gif"
-        onChange={(e) =>
-          handleFileUpload(
-            `${selectedAssetCategory
-              .toLowerCase()
-              .replace(/\s+/g, "")
-              .replace("&", "")}AssetImage`,
-            e.target.files
-          )
-        }
-        className="hidden"
-        id="asset-image-upload"
-        multiple={false} // Explicitly disable multiple file selection
-      />
-      <label
-        htmlFor="asset-image-upload"
-        className="cursor-pointer block"
-      >
-        <div className="flex items-center justify-center space-x-2 mb-2">
-          <span className="text-[#C72030] font-medium text-xs sm:text-sm">
-            Choose Asset Image
-          </span>
-          <span className="text-gray-500 text-xs sm:text-sm">
-            {(() => {
-              const categoryKey = `${selectedAssetCategory
-                .toLowerCase()
-                .replace(/\s+/g, "")
-                .replace("&", "")}AssetImage`;
-              return attachments[categoryKey]?.length > 0
-                ? `${attachments[categoryKey].length} image selected`
-                : "No image chosen";
-            })()}
-          </span>
-        </div>
-      </label>
-      {(() => {
-        const categoryKey = `${selectedAssetCategory
-          .toLowerCase()
-          .replace(/\s+/g, "")
-          .replace("&", "")}AssetImage`;
-        return (
-          attachments[categoryKey]?.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {attachments[categoryKey].map((file, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between bg-gray-100 p-2 rounded text-left"
-                >
-                  <span className="text-xs sm:text-sm truncate">
-                    {file.name}
-                  </span>
-                  <button
-                    onClick={() => removeFile(categoryKey, index)}
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )
-        );
-      })()}
-      <div className="mt-2">
-        <button
-          type="button"
-          onClick={() =>
-            document.getElementById("asset-image-upload")?.click()
-          }
-          className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
-        >
-          <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
-          Upload Asset Image
-        </button>
-      </div>
-    </div>
-  </div>
-
-  {/* Common Document Sections for All Categories */}
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-    {[
-      {
-        label: "Manuals Upload",
-        id: "manuals-upload",
-        category: `${selectedAssetCategory
-          .toLowerCase()
-          .replace(/\s+/g, "")
-          .replace("&", "")}ManualsUpload`,
-        accept: ".pdf,.doc,.docx,.txt",
-      },
-      {
-        label: "Insurance Details",
-        id: "insurance-upload",
-        category: `${selectedAssetCategory
-          .toLowerCase()
-          .replace(/\s+/g, "")
-          .replace("&", "")}InsuranceDetails`,
-        accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
-      },
-      {
-        label: "Purchase Invoice",
-        id: "invoice-upload",
-        category: `${selectedAssetCategory
-          .toLowerCase()
-          .replace(/\s+/g, "")
-          .replace("&", "")}PurchaseInvoice`,
-        accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
-      },
-      {
-        label: "Other Documents",
-        id: "other-upload",
-        category: `${selectedAssetCategory
-          .toLowerCase()
-          .replace(/\s+/g, "")
-          .replace("&", "")}OtherDocuments`,
-        accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
-      },
-    ].map((field) => (
-      <div key={field.id}>
-        <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">
-          {field.label}
-        </label>
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-          <input
-            type="file"
-            multiple
-            accept={field.accept}
-            onChange={(e) =>
-              handleFileUpload(field.category, e.target.files)
-            }
-            className="hidden"
-            id={field.id}
-          />
-          <label
-            htmlFor={field.id}
-            className="cursor-pointer block"
-          >
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <span className="text-[#C72030] font-medium text-xs sm:text-sm">
-                Choose File
-              </span>
-              <span className="text-gray-500 text-xs sm:text-sm">
-                {attachments[field.category]?.length > 0
-                  ? `${
-                      attachments[field.category].length
-                    } file(s) selected`
-                  : "No file chosen"}
-              </span>
-            </div>
-          </label>
-          {attachments[field.category]?.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {attachments[field.category].map((file, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between bg-gray-100 p-2 rounded text-left"
-                >
-                  <span className="text-xs sm:text-sm truncate">
-                    {file.name}
-                  </span>
-                  <button
-                    onClick={() =>
-                      removeFile(field.category, index)
+              {/* Category-specific Asset Image */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-700 mb-4">
+                  Asset Image
+                </h3>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.gif"
+                    onChange={(e) =>
+                      handleFileUpload(
+                        `${selectedAssetCategory
+                          .toLowerCase()
+                          .replace(/\s+/g, "")
+                          .replace("&", "")}AssetImage`,
+                        e.target.files
+                      )
                     }
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                    className="hidden"
+                    id="asset-image-upload"
+                    multiple={false} // Explicitly disable multiple file selection
+                  />
+                  <label
+                    htmlFor="asset-image-upload"
+                    className="cursor-pointer block"
                   >
-                    <X className="w-4 h-4" />
-                  </button>
+                    <div className="flex items-center justify-center space-x-2 mb-2">
+                      <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+                        Choose Asset Image
+                      </span>
+                      <span className="text-gray-500 text-xs sm:text-sm">
+                        {(() => {
+                          const categoryKey = `${selectedAssetCategory
+                            .toLowerCase()
+                            .replace(/\s+/g, "")
+                            .replace("&", "")}AssetImage`;
+                          return attachments[categoryKey]?.length > 0
+                            ? `${attachments[categoryKey].length} image selected`
+                            : "No image chosen";
+                        })()}
+                      </span>
+                    </div>
+                  </label>
+                  {(() => {
+                    const categoryKey = `${selectedAssetCategory
+                      .toLowerCase()
+                      .replace(/\s+/g, "")
+                      .replace("&", "")}AssetImage`;
+                    return (
+                      attachments[categoryKey]?.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {attachments[categoryKey].map((file, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between bg-gray-100 p-2 rounded text-left"
+                            >
+                              <span className="text-xs sm:text-sm truncate">
+                                {file.name}
+                              </span>
+                              <button
+                                onClick={() => removeFile(categoryKey, index)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    );
+                  })()}
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        document.getElementById("asset-image-upload")?.click()
+                      }
+                      className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+                    >
+                      <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                      Upload Asset Image
+                    </button>
+                  </div>
                 </div>
-              ))}
+              </div>
+
+              {/* Common Document Sections for All Categories */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                {[
+                  {
+                    label: "Manuals Upload",
+                    id: "manuals-upload",
+                    category: `${selectedAssetCategory
+                      .toLowerCase()
+                      .replace(/\s+/g, "")
+                      .replace("&", "")}ManualsUpload`,
+                    accept: ".pdf,.doc,.docx,.txt",
+                  },
+                  {
+                    label: "Insurance Details",
+                    id: "insurance-upload",
+                    category: `${selectedAssetCategory
+                      .toLowerCase()
+                      .replace(/\s+/g, "")
+                      .replace("&", "")}InsuranceDetails`,
+                    accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
+                  },
+                  {
+                    label: "Purchase Invoice",
+                    id: "invoice-upload",
+                    category: `${selectedAssetCategory
+                      .toLowerCase()
+                      .replace(/\s+/g, "")
+                      .replace("&", "")}PurchaseInvoice`,
+                    accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
+                  },
+                  {
+                    label: "Other Documents",
+                    id: "other-upload",
+                    category: `${selectedAssetCategory
+                      .toLowerCase()
+                      .replace(/\s+/g, "")
+                      .replace("&", "")}OtherDocuments`,
+                    accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
+                  },
+                ].map((field) => (
+                  <div key={field.id}>
+                    <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">
+                      {field.label}
+                    </label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      <input
+                        type="file"
+                        multiple
+                        accept={field.accept}
+                        onChange={(e) =>
+                          handleFileUpload(field.category, e.target.files)
+                        }
+                        className="hidden"
+                        id={field.id}
+                      />
+                      <label
+                        htmlFor={field.id}
+                        className="cursor-pointer block"
+                      >
+                        <div className="flex items-center justify-center space-x-2 mb-2">
+                          <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+                            Choose File
+                          </span>
+                          <span className="text-gray-500 text-xs sm:text-sm">
+                            {attachments[field.category]?.length > 0
+                              ? `${
+                                  attachments[field.category].length
+                                } file(s) selected`
+                              : "No file chosen"}
+                          </span>
+                        </div>
+                      </label>
+                      {attachments[field.category]?.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {attachments[field.category].map((file, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between bg-gray-100 p-2 rounded text-left"
+                            >
+                              <span className="text-xs sm:text-sm truncate">
+                                {file.name}
+                              </span>
+                              <button
+                                onClick={() =>
+                                  removeFile(field.category, index)
+                                }
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="mt-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            document.getElementById(field.id)?.click()
+                          }
+                          className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+                        >
+                          <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                          Upload Files
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          )}
-          <div className="mt-2">
-            <button
-              type="button"
-              onClick={() =>
-                document.getElementById(field.id)?.click()
-              }
-              className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
-            >
-              <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
-              Upload Files
-            </button>
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
-</div>
           )}
         </div>
 
