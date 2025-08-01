@@ -97,7 +97,7 @@ export const MobileOrdersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [restaurantLoading, setRestaurantLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const token= sessionStorage.getItem("app_token")
+  const token= sessionStorage .getItem("app_token")
 
   // Get facility ID from URL params or localStorage (for app users)
   const facilityId = searchParams.get('facilityId') || localStorage.getItem('currentFacilityId');

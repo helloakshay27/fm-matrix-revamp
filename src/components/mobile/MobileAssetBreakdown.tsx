@@ -174,6 +174,7 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
           // Convert activities to breakdown history format  
           if (assetApiData.asset.activities && assetApiData.asset.activities.length > 0) {
             console.log("All activities:", assetApiData.asset.activities);
+            console.log("Total activities count:", assetApiData.asset.activities.length);
             
             // Filter breakdown activities only
             const breakdownActivities = assetApiData.asset.activities
@@ -212,6 +213,8 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
                 return activityTime >= startTime && activityTime <= endTime;
               });
               
+              console.log(`Related activities for breakdown ${activity.id}:`, relatedActivities.length);
+              
               return {
                 id: activity.id,
                 date: new Date(breakdownStartDate).toLocaleDateString("en-GB", {
@@ -226,6 +229,27 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
                 activities: relatedActivities
               };
             });
+
+            // If no breakdown activities found, create a single breakdown entry with all activities
+            if (history.length === 0 && assetApiData.asset.activities.length > 0) {
+              console.log("No breakdown activities found, showing all activities in single breakdown");
+              const firstActivity = assetApiData.asset.activities[0];
+              const lastActivity = assetApiData.asset.activities[assetApiData.asset.activities.length - 1];
+              
+              history.push({
+                id: 1,
+                date: new Date(firstActivity.created_at).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "2-digit", 
+                  year: "numeric"
+                }),
+                time: calculateTimeDifference(firstActivity.created_at, lastActivity.created_at),
+                aging: calculateAging(firstActivity.created_at, lastActivity.created_at),
+                attendeeName: "Repair Technician",
+                status: "Asset Activity",
+                activities: assetApiData.asset.activities // Show all activities
+              });
+            }
 
             setBreakdownHistory(history);
           } else {
@@ -541,7 +565,7 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
                       {expandedActivities.has(breakdown.id) && (
                         <div className="space-y-2 mt-2 max-h-60 overflow-y-auto">
                           {breakdown.activities.map((activity, index) => (
-                            <div key={activity.id} className="bg-gray-50 p-3 rounded border-l-2 border-blue-200">
+                            <div key={`${activity.id}-${index}`} className="bg-gray-50 p-3 rounded border-l-2 border-blue-200">
                               <div className="flex justify-between items-start mb-2">
                                 <span className="font-medium text-gray-800 text-xs">
                                   {formatActivityKey(activity.key)}
@@ -558,7 +582,7 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
                               <div className="text-gray-600 text-xs space-y-1">
                                 <div className="grid grid-cols-2 gap-2">
                                   <p><span className="font-medium">ID:</span> #{activity.id}</p>
-                                  <p><span className="font-medium">Type:</span> {activity.trackable_type}</p>
+                                  <p><span className="font-medium">Type:</span> {activity.trackable_type.split('::').pop()}</p>
                                 </div>
                                 {activity.parameters.breakdown && (
                                   <p><span className="font-medium">Breakdown:</span> {activity.parameters.breakdown[1] ? 'Active' : 'Resolved'}</p>
@@ -566,9 +590,16 @@ export const MobileAssetBreakdown: React.FC<MobileAssetBreakdownProps> = ({
                                 {activity.parameters.created_by && (
                                   <p><span className="font-medium">Created By:</span> {activity.parameters.created_by[1] || activity.parameters.created_by[0]}</p>
                                 )}
-                                {activity.parameters.updated_at && (
+                                {activity.parameters.updated_at && activity.parameters.updated_at[1] && (
                                   <p><span className="font-medium">Last Updated:</span> {new Date(activity.parameters.updated_at[1]).toLocaleDateString("en-GB")}</p>
                                 )}
+                                {activity.parameters.breakdown_date && activity.parameters.breakdown_date[1] && (
+                                  <p><span className="font-medium">Breakdown Date:</span> {new Date(activity.parameters.breakdown_date[1]).toLocaleDateString("en-GB")}</p>
+                                )}
+                                {activity.parameters.location_type && (
+                                  <p><span className="font-medium">Location:</span> {activity.parameters.location_type[1] || activity.parameters.location_type[0]}</p>
+                                )}
+                                <p className="text-gray-400 text-xs mt-1">Activity #{index + 1} of {breakdown.activities.length}</p>
                               </div>
                             </div>
                           ))}

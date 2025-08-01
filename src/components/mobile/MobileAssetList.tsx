@@ -10,14 +10,17 @@ interface Asset {
   assetNumber?: string;
   status?: string;
   breakdown?: boolean;
-  assetGroup?: string;
-  assetSubGroup?: string;
+  asset_group?: string;
+  asset_sub_group?: string;
   siteName?: string;
+  site_name?: string;
   building?: { name: string } | null;
   wing?: { name: string } | null;
   area?: { name: string } | null;
   createdAt?: string;
+  created_at?: string;
   updatedAt?: string;
+  updated_at?: string;
 }
 
 interface MobileAssetListProps {
@@ -55,7 +58,17 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
   useEffect(() => {
     console.log("📱 MobileAssetList: Assets prop updated:", {
       assetsCount: assets.length,
-      firstAsset: assets[0] ? { id: assets[0].id, name: assets[0].name } : null
+      firstAsset: assets[0] ? { 
+        id: assets[0].id, 
+        name: assets[0].name,
+        asset_group: assets[0].asset_group,
+        asset_sub_group: assets[0].asset_sub_group,
+        site_name: assets[0].site_name,
+        created_at: assets[0].created_at,
+        updated_at: assets[0].updated_at,
+        formatted_created: formatDate(assets[0].created_at),
+        formatted_updated: formatDate(assets[0].updated_at)
+      } : null
     });
   }, [assets]);
 
@@ -112,12 +125,54 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "24 Jul 2025";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+    
+    try {
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return "24 Jul 2025";
+      }
+      
+      return date.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "24 Jul 2025";
+    }
+  };
+
+  const formatDateTime = (dateString?: string) => {
+    if (!dateString) return "24 Jul 2025, 12:00 PM";
+    
+    try {
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return "24 Jul 2025, 12:00 PM";
+      }
+      
+      const dateStr = date.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+      
+      const timeStr = date.toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+      
+      return `${dateStr}, ${timeStr}`;
+    } catch (error) {
+      console.error("Error formatting datetime:", error);
+      return "24 Jul 2025, 12:00 PM";
+    }
   };
 
   // Handle infinite scroll
@@ -181,7 +236,7 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
             {/* Group + Status */}
             <div className="flex items-start justify-between mb-2">
               <div className="text-xs text-gray-600">
-                {asset.assetGroup || "Technical"}
+                {asset.asset_group || "Technical"}
               </div>
               <div className="relative">
                 <button
@@ -216,7 +271,7 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
 
             {/* Created Date */}
             <div className="text-xs text-gray-500 mb-2 text-right">
-              Created On: {formatDate(asset.createdAt) || "24 May 2025"}
+              Created On: {formatDate(asset.created_at || asset.createdAt)}
             </div>
 
             {/* Name + Group */}
@@ -224,9 +279,9 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
               {asset.name || "Asset Name"}
             </div>
             <div className="text-sm text-gray-600 mb-2">
-              {asset.assetGroup && asset.assetSubGroup
-                ? `${asset.assetGroup}/${asset.assetSubGroup}`
-                : "Group/Subgroup"}
+              {asset.asset_group && asset.asset_sub_group
+                ? `${asset.asset_group}/${asset.asset_sub_group}`
+                : asset.asset_group || "Group/Subgroup"}
             </div>
 
             {/* Dotted line */}
@@ -236,7 +291,8 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
             <div className="flex items-center gap-1 text-sm text-gray-600 mb-3">
               <MapPin className="h-4 w-4 text-gray-500" />
               <span>
-                {asset.siteName ||
+                {asset.site_name ||
+                  asset.siteName ||
                   asset.building?.name ||
                   asset.wing?.name ||
                   asset.area?.name ||
@@ -247,7 +303,7 @@ export const MobileAssetList: React.FC<MobileAssetListProps> = ({
             {/* Footer */}
             <div className="flex items-center justify-between">
               <span className="text-sm bg-gray-200 px-3 py-1 rounded text-gray-800">
-                Updated at: {formatDate(asset.updatedAt)}
+                Updated at: {formatDate(asset.updated_at || asset.updatedAt)}
               </span>
               <button
                 onClick={() => handleAssetClick(asset.id)}
