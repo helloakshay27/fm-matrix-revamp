@@ -601,12 +601,13 @@ export const exportOrders = createAsyncThunk(
     async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: number }, { rejectWithValue }) => {
         try {
             const response = await axios.get(
-                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.xlsx?access_token=${token}`,
+                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.xlsx`,
                 {
                     headers: {
-                        // Authorization: `Bearer ${token}`,
+                        Authorization: `Bearer ${token}`,
                         Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     },
+                    responseType: "blob",
                 }
             );
             return response.data;
