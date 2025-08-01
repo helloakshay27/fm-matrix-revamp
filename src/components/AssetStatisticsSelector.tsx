@@ -10,7 +10,6 @@ import {
   Package,
   BarChart3,
   Download,
-  Star,
 } from 'lucide-react';
 import { assetAnalyticsAPI } from '@/services/assetAnalyticsAPI';
 import { assetAnalyticsDownloadAPI } from '@/services/assetAnalyticsDownloadAPI';
@@ -37,10 +36,6 @@ interface AssetStatistics {
     info: string;
     overdue_assets: string;
     total: number;
-  };
-  average_customer_rating?: {
-    info: string;
-    avg_rating: number;
   };
   // Legacy support for transformed data
   total_assets?: number;
@@ -111,15 +106,6 @@ const METRICS_CONFIG = [
     borderColor: 'border-purple-200',
     downloadType: 'card_ppm_conduct_assets',
   },
-  {
-    id: 'average_customer_rating',
-    label: 'Average Rating',
-    icon: Star,
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-50',
-    borderColor: 'border-yellow-200',
-    downloadType: 'average_rating', // No specific download for rating
-  },
 ];
 
 export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = ({
@@ -129,8 +115,7 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
     'assets_in_use', 
     'assets_in_breakdown', 
     'critical_assets_in_breakdown', 
-    'ppm_conduct_assets_count', 
-    'average_customer_rating'
+    'ppm_conduct_assets_count'
   ],
   onMetricsChange,
   onDownload,
@@ -228,8 +213,6 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
           return (value as any).total_assets_in_breakdown?.toLocaleString() || 'N/A';
         case 'ppm_conduct_assets_count':
           return (value as any).total?.toLocaleString() || 'N/A';
-        case 'average_customer_rating':
-          return (value as any).avg_rating?.toFixed(1) || 'N/A';
         default:
           return 'N/A';
       }
@@ -240,7 +223,7 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
       return typeof value === 'string' ? value : `₹${value.toLocaleString()}`;
     }
     
-    if (key === 'average_rating' || key === 'average_customer_rating') {
+    if (key === 'average_rating') {
       return typeof value === 'number' ? value.toFixed(1) : value;
     }
     
@@ -376,7 +359,7 @@ export const AssetStatisticsSelector: React.FC<AssetStatisticsSelectorProps> = (
       );
     }
 
-    // Default grid layout - 3x2 grid (3 cards per row, 2 rows, 6 total cards)
+    // Default grid layout - responsive grid for 5 cards
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 min-h-[300px]">
         {allMetrics.map(renderMetricCard)}
