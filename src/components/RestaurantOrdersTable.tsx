@@ -135,9 +135,7 @@ export const RestaurantOrdersTable = () => {
   const handleExport = async () => {
     try {
       const response = await dispatch(exportOrders({ baseUrl, token, id: Number(restoId) })).unwrap();
-      const blob = new Blob([response], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
+      const blob = new Blob([response]);
 
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
