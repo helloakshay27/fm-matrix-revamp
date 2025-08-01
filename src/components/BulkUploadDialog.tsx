@@ -172,7 +172,7 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
           ? "/pms/assets/asset_import"
           : "/pms/assets/update_assets";
         formData = new FormData();
-        formData.append('file', selectedFile);
+        formData.append('pms_asset_file', selectedFile);
       }
 
       // Call the API with the selected file

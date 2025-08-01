@@ -6,6 +6,7 @@ interface AssetTableDisplayProps {
 }
 
 export const AssetTableDisplay: React.FC<AssetTableDisplayProps> = ({ selectedAssets }) => {
+  console.log(selectedAssets)
   const getStatusBadge = (status: string) => {
     const statusConfig: { [key: string]: { bg: string; text: string; label: string } } = {
       'in_use': { bg: 'bg-green-100', text: 'text-green-800', label: 'In Use' },
@@ -58,12 +59,12 @@ export const AssetTableDisplay: React.FC<AssetTableDisplayProps> = ({ selectedAs
                   <td className="px-4 py-3">
                     {getStatusBadge(asset.status || 'unknown')}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{asset.site_name || 'N/A'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{asset.siteName || 'N/A'}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">{asset.building?.name || 'N/A'}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">{asset.wing?.name || 'N/A'}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">{asset.floor?.name || 'N/A'}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">{asset.area?.name || 'N/A'}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{asset.pms_room?.name || 'N/A'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{asset.pmsRoom || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
@@ -8,13 +7,12 @@ import { fetchOccupantUserCounts } from '@/store/slices/occupantUserCountsSlice'
 import { StatsCard } from '@/components/StatsCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Users, Download, Filter, Eye, Search, RotateCcw, X } from 'lucide-react';
-import { 
+import { Users, Download, X } from 'lucide-react';
+import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -23,17 +21,20 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { useToast } from '@/hooks/use-toast';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { toast } from 'sonner';
 
 
 export const OccupantUserMasterDashboard = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeSearchTerm, setActiveSearchTerm] = useState('');
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [occupantUser, setOccupantUser] = useState([])
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
   const [filters, setFilters] = useState({
     name: '',
     email: '',
@@ -41,61 +42,21 @@ export const OccupantUserMasterDashboard = () => {
     status: '',
     entity: ''
   });
-  const pageSize = 5;
-  
-  const { users: occupantUsersData, loading, error } = useSelector((state: RootState) => state.occupantUsers);
+
+  const { users: occupantUsersData, loading } = useSelector((state: RootState) => state.occupantUsers);
   const occupantUserCounts = useSelector((state: RootState) => state.occupantUserCounts);
   const { total: totalUsers = 0, approved: approvedUsers = 0, pending: pendingUsers = 0, rejected: rejectedUsers = 0, appDownloaded = 0 } = occupantUserCounts || {};
 
-  const filteredUsers = occupantUsersData.filter(user =>
-    user.name.toLowerCase().includes(activeSearchTerm.toLowerCase())
-  );
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredUsers.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const currentPageUsers = filteredUsers.slice(startIndex, endIndex);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handlePrevious = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+  useEffect(() => {
+    if (occupantUsersData?.transformedUsers) {
+      setOccupantUser(occupantUsersData?.transformedUsers)
+      setPagination({
+        current_page: occupantUsersData.pagination?.current_page,
+        total_count: occupantUsersData.pagination?.total_count,
+        total_pages: occupantUsersData.pagination?.total_pages
+      })
     }
-  };
-
-  const handleNext = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-
-  const handleViewUser = (id: number) => {
-    navigate(`/master/user/occupant-users/view/${id}`);
-  };
-
-  const handleSearch = () => {
-    setActiveSearchTerm(searchTerm);
-    setCurrentPage(1);
-    toast({
-      title: "Search Applied",
-      description: `Searching for users with name: "${searchTerm}"`
-    });
-  };
-
-  const handleReset = () => {
-    setSearchTerm('');
-    setActiveSearchTerm('');
-    setCurrentPage(1);
-    toast({
-      title: "Search Reset",
-      description: "Search has been cleared"
-    });
-  };
+  }, [occupantUsersData.transformedUsers])
 
   const handleFilterChange = (field: string, value: string) => {
     setFilters(prev => ({
@@ -105,10 +66,7 @@ export const OccupantUserMasterDashboard = () => {
   };
 
   const handleApplyFilters = () => {
-    toast({
-      title: "Filters Applied",
-      description: "Search results have been updated based on your filters."
-    });
+    toast.success('Filters applied successfully');
     setFilterDialogOpen(false);
   };
 
@@ -120,83 +78,86 @@ export const OccupantUserMasterDashboard = () => {
       status: '',
       entity: ''
     });
-    toast({
-      title: "Filters Reset",
-      description: "All filters have been cleared."
-    });
+    toast.success('Filters reset successfully');
+    setFilterDialogOpen(false);
   };
 
   const handleExport = () => {
     try {
       // Create CSV data
-      const headers = ['Sr. No.', 'Company', 'Name', 'Mobile Number', 'Email ID', 'Status'];
-      const csvData = [
-        headers.join(','),
-        ...filteredUsers.map(user => [
-          user.srNo,
-          `"${user.company}"`,
-          `"${user.name}"`,
-          user.mobile,
-          user.email,
-          user.status
-        ].join(','))
-      ].join('\n');
 
-      // Create and download the file
-      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `occupant-users-${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
 
-      toast({
-        title: "Export Successful",
-        description: "Occupant users data has been exported to CSV file."
-      });
+      toast.success('Data exported successfully');
     } catch (error) {
-      toast({
-        title: "Export Failed",
-        description: "There was an error exporting the data. Please try again.",
-        variant: "destructive"
-      });
+      toast.error('Failed to export data');
+    }
+  };
+
+  const { setCurrentSection } = useLayout();
+
+  useEffect(() => {
+    setCurrentSection('Master');
+    dispatch(fetchOccupantUsers({ page: pagination.current_page, perPage: 10 }));
+    dispatch(fetchOccupantUserCounts());
+  }, [setCurrentSection, dispatch]);
+
+  const columns: ColumnConfig[] = [
+    { key: "id", label: "ID", sortable: true, draggable: true },
+    { key: "company", label: "Company", sortable: true, draggable: true },
+    { key: "name", label: "Name", sortable: true, draggable: true },
+    { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
+    { key: "email", label: "Email", sortable: true, draggable: true },
+    { key: "status", label: "Status", sortable: true, draggable: true },
+  ];
+
+  const handlePageChange = async (page: number) => {
+    setPagination((prev) => ({
+      ...prev,
+      current_page: page,
+    }));
+    try {
+      dispatch(fetchOccupantUsers({ page: page, perPage: 10 }));
+    } catch (error) {
+      toast.error('Failed to fetch bookings');
     }
   };
 
   const renderPaginationItems = () => {
+    if (!pagination.total_pages || pagination.total_pages <= 0) {
+      return null;
+    }
     const items = [];
+    const totalPages = pagination.total_pages;
+    const currentPage = pagination.current_page;
     const showEllipsis = totalPages > 7;
-    
+
     if (showEllipsis) {
-      // Show first page
       items.push(
-        <PaginationItem key={1}>
-          <PaginationLink 
-            onClick={() => setCurrentPage(1)}
+        <PaginationItem key={1} className='cursor-pointer'>
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
             isActive={currentPage === 1}
+            disabled={loading}
           >
             1
           </PaginationLink>
         </PaginationItem>
       );
 
-      // Show ellipsis or pages 2-3
       if (currentPage > 4) {
         items.push(
-          <PaginationItem key="ellipsis1">
+          <PaginationItem key="ellipsis1" >
             <PaginationEllipsis />
           </PaginationItem>
         );
       } else {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
-            <PaginationItem key={i}>
-              <PaginationLink 
-                onClick={() => setCurrentPage(i)}
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
+                disabled={loading}
               >
                 {i}
               </PaginationLink>
@@ -205,14 +166,14 @@ export const OccupantUserMasterDashboard = () => {
         }
       }
 
-      // Show current page area
       if (currentPage > 3 && currentPage < totalPages - 2) {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
-            <PaginationItem key={i}>
-              <PaginationLink 
-                onClick={() => setCurrentPage(i)}
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
+                disabled={loading}
               >
                 {i}
               </PaginationLink>
@@ -221,7 +182,6 @@ export const OccupantUserMasterDashboard = () => {
         }
       }
 
-      // Show ellipsis or pages before last
       if (currentPage < totalPages - 3) {
         items.push(
           <PaginationItem key="ellipsis2">
@@ -230,12 +190,13 @@ export const OccupantUserMasterDashboard = () => {
         );
       } else {
         for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-          if (!items.find(item => item.key === i)) {
+          if (!items.find((item) => item.key === i.toString())) {
             items.push(
-              <PaginationItem key={i}>
-                <PaginationLink 
-                  onClick={() => setCurrentPage(i)}
+              <PaginationItem key={i} className='cursor-pointer'>
+                <PaginationLink
+                  onClick={() => handlePageChange(i)}
                   isActive={currentPage === i}
+                  disabled={loading}
                 >
                   {i}
                 </PaginationLink>
@@ -245,13 +206,13 @@ export const OccupantUserMasterDashboard = () => {
         }
       }
 
-      // Show last page
       if (totalPages > 1) {
         items.push(
-          <PaginationItem key={totalPages}>
-            <PaginationLink 
-              onClick={() => setCurrentPage(totalPages)}
+          <PaginationItem key={totalPages} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(totalPages)}
               isActive={currentPage === totalPages}
+              disabled={loading}
             >
               {totalPages}
             </PaginationLink>
@@ -259,13 +220,13 @@ export const OccupantUserMasterDashboard = () => {
         );
       }
     } else {
-      // Show all pages if total is 7 or less
       for (let i = 1; i <= totalPages; i++) {
         items.push(
-          <PaginationItem key={i}>
-            <PaginationLink 
-              onClick={() => setCurrentPage(i)}
+          <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
               isActive={currentPage === i}
+              disabled={loading}
             >
               {i}
             </PaginationLink>
@@ -277,16 +238,32 @@ export const OccupantUserMasterDashboard = () => {
     return items;
   };
 
-  const { setCurrentSection } = useLayout();
-  
-  useEffect(() => {
-    setCurrentSection('Master');
-    dispatch(fetchOccupantUsers());
-    dispatch(fetchOccupantUserCounts());
-  }, [setCurrentSection, dispatch]);
+  const renderCell = (user: any, columnKey: string) => {
+    switch (columnKey) {
+      case "status":
+        return (
+          <Badge
+            variant={
+              user.status === 'approved' ? 'default' :
+                user.status === 'pending' ? 'secondary' :
+                  'destructive'
+            }
+            className={
+              user.status === 'approved' ? 'bg-green-100 text-green-800' :
+                user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+            }
+          >
+            {user.status}
+          </Badge>
+        );
+      default:
+        return user[columnKey];
+    }
+  };
 
   return (
-      <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="w-full space-y-6">
 
         {/* Header */}
@@ -323,127 +300,40 @@ export const OccupantUserMasterDashboard = () => {
           />
         </div>
 
-        {/* Action Buttons and Search */}
-        <div className="flex flex-wrap gap-3 items-center">
-          <Button 
-            variant="outline" 
-            className="border-gray-300 text-gray-700 hover:bg-gray-50"
-            onClick={handleExport}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-          <Button 
-            variant="outline" 
-            className="border-gray-300 text-gray-700 hover:bg-gray-50"
-            onClick={() => setFilterDialogOpen(true)}
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-          </Button>
-          
-          {/* Search Section */}
-          <div className="flex gap-2 items-center ml-auto">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-               <Input
-                 placeholder="Search by user name..."
-                 value={searchTerm}
-                 onChange={(e) => setSearchTerm(e.target.value)}
-                 onKeyDown={(e) => {
-                   if (e.key === 'Enter') {
-                     handleSearch();
-                   }
-                 }}
-                 className="pl-10 w-64"
-               />
-            </div>
-            <Button 
-              onClick={handleSearch}
-              className="bg-[#C72030] hover:bg-[#a91b29] text-white"
-            >
-              Go!
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleReset}
-              className="border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reset
-            </Button>
-          </div>
-        </div>
-
         {/* Table */}
-        <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-[#1a1a1a]">Sr. No.</TableHead>
-                  <TableHead className="font-semibold text-[#1a1a1a]">Company</TableHead>
-                  <TableHead className="font-semibold text-[#1a1a1a]">Name</TableHead>
-                  <TableHead className="font-semibold text-[#1a1a1a]">Mobile Number</TableHead>
-                  <TableHead className="font-semibold text-[#1a1a1a]">Email ID</TableHead>
-                  <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currentPageUsers.map((user) => (
-                  <TableRow key={user.id} className="hover:bg-gray-50">
-                    <TableCell className="font-medium">{user.srNo}</TableCell>
-                    <TableCell>{user.company}</TableCell>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.mobile}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={
-                          user.status === 'approved' ? 'default' : 
-                          user.status === 'pending' ? 'secondary' : 
-                          'destructive'
-                        }
-                        className={
-                          user.status === 'approved' ? 'bg-green-100 text-green-800' :
-                          user.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
-                        }
-                      >
-                        {user.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        <div className="overflow-x-auto">
+          <EnhancedTable
+            data={occupantUser}
+            columns={columns}
+            renderCell={renderCell}
+            onFilterClick={() => setFilterDialogOpen(true)}
+            enableExport
+            handleExport={handleExport}
+            storageKey="fm-user-master-table"
+            searchPlaceholder="Search users..."
+            loading={loading}
+          />
         </div>
-      </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
         <div className="flex justify-center mt-6">
           <Pagination>
             <PaginationContent>
               <PaginationItem>
-                <PaginationPrevious 
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                <PaginationPrevious
+                  onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                  className={pagination.current_page === 1 || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                 />
               </PaginationItem>
-              
               {renderPaginationItems()}
-              
               <PaginationItem>
-                <PaginationNext 
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                <PaginationNext
+                  onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                  className={pagination.current_page === pagination.total_pages || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                 />
               </PaginationItem>
             </PaginationContent>
           </Pagination>
         </div>
-      )}
       </div>
 
       {/* Filter Dialog */}
@@ -462,7 +352,7 @@ export const OccupantUserMasterDashboard = () => {
               </Button>
             </div>
           </DialogHeader>
-          
+
           <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Name Field */}

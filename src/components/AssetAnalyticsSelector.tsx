@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -11,9 +11,11 @@ import { ChevronDown } from 'lucide-react';
 interface AssetAnalyticsSelectorProps {
   onSelectionChange: (selectedOptions: string[]) => void;
   dateRange: { startDate: Date; endDate: Date };
+  selectedOptions?: string[];
 }
 
 const analyticsOptions = [
+  { id: 'assetStatistics', label: 'Asset Statistics', description: 'Key asset metrics and statistics overview' },
   { id: 'groupWise', label: 'Group-wise Assets', description: 'Assets distribution by groups' },
   { id: 'categoryWise', label: 'Category-wise Assets', description: 'Assets distribution by categories' },
   { id: 'statusDistribution', label: 'Status Distribution', description: 'Assets by status (In Use, Breakdown, etc.)' },
@@ -23,9 +25,15 @@ const analyticsOptions = [
 export const AssetAnalyticsSelector: React.FC<AssetAnalyticsSelectorProps> = ({
   onSelectionChange,
   dateRange,
+  selectedOptions: propSelectedOptions = ['assetStatistics', 'groupWise', 'categoryWise', 'statusDistribution', 'assetDistributions'],
 }) => {
-  const [selectedOptions, setSelectedOptions] = useState<string[]>(['groupWise', 'categoryWise', 'statusDistribution', 'assetDistributions']);
+  const [selectedOptions, setSelectedOptions] = useState<string[]>(propSelectedOptions);
   const [isOpen, setIsOpen] = useState(false);
+
+  // Sync with prop changes
+  useEffect(() => {
+    setSelectedOptions(propSelectedOptions);
+  }, [propSelectedOptions]);
 
   const handleSelectionChange = (optionId: string, checked: boolean) => {
     const newSelection = checked

@@ -135,18 +135,14 @@ export const RestaurantOrdersTable = () => {
   const handleExport = async () => {
     try {
       const response = await dispatch(exportOrders({ baseUrl, token, id: Number(restoId) })).unwrap();
-      const blob = new Blob([response], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
 
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'orders.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
+      const url = window.URL.createObjectURL(new Blob([response]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "orders.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
       toast.success('Orders exported successfully!');
     } catch (error) {
