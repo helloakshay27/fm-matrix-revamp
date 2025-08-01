@@ -8,7 +8,7 @@ import { serviceDetailsReducer } from './slices/serviceDetailsSlice'
 import { departmentReducer } from './slices/departmentSlice'
 import roleReducer from './slices/roleSlice'
 import { functionReducer } from './slices/functionSlice'
-import fmUserReducer, { createFmUserReducer, fetchRolesReducer, fetchSuppliersReducer, fetchUnitsReducer, getFMUsersReducer } from './slices/fmUserSlice'
+import fmUserReducer, { createFmUserReducer, editFMUserReducer, fetchRolesReducer, fetchSuppliersReducer, fetchUnitsReducer, getFMUsersReducer, getUserDetailsReducer } from './slices/fmUserSlice'
 import userCountsReducer from './slices/userCountsSlice'
 import occupantUsersReducer from './slices/occupantUsersSlice'
 import occupantUserCountsReducer from './slices/occupantUserCountsSlice'
@@ -138,6 +138,8 @@ export const store = configureStore({
 
     fetchRestaurantOrders: fetchRestaurantOrdersReducer,
     getFMUsers: getFMUsersReducer,
+    getUserDetails: getUserDetailsReducer,
+    editFMUser: editFMUserReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>
