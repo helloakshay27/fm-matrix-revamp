@@ -197,6 +197,182 @@ export const assetAnalyticsDownloadAPI = {
     }
   },
 
+  // Download asset statistics card data
+  downloadCardAssetsInBreakdown: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+
+    const url = `${getBaseUrl()}/pms/assets/card_assets_in_breakdown_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download assets in breakdown data: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `assets_in_breakdown_${fromDateStr}_to_${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading assets in breakdown data:', error);
+      throw error;
+    }
+  },
+
+  downloadCardCriticalAssetsInBreakdown: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+
+    const url = `${getBaseUrl()}/pms/assets/card_critical_assets_in_breakdown_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download critical assets in breakdown data: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `critical_assets_in_breakdown_${fromDateStr}_to_${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading critical assets in breakdown data:', error);
+      throw error;
+    }
+  },
+
+  downloadCardAssetsInUse: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+
+    const url = `${getBaseUrl()}/pms/assets/card_assets_in_use_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download assets in use data: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `assets_in_use_${fromDateStr}_to_${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading assets in use data:', error);
+      throw error;
+    }
+  },
+
+  downloadCardTotalAssets: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+
+    const url = `${getBaseUrl()}/pms/assets/card_total_assets_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download total assets data: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `total_assets_${fromDateStr}_to_${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading total assets data:', error);
+      throw error;
+    }
+  },
+
+  downloadCardPPMConductAssets: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+
+    const url = `${getBaseUrl()}/pms/assets/card_ppm_conduct_assets_download.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download PPM conduct assets data: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `ppm_conduct_assets_${fromDateStr}_to_${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading PPM conduct assets data:', error);
+      throw error;
+    }
+  },
+
   // Download all asset analytics data
   downloadAllAssetAnalyticsData: async (fromDate: Date, toDate: Date, selectedTypes: string[] = []): Promise<void> => {
     try {
