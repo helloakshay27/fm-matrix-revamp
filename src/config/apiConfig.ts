@@ -116,7 +116,7 @@ export const API_CONFIG = {
     // Checklist sample format download
     CHECKLIST_SAMPLE_FORMAT: '/assets/checklist.xlsx',
     // Bulk upload for custom forms
-    CUSTOM_FORMS_BULK_UPLOAD: '/pms/custom_forms/bulk_upload',
+    CUSTOM_FORMS_BULK_UPLOAD: '/pms/custom_forms/bulk_upload.json',
     // Asset dashboard endpoints
     // ASSET_STATISTICS: '/pms/asset_statistics.json',
     // ASSET_STATUS: '/pms/asset_status.json',
