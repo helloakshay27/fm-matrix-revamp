@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Plus, Minus, X } from "lucide-react";
+import { ArrowLeft, Plus, Minus, X, NotebookPen, PenBoxIcon } from "lucide-react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { restaurantApi } from "@/services/restaurantApi";
-import { NoteAdd } from "@mui/icons-material";
+import { Note, NoteAdd, NoteAddOutlined } from "@mui/icons-material";
 
 interface MenuItem {
   id: string;
@@ -407,8 +407,8 @@ export const MobileItemsDetails: React.FC = () => {
       <div className="mx-4 mt-4">
         <div className="bg-white rounded-xl p-4">
           <div className="flex items-center mb-3">
-            <div className="w-5 h-5 bg-gray-900 rounded-sm flex items-center justify-center mr-2">
-             < NoteAdd />
+            <div className="w-5 h-5 bg-gray-300 rounded-sm flex items-center justify-center mr-2">
+             <PenBoxIcon className="w-3 h-3 text-red-500" />
             </div>
             <span className="font-semibold text-gray-900">
               Additional Request
