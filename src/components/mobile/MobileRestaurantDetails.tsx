@@ -203,10 +203,29 @@ export const MobileRestaurantDetails: React.FC<
         sourceParam || "none"
       );
 
-      // Construct URL with source parameter if any source exists
-      const itemsUrl = sourceParam
-        ? `/mobile/restaurant/${restaurant.id}/items?source=${sourceParam}`
+      // Construct URL with source parameter and facility_id if any exists
+      const currentParams = new URLSearchParams(window.location.search);
+      
+      // Get facility_id from session storage and add to URL if available
+      const facilityId = sessionStorage.getItem("facility_id");
+      if (facilityId && !currentParams.has("facilityId")) {
+        currentParams.set("facilityId", facilityId);
+      }
+      
+      // Ensure source parameter is preserved
+      if (sourceParam && !currentParams.has("source")) {
+        currentParams.set("source", sourceParam);
+      }
+      
+      const queryString = currentParams.toString();
+      const itemsUrl = queryString
+        ? `/mobile/restaurant/${restaurant.id}/items?${queryString}`
         : `/mobile/restaurant/${restaurant.id}/items`;
+
+      console.log("🛒 NAVIGATING TO ITEMS:");
+      console.log("  - URL:", itemsUrl);
+      console.log("  - facility_id preserved:", facilityId);
+      console.log("  - source preserved:", sourceParam);
 
       navigate(itemsUrl, {
         state: { selectedItems, restaurant, isExternalScan, sourceParam },
@@ -266,10 +285,10 @@ export const MobileRestaurantDetails: React.FC<
         </div>
 
         {/* Discount Badge */}
-        <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded-full flex items-center">
+        {/* <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded-full flex items-center">
           <Percent className="w-4 h-4 mr-1" />
           <span className="text-sm font-semibold">{restaurant.discount}</span>
-        </div>
+        </div> */}
 
         {/* Pagination dots */}
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
@@ -401,13 +420,13 @@ export const MobileRestaurantDetails: React.FC<
             onClick={handleShowItems}
             className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl text-lg font-semibold"
           >
-            Show Items
+            Book Order
           </Button>
         </div>
       )}
 
       {/* Menu Button */}
-      <div className="fixed bottom-4 right-4">
+      {/* <div className="fixed bottom-4 right-4">
         <Button
           onClick={handleMenuClick}
           className="bg-white text-gray-900 border border-gray-300 px-6 py-3 rounded-xl shadow-lg flex items-center"
@@ -415,7 +434,7 @@ export const MobileRestaurantDetails: React.FC<
           <span className="mr-2">🍽️</span>
           Menu
         </Button>
-      </div>
+      </div> */}
 
       {/* Menu Images Modal */}
       {showMenuModal && (
