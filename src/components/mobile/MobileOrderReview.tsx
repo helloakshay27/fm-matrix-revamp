@@ -413,7 +413,8 @@ export const MobileOrderReview: React.FC = () => {
   }, [showSuccess, isExternalScan, navigate]);
 
   // Guard clause: Handle missing essential data
-  if (!restaurant) {
+  if (!restaurant && !orderData?.restaurant_name) {
+    console.log("❌ GUARD CLAUSE: No restaurant data and no orderData restaurant_name");
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -433,6 +434,17 @@ export const MobileOrderReview: React.FC = () => {
       </div>
     );
   }
+
+  // Create a fallback restaurant object if restaurant is missing but we have orderData
+  const effectiveRestaurant = restaurant || {
+    id: orderData?.restaurant_id?.toString() || "unknown",
+    name: orderData?.restaurant_name || "Restaurant",
+    location: "Restaurant Location",
+    rating: 4.1,
+    timeRange: "60-65 mins",
+    discount: "20% OFF",
+    image: orderData?.restaurant_cover_images?.[0]?.document || "",
+  };
 
   if (showSuccess) {
     return (
@@ -679,7 +691,7 @@ export const MobileOrderReview: React.FC = () => {
 
           <div className="flex justify-between items-center mb-4">
             <span className="font-semibold text-gray-900">
-              {orderData?.restaurant_name || restaurant.name}
+              {orderData?.restaurant_name || effectiveRestaurant.name}
             </span>
             <span className="text-gray-600">
               Total Items - {getTotalItems()}

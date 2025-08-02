@@ -594,4 +594,110 @@ export const restaurantApi = {
       };
     }
   },
+
+  // Admin Order Management APIs
+  async getAdminOrders(token: string, restaurantId: string, page: number = 1): Promise<AdminOrdersResponse> {
+    try {
+      const response = await baseClient.get(
+        `/pms/admin/restaurants/${restaurantId}/food_orders.json?all=true&page=${page}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching admin orders:", error);
+      throw new Error("Failed to fetch admin orders");
+    }
+  },
+
+  async updateOrderStatus(orderId: string, statusId: string, comment: string = "", token?: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      // Use provided token or get from sessionStorage
+      const authToken = token || sessionStorage.getItem('token') || sessionStorage.getItem('app_token');
+      
+      const response = await baseClient.post(
+        `/crm/create_osr_log.json`,
+        {
+          osr_log: {
+            about: "FoodOrder",
+            about_id: orderId,
+            osr_status_id: statusId,
+            comment: comment
+          }
+        },
+        {
+          headers: authToken ? {
+            'Authorization': `Bearer ${authToken}`
+          } : {}
+        }
+      );
+      
+      return {
+        success: true,
+        message: "Status updated successfully"
+      };
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      return {
+        success: false,
+        message: "Failed to update order status"
+      };
+    }
+  },
 };
+
+// Admin Order Management Interfaces
+export interface OrderStatus {
+  id: number;
+  position: number | null;
+  name: string;
+  display: string | null;
+  fixed_state: string;
+  color_code: string | null;
+  mail: number;
+  sms: number;
+  cancel: number;
+  active: number;
+}
+
+export interface AdminOrderItem {
+  id: number;
+  menu_name: string;
+  quantity: number;
+  price: number;
+}
+
+export interface AdminOrder {
+  id: number;
+  restaurant_name: string;
+  restaurant_id: number;
+  created_at: string;
+  created_by: string;
+  status_name: string;
+  total_amount: number;
+  item_count: number;
+  items: AdminOrderItem[];
+  statuses: OrderStatus[];
+  payment_status?: string;
+  payment_status_class?: string;
+  meeting_room?: string;
+  details_url?: string;
+}
+
+export interface AdminOrdersResponse {
+  total_pages: number;
+  current_page: number;
+  per_page: number;
+  total_records: number;
+  food_orders: AdminOrder[];
+}
+
+export interface AdminRestaurant {
+  id: number;
+  name: string;
+  location?: string;
+  image?: string;
+}

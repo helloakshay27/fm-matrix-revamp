@@ -280,20 +280,27 @@ export const MobileItemsDetails: React.FC = () => {
         console.log("  - finalSourceParam:", finalSourceParam);
         console.log("  - finalIsExternalScan:", finalIsExternalScan);
 
+        // Prepare order review data for sessionStorage
+        const orderReviewData = {
+          orderData: result.data,
+          restaurant,
+          totalPrice: getTotalPrice(),
+          totalItems: getTotalItems(),
+          items,
+          note,
+          isExternalScan: finalIsExternalScan,
+          sourceParam: finalSourceParam,
+          showSuccessImmediately: true,
+        };
+
+        // Store order data in sessionStorage for direct navigation support
+        sessionStorage.setItem("latest_order_data", JSON.stringify(orderReviewData));
+        console.log("💾 STORED ORDER DATA in sessionStorage for direct navigation");
+
         // Navigate to order review with success state
         // navigate(`/mobile/restaurant/${restaurant.id}/order-placed`, {
         navigate(`/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`, {
-          state: {
-            orderData: result.data,
-            restaurant,
-            totalPrice: getTotalPrice(),
-            totalItems: getTotalItems(),
-            items,
-            note,
-            isExternalScan: finalIsExternalScan, // Pass the external scan flag
-            sourceParam: finalSourceParam, // Pass the source parameter
-            showSuccessImmediately: true, // Flag to show success immediately
-          },
+          state: orderReviewData,
         });
       } else {
         console.error("❌ Order placement failed:", result.message);
