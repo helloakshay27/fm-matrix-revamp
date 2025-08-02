@@ -59,7 +59,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset }) => {
             'Authorization': getAuthHeader(),
           },
           body: JSON.stringify({
-            pms_asset: { breakdown: true, status: "breakdown" }
+            pms_asset: { breakdown: "true", status: "breakdown" }
           })
         });
 

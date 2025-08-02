@@ -70,7 +70,7 @@ export const BookingDetailsPage = () => {
                 </div>
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">Comment</span>
-                  <span className="font-medium text-16 truncate max-w-[200px] overflow-hidden whitespace-nowrap" title={bookings.comment}>
+                  <span className="font-medium text-16 truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings.comment}>
                     {bookings.comment}
                   </span>
                 </div>

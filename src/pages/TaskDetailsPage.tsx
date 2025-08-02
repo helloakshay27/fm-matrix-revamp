@@ -515,49 +515,78 @@ export const TaskDetailsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {taskDetails?.activity?.resp && taskDetails.activity.resp.length > 0 ? (
-                    taskDetails.activity.resp.map((activity, index) => (
+                  {taskDetails?.activity && (taskDetails.activity as any).resp && (taskDetails.activity as any).resp.length > 0 ? (
+                    (taskDetails.activity as any).resp.map((activity: any, index: number) => (
                       <tr key={index} className={index % 2 === 0 ? "bg-blue-50" : "bg-white"}>
                         <td className="p-3 border-b border-r">
-                          {activity.hint || '-'}
+                          {(activity as any).hint || '-'}
                         </td>
                         <td className="p-3 border-b border-r">
-                          {activity.label}
+                          {(activity as any).label}
                         </td>
                         <td className="p-3 border-b border-r">
-                          {activity.userData && activity.userData.length > 0 
-                            ? activity.userData.join(', ') 
+                          {(activity as any).userData && (activity as any).userData.length > 0 
+                            ? (activity as any).userData.join(', ') 
                             : '-'}
                         </td>
                         <td className="p-3 border-b border-r">
-                          {activity.comment || '-'}
+                          {(activity as any).comment || '-'}
                         </td>
                         <td className="p-3 border-b border-r">
-                          {activity.weightage || '-'}
+                          {(activity as any).weightage || '-'}
                         </td>
                         <td className="p-3 border-b border-r">
-                          {activity.rating || '-'}
+                          {(activity as any).rating || '-'}
                         </td>
                         <td className="p-3 border-b border-r">
-                          {index === 0 ? (
+                          { (
                             typeof taskDetails?.activity?.total_score === 'object'
                               ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
                               : taskDetails?.activity?.total_score ?? '-'
-                          ) : '-'}
+                          ) || '-'  }
                         </td>
                         <td className="p-3 border-b border-r">
-                          {index === 0 ? (
+                          {/* {index === 0 ? ( */}
                             <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
                               {taskDetails.task_details.status.display_name}
                             </Badge>
-                          ) : '-'}
+                          {/* ) : '-'} */}
                         </td>
                         <td className="p-3 border-b">
-                          {index === 0 ? (
-                            taskDetails?.attachments.blob_store_files.length > 0
-                              ? 'Has Attachments'
-                              : 'No attachments'
-                          ) : '-'}
+                          {taskDetails?.attachments.blob_store_files.length > 0 ? (
+                            <div className="space-y-1">
+                              {taskDetails.attachments.blob_store_files
+                                .filter((file: any) => file.relation === `AssetQuestResponse${activity.name}`)
+                                .map((file, fileIndex) => (
+                                <div key={file.id} className="flex items-center gap-2">
+                                  <a
+                                    href={file.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
+                                    title={file.filename}
+                                  >
+                                    <img
+                                      src={file.url}
+                                      alt={file.filename}
+                                      className="w-8 h-8 object-cover rounded"
+                                    />
+                                    {/* {file.filename} */}
+                                  </a>
+                                  {/* <span className="text-xs text-gray-500">
+                                    ({Math.round(file.file_size / 1024)}KB)
+                                  </span> */}
+                                </div>
+                              ))}
+                              {taskDetails.attachments.blob_store_files
+                                .filter((file: any) => file.relation === `AssetQuestResponse${activity.name}`)
+                                .length === 0 && (
+                                <span className="text-sm text-gray-500">No attachments for this activity</span>
+                              )}
+                            </div>
+                          ) : (
+                            'No attachments'
+                          )}
                         </td>
                       </tr>
                     ))
@@ -588,9 +617,28 @@ export const TaskDetailsPage = () => {
                         </Badge>
                       </td>
                       <td className="p-3 border-b">
-                        {taskDetails?.attachments.blob_store_files.length > 0
-                          ? 'Has Attachments'
-                          : 'No attachments'}
+                        {taskDetails?.attachments.blob_store_files.length > 0 ? (
+                          <div className="space-y-1">
+                            {taskDetails.attachments.blob_store_files.map((file, fileIndex) => (
+                              <div key={file.id} className="flex items-center gap-2">
+                                <a
+                                  href={file.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
+                                  title={file.filename}
+                                >
+                                  {file.filename}
+                                </a>
+                                <span className="text-xs text-gray-500">
+                                  ({Math.round(file.file_size / 1024)}KB)
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          'No attachments'
+                        )}
                       </td>
                     </tr>
                   )}
@@ -923,8 +971,8 @@ export const TaskDetailsPage = () => {
                         </tr>
                       </thead>
                        <tbody>
-                  {taskDetails?.activity?.resp && taskDetails.activity.resp.length > 0 ? (
-                    taskDetails.activity.resp.map((activity, index) => (
+                  {taskDetails?.activity && (taskDetails.activity as any).resp && (taskDetails.activity as any).resp.length > 0 ? (
+                    (taskDetails.activity as any).resp.map((activity: any, index: number) => (
                       <tr key={index} className={index % 2 === 0 ? "bg-blue-50" : "bg-white"}>
                         <td className="p-3 border-b border-r">
                           {activity.hint || '-'}
@@ -961,11 +1009,35 @@ export const TaskDetailsPage = () => {
                           ) : '-'}
                         </td>
                         <td className="p-3 border-b">
-                          {index === 0 ? (
-                            taskDetails?.attachments.blob_store_files.length > 0
-                              ? 'Has Attachments'
-                              : 'No attachments'
-                          ) : '-'}
+                          {taskDetails?.attachments.blob_store_files.length > 0 ? (
+                            <div className="space-y-1">
+                              {taskDetails.attachments.blob_store_files
+                                .filter((file: any) => file.relation === `AssetQuestResponse${activity.name}`)
+                                .map((file, fileIndex) => (
+                                <div key={file.id} className="flex items-center gap-2">
+                                  <a
+                                    href={file.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
+                                    title={file.filename}
+                                  >
+                                    {file.filename}
+                                  </a>
+                                  <span className="text-xs text-gray-500">
+                                    ({Math.round(file.file_size / 1024)}KB)
+                                  </span>
+                                </div>
+                              ))}
+                              {taskDetails.attachments.blob_store_files
+                                .filter((file: any) => file.relation === `AssetQuestResponse${activity.name}`)
+                                .length === 0 && (
+                                <span className="text-sm text-gray-500">No attachments for this activity</span>
+                              )}
+                            </div>
+                          ) : (
+                            'No attachments'
+                          )}
                         </td>
                       </tr>
                     ))
@@ -996,9 +1068,28 @@ export const TaskDetailsPage = () => {
                         </Badge>
                       </td>
                       <td className="p-3 border-b">
-                        {taskDetails?.attachments.blob_store_files.length > 0
-                          ? 'Has Attachments'
-                          : 'No attachments'}
+                        {taskDetails?.attachments.blob_store_files.length > 0 ? (
+                          <div className="space-y-1">
+                            {taskDetails.attachments.blob_store_files.map((file, fileIndex) => (
+                              <div key={file.id} className="flex items-center gap-2">
+                                <a
+                                  href={file.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
+                                  title={file.filename}
+                                >
+                                  {file.filename}
+                                </a>
+                                <span className="text-xs text-gray-500">
+                                  ({Math.round(file.file_size / 1024)}KB)
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          'No attachments'
+                        )}
                       </td>
                     </tr>
                   )}
