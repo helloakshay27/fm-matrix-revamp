@@ -164,7 +164,6 @@ export const AddFacilityBookingPage = () => {
         return;
       }
 
-
       const selectedSiteId = localStorage.getItem('selectedSiteId') || '7';
       const userString = localStorage.getItem('user');
       let userId = '2844';
@@ -423,6 +422,8 @@ export const AddFacilityBookingPage = () => {
                 height: 'auto',
               },
             }}
+            helperText={<span style={{ textAlign: 'right', display: 'block' }}>{`${comment.length}/255 characters`}</span>}
+            error={comment.length > 255}
           />
         </div>
 
@@ -535,15 +536,6 @@ export const AddFacilityBookingPage = () => {
           <DialogTitle>Cancellation Policy</DialogTitle>
           <DialogContent>
             <div className="space-y-4">
-              {/* <p>Our cancellation policy is designed to ensure fair usage of our facilities:</p>
-              <ul className="list-disc pl-5">
-                <li>Cancellations made at least 24 hours in advance will receive a full refund.</li>
-                <li>Cancellations made within 24 hours of the booking time may incur a 50% charge.</li>
-                <li>No-shows or cancellations within 2 hours of the booking time will be charged the full amount.</li>
-                <li>Complementary bookings may be cancelled without charge, subject to availability.</li>
-              </ul>
-              <p>Please contact our support team for any cancellation requests or inquiries.</p> */}
-
               {
                 selectedFacility.cancellation_policy
               }
@@ -569,15 +561,6 @@ export const AddFacilityBookingPage = () => {
           <DialogTitle>Terms & Conditions</DialogTitle>
           <DialogContent>
             <div className="space-y-4">
-              {/* <p>By using our facility booking system, you agree to the following terms:</p>
-              <ul className="list-disc pl-5">
-                <li>All bookings are subject to availability and confirmation.</li>
-                <li>Users must adhere to facility usage guidelines and safety protocols.</li>
-                <li>The management reserves the right to cancel or modify bookings in case of unforeseen circumstances.</li>
-                <li>Users are responsible for any damage caused to the facilities during their booking.</li>
-                <li>Payment terms must be adhered to as per the selected payment method.</li>
-              </ul>
-              <p>For a complete list of terms, please contact our administration office.</p> */}
               {
                 selectedFacility.terms
               }

@@ -517,12 +517,12 @@ const BookingListDashboard = () => {
                 </Badge>
               </SelectValue>
             </SelectTrigger>
-            <SelectContent>
+            {/* <SelectContent>
               <SelectItem value="Confirmed">Confirmed</SelectItem>
               <SelectItem value="Pending">Pending</SelectItem>
               <SelectItem value="Cancelled">Cancelled</SelectItem>
               <SelectItem value="Completed">Completed</SelectItem>
-            </SelectContent>
+            </SelectContent> */}
           </Select>
         );
       default:
