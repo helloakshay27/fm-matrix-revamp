@@ -539,18 +539,18 @@ export const TaskDetailsPage = () => {
                           {(activity as any).rating || '-'}
                         </td>
                         <td className="p-3 border-b border-r">
-                          {index === 0 ? (
+                          { (
                             typeof taskDetails?.activity?.total_score === 'object'
                               ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
                               : taskDetails?.activity?.total_score ?? '-'
-                          ) : '-'}
+                          ) || '-'  }
                         </td>
                         <td className="p-3 border-b border-r">
-                          {index === 0 ? (
+                          {/* {index === 0 ? ( */}
                             <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
                               {taskDetails.task_details.status.display_name}
                             </Badge>
-                          ) : '-'}
+                          {/* ) : '-'} */}
                         </td>
                         <td className="p-3 border-b">
                           {taskDetails?.attachments.blob_store_files.length > 0 ? (
