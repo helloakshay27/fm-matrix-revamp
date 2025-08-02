@@ -4,6 +4,7 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { restaurantApi } from "@/services/restaurantApi";
+import { NoteAdd } from "@mui/icons-material";
 
 interface MenuItem {
   id: string;
@@ -151,10 +152,18 @@ export const MobileItemsDetails: React.FC = () => {
     if (finalIsExternalScan) {
       console.log("🔄 EXTERNAL USER: Redirecting to contact form");
       
+      // Get facility_id from session storage to pass along
+      const facilityId = sessionStorage.getItem("facility_id");
+      const siteId = sessionStorage.getItem("site_id");
+      
       // Construct contact form URL with source parameter
       const contactFormUrl = finalSourceParam 
         ? `/mobile/restaurant/${restaurant.id}/contact-form?source=${finalSourceParam}`
         : `/mobile/restaurant/${restaurant.id}/contact-form`;
+      
+      console.log("🔄 PASSING TO CONTACT FORM:");
+      console.log("  - facilityId:", facilityId);
+      console.log("  - siteId:", siteId);
       
       navigate(contactFormUrl, {
         state: {
@@ -165,28 +174,99 @@ export const MobileItemsDetails: React.FC = () => {
           note,
           isExternalScan: finalIsExternalScan,
           sourceParam: finalSourceParam,
+          facilityId: facilityId,
+          siteId: siteId ? parseInt(siteId) : undefined,
         },
       });
       return;
     }
     setIsSubmitting(true);
 
+    // 🔍 DEBUG: Check all session storage values
+    console.log("🔍 SESSION STORAGE DEBUG:");
+    console.log("  - facility_id:", sessionStorage.getItem("facility_id"));
+    console.log("  - org_id:", sessionStorage.getItem("org_id"));
+    console.log("  - site_id:", sessionStorage.getItem("site_id"));
+    console.log("  - facility_setup:", sessionStorage.getItem("facility_setup"));
+    console.log("  - app_token:", sessionStorage.getItem("app_token"));
+    console.log("  - app_user_info:", sessionStorage.getItem("app_user_info"));
+
+    // Get facility_id from session storage for order association
+    const facilityId = sessionStorage.getItem("facility_id");
+    const orgId = sessionStorage.getItem("org_id");
+    const siteId = sessionStorage.getItem("site_id");
+    const facilitySetup = sessionStorage.getItem("facility_setup");
+
+    // Get user info from session storage
+    const userInfo = sessionStorage.getItem("app_user_info");
+    const parsedUserInfo = userInfo ? JSON.parse(userInfo) : null;
+
+    // Parse facility setup to get delivery location
+    let deliveryLocation = "App Location";
+    if (facilitySetup) {
+      try {
+        const parsedFacilitySetup = JSON.parse(facilitySetup);
+        deliveryLocation = parsedFacilitySetup.fac_name || parsedFacilitySetup.name || "App Location";
+      } catch (error) {
+        console.error("Error parsing facility setup:", error);
+      }
+    } else if (facilityId) {
+      // If we have facility_id but no facility_setup, try to fetch it
+      try {
+        console.log("🏢 Fetching facility setup for facility_id:", facilityId);
+        const facilityResponse = await restaurantApi.getFacilitySetup(facilityId);
+        deliveryLocation = facilityResponse.facility_setup.fac_name || facilityResponse.facility_setup.name || "App Location";
+        
+        // Store facility setup for future use
+        sessionStorage.setItem("facility_setup", JSON.stringify(facilityResponse.facility_setup));
+        console.log("🏢 Facility setup fetched and stored:", deliveryLocation);
+      } catch (error) {
+        console.error("❌ Error fetching facility setup:", error);
+        deliveryLocation = `Facility ${facilityId}`;
+      }
+    }
+
+    // Build the order data with optional facility fields
+    // Get facility info from session storage
+    const facilityInfo = sessionStorage.getItem("facility");
+    const parsedFacilityInfo = facilityInfo ? JSON.parse(facilityInfo) : null;
+
+    const foodOrderData = {
+      name: parsedUserInfo?.name || user?.full_name || user?.name || "App User",
+      mobile: parsedUserInfo?.mobile || user?.mobile || "",
+      email: parsedUserInfo?.email || user?.email || "",
+      location: deliveryLocation,
+      restaurant_id: parseInt(restaurant.id),
+      user_id: userId,
+      requests: note || "",
+      items_attributes: items.map((item) => ({
+      menu_id: parseInt(item.id),
+      quantity: item.quantity,
+      })),
+      ...(facilityId && { facility_id: parseInt(facilityId) }),
+      ...(orgId && { org_id: parseInt(orgId) }),
+      ...(siteId && { site_id: parseInt(siteId) }),
+      ...(parsedFacilityInfo && { facility: parsedFacilityInfo }),
+    };
+
     const orderData = {
-      food_order: {
-        restaurant_id: parseInt(restaurant.id),
-        user_id: userId,
-        requests: note || "",
-        items_attributes: items.map((item) => ({
-          menu_id: parseInt(item.id),
-          quantity: item.quantity,
-        })),
-      },
+      food_order: foodOrderData,
     };
 
     console.log("🚀 SUBMITTING ORDER:");
     console.log("  - finalSourceParam:", finalSourceParam);
     console.log("  - finalIsExternalScan:", finalIsExternalScan);
-    console.log("  - Order data:", orderData);
+    console.log("  - facilityId (raw):", facilityId);
+    console.log("  - facilityId (will be included):", facilityId && parseInt(facilityId));
+    console.log("  - orgId (raw):", orgId);
+    console.log("  - orgId (will be included):", orgId && parseInt(orgId));
+    console.log("  - siteId (raw):", siteId);
+    console.log("  - siteId (will be included):", siteId && parseInt(siteId));
+    console.log("  - facilitySetup:", facilitySetup);
+    console.log("  - deliveryLocation:", deliveryLocation);
+    console.log("  - Final Order Data:", orderData);
+    console.log("  - Order data food_order:", orderData.food_order);
+    console.log("  - Order data stringified:", JSON.stringify(orderData, null, 2));
 
     try {
       const result = await restaurantApi.placeOrder(orderData);
@@ -328,10 +408,10 @@ export const MobileItemsDetails: React.FC = () => {
         <div className="bg-white rounded-xl p-4">
           <div className="flex items-center mb-3">
             <div className="w-5 h-5 bg-gray-900 rounded-sm flex items-center justify-center mr-2">
-              <span className="text-white text-xs">📝</span>
+             < NoteAdd />
             </div>
             <span className="font-semibold text-gray-900">
-              Note for the restaurant
+              Additional Request
             </span>
           </div>
           {note && (

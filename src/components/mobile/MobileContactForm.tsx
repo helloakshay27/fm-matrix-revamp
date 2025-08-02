@@ -38,14 +38,14 @@ export const MobileContactForm: React.FC = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const siteID = localStorage.getItem("site_id");
-  const orgID = localStorage.getItem("org_id");
-  const facilitySetupData = localStorage.getItem("facility_setup");
+  const siteID = sessionStorage.getItem("site_id");
+  const orgID = sessionStorage.getItem("org_id");
+  const facilitySetupData = sessionStorage.getItem("facility_setup");
   const facilityData = facilitySetupData ? JSON.parse(facilitySetupData) : null;
   
   // Check for token-based authentication
-  const appToken = localStorage.getItem("app_token");
-  const appUserInfo = localStorage.getItem("app_user_info");
+  const appToken = sessionStorage.getItem("app_token");
+  const appUserInfo = sessionStorage.getItem("app_user_info");
   const userInfo = appUserInfo ? JSON.parse(appUserInfo) : null;
   
   console.log("📋 STORED DATA:");
@@ -78,7 +78,18 @@ export const MobileContactForm: React.FC = () => {
   };
 
   // Get facility ID from URL params or passed state or localStorage
-  const storedFacilityId = localStorage.getItem("facility_id");
+  const storedFacilityId = sessionStorage.getItem("facility_id");
+  
+  // 🔍 Enhanced session storage debugging
+  console.log("🔍 SESSION STORAGE DEBUG:");
+  console.log("  - All session storage keys:", Object.keys(sessionStorage));
+  console.log("  - Raw facility_id value:", sessionStorage.getItem("facility_id"));
+  console.log("  - facility_id type:", typeof sessionStorage.getItem("facility_id"));
+  console.log("  - facility_id length:", sessionStorage.getItem("facility_id")?.length);
+  console.log("  - org_id value:", sessionStorage.getItem("org_id"));
+  console.log("  - site_id value:", sessionStorage.getItem("site_id"));
+  
+  console.log("Stored facility", storedFacilityId);
   const finalFacilityId = searchParams.get("facilityId") || facilityId || storedFacilityId;
   // Get source parameter from URL or passed state
   const finalSourceParam = searchParams.get("source") || sourceParam;
@@ -299,7 +310,7 @@ export const MobileContactForm: React.FC = () => {
         console.log("📱 FALLBACK: Using regular order API");
 
         // Get user from localStorage
-        const storedUser = localStorage.getItem("user");
+        const storedUser = sessionStorage.getItem("user");
         const user = storedUser ? JSON.parse(storedUser) : null;
         const userId = user?.id || null; // Use a default user ID for fallback
 
