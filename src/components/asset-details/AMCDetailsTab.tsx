@@ -28,6 +28,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
             firstService: amc?.amc_first_service || '-',
             paymentTerms: amc?.payment_term || '-',
             noOfVisits: amc?.no_of_visits?.toString() || '-',
+            amc_cost: amc?.amc_cost || '-',
           };
 
           const historyData = Array.isArray(amc?.amc_visit_logs) && amc.amc_visit_logs.length > 0
@@ -70,6 +71,11 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                     <span className="text-gray-500 w-24">First Service</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcData.firstService}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">AMC Cost</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcData.amc_cost || '-'}</span>
                   </div>
                 </div>
 
