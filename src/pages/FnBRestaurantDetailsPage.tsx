@@ -875,7 +875,7 @@ export const FnBRestaurantDetailsPage = () => {
             </Card>
 
             {/* Blocked Days */}
-            <Card>
+            {/* <Card>
               <CardHeader className="bg-[#F6F4EE]" style={{ border: '1px solid #D9D9D9' }}>
                 <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
                   <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">3</span>
@@ -944,7 +944,7 @@ export const FnBRestaurantDetailsPage = () => {
                   </Button>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Table Booking Configuration */}
             <Card>

@@ -25,6 +25,7 @@ import { API_CONFIG, ENDPOINTS } from '@/config/apiConfig';
 import { apiClient } from '@/utils/apiClient';
 import { toast, Toaster } from "sonner";
 import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
+import axios from 'axios';
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
@@ -253,10 +254,17 @@ export const ScheduleListDashboard = () => {
   };
   const handleEditSchedule = (id: string) => navigate(`/maintenance/schedule/edit/${id}`);
   const handleCopySchedule = (id: string) => navigate(`/maintenance/schedule/copy/${id}`);
-  const handleViewSchedule = (item: TransformedScheduleData) => {
-    // Get the form_code from the original custom forms data
-    const customForm = customFormsData?.custom_forms.find(form => form.id.toString() === item.id);
-    const formCode = customForm?.custom_form_code;
+  const handleViewSchedule = (item: any) => {
+    // Use custom_form_code from the table row if present, fallback to lookup
+    let formCode = item.custom_form_code;
+    if (!formCode && customFormsData?.custom_forms) {
+      const customForm = customFormsData.custom_forms.find((form: any) => form.id?.toString() === item.id?.toString());
+      formCode = customForm?.custom_form_code;
+    }
+    if (!item.id || !formCode) {
+      toast.error('Invalid schedule ID or missing form code.');
+      return;
+    }
     navigate(`/maintenance/schedule/view/${item.id}`, { state: { formCode } });
   };
 
@@ -679,142 +687,184 @@ export const ScheduleListDashboard = () => {
       setCurrentPage(page);
     };
 
-    const renderListTab = () => (
-      <div className="space-y-4">
-        {showActionPanel && (
-          <SelectionPanel
-            actions={selectionActions}
-            onAdd={handleAddSchedule}
-            onClearSelection={() => setShowActionPanel(false)}
-            onImport={() => setShowImportModal(true)}
-          />
-        )}
-  
-        {isLoading ? (
-          <div className="flex items-center justify-center h-32">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-sm text-muted-foreground">Loading schedules...</p>
-            </div>
-          </div>
-        ) : error ? (
-          <div className="flex items-center justify-center h-32">
-            <div className="text-center max-w-md">
-              <p className="text-sm text-red-600 mb-2">Error loading schedules</p>
-              <p className="text-xs text-gray-500 mb-3">
-                {error instanceof Error ? error.message : 'Unknown error occurred'}
-              </p>
-              {error instanceof Error && (
-                error.message.includes('Base URL is not configured') || 
-                error.message.includes('Authentication token is not available')
-              ) ? (
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mb-3">
-                  <p className="text-xs text-yellow-800 mb-2">
-                    It appears your session has expired or the application is not properly configured.
-                  </p>
-                  <button 
-                    onClick={() => {
-                      localStorage.clear();
-                      window.location.href = '/login';
-                    }} 
-                    className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200"
-                  >
-                    Go to Login
-                  </button>
-                </div>
-              ) : (
-                <button 
-                  onClick={() => window.location.reload()} 
-                  className="mt-2 px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
-                >
-                  Retry
-                </button>
-              )}
-            </div>
-          </div>
-        ) : (
-          <>
-            <EnhancedTable 
-              data={paginatedSchedules} 
-              columns={columns} 
-              renderCell={renderCell} 
-              // selectable={true} 
-              pagination={false} 
-              enableExport={true} 
-              exportFileName="schedules" 
-              storageKey="schedules-table" 
-              enableSearch={true} 
-              searchPlaceholder="Search schedules..." 
-              leftActions={renderCustomActions()} 
-              onFilterClick={() => setShowFilterDialog(true)}
-            />
+    // Remove old schedules state and pagination logic for table
+    // Add new state for paginated API data
+    const [tableSchedules, setTableSchedules] = useState<any[]>([]);
+    const [tableLoading, setTableLoading] = useState(false);
+    const [tableError, setTableError] = useState<string | null>(null);
+    const [tablePage, setTablePage] = useState(1);
+    const [tableTotalPages, setTableTotalPages] = useState(1);
+    const [tableTotalCount, setTableTotalCount] = useState(0);
 
-{/* Pagination */}
-{totalPages > 1 && (
-  <div className="mt-6">
-    <Pagination>
-      <PaginationContent>
-        <PaginationItem>
-          <PaginationPrevious
-            onClick={() => {
-              if (currentPage > 1) {
-                handlePageChange(currentPage - 1);
-              }
-            }}
-            className={
-              currentPage === 1
-                ? "pointer-events-none opacity-50"
-                : ""
+    // Fetch paginated schedule list for table only
+    useEffect(() => {
+      let isMounted = true;
+      setTableLoading(true);
+      setTableError(null);
+
+      // Use token from API_CONFIG
+      const token = API_CONFIG.TOKEN;
+      if (!token) {
+        setTableError('Authentication token is missing.');
+        setTableLoading(false);
+        return;
+      }
+
+      axios.get(
+        `https://oig-api.gophygital.work/pms/custom_forms.json?page=${tablePage}&access_token=${token}`
+      )
+        .then(res => {
+          if (!isMounted) return;
+          let forms: any[] = [];
+          console.log('API Response for schedules:', res.data);
+          if (Array.isArray(res.data.custom_forms)) {
+            forms = res.data.custom_forms;
+          } else if (res.data.custom_forms && typeof res.data.custom_forms === 'object') {
+            forms = [res.data.custom_forms];
+          }
+          // Map API fields to table fields
+          const mappedForms = forms.map((item: any) => {
+            // Extract scheduleType from checklist_for (after '::'), fallback to item.schedule_type
+            let scheduleType = '';
+            if (item.checklist_for && typeof item.checklist_for === 'string' && item.checklist_for.includes('::')) {
+              scheduleType = item.checklist_for.split('::')[1] || '';
+            } else {
+              scheduleType = item.schedule_type || '';
             }
-          />
-        </PaginationItem>
+            return {
+              id: item.id,
+              activityName: item.form_name || '',
+              type: item.schedule_type || '',
+              scheduleType,
+              noOfAssociation: item.no_of_associations?.toString() || '',
+              validFrom: item.start_date ? new Date(item.start_date).toLocaleDateString() : '',
+              validTill: item.end_date ? new Date(item.end_date).toLocaleDateString() : '',
+              category: item.category_name
+                ? (item.category_name.charAt(0).toUpperCase() + item.category_name.slice(1).toLowerCase())
+                : '',
+              active: item.active,
+              createdOn: item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
+              custom_form_code: item.custom_form_code,
+              // Add any other fields you need
+            };
+          });
+          setTableSchedules(mappedForms);
+          if (res.data.pagination) {
+            setTableTotalPages(res.data.pagination.total_pages);
+            setTableTotalCount(res.data.pagination.total_count);
+          } else {
+            setTableTotalPages(1);
+            setTableTotalCount(mappedForms.length);
+          }
+          setTableLoading(false);
+        })
+        .catch(err => {
+          if (!isMounted) return;
+          setTableError('Failed to load schedule list');
+          setTableLoading(false);
+        });
+      return () => { isMounted = false; };
+    }, [tablePage]);
 
-        {Array.from(
-          { length: Math.min(totalPages, 10) },
-          (_, i) => i + 1
-        ).map((page) => (
-          <PaginationItem key={page}>
-            <PaginationLink
-              onClick={() => handlePageChange(page)}
-              isActive={currentPage === page}
+  const renderListTab = () => (
+    <div className="space-y-4">
+      {showActionPanel && (
+        <SelectionPanel
+          actions={selectionActions}
+          onAdd={handleAddSchedule}
+          onClearSelection={() => setShowActionPanel(false)}
+          onImport={() => setShowImportModal(true)}
+        />
+      )}
+
+      {tableLoading ? (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-sm text-muted-foreground">Loading schedules...</p>
+          </div>
+        </div>
+      ) : tableError ? (
+        <div className="flex items-center justify-center h-32">
+          <div className="text-center max-w-md">
+            <p className="text-sm text-red-600 mb-2">Error loading schedules</p>
+            <p className="text-xs text-gray-500 mb-3">{tableError}</p>
+            <button
+              onClick={() => setTablePage(1)}
+              className="mt-2 px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
             >
-              {page}
-            </PaginationLink>
-          </PaginationItem>
-        ))}
-
-        {totalPages > 10 && (
-          <PaginationItem>
-            <PaginationEllipsis />
-          </PaginationItem>
-        )}
-
-        <PaginationItem>
-          <PaginationNext
-            onClick={() => {
-              if (currentPage < totalPages) {
-                handlePageChange(currentPage + 1);
-              }
-            }}
-            className={
-              currentPage === totalPages
-                ? "pointer-events-none opacity-50"
-                : ""
-            }
+              Retry
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <EnhancedTable
+            data={tableSchedules}
+            columns={columns}
+            renderCell={renderCell}
+            pagination={false}
+            enableExport={true}
+            exportFileName="schedules"
+            storageKey="schedules-table"
+            enableSearch={true}
+            searchPlaceholder="Search schedules..."
+            leftActions={renderCustomActions()}
+            onFilterClick={() => setShowFilterDialog(true)}
           />
-        </PaginationItem>
-      </PaginationContent>
-    </Pagination>
 
-    <div className="text-center mt-2 text-sm text-gray-600">
-      Showing page {currentPage} of {totalPages} ({totalCount} total tasks)
+          {/* Pagination */}
+          {tableTotalPages > 1 && (
+            <div className="mt-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => {
+                        if (tablePage > 1) setTablePage(tablePage - 1);
+                      }}
+                      className={tablePage === 1 ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                  {Array.from(
+                    { length: Math.min(tableTotalPages, 10) },
+                    (_, i) => i + 1
+                  ).map((page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => setTablePage(page)}
+                        isActive={tablePage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  {tableTotalPages > 10 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => {
+                        if (tablePage < tableTotalPages) setTablePage(tablePage + 1);
+                      }}
+                      className={tablePage === tableTotalPages ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+              <div className="text-center mt-2 text-sm text-gray-600">
+                Showing page {tablePage} of {tableTotalPages} ({tableTotalCount} total tasks)
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
-  </div>
-)}
-          </>
-        )}
-      </div>
-    );
+  );
+
+  // Handle filters
   function handleApplyFilters(filters: { activityName: string; type: string; category: string; }): void {
     setFilters(filters);
     setShowFilterDialog(false);

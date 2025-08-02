@@ -31,6 +31,12 @@ interface AMCDetailsData {
   no_of_visits: number;
   remarks: string;
   asset_name?: string;
+  amc_type?: string;
+  amc_assets?: any[];
+  service_name?: string;
+  service_code?: string;
+  execution_type?: string;
+  service_status?: string;
 }
 
 interface Technician {
@@ -48,6 +54,7 @@ interface AmcVisitLog {
   updated_at: string;
   asset_period: string;
   technician: Technician | null;
+  
 }
 
 interface AMCDetailsDataWithVisits extends AMCDetailsData {
@@ -172,16 +179,18 @@ export const AMCDetailsPage = () => {
               { label: 'Supplier Information', value: 'supplier-information' },
               { label: 'Attachments', value: 'attachments' },
               { label: 'AMC Visits', value: 'amc-visits' },
-              { label: 'Asset Information', value: 'asset-information' },
-            ].map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
+              {
+                label: amcDetails.amc_type === "Service" ? "Service Information" : "Asset Information",
+                value: "asset-information",
+              },].map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
           </TabsList>
 
           {/* AMC Information */}
@@ -622,62 +631,139 @@ export const AMCDetailsPage = () => {
 
 
           {/* Asset Information */}
-          <TabsContent value="asset-information" className="p-3 sm:p-6">
-            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
-              <CardHeader className="bg-[#F6F4EE] mb-6">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                    <Boxes className="h-4 w-4" />
+          {amcDetails.amc_type === 'Asset' && (
+            <TabsContent value="asset-information" className="p-3 sm:p-6">
+              <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                <CardHeader className="bg-[#F6F4EE] mb-6">
+                  <CardTitle className="text-lg flex items-center">
+                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                      <Boxes className="h-4 w-4" />
+                    </div>
+                    ASSET INFORMATION
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Action</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Code</TableHead>
+                          <TableHead>Under Warranty</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {amcDetails.amc_assets?.length > 0 ? (
+                          amcDetails.amc_assets.map((asset) => (
+                            <TableRow key={asset.id} className="bg-white">
+                              <TableCell>
+                                <a
+                                  href={`/maintenance/asset/details/${asset.asset_id}`}
+                                  className="text-gray-600 hover:text-black"
+                                  title="View Details"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </a>
+                              </TableCell>
+                              <TableCell>{asset.asset_name || '—'}</TableCell>
+                              <TableCell>{asset.sset_code || '—'}</TableCell>
+                              <TableCell>
+                                {asset.warranty === true
+                                  ? 'Yes'
+                                  : asset.warranty === false
+                                    ? 'No'
+                                    : 'NA'}
+                              </TableCell>                              <TableCell>
+                                <span
+                                  className={`px-2 py-1 text-xs rounded ${asset.asset_status === 'active'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                    }`}
+                                >
+                                  {asset.asset_status?.replace('_', ' ') || '—'}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center text-sm text-gray-500">
+                              No assets found
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
                   </div>
-                  ASSET INFORMATION
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Action</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Code</TableHead>
-                        <TableHead>Under Warranty</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {amcDetails.amc_assets?.length > 0 ? (
-                        amcDetails.amc_assets.map((asset) => (
-                          <TableRow key={asset.id} className="bg-white">
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {amcDetails.amc_type === 'Service' && (
+            <TabsContent value="asset-information" className="p-3 sm:p-6">
+              <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                <CardHeader className="bg-[#F6F4EE] mb-6">
+                  <CardTitle className="text-lg flex items-center">
+                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                      <Boxes className="h-4 w-4" />
+                    </div>
+                    SERVICE INFORMATION
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Action</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Code</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {amcDetails ? (
+                          <TableRow className="bg-white">
                             <TableCell>
                               <a
-                                href={`/maintenance/asset/details/${asset.asset_id}`}
+                                href={`/maintenance/service/details/${amcDetails.service_id}`}
                                 className="text-gray-600 hover:text-black"
                                 title="View Details"
                               >
                                 <Eye className="w-4 h-4" />
                               </a>
                             </TableCell>
-                            <TableCell>{asset.asset_name || '—'}</TableCell>
-                            <TableCell>{asset.asset_id || '—'}</TableCell>
-                            <TableCell>No</TableCell>
+                            <TableCell>{amcDetails.service_name || 'NA'}</TableCell>
+                            <TableCell>{amcDetails.service_code || 'NA'}</TableCell>
+                            <TableCell>{amcDetails.execution_type || 'NA'}</TableCell>
                             <TableCell>
-                              <span className="px-2 py-1 text-xs rounded bg-green-100 text-green-800">Active</span>
+                              {amcDetails.service_status ? (
+                                <span className="px-2 py-1 text-xs rounded bg-green-100 text-green-800">Active</span>
+                              ) : (
+                                <span className="px-2 py-1 text-xs rounded bg-red-100 text-red-800">Inactive</span>
+                              )}
                             </TableCell>
                           </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center text-sm text-gray-500">
-                            No assets found
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center text-sm text-gray-500">
+                              No service found
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+
 
         </Tabs>
       </div>
