@@ -309,10 +309,10 @@ export const MobileRestaurantDetails: React.FC<
         <div className="flex justify-between items-start mb-2">
           <h2 className="text-xl font-bold text-gray-900">{restaurant.name}</h2>
           <div className="flex items-center bg-orange-100 px-2 py-1 rounded-lg">
-            <span className="text-sm font-semibold text-gray-900 mr-1">
+            {/* <span className="text-sm font-semibold text-gray-900 mr-1">
               {restaurant.rating ? Number(restaurant.rating).toFixed(1) : "4.0"}
             </span>
-            <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
+            <Star className="w-4 h-4 fill-orange-400 text-orange-400" /> */}
           </div>
         </div>
 
@@ -328,7 +328,7 @@ export const MobileRestaurantDetails: React.FC<
       </div>
 
       {/* Menu Items */}
-      <div className={`p-4 space-y-4 ${getTotalItems() > 0 ? 'pb-14' : ''}`}>
+      <div className={`p-4 space-y-4 ${getTotalItems() > 0 ? 'pb-20' : ''}`}>
         {menuItems.map((item) => (
           <div
             key={item.id}
@@ -363,14 +363,14 @@ export const MobileRestaurantDetails: React.FC<
               </div>
 
               {/* Item Image */}
-              <div className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden relative">
+              <div className="w-24 h-24 bg-gray-200 rounded-lg overflow-visible relative mb-4">
                 <img
                   src={
                     item.image ||
                     "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=300&h=200"
                   }
                   alt={item.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-lg"
                   onError={(e) => {
                     // Fallback to placeholder if image fails to load
                     e.currentTarget.src =
@@ -378,12 +378,12 @@ export const MobileRestaurantDetails: React.FC<
                   }}
                 />
 
-                {/* Add Button - Fully visible below image */}
-                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+                {/* Add Button - Half inside image, half below */}
+                <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 z-5">
                   {!item.quantity || item.quantity === 0 ? (
                     <Button
                       onClick={() => addItem(item.id)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-lg border border-red-700"
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-lg text-sm font-medium shadow-lg border border-red-700"
                     >
                       Add
                     </Button>
@@ -415,12 +415,12 @@ export const MobileRestaurantDetails: React.FC<
 
       {/* Show Items Button */}
       {getTotalItems() > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-2 shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-2 shadow-lg z-20">
           <Button
             onClick={handleShowItems}
             className="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl text-lg font-semibold shadow-md flex items-center justify-center"
           >
-            <span>Book Order</span>
+            <span>Proceed</span>
             <span className="ml-2 bg-red-700 text-white px-2 py-1 rounded-full text-sm">
               {getTotalItems()}
             </span>
