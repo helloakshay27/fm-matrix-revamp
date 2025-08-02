@@ -254,10 +254,17 @@ export const ScheduleListDashboard = () => {
   };
   const handleEditSchedule = (id: string) => navigate(`/maintenance/schedule/edit/${id}`);
   const handleCopySchedule = (id: string) => navigate(`/maintenance/schedule/copy/${id}`);
-  const handleViewSchedule = (item: TransformedScheduleData) => {
-    // Get the form_code from the original custom forms data
-    const customForm = customFormsData?.custom_forms.find(form => form.id.toString() === item.id);
-    const formCode = customForm?.custom_form_code;
+  const handleViewSchedule = (item: any) => {
+    // Use custom_form_code from the table row if present, fallback to lookup
+    let formCode = item.custom_form_code;
+    if (!formCode && customFormsData?.custom_forms) {
+      const customForm = customFormsData.custom_forms.find((form: any) => form.id?.toString() === item.id?.toString());
+      formCode = customForm?.custom_form_code;
+    }
+    if (!item.id || !formCode) {
+      toast.error('Invalid schedule ID or missing form code.');
+      return;
+    }
     navigate(`/maintenance/schedule/view/${item.id}`, { state: { formCode } });
   };
 
