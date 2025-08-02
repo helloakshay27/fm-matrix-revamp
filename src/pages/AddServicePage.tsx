@@ -194,7 +194,7 @@ export const AddServicePage = () => {
 
         setTimeout(() => {
           window.location.href = `/maintenance/service/details/${response.id}`;
-        }, 1500);
+        }, 1000);
       } else if (action === 'new') {
         toast.success('Service created successfully! Ready to add a new service.', {
           duration: 3000,
@@ -326,7 +326,6 @@ export const AddServicePage = () => {
                 <MenuItem value="">Select Execution Type</MenuItem>
                 <MenuItem value="internal">Internal</MenuItem>
                 <MenuItem value="external">External</MenuItem>
-                <MenuItem value="both">Both</MenuItem>
               </MuiSelect>
               {errors.executionType && (
                 <p className="text-red-600 text-xs mt-1">Execution Type is required</p>
