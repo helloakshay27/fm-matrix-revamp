@@ -40,6 +40,7 @@ interface ServiceRecord {
   base_uom?: string;
   active?: boolean;
   is_flagged?: boolean;
+  execution_type?: string;
 }
 
 interface PaginationData {
@@ -398,6 +399,7 @@ export const ServiceDashboard = () => {
     { key: 'serviceName', label: 'Service Name', sortable: true },
     { key: 'id', label: 'ID', sortable: true },
     { key: 'referenceNumber', label: 'Reference Number', sortable: true },
+    {key: 'executionType', label: 'Type', sortable: true },
     { key: 'category', label: 'Category', sortable: true },
     { key: 'group', label: 'Group', sortable: true },
     { key: 'subGroup', label: 'Sub Group', sortable: true },
@@ -482,6 +484,8 @@ export const ServiceDashboard = () => {
         return <span className="font-medium">{item.id}</span>;
       case 'referenceNumber':
         return item.service_code || '-';
+      case 'executionType':
+        return item.execution_type || '-';
       case 'category':
         return '-';
       case 'group':
