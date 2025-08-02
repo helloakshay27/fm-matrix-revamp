@@ -114,7 +114,7 @@ export const MobileRestaurantDetails: React.FC<
     if (availableImages.length > 1) {
       const interval = setInterval(() => {
         setCurrentImageIndex((prev) => (prev + 1) % availableImages.length);
-      }, 5000); 
+      }, 5000);
 
       return () => clearInterval(interval);
     }
@@ -205,18 +205,18 @@ export const MobileRestaurantDetails: React.FC<
 
       // Construct URL with source parameter and facility_id if any exists
       const currentParams = new URLSearchParams(window.location.search);
-      
+
       // Get facility_id from session storage and add to URL if available
       const facilityId = sessionStorage.getItem("facility_id");
       if (facilityId && !currentParams.has("facilityId")) {
         currentParams.set("facilityId", facilityId);
       }
-      
+
       // Ensure source parameter is preserved
       if (sourceParam && !currentParams.has("source")) {
         currentParams.set("source", sourceParam);
       }
-      
+
       const queryString = currentParams.toString();
       const itemsUrl = queryString
         ? `/mobile/restaurant/${restaurant.id}/items?${queryString}`
@@ -328,7 +328,7 @@ export const MobileRestaurantDetails: React.FC<
       </div>
 
       {/* Menu Items */}
-      <div className={`p-4 space-y-4 ${getTotalItems() > 0 ? 'pb-20' : ''}`}>
+      <div className={`p-4 space-y-4 ${getTotalItems() > 0 ? "pb-20" : ""}`}>
         {menuItems.map((item) => (
           <div
             key={item.id}

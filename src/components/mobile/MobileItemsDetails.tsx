@@ -282,7 +282,7 @@ export const MobileItemsDetails: React.FC = () => {
 
         // Navigate to order review with success state
         // navigate(`/mobile/restaurant/${restaurant.id}/order-placed`, {
-        navigate(`/mobile/restaurant/${restaurant.id}/order-review`, {
+        navigate(`/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`, {
           state: {
             orderData: result.data,
             restaurant,
