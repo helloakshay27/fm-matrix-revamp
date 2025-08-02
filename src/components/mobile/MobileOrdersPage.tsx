@@ -130,7 +130,7 @@ export const MobileOrdersPage: React.FC = () => {
         setError(null);
         
         // Get current user from localStorage
-        const storedUser = localStorage.getItem("user");
+        const storedUser = sessionStorage.getItem("user");
         const user = storedUser ? JSON.parse(storedUser) : null;
         const userId = user?.id?.toString();
         

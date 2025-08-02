@@ -535,6 +535,7 @@ import { TaskEscalationPage } from "./pages/maintenance/TaskEscalationPage";
 import { TicketManagementSetupPage } from "./pages/maintenance/TicketManagementSetupPage";
 import { MobileTicketsPage } from "./pages/mobile/MobileTicketsPage";
 import { MobileRestaurantPage } from "./pages/mobile/MobileRestaurantPage";
+import MobileAdminOrderDetailsPage from "./pages/MobileAdminOrderDetailsPage";
 import { MobileSurveyPage } from "./pages/mobile/MobileSurveyPage";
 import { MobileAssetPage } from "./pages/mobile/MobileAssetPage";
 import { MobileOrdersPage } from "./components/mobile/MobileOrdersPage";
@@ -562,6 +563,8 @@ import { useAppDispatch, useAppSelector } from './store/hooks';
 import { useEffect } from 'react';
 import { getCurrency } from './store/slices/currencySlice';
 import { EditBookingSetupPage } from "./pages/setup/EditBookingSetupPage";
+import { MobileAdminOrdersPage } from "./pages/MobileAdminOrdersPage";
+
 
 const queryClient = new QueryClient();
 
@@ -1839,11 +1842,12 @@ function App() {
               <Route path="/setup/fm-users/add" element={<ProtectedRoute><AddFMUserDashboard /></ProtectedRoute>} />
               <Route path="/setup/occupant-users" element={<ProtectedRoute><OccupantUsersDashboard /></ProtectedRoute>} />
               <Route path="/setup/occupant-users/add" element={<ProtectedRoute><AddOccupantUserDashboard /></ProtectedRoute>} />
-
-
+              
               {/* Mobile Routes */}
               <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
               <Route path="/mobile/orders" element={<MobileOrdersPage />} />
+              <Route path="/mobile/admin/orders" element={<MobileAdminOrdersPage />} />
+              <Route path="/mobile/admin/orders/:orderId" element={<MobileAdminOrderDetailsPage />} />
               {/* External Flow Tester */}
               <Route path="/test-external" element={<ExternalFlowTester />} />
               {/* Mobile Restaurant Routes */}

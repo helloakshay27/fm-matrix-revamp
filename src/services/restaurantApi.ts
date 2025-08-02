@@ -26,6 +26,7 @@ export interface FacilitySetup {
   site_id: number;
   id: number;
   name: string;
+  fac_name?: string; // Facility name from API
   // Add other facility fields as needed
 }
 
@@ -298,6 +299,9 @@ export const restaurantApi = {
       restaurant_id: number;
       user_id: number;
       requests: string;
+      facility_id?: number; // Optional facility ID for QR scan orders
+      org_id?: number; // Optional organization ID for QR scan orders
+      site_id?: number; // Optional site ID for QR scan orders
       items_attributes: Array<{
         menu_id: number;
         quantity: number;
@@ -307,8 +311,8 @@ export const restaurantApi = {
     try {
       console.log("Sending order data to API:", orderData);
       
-      // Get token from localStorage
-      const token = localStorage.getItem("app_token") || localStorage.getItem("token");
+      // Get token from localStorage/sessionStorage
+      const token = sessionStorage.getItem("app_token") || sessionStorage.getItem("token") || localStorage.getItem("app_token") || localStorage.getItem("token");
       
       const response = await baseClient.post("/pms/food_orders.json", orderData, {
         headers: token ? {
@@ -366,7 +370,7 @@ export const restaurantApi = {
   // Get user food orders
   async getUserOrders(userId?: string, token?: string): Promise<FoodOrder[]> {
     try {
-      const token = localStorage.getItem("app_token") || localStorage.getItem("token");
+      const token = sessionStorage.getItem("app_token") || sessionStorage.getItem("token");
       const response = await baseClient.get("/pms/food_orders.json", {
         params: userId ? { user_id: userId, ...(token ? { token } : {}) } : (token ? { token } : {}),
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
@@ -503,7 +507,7 @@ export const restaurantApi = {
       console.log("📡 CREATING QR ORDER:", orderData);
       
       const response = await baseClient.post(
-        `/pms/admin/restaurants/api_create_qr_order.json`,
+        `/pms/admin/restaurants/api_create_qr_order.json?skp_dr=true`,
         orderData
       );
       
@@ -530,6 +534,7 @@ export const restaurantApi = {
   // Create order for authenticated app users with token
   async createTokenOrder(orderData: {
     token: string;
+    facility_id?: number;
     food_order: {
       restaurant_id: number;
       preferred_time?: string;
@@ -552,22 +557,29 @@ export const restaurantApi = {
   }> {
     try {
       console.log("📡 CREATING TOKEN ORDER:", orderData);
-      
+
+      // Get facility_id from sessionStorage if available
+      const facilityId = sessionStorage.getItem("facility_id");
+      const postData = {
+        ...orderData,
+        ...(facilityId ? { facility_id: Number(facilityId) } : {}),
+      };
+
       const response = await baseClient.post(
         `/pms/admin/restaurants/api_create_token_order.json`,
-        orderData,
+        postData,
         {
           headers: {
             'Authorization': `Bearer ${orderData.token}`,
           }
         }
       );
-      
+
       console.log("📡 TOKEN ORDER RESPONSE:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error creating token order:", error);
-      
+
       if (error && typeof error === "object" && "response" in error) {
         const apiError = error as { response: { status: number; data?: { message?: string } } };
         return {
@@ -575,11 +587,117 @@ export const restaurantApi = {
           message: apiError.response.data?.message || `Server error: ${apiError.response.status}`,
         };
       }
-      
+
       return {
         success: false,
         message: "Failed to create order. Please try again.",
       };
     }
   },
+
+  // Admin Order Management APIs
+  async getAdminOrders(token: string, restaurantId: string, page: number = 1): Promise<AdminOrdersResponse> {
+    try {
+      const response = await baseClient.get(
+        `/pms/admin/restaurants/${restaurantId}/food_orders.json?all=true&page=${page}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching admin orders:", error);
+      throw new Error("Failed to fetch admin orders");
+    }
+  },
+
+  async updateOrderStatus(orderId: string, statusId: string, comment: string = "", token?: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      // Use provided token or get from sessionStorage
+      const authToken = token || sessionStorage.getItem('token') || sessionStorage.getItem('app_token');
+      
+      const response = await baseClient.post(
+        `/crm/create_osr_log.json`,
+        {
+          osr_log: {
+            about: "FoodOrder",
+            about_id: orderId,
+            osr_status_id: statusId,
+            comment: comment
+          }
+        },
+        {
+          headers: authToken ? {
+            'Authorization': `Bearer ${authToken}`
+          } : {}
+        }
+      );
+      
+      return {
+        success: true,
+        message: "Status updated successfully"
+      };
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      return {
+        success: false,
+        message: "Failed to update order status"
+      };
+    }
+  },
 };
+
+// Admin Order Management Interfaces
+export interface OrderStatus {
+  id: number;
+  position: number | null;
+  name: string;
+  display: string | null;
+  fixed_state: string;
+  color_code: string | null;
+  mail: number;
+  sms: number;
+  cancel: number;
+  active: number;
+}
+
+export interface AdminOrderItem {
+  id: number;
+  menu_name: string;
+  quantity: number;
+  price: number;
+}
+
+export interface AdminOrder {
+  id: number;
+  restaurant_name: string;
+  restaurant_id: number;
+  created_at: string;
+  created_by: string;
+  status_name: string;
+  total_amount: number;
+  item_count: number;
+  items: AdminOrderItem[];
+  statuses: OrderStatus[];
+  payment_status?: string;
+  payment_status_class?: string;
+  meeting_room?: string;
+  details_url?: string;
+}
+
+export interface AdminOrdersResponse {
+  total_pages: number;
+  current_page: number;
+  per_page: number;
+  total_records: number;
+  food_orders: AdminOrder[];
+}
+
+export interface AdminRestaurant {
+  id: number;
+  name: string;
+  location?: string;
+  image?: string;
+}

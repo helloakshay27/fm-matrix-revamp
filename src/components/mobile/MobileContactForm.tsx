@@ -115,7 +115,7 @@ export const MobileContactForm: React.FC = () => {
     customer_mobile: userInfo?.mobile || "",
     customer_name: userInfo?.name || "",
     customer_email: userInfo?.email || "",
-    delivery_address: "",
+    delivery_address: facilityData?.fac_name || "",
   });  console.log("formData", formData);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -209,25 +209,29 @@ export const MobileContactForm: React.FC = () => {
         if (result.success && result.data) {
           console.log("✅ Token order placed successfully:", result.data);
 
-          // Navigate to order review with success state
-          navigate(`/mobile/restaurant/${restaurant.id}/order-review`, {
-            state: {
-              orderData: {
-                id: result.data.order_id,
-                restaurant_name: result.data.restaurant_name || restaurant.name,
-                customer_name: result.data.customer_name || formData.customer_name,
-                total_amount: result.data.total_amount,
-                message: result.data.message,
-              },
-              restaurant,
-              totalPrice: result.data.total_amount,
-              totalItems: totalItems,
-              items,
-              note,
-              contactDetails: formData,
-              isTokenUser: true,
-              showSuccessImmediately: true,
+          // Store order data in sessionStorage for external users
+          const orderReviewData = {
+            orderData: {
+              id: result.data.order_id,
+              restaurant_name: result.data.restaurant_name || restaurant.name,
+              customer_name: result.data.customer_name || formData.customer_name,
+              total_amount: result.data.total_amount,
+              message: result.data.message,
             },
+            restaurant,
+            totalPrice: result.data.total_amount,
+            totalItems: totalItems,
+            items,
+            note,
+            contactDetails: formData,
+            isTokenUser: true,
+            showSuccessImmediately: true,
+          };
+          sessionStorage.setItem("latest_order_data", JSON.stringify(orderReviewData));
+
+          // Navigate to order review with success state
+          navigate(`/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`, {
+            state: orderReviewData,
           });
           return; // Exit early on success
         } else {
@@ -251,7 +255,7 @@ export const MobileContactForm: React.FC = () => {
         
         const qrOrderData = {
           customer_name: formData.customer_name,
-          customer_number: formData.customer_mobile, // API expects customer_number field
+          customer_mobile: formData.customer_mobile, 
           customer_email: formData.customer_email,
           delivery_address: deliveryLocation,
           facility_id: parseInt(finalFacilityId),
@@ -275,26 +279,30 @@ export const MobileContactForm: React.FC = () => {
         if (result.success && result.data) {
           console.log("✅ QR order placed successfully:", result.data);
 
-          // Navigate to order review with success state for external users
-          navigate(`/mobile/restaurant/${restaurant.id}/order-review`, {
-            state: {
-              orderData: {
-                id: result.data.order_id, // Use actual order ID from API response
-                restaurant_name: result.data.restaurant_name || restaurant.name,
-                customer_name: result.data.customer_name || formData.customer_name,
-                total_amount: result.data.total_amount,
-                message: result.data.message,
-              },
-              restaurant,
-              totalPrice: result.data.total_amount,
-              totalItems: totalItems,
-              items,
-              note,
-              contactDetails: formData,
-              isExternalScan: finalIsExternalScan,
-              sourceParam: finalSourceParam,
-              showSuccessImmediately: true, // Show success immediately for external users
+          // Store order data in sessionStorage for external users
+          const orderReviewData = {
+            orderData: {
+              id: result.data.order_id, // Use actual order ID from API response
+              restaurant_name: result.data.restaurant_name || restaurant.name,
+              customer_name: result.data.customer_name || formData.customer_name,
+              total_amount: result.data.total_amount,
+              message: result.data.message,
             },
+            restaurant,
+            totalPrice: result.data.total_amount,
+            totalItems: totalItems,
+            items,
+            note,
+            contactDetails: formData,
+            isExternalScan: finalIsExternalScan,
+            sourceParam: finalSourceParam,
+            showSuccessImmediately: true, // Show success immediately for external users
+          };
+          sessionStorage.setItem("latest_order_data", JSON.stringify(orderReviewData));
+
+          // Navigate to order review with success state for external users
+          navigate(`/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`, {
+            state: orderReviewData,
           });
         } else {
           console.error("❌ QR order placement failed:", result.message);
@@ -318,7 +326,7 @@ export const MobileContactForm: React.FC = () => {
 
         const orderData = {
           customer_name: formData.customer_name,
-          customer_number: formData.customer_mobile, // API expects customer_number field
+          customer_mobile: formData.customer_mobile, // API expects customer_mobile field
           customer_email: formData.customer_email,
           delivery_address: deliveryLocation,
           facility_id: parseInt(finalFacilityId || "0"),
@@ -340,29 +348,32 @@ export const MobileContactForm: React.FC = () => {
         const result = await restaurantApi.createQROrder(orderData);
         console.log("📡 FALLBACK API Response:", result);
 
-        if (result.success) {
+        if (result.success && result.data) {
           console.log("✅ Fallback order placed successfully:", result.data);
 
-          // Navigate to order review with success state
-          navigate(`/mobile/restaurant/${restaurant.id}/order-review`, {
-            state: {
-              orderData: {
-                id: result.data.order_id, // Use actual order ID from API response
-                restaurant_name: result.data.restaurant_name || restaurant.name,
-                customer_name: result.data.customer_name || formData.customer_name,
-                total_amount: result.data.total_amount || totalPrice,
-                message: result.data.message,
-              },
-              restaurant,
-              totalPrice: result.data.total_amount || totalPrice,
-              totalItems: totalItems,
-              items,
-              note,
-              contactDetails: formData,
-              isExternalScan: finalIsExternalScan,
-              sourceParam: finalSourceParam,
-              showSuccessImmediately: true,
+          // Store order data in sessionStorage for external users
+          const orderReviewData = {
+            orderData: {
+              id: result.data.order_id, // Use actual order ID from API response
+              restaurant_name: result.data.restaurant_name || restaurant.name,
+              customer_name: result.data.customer_name || formData.customer_name,
+              total_amount: result.data.total_amount || totalPrice,
+              message: result.data.message,
             },
+            restaurant,
+            totalPrice: result.data.total_amount || totalPrice,
+            totalItems: totalItems,
+            items,
+            note,
+            contactDetails: formData,
+            isExternalScan: finalIsExternalScan,
+            sourceParam: finalSourceParam,
+            showSuccessImmediately: true,
+          };
+          sessionStorage.setItem("latest_order_data", JSON.stringify(orderReviewData));
+
+          navigate(`/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`, {
+            state: orderReviewData,
           });
         } else {
           console.error("❌ Fallback order placement failed:", result.message);
