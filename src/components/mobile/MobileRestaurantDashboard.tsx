@@ -137,16 +137,27 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
     };
     
     // Navigate to order review page with complete order data
-    navigate(`/mobile/restaurant/${order.restaurant_id}/order-review`, {
-      state: {
-        items: mockItems,
-        restaurant: mockRestaurant,
-        note: order.requests || 'Previous order details',
-        isExistingOrder: true,
-        totalPrice: order.total_amount,
-        totalItems: order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0,
-        orderData: order
-      }
+    const currentParams = new URLSearchParams(window.location.search);
+    const currentSource = currentParams.get('source') || 'app';
+    
+    const orderReviewData = {
+      items: mockItems,
+      restaurant: mockRestaurant,
+      note: order.requests || 'Previous order details',
+      isExistingOrder: true,
+      showSuccessImmediately: false, // Don't show success for existing orders
+      totalPrice: order.total_amount,
+      totalItems: order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0,
+      sourceParam: currentSource, // Preserve source
+      isExternalScan: isExternalScan, // Preserve external scan flag
+      orderData: order
+    };
+
+    // Store in sessionStorage for direct navigation support
+    sessionStorage.setItem("latest_order_data", JSON.stringify(orderReviewData));
+    
+    navigate(`/mobile/restaurant/${order.restaurant_id}/order-review?source=${currentSource}`, {
+      state: orderReviewData
     });
   };
 
