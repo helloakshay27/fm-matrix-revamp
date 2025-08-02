@@ -360,7 +360,6 @@ export const EditServicePage = () => {
                 <MenuItem value="">Select Execution Type</MenuItem>
                 <MenuItem value="internal">Internal</MenuItem>
                 <MenuItem value="external">External</MenuItem>
-                <MenuItem value="both">Both</MenuItem>
               </MuiSelect>
               {errors.executionType && (
                 <FormHelperText>Execution Type is required</FormHelperText>
