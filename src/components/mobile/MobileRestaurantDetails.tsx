@@ -328,7 +328,7 @@ export const MobileRestaurantDetails: React.FC<
       </div>
 
       {/* Menu Items */}
-      <div className="p-4 space-y-4">
+      <div className={`p-4 space-y-4 ${getTotalItems() > 0 ? 'pb-14' : ''}`}>
         {menuItems.map((item) => (
           <div
             key={item.id}
@@ -415,12 +415,15 @@ export const MobileRestaurantDetails: React.FC<
 
       {/* Show Items Button */}
       {getTotalItems() > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-2 shadow-lg">
           <Button
             onClick={handleShowItems}
-            className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl text-lg font-semibold"
+            className="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl text-lg font-semibold shadow-md flex items-center justify-center"
           >
-            Book Order
+            <span>Book Order</span>
+            <span className="ml-2 bg-red-700 text-white px-2 py-1 rounded-full text-sm">
+              {getTotalItems()}
+            </span>
           </Button>
         </div>
       )}
