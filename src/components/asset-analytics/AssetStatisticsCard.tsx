@@ -121,17 +121,7 @@ export const AssetStatisticsCard: React.FC<AssetStatisticsCardProps> = ({ data, 
               </div>
             </div>
             
-            {stats.average_rating > 0 && (
-              <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg">
-                <Star className="w-5 h-5 text-yellow-600" />
-                <div>
-                  <div className="text-lg font-bold text-yellow-600">
-                    {stats.average_rating.toFixed(1)}
-                  </div>
-                  <div className="text-xs text-yellow-500">Average Rating</div>
-                </div>
-              </div>
-            )}
+        
           </div>
         ) : (
           <div className="flex items-center justify-center h-64 text-muted-foreground">

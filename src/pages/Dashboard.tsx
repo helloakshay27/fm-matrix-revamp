@@ -307,23 +307,17 @@ export const Dashboard = () => {
           case 'assets':
             for (const analytic of analytics) {
               switch (analytic.endpoint) {
-                case 'group_wise':
-                  promises.push(assetAnalyticsAPI.getGroupWiseAssets(dateRange.from, dateRange.to));
-                  break;
                 case 'asset_status':
                   promises.push(assetAnalyticsAPI.getAssetStatus(dateRange.from, dateRange.to));
                   break;
                 case 'asset_statistics':
                   promises.push(assetAnalyticsAPI.getAssetStatistics(dateRange.from, dateRange.to));
                   break;
-                case 'asset_breakdown':
-                  promises.push(assetAnalyticsAPI.getAssetBreakdown(dateRange.from, dateRange.to));
+                case 'group_wise':
+                  promises.push(assetAnalyticsAPI.getGroupWiseAssets(dateRange.from, dateRange.to));
                   break;
                 case 'category_wise':
                   promises.push(assetAnalyticsAPI.getCategoryWiseAssets(dateRange.from, dateRange.to));
-                  break;
-                case 'overall_analytics':
-                  promises.push(assetAnalyticsAPI.getOverallAssetAnalytics(dateRange.from, dateRange.to));
                   break;
                 case 'asset_distribution':
                   promises.push(assetAnalyticsAPI.getAssetDistribution(dateRange.from, dateRange.to));
@@ -843,7 +837,6 @@ export const Dashboard = () => {
             );
 
           case 'asset_statistics':
-          case 'overall_analytics':
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <AssetStatisticsCard
@@ -851,6 +844,11 @@ export const Dashboard = () => {
                   onDownload={async () => {
                     if (dateRange?.from && dateRange?.to) {
                       await assetAnalyticsDownloadAPI.downloadCardTotalAssets(dateRange.from, dateRange.to);
+                      await assetAnalyticsDownloadAPI.downloadAssetsInUseData(dateRange.from, dateRange.to);
+                      await assetAnalyticsDownloadAPI.downloadCardCriticalAssetsInBreakdown(dateRange.from, dateRange.to);
+                      await assetAnalyticsDownloadAPI.downloadCardAssetsInUse(dateRange.from, dateRange.to);
+                      await assetAnalyticsDownloadAPI.downloadCardPPMConductAssets(dateRange.from, dateRange.to);
+
                     }
                   }}
                 />
@@ -900,19 +898,8 @@ export const Dashboard = () => {
             );
 
           default:
-            // Fallback for any other asset endpoints
-            return (
-              <SortableChartItem key={analytic.id} id={analytic.id}>
-                <AssetStatisticsCard
-                  data={data}
-                  onDownload={async () => {
-                    if (dateRange?.from && dateRange?.to) {
-                      await assetAnalyticsDownloadAPI.downloadCardTotalAssets(dateRange.from, dateRange.to);
-                    }
-                  }}
-                />
-              </SortableChartItem>
-            );
+            // Fallback for any other asset endpoints - avoid duplication
+            return null;
         }
       default:
         return null;
