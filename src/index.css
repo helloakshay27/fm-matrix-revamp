@@ -444,3 +444,131 @@
         max-width: 100% !important;
     }
 }
+
+/* Sticky/Frozen Scrollbar Styles for Asset Table */
+.sticky-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+  /* Force scrollbar to always be visible */
+  overflow-x: scroll !important;
+  /* Set a minimum height to ensure scrollbar is always visible */
+  min-height: 200px;
+}
+
+.sticky-scrollbar::-webkit-scrollbar {
+  height: 12px;
+  /* Make scrollbar always visible */
+  background-color: #f1f1f1;
+}
+
+.sticky-scrollbar::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+  border-radius: 6px;
+}
+
+.sticky-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 6px;
+  border: 2px solid #f1f1f1;
+}
+
+.sticky-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+/* Ensure the scrollbar container maintains proper spacing */
+.sticky-scrollbar {
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+/* Alternative approach - Sticky bottom scrollbar */
+.sticky-scrollbar-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.sticky-scrollbar-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-height: calc(100vh - 300px);
+}
+
+/* Make sure table cells don't wrap and maintain minimum widths */
+.sticky-scrollbar table {
+  table-layout: fixed;
+  min-width: 100%;
+  width: max-content;
+}
+
+.sticky-scrollbar th,
+.sticky-scrollbar td {
+  white-space: nowrap;
+  min-width: 120px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* First column (actions) should be narrower */
+.sticky-scrollbar th[data-actions],
+.sticky-scrollbar td[data-actions],
+.sticky-scrollbar th[data-checkbox],
+.sticky-scrollbar td[data-checkbox] {
+  min-width: 60px;
+  width: 60px;
+}
+
+/* Sticky Table Header Styles */
+.sticky-header th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background-color: #f6f4ee !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Enhanced table container for better scrolling */
+.table-container {
+  position: relative;
+  overflow: auto;
+  max-height: calc(100vh - 300px);
+}
+
+.table-container table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Ensure header stays on top during scroll */
+.table-container thead th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: #f6f4ee;
+  border-bottom: 1px solid #d5dbdb;
+}
+
+/* Fix for sticky header with horizontal scroll */
+.sticky-scrollbar {
+  position: relative;
+}
+
+.sticky-scrollbar::-webkit-scrollbar {
+  height: 12px;
+  position: sticky;
+  bottom: 0;
+}
+
+.sticky-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 6px;
+}
+
+.sticky-scrollbar::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 6px;
+}
+
+.sticky-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
