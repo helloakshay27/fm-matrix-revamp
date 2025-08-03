@@ -14,7 +14,6 @@ import { StatsCard } from '@/components/StatsCard';
 import { Sidebar } from '@/components/Sidebar';
 import { UnifiedAnalyticsSelector } from '@/components/dashboard/UnifiedAnalyticsSelector';
 import { UnifiedDateRangeFilter } from '@/components/dashboard/UnifiedDateRangeFilter';
-import { AnalyticsGrid } from '@/components/dashboard/AnalyticsGrid';
 import { TicketAnalyticsCard } from '@/components/dashboard/TicketAnalyticsCard';
 import { TaskAnalyticsCard } from '@/components/TaskAnalyticsCard';
 import { AMCAnalyticsCard } from '@/components/AMCAnalyticsCard';
@@ -26,16 +25,16 @@ import { AMCVendorPerformanceCard } from '@/components/AMCVendorPerformanceCard'
 import { InventoryAnalyticsCard } from '@/components/InventoryAnalyticsCard';
 import { ScheduleAnalyticsCard } from '@/components/dashboard/ScheduleAnalyticsCard';
 import { AssetAnalyticsCard } from '@/components/dashboard/AssetAnalyticsCard';
-// Import individual chart components
+// Import individual ticket analytics components from TicketDashboard
 import {
-  TicketStatusChart,
-  ReactiveChart,
-  ResponseTatChart,
-  CategoryWiseProactiveReactiveChart,
-  CategoryChart,
-  AgingMatrixChart,
-  ResolutionTatChart
-} from '@/components/charts';
+  TicketStatusOverviewCard,
+  ProactiveReactiveCard,
+  CategoryWiseProactiveReactiveCard,
+  UnitCategoryWiseCard,
+  TicketAgingMatrixCard
+} from '@/components/ticket-analytics';
+import { ResponseTATCard } from '@/components/ResponseTATCard';
+import { ResolutionTATCard } from '@/components/ResolutionTATCard';
 import { ticketAnalyticsAPI } from '@/services/ticketAnalyticsAPI';
 import { taskAnalyticsAPI } from '@/services/taskAnalyticsAPI';
 import { amcAnalyticsAPI } from '@/services/amcAnalyticsAPI';
@@ -186,6 +185,9 @@ export const Dashboard = () => {
                 case 'tickets_categorywise':
                   promises.push(ticketAnalyticsAPI.getTicketsCategorywiseData(dateRange.from, dateRange.to));
                   break;
+                case 'tickets_proactive_reactive':
+                  promises.push(ticketAnalyticsAPI.getTicketsCategorywiseData(dateRange.from, dateRange.to));
+                  break;
                 case 'ticket_status':
                   promises.push(ticketAnalyticsAPI.getTicketStatusData(dateRange.from, dateRange.to));
                   break;
@@ -193,12 +195,15 @@ export const Dashboard = () => {
                   promises.push(ticketAnalyticsAPI.getTicketAgingMatrix(dateRange.from, dateRange.to));
                   break;
                 case 'unit_categorywise':
+                case 'tickets_unit_categorywise':
                   promises.push(ticketAnalyticsAPI.getUnitCategorywiseData(dateRange.from, dateRange.to));
                   break;
                 case 'response_tat':
+                case 'tickets_response_tat':
                   promises.push(ticketAnalyticsAPI.getResponseTATData(dateRange.from, dateRange.to));
                   break;
                 case 'resolution_tat':
+                case 'tickets_resolution_tat':
                   promises.push(ticketAnalyticsAPI.getResolutionTATReportData(dateRange.from, dateRange.to));
                   break;
               }
@@ -438,10 +443,31 @@ export const Dashboard = () => {
           if (Array.isArray(data)) {
             return data.map(item => ({
               category: item.category,
+              proactive: item.proactive || { Open: 0, Closed: 0 },
+              reactive: item.reactive || { Open: 0, Closed: 0 },
               proactive_count: (item.proactive?.Open || 0) + (item.proactive?.Closed || 0),
               reactive_count: (item.reactive?.Open || 0) + (item.reactive?.Closed || 0)
             }));
           }
+          return data;
+
+        case 'tickets_proactive_reactive':
+          // Return data as-is for proactive/reactive breakdown
+          return data;
+
+        case 'unit_categorywise':
+        case 'tickets_unit_categorywise':
+          // Return unit category-wise data as-is
+          return data;
+
+        case 'response_tat':
+        case 'tickets_response_tat':
+          // Return Response TAT data as-is
+          return data;
+
+        case 'resolution_tat':
+        case 'tickets_resolution_tat':
+          // Return Resolution TAT data as-is
           return data;
 
         case 'ticket_status':
@@ -479,75 +505,163 @@ export const Dashboard = () => {
 
     switch (analytic.module) {
       case 'tickets':
-        // Handle individual ticket chart components
+        // Handle individual ticket analytics components based on endpoint
         switch (analytic.endpoint) {
           case 'ticket_status':
-            // Transform status data for chart
-            const statusChartData = data ? [
-              { name: 'Open', value: data.open || 0, color: '#C6B692' },
-              { name: 'Closed', value: data.closed || 0, color: '#D8DCDD' },
-              { name: 'In Progress', value: data.wip || 0, color: '#F59E0B' }
-            ] : [];
+            // Ticket Status Overview
+            const statusData = data && typeof data === 'object' && 'open' in data && 'closed' in data 
+              ? data 
+              : { open: 0, closed: 0, wip: 0 };
+            
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <TicketStatusChart data={statusChartData} title={analytic.title} />
+                <TicketStatusOverviewCard
+                  openTickets={statusData.open || 0}
+                  closedTickets={statusData.closed || 0}
+                />
+              </SortableChartItem>
+            );
+
+          case 'tickets_proactive_reactive':
+            // Proactive/Reactive tickets breakdown
+            const proactiveReactiveData = Array.isArray(data) && data.length > 0 ? data[0] : null;
+            
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <ProactiveReactiveCard
+                  proactiveOpenTickets={proactiveReactiveData?.proactive?.Open || 0}
+                  proactiveClosedTickets={proactiveReactiveData?.proactive?.Closed || 0}
+                  reactiveOpenTickets={proactiveReactiveData?.reactive?.Open || 0}
+                  reactiveClosedTickets={proactiveReactiveData?.reactive?.Closed || 0}
+                />
               </SortableChartItem>
             );
 
           case 'tickets_categorywise':
+            // Category-wise Proactive/Reactive
+            const categoryData = Array.isArray(data) ? data : [];
+            
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <CategoryWiseProactiveReactiveChart data={rawData || []} title={analytic.title} />
+                <CategoryWiseProactiveReactiveCard
+                  data={categoryData}
+                  dateRange={{
+                    startDate: dateRange?.from || new Date(),
+                    endDate: dateRange?.to || new Date()
+                  }}
+                />
               </SortableChartItem>
             );
 
-          case 'response_tat':
+          case 'tickets_unit_categorywise':
+          case 'unit_categorywise':
+            // Unit Category-wise tickets
+            const unitCategoryData = data && typeof data === 'object' ? data : null;
+            
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <ResponseTatChart data={rawData} title={analytic.title} />
-              </SortableChartItem>
-            );
-
-          case 'resolution_tat':
-            return (
-              <SortableChartItem key={analytic.id} id={analytic.id}>
-                <ResolutionTatChart data={rawData} title={analytic.title} />
+                <UnitCategoryWiseCard
+                  data={unitCategoryData}
+                  dateRange={{
+                    startDate: dateRange?.from || new Date(),
+                    endDate: dateRange?.to || new Date()
+                  }}
+                />
               </SortableChartItem>
             );
 
           case 'ticket_aging_matrix':
-            // Transform aging matrix data for chart
-            const agingData = rawData?.response?.matrix ?
-              Object.entries(rawData.response.matrix).map(([priority, ranges]: [string, any]) => ({
+            // Ticket Aging Matrix - use rawData, not transformed data
+            const agingRawData = rawData && typeof rawData === 'object' ? rawData : null;
+            
+            // Transform API response to expected format - same as TicketDashboard
+            const agingMatrixData = agingRawData?.response?.matrix
+              ? Object.entries(agingRawData.response.matrix).map(([priority, data]: [string, any]) => ({
                 priority,
-                T1: ranges.T1 || 0,
-                T2: ranges.T2 || 0,
-                T3: ranges.T3 || 0,
-                T4: ranges.T4 || 0,
-                T5: ranges.T5 || 0
-              })) : [];
+                T1: data.T1 || 0,
+                T2: data.T2 || 0,
+                T3: data.T3 || 0,
+                T4: data.T4 || 0,
+                T5: data.T5 || 0
+              }))
+              : [
+                {
+                  priority: 'High',
+                  T1: 0,
+                  T2: 0,
+                  T3: 0,
+                  T4: 0,
+                  T5: 0,
+                },
+                {
+                  priority: 'Medium',
+                  T1: 0,
+                  T2: 0,
+                  T3: 0,
+                  T4: 0,
+                  T5: 0,
+                },
+                {
+                  priority: 'Low',
+                  T1: 0,
+                  T2: 0,
+                  T3: 0,
+                  T4: 0,
+                  T5: 0,
+                }
+              ];
+            
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <AgingMatrixChart data={agingData} title={analytic.title} />
+                <TicketAgingMatrixCard
+                  data={agingRawData || {
+                    success: 1,
+                    message: "Success",
+                    response: { matrix: {} },
+                    average_days: 0,
+                    info: "Aging matrix data"
+                  }}
+                  agingMatrixData={agingMatrixData}
+                  dateRange={{
+                    startDate: dateRange?.from || new Date(),
+                    endDate: dateRange?.to || new Date()
+                  }}
+                />
               </SortableChartItem>
             );
 
-          case 'unit_categorywise':
-            // Transform unit category data for pie chart
-            const categoryData = rawData ? Object.entries(rawData).map(([name, value]: [string, any]) => ({
-              name,
-              value: typeof value === 'number' ? value : 0,
-              proactive: 0,
-              reactive: 0
-            })) : [];
+          case 'tickets_response_tat':
+          case 'response_tat':
+            // Response TAT
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
-                <CategoryChart data={categoryData} title={analytic.title} />
+                <ResponseTATCard
+                  data={data}
+                  dateRange={{
+                    startDate: dateRange?.from || new Date(),
+                    endDate: dateRange?.to || new Date()
+                  }}
+                />
+              </SortableChartItem>
+            );
+
+          case 'tickets_resolution_tat':
+          case 'resolution_tat':
+            // Resolution TAT
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <ResolutionTATCard
+                  data={data}
+                  dateRange={{
+                    startDate: dateRange?.from || new Date(),
+                    endDate: dateRange?.to || new Date()
+                  }}
+                />
               </SortableChartItem>
             );
 
           default:
-            // Fallback to TicketAnalyticsCard
+            // Fallback to simplified TicketAnalyticsCard for other endpoints
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <TicketAnalyticsCard
@@ -806,12 +920,84 @@ export const Dashboard = () => {
               onDragEnd={handleDragEnd}
             >
               <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
-                <AnalyticsGrid loading={loading}>
-                  {chartOrder.map(chartId => {
-                    const analytic = selectedAnalytics.find(a => a.id === chartId);
-                    return analytic ? renderAnalyticsCard(analytic) : null;
-                  })}
-                </AnalyticsGrid>
+                <div className="space-y-4 sm:space-y-6">
+                  {/* First Row - Ticket Status and ProActive/Reactive */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                    {chartOrder.filter(id => {
+                      const analytic = selectedAnalytics.find(a => a.id === id);
+                      return analytic && ['ticket_status', 'tickets_proactive_reactive'].includes(analytic.endpoint);
+                    }).map(chartId => {
+                      const analytic = selectedAnalytics.find(a => a.id === chartId);
+                      return analytic ? renderAnalyticsCard(analytic) : null;
+                    })}
+                  </div>
+
+                  {/* Second Row - Response TAT */}
+                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                    {chartOrder.filter(id => {
+                      const analytic = selectedAnalytics.find(a => a.id === id);
+                      return analytic && ['response_tat', 'tickets_response_tat'].includes(analytic.endpoint);
+                    }).map(chartId => {
+                      const analytic = selectedAnalytics.find(a => a.id === chartId);
+                      return analytic ? renderAnalyticsCard(analytic) : null;
+                    })}
+                  </div>
+
+                  {/* Third Row - Category Wise ProActive/Reactive */}
+                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                    {chartOrder.filter(id => {
+                      const analytic = selectedAnalytics.find(a => a.id === id);
+                      return analytic && ['tickets_categorywise'].includes(analytic.endpoint);
+                    }).map(chartId => {
+                      const analytic = selectedAnalytics.find(a => a.id === chartId);
+                      return analytic ? renderAnalyticsCard(analytic) : null;
+                    })}
+                  </div>
+
+                  {/* Fourth Row - Unit Category-wise Tickets */}
+                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                    {chartOrder.filter(id => {
+                      const analytic = selectedAnalytics.find(a => a.id === id);
+                      return analytic && ['unit_categorywise', 'tickets_unit_categorywise'].includes(analytic.endpoint);
+                    }).map(chartId => {
+                      const analytic = selectedAnalytics.find(a => a.id === chartId);
+                      return analytic ? renderAnalyticsCard(analytic) : null;
+                    })}
+                  </div>
+
+                  {/* Fifth Row - Tickets Aging Matrix */}
+                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                    {chartOrder.filter(id => {
+                      const analytic = selectedAnalytics.find(a => a.id === id);
+                      return analytic && ['ticket_aging_matrix'].includes(analytic.endpoint);
+                    }).map(chartId => {
+                      const analytic = selectedAnalytics.find(a => a.id === chartId);
+                      return analytic ? renderAnalyticsCard(analytic) : null;
+                    })}
+                  </div>
+
+                  {/* Sixth Row - Resolution TAT Report */}
+                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                    {chartOrder.filter(id => {
+                      const analytic = selectedAnalytics.find(a => a.id === id);
+                      return analytic && ['resolution_tat', 'tickets_resolution_tat'].includes(analytic.endpoint);
+                    }).map(chartId => {
+                      const analytic = selectedAnalytics.find(a => a.id === chartId);
+                      return analytic ? renderAnalyticsCard(analytic) : null;
+                    })}
+                  </div>
+
+                  {/* Other Analytics */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                    {chartOrder.filter(id => {
+                      const analytic = selectedAnalytics.find(a => a.id === id);
+                      return analytic && !['ticket_status', 'tickets_proactive_reactive', 'response_tat', 'tickets_response_tat', 'tickets_categorywise', 'unit_categorywise', 'tickets_unit_categorywise', 'ticket_aging_matrix', 'resolution_tat', 'tickets_resolution_tat'].includes(analytic.endpoint);
+                    }).map(chartId => {
+                      const analytic = selectedAnalytics.find(a => a.id === chartId);
+                      return analytic ? renderAnalyticsCard(analytic) : null;
+                    })}
+                  </div>
+                </div>
               </SortableContext>
             </DndContext>
           ) : (
