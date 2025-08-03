@@ -988,6 +988,8 @@ export const ScheduledTaskDashboard = () => {
         isOpen={showAnalyticsFilter}
         onClose={() => setShowAnalyticsFilter(false)}
         onApplyFilters={handleAnalyticsFilterApply}
+        currentStartDate={analyticsDateRange.startDate.toISOString().split('T')[0]}
+        currentEndDate={analyticsDateRange.endDate.toISOString().split('T')[0]}
       />
     </div>
   );
