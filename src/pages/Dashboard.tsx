@@ -24,7 +24,14 @@ import { AMCServiceTrackingCard } from '@/components/AMCServiceTrackingCard';
 import { AMCVendorPerformanceCard } from '@/components/AMCVendorPerformanceCard';
 import { InventoryAnalyticsCard } from '@/components/InventoryAnalyticsCard';
 import { ScheduleAnalyticsCard } from '@/components/dashboard/ScheduleAnalyticsCard';
-import { AssetAnalyticsCard } from '@/components/dashboard/AssetAnalyticsCard';
+// Import individual asset analytics components
+import {
+  AssetStatusCard,
+  AssetStatisticsCard,
+  AssetGroupWiseCard,
+  AssetCategoryWiseCard,
+  AssetDistributionCard
+} from '@/components/asset-analytics';
 // Import individual ticket analytics components from TicketDashboard
 import {
   TicketStatusOverviewCard,
@@ -39,6 +46,7 @@ import { ticketAnalyticsAPI } from '@/services/ticketAnalyticsAPI';
 import { taskAnalyticsAPI } from '@/services/taskAnalyticsAPI';
 import { amcAnalyticsAPI } from '@/services/amcAnalyticsAPI';
 import { amcAnalyticsDownloadAPI } from '@/services/amcAnalyticsDownloadAPI';
+import { assetAnalyticsDownloadAPI } from '@/services/assetAnalyticsDownloadAPI';
 import { inventoryAnalyticsAPI } from '@/services/inventoryAnalyticsAPI';
 import { scheduleAnalyticsAPI } from '@/services/scheduleAnalyticsAPI';
 import { assetAnalyticsAPI } from '@/services/assetAnalyticsAPI';
@@ -316,6 +324,9 @@ export const Dashboard = () => {
                   break;
                 case 'overall_analytics':
                   promises.push(assetAnalyticsAPI.getOverallAssetAnalytics(dateRange.from, dateRange.to));
+                  break;
+                case 'asset_distribution':
+                  promises.push(assetAnalyticsAPI.getAssetDistribution(dateRange.from, dateRange.to));
                   break;
               }
             }
@@ -815,15 +826,94 @@ export const Dashboard = () => {
           </SortableChartItem>
         );
       case 'assets':
-        return (
-          <SortableChartItem key={analytic.id} id={analytic.id}>
-            <AssetAnalyticsCard
-              title={analytic.title}
-              data={data}
-              type={analytic.endpoint as any}
-            />
-          </SortableChartItem>
-        );
+        // Handle individual asset analytics components based on endpoint
+        switch (analytic.endpoint) {
+          case 'asset_status':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <AssetStatusCard
+                  data={data}
+                  onDownload={async () => {
+                    if (dateRange?.from && dateRange?.to) {
+                      await assetAnalyticsDownloadAPI.downloadAssetsInUseData(dateRange.from, dateRange.to);
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+
+          case 'asset_statistics':
+          case 'overall_analytics':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <AssetStatisticsCard
+                  data={data}
+                  onDownload={async () => {
+                    if (dateRange?.from && dateRange?.to) {
+                      await assetAnalyticsDownloadAPI.downloadCardTotalAssets(dateRange.from, dateRange.to);
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+
+          case 'group_wise':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <AssetGroupWiseCard
+                  data={data}
+                  onDownload={async () => {
+                    if (dateRange?.from && dateRange?.to) {
+                      await assetAnalyticsDownloadAPI.downloadGroupWiseAssetsData(dateRange.from, dateRange.to);
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+
+          case 'category_wise':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <AssetCategoryWiseCard
+                  data={data}
+                  onDownload={async () => {
+                    if (dateRange?.from && dateRange?.to) {
+                      await assetAnalyticsDownloadAPI.downloadCategoryWiseAssetsData(dateRange.from, dateRange.to);
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+
+          case 'asset_distribution':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <AssetDistributionCard
+                  data={data}
+                  onDownload={async () => {
+                    if (dateRange?.from && dateRange?.to) {
+                      await assetAnalyticsDownloadAPI.downloadAssetDistributionsData(dateRange.from, dateRange.to);
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+
+          default:
+            // Fallback for any other asset endpoints
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <AssetStatisticsCard
+                  data={data}
+                  onDownload={async () => {
+                    if (dateRange?.from && dateRange?.to) {
+                      await assetAnalyticsDownloadAPI.downloadCardTotalAssets(dateRange.from, dateRange.to);
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+        }
       default:
         return null;
     }
