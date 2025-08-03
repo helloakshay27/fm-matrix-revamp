@@ -31,6 +31,7 @@ const analyticsOptions = {
     options: [
       { id: 'tickets_categorywise', endpoint: 'tickets_categorywise', label: 'Category-wise Tickets' },
       { id: 'ticket_status', endpoint: 'ticket_status', label: 'Ticket Status Overview' },
+      { id: 'tickets_proactive_reactive', endpoint: 'tickets_proactive_reactive', label: 'Proactive/Reactive Tickets' },
       { id: 'ticket_aging_matrix', endpoint: 'ticket_aging_matrix', label: 'Ticket Aging Matrix' },
       { id: 'unit_categorywise', endpoint: 'unit_categorywise', label: 'Unit Category-wise' },
       { id: 'response_tat', endpoint: 'response_tat', label: 'Response TAT Report' },

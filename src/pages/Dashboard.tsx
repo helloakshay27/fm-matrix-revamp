@@ -920,83 +920,12 @@ export const Dashboard = () => {
               onDragEnd={handleDragEnd}
             >
               <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
-                <div className="space-y-4 sm:space-y-6">
-                  {/* First Row - Ticket Status and ProActive/Reactive */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                    {chartOrder.filter(id => {
-                      const analytic = selectedAnalytics.find(a => a.id === id);
-                      return analytic && ['ticket_status', 'tickets_proactive_reactive'].includes(analytic.endpoint);
-                    }).map(chartId => {
-                      const analytic = selectedAnalytics.find(a => a.id === chartId);
-                      return analytic ? renderAnalyticsCard(analytic) : null;
-                    })}
-                  </div>
-
-                  {/* Second Row - Response TAT */}
-                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                    {chartOrder.filter(id => {
-                      const analytic = selectedAnalytics.find(a => a.id === id);
-                      return analytic && ['response_tat', 'tickets_response_tat'].includes(analytic.endpoint);
-                    }).map(chartId => {
-                      const analytic = selectedAnalytics.find(a => a.id === chartId);
-                      return analytic ? renderAnalyticsCard(analytic) : null;
-                    })}
-                  </div>
-
-                  {/* Third Row - Category Wise ProActive/Reactive */}
-                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                    {chartOrder.filter(id => {
-                      const analytic = selectedAnalytics.find(a => a.id === id);
-                      return analytic && ['tickets_categorywise'].includes(analytic.endpoint);
-                    }).map(chartId => {
-                      const analytic = selectedAnalytics.find(a => a.id === chartId);
-                      return analytic ? renderAnalyticsCard(analytic) : null;
-                    })}
-                  </div>
-
-                  {/* Fourth Row - Unit Category-wise Tickets */}
-                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                    {chartOrder.filter(id => {
-                      const analytic = selectedAnalytics.find(a => a.id === id);
-                      return analytic && ['unit_categorywise', 'tickets_unit_categorywise'].includes(analytic.endpoint);
-                    }).map(chartId => {
-                      const analytic = selectedAnalytics.find(a => a.id === chartId);
-                      return analytic ? renderAnalyticsCard(analytic) : null;
-                    })}
-                  </div>
-
-                  {/* Fifth Row - Tickets Aging Matrix */}
-                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                    {chartOrder.filter(id => {
-                      const analytic = selectedAnalytics.find(a => a.id === id);
-                      return analytic && ['ticket_aging_matrix'].includes(analytic.endpoint);
-                    }).map(chartId => {
-                      const analytic = selectedAnalytics.find(a => a.id === chartId);
-                      return analytic ? renderAnalyticsCard(analytic) : null;
-                    })}
-                  </div>
-
-                  {/* Sixth Row - Resolution TAT Report */}
-                  <div className="grid grid-cols-1 gap-4 sm:gap-6">
-                    {chartOrder.filter(id => {
-                      const analytic = selectedAnalytics.find(a => a.id === id);
-                      return analytic && ['resolution_tat', 'tickets_resolution_tat'].includes(analytic.endpoint);
-                    }).map(chartId => {
-                      const analytic = selectedAnalytics.find(a => a.id === chartId);
-                      return analytic ? renderAnalyticsCard(analytic) : null;
-                    })}
-                  </div>
-
-                  {/* Other Analytics */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
-                    {chartOrder.filter(id => {
-                      const analytic = selectedAnalytics.find(a => a.id === id);
-                      return analytic && !['ticket_status', 'tickets_proactive_reactive', 'response_tat', 'tickets_response_tat', 'tickets_categorywise', 'unit_categorywise', 'tickets_unit_categorywise', 'ticket_aging_matrix', 'resolution_tat', 'tickets_resolution_tat'].includes(analytic.endpoint);
-                    }).map(chartId => {
-                      const analytic = selectedAnalytics.find(a => a.id === chartId);
-                      return analytic ? renderAnalyticsCard(analytic) : null;
-                    })}
-                  </div>
+                {/* Unified 2-Column Grid for All Analytics */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                  {chartOrder.map(chartId => {
+                    const analytic = selectedAnalytics.find(a => a.id === chartId);
+                    return analytic ? renderAnalyticsCard(analytic) : null;
+                  })}
                 </div>
               </SortableContext>
             </DndContext>
