@@ -65,10 +65,11 @@ export interface SiteWiseChecklistResponse {
   info: string;
 }
 
-// Utility Functions
-export const formatDateForAPI = (date: Date): string => {
-  return date.toISOString().split('T')[0];
+export const formatDateForAPI = (date: any): string => {
+  const d = date instanceof Date ? date : new Date(date);
+  return d.toISOString().split('T')[0];
 };
+
 
 const getSelectedSiteId = () => {
   return localStorage.getItem("selectedSiteId") ; // Default to 2189 if not found

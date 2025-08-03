@@ -21,6 +21,13 @@ import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAP
 import { TicketAnalyticsCard } from '@/components/TicketAnalyticsCard';
 import { ResponseTATCard } from '@/components/ResponseTATCard';
 import { ResolutionTATCard } from '@/components/ResolutionTATCard';
+import { 
+  TicketStatusOverviewCard,
+  ProactiveReactiveCard,
+  CategoryWiseProactiveReactiveCard,
+  UnitCategoryWiseCard,
+  TicketAgingMatrixCard
+} from '@/components/ticket-analytics';
 import { useToast } from '@/hooks/use-toast';
 
 // Sortable Chart Item Component
@@ -432,6 +439,8 @@ export const TicketDashboard = () => {
   const proactiveClosedTickets = statusAnalyticsData?.proactive_reactive.proactive.closed || 0;
   const reactiveOpenTickets = statusAnalyticsData?.proactive_reactive.reactive.open || 0;
   const reactiveClosedTickets = statusAnalyticsData?.proactive_reactive.reactive.closed || 0;
+  const openticketanalyticsData = statusAnalyticsData?.overall.total_open || 0;
+  const closedticketanalyticsData = statusAnalyticsData?.overall.total_closed || 0;
 
   const typeData = [{
     name: 'Proactive Open',
@@ -657,7 +666,7 @@ export const TicketDashboard = () => {
     if (cardType !== 'total') {
       // Use the correct API parameter format for status filtering
       if (cardType === 'open') {
-        newFilters.complaint_status_fixed_state_not_eq = 'Closed';
+        newFilters.complaint_status_fixed_state_eq = 'Open';
         // console.log('Setting Open filter with complaint_status_fixed_state_eq=Open');
       } else if (cardType === 'pending') {
         newFilters.complaint_status_fixed_state_eq = 'Pending';
@@ -1048,64 +1057,26 @@ export const TicketDashboard = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                       {chartOrder.filter(id => ['statusChart', 'reactiveChart'].includes(id)).map(chartId => {
                         if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
-                          return <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
-                              {/* Drag indicator */}
-                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
-                                <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
-                              </div>
-                              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets Status</h3>
-                              </div>
-                              <div className="flex grid-cols-3 gap-4">
-                                <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                                  <div className="text-2xl font-bold text-yellow-600">{openTickets}</div>
-                                  <div className="text-sm text-yellow-700 font-medium">Open</div>
-                                </div>
-                                <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                                  <div className="text-2xl font-bold text-green-600">{closedTickets}</div>
-                                  <div className="text-sm text-green-700 font-medium">Closed</div>
-                                </div>
-                              </div>
-                            </div>
-                          </SortableChartItem>;
+                          return (
+                            <SortableChartItem key={chartId} id={chartId}>
+                              <TicketStatusOverviewCard
+                                openTickets={openticketanalyticsData}
+                                closedTickets={closedticketanalyticsData}
+                              />
+                            </SortableChartItem>
+                          );
                         }
                         if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
-                          return <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
-                              {/* Drag indicator */}
-                              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
-                                <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
-                              </div>
-                              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Proactive/Reactive Tickets</h3>
-                              </div>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-3">
-                                  <h4 className="text-sm font-semibold text-gray-700 text-center">Proactive</h4>
-                                  <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                    <div className="text-xl font-bold text-blue-600">{proactiveOpenTickets}</div>
-                                    <div className="text-xs text-blue-700 font-medium">Open</div>
-                                  </div>
-                                  <div className="text-center p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    <div className="text-xl font-bold text-gray-600">{proactiveClosedTickets}</div>
-                                    <div className="text-xs text-gray-700 font-medium">Closed</div>
-                                  </div>
-                                </div>
-                                <div className="space-y-3">
-                                  <h4 className="text-sm font-semibold text-gray-700 text-center">Reactive</h4>
-                                  <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
-                                    <div className="text-xl font-bold text-red-600">{reactiveOpenTickets}</div>
-                                    <div className="text-xs text-red-700 font-medium">Open</div>
-                                  </div>
-                                  <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                                    <div className="text-xl font-bold text-green-600">{reactiveClosedTickets}</div>
-                                    <div className="text-xs text-green-700 font-medium">Closed</div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </SortableChartItem>;
+                          return (
+                            <SortableChartItem key={chartId} id={chartId}>
+                              <ProactiveReactiveCard
+                                proactiveOpenTickets={proactiveOpenTickets}
+                                proactiveClosedTickets={proactiveClosedTickets}
+                                reactiveOpenTickets={reactiveOpenTickets}
+                                reactiveClosedTickets={reactiveClosedTickets}
+                              />
+                            </SortableChartItem>
+                          );
                         }
                         return null;
                       })}
@@ -1131,224 +1102,28 @@ export const TicketDashboard = () => {
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('categoryWiseProactiveReactive') && (
                         <SortableChartItem key="categoryWiseProactiveReactive" id="categoryWiseProactiveReactive">
-                          <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
-                            {/* Drag indicator */}
-                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
-                              <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
-                            </div>
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Category Wise ProActive / Reactives</h3>
-                              <Download
-                                className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer text-[#C72030]"
-                                onClick={async () => {
-                                  if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
-                                    try {
-                                      const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                      const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                      await ticketAnalyticsDownloadAPI.downloadProactiveCategorywiseData(startDate, endDate);
-                                      toast({
-                                        title: "Success",
-                                        description: "Category-wise proactive/reactive data downloaded successfully"
-                                      });
-                                    } catch (error) {
-                                      console.error('Error downloading category-wise proactive/reactive data:', error);
-                                      toast({
-                                        title: "Error",
-                                        description: "Failed to download category-wise data",
-                                        variant: "destructive"
-                                      });
-                                    }
-                                  }
-                                }}
-                              />
-                            </div>
-                            <div className="w-full overflow-x-auto">
-                              <div className="space-y-4">
-                                {/* Category-wise Proactive/Reactive Data as Bar Chart */}
-                                {categorywiseTicketsData && categorywiseTicketsData.length > 0 ? (
-                                  <div className="h-80">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                      <BarChart
-                                        data={categorywiseTicketsData.slice(0, 10).map(categoryData => ({
-                                          category: categoryData.category || 'Unknown',
-                                          proactiveOpen: categoryData.proactive?.Open || 0,
-                                          proactiveClosed: categoryData.proactive?.Closed || 0,
-                                          reactiveOpen: categoryData.reactive?.Open || 0,
-                                          reactiveClosed: categoryData.reactive?.Closed || 0,
-                                          proactiveTotal: (categoryData.proactive?.Open || 0) + (categoryData.proactive?.Closed || 0),
-                                          reactiveTotal: (categoryData.reactive?.Open || 0) + (categoryData.reactive?.Closed || 0)
-                                        }))}
-                                        margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-                                      >
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
-                                        <XAxis
-                                          dataKey="category"
-                                          angle={-45}
-                                          textAnchor="end"
-                                          height={100}
-                                          fontSize={10}
-                                          tick={{ fill: '#374151' }}
-                                        />
-                                        <YAxis
-                                          fontSize={12}
-                                          tick={{ fill: '#374151' }}
-                                        />
-                                        <Tooltip
-                                          content={({ active, payload, label }) => {
-                                            if (active && payload && payload.length) {
-                                              const data = payload[0].payload;
-                                              return (
-                                                <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-                                                  <p className="font-semibold text-gray-800 mb-2">{label}</p>
-                                                  <div className="space-y-1">
-                                                    <div className="flex justify-between items-center">
-                                                      <span className="text-blue-600 font-medium">Proactive:</span>
-                                                      <span className="text-gray-700">
-                                                        Open: {data.proactiveOpen}, Closed: {data.proactiveClosed}
-                                                      </span>
-                                                    </div>
-                                                    <div className="flex justify-between items-center">
-                                                      <span className="text-red-600 font-medium">Reactive:</span>
-                                                      <span className="text-gray-700">
-                                                        Open: {data.reactiveOpen}, Closed: {data.reactiveClosed}
-                                                      </span>
-                                                    </div>
-                                                    <div className="pt-1 border-t border-gray-200">
-                                                      <div className="flex justify-between items-center font-semibold">
-                                                        <span>Total:</span>
-                                                        <span>{data.proactiveTotal + data.reactiveTotal}</span>
-                                                      </div>
-                                                    </div>
-                                                  </div>
-                                                </div>
-                                              );
-                                            }
-                                            return null;
-                                          }}
-                                        />
-                                        <Bar dataKey="proactiveTotal" fill="#3b82f6" name="Proactive" />
-                                        <Bar dataKey="reactiveTotal" fill="#ef4444" name="Reactive" />
-                                      </BarChart>
-                                    </ResponsiveContainer>
-                                  </div>
-                                ) : (
-                                  <div className="text-center py-8 text-gray-500">
-                                    No category-wise data available for the selected date range
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
+                          <CategoryWiseProactiveReactiveCard
+                            data={categorywiseTicketsData}
+                            dateRange={{
+                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                            }}
+                          />
                         </SortableChartItem>
                       )}
-
-
                     </div>
 
                     {/* Fourth Row - Unit Category-wise Tickets */}
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('categoryChart') && (
                         <SortableChartItem key="categoryChart" id="categoryChart">
-                          <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
-                            {/* Drag indicator */}
-                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
-                              <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
-                            </div>
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Unit Category-wise Tickets</h3>
-                              <Download
-                                className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer text-[#C72030]"
-                                onClick={async () => {
-                                  if (analyticsDateRange.startDate && analyticsDateRange.endDate) {
-                                    try {
-                                      const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                      const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                      await ticketAnalyticsDownloadAPI.downloadUnitCategorywiseData(startDate, endDate);
-                                      toast({
-                                        title: "Success",
-                                        description: "Unit category-wise data downloaded successfully"
-                                      });
-                                    } catch (error) {
-                                      console.error('Error downloading unit category-wise data:', error);
-                                      toast({
-                                        title: "Error",
-                                        description: "Failed to download unit category-wise data",
-                                        variant: "destructive"
-                                      });
-                                    }
-                                  }
-                                }}
-                              />
-                            </div>
-                            <div className="w-full overflow-x-auto">
-                              <ResponsiveContainer width="100%" height={300} className="min-w-[400px]">
-                                {unitCategorywiseData && unitCategorywiseData.response ? (
-                                  <BarChart 
-                                    data={unitCategorywiseData.response.tickets_category.map((category, index) => ({
-                                      name: category,
-                                      open: unitCategorywiseData.response.open_tickets[index] || 0,
-                                      closed: unitCategorywiseData.response.closed_tickets[index] || 0,
-                                      total: unitCategorywiseData.response.total_tickets[index] || 0
-                                    }))}
-                                    margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-                                  >
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
-                                    <XAxis 
-                                      dataKey="name" 
-                                      angle={-45} 
-                                      textAnchor="end" 
-                                      height={80} 
-                                      tick={{
-                                        fill: '#374151',
-                                        fontSize: 10
-                                      }} 
-                                      className="text-xs" 
-                                    />
-                                    <YAxis tick={{
-                                      fill: '#374151',
-                                      fontSize: 10
-                                    }} />
-                                    <Tooltip 
-                                      content={({ active, payload, label }) => {
-                                        if (active && payload && payload.length) {
-                                          return (
-                                            <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-                                              <p className="font-semibold text-gray-800 mb-2">{label}</p>
-                                              <div className="space-y-1">
-                                                <div className="flex justify-between items-center">
-                                                  <span className="text-yellow-600 font-medium">Open:</span>
-                                                  <span className="text-gray-700">{payload.find(p => p.dataKey === 'open')?.value || 0}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                  <span className="text-green-600 font-medium">Closed:</span>
-                                                  <span className="text-gray-700">{payload.find(p => p.dataKey === 'closed')?.value || 0}</span>
-                                                </div>
-                                                <div className="pt-1 border-t border-gray-200">
-                                                  <div className="flex justify-between items-center font-semibold">
-                                                    <span>Total:</span>
-                                                    <span>{payload.find(p => p.dataKey === 'total')?.value || 0}</span>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            </div>
-                                          );
-                                        }
-                                        return null;
-                                      }}
-                                    />
-                                    <Bar dataKey="open" fill="#f59e0b" name="Open" />
-                                    <Bar dataKey="closed" fill="#10b981" name="Closed" />
-                                  </BarChart>
-                                ) : (
-                                  <div className="flex items-center justify-center h-full">
-                                    <div className="text-center py-8 text-gray-500">
-                                      No unit category-wise data available for the selected date range
-                                    </div>
-                                  </div>
-                                )}
-                              </ResponsiveContainer>
-                            </div>
-                          </div>
+                          <UnitCategoryWiseCard
+                            data={unitCategorywiseData}
+                            dateRange={{
+                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                            }}
+                          />
                         </SortableChartItem>
                       )}
                     </div>
@@ -1357,87 +1132,14 @@ export const TicketDashboard = () => {
                     <div className="grid grid-cols-1 gap-4 sm:gap-6">
                       {visibleSections.includes('agingMatrix') && (
                         <SortableChartItem key="agingMatrix" id="agingMatrix">
-                          <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6 shadow-sm hover:shadow-lg transition-all duration-200 group-hover:border-gray-300 group-active:border-blue-300 group-active:shadow-xl relative">
-                            {/* Drag indicator */}
-                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-50 transition-opacity duration-200">
-                              <div className="w-1 h-6 bg-gray-400 rounded-full"></div>
-                            </div>
-                            <div className="flex items-center justify-between mb-4 sm:mb-6">
-                              <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets Ageing Matrix</h3>
-                              <Download
-                                className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer text-[#C72030]"
-                                onClick={async () => {
-                                  try {
-                                    const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                    const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                    await ticketAnalyticsDownloadAPI.downloadTicketAgingMatrixData(startDate, endDate);
-                                    toast({
-                                      title: "Success",
-                                      description: "Ticket aging matrix data downloaded successfully"
-                                    });
-                                    console.log('Ticket aging matrix data downloaded successfully');
-                                  } catch (error) {
-                                    console.error('Error downloading aging matrix data:', error);
-                                    toast({
-                                      title: "Error",
-                                      description: "Failed to download aging matrix data",
-                                      variant: "destructive"
-                                    });
-                                  }
-                                }}
-                              />
-                            </div>
-
-                            <div className="space-y-4 sm:space-y-6">
-                              {/* Table - Horizontally scrollable on mobile */}
-                              <div className="overflow-x-auto -mx-3 sm:mx-0">
-                                <div className="min-w-[500px] px-3 sm:px-0">
-                                  <table className="w-full border-collapse border border-gray-300">
-                                    <thead>
-                                      <tr style={{
-                                        backgroundColor: '#EDE4D8'
-                                      }}>
-                                        <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Priority</th>
-                                        <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">No. of Days</th>
-                                      </tr>
-                                      <tr style={{
-                                        backgroundColor: '#EDE4D8'
-                                      }}>
-                                        <th className="border border-gray-300 p-2 sm:p-3"></th>
-                                        <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">0-10</th>
-                                        <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">11-20</th>
-                                        <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">21-30</th>
-                                        <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">31-40</th>
-                                        <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">41-50</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {agingMatrixData.map((row, index) => <tr key={index} className="bg-white">
-                                        <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
-                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T1}</td>
-                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T2}</td>
-                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T3}</td>
-                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T4}</td>
-                                        <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.T5}</td>
-                                      </tr>)}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </div>
-
-                              {/* Summary Box - Full Width Below Table */}
-                              <div className="w-full">
-                                <div className="rounded-lg p-4 sm:p-8 text-center" style={{
-                                  backgroundColor: '#EDE4D8'
-                                }}>
-                                  <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">
-                                    {agingMatrixAnalyticsData?.average_days} Days
-                                  </div>
-                                  <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                          <TicketAgingMatrixCard
+                            data={agingMatrixAnalyticsData}
+                            agingMatrixData={agingMatrixData}
+                            dateRange={{
+                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                            }}
+                          />
                         </SortableChartItem>
                       )}
                     </div>
