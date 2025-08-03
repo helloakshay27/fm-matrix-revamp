@@ -38,6 +38,18 @@ const analyticsOptions = {
       { id: 'resolution_tat', endpoint: 'resolution_tat', label: 'Resolution TAT Report' },
     ]
   },
+    assets: {
+    icon: Package,
+    label: 'Assets',
+    color: '#06B6D4',
+    options: [
+      { id: 'assets_status', endpoint: 'asset_status', label: 'Asset Status Distribution' },
+      { id: 'assets_statistics', endpoint: 'asset_statistics', label: 'Asset Statistics Overview' },
+      { id: 'assets_group_wise', endpoint: 'group_wise', label: 'Assets Group-Wise' },
+      { id: 'assets_category_wise', endpoint: 'category_wise', label: 'Category Wise Assets' },
+      { id: 'assets_distribution', endpoint: 'asset_distribution', label: 'Asset Distribution (IT vs Non-IT)' },
+    ]
+  },
   tasks: {
     icon: CheckSquare,
     label: 'Tasks',
@@ -84,19 +96,7 @@ const analyticsOptions = {
       { id: 'amc_vendor_performance', endpoint: 'vendor_performance', label: 'AMC Vendor Performance' },
     ]
   },
-  assets: {
-    icon: Package,
-    label: 'Assets',
-    color: '#06B6D4',
-    options: [
-      { id: 'assets_group_wise', endpoint: 'group_wise', label: 'Assets Group-Wise' },
-      { id: 'assets_status', endpoint: 'asset_status', label: 'Assets Status' },
-      { id: 'assets_statistics', endpoint: 'asset_statistics', label: 'Assets Statistics' },
-      { id: 'assets_breakdown', endpoint: 'asset_breakdown', label: 'Assets Breakdown' },
-      { id: 'assets_category_wise', endpoint: 'category_wise', label: 'Category Wise Assets' },
-      { id: 'assets_overall_analytics', endpoint: 'overall_analytics', label: 'Assets Overall Analytics' },
-    ]
-  }
+
 };
 
 export const UnifiedAnalyticsSelector: React.FC<UnifiedAnalyticsSelectorProps> = ({
