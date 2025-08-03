@@ -177,8 +177,19 @@ export const MobileOrderReview: React.FC = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
+  // Try to get data from navigation state first, then fallback to sessionStorage
+  const navigationState = location.state || {};
+  const sessionOrderData = sessionStorage.getItem("latest_order_data");
+  const parsedSessionData = sessionOrderData ? JSON.parse(sessionOrderData) : {};
+  
+  // Merge navigation state with session data (navigation state takes priority)
+  const combinedData = {
+    ...parsedSessionData,
+    ...navigationState,
+  };
+
   const {
-    items,
+    items = [],
     restaurant,
     note,
     isExistingOrder,
@@ -189,9 +200,9 @@ export const MobileOrderReview: React.FC = () => {
     isExternalScan: passedExternalScan,
     sourceParam: passedSourceParam,
     contactDetails,
-  } = location.state as {
-    items: MenuItem[];
-    restaurant: Restaurant;
+  } = combinedData as {
+    items?: MenuItem[];
+    restaurant?: Restaurant;
     note?: string;
     isExistingOrder?: boolean;
     showSuccessImmediately?: boolean;
@@ -223,10 +234,14 @@ export const MobileOrderReview: React.FC = () => {
     console.log("  - showSuccessImmediately:", showSuccessImmediately);
     console.log("  - contactDetails:", contactDetails);
     console.log("  - orderData:", orderData);
+    console.log("  - restaurant:", restaurant);
     console.log("  - orderData.order_status:", orderData?.order_status);
     console.log("  - orderData.order_status_color:", orderData?.order_status_color);
     console.log("  - orderData.requests:", orderData?.requests);
     console.log("  - Current URL:", window.location.href);
+    console.log("  - Navigation state:", location.state);
+    console.log("  - Session storage data:", sessionOrderData ? "Available" : "Not available");
+    console.log("  - Combined data has restaurant:", !!restaurant);
   }, [
     passedExternalScan,
     passedSourceParam,
@@ -235,7 +250,10 @@ export const MobileOrderReview: React.FC = () => {
     showSuccessImmediately,
     contactDetails,
     orderData,
+    restaurant,
     searchParams,
+    location.state,
+    sessionOrderData,
   ]);
 
   const [showSuccess, setShowSuccess] = useState(
@@ -394,68 +412,94 @@ export const MobileOrderReview: React.FC = () => {
     }
   }, [showSuccess, isExternalScan, navigate]);
 
-  // if (showSuccess) {
-  //   return (
-  //     <div className="min-h-screen bg-gray-50">
-  //       {/* Header */}
-  //       <div className="bg-white border-b border-gray-200 px-4 py-4">
-  //         <div className="flex items-center">
-  //           <button onClick={handleBack} className="mr-4">
-  //             <ArrowLeft className="w-6 h-6 text-gray-600" />
-  //           </button>
-  //           <h1 className="text-lg font-semibold text-gray-900">Order Review</h1>
-  //         </div>
-  //       </div>
+  // Guard clause: Handle missing essential data
+  if (!restaurant && !orderData?.restaurant_name) {
+    console.log("❌ GUARD CLAUSE: No restaurant data and no orderData restaurant_name");
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Order data not found
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Please try placing your order again.
+          </p>
+          <Button
+            onClick={() => navigate(-1)}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
-  //       {/* Success Message */}
-  //       <div className="p-4">
-  //         <div className="bg-white rounded-lg p-6 text-center mb-4">
-  //           <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-  //             <Check className="w-8 h-8 text-white" />
-  //           </div>
-  //           <h2 className="text-xl font-bold text-gray-900 mb-2">Order Placed Successfully!</h2>
-  //           <p className="text-gray-600 mb-4">Your order has been confirmed and is being prepared</p>
+  // Create a fallback restaurant object if restaurant is missing but we have orderData
+  const effectiveRestaurant = restaurant || {
+    id: orderData?.restaurant_id?.toString() || "unknown",
+    name: orderData?.restaurant_name || "Restaurant",
+    location: "Restaurant Location",
+    rating: 4.1,
+    timeRange: "60-65 mins",
+    discount: "20% OFF",
+    image: orderData?.restaurant_cover_images?.[0]?.document || "",
+  };
 
-  //           {/* Order ID if available */}
-  //           {orderData?.id && (
-  //             <div className="bg-gray-100 rounded-lg p-3 mb-4">
-  //               <p className="text-sm text-gray-600">Order ID</p>
-  //               <p className="font-semibold text-gray-900">#{orderData.id}</p>
-  //             </div>
-  //           )}
+  if (showSuccess) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-4 py-4">
+          <div className="flex items-center">
+            <button onClick={handleBack} className="mr-4">
+              {/* <ArrowLeft className="w-6 h-6 text-gray-600" /> */}
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">
+              Order Review
+            </h1>
+          </div>
+        </div>
 
-  //           {/* Auto redirect message */}
-  //           <p className="text-sm text-gray-500">
-  //             {isExternalScan
-  //               ? "Redirecting to order details in 5 seconds..."
-  //               : "Redirecting to My Orders in 5 seconds..."
-  //             }
-  //           </p>
-  //         </div>
+        {/* Success Message */}
+        <div className="flex items-center justify-center min-h-[70vh]">
+          <div className="bg-[#E8E2D3] rounded-lg p-8 mx-4 text-center">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-gray-400">
+              <Check className="w-8 h-8 text-gray-900" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Order Placed Successfully
+            </h2>
 
-  //         {/* Quick Order Summary */}
-  //         <div className="bg-white rounded-lg p-4">
-  //           <h3 className="font-semibold text-gray-900 mb-3">{restaurant.name}</h3>
-  //           <div className="flex justify-between items-center">
-  //             <span className="text-gray-600">{getTotalItems()} items</span>
-  //             <span className="font-semibold text-red-600">₹{getTotalPrice()}</span>
-  //           </div>
-  //         </div>
-  //       </div>
+            {/* Order ID if available
+            {orderData?.id && (
+              <div className="bg-white rounded-lg p-3 mt-4 mb-4">
+                <p className="text-sm text-gray-600">Order ID</p>
+                <p className="font-semibold text-gray-900">#{orderData.id}</p>
+              </div>
+            )} */}
 
-  //       {/* View Order Details Button */}
-  //       <div className="fixed bottom-0 left-0 right-0 p-4">
-  //         <Button
-  //           onClick={handleViewOrderDetails}
-  //           variant="outline"
-  //           className="w-full border-2 border-red-600 text-red-600 bg-white hover:bg-red-50 py-4 rounded-xl text-lg font-medium"
-  //         >
-  //           View Order Details
-  //         </Button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+            {/* Auto redirect message for external scan users */}
+            {isExternalScan && (
+              <p className="text-sm text-gray-500 mt-4">
+                Showing order details in 5 seconds...
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* View Order Details Button */}
+        <div className="fixed bottom-0 left-0 right-0 p-4">
+          <Button
+            onClick={() => setShowSuccess(false)}
+            className="w-full bg-red-600 hover:bg-red-700 text-white py-4 rounded-xl text-lg font-medium"
+          >
+            View Order Details
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (showSuccess) {
     return (
@@ -647,7 +691,7 @@ export const MobileOrderReview: React.FC = () => {
 
           <div className="flex justify-between items-center mb-4">
             <span className="font-semibold text-gray-900">
-              {orderData?.restaurant_name || restaurant.name}
+              {orderData?.restaurant_name || effectiveRestaurant.name}
             </span>
             <span className="text-gray-600">
               Total Items - {getTotalItems()}

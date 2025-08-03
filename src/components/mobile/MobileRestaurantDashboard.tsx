@@ -95,14 +95,23 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
   };
 
   const handleRestaurantClick = (restaurantId: string | number) => {
-    // Preserve source parameter when navigating
+    // Preserve source parameter and facility_id when navigating
     const currentParams = new URLSearchParams(window.location.search);
+    
+    // Get facility_id from session storage and add to URL if not already present
+    const facilityId = sessionStorage.getItem("facility_id");
+    if (facilityId && !currentParams.has("facilityId")) {
+      currentParams.set("facilityId", facilityId);
+    }
+    
     const queryString = currentParams.toString();
     const url = queryString 
       ? `/mobile/restaurant/${restaurantId}/details?${queryString}`
       : `/mobile/restaurant/${restaurantId}/details`;
     
-    console.log("🍽️ NAVIGATING TO RESTAURANT:", url);
+    console.log("🍽️ NAVIGATING TO RESTAURANT:");
+    console.log("  - URL:", url);
+    console.log("  - facility_id preserved:", facilityId);
     navigate(url);
   };
 
@@ -128,16 +137,27 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
     };
     
     // Navigate to order review page with complete order data
-    navigate(`/mobile/restaurant/${order.restaurant_id}/order-review`, {
-      state: {
-        items: mockItems,
-        restaurant: mockRestaurant,
-        note: order.requests || 'Previous order details',
-        isExistingOrder: true,
-        totalPrice: order.total_amount,
-        totalItems: order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0,
-        orderData: order
-      }
+    const currentParams = new URLSearchParams(window.location.search);
+    const currentSource = currentParams.get('source') || 'app';
+    
+    const orderReviewData = {
+      items: mockItems,
+      restaurant: mockRestaurant,
+      note: order.requests || 'Previous order details',
+      isExistingOrder: true,
+      showSuccessImmediately: false, // Don't show success for existing orders
+      totalPrice: order.total_amount,
+      totalItems: order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0,
+      sourceParam: currentSource, // Preserve source
+      isExternalScan: isExternalScan, // Preserve external scan flag
+      orderData: order
+    };
+
+    // Store in sessionStorage for direct navigation support
+    sessionStorage.setItem("latest_order_data", JSON.stringify(orderReviewData));
+    
+    navigate(`/mobile/restaurant/${order.restaurant_id}/order-review?source=${currentSource}`, {
+      state: orderReviewData
     });
   };
 

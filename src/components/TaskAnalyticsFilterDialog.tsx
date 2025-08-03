@@ -2,47 +2,77 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
+import { format, parse } from 'date-fns';
 
 interface TaskAnalyticsFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyFilters: (startDate: string, endDate: string) => void;
+  currentStartDate?: string; // Current applied start date in YYYY-MM-DD format
+  currentEndDate?: string;   // Current applied end date in YYYY-MM-DD format
 }
 
 export const TaskAnalyticsFilterDialog: React.FC<TaskAnalyticsFilterDialogProps> = ({
   isOpen,
   onClose,
   onApplyFilters,
+  currentStartDate,
+  currentEndDate,
 }) => {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
 
+  const convertFromApiFormat = (dateString: string): string => {
+    // Convert from YYYY-MM-DD to DD/MM/YYYY
+    const date = parse(dateString, 'yyyy-MM-dd', new Date());
+    return format(date, 'dd/MM/yyyy');
+  };
+
+  const convertToApiFormat = (dateString: string): string => {
+    // Convert from DD/MM/YYYY to YYYY-MM-DD
+    const date = parse(dateString, 'dd/MM/yyyy', new Date());
+    return format(date, 'yyyy-MM-dd');
+  };
+
   useEffect(() => {
     if (isOpen) {
-      // Set default dates (last year to today)
-      const today = new Date();
-      const lastYear = new Date(today);
-      lastYear.setFullYear(today.getFullYear() - 1);
-      
-      setStartDate(lastYear.toISOString().split('T')[0]);
-      setEndDate(today.toISOString().split('T')[0]);
+      if (currentStartDate && currentEndDate) {
+        // Use current applied filter dates
+        setStartDate(convertFromApiFormat(currentStartDate));
+        setEndDate(convertFromApiFormat(currentEndDate));
+      } else {
+        // Set default dates (last year to today) only if no current dates
+        const today = new Date();
+        const lastYear = new Date(today);
+        lastYear.setFullYear(today.getFullYear() - 1);
+        
+        setStartDate(format(lastYear, 'dd/MM/yyyy'));
+        setEndDate(format(today, 'dd/MM/yyyy'));
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, currentStartDate, currentEndDate]);
 
   const handleSubmit = () => {
     if (startDate && endDate) {
-      onApplyFilters(startDate, endDate);
+      onApplyFilters(convertToApiFormat(startDate), convertToApiFormat(endDate));
       onClose();
     }
   };
 
   const handleReset = () => {
-    const today = new Date();
-    const lastYear = new Date(today);
-    lastYear.setFullYear(today.getFullYear() - 1);
-    
-    setStartDate(lastYear.toISOString().split('T')[0]);
-    setEndDate(today.toISOString().split('T')[0]);
+    if (currentStartDate && currentEndDate) {
+      // Reset to current applied filter dates
+      setStartDate(convertFromApiFormat(currentStartDate));
+      setEndDate(convertFromApiFormat(currentEndDate));
+    } else {
+      // Reset to default dates (last year to today)
+      const today = new Date();
+      const lastYear = new Date(today);
+      lastYear.setFullYear(today.getFullYear() - 1);
+      
+      setStartDate(format(lastYear, 'dd/MM/yyyy'));
+      setEndDate(format(today, 'dd/MM/yyyy'));
+    }
   };
 
   return (

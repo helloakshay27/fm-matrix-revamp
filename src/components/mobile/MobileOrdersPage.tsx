@@ -130,7 +130,7 @@ export const MobileOrdersPage: React.FC = () => {
         setError(null);
         
         // Get current user from localStorage
-        const storedUser = localStorage.getItem("user");
+        const storedUser = sessionStorage.getItem("user");
         const user = storedUser ? JSON.parse(storedUser) : null;
         const userId = user?.id?.toString();
         
@@ -319,24 +319,36 @@ export const MobileOrdersPage: React.FC = () => {
       // Find the original FoodOrder data to pass complete API response
       const originalFoodOrder = originalFoodOrders.find(fo => fo.id.toString() === orderId);
       
-      // Navigate to order review page with complete order data
-      navigate(`/mobile/restaurant/${order.restaurantId}/order-review`, {
-        state: {
-          items: mockItems,
-          restaurant: mockRestaurant,
-          note: originalFoodOrder?.requests || 'Previous order details',
-          isExistingOrder: true,
-          totalPrice: order.totalAmount,
-          totalItems: order.items.reduce((sum, item) => sum + item.quantity, 0),
-          orderData: originalFoodOrder || {
-            id: order.id,
-            order_status: order.status,
-            order_status_color: order.statusColor,
-            restaurant_name: order.restaurantName,
-            total_amount: order.totalAmount,
-            requests: 'Previous order details'
-          }
+      // Preserve source parameter - default to 'app' for orders page navigation
+      const currentSource = sourceParam || 'app';
+      
+      // Prepare order review data
+      const orderReviewData = {
+        items: mockItems,
+        restaurant: mockRestaurant,
+        note: originalFoodOrder?.requests || 'Previous order details',
+        isExistingOrder: true,
+        showSuccessImmediately: false, // Don't show success for existing orders
+        totalPrice: order.totalAmount,
+        totalItems: order.items.reduce((sum, item) => sum + item.quantity, 0),
+        sourceParam: currentSource, // Preserve source
+        isExternalScan: isExternalScan, // Preserve external scan flag
+        orderData: originalFoodOrder || {
+          id: order.id,
+          order_status: order.status,
+          order_status_color: order.statusColor,
+          restaurant_name: order.restaurantName,
+          total_amount: order.totalAmount,
+          requests: 'Previous order details'
         }
+      };
+
+      // Store in sessionStorage for direct navigation support
+      sessionStorage.setItem("latest_order_data", JSON.stringify(orderReviewData));
+      
+      // Navigate to order review page with complete order data and preserved source
+      navigate(`/mobile/restaurant/${order.restaurantId}/order-review?source=${currentSource}`, {
+        state: orderReviewData
       });
     }
   };
