@@ -363,7 +363,7 @@ export const FMUserMasterDashboard = () => {
       const response = await axios.get(
         `https://${localStorage.getItem(
           "baseUrl"
-        )}/pms/account_setups/export_users.json`,
+        )}/pms/account_setups/export_users.xlsx`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

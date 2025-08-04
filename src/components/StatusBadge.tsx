@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,15 +15,17 @@ interface StatusBadgeProps {
   onStatusUpdate?: () => void; // Callback to refresh data
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ 
-  status, 
-  assetId, 
-  onStatusUpdate 
+export const StatusBadge: React.FC<StatusBadgeProps> = ({
+  status,
+  assetId,
+  onStatusUpdate
 }) => {
-  const [currentStatus, setCurrentStatus] = useState(status);
+  const [currentStatus, setCurrentStatus] = useState<string>(status);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  console.log(currentStatus);
+  useEffect(() => {
+    setCurrentStatus(status)
+  }, [status])
 
   const statusOptions = [
     { value: "in_use", label: "In Use" },
@@ -68,7 +70,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     if (newStatus === currentStatus) return;
 
     setIsUpdating(true);
-    
+
     try {
       const body = {
         pms_asset: {
@@ -77,8 +79,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
             newStatus === "in_use"
               ? "false"
               : newStatus === "breakdown"
-              ? "true"
-              : "",
+                ? "true"
+                : "",
         },
       };
 
@@ -110,7 +112,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       } else {
         setCurrentStatus(newStatus);
       }
-      
+
       // Call the callback to refresh table data
       if (onStatusUpdate) {
         onStatusUpdate();
@@ -144,11 +146,10 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
           <DropdownMenuItem
             key={option.value}
             onClick={() => updateAssetStatus(option.value)}
-            className={`cursor-pointer ${getStatusColor(option.value)} rounded-sm mb-1 ${
-              currentStatus.toLowerCase() === option.value.toLowerCase()
+            className={`cursor-pointer ${getStatusColor(option.value)} rounded-sm mb-1 ${currentStatus.toLowerCase() === option.value.toLowerCase()
                 ? "ring-2 ring-gray-400"
                 : ""
-            }`}
+              }`}
           >
             <span className="w-full text-center">{option.label}</span>
           </DropdownMenuItem>

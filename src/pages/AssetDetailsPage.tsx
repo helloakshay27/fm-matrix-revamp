@@ -126,8 +126,8 @@ export const AssetDetailsPage = () => {
               </h1>
 
               <div className="text-base px-4 py-2 ">
-                <StatusBadge 
-                  status={assetData.status || "-"} 
+                <StatusBadge
+                  status={assetData.status || "-"}
                   assetId={assetData.id}
                   onStatusUpdate={refreshAssetData}
                 />
@@ -321,7 +321,7 @@ export const AssetDetailsPage = () => {
             <AssociationTab asset={assetData} assetId={assetData.id} />
           </TabsContent>
           <TabsContent value="owner-cost" className="p-4 sm:p-6">
-            <OwnerCostTab asset={assetData} assetId={assetData.id} />
+            <OwnerCostTab asset={assetData} assetId={assetData.id} refreshAssetData={refreshAssetData} />
           </TabsContent>
         </Tabs>
       </div>

@@ -204,8 +204,9 @@ export const ScheduledTaskDashboard = () => {
 
  const getDefaultDateRange = () => {
     const today = new Date();
-    const lastYear = new Date();
-    lastYear.setFullYear(today.getFullYear() - 1);
+    // Create a new date object for one week ago to avoid mutation
+    const oneWeekAgo = new Date(today);
+    oneWeekAgo.setDate(today.getDate() - 7);
     
     const formatDate = (date: Date) => {
       const day = date.getDate().toString().padStart(2, '0');
@@ -215,7 +216,7 @@ export const ScheduledTaskDashboard = () => {
     };
     
     return {
-      startDate: formatDate(lastYear),
+      startDate: formatDate(oneWeekAgo),
       endDate: formatDate(today)
     };
   };
@@ -513,6 +514,17 @@ export const ScheduledTaskDashboard = () => {
   };
 
   // Analytics functions
+  const parseDateFromString = (dateStr: string): Date => {
+    const [day, month, year] = dateStr.split('/');
+    // Create date in UTC to avoid timezone issues
+    return new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+  };
+
+  const getDateRangeForComponents = () => ({
+    startDate: parseDateFromString(analyticsDateRange.startDate),
+    endDate: parseDateFromString(analyticsDateRange.endDate)
+  });
+
   const fetchAnalyticsData = async (startDate: Date, endDate: Date, selectedTypes: string[] = selectedAnalytics) => {
     setAnalyticsLoading(true);
     try {
@@ -557,13 +569,38 @@ export const ScheduledTaskDashboard = () => {
 
   const handleAnalyticsSelectionChange = (selectedOptions: string[]) => {
     setSelectedAnalytics(selectedOptions);
-    fetchAnalyticsData(analyticsDateRange.startDate, analyticsDateRange.endDate, selectedOptions);
+    const dateRange = getDateRangeForComponents();
+    fetchAnalyticsData(dateRange.startDate, dateRange.endDate, selectedOptions);
   };
 
   const handleAnalyticsFilterApply = (startDateStr: string, endDateStr: string) => {
+    // Handle empty dates (reset case)
+    if (!startDateStr || !endDateStr) {
+      // Clear all analytics data
+      setTechnicalData(null);
+      setNonTechnicalData(null);
+      setTopTenData(null);
+      setSiteWiseData(null);
+      // Reset to default date range
+      setAnalyticsDateRange(getDefaultDateRange());
+      return;
+    }
+
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
-    setAnalyticsDateRange({ startDate, endDate });
+    
+    // Convert dates to DD/MM/YYYY format for consistent storage
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+    
+    setAnalyticsDateRange({ 
+      startDate: formatDate(startDate), 
+      endDate: formatDate(endDate) 
+    });
     fetchAnalyticsData(startDate, endDate, selectedAnalytics);
   };
 
@@ -580,9 +617,19 @@ export const ScheduledTaskDashboard = () => {
   };
 
   // Load analytics data when tab is selected
+  // Load analytics data when tab is selected
   useEffect(() => {
     if (activeTab === 'analytics') {
-      fetchAnalyticsData(analyticsDateRange.startDate, analyticsDateRange.endDate, selectedAnalytics);
+      // Convert DD/MM/YYYY strings to Date objects using UTC to avoid timezone issues
+      const parseDate = (dateStr: string) => {
+        const [day, month, year] = dateStr.split('/');
+        return new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
+      };
+      
+      const startDate = parseDate(analyticsDateRange.startDate);
+      const endDate = parseDate(analyticsDateRange.endDate);
+      
+      fetchAnalyticsData(startDate, endDate, selectedAnalytics);
     }
   }, [activeTab]);
 
@@ -885,7 +932,7 @@ export const ScheduledTaskDashboard = () => {
               </Button>
               <TaskAnalyticsSelector
                 onSelectionChange={handleAnalyticsSelectionChange}
-                dateRange={analyticsDateRange}
+                dateRange={getDateRangeForComponents()}
               />
 
             </div>
@@ -909,7 +956,7 @@ export const ScheduledTaskDashboard = () => {
                             title="Technical Checklist"
                             data={technicalData.response}
                             type="technical"
-                            dateRange={analyticsDateRange}
+                            dateRange={getDateRangeForComponents()}
                           />
                         </SortableChartItem>
                       );
@@ -922,7 +969,7 @@ export const ScheduledTaskDashboard = () => {
                             title="Non-Technical Checklist"
                             data={nonTechnicalData.response}
                             type="nonTechnical"
-                            dateRange={analyticsDateRange}
+                            dateRange={getDateRangeForComponents()}
                           />
                         </SortableChartItem>
                       );
@@ -935,7 +982,7 @@ export const ScheduledTaskDashboard = () => {
                             title="Top 10 Checklist Types"
                             data={topTenData.response}
                             type="topTen"
-                            dateRange={analyticsDateRange}
+                            dateRange={getDateRangeForComponents()}
                           />
                         </SortableChartItem>
                       );
@@ -948,7 +995,7 @@ export const ScheduledTaskDashboard = () => {
                             title="Site-wise Checklist Status"
                             data={siteWiseData.response}
                             type="siteWise"
-                            dateRange={analyticsDateRange}
+                            dateRange={getDateRangeForComponents()}
                           />
                         </SortableChartItem>
                       );
@@ -1005,8 +1052,16 @@ export const ScheduledTaskDashboard = () => {
         isOpen={showAnalyticsFilter}
         onClose={() => setShowAnalyticsFilter(false)}
         onApplyFilters={handleAnalyticsFilterApply}
-        currentStartDate={new Date(analyticsDateRange.startDate).toISOString().split('T')[0]}
-        currentEndDate={new Date(analyticsDateRange.endDate).toISOString().split('T')[0]}
+        currentStartDate={(() => {
+          // Convert DD/MM/YYYY to YYYY-MM-DD
+          const [day, month, year] = analyticsDateRange.startDate.split('/');
+          return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        })()}
+        currentEndDate={(() => {
+          // Convert DD/MM/YYYY to YYYY-MM-DD
+          const [day, month, year] = analyticsDateRange.endDate.split('/');
+          return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        })()}
       />
 
     </div>
