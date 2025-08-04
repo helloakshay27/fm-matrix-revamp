@@ -55,13 +55,28 @@ export const Header = () => {
     '203696', '203606', '194409', '166641', '168838', '144714', '53815'
   ];
 
+  useEffect(() => {
+    if (selectedCompany) {
+      // setCompany(selectedCompany.name)
+      localStorage.setItem("selectedCompany", selectedCompany.name)
+    }
+  }, [selectedCompany])
+
   const handleSearch = (searchTerm: string) => {
     console.log('Search term:', searchTerm);
   };
 
   // Load initial data
   useEffect(() => {
-    dispatch(fetchAllowedCompanies());
+    const fetchCompanies = async () => {
+      try {
+        await dispatch(fetchAllowedCompanies()).unwrap();
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    fetchCompanies();
   }, [dispatch]);
 
   // Load sites when company changes
@@ -76,7 +91,7 @@ export const Header = () => {
   // Handle company change
   const handleCompanyChange = async (companyId: number) => {
     try {
-      await dispatch(changeCompany(companyId)).unwrap();
+      const response = await dispatch(changeCompany(companyId)).unwrap();
       // Reload page smoothly after successful company change
       window.location.reload();
     } catch (error) {
@@ -151,7 +166,7 @@ export const Header = () => {
         <div className="flex items-center gap-4">
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
-                <Building2 className="w-4 h-4" />
+              <Building2 className="w-4 h-4" />
 
               {projectLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
