@@ -180,7 +180,7 @@ export const RecentAssetsSidebar = () => {
 
             {/* TAT in quotes */}
             <div className="mb-4">
-              <span className="text-blue-600 font-medium">"{asset.tat}"</span>
+              {/* <span className="text-blue-600 font-medium">"{asset.tat}"</span> */}
             </div>
 
             {/* Asset Details */}
