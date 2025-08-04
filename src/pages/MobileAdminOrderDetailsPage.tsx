@@ -349,11 +349,11 @@ const MobileAdminOrderDetailsPage: React.FC = () => {
                 {order.created_by}
               </span>
             </div>
-            {order.facility_name && (
+            {(order.facility_name || order.location || order.meeting_room ) && (
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Room</span>
                 <span className="text-sm font-medium text-gray-800">
-                  {order?.facility_name}
+                  {order.facility_name || order.location || order.meeting_room }
                 </span>
               </div>
             )}
@@ -363,11 +363,11 @@ const MobileAdminOrderDetailsPage: React.FC = () => {
                 {formatDate(order.created_at)}
               </span>
             </div>
-            {order.total_amount && order.total_amount > 0 && (
+            {order.total_amount && order.total_amount >= 0 && (
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Total Amount</span>
                 <span className="text-sm font-medium text-gray-800">
-                  {formatCurrency(order.total_amount)}
+                  {formatCurrency(order.total_amount )}
                 </span>
               </div>
             )}

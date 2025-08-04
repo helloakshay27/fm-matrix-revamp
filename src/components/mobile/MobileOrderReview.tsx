@@ -92,6 +92,7 @@ interface ApiOrderData {
   facility_id?: number;
   facility_name?: string;
   meeting_room?: string;
+  location?: string;
   [key: string]: unknown;
 }
 
@@ -771,10 +772,10 @@ export const MobileOrderReview: React.FC = () => {
             )}
             
             {/* Meeting Room - Show if available in order data */}
-            {(orderData?.facility_name || orderData?.meeting_room) && (
+            {(orderData?.facility_name || orderData?.meeting_room || orderData?.location) && (
               <div className="flex justify-between">
                 <span className="text-gray-900">Meeting Room</span>
-                <span className="text-gray-900">{orderData.facility_name || orderData.meeting_room}</span>
+                <span className="text-gray-900">{orderData.facility_name || orderData.meeting_room || orderData.location}</span>
               </div>
             )}
             
