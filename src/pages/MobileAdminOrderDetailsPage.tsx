@@ -351,7 +351,7 @@ const MobileAdminOrderDetailsPage: React.FC = () => {
             </div>
             {(order.facility_name || order.location || order.meeting_room ) && (
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Room</span>
+                <span className="text-sm text-gray-600">Location</span>
                 <span className="text-sm font-medium text-gray-800">
                   {order.facility_name || order.location || order.meeting_room }
                 </span>
