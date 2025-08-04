@@ -145,7 +145,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
 
       {/* Rules Table */}
       <div className="bg-white rounded-lg border border-gray-200 p-8">
-        <h3 className="text-lg font-semibold text-teal-600 mb-6">Rule</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Rule</h3>
         
         <div className="space-y-4">
           {/* Rules Header */}
