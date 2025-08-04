@@ -13,7 +13,9 @@ interface MenuItem {
   sku: string;
   active: number;
   category_id: number;
+  category_name: string;
   sub_category_id: number;
+  sub_category_name: string;
   restaurant_id: number;
   stock: number;
   display_price: number;
@@ -124,7 +126,7 @@ export const ProductSetupDetailPage = () => {
                 </div>
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">Category</span>
-                  <span className="font-medium text-16"> {menuItems.category_id}</span>
+                  <span className="font-medium text-16"> {menuItems.category_name}</span>
                 </div>
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">SGST Rate</span>
@@ -152,7 +154,7 @@ export const ProductSetupDetailPage = () => {
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">Subcategory</span>
                   <span className="font-medium text-16 truncate max-w-[170px] overflow-hidden whitespace-nowrap">
-                    {menuItems.sub_category_id}
+                    {menuItems.sub_category_name}
                   </span>
                 </div>
                 <div className="flex">
