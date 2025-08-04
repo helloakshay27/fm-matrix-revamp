@@ -719,7 +719,7 @@ export const MobileOrderReview: React.FC = () => {
                   {/* Show individual price only if available and greater than 0 */}
                   {itemPrice != null && itemPrice !== undefined && itemPrice > 0 && (
                     <div className="text-sm text-gray-600 mt-1">
-                      OMR{itemPrice} × {itemQuantity} = ₹{itemPrice * itemQuantity}
+                      OMR{itemPrice} × {itemQuantity} = OMR{itemPrice * itemQuantity}
                     </div>
                   )}
                 </div>
