@@ -1122,8 +1122,8 @@ export const AMCDashboard = () => {
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
                     {(apiData as any)?.total_amcs_count || 0}
                   </div>
-                  <span className="text-sm font-medium text-gray-700">
-                    ₹{(apiData as any)?.total_amc_cost?.toLocaleString() || 0}
+                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                  {`${localStorage.getItem("currency") ?? ''} ${(apiData as any)?.total_amc_cost?.toLocaleString() || 0}`}
                   </span>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
                     Total AMC

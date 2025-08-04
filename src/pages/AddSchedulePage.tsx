@@ -3454,13 +3454,13 @@ export const AddSchedulePage = () => {
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                   options={[
-                    { id: 'technical', label: 'Technical', value: 'technical' },
-                    { id: 'non-technical', label: 'Non-Technical', value: 'non-technical' }
+                    { id: 'Technical', label: 'Technical', value: 'Technical' },
+                    { id: 'Non Technical', label: 'Non-Technical', value: 'Non Technical' }
                   ]}
                   getOptionLabel={(option) => option.label}
                   value={[
-                    { id: 'technical', label: 'Technical', value: 'technical' },
-                    { id: 'non-technical', label: 'Non-Technical', value: 'non-technical' }
+                    { id: 'Technical', label: 'Technical', value: 'Technical' },
+                    { id: 'Non Technical', label: 'Non-Technical', value: 'Non Technical' }
                   ].find(option => option.value === formData.category) || null}
                   onChange={(event, newValue) => {
                     const selectedValue = newValue ? newValue.value : '';
@@ -4931,25 +4931,39 @@ export const AddSchedulePage = () => {
                                     }}
                                   />
 
-                                  <FormControl size="small" sx={{ minWidth: 80 }}>
-                                    <InputLabel>
-                                      Type <span style={{ color: 'currentColor' }}>*</span>
-                                    </InputLabel>
-                                    <Select
-                                      value={value.type}
-                                      onChange={(e) => updateRadioType(section.id, task.id, valueIndex, e.target.value)}
-                                      sx={{
-                                        backgroundColor: 'white',
-                                        '& .MuiSelect-select': {
-                                          color: '#666'
-                                        }
-                                      }}
-                                    >
-                                      <MenuItem value="positive">P</MenuItem>
-                                      <MenuItem value="negative">N</MenuItem>
-                                    </Select>
-                                  </FormControl>
-
+<FormControl size="small" sx={{ minWidth: 80 }}>
+  <Autocomplete
+    disableClearable
+    options={[
+      { value: 'positive', label: 'P' },
+      { value: 'negative', label: 'N' }
+    ]}
+    getOptionLabel={(option) => option.label}
+    isOptionEqualToValue={(option, value) => option.value === value.value}
+    value={
+      [{ value: 'positive', label: 'P' }, { value: 'negative', label: 'N' }]
+        .find(opt => opt.value === value.type) || { value: '', label: '' }
+    }
+    onChange={(_, newValue) => {
+      if (newValue) updateRadioType(section.id, task.id, valueIndex, newValue.value);
+    }}
+    renderInput={(params) => (
+      <TextField
+        {...params}
+        label={
+          <span>
+            Type <span style={{ color: 'currentColor' }}>*</span>
+          </span>
+        }
+        size="small"
+        sx={{
+          backgroundColor: 'white',
+          '& .MuiInputBase-input': { color: '#666' }
+        }}
+      />
+    )}
+  />
+</FormControl>
                                   {task.radioValues.length > 1 && (
                                     <IconButton
                                       size="small"

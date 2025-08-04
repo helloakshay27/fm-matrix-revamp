@@ -7,16 +7,13 @@ import { fetchFMUsers, FMUser, getFMUsers } from "@/store/slices/fmUserSlice";
 import { fetchUserCounts } from "@/store/slices/userCountsSlice";
 import { StatsCard } from "@/components/StatsCard";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
   Plus,
   Upload,
   Download,
-  Filter,
   Eye,
-  Search,
   Users,
   X,
 } from "lucide-react";
@@ -133,7 +130,7 @@ export const FMUserMasterDashboard = () => {
 
         // Make API call with search query
         const response = await axios.get(
-          `https://${baseUrl}/pms/account_setups/fm_users.json?q[search_all_fields_cont]=${encodeURIComponent(searchQuery)}&per_page=10&page=${pagination.current_page}`,
+          `https://${baseUrl}/pms/account_setups/fm_users.json?q[search_all_fields_cont]=${searchQuery}&per_page=10&page=${pagination.current_page}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -148,8 +145,6 @@ export const FMUserMasterDashboard = () => {
           total_count: response.data.total_count,
           total_pages: response.data.total_pages
         });
-
-        toast.success("Search completed successfully!");
       } catch (error) {
         console.error("Search error:", error);
         toast.error("Failed to perform search.");
@@ -329,11 +324,34 @@ export const FMUserMasterDashboard = () => {
         throw new Error("Failed to update user status");
       }
 
+      setFmUsersData((prevUsers) =>
+        prevUsers.map((user) =>
+          user.lockUserId === selectedUser?.lockUserId
+            ? {
+              ...user,
+              status: selectedStatus,
+              active: selectedStatus === "approved", // Assuming "approved" means active
+            }
+            : user
+        )
+      );
+
+      setFilteredFMUsersData((prevUsers) =>
+        prevUsers.map((user) =>
+          user.lockUserId === selectedUser?.lockUserId
+            ? {
+              ...user,
+              status: selectedStatus,
+              active: selectedStatus === "approved", // Assuming "approved" means active
+            }
+            : user
+        )
+      );
       toast.success("User status updated successfully!");
       setStatusDialogOpen(false);
       setSelectedUser(null);
       setSelectedStatus("");
-      dispatch(fetchFMUsers());
+
     } catch (error) {
       console.error("Error updating user status:", error);
       toast.error("Failed to update user status.");

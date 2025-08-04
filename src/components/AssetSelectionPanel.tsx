@@ -216,7 +216,7 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   return (
     <div
       className="fixed bg-white border border-gray-200 rounded-sm shadow-lg z-50"
-      style={{ top: "477px", left: "629px", width: "863px", height: "105px" }}
+      style={{ top: "50%", left: "30%", width: "863px", height: "105px" }}
     >
       <div className="flex items-center justify-between w-full h-full pr-6">
         <div className="flex items-center gap-2">

@@ -868,6 +868,17 @@ export const ViewSchedulePage = () => {
                   sx={muiFieldStyles}
                 />
               </div>
+              <div className="space-y-2">
+                <TextField
+                  label="Backup Assigned to"
+                  value={assetTask?.backup_assigned?.name || 'No backup assigned'}
+                  InputProps={{ readOnly: true, disabled: true }}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={muiFieldStyles}
+                />
+              </div>
               {/* {customForm?.backup_assigned.name !== "" && (<div className="space-y-2">
                 <TextField
                   label="Backup Assigned to"
@@ -879,6 +890,9 @@ export const ViewSchedulePage = () => {
                   sx={muiFieldStyles}
                 />
               </div>)} */}
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Supervisors</InputLabel>
@@ -913,10 +927,7 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Priority</InputLabel>
                   <Select
@@ -930,7 +941,7 @@ export const ViewSchedulePage = () => {
                     </MenuItem>
                   </Select>
                 </FormControl>
-              </div>
+              </div> */}
               <div className="space-y-2">
                 <TextField
                   label="Submission Type"
@@ -971,6 +982,7 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div>
+              
               
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
@@ -1017,6 +1029,7 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div>
+              
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Frequency</InputLabel>

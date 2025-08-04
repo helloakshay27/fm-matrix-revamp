@@ -515,133 +515,70 @@ export const TaskDetailsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {taskDetails?.activity && (taskDetails.activity as any).resp && (taskDetails.activity as any).resp.length > 0 ? (
-                    (taskDetails.activity as any).resp.map((activity: any, index: number) => (
-                      <tr key={index} className={index % 2 === 0 ? "bg-blue-50" : "bg-white"}>
-                        <td className="p-3 border-b border-r">
-                          {(activity as any).hint || '-'}
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          {(activity as any).label}
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          {(activity as any).userData && (activity as any).userData.length > 0 
-                            ? (activity as any).userData.join(', ') 
-                            : '-'}
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          {(activity as any).comment || '-'}
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          {(activity as any).weightage || '-'}
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          {(activity as any).rating || '-'}
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          { (
-                            typeof taskDetails?.activity?.total_score === 'object'
-                              ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
-                              : taskDetails?.activity?.total_score ?? '-'
-                          ) || '-'  }
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          {/* {index === 0 ? ( */}
+                  {taskDetails?.activity?.resp?.length > 0 ? (
+                    taskDetails.activity.resp.map((activity: any, index: number) => {
+                      const files = taskDetails.attachments?.blob_store_files?.filter(
+                        (file: any) => file.relation === `AssetQuestResponse${activity.name}`
+                      );
+
+                      const score =
+                        typeof taskDetails.activity.total_score === 'object'
+                          ? taskDetails.activity.total_score?.score ?? '-'
+                          : taskDetails.activity.total_score ?? '-';
+
+                      return (
+                        <tr key={index} className={index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}>
+                          <td className="p-3 border-b border-r">{activity.hint || '-'}</td>
+                          <td className="p-3 border-b border-r">{activity.label || '-'}</td>
+                          <td className="p-3 border-b border-r">
+                            {activity.userData?.length > 0 ? activity.userData.join(', ') : '-'}
+                          </td>
+                          <td className="p-3 border-b border-r">{activity.comment || '-'}</td>
+                          <td className="p-3 border-b border-r">{activity.weightage || '-'}</td>
+                          <td className="p-3 border-b border-r">{activity.rating || '-'}</td>
+                          <td className="p-3 border-b border-r">{score}</td>
+                          <td className="p-3 border-b border-r">
                             <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
                               {taskDetails.task_details.status.display_name}
                             </Badge>
-                          {/* ) : '-'} */}
-                        </td>
-                        <td className="p-3 border-b">
-                          {taskDetails?.attachments.blob_store_files.length > 0 ? (
-                            <div className="space-y-1">
-                              {taskDetails.attachments.blob_store_files
-                                .filter((file: any) => file.relation === `AssetQuestResponse${activity.name}`)
-                                .map((file, fileIndex) => (
-                                <div key={file.id} className="flex items-center gap-2">
-                                  <a
-                                    href={file.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
-                                    title={file.filename}
-                                  >
-                                    <img
-                                      src={file.url}
-                                      alt={file.filename}
-                                      className="w-8 h-8 object-cover rounded"
-                                    />
-                                    {/* {file.filename} */}
-                                  </a>
-                                  {/* <span className="text-xs text-gray-500">
-                                    ({Math.round(file.file_size / 1024)}KB)
-                                  </span> */}
-                                </div>
-                              ))}
-                              {taskDetails.attachments.blob_store_files
-                                .filter((file: any) => file.relation === `AssetQuestResponse${activity.name}`)
-                                .length === 0 && (
-                                <span className="text-sm text-gray-500">No attachments for this activity</span>
-                              )}
-                            </div>
-                          ) : (
-                            'No attachments'
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr className="bg-blue-50">
-                      <td className="p-3 border-b border-r">
-                        {taskDetails?.task_details.associated_with}
-                      </td>
-                      <td className="p-3 border-b border-r">{taskDetails?.task_details.asset_service_name}</td>
-                      <td className="p-3 border-b border-r">
-                        {taskDetails?.task_details.assigned_to}
-                      </td>
-                      <td className="p-3 border-b border-r">
-                        {taskDetails?.comments.length > 0
-                          ? taskDetails.comments[0].comment
-                          : 'No comments'}
-                      </td>
-                      <td className="p-3 border-b border-r">-</td>
-                      <td className="p-3 border-b border-r">-</td>
-                      <td className="p-3 border-b border-r">
-                        {typeof taskDetails?.activity?.total_score === 'object'
-                          ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
-                          : taskDetails?.activity?.total_score ?? '-'}
-                      </td>
-                      <td className="p-3 border-b border-r">
-                        <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
-                          {taskDetails.task_details.status.display_name}
-                        </Badge>
-                      </td>
-                      <td className="p-3 border-b">
-                        {taskDetails?.attachments.blob_store_files.length > 0 ? (
-                          <div className="space-y-1">
-                            {taskDetails.attachments.blob_store_files.map((file, fileIndex) => (
-                              <div key={file.id} className="flex items-center gap-2">
-                                <a
-                                  href={file.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
-                                  title={file.filename}
-                                >
-                                  {file.filename}
-                                </a>
-                                <span className="text-xs text-gray-500">
-                                  ({Math.round(file.file_size / 1024)}KB)
-                                </span>
+                          </td>
+                          <td className="p-3 border-b">
+                            {files?.length > 0 ? (
+                              <div className="space-y-1">
+                                {files.map((file: any) => (
+                                  <div key={file.id} className="flex items-center gap-2">
+                                    <a
+                                      href={file.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
+                                      title={file.filename}
+                                    >
+                                      <img
+                                        src={file.url}
+                                        alt={file.filename}
+                                        className="w-8 h-8 object-cover rounded"
+                                      />
+                                    </a>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        ) : (
-                          'No attachments'
-                        )}
+                            ) : (
+                              <span className="text-sm text-gray-500">No attachments for this activity</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={9} className="p-3 text-center text-gray-500">
+                        No activities found for this task.
                       </td>
                     </tr>
                   )}
+
+
                 </tbody>
 
               </table>
@@ -970,130 +907,71 @@ export const TaskDetailsPage = () => {
                           <th className="p-3 border-b">Attachments</th>
                         </tr>
                       </thead>
-                       <tbody>
-                  {taskDetails?.activity && (taskDetails.activity as any).resp && (taskDetails.activity as any).resp.length > 0 ? (
-                    (taskDetails.activity as any).resp.map((activity: any, index: number) => (
-                      <tr key={index} className={index % 2 === 0 ? "bg-blue-50" : "bg-white"}>
-                        <td className="p-3 border-b border-r">
-                          {activity.hint || '-'}
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          {activity.label}
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          {activity.userData && activity.userData.length > 0 
-                            ? activity.userData.join(', ') 
-                            : '-'}
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          {activity.comment || '-'}
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          {activity.weightage || '-'}
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          {activity.rating || '-'}
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          {index === 0 ? (
-                            typeof taskDetails?.activity?.total_score === 'object'
-                              ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
-                              : taskDetails?.activity?.total_score ?? '-'
-                          ) : '-'}
-                        </td>
-                        <td className="p-3 border-b border-r">
-                          {index === 0 ? (
-                            <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
-                              {taskDetails.task_details.status.display_name}
-                            </Badge>
-                          ) : '-'}
-                        </td>
-                        <td className="p-3 border-b">
-                          {taskDetails?.attachments.blob_store_files.length > 0 ? (
-                            <div className="space-y-1">
-                              {taskDetails.attachments.blob_store_files
-                                .filter((file: any) => file.relation === `AssetQuestResponse${activity.name}`)
-                                .map((file, fileIndex) => (
-                                <div key={file.id} className="flex items-center gap-2">
-                                  <a
-                                    href={file.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
-                                    title={file.filename}
-                                  >
-                                    {file.filename}
-                                  </a>
-                                  <span className="text-xs text-gray-500">
-                                    ({Math.round(file.file_size / 1024)}KB)
-                                  </span>
-                                </div>
-                              ))}
-                              {taskDetails.attachments.blob_store_files
-                                .filter((file: any) => file.relation === `AssetQuestResponse${activity.name}`)
-                                .length === 0 && (
-                                <span className="text-sm text-gray-500">No attachments for this activity</span>
-                              )}
-                            </div>
-                          ) : (
-                            'No attachments'
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr className="bg-blue-50">
-                      <td className="p-3 border-b border-r">
-                        {taskDetails?.task_details.associated_with}
-                      </td>
-                      <td className="p-3 border-b border-r">{taskDetails?.task_details.asset_service_name}</td>
-                      <td className="p-3 border-b border-r">
-                        {taskDetails?.task_details.assigned_to}
-                      </td>
-                      <td className="p-3 border-b border-r">
-                        {taskDetails?.comments.length > 0
-                          ? taskDetails.comments[0].comment
-                          : 'No comments'}
-                      </td>
-                      <td className="p-3 border-b border-r">-</td>
-                      <td className="p-3 border-b border-r">-</td>
-                      <td className="p-3 border-b border-r">
-                        {typeof taskDetails?.activity?.total_score === 'object'
-                          ? (taskDetails?.activity?.total_score as any)?.score ?? '-'
-                          : taskDetails?.activity?.total_score ?? '-'}
-                      </td>
-                      <td className="p-3 border-b border-r">
-                        <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
-                          {taskDetails.task_details.status.display_name}
-                        </Badge>
-                      </td>
-                      <td className="p-3 border-b">
-                        {taskDetails?.attachments.blob_store_files.length > 0 ? (
-                          <div className="space-y-1">
-                            {taskDetails.attachments.blob_store_files.map((file, fileIndex) => (
-                              <div key={file.id} className="flex items-center gap-2">
-                                <a
-                                  href={file.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
-                                  title={file.filename}
-                                >
-                                  {file.filename}
-                                </a>
-                                <span className="text-xs text-gray-500">
-                                  ({Math.round(file.file_size / 1024)}KB)
-                                </span>
-                              </div>
-                            ))}
-                          </div>
+                      <tbody>
+                        {taskDetails?.activity?.resp?.length > 0 ? (
+                          taskDetails.activity.resp.map((activity: any, index: number) => {
+                            const files = taskDetails.attachments?.blob_store_files?.filter(
+                              (file: any) => file.relation === `AssetQuestResponse${activity.name}`
+                            );
+
+                            const score =
+                              typeof taskDetails.activity.total_score === 'object'
+                                ? taskDetails.activity.total_score?.score ?? '-'
+                                : taskDetails.activity.total_score ?? '-';
+
+                            return (
+                              <tr key={index} className={index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}>
+                                <td className="p-3 border-b border-r">{activity.hint || '-'}</td>
+                                <td className="p-3 border-b border-r">{activity.label || '-'}</td>
+                                <td className="p-3 border-b border-r">
+                                  {activity.userData?.length > 0 ? activity.userData.join(', ') : '-'}
+                                </td>
+                                <td className="p-3 border-b border-r">{activity.comment || '-'}</td>
+                                <td className="p-3 border-b border-r">{activity.weightage || '-'}</td>
+                                <td className="p-3 border-b border-r">{activity.rating || '-'}</td>
+                                <td className="p-3 border-b border-r">{score}</td>
+                                <td className="p-3 border-b border-r">
+                                  <Badge className={getStatusColor(taskDetails.task_details.status.value)}>
+                                    {taskDetails.task_details.status.display_name}
+                                  </Badge>
+                                </td>
+                                <td className="p-3 border-b">
+                                  {files?.length > 0 ? (
+                                    <div className="space-y-1">
+                                      {files.map((file: any) => (
+                                        <div key={file.id} className="flex items-center gap-2">
+                                          <a
+                                            href={file.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800 underline text-sm truncate max-w-[150px]"
+                                            title={file.filename}
+                                          >
+                                            <img
+                                              src={file.url}
+                                              alt={file.filename}
+                                              className="w-8 h-8 object-cover rounded"
+                                            />
+                                          </a>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm text-gray-500">No attachments for this activity</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })
                         ) : (
-                          'No attachments'
+                          <tr>
+                            <td colSpan={9} className="p-3 text-center text-gray-500">
+                              No activities found for this task.
+                            </td>
+                          </tr>
                         )}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
+
+                      </tbody>
                     </table>
                   </div>
                 </div>
