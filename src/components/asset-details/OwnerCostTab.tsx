@@ -13,6 +13,7 @@ import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 interface OwnerCostTabProps {
   asset: Asset;
   assetId?: string | number;
+  refreshAssetData?: () => void;
 }
 
 interface Asset {
@@ -31,7 +32,7 @@ interface OwnershipCost {
   warranty_in_month: number;
 }
 
-export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset }) => {
+export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetData }) => {
   const [isInUse, setIsInUse] = useState(!(asset?.breakdown ?? true));
   const [showModal, setShowModal] = useState(false);
   const totalCost = asset?.ownership_total_cost || 0;
@@ -50,7 +51,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset }) => {
     if (newInUseState) {
       setShowModal(true);
     } else {
-      
+
       try {
         const response = await fetch(`${API_CONFIG.BASE_URL}/pms/assets/${asset?.id}.json`, {
           method: 'PUT',
@@ -68,6 +69,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset }) => {
         }
 
         console.log('Breakdown status updated.');
+        refreshAssetData();
         // window.location.reload();
       } catch (error) {
         console.error('Error updating breakdown status:', error);
