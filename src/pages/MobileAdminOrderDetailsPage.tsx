@@ -363,7 +363,7 @@ const MobileAdminOrderDetailsPage: React.FC = () => {
                 {formatDate(order.created_at)}
               </span>
             </div>
-            {order.total_amount && order.total_amount >= 0 && (
+            {order.total_amount >= 1 && (
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Total Amount</span>
                 <span className="text-sm font-medium text-gray-800">
