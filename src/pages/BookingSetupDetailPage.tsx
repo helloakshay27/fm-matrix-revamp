@@ -168,6 +168,7 @@ export const BookingSetupDetailPage = () => {
 
   const handleDownloadQr = () => {
     const link = document.createElement("a");
+    link.target = "_blank";
     link.href = qrUrl;
     link.download = "qr-code.png";
     link.click();
@@ -1306,6 +1307,7 @@ export const BookingSetupDetailPage = () => {
         isOpen={showQr}
         onClose={() => setShowQr(false)}
         qrCode={qrUrl}
+        handleDownloadQR={handleDownloadQr}
       />
     </ThemeProvider>
   );

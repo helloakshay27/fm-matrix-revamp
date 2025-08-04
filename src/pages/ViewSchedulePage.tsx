@@ -916,7 +916,7 @@ export const ViewSchedulePage = () => {
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Priority</InputLabel>
                   <Select
@@ -930,7 +930,7 @@ export const ViewSchedulePage = () => {
                     </MenuItem>
                   </Select>
                 </FormControl>
-              </div>
+              </div> */}
               <div className="space-y-2">
                 <TextField
                   label="Submission Type"
@@ -953,9 +953,6 @@ export const ViewSchedulePage = () => {
                   sx={muiFieldStyles}
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Category</InputLabel>
@@ -971,6 +968,10 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              
               
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
@@ -998,10 +999,6 @@ export const ViewSchedulePage = () => {
                   sx={muiFieldStyles}
                 />
               </div>
-
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Lock Overdue Task</InputLabel>
@@ -1017,6 +1014,11 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div>
+
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Frequency</InputLabel>
