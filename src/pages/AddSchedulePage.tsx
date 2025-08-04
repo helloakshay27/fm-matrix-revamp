@@ -54,6 +54,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { assetService, Asset, AssetGroup, AssetSubGroup, EmailRule, User, Supplier } from '../services/assetService';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { MuiSearchableDropdown } from '@/components/MuiSearchableDropdown';
+import { log } from 'console';
 
 // Styled Components
 const CustomStepConnector = styled(StepConnector)(({ theme }) => ({
@@ -1823,7 +1824,39 @@ export const AddSchedulePage = () => {
 
   // Load template data when a template is selected
   const loadTemplateData = async (templateId: string) => {
+    if (!templateId || templateId === '') {
+      console.log("Template unselected — clearing only template tasks.");
+      setQuestionSections(sections => {
+        // Always ensure only one section with one empty task remains
+        return [
+          {
+            id: (sections[0]?.id || Date.now().toString()),
+            tasks: [{
+              id: (Date.now() + 1).toString(),
+              group: '',
+              subGroup: '',
+              task: '',
+              inputType: '',
+              mandatory: false,
+              helpText: false,
+              helpTextValue: '',
+              autoTicket: false,
+              weightage: '',
+              rating: false,
+              reading: false,
+              dropdownValues: [{ label: '', type: 'positive' }],
+              radioValues: [{ label: '', type: 'positive' }],
+              checkboxValues: [''],
+              checkboxSelectedStates: [false],
+              optionsInputsValues: ['']
+            }]
+          }
+        ];
+      });
+      return; // Don't proceed to fetch
+    }
     setLoading(prev => ({ ...prev, templates: true }));
+    console.log(`Loading template data for ID: ${templateId}`);
     try {
       // Call the detailed template API with the selected template ID
       const response = await fetch(`${API_CONFIG.BASE_URL}/exisiting_checklist.json?id=${templateId}`, {
@@ -2084,61 +2117,45 @@ export const AddSchedulePage = () => {
 
     // Validate each section has at least one valid task
     questionSections.forEach((section, sectionIndex) => {
-      if (!section.title.trim()) {
+      if (!section.title || typeof section.title !== 'string' || !section.title.trim()) {
         errors[`section_${sectionIndex}_title`] = `Section ${sectionIndex + 1} title is required`;
       }
 
-      const validTasks = section.tasks.filter(task => task.task.trim());
+      const validTasks = section.tasks.filter(task => task && typeof task.task === 'string' && task.task.trim());
       if (validTasks.length === 0) {
         errors[`section_${sectionIndex}_tasks`] = `Section ${sectionIndex + 1} must have at least one task with content`;
       }
 
       // Validate each task
       section.tasks.forEach((task, taskIndex) => {
-        if (task.task.trim()) {
+        if (task && typeof task.task === 'string' && task.task.trim()) {
           if (!task.inputType) {
             errors[`section_${sectionIndex}_task_${taskIndex}_inputType`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have an input type selected`;
           }
-
-          if (task.helpText && !task.helpTextValue.trim()) {
+          // Group and SubGroup are mandatory
+          if (!task.group || !task.group.trim()) {
+            errors[`section_${sectionIndex}_task_${taskIndex}_group`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a group selected`;
+          }
+          if (!task.subGroup || !task.subGroup.trim()) {
+            errors[`section_${sectionIndex}_task_${taskIndex}_subGroup`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a sub-group selected`;
+          }
+          // Help text is optional, but if enabled, value is required
+          if (task.helpText && (!task.helpTextValue || !task.helpTextValue.trim())) {
             errors[`section_${sectionIndex}_task_${taskIndex}_helpTextValue`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} help text value is required when help text is enabled`;
           }
-
-          if (weightage && task.rating && !task.weightage) {
-            errors[`section_${sectionIndex}_task_${taskIndex}_weightage`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} weightage is required when rating is enabled`;
-          }
-
           // Validate input type specific values
-          if (task.inputType === 'dropdown' && task.dropdownValues.some(val => !val.label.trim())) {
+          if (task.inputType === 'dropdown' && task.dropdownValues.some(val => !val.label || !val.label.trim())) {
             errors[`section_${sectionIndex}_task_${taskIndex}_dropdownValues`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} dropdown must have all option values filled`;
           }
-
-          if (task.inputType === 'radio' && task.radioValues.some(val => !val.label.trim())) {
+          if (task.inputType === 'radio' && task.radioValues.some(val => !val.label || !val.label.trim())) {
             errors[`section_${sectionIndex}_task_${taskIndex}_radioValues`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} radio must have all option values filled`;
           }
-
-          if (task.inputType === 'checkbox' && task.checkboxValues.some(val => !val.trim())) {
-            errors[`section_${sectionIndex}_task_${taskIndex}_checkboxValues`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} checkbox must have all option values filled`;
-          }
-
-          if (task.inputType === 'options-inputs' && task.optionsInputsValues.some(val => !val.trim())) {
-            errors[`section_${sectionIndex}_task_${taskIndex}_optionsInputsValues`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} options & inputs must have all values filled`;
-          }
+          // Checkboxes are not mandatory, so skip validation for checkboxValues
         } else if (section.tasks.length === 1) {
           // If there's only one task and it's empty, require it to be filled
           errors[`section_${sectionIndex}_task_${taskIndex}_task`] = `Section ${sectionIndex + 1} must have at least one task filled`;
         }
       });
-
-      // Auto ticket validation
-      if (section.autoTicket) {
-        if (!section.ticketAssignedTo) {
-          errors[`section_${sectionIndex}_ticketAssignedTo`] = `Section ${sectionIndex + 1} auto ticket assigned to is required`;
-        }
-        if (!section.ticketCategory) {
-          errors[`section_${sectionIndex}_ticketCategory`] = `Section ${sectionIndex + 1} auto ticket category is required`;
-        }
-      }
     });
 
     // Update field errors
@@ -2579,7 +2596,7 @@ export const AddSchedulePage = () => {
         grace_time_type: formData.graceTime || "",
         grace_time_value: formData.graceTimeValue || "",
         overdue_task_start_status: formData.lockOverdueTask || "false",
-        frequency: "Daily", // Default or from form
+        frequency: null, // Default or from form
         start_date: formatDateToISO(formData.startFrom),
         end_date: formatDateToISO(formData.endAt)
       },
@@ -3810,9 +3827,9 @@ export const AddSchedulePage = () => {
       case 2: // Question Setup
         function handleTemplateChange(templateId: string) {
           setFormData(prev => ({ ...prev, selectedTemplate: templateId }));
-          if (templateId) {
+          // if (templateId) {
             loadTemplateData(templateId);
-          }
+          // }
         }
 
         function updateDropdownValue(sectionId: string, taskId: string, valueIndex: number, value: string): void {
@@ -4206,78 +4223,76 @@ export const AddSchedulePage = () => {
             {/* Create New Template Section */}
 {createNew && (
   <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
-    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-      Select Template
-    </Typography>
+  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+    Select Template
+  </Typography>
 
-    {(() => {
-      const templateOptions = [
-        ...(Array.isArray(templates) ? templates : []).map((template) => ({
-          id: String(template?.id ?? ''),
-          label: (template?.form_name ?? '').toString().trim(),
-          value: String(template?.id ?? ''),
-        })),
-      ];
+  {(() => {
+    const templateOptions = [
+      { id: '', label: 'None', value: '' }, // Allow unselecting
+      ...(Array.isArray(templates) ? templates : []).map((template) => ({
+        id: String(template?.id ?? ''),
+        label: (template?.form_name ?? '').toString().trim(),
+        value: String(template?.id ?? ''),
+      })),
+    ];
 
-      console.log('Available Template Options:', templateOptions);
+    const selectedTemplateValue = String(formData?.selectedTemplate ?? '');
+    const selectedTemplate =
+      templateOptions.find(
+        (opt) =>
+          opt &&
+          typeof opt.value === 'string' &&
+          opt.value === selectedTemplateValue
+      ) ?? null;
 
-      const selectedTemplateValue = String(formData?.selectedTemplate ?? '');
-      const selectedTemplate =
-        templateOptions.find(
-          (opt) =>
-            opt &&
-            typeof opt.value === 'string' &&
-            opt.value === selectedTemplateValue
-        ) ?? templateOptions[0];
-
-      console.log('Current Selected Template:', selectedTemplate);
-
-      return (
-        <Autocomplete
-          disableClearable
-          options={templateOptions}
-          getOptionLabel={(option) => {
-            if (!option || typeof option !== 'object') return '';
-            if (typeof option.label === 'string') return option.label;
-            return '';
-          }}
-          isOptionEqualToValue={(option, value) => {
-            if (!option || !value) return false;
-            return String(option.value ?? '') === String(value.value ?? '');
-          }}
-          value={selectedTemplate || templateOptions[0]}
-          onChange={(event, newValue) => {
-            console.log('Template Selected by User:', newValue);
-            if (newValue && typeof newValue.value !== 'undefined') {
-              handleTemplateChange(newValue.value ?? '');
-            }
-          }}
-          disabled={
-            (stepIndex < activeStep && editingStep !== stepIndex) ||
-            loading.templates
+    return (
+      <Autocomplete
+        options={templateOptions}
+        getOptionLabel={(option) => {
+          if (!option || typeof option !== 'object') return '';
+          return typeof option.label === 'string' ? option.label : '';
+        }}
+        isOptionEqualToValue={(option, value) => {
+          if (!option || !value) return false;
+          return String(option.value ?? '') === String(value.value ?? '');
+        }}
+        value={selectedTemplate}
+        onChange={(event, newValue) => {
+          if (newValue && typeof newValue.value !== 'undefined') {
+            handleTemplateChange(newValue.value ?? '');
+          } else {
+            handleTemplateChange(''); // Clear the selection
           }
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label={
-                <span>
-                  Template <span style={{ color: 'currentColor' }}>*</span>
-                </span>
-              }
-              fullWidth
-              disabled={stepIndex < activeStep && editingStep !== stepIndex}
-            />
-          )}
-        />
-      );
-    })()}
+        }}
+        disabled={
+          (stepIndex < activeStep && editingStep !== stepIndex) ||
+          loading.templates
+        }
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={
+              <span>
+                Template <span style={{ color: 'currentColor' }}>*</span>
+              </span>
+            }
+            fullWidth
+            disabled={stepIndex < activeStep && editingStep !== stepIndex}
+          />
+        )}
+        clearOnEscape
+        clearText="Clear"
+      />
+    );
+  })()}
 
-    {loading.templates && (
-      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-        Loading templates...
-      </Typography>
-    )}
-  </SectionCard>
+  {loading.templates && (
+    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+      Loading templates...
+    </Typography>
+  )}
+</SectionCard>
 )}
             {/* Auto Ticket Configuration Section */}
             {autoTicket && (
