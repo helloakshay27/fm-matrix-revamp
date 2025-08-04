@@ -2025,9 +2025,9 @@ export const AddSchedulePage = () => {
       errors['emailTriggerRule'] = 'Email Trigger Rule is required';
     }
 
-    if (!formData.scanType) {
-      errors['scanType'] = 'Scan Type is required';
-    }
+    // if (!formData.scanType) {
+    //   errors['scanType'] = 'Scan Type is required';
+    // }
 
     if (!formData.category) {
       errors['category'] = 'Category is required';
@@ -2049,20 +2049,12 @@ export const AddSchedulePage = () => {
       errors['lockOverdueTask'] = 'Lock Overdue Task selection is required';
     }
 
-    if (!formData.frequency) {
-      errors['frequency'] = 'Frequency is required';
-    }
-
     // Grace time validation
     if (!formData.graceTime) {
       errors['graceTime'] = 'Grace Time type is required';
     }
     if (formData.graceTime && !formData.graceTimeValue) {
       errors['graceTimeValue'] = 'Grace Time value is required when time type is selected';
-    }
-
-    if (!formData.supplier) {
-      errors['supplier'] = 'Supplier selection is required';
     }
 
     if (!formData.startFrom) {
@@ -2579,7 +2571,7 @@ export const AddSchedulePage = () => {
       sub_group_ids: [""],
       pms_asset_task: {
         assignment_type: formData.assignToType === 'user' ? 'people' : 'group',
-        scan_type: formData.scanType || "",
+        scan_type: 'qr',
         plan_type: formData.planDuration || "",
         plan_value: formData.planDurationValue || "",
         priority: "Low", // Default or from form
@@ -2587,7 +2579,7 @@ export const AddSchedulePage = () => {
         grace_time_type: formData.graceTime || "",
         grace_time_value: formData.graceTimeValue || "",
         overdue_task_start_status: formData.lockOverdueTask || "false",
-        frequency: formData.frequency,
+        frequency: "Daily", // Default or from form
         start_date: formatDateToISO(formData.startFrom),
         end_date: formatDateToISO(formData.endAt)
       },
@@ -3418,7 +3410,7 @@ export const AddSchedulePage = () => {
                 )}
               </Box>
 
-              <Box>
+              {/* <Box>
                 <Autocomplete
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
@@ -3447,7 +3439,7 @@ export const AddSchedulePage = () => {
                   )}
                   isOptionEqualToValue={(option, value) => option.id === value.id}
                 />
-              </Box>
+              </Box> */}
 
               <Box>
                 <Autocomplete
@@ -3607,7 +3599,7 @@ export const AddSchedulePage = () => {
                 />
               </Box>
 
-              <Box>
+              {/* <Box>
                 <Autocomplete
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
@@ -3648,7 +3640,7 @@ export const AddSchedulePage = () => {
                   )}
                   isOptionEqualToValue={(option, value) => option.id === value.id}
                 />
-              </Box>
+              </Box> */}
 
               {/* Grace Time with conditional input */}
               <Box>
@@ -3750,7 +3742,7 @@ export const AddSchedulePage = () => {
                 <DatePicker
                   label={
                     <span>
-                      Start From *
+                      Start Date *
                     </span>
                   }
                   slotProps={{
@@ -3781,7 +3773,7 @@ export const AddSchedulePage = () => {
 
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
-                  label="End At *"
+                  label="End Date *"
                   slotProps={{
                     textField: {
                       fullWidth: true,
@@ -4720,7 +4712,7 @@ export const AddSchedulePage = () => {
                               { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
                               { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
                               { id: 'radio', label: 'Radio', value: 'radio' },
-                              { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
+                              // { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
                             ]}
                             getOptionLabel={(option) => option.label}
                             value={[
@@ -4730,7 +4722,7 @@ export const AddSchedulePage = () => {
                               { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
                               { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
                               { id: 'radio', label: 'Radio', value: 'radio' },
-                              { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
+                              // { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
                             ].find(option => option.value === task.inputType) || null}
                             onChange={(event, newValue) => {
                               if (!newValue) return;

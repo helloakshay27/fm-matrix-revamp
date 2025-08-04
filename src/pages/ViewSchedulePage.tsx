@@ -1030,7 +1030,7 @@ export const ViewSchedulePage = () => {
                 </FormControl>
               </div>
               
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Frequency</InputLabel>
                   <Select
@@ -1044,7 +1044,7 @@ export const ViewSchedulePage = () => {
                     </MenuItem>
                   </Select>
                 </FormControl>
-              </div>
+              </div> */}
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Select Supplier</InputLabel>
