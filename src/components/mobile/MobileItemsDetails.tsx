@@ -17,6 +17,7 @@ import {
   NoteAdd,
   NoteAddOutlined,
 } from "@mui/icons-material";
+import { toast } from "sonner";
 
 interface MenuItem {
   id: string;
@@ -85,7 +86,7 @@ export const MobileItemsDetails: React.FC = () => {
   const [items, setItems] = useState<MenuItem[]>(initialItems);
   const [note, setNote] = useState<string>("");
   const [inputLocation, setInputLocation] = useState<string>("");
-  console.log("value", inputLocation);
+  // console.log("value", inputLocation);
   const [showNoteDialog, setShowNoteDialog] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -159,6 +160,12 @@ export const MobileItemsDetails: React.FC = () => {
   // ✅ Place order handler
   const handlePlaceOrder = async () => {
     if (isSubmitting) return; // Prevent double submission
+
+    // Validate delivery location for app users
+    if (finalSourceParam === "app" && (!inputLocation || inputLocation.trim() === "")) {
+      alert("Please add delivery location");
+      return;
+    }
 
     console.log("🚀 HANDLING PLACE ORDER:");
     console.log("  - finalSourceParam:", finalSourceParam);
