@@ -6,9 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 interface EscalationLevel {
   level: string;
   escalationTo: string;
-  days: string;
-  hours: string;
-  minutes: string;
+  p1Days: string;
+  p1Hours: string;
+  p1Minutes: string;
+  p2Days: string;
+  p2Hours: string;
+  p2Minutes: string;
 }
 
 interface EscalationRule {
@@ -19,10 +22,11 @@ interface EscalationRule {
 
 export const ExecutiveEscalationTab: React.FC = () => {
   const [escalationData, setEscalationData] = useState<EscalationLevel[]>([
-    { level: 'E0', escalationTo: '', days: '', hours: '', minutes: '' },
-    { level: 'E1', escalationTo: '', days: '', hours: '', minutes: '' },
-    { level: 'E2', escalationTo: '', days: '', hours: '', minutes: '' },
-    { level: 'E3', escalationTo: '', days: '', hours: '', minutes: '' }
+    { level: 'E1', escalationTo: '', p1Days: '', p1Hours: '', p1Minutes: '', p2Days: '', p2Hours: '', p2Minutes: '' },
+    { level: 'E2', escalationTo: '', p1Days: '', p1Hours: '', p1Minutes: '', p2Days: '', p2Hours: '', p2Minutes: '' },
+    { level: 'E3', escalationTo: '', p1Days: '', p1Hours: '', p1Minutes: '', p2Days: '', p2Hours: '', p2Minutes: '' },
+    { level: 'E4', escalationTo: '', p1Days: '', p1Hours: '', p1Minutes: '', p2Days: '', p2Hours: '', p2Minutes: '' },
+    { level: 'E5', escalationTo: '', p1Days: '', p1Hours: '', p1Minutes: '', p2Days: '', p2Hours: '', p2Minutes: '' }
   ]);
 
   const [savedRules, setSavedRules] = useState<EscalationRule[]>([]);
@@ -53,7 +57,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
       .map(item => ({
         level: item.level,
         escalationTo: item.escalationTo,
-        timing: `${item.days || 0} Day, ${item.hours || 0} Hour, ${item.minutes || 0} Minute`
+        timing: `P1: ${item.p1Days || 0} Day, ${item.p1Hours || 0} Hour, ${item.p1Minutes || 0} Minute | P2: ${item.p2Days || 0} Day, ${item.p2Hours || 0} Hour, ${item.p2Minutes || 0} Minute`
       }));
     
     setSavedRules(rules);
@@ -65,24 +69,28 @@ export const ExecutiveEscalationTab: React.FC = () => {
       <div className="bg-white rounded-lg border border-gray-200 p-8">
         <div className="space-y-6">
           {/* Header Row 1 */}
-          <div className="grid grid-cols-6 gap-6 font-medium text-gray-700 text-sm border-b border-gray-200 pb-3 bg-amber-50">
+          <div className="grid grid-cols-8 gap-4 font-medium text-gray-700 text-sm border-b border-gray-200 pb-3 bg-amber-50">
             <div>Levels</div>
             <div className="col-span-2">Escalation To</div>
             <div className="col-span-3 text-center">P1</div>
+            <div className="col-span-2 text-center">P2</div>
           </div>
 
           {/* Header Row 2 */}
-          <div className="grid grid-cols-6 gap-6 font-medium text-gray-700 text-sm bg-amber-50">
+          <div className="grid grid-cols-8 gap-4 font-medium text-gray-700 text-sm bg-amber-50">
             <div></div>
             <div className="col-span-2"></div>
-            <div className="text-center">Days</div>
+            <div className="text-center">Day</div>
+            <div className="text-center">Hrs</div>
+            <div className="text-center">Min</div>
+            <div className="text-center">Day</div>
             <div className="text-center">Hrs</div>
             <div className="text-center">Min</div>
           </div>
 
           {/* Escalation Levels */}
           {escalationData.map((item, index) => (
-            <div key={item.level} className="grid grid-cols-6 gap-6 items-center py-2">
+            <div key={item.level} className="grid grid-cols-8 gap-4 items-center py-2">
               <div className="bg-gray-100 px-3 py-2 rounded border text-sm font-medium">
                 {item.level}
               </div>
@@ -93,7 +101,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                   onValueChange={(value) => handleFieldChange(index, 'escalationTo', value)}
                 >
                   <SelectTrigger className="w-full bg-white border-gray-300 z-50">
-                    <SelectValue placeholder="Select an Option..." />
+                    <SelectValue placeholder="Select up to 15 Options..." />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-gray-300 shadow-lg z-50">
                     {escalationOptions.map((option) => (
@@ -105,27 +113,53 @@ export const ExecutiveEscalationTab: React.FC = () => {
                 </Select>
               </div>
 
+              {/* P1 inputs */}
               <Input
                 type="number"
-                value={item.days}
-                onChange={(e) => handleFieldChange(index, 'days', e.target.value)}
-                placeholder="Days"
+                value={item.p1Days}
+                onChange={(e) => handleFieldChange(index, 'p1Days', e.target.value)}
+                placeholder="0"
                 className="text-center bg-white border-gray-300"
               />
 
               <Input
                 type="number"
-                value={item.hours}
-                onChange={(e) => handleFieldChange(index, 'hours', e.target.value)}
-                placeholder="Hrs"
+                value={item.p1Hours}
+                onChange={(e) => handleFieldChange(index, 'p1Hours', e.target.value)}
+                placeholder="0"
                 className="text-center bg-white border-gray-300"
               />
 
               <Input
                 type="number"
-                value={item.minutes}
-                onChange={(e) => handleFieldChange(index, 'minutes', e.target.value)}
-                placeholder="Min"
+                value={item.p1Minutes}
+                onChange={(e) => handleFieldChange(index, 'p1Minutes', e.target.value)}
+                placeholder="0"
+                className="text-center bg-white border-gray-300"
+              />
+
+              {/* P2 inputs */}
+              <Input
+                type="number"
+                value={item.p2Days}
+                onChange={(e) => handleFieldChange(index, 'p2Days', e.target.value)}
+                placeholder="0"
+                className="text-center bg-white border-gray-300"
+              />
+
+              <Input
+                type="number"
+                value={item.p2Hours}
+                onChange={(e) => handleFieldChange(index, 'p2Hours', e.target.value)}
+                placeholder="0"
+                className="text-center bg-white border-gray-300"
+              />
+
+              <Input
+                type="number"
+                value={item.p2Minutes}
+                onChange={(e) => handleFieldChange(index, 'p2Minutes', e.target.value)}
+                placeholder="0"
                 className="text-center bg-white border-gray-300"
               />
             </div>
