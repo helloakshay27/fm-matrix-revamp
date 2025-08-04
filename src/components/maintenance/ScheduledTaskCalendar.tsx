@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Calendar, momentLocalizer, Views } from 'react-big-calendar';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
@@ -24,13 +24,43 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   const [view, setView] = useState<'month' | 'week' | 'day' | 'agenda' | 'work_week' | 'year'>('month');
   const [date, setDate] = useState(new Date());
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState<CalendarFilters>({
-    dateFrom: '01/07/2025',
-    dateTo: '31/07/2025',
-    's[task_custom_form_schedule_type_eq]': '',
-    's[task_task_of_eq]': ''
+  
+  // Helper function to get default date range (today to one week ago)
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const oneWeekAgo = new Date(today);
+    oneWeekAgo.setDate(today.getDate() - 7);
+    
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+    
+    return {
+      dateFrom: formatDate(oneWeekAgo),
+      dateTo: formatDate(today)
+    };
+  };
+  
+  const [activeFilters, setActiveFilters] = useState<CalendarFilters>(() => {
+    const defaultRange = getDefaultDateRange();
+    return {
+      dateFrom: defaultRange.dateFrom,
+      dateTo: defaultRange.dateTo,
+      's[task_custom_form_schedule_type_eq]': '',
+      's[task_task_of_eq]': ''
+    };
   });
   const navigate = useNavigate();
+
+  // Apply default filters on component mount
+  useEffect(() => {
+    const defaultRange = getDefaultDateRange();
+    onDateRangeChange?.(defaultRange.dateFrom, defaultRange.dateTo);
+    onFiltersChange?.(activeFilters);
+  }, []); // Empty dependency array to run only on mount
 
   const get52WeeksRange = () => {
     const today = new Date();
@@ -107,9 +137,13 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
     };
   };
 
-  const activeFilterCount = Object.values(activeFilters).filter(
-    v => v !== '' && v !== '01/07/2025' && v !== '31/07/2025'
-  ).length;
+  const activeFilterCount = Object.entries(activeFilters).filter(([key, value]) => {
+    const defaultRange = getDefaultDateRange();
+    // Exclude default date values and empty strings from filter count
+    if (key === 'dateFrom' && value === defaultRange.dateFrom) return false;
+    if (key === 'dateTo' && value === defaultRange.dateTo) return false;
+    return value !== '';
+  }).length;
 
   const CustomToolbar = () => (
     <div className="flex items-center justify-between mb-4">

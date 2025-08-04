@@ -115,7 +115,7 @@ export const RestaurantMenuTable = () => {
   };
 
   const handleEditProduct = (menuItem: MenuItem) => {
-    navigate(`/vas/fnb/restaurant-menu/edit/${menuItem.id}`);
+    navigate(`/vas/fnb/details/${id}/restaurant-menu/edit/${menuItem.id}`);
   };
 
   const columns: ColumnConfig[] = [
