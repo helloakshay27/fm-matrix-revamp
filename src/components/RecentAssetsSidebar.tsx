@@ -48,7 +48,7 @@ export const RecentAssetsSidebar = () => {
   // Transform API data to match local interface
   const transformAsset = (apiAsset: RecentAsset): Asset => {
     // Calculate TAT display string
-    let tatDisplay = 'N/A';
+    let tatDisplay = '0 hrs '; // Default TAT display
     let tatStatus: 'normal' | 'warning' | 'critical' = 'normal';
 
     if (apiAsset.tat) {
@@ -180,7 +180,7 @@ export const RecentAssetsSidebar = () => {
 
             {/* TAT in quotes */}
             <div className="mb-4">
-              {/* <span className="text-blue-600 font-medium">"{asset.tat}"</span> */}
+              <span className="text-blue-600 font-medium">"{asset.tat}"</span>
             </div>
 
             {/* Asset Details */}
