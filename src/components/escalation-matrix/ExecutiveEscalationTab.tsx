@@ -65,7 +65,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
       <div className="bg-white rounded-lg border border-gray-200 p-8">
         <div className="space-y-6">
           {/* Header Row 1 */}
-          <div className="grid grid-cols-6 gap-6 font-medium text-gray-700 text-sm border-b border-gray-200 pb-3">
+          <div className="grid grid-cols-6 gap-6 font-medium text-gray-700 text-sm border-b border-gray-200 pb-3 bg-amber-50">
             <div>Levels</div>
             <div className="col-span-2">Escalation To</div>
             <div className="col-span-3 text-center">P1</div>
