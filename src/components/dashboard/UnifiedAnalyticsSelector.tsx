@@ -89,11 +89,14 @@ const analyticsOptions = {
     label: 'AMC',
     color: '#8B5CF6',
     options: [
-      { id: 'amc_status_overview', endpoint: 'status_overview', label: 'AMC Status Overview' },
-      { id: 'amc_type_distribution', endpoint: 'type_distribution', label: 'AMC Type Distribution' },
-      { id: 'amc_expiry_analysis', endpoint: 'expiry_analysis', label: 'AMC Expiry Analysis' },
-      { id: 'amc_service_tracking', endpoint: 'service_tracking', label: 'AMC Service Tracking' },
-      { id: 'amc_vendor_performance', endpoint: 'vendor_performance', label: 'AMC Vendor Performance' },
+      { id: 'amc_status_overview', endpoint: 'status_overview', label: 'Status Overview' },
+      { id: 'amc_type_distribution', endpoint: 'type_distribution', label: 'Type Distribution' },
+      { id: 'amc_unit_resource_wise', endpoint: 'unit_resource_wise', label: 'Unit Resource Distribution' },
+      { id: 'amc_service_stats', endpoint: 'service_stats', label: 'Service Statistics' },
+      { id: 'amc_expiry_analysis', endpoint: 'expiry_analysis', label: 'Expiry Analysis' },
+      { id: 'amc_service_tracking', endpoint: 'service_tracking', label: 'Service Tracking' },
+      { id: 'amc_coverage_by_location', endpoint: 'coverage_by_location', label: 'Coverage by Location' },
+      // { id: 'amc_vendor_performance', endpoint: 'vendor_performance', label: 'Vendor Performance' },
     ]
   },
 
