@@ -89,6 +89,7 @@ export const MobileItemsDetails: React.FC = () => {
   // console.log("value", inputLocation);
   const [showNoteDialog, setShowNoteDialog] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [showLocationError, setShowLocationError] = useState<boolean>(false);
 
   const handleBack = () => {
     navigate(-1);
@@ -163,9 +164,12 @@ export const MobileItemsDetails: React.FC = () => {
 
     // Validate delivery location for app users
     if (finalSourceParam === "app" && (!inputLocation || inputLocation.trim() === "")) {
-      alert("Please add delivery location");
+      setShowLocationError(true);
       return;
     }
+
+    // Clear location error if validation passes
+    setShowLocationError(false);
 
     console.log("🚀 HANDLING PLACE ORDER:");
     console.log("  - finalSourceParam:", finalSourceParam);
@@ -477,12 +481,25 @@ export const MobileItemsDetails: React.FC = () => {
               </div>
               <div>
                 <input
-                  onChange={(e) => setInputLocation(e.target.value)}
+                  onChange={(e) => {
+                    setInputLocation(e.target.value);
+                    // Clear error when user starts typing
+                    if (showLocationError) {
+                      setShowLocationError(false);
+                    }
+                  }}
                   value={inputLocation || ""}
                   type="text"
-                  className="w-full bg-white resize-none  text-gray-600 mt-2 p-1 rounded-md border border-gray-300 focus:ring-2 focus:ring-red-500 outline-none"
+                  className={`w-full bg-white resize-none text-gray-600 mt-2 p-1 rounded-md border ${
+                    showLocationError ? 'border-red-500' : 'border-gray-300'
+                  } focus:ring-2 focus:ring-red-500 outline-none`}
                   placeholder="Enter delivery location"
                 />
+                {showLocationError && (
+                  <div className="text-red-500 text-sm mt-1">
+                    Please add delivery location
+                  </div>
+                )}
               </div>
             </div>
           </div>
