@@ -143,30 +143,45 @@ export const ExecutiveEscalationTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Rules Section */}
-      {savedRules.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-8">
-          <h3 className="text-lg font-semibold text-teal-600 mb-6">Rule</h3>
-          
-          <div className="space-y-4">
-            {/* Rules Header */}
-            <div className="grid grid-cols-3 gap-8 font-medium text-gray-700 text-sm border-b border-gray-200 pb-3">
-              <div>Levels</div>
-              <div>Escalation To</div>
-              <div>P1</div>
-            </div>
+      {/* Rules Table */}
+      <div className="bg-white rounded-lg border border-gray-200 p-8">
+        <h3 className="text-lg font-semibold text-teal-600 mb-6">Rule</h3>
+        
+        <div className="space-y-4">
+          {/* Rules Header */}
+          <div className="grid grid-cols-3 gap-8 font-medium text-gray-700 text-sm border-b border-gray-200 pb-3">
+            <div>Levels</div>
+            <div>Escalation To</div>
+            <div>P1</div>
+          </div>
 
-            {/* Rules Data */}
-            {savedRules.map((rule, index) => (
-              <div key={index} className="grid grid-cols-3 gap-8 text-sm py-2">
-                <div className="font-medium text-gray-800">{rule.level}</div>
-                <div className="text-gray-700">{rule.escalationTo}</div>
-                <div className="text-gray-700">{rule.timing}</div>
-              </div>
-            ))}
+          {/* Static Rules Data */}
+          <div className="grid grid-cols-3 gap-8 text-sm py-2">
+            <div className="font-medium text-gray-800">E0</div>
+            <div className="text-gray-700">Abhiraj Gaar, Locktated Customercare</div>
+            <div className="text-gray-700"></div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-8 text-sm py-2">
+            <div className="font-medium text-gray-800">E1</div>
+            <div className="text-gray-700">Dinesh Shinde</div>
+            <div className="text-gray-700">0 Day, 1 Hour, 0 Minute</div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-8 text-sm py-2">
+            <div className="font-medium text-gray-800">E2</div>
+            <div className="text-gray-700">Devesh Jain</div>
+            <div className="text-gray-700">0 Day, 2 Hour, 0 Minute</div>
+          </div>
+          
+          <div className="grid grid-cols-3 gap-8 text-sm py-2">
+            <div className="font-medium text-gray-800">E3</div>
+            <div className="text-gray-700"></div>
+            <div className="text-gray-700">0 Day, 3 Hour, 0 Minute</div>
           </div>
         </div>
-      )}
+      </div>
+
     </div>
   );
 };
