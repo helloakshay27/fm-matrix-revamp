@@ -573,6 +573,30 @@ export const fetchMenuDetails = createAsyncThunk(
     }
 )
 
+export const updateMenu = createAsyncThunk(
+    "updateMenu",
+    async ({ baseUrl, token, id, mid, data }: { baseUrl: string; token: string; id: number, mid: number, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_menus/${mid}.json`,
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to update menu";
+            return rejectWithValue(message);
+        }
+    }
+)
+
 export const fetchOrderDetails = createAsyncThunk(
     "fetchOrderDetails",
     async ({ baseUrl, token, id, oid }: { baseUrl: string; token: string; id: number, oid: number }, { rejectWithValue }) => {
@@ -710,6 +734,10 @@ export const fetchRestaurantOrdersSlice = createApiSlice(
     "fetchRestaurantOrders",
     fetchRestaurantOrders
 )
+export const updateMenuSlice = createApiSlice(
+    "updateMenu",
+    updateMenu
+)
 
 export const fetchRestaurantsReducer = fetchRestaurantsSlice.reducer;
 export const createRestaurantReducer = createRestaurantSlice.reducer;
@@ -739,3 +767,4 @@ export const fetchMenuDetailsReducer = fetchMenuDetailsSlice.reducer;
 export const fetchOrderDetailsReducer = fetchOrderDetailsSlice.reducer;
 export const exportOrdersReducer = exportOrdersSlice.reducer;
 export const fetchRestaurantOrdersReducer = fetchRestaurantOrdersSlice.reducer
+export const updateMenuReducer = updateMenuSlice.reducer
