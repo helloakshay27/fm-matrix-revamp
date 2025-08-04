@@ -56,23 +56,16 @@ export const TaskAnalyticsFilterDialog: React.FC<TaskAnalyticsFilterDialogProps>
     if (startDate && endDate) {
       onApplyFilters(convertToApiFormat(startDate), convertToApiFormat(endDate));
       onClose();
+    } else {
+      // If dates are empty, close without applying (effectively clearing the filter)
+      onClose();
     }
   };
 
   const handleReset = () => {
-    if (currentStartDate && currentEndDate) {
-      // Reset to current applied filter dates
-      setStartDate(convertFromApiFormat(currentStartDate));
-      setEndDate(convertFromApiFormat(currentEndDate));
-    } else {
-      // Reset to default dates (last year to today)
-      const today = new Date();
-      const lastYear = new Date(today);
-      lastYear.setFullYear(today.getFullYear() - 1);
-      
-      setStartDate(format(lastYear, 'dd/MM/yyyy'));
-      setEndDate(format(today, 'dd/MM/yyyy'));
-    }
+    // Reset to empty/null values to clear the data
+    setStartDate('');
+    setEndDate('');
   };
 
   return (
