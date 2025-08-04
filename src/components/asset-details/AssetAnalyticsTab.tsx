@@ -391,7 +391,7 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
         {/* Open Tickets */}
         <div
           className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "488px" }}
+          style={{ height: "132px", width: "auto" }}
         >
           <div
             className="flex items-center justify-center rounded-lg mr-4"
@@ -434,7 +434,7 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
         {/* Upcoming AMC */}
         <div
           className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "488px" }}
+          style={{ height: "132px", width: "auto" }}
         >
           <div
             className="flex items-center justify-center rounded-lg mr-4"
@@ -476,7 +476,7 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
         {/* PPM Comp. Rate */}
         <div
           className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "488px" }}
+          style={{ height: "132px", width: "auto" }}
         >
           <div
             className="flex items-center justify-center rounded-lg mr-4"
@@ -518,7 +518,7 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
         {/* Last PPM */}
         <div
           className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "488px" }}
+          style={{ height: "132px", width: "auto" }}
         >
           <div
             className="flex items-center justify-center rounded-lg mr-4"
@@ -560,7 +560,7 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
         {/* Next PPM Due */}
         <div
           className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "488px" }}
+          style={{ height: "132px", width: "auto" }}
         >
           <div
             className="flex items-center justify-center rounded-lg mr-4"
@@ -602,7 +602,7 @@ export const AssetAnalyticsTab: React.FC<AssetAnalyticsTab> = ({
         {/* 6th Card - Recent Updates */}
         <div
           className="border bg-[#F6F4EE] flex items-center p-4"
-          style={{ height: "132px", width: "488px" }}
+          style={{ height: "132px", width: "auto" }}
         >
           <div
             className="flex items-center justify-center rounded-lg mr-4"
