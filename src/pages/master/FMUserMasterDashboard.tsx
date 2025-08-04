@@ -7,16 +7,13 @@ import { fetchFMUsers, FMUser, getFMUsers } from "@/store/slices/fmUserSlice";
 import { fetchUserCounts } from "@/store/slices/userCountsSlice";
 import { StatsCard } from "@/components/StatsCard";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
   Plus,
   Upload,
   Download,
-  Filter,
   Eye,
-  Search,
   Users,
   X,
 } from "lucide-react";
@@ -329,11 +326,34 @@ export const FMUserMasterDashboard = () => {
         throw new Error("Failed to update user status");
       }
 
+      setFmUsersData((prevUsers) =>
+        prevUsers.map((user) =>
+          user.lockUserId === selectedUser?.lockUserId
+            ? {
+              ...user,
+              status: selectedStatus,
+              active: selectedStatus === "approved", // Assuming "approved" means active
+            }
+            : user
+        )
+      );
+
+      setFilteredFMUsersData((prevUsers) =>
+        prevUsers.map((user) =>
+          user.lockUserId === selectedUser?.lockUserId
+            ? {
+              ...user,
+              status: selectedStatus,
+              active: selectedStatus === "approved", // Assuming "approved" means active
+            }
+            : user
+        )
+      );
       toast.success("User status updated successfully!");
       setStatusDialogOpen(false);
       setSelectedUser(null);
       setSelectedStatus("");
-      dispatch(fetchFMUsers());
+
     } catch (error) {
       console.error("Error updating user status:", error);
       toast.error("Failed to update user status.");
