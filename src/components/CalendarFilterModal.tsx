@@ -15,8 +15,8 @@ interface CalendarFilterModalProps {
 export interface CalendarFilters {
   dateFrom: string;
   dateTo: string;
-  type: string;
-  scheduleType: string;
+  's[task_custom_form_schedule_type_eq]': string;
+  's[task_task_of_eq]': string;
 }
 export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   isOpen,
@@ -26,8 +26,8 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   const [filters, setFilters] = useState<CalendarFilters>({
     dateFrom: '01/07/2025',
     dateTo: '31/07/2025',
-    type: '',
-    scheduleType: ''
+    's[task_custom_form_schedule_type_eq]': '',
+    's[task_task_of_eq]': ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const handleFilterChange = (key: keyof CalendarFilters, value: string) => {
@@ -52,8 +52,8 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
     const clearedFilters: CalendarFilters = {
       dateFrom: '01/07/2025',
       dateTo: '31/07/2025',
-      type: '',
-      scheduleType: ''
+      's[task_custom_form_schedule_type_eq]': '',
+      's[task_task_of_eq]': ''
     };
     setFilters(clearedFilters);
     onApplyFilters(clearedFilters);
@@ -100,7 +100,7 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Select Type</Label>
-                <Select value={filters.formName} onValueChange={value => handleFilterChange('formName', value)}>
+                <Select value={filters['s[task_custom_form_schedule_type_eq]']} onValueChange={value => handleFilterChange('s[task_custom_form_schedule_type_eq]', value)}>
                   <SelectTrigger className="h-10 bg-white border border-gray-300 hover:border-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <SelectValue placeholder="Select Type" />
                   </SelectTrigger>
@@ -115,13 +115,13 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Schedule Type</Label>
-                <Select value={filters.scheduleType} onValueChange={value => handleFilterChange('scheduleType', value)}>
+                <Select value={filters['s[task_task_of_eq]']} onValueChange={value => handleFilterChange('s[task_task_of_eq]', value)}>
                   <SelectTrigger className="h-10 bg-white border border-gray-300 hover:border-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <SelectValue placeholder="Select Schedule Type" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-md z-50">
-                    <SelectItem value="asset" className="hover:bg-gray-100 focus:bg-gray-100">Asset</SelectItem>
-                    <SelectItem value="service" className="hover:bg-gray-100 focus:bg-gray-100">Service</SelectItem>
+                    <SelectItem value="Pms::Asset" className="hover:bg-gray-100 focus:bg-gray-100">Asset</SelectItem>
+                    <SelectItem value="Pms::Service" className="hover:bg-gray-100 focus:bg-gray-100">Service</SelectItem>
                    
                   </SelectContent>
                 </Select>

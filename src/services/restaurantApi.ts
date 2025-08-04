@@ -160,6 +160,9 @@ export interface FoodOrder {
   order_qr_code: string;
   restaurant_cover_images: RestaurantCoverImage[];
   comments: unknown[];
+  facility_id?: number;
+  facility_name?: string;
+  meeting_room?: string;
 }
 
 export interface FoodOrdersResponse {

@@ -27,8 +27,8 @@ export const ScheduledTaskCalendar: React.FC<ScheduledTaskCalendarProps> = ({
   const [activeFilters, setActiveFilters] = useState<CalendarFilters>({
     dateFrom: '01/07/2025',
     dateTo: '31/07/2025',
-    type: '',
-    scheduleType: ''
+    's[task_custom_form_schedule_type_eq]': '',
+    's[task_task_of_eq]': ''
   });
   const navigate = useNavigate();
 

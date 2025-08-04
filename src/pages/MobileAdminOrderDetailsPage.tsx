@@ -349,11 +349,11 @@ const MobileAdminOrderDetailsPage: React.FC = () => {
                 {order.created_by}
               </span>
             </div>
-            {order.meeting_room && (
+            {order.facility_name && (
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Room</span>
                 <span className="text-sm font-medium text-gray-800">
-                  {order.meeting_room}
+                  {order?.facility_name}
                 </span>
               </div>
             )}

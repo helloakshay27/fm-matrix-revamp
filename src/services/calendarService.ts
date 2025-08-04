@@ -31,8 +31,10 @@ export interface CalendarResponse {
 export const calendarService = {
   // Fetch calendar events
   async fetchCalendarEvents(params?: {
-    start_date?: string;
-    end_date?: string;
+    'q[start_date_gteq]'?: string;
+    'q[start_date_lteq]'?: string;
+    's[task_custom_form_schedule_type_eq]'?: string;
+    's[task_task_of_eq]'?: string;
     amc?: string;
     service?: string;
   }): Promise<CalendarEvent[]> {

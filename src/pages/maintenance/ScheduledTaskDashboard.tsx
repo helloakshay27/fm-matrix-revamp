@@ -21,6 +21,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { ScheduledTaskCalendar } from '@/components/maintenance/ScheduledTaskCalendar';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { calendarService, CalendarEvent } from '@/services/calendarService';
+import { CalendarFilters } from '@/components/CalendarFilterModal';
 import { getToken } from '@/utils/auth';
 import { getFullUrl } from '@/config/apiConfig';
 import { TaskFilterDialog, TaskFilters } from '@/components/TaskFilterDialog';
@@ -233,6 +234,12 @@ export const ScheduledTaskDashboard = () => {
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [showSelectionPanel, setShowSelectionPanel] = useState(false);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [calendarFilters, setCalendarFilters] = useState<CalendarFilters>({
+    dateFrom: '01/07/2025',
+    dateTo: '31/07/2025',
+    's[task_custom_form_schedule_type_eq]': '',
+    's[task_task_of_eq]': ''
+  });
   const [taskData, setTaskData] = useState<TaskRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -439,10 +446,20 @@ export const ScheduledTaskDashboard = () => {
   useEffect(() => {
     const loadCalendarEvents = async () => {
       try {
-        const events = await calendarService.fetchCalendarEvents({
-          start_date: dateFrom,
-          end_date: dateTo
-        });
+        const params: any = {
+          'q[start_date_gteq]': calendarFilters.dateFrom,
+          'q[start_date_lteq]': calendarFilters.dateTo
+        };
+
+        // Add filter parameters if they have values
+        if (calendarFilters['s[task_custom_form_schedule_type_eq]']) {
+          params['s[task_custom_form_schedule_type_eq]'] = calendarFilters['s[task_custom_form_schedule_type_eq]'];
+        }
+        if (calendarFilters['s[task_task_of_eq]']) {
+          params['s[task_task_of_eq]'] = calendarFilters['s[task_task_of_eq]'];
+        }
+
+        const events = await calendarService.fetchCalendarEvents(params);
         setCalendarEvents(events);
       } catch (error) {
         console.error('Failed to load calendar events:', error);
@@ -478,7 +495,7 @@ export const ScheduledTaskDashboard = () => {
     if (activeTab === 'calendar') {
       loadCalendarEvents();
     }
-  }, [activeTab, dateFrom, dateTo]);
+  }, [activeTab, calendarFilters]);
 
   const handleViewTask = (taskId: string) => {
     navigate(`/task-details/${taskId}`);
@@ -906,11 +923,15 @@ export const ScheduledTaskDashboard = () => {
           <ScheduledTaskCalendar
             events={calendarEvents}
             onDateRangeChange={(start, end) => {
-              setDateFrom(start);
-              setDateTo(end);
+              setCalendarFilters(prev => ({
+                ...prev,
+                dateFrom: start,
+                dateTo: end
+              }));
             }}
             onFiltersChange={(filters) => {
               console.log('Filters changed:', filters);
+              setCalendarFilters(filters);
             }}
           />
         </TabsContent>
