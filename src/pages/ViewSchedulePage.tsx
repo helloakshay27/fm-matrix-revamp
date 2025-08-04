@@ -540,7 +540,9 @@ export const ViewSchedulePage = () => {
                                   ? 'Radio'
                                   : task.type === 'numeric'
                                     ? 'Numeric'
-                                    : task.type}
+                                    : task.type === 'select'
+                                      ? 'Dropdown'
+                                      : task.type}
                             </MenuItem>
                           </Select>
                         </FormControl>
@@ -1030,7 +1032,7 @@ export const ViewSchedulePage = () => {
                 </FormControl>
               </div>
               
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Frequency</InputLabel>
                   <Select
@@ -1044,8 +1046,8 @@ export const ViewSchedulePage = () => {
                     </MenuItem>
                   </Select>
                 </FormControl>
-              </div>
-              <div className="space-y-2">
+              </div> */}
+              {customForm?.supplier_id && (<div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Select Supplier</InputLabel>
                   <Select
@@ -1069,7 +1071,7 @@ export const ViewSchedulePage = () => {
                     )}
                   </Select>
                 </FormControl>
-              </div>
+              </div>)}
 
             </div>
 
@@ -1156,7 +1158,7 @@ export const ViewSchedulePage = () => {
                         <TableCell>{asset.model_number || 'N/A'}</TableCell>
                         {/* <TableCell>{asset.purchase_date ? formatDateTime(asset.purchase_date) : 'N/A'}</TableCell> */}
                         <TableCell>{asset.purchase_cost || 'N/A'}</TableCell>
-                        <TableCell>{asset.created_at ? formatDateTime(asset.created_on) : 'N/A'}</TableCell>
+                        <TableCell>{asset.created_at ? formatDateTime(asset.created_at) : 'N/A'}</TableCell>
                       </TableRow>
                     ))
                   ) : (

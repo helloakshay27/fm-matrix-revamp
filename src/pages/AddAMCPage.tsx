@@ -44,8 +44,7 @@ export const AddAMCPage = () => {
     details: 'Asset',
     type: 'Individual',
     assetName: '',
-    asset_ids: [] as string[],
-    vendor: '',
+    asset_ids: [] as number[],
     group: '',
     subgroup: '',
     service: '',
@@ -63,7 +62,6 @@ export const AddAMCPage = () => {
   // Error state for validation
   const [errors, setErrors] = useState({
     asset_ids: '',
-    vendor: '',
     group: '',
     supplier: '',
     service: '',
@@ -98,7 +96,6 @@ export const AddAMCPage = () => {
           [field]: value,
           assetName: '',
           asset_ids: [],
-          vendor: '',
           group: '',
           subgroup: '',
           service: '',
@@ -114,7 +111,6 @@ export const AddAMCPage = () => {
           service: '',
           supplier: '',
           asset_ids: [],
-          vendor: ''
         };
       }
       return {
@@ -245,7 +241,6 @@ export const AddAMCPage = () => {
     let isValid = true;
     const newErrors = {
       asset_ids: '',
-      vendor: '',
       group: '',
       supplier: '',
       service: '',
@@ -263,8 +258,8 @@ export const AddAMCPage = () => {
         newErrors.asset_ids = 'Please select at least one asset.';
         isValid = false;
       }
-      if (!formData.vendor) {
-        newErrors.vendor = 'Please select a supplier.';
+      if (!formData.supplier) {
+        newErrors.supplier = 'Please select a supplier.';
         isValid = false;
       }
     } else if (formData.details === 'Service' && formData.type === 'Individual') {
@@ -272,8 +267,8 @@ export const AddAMCPage = () => {
         newErrors.service = 'Please select a service.';
         isValid = false;
       }
-      if (!formData.vendor) {
-        newErrors.vendor = 'Please select a supplier.';
+      if (!formData.supplier) {
+        newErrors.supplier = 'Please select a supplier.';
         isValid = false;
       }
     } else if (formData.type === 'Group') {
@@ -340,10 +335,8 @@ export const AddAMCPage = () => {
     }
 
     const sendData = new FormData();
-    sendData.append('pms_asset_amc[asset_id]', formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0 ? formData.asset_ids[0] : '');
-    sendData.append('pms_asset_amc[service_id]', formData.details === 'Service' ? formData.assetName : '');
-    sendData.append('pms_asset_amc[pms_site_id]', localStorage.getItem('selectedSiteId') || '1');
-    sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier);
+
+    // sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
     sendData.append('pms_asset_amc[checklist_type]', formData.details);
     sendData.append('pms_asset_amc[amc_cost]', formData.cost);
     sendData.append('pms_asset_amc[contract_name]', formData.contractName);
@@ -353,20 +346,40 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
     sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
     sendData.append('pms_asset_amc[remarks]', formData.remarks);
-    sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
     sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Service");
     if (action === 'schedule') {
       sendData.append('pms_asset_amc[schedule_immediately]', 'true');
     }
 
-    if (formData.type === 'Group') {
-      sendData.append('group_id', formData.group);
-      sendData.append('sub_group_id', formData.subgroup);
+    if (formData.details === 'Asset') {
+      if (formData.type === 'Individual' && formData.asset_ids.length > 0) {
+        sendData.append('pms_asset_amc[asset_id]', formData.asset_ids[0]);
+        formData.asset_ids.forEach((id: number) => {
+          sendData.append('asset_ids[]', id.toString());
+        });
+
+      } else if (formData.type === 'Group' && formData.group) {
+        sendData.append('group_id', formData.group);
+        sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
+        if (formData.subgroup) {
+          sendData.append('sub_group_id', formData.subgroup);
+        }
+      }
+    } else if (formData.details === 'Service') {
+      if (formData.type === 'Individual' && formData.assetName) {
+        sendData.append('pms_asset_amc[service_id]', formData.assetName);
+      } else if (formData.type === 'Group' && formData.service) {
+        sendData.append('pms_asset_amc[service_id]', formData.service);
+        if (formData.group) {
+          sendData.append('group_id', formData.group);
+        }
+        if (formData.subgroup) {
+          sendData.append('sub_group_id', formData.subgroup);
+        }
+      }
     }
 
-    if (formData.details === 'Asset' && formData.type === 'Individual' && formData.asset_ids.length > 0) {
-      formData.asset_ids.forEach(id => sendData.append('asset_ids[]', id));
-    }
+
 
     attachments.contracts.forEach((file) => {
       sendData.append('amc_contracts[content][]', file);
@@ -392,7 +405,6 @@ export const AddAMCPage = () => {
           type: 'Individual',
           assetName: '',
           asset_ids: [],
-          vendor: '',
           group: '',
           subgroup: '',
           service: '',
@@ -412,7 +424,6 @@ export const AddAMCPage = () => {
         });
         setErrors({
           asset_ids: '',
-          vendor: '',
           group: '',
           supplier: '',
           service: '',
@@ -543,14 +554,17 @@ export const AddAMCPage = () => {
                     options={assets || []}
                     loading={AssetsLoading}
                     getOptionLabel={(option) => option.name}
-                    value={assets?.filter(asset => formData.asset_ids.includes(asset.id.toString())) || []}
+                    value={
+                      assets?.filter(asset => formData.asset_ids.includes(asset.id)) || []
+                    }
                     onChange={(event, newValue) => {
                       setFormData(prev => ({
                         ...prev,
-                        asset_ids: newValue.map(asset => asset.id.toString())
+                        asset_ids: newValue.map(asset => asset.id) // keep as number
                       }));
                       setErrors(prev => ({ ...prev, asset_ids: '' }));
                     }}
+
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                     renderOption={(props, option, { selected }) => (
                       <li {...props}>
@@ -628,14 +642,14 @@ export const AddAMCPage = () => {
                 )}
 
                 <div>
-                  <FormControl fullWidth variant="outlined" error={!!errors.vendor}>
+                  <FormControl fullWidth variant="outlined" error={!!errors.supplier}>
                     <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
                     <MuiSelect
                       labelId="vendor-select-label"
                       label="Supplier"
                       displayEmpty
-                      value={formData.vendor}
-                      onChange={e => handleInputChange('vendor', e.target.value)}
+                      value={formData.supplier}
+                      onChange={e => handleInputChange('supplier', e.target.value)}
                       sx={fieldStyles}
                       disabled={loading || suppliersLoading || isSubmitting}
                     >
@@ -646,7 +660,7 @@ export const AddAMCPage = () => {
                         </MenuItem>
                       ))}
                     </MuiSelect>
-                    {errors.vendor && <FormHelperText>{errors.vendor}</FormHelperText>}
+                    {errors.supplier && <FormHelperText>{errors.supplier}</FormHelperText>}
                   </FormControl>
                 </div>
               </>
@@ -709,19 +723,26 @@ export const AddAMCPage = () => {
                           value={formData.service}
                           onChange={e => handleInputChange('service', e.target.value)}
                           sx={fieldStyles}
-                          disabled={isSubmitting}
+                          disabled={loading || servicesLoading || isSubmitting}
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <em>Select a Service...</em>;
+                            }
+                            const service = services.find(s => s.id.toString() === selected);
+                            return service ? service.service_name : selected;
+                          }}
                         >
-                          <MenuItem value=""><em>Select Service</em></MenuItem>
-                          <MenuItem value="preventive-maintenance">Preventive Maintenance</MenuItem>
-                          <MenuItem value="corrective-maintenance">Corrective Maintenance</MenuItem>
-                          <MenuItem value="emergency-service">Emergency Service</MenuItem>
-                          <MenuItem value="inspection-service">Inspection Service</MenuItem>
+                          <MenuItem value=""><em>Select a Service...</em></MenuItem>
+                          {Array.isArray(services) && services.map((service) => (
+                            <MenuItem key={service.id} value={service.id.toString()}>
+                              {service.service_name}
+                            </MenuItem>
+                          ))}
                         </MuiSelect>
                         {errors.service && <FormHelperText>{errors.service}</FormHelperText>}
                       </FormControl>
                     </div>
                   )}
-
                   <div>
                     <FormControl fullWidth variant="outlined" error={!!errors.supplier}>
                       <InputLabel id="group-supplier-select-label" shrink>Supplier</InputLabel>
@@ -858,7 +879,7 @@ export const AddAMCPage = () => {
                 <FormControl fullWidth variant="outlined" error={!!errors.paymentTerms}>
                   <InputLabel id="payment-terms-select-label" shrink>
                     Payment Terms <span style={{ color: 'red' }}>*</span>
-                     </InputLabel>
+                  </InputLabel>
                   <MuiSelect
                     labelId="payment-terms-select-label"
                     label="Payment Terms"

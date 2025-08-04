@@ -12,6 +12,7 @@ import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
 import { fetchServicesData } from '@/store/slices/servicesSlice';
 import { fetchAMCDetails } from '@/store/slices/amcDetailsSlice';
 import { apiClient } from '@/utils/apiClient';
+import { debounce } from 'lodash';
 
 interface Service {
   id: string | number;
@@ -179,35 +180,52 @@ export const EditAMCPage = () => {
     }
   }, [amcData, assets, suppliers, services]);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => {
-      if (field === 'details' && prev.details !== value) {
+  const debouncedHandleInputChange = useCallback(
+    debounce((field: string, value: string) => {
+      if (field === 'cost') {
+        if (value === '' || !isNaN(parseFloat(value))) {
+          console.log(`Updating ${field} to ${value}`);
+          setFormData(prev => ({
+            ...prev,
+            [field]: value,
+          }));
+          setErrors(prev => ({ ...prev, [field]: '' }));
+        }
+        return;
+      }
+      console.log(`Updating ${field} to ${value}`);
+      setFormData(prev => {
+        if (field === 'details' && prev.details !== value) {
+          return {
+            ...prev,
+            [field]: value,
+            assetName: '',
+            asset_ids: [],
+          };
+        }
+        if (field === 'type' && prev.type !== value) {
+          return {
+            ...prev,
+            [field]: value,
+            group: '',
+            subgroup: '',
+            service: '',
+            supplier: '',
+          };
+        }
         return {
           ...prev,
           [field]: value,
-          assetName: '',
-          asset_ids: []
         };
-      }
-      if (field === 'type' && prev.type !== value) {
-        return {
-          ...prev,
-          [field]: value,
-          group: '',
-          subgroup: '',
-          service: '',
-          supplier: ''
-        };
-      }
-      return {
-        ...prev,
-        [field]: value
-      };
-    });
-    // Clear error for the field being updated
-    setErrors(prev => ({ ...prev, [field]: '' }));
-  };
+      });
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }, 300),
+    []
+  );
 
+  const handleInputChange = (field: string, value: string) => {
+    debouncedHandleInputChange(field, value);
+  };
   const handleFileUpload = (type: 'contracts' | 'invoices', files: FileList | null) => {
     if (files) {
       const fileArray = Array.from(files);
@@ -405,64 +423,81 @@ export const EditAMCPage = () => {
     setErrors(newErrors);
     return isValid;
   };
-
   const handleSubmit = useCallback(async (action: string) => {
     if (!id) return;
+    if (assetsLoading || suppliersLoading || servicesLoading || loading) {
+      toast({
+        title: 'Error',
+        description: 'Please wait for all data to load.',
+        variant: 'destructive',
+      });
+      return;
+    }
     if (!validateForm()) {
       toast({
-        title: "Error",
-        description: "Please fill all required fields.",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Please fill all required fields correctly.',
+        variant: 'destructive',
       });
       return;
     }
     setUpdateLoading(true);
-
+  
     try {
       const sendData = new FormData();
-
+  
       // Append form data
-      sendData.append('pms_asset_amc[amc_cost]', (parseFloat(formData.cost) || '0').toString());
-      sendData.append('pms_asset_amc[contract_name]', formData.contractName); // Added new field
-      sendData.append('pms_asset_amc[amc_start_date]', formData.startDate || '');
-      sendData.append('pms_asset_amc[amc_end_date]', formData.endDate || '');
-      sendData.append('pms_asset_amc[amc_first_service]', formData.firstService || '');
-      sendData.append('pms_asset_amc[amc_frequency]', formData.paymentTerms || '');
+      sendData.append('pms_asset_amc[amc_cost]', parseFloat(formData.cost).toString());
+      sendData.append('pms_asset_amc[contract_name]', formData.contractName);
+      sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
+      sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
+      sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
+      sendData.append('pms_asset_amc[amc_frequency]', formData.paymentTerms);
       sendData.append('pms_asset_amc[amc_period]', `${formData.startDate} - ${formData.endDate}`);
-      sendData.append('pms_asset_amc[no_of_visits]', (parseInt(formData.noOfVisits) || 0).toString());
-      sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms || '');
+      sendData.append('pms_asset_amc[no_of_visits]', parseInt(formData.noOfVisits).toString());
+      sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
       sendData.append('pms_asset_amc[remarks]', formData.remarks || '');
       sendData.append('pms_asset_amc[pms_site_id]', (amcData as any)?.pms_site_id || '');
       sendData.append('pms_asset_amc[site_name]', (amcData as any)?.site_name || '');
-      sendData.append('pms_asset_amc[resource_id]', (amcData as any)?.resource_id || '');
-      sendData.append('pms_asset_amc[resource_name]', (amcData as any)?.resource_name || '');
-      sendData.append('pms_asset_amc[resource_type]', (amcData as any)?.resource_type || '');
-      sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier || '');
-
-      // Add supplier details
+  
+      // Set resource type and ID
+      if (formData.details === 'Asset') {
+        sendData.append('pms_asset_amc[resource_type]', 'Pms::Asset');
+        if (formData.type === 'Individual') {
+          sendData.append('pms_asset_amc[resource_id]', formData.asset_ids.join(','));
+        } else {
+          sendData.append('pms_asset_amc[resource_id]', formData.group);
+        }
+      } else if (formData.details === 'Service') {
+        sendData.append('pms_asset_amc[resource_type]', 'Pms::Service');
+        sendData.append('pms_asset_amc[resource_id]', formData.assetName || formData.service);
+      }
+  
+      // Append supplier details
       const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
       if (selectedSupplier) {
+        sendData.append('pms_asset_amc[supplier_id]', selectedSupplier.id.toString());
         sendData.append('pms_asset_amc[amc_vendor_name]', selectedSupplier.company_name || '');
         sendData.append('pms_asset_amc[amc_vendor_mobile]', selectedSupplier.mobile || '');
         sendData.append('pms_asset_amc[amc_vendor_email]', selectedSupplier.email || '');
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Selected supplier not found.',
+          variant: 'destructive',
+        });
+        setUpdateLoading(false);
+        return;
       }
-
-      // Add asset_ids, group_id, sub_group_id, or service_id based on details and type
-      if (formData.details === 'Asset') {
-        if (formData.type === 'Individual' && formData.asset_ids.length > 0) {
-          formData.asset_ids.forEach((id, index) => {
-            sendData.append(`pms_asset_amc[asset_ids][${index}]`, id);
-          });
-        } else if (formData.type === 'Group' && formData.group) {
-          sendData.append('pms_asset_amc[group_id]', formData.group);
-          if (formData.subgroup) {
-            sendData.append('pms_asset_amc[sub_group_id]', formData.subgroup);
-          }
+  
+      // Append group/subgroup for Group type
+      if (formData.type === 'Group' && formData.group) {
+        sendData.append('pms_asset_amc[group_id]', formData.group);
+        if (formData.subgroup) {
+          sendData.append('pms_asset_amc[sub_group_id]', formData.subgroup);
         }
-      } else if (formData.details === 'Service' && formData.assetName) {
-        sendData.append('pms_asset_amc[service_id]', formData.assetName);
       }
-
+  
       // Append attachments
       attachments.contracts.forEach(file => {
         sendData.append('amc_contracts[content][]', file);
@@ -470,30 +505,40 @@ export const EditAMCPage = () => {
       attachments.invoices.forEach(file => {
         sendData.append('amc_invoices[content][]', file);
       });
-
-      // Add subaction to indicate save action
+  
+      // Append existing file IDs
+      existingFiles.contracts.forEach(file => {
+        sendData.append('pms_asset_amc[existing_contract_ids][]', file.attachment_id.toString());
+      });
+      existingFiles.invoices.forEach(file => {
+        sendData.append('pms_asset_amc[existing_invoice_ids][]', file.attachment_id.toString());
+      });
+  
       sendData.append('subaction', 'save');
-
-      // Make API call
+  
+      // Log payload for debugging
+      for (const [key, value] of sendData.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+  
       const response = await apiClient.put(`/pms/asset_amcs/${id}.json`, sendData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-
+  
       toast({
         title: 'AMC Updated',
         description: 'AMC has been successfully updated.',
       });
-
-      // Navigate based on action
+  
       if (action === 'updated with details') {
         navigate(`/maintenance/amc/details/${id}`);
       } else if (action === 'updated new service') {
         navigate('/maintenance/amc');
       }
-
     } catch (error: any) {
+      console.error('API Error:', error.response?.data);
       toast({
         title: 'Error',
         description: `Failed to update AMC: ${error.response?.data?.message || error.message || 'Please try again.'}`,
@@ -502,8 +547,7 @@ export const EditAMCPage = () => {
     } finally {
       setUpdateLoading(false);
     }
-  }, [id, formData, attachments, amcData, suppliers, toast, navigate]);
-
+  }, [id, formData, attachments, amcData, suppliers, toast, navigate, assetsLoading, suppliersLoading, servicesLoading, loading]);
   // Responsive styles for TextField and Select
   const fieldStyles = {
     height: {

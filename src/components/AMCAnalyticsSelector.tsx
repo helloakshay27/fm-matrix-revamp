@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CheckSquare, Square, ChevronDown, Package, BarChart, Activity, AlertTriangle, Settings } from 'lucide-react';
+import { CheckSquare, Square, ChevronDown, Package, BarChart, Activity, AlertTriangle, Settings, Layers, MapPin } from 'lucide-react';
 
 const amcAnalyticsOptions = [
   { 
@@ -19,6 +19,20 @@ const amcAnalyticsOptions = [
     icon: BarChart 
   },
   { 
+    id: 'unit_resource_wise', 
+    label: 'Unit Resource Distribution', 
+    checked: true, 
+    endpoint: 'unit_resource_wise',
+    icon: Layers 
+  },
+  { 
+    id: 'service_stats', 
+    label: 'Service Statistics', 
+    checked: true, 
+    endpoint: 'service_stats',
+    icon: Activity 
+  },
+  { 
     id: 'expiry_analysis', 
     label: 'Expiry Analysis', 
     checked: true, 
@@ -33,11 +47,11 @@ const amcAnalyticsOptions = [
     icon: Settings 
   },
   { 
-    id: 'vendor_performance', 
-    label: 'Vendor Performance', 
+    id: 'coverage_by_location', 
+    label: 'Coverage by Location', 
     checked: true, 
-    endpoint: 'vendor_performance',
-    icon: Activity 
+    endpoint: 'coverage_by_location',
+    icon: MapPin 
   }
 ];
 

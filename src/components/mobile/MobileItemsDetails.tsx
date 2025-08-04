@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Plus, Minus, X, NotebookPen, PenBoxIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Minus,
+  X,
+  NotebookPen,
+  PenBoxIcon,
+} from "lucide-react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { restaurantApi } from "@/services/restaurantApi";
-import { Note, NoteAdd, NoteAddOutlined } from "@mui/icons-material";
+import { DeliveryDining, Note, NoteAdd, NoteAddOutlined } from "@mui/icons-material";
 
 interface MenuItem {
   id: string;
@@ -70,6 +77,8 @@ export const MobileItemsDetails: React.FC = () => {
 
   const [items, setItems] = useState<MenuItem[]>(initialItems);
   const [note, setNote] = useState<string>("");
+  const [inputLocation, setInputLocation] = useState<string>("");
+  console.log("value", inputLocation);
   const [showNoteDialog, setShowNoteDialog] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -124,7 +133,7 @@ export const MobileItemsDetails: React.FC = () => {
         restaurant,
         isExternalScan: finalIsExternalScan,
         sourceParam: finalSourceParam,
-      }
+      },
     });
   };
 
@@ -151,20 +160,20 @@ export const MobileItemsDetails: React.FC = () => {
     // 🔀 EXTERNAL USER FLOW: Redirect to contact form first
     if (finalIsExternalScan) {
       console.log("🔄 EXTERNAL USER: Redirecting to contact form");
-      
+
       // Get facility_id from session storage to pass along
       const facilityId = sessionStorage.getItem("facility_id");
       const siteId = sessionStorage.getItem("site_id");
-      
+
       // Construct contact form URL with source parameter
-      const contactFormUrl = finalSourceParam 
+      const contactFormUrl = finalSourceParam
         ? `/mobile/restaurant/${restaurant.id}/contact-form?source=${finalSourceParam}`
         : `/mobile/restaurant/${restaurant.id}/contact-form`;
-      
+
       console.log("🔄 PASSING TO CONTACT FORM:");
       console.log("  - facilityId:", facilityId);
       console.log("  - siteId:", siteId);
-      
+
       navigate(contactFormUrl, {
         state: {
           selectedItems: items,
@@ -187,7 +196,10 @@ export const MobileItemsDetails: React.FC = () => {
     console.log("  - facility_id:", sessionStorage.getItem("facility_id"));
     console.log("  - org_id:", sessionStorage.getItem("org_id"));
     console.log("  - site_id:", sessionStorage.getItem("site_id"));
-    console.log("  - facility_setup:", sessionStorage.getItem("facility_setup"));
+    console.log(
+      "  - facility_setup:",
+      sessionStorage.getItem("facility_setup")
+    );
     console.log("  - app_token:", sessionStorage.getItem("app_token"));
     console.log("  - app_user_info:", sessionStorage.getItem("app_user_info"));
 
@@ -202,11 +214,14 @@ export const MobileItemsDetails: React.FC = () => {
     const parsedUserInfo = userInfo ? JSON.parse(userInfo) : null;
 
     // Parse facility setup to get delivery location
-    let deliveryLocation = "App Location";
+    let deliveryLocation = "";
     if (facilitySetup) {
       try {
         const parsedFacilitySetup = JSON.parse(facilitySetup);
-        deliveryLocation = parsedFacilitySetup.fac_name || parsedFacilitySetup.name || "App Location";
+        deliveryLocation =
+          parsedFacilitySetup.fac_name ||
+          parsedFacilitySetup.name ||
+          "App Location";
       } catch (error) {
         console.error("Error parsing facility setup:", error);
       }
@@ -214,11 +229,19 @@ export const MobileItemsDetails: React.FC = () => {
       // If we have facility_id but no facility_setup, try to fetch it
       try {
         console.log("🏢 Fetching facility setup for facility_id:", facilityId);
-        const facilityResponse = await restaurantApi.getFacilitySetup(facilityId);
-        deliveryLocation = facilityResponse.facility_setup.fac_name || facilityResponse.facility_setup.name || "App Location";
-        
+        const facilityResponse = await restaurantApi.getFacilitySetup(
+          facilityId
+        );
+        deliveryLocation =
+          facilityResponse.facility_setup.fac_name ||
+          facilityResponse.facility_setup.name ||
+          "App Location";
+
         // Store facility setup for future use
-        sessionStorage.setItem("facility_setup", JSON.stringify(facilityResponse.facility_setup));
+        sessionStorage.setItem(
+          "facility_setup",
+          JSON.stringify(facilityResponse.facility_setup)
+        );
         console.log("🏢 Facility setup fetched and stored:", deliveryLocation);
       } catch (error) {
         console.error("❌ Error fetching facility setup:", error);
@@ -235,13 +258,13 @@ export const MobileItemsDetails: React.FC = () => {
       name: parsedUserInfo?.name || user?.full_name || user?.name || "App User",
       mobile: parsedUserInfo?.mobile || user?.mobile || "",
       email: parsedUserInfo?.email || user?.email || "",
-      location: deliveryLocation,
+      location: deliveryLocation || inputLocation,
       restaurant_id: parseInt(restaurant.id),
       user_id: userId,
       requests: note || "",
       items_attributes: items.map((item) => ({
-      menu_id: parseInt(item.id),
-      quantity: item.quantity,
+        menu_id: parseInt(item.id),
+        quantity: item.quantity,
       })),
       ...(facilityId && { facility_id: parseInt(facilityId) }),
       ...(orgId && { org_id: parseInt(orgId) }),
@@ -257,7 +280,10 @@ export const MobileItemsDetails: React.FC = () => {
     console.log("  - finalSourceParam:", finalSourceParam);
     console.log("  - finalIsExternalScan:", finalIsExternalScan);
     console.log("  - facilityId (raw):", facilityId);
-    console.log("  - facilityId (will be included):", facilityId && parseInt(facilityId));
+    console.log(
+      "  - facilityId (will be included):",
+      facilityId && parseInt(facilityId)
+    );
     console.log("  - orgId (raw):", orgId);
     console.log("  - orgId (will be included):", orgId && parseInt(orgId));
     console.log("  - siteId (raw):", siteId);
@@ -266,7 +292,10 @@ export const MobileItemsDetails: React.FC = () => {
     console.log("  - deliveryLocation:", deliveryLocation);
     console.log("  - Final Order Data:", orderData);
     console.log("  - Order data food_order:", orderData.food_order);
-    console.log("  - Order data stringified:", JSON.stringify(orderData, null, 2));
+    console.log(
+      "  - Order data stringified:",
+      JSON.stringify(orderData, null, 2)
+    );
 
     try {
       const result = await restaurantApi.placeOrder(orderData);
@@ -294,14 +323,22 @@ export const MobileItemsDetails: React.FC = () => {
         };
 
         // Store order data in sessionStorage for direct navigation support
-        sessionStorage.setItem("latest_order_data", JSON.stringify(orderReviewData));
-        console.log("💾 STORED ORDER DATA in sessionStorage for direct navigation");
+        sessionStorage.setItem(
+          "latest_order_data",
+          JSON.stringify(orderReviewData)
+        );
+        console.log(
+          "💾 STORED ORDER DATA in sessionStorage for direct navigation"
+        );
 
         // Navigate to order review with success state
         // navigate(`/mobile/restaurant/${restaurant.id}/order-placed`, {
-        navigate(`/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`, {
-          state: orderReviewData,
-        });
+        navigate(
+          `/mobile/restaurant/${restaurant.id}/order-review?source=${finalSourceParam}`,
+          {
+            state: orderReviewData,
+          }
+        );
       } else {
         console.error("❌ Order placement failed:", result.message);
         alert(result.message || "Failed to place order. Please try again.");
@@ -353,12 +390,14 @@ export const MobileItemsDetails: React.FC = () => {
             <div key={item.id} className="flex justify-between items-center">
               <div className="flex-1">
                 <span className="text-gray-900 font-medium">{item.name}</span>
-                {item.price != null && item.price !== undefined && item.price > 0 && (
-                  <div className="text-sm text-gray-600 mt-1">
-                    ORM{item.price} × {item.quantity} = ORM
-                    {item.price * item.quantity}
-                  </div>
-                )}
+                {item.price != null &&
+                  item.price !== undefined &&
+                  item.price > 0 && (
+                    <div className="text-sm text-gray-600 mt-1">
+                      ORM{item.price} × {item.quantity} = ORM
+                      {item.price * item.quantity}
+                    </div>
+                  )}
               </div>
               <div className="flex items-center border-2 border-red-600 rounded-lg bg-white ml-3">
                 <button
@@ -410,12 +449,35 @@ export const MobileItemsDetails: React.FC = () => {
         </div>
       </div>
 
+      <div className="mx-4 mt-4">
+        <div className="flex items-center mb-3">
+          <div className="bg-white rounded-xl w-full p-4 gap-2">
+            <div className="text-gray-900 gap-2 mr-2 bg-white  font-medium">
+            <label className="text-bold gap-2 flex items-center">
+              <div className="bg-gray-300 rounded-sm">
+              <DeliveryDining className="" />
+              </div>
+               Delivery Location  <span className="text-red-500">*</span>
+            </label>
+              </div>
+            <div>
+            <input
+              onChange={(e) => setInputLocation(e.target.value)}
+              value={inputLocation || ""}
+              type="text"
+              className="w-full bg-white resize-none  text-gray-600 mt-2 p-1 rounded-md border border-gray-300 focus:ring-2 focus:ring-red-500 outline-none"
+              placeholder="Enter delivery location"
+            />
+            </div>
+          </div>
+        </div>
+      </div>
       {/* Note Section */}
       <div className="mx-4 mt-4">
         <div className="bg-white rounded-xl p-4">
           <div className="flex items-center mb-3">
             <div className="w-5 h-5 bg-gray-300 rounded-sm flex items-center justify-center mr-2">
-             <PenBoxIcon className="w-3 h-3 text-red-500" />
+              <PenBoxIcon className="w-3 h-3 text-red-500" />
             </div>
             <span className="font-semibold text-gray-900">
               Additional Request
