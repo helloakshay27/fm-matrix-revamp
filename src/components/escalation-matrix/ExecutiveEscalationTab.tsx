@@ -61,21 +61,20 @@ export const ExecutiveEscalationTab: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="space-y-8">
+      <div className="bg-white rounded-lg border border-gray-200 p-8">
         <div className="space-y-6">
-          {/* Header */}
-          <div className="grid grid-cols-5 gap-4 font-medium text-gray-700 text-sm">
+          {/* Header Row 1 */}
+          <div className="grid grid-cols-6 gap-6 font-medium text-gray-700 text-sm border-b border-gray-200 pb-3">
             <div>Levels</div>
-            <div>Escalation To</div>
-            <div className="text-center">P1</div>
-            <div></div>
-            <div></div>
+            <div className="col-span-2">Escalation To</div>
+            <div className="col-span-3 text-center">P1</div>
           </div>
 
-          <div className="grid grid-cols-5 gap-4 font-medium text-gray-700 text-sm">
+          {/* Header Row 2 */}
+          <div className="grid grid-cols-6 gap-6 font-medium text-gray-700 text-sm">
             <div></div>
-            <div></div>
+            <div className="col-span-2"></div>
             <div className="text-center">Days</div>
             <div className="text-center">Hrs</div>
             <div className="text-center">Min</div>
@@ -83,58 +82,60 @@ export const ExecutiveEscalationTab: React.FC = () => {
 
           {/* Escalation Levels */}
           {escalationData.map((item, index) => (
-            <div key={item.level} className="grid grid-cols-5 gap-4 items-center">
+            <div key={item.level} className="grid grid-cols-6 gap-6 items-center py-2">
               <div className="bg-gray-100 px-3 py-2 rounded border text-sm font-medium">
                 {item.level}
               </div>
               
-              <Select
-                value={item.escalationTo}
-                onValueChange={(value) => handleFieldChange(index, 'escalationTo', value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select an Option..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {escalationOptions.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="col-span-2">
+                <Select
+                  value={item.escalationTo}
+                  onValueChange={(value) => handleFieldChange(index, 'escalationTo', value)}
+                >
+                  <SelectTrigger className="w-full bg-white border-gray-300 z-50">
+                    <SelectValue placeholder="Select an Option..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-gray-300 shadow-lg z-50">
+                    {escalationOptions.map((option) => (
+                      <SelectItem key={option} value={option} className="hover:bg-gray-100">
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <Input
                 type="number"
                 value={item.days}
                 onChange={(e) => handleFieldChange(index, 'days', e.target.value)}
-                placeholder="0"
-                className="text-center"
+                placeholder="Days"
+                className="text-center bg-white border-gray-300"
               />
 
               <Input
                 type="number"
                 value={item.hours}
                 onChange={(e) => handleFieldChange(index, 'hours', e.target.value)}
-                placeholder="0"
-                className="text-center"
+                placeholder="Hrs"
+                className="text-center bg-white border-gray-300"
               />
 
               <Input
                 type="number"
                 value={item.minutes}
                 onChange={(e) => handleFieldChange(index, 'minutes', e.target.value)}
-                placeholder="0"
-                className="text-center"
+                placeholder="Min"
+                className="text-center bg-white border-gray-300"
               />
             </div>
           ))}
 
           {/* Submit Button */}
-          <div className="flex justify-center pt-4">
+          <div className="flex justify-center pt-6">
             <Button
               onClick={handleSubmit}
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
+              className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded-md"
             >
               Submit
             </Button>
@@ -144,21 +145,23 @@ export const ExecutiveEscalationTab: React.FC = () => {
 
       {/* Rules Section */}
       {savedRules.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-teal-600 mb-4">Rule</h3>
+        <div className="bg-white rounded-lg border border-gray-200 p-8">
+          <h3 className="text-lg font-semibold text-teal-600 mb-6">Rule</h3>
           
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-6 font-medium text-gray-700 text-sm">
+            {/* Rules Header */}
+            <div className="grid grid-cols-3 gap-8 font-medium text-gray-700 text-sm border-b border-gray-200 pb-3">
               <div>Levels</div>
               <div>Escalation To</div>
               <div>P1</div>
             </div>
 
+            {/* Rules Data */}
             {savedRules.map((rule, index) => (
-              <div key={index} className="grid grid-cols-3 gap-6 text-sm">
-                <div className="font-medium">{rule.level}</div>
-                <div>{rule.escalationTo}</div>
-                <div>{rule.timing}</div>
+              <div key={index} className="grid grid-cols-3 gap-8 text-sm py-2">
+                <div className="font-medium text-gray-800">{rule.level}</div>
+                <div className="text-gray-700">{rule.escalationTo}</div>
+                <div className="text-gray-700">{rule.timing}</div>
               </div>
             ))}
           </div>
