@@ -336,7 +336,7 @@ export const AddAMCPage = () => {
 
     const sendData = new FormData();
 
-    sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
+    // sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
     sendData.append('pms_asset_amc[checklist_type]', formData.details);
     sendData.append('pms_asset_amc[amc_cost]', formData.cost);
     sendData.append('pms_asset_amc[contract_name]', formData.contractName);
@@ -360,7 +360,7 @@ export const AddAMCPage = () => {
 
       } else if (formData.type === 'Group' && formData.group) {
         sendData.append('group_id', formData.group);
-        sendData.append('pms_asset_amc[resource_id]', formData.service);
+        sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
         if (formData.subgroup) {
           sendData.append('sub_group_id', formData.subgroup);
         }
