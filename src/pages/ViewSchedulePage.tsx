@@ -868,6 +868,17 @@ export const ViewSchedulePage = () => {
                   sx={muiFieldStyles}
                 />
               </div>
+              <div className="space-y-2">
+                <TextField
+                  label="Backup Assigned to"
+                  value={assetTask?.backup_assigned?.name || 'No backup assigned'}
+                  InputProps={{ readOnly: true, disabled: true }}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={muiFieldStyles}
+                />
+              </div>
               {/* {customForm?.backup_assigned.name !== "" && (<div className="space-y-2">
                 <TextField
                   label="Backup Assigned to"
@@ -879,6 +890,9 @@ export const ViewSchedulePage = () => {
                   sx={muiFieldStyles}
                 />
               </div>)} */}
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Supervisors</InputLabel>
@@ -913,9 +927,6 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
               {/* <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Priority</InputLabel>
@@ -953,6 +964,9 @@ export const ViewSchedulePage = () => {
                   sx={muiFieldStyles}
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Category</InputLabel>
@@ -968,9 +982,6 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
               
               
               <div className="space-y-2">
@@ -999,6 +1010,10 @@ export const ViewSchedulePage = () => {
                   sx={muiFieldStyles}
                 />
               </div>
+
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
                   <InputLabel shrink>Lock Overdue Task</InputLabel>
@@ -1014,10 +1029,6 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div>
-
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
               
               <div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
