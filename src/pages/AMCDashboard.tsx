@@ -1123,7 +1123,7 @@ export const AMCDashboard = () => {
                     {(apiData as any)?.total_amcs_count || 0}
                   </div>
                   <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                    OMR&nbsp;{(apiData as any)?.total_amc_cost?.toLocaleString() || 0}
+                  {`${localStorage.getItem("currency") ?? ''} ${(apiData as any)?.total_amc_cost?.toLocaleString() || 0}`}
                   </span>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
                     Total AMC
