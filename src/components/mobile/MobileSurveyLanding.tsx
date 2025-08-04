@@ -159,13 +159,13 @@ export const MobileSurveyLanding: React.FC = () => {
       {/* Header with Lockated Logo */}
       <div className="bg-white py-8 px-4 text-center">
         <div className="flex justify-center items-center mb-4">
-          <div className="w-16 h-16 flex items-center justify-center">
+            <div className="w-24 h-24 flex items-center justify-center">
             <img
               src="/Without bkg.svg"
               alt="OIG Logo"
-              className="w-16 h-16 object-contain"
+              className="w-24 h-24 object-contain"
             />
-          </div>
+            </div>
         </div>
         {/* <h1 className="text-2xl font-bold text-black mb-2">OIG</h1> */}
       </div>
