@@ -6,11 +6,15 @@ import { AttachmentsSection } from './AttachmentsSection';
 interface CommentsAttachmentsSectionProps {
   comments: string;
   onCommentsChange: (comments: string) => void;
+  attachments: File[];
+  onAttachmentsChange: (attachments: File[]) => void;
 }
 
 export const CommentsAttachmentsSection: React.FC<CommentsAttachmentsSectionProps> = ({
   comments,
-  onCommentsChange
+  onCommentsChange,
+  attachments,
+  onAttachmentsChange
 }) => {
   return (
     <div className="grid grid-cols-2 gap-6 items-start">
@@ -37,7 +41,7 @@ export const CommentsAttachmentsSection: React.FC<CommentsAttachmentsSectionProp
 
       {/* Attachments - 50% width */}
       <div className="space-y-2">
-        <AttachmentsSection />
+        <AttachmentsSection attachments={attachments} onAttachmentsChange={onAttachmentsChange} />
       </div>
     </div>
   );
