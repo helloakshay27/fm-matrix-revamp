@@ -57,7 +57,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
       .map(item => ({
         level: item.level,
         escalationTo: item.escalationTo,
-        timing: `P1: ${item.p1Days || 0} Day, ${item.p1Hours || 0} Hour, ${item.p1Minutes || 0} Minute | P2: ${item.p2Days || 0} Day, ${item.p2Hours || 0} Hour, ${item.p2Minutes || 0} Minute`
+        timing: `${item.p1Days || 0} Day, ${item.p1Hours || 0} Hour, ${item.p1Minutes || 0} Minute`
       }));
     
     setSavedRules(rules);
@@ -66,41 +66,41 @@ export const ExecutiveEscalationTab: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <div className="bg-white rounded-lg border border-gray-200 p-8">
-        <div className="space-y-6">
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="overflow-hidden">
           {/* Header Row 1 */}
-          <div className="grid grid-cols-8 gap-4 font-medium text-gray-700 text-sm border-b border-gray-200 pb-3 bg-amber-50">
-            <div>Levels</div>
-            <div className="col-span-2">Escalation To</div>
-            <div className="col-span-3 text-center">P1</div>
-            <div className="col-span-2 text-center">P2</div>
+          <div className="grid grid-cols-9 gap-0 bg-gray-100 border-b border-gray-300">
+            <div className="p-4 border-r border-gray-300 font-medium text-gray-700 text-sm">Levels</div>
+            <div className="p-4 border-r border-gray-300 font-medium text-gray-700 text-sm col-span-2">Escalation To</div>
+            <div className="p-4 border-r border-gray-300 font-medium text-gray-700 text-sm text-center col-span-3">P1</div>
+            <div className="p-4 font-medium text-gray-700 text-sm text-center col-span-3">P2</div>
           </div>
 
           {/* Header Row 2 */}
-          <div className="grid grid-cols-8 gap-4 font-medium text-gray-700 text-sm bg-amber-50">
-            <div></div>
-            <div className="col-span-2"></div>
-            <div className="text-center">Day</div>
-            <div className="text-center">Hrs</div>
-            <div className="text-center">Min</div>
-            <div className="text-center">Day</div>
-            <div className="text-center">Hrs</div>
-            <div className="text-center">Min</div>
+          <div className="grid grid-cols-9 gap-0 bg-gray-50 border-b border-gray-300">
+            <div className="p-3 border-r border-gray-300"></div>
+            <div className="p-3 border-r border-gray-300 col-span-2"></div>
+            <div className="p-3 border-r border-gray-300 text-center text-sm text-gray-600">Day</div>
+            <div className="p-3 border-r border-gray-300 text-center text-sm text-gray-600">Hrs</div>
+            <div className="p-3 border-r border-gray-300 text-center text-sm text-gray-600">Min</div>
+            <div className="p-3 border-r border-gray-300 text-center text-sm text-gray-600">Day</div>
+            <div className="p-3 border-r border-gray-300 text-center text-sm text-gray-600">Hrs</div>
+            <div className="p-3 text-center text-sm text-gray-600">Min</div>
           </div>
 
           {/* Escalation Levels */}
           {escalationData.map((item, index) => (
-            <div key={item.level} className="grid grid-cols-8 gap-4 items-center py-2">
-              <div className="bg-gray-100 px-3 py-2 rounded border text-sm font-medium">
+            <div key={item.level} className={`grid grid-cols-9 gap-0 border-b border-gray-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+              <div className="p-4 border-r border-gray-300 bg-gray-100 font-medium text-gray-800 text-sm">
                 {item.level}
               </div>
               
-              <div className="col-span-2">
+              <div className="col-span-2 p-2 border-r border-gray-300">
                 <Select
                   value={item.escalationTo}
                   onValueChange={(value) => handleFieldChange(index, 'escalationTo', value)}
                 >
-                  <SelectTrigger className="w-full bg-white border-gray-300 z-50">
+                  <SelectTrigger className="w-full bg-white border-0 shadow-none h-8 text-sm">
                     <SelectValue placeholder="Select up to 15 Options..." />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-gray-300 shadow-lg z-50">
@@ -113,60 +113,70 @@ export const ExecutiveEscalationTab: React.FC = () => {
                 </Select>
               </div>
 
-              {/* P1 inputs */}
-              <Input
-                type="number"
-                value={item.p1Days}
-                onChange={(e) => handleFieldChange(index, 'p1Days', e.target.value)}
-                placeholder="0"
-                className="text-center bg-white border-gray-300"
-              />
+              <div className="p-2 border-r border-gray-300">
+                <Input
+                  type="number"
+                  value={item.p1Days}
+                  onChange={(e) => handleFieldChange(index, 'p1Days', e.target.value)}
+                  placeholder="0"
+                  className="text-center bg-transparent border-0 shadow-none h-8 text-sm"
+                />
+              </div>
 
-              <Input
-                type="number"
-                value={item.p1Hours}
-                onChange={(e) => handleFieldChange(index, 'p1Hours', e.target.value)}
-                placeholder="0"
-                className="text-center bg-white border-gray-300"
-              />
+              <div className="p-2 border-r border-gray-300">
+                <Input
+                  type="number"
+                  value={item.p1Hours}
+                  onChange={(e) => handleFieldChange(index, 'p1Hours', e.target.value)}
+                  placeholder="0"
+                  className="text-center bg-transparent border-0 shadow-none h-8 text-sm"
+                />
+              </div>
 
-              <Input
-                type="number"
-                value={item.p1Minutes}
-                onChange={(e) => handleFieldChange(index, 'p1Minutes', e.target.value)}
-                placeholder="0"
-                className="text-center bg-white border-gray-300"
-              />
+              <div className="p-2 border-r border-gray-300">
+                <Input
+                  type="number"
+                  value={item.p1Minutes}
+                  onChange={(e) => handleFieldChange(index, 'p1Minutes', e.target.value)}
+                  placeholder="0"
+                  className="text-center bg-transparent border-0 shadow-none h-8 text-sm"
+                />
+              </div>
 
-              {/* P2 inputs */}
-              <Input
-                type="number"
-                value={item.p2Days}
-                onChange={(e) => handleFieldChange(index, 'p2Days', e.target.value)}
-                placeholder="0"
-                className="text-center bg-white border-gray-300"
-              />
+              <div className="p-2 border-r border-gray-300">
+                <Input
+                  type="number"
+                  value={item.p2Days}
+                  onChange={(e) => handleFieldChange(index, 'p2Days', e.target.value)}
+                  placeholder="0"
+                  className="text-center bg-transparent border-0 shadow-none h-8 text-sm"
+                />
+              </div>
 
-              <Input
-                type="number"
-                value={item.p2Hours}
-                onChange={(e) => handleFieldChange(index, 'p2Hours', e.target.value)}
-                placeholder="0"
-                className="text-center bg-white border-gray-300"
-              />
+              <div className="p-2 border-r border-gray-300">
+                <Input
+                  type="number"
+                  value={item.p2Hours}
+                  onChange={(e) => handleFieldChange(index, 'p2Hours', e.target.value)}
+                  placeholder="0"
+                  className="text-center bg-transparent border-0 shadow-none h-8 text-sm"
+                />
+              </div>
 
-              <Input
-                type="number"
-                value={item.p2Minutes}
-                onChange={(e) => handleFieldChange(index, 'p2Minutes', e.target.value)}
-                placeholder="0"
-                className="text-center bg-white border-gray-300"
-              />
+              <div className="p-2">
+                <Input
+                  type="number"
+                  value={item.p2Minutes}
+                  onChange={(e) => handleFieldChange(index, 'p2Minutes', e.target.value)}
+                  placeholder="0"
+                  className="text-center bg-transparent border-0 shadow-none h-8 text-sm"
+                />
+              </div>
             </div>
           ))}
 
           {/* Submit Button */}
-          <div className="flex justify-center pt-6">
+          <div className="flex justify-center py-6">
             <Button
               onClick={handleSubmit}
               className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded-md"
