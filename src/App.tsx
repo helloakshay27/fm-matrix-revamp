@@ -619,11 +619,11 @@ function App() {
                 path="/password-reset-success"
                 element={<PasswordResetSuccessPage />}
               />
-                <Route path="/dashboard"   element={
-                  <ProtectedRoute>
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
                   <Dashboard />
-                  </ProtectedRoute>
-                } />
+                </ProtectedRoute>
+              } />
 
               <Route
                 path="/"
@@ -1471,7 +1471,7 @@ function App() {
                   element={<ProductSetupDetailPage />}
                 />
                 <Route
-                  path="/vas/fnb/restaurant-menu/edit/:id"
+                  path="/vas/fnb/details/:id/restaurant-menu/edit/:mid"
                   element={<ProductEditPage />}
                 />
                 <Route
@@ -1842,7 +1842,7 @@ function App() {
               <Route path="/setup/fm-users/add" element={<ProtectedRoute><AddFMUserDashboard /></ProtectedRoute>} />
               <Route path="/setup/occupant-users" element={<ProtectedRoute><OccupantUsersDashboard /></ProtectedRoute>} />
               <Route path="/setup/occupant-users/add" element={<ProtectedRoute><AddOccupantUserDashboard /></ProtectedRoute>} />
-              
+
               {/* Mobile Routes */}
               <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
               <Route path="/mobile/orders" element={<MobileOrdersPage />} />
