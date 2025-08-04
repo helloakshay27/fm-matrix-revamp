@@ -150,7 +150,11 @@ export const MobileRestaurantDashboard: React.FC<MobileRestaurantDashboardProps>
       totalItems: order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0,
       sourceParam: currentSource, // Preserve source
       isExternalScan: isExternalScan, // Preserve external scan flag
-      orderData: order
+      orderData: {
+        ...order,
+        facility_id: order.facility_id || "",
+        facility_name: order.facility_name || ""
+      }
     };
 
     // Store in sessionStorage for direct navigation support

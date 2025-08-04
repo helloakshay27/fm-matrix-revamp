@@ -21,6 +21,9 @@ interface Order {
   }[];
   restaurantId: string;
   orderQrCode?: string;
+  facilityId?: number;
+  facilityName?: string;
+  meetingRoom?: string;
 }
 
 // Helper function to convert FoodOrder to Order format
@@ -84,6 +87,9 @@ const convertFoodOrderToOrder = (foodOrder: FoodOrder): Order => {
     })),
     restaurantId: foodOrder.restaurant_id.toString(),
     orderQrCode: foodOrder.order_qr_code,
+    facilityId: foodOrder.facility_id,
+    facilityName: foodOrder.facility_name,
+    meetingRoom: foodOrder.meeting_room,
   };
 };
 
@@ -339,7 +345,10 @@ export const MobileOrdersPage: React.FC = () => {
           order_status_color: order.statusColor,
           restaurant_name: order.restaurantName,
           total_amount: order.totalAmount,
-          requests: 'Previous order details'
+          requests: 'Previous order details',
+          facility_id: order.facilityId,
+          facility_name: order.facilityName,
+          meeting_room: order.meetingRoom
         }
       };
 
@@ -468,6 +477,12 @@ export const MobileOrdersPage: React.FC = () => {
                       <p className="text-gray-600 text-base">
                         {order.restaurantName}
                       </p>
+                      {(order.facilityName || order.meetingRoom) && (
+                        <p className="text-gray-600 text-sm flex items-center mt-1">
+                          <span className="text-xs mr-1">🏢</span>
+                          {order.facilityName || order.meetingRoom}
+                        </p>
+                      )}
                       {order.totalAmount > 0 && (
                         <p className="text-gray-800 font-medium text-sm mt-1">
                           ₹{order.totalAmount}
