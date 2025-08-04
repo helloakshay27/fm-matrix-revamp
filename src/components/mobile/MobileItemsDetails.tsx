@@ -11,7 +11,12 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { restaurantApi } from "@/services/restaurantApi";
-import { DeliveryDining, Note, NoteAdd, NoteAddOutlined } from "@mui/icons-material";
+import {
+  DeliveryDining,
+  Note,
+  NoteAdd,
+  NoteAddOutlined,
+} from "@mui/icons-material";
 
 interface MenuItem {
   id: string;
@@ -36,6 +41,8 @@ export const MobileItemsDetails: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  // const source = sessionStorage.get("app_source")
+  // console.log("source", source);
 
   // Check if user is from external scan (Google Lens, etc.)
   const sourceParam = searchParams.get("source");
@@ -449,29 +456,31 @@ export const MobileItemsDetails: React.FC = () => {
         </div>
       </div>
 
-      <div className="mx-4 mt-4">
-        <div className="flex items-center mb-3">
-          <div className="bg-white rounded-xl w-full p-4 gap-2">
-            <div className="text-gray-900 gap-2 mr-2 bg-white  font-medium">
-            <label className="text-bold gap-2 flex items-center">
-              <div className="bg-gray-300 rounded-sm">
-              <DeliveryDining className="" />
+      { ( sourceParam === "app") && (
+        <div className="mx-4 mt-4">
+          <div className="flex items-center mb-3">
+            <div className="bg-white rounded-xl w-full p-4 gap-2">
+              <div className="text-gray-900 gap-2 mr-2 bg-white  font-medium">
+                <label className="text-bold gap-2 flex items-center">
+                  <div className="bg-gray-300 rounded-sm">
+                    <DeliveryDining className="" />
+                  </div>
+                  Delivery Location <span className="text-red-500">*</span>
+                </label>
               </div>
-               Delivery Location  <span className="text-red-500">*</span>
-            </label>
+              <div>
+                <input
+                  onChange={(e) => setInputLocation(e.target.value)}
+                  value={inputLocation || ""}
+                  type="text"
+                  className="w-full bg-white resize-none  text-gray-600 mt-2 p-1 rounded-md border border-gray-300 focus:ring-2 focus:ring-red-500 outline-none"
+                  placeholder="Enter delivery location"
+                />
               </div>
-            <div>
-            <input
-              onChange={(e) => setInputLocation(e.target.value)}
-              value={inputLocation || ""}
-              type="text"
-              className="w-full bg-white resize-none  text-gray-600 mt-2 p-1 rounded-md border border-gray-300 focus:ring-2 focus:ring-red-500 outline-none"
-              placeholder="Enter delivery location"
-            />
             </div>
           </div>
         </div>
-      </div>
+      )}
       {/* Note Section */}
       <div className="mx-4 mt-4">
         <div className="bg-white rounded-xl p-4">
@@ -529,7 +538,7 @@ export const MobileItemsDetails: React.FC = () => {
               <Textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="do not add egg in the noodles"
+                placeholder=""
                 className="w-full border-0 bg-white rounded-lg p-3 resize-none focus:ring-0 text-gray-600"
                 rows={4}
               />

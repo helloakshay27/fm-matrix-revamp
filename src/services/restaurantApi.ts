@@ -163,6 +163,7 @@ export interface FoodOrder {
   facility_id?: number;
   facility_name?: string;
   meeting_room?: string;
+  location?: string;
 }
 
 export interface FoodOrdersResponse {
@@ -688,6 +689,8 @@ export interface AdminOrder {
   payment_status_class?: string;
   meeting_room?: string;
   details_url?: string;
+  location?: string;
+  facility_name?: string;
 }
 
 export interface AdminOrdersResponse {

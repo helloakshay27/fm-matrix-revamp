@@ -404,12 +404,12 @@ export const MobileAdminOrdersPage = () => {
                       <User className="w-4 h-4 mr-1" />
                       {order.created_by}
                     </div>
-                    {order.meeting_room && (
+                    {(order.meeting_room || order.location || order.facility_name ) && (
                       <div className="flex items-center text-sm text-gray-600 mb-2">
                         <div className="w-4 h-4 mr-1 flex items-center justify-center">
                           <span className="text-xs">🏢</span>
                         </div>
-                        {order.meeting_room}
+                        {order.meeting_room || order.location || order.facility_name}
                       </div>
                     )}
                     <div className="text-xs text-gray-500">
