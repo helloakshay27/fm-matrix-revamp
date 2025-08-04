@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchFMUsers, FMUser, getFMUsers } from "@/store/slices/fmUserSlice";
+import { FMUser, getFMUsers } from "@/store/slices/fmUserSlice";
 import { fetchUserCounts } from "@/store/slices/userCountsSlice";
 import { StatsCard } from "@/components/StatsCard";
 import { Button } from "@/components/ui/button";
@@ -99,6 +99,7 @@ export const FMUserMasterDashboard = () => {
   // Transform API data to table format
   const [fmUsersData, setFmUsersData] = useState<any[]>([]);
   const [filteredFMUsersData, setFilteredFMUsersData] = useState<any[]>([]);
+  const [cloneLoading, setCloneLoading] = useState(false)
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_count: 0,
@@ -153,23 +154,23 @@ export const FMUserMasterDashboard = () => {
     [dispatch, baseUrl, token]
   );
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await dispatch(getFMUsers({ baseUrl, token, perPage: 10, currentPage: pagination.current_page })).unwrap();
-        const transformedData = response.fm_users.map(transformFMUserData);
-        setFmUsersData(transformedData);
-        setFilteredFMUsersData(transformedData);
-        setPagination({
-          current_page: response.current_page,
-          total_count: response.total_count,
-          total_pages: response.total_pages
-        });
-      } catch (error) {
-        console.log(error);
-      }
-    };
+  const fetchUsers = async () => {
+    try {
+      const response = await dispatch(getFMUsers({ baseUrl, token, perPage: 10, currentPage: pagination.current_page })).unwrap();
+      const transformedData = response.fm_users.map(transformFMUserData);
+      setFmUsersData(transformedData);
+      setFilteredFMUsersData(transformedData);
+      setPagination({
+        current_page: response.current_page,
+        total_count: response.total_count,
+        total_pages: response.total_pages
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
+  useEffect(() => {
     fetchUsers();
   }, [dispatch, baseUrl, token]);
 
@@ -209,8 +210,7 @@ export const FMUserMasterDashboard = () => {
     {
       key: "employeeId",
       label: "Employee ID",
-      sortable: true,
-      draggable: true,
+      sortable: true, draggable: true,
     },
     { key: "createdBy", label: "Created By", sortable: true, draggable: true },
     {
@@ -348,6 +348,7 @@ export const FMUserMasterDashboard = () => {
         )
       );
       toast.success("User status updated successfully!");
+      dispatch(fetchUserCounts());
       setStatusDialogOpen(false);
       setSelectedUser(null);
       setSelectedStatus("");
@@ -363,7 +364,7 @@ export const FMUserMasterDashboard = () => {
       const response = await axios.get(
         `https://${localStorage.getItem(
           "baseUrl"
-        )}/pms/account_setups/export_users.json`,
+        )}/pms/account_setups/export_users.xlsx`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -448,19 +449,32 @@ export const FMUserMasterDashboard = () => {
   };
 
   const handleCloneRoleSubmit = async () => {
+    setCloneLoading(true);
     try {
-      if (activeTab === "handover") {
-        toast.success("Role handover successful!");
-      } else {
-        toast.success("Role cloning successful!");
+      const operationType = activeTab === "handover" ? "transfer" : "clone";
+      const response = await axios.post(
+        `https://${baseUrl}/pms/users/clone_user.json?clone_from_id=${fromUser}&clone_to_id=${toUser}&type=${operationType}`, {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status !== 200) {
+        throw new Error(`Failed to ${operationType} role`);
       }
 
+      toast.success(`Role ${operationType} successful!`);
       setCloneRoleDialogOpen(false);
       setFromUser("");
       setToUser("");
       setActiveTab("handover");
     } catch (error) {
-      toast.error("Failed to clone or handover role.");
+      console.error("Role operation failed:", error);
+      toast.error(`Failed to ${activeTab === "handover" ? "transfer" : "clone"} role.`);
+    } finally {
+      setCloneLoading(false);
     }
   };
 
@@ -737,6 +751,7 @@ export const FMUserMasterDashboard = () => {
           title="Total Users"
           value={totalUsers}
           icon={<Users className="w-6 h-6" />}
+          onClick={fetchUsers}
           className="cursor-pointer"
         />
         <StatsCard
@@ -758,6 +773,7 @@ export const FMUserMasterDashboard = () => {
           value={rejectedUsers}
           icon={<Users className="w-6 h-6" />}
           onClick={() => cardFilter('rejected')}
+          className="cursor-pointer"
         />
         <StatsCard
           title="App Downloaded"
@@ -949,7 +965,11 @@ export const FMUserMasterDashboard = () => {
           <div className="p-6">
             <Tabs
               value={activeTab}
-              onValueChange={setActiveTab}
+              onValueChange={(value) => {
+                setActiveTab(value);
+                setFromUser("");
+                setToUser("");
+              }}
               className="w-full"
             >
               <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -1020,6 +1040,30 @@ export const FMUserMasterDashboard = () => {
               <TabsContent value="clone" className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    From User
+                  </label>
+                  <Select value={fromUser} onValueChange={setFromUser}>
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border shadow-lg z-50">
+                      {fmUsersData.length > 0 ? (
+                        fmUsersData.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.userName}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="" disabled className="text-gray-400">
+                          No users available
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
                     To User
                   </label>
                   <Select value={toUser} onValueChange={setToUser}>
@@ -1048,7 +1092,7 @@ export const FMUserMasterDashboard = () => {
               <Button
                 onClick={handleCloneRoleSubmit}
                 className="bg-[#C72030] hover:bg-[#a91b29] text-white px-8 py-2 rounded-md"
-                disabled={!toUser || (activeTab === "handover" && !fromUser)}
+                disabled={!toUser || !fromUser || cloneLoading}
               >
                 Submit
               </Button>

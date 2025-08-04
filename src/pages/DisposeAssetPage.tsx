@@ -101,7 +101,7 @@ export const DisposeAssetPage: React.FC = () => {
   const [vendorBids, setVendorBids] = useState([
     { vendor_name: "", bidding_cost: "" },
   ]);
-  const [attachments, setAttachments] = useState<string[]>([]);
+  const [attachments, setAttachments] = useState<File[]>([]);
 
   // Function to refresh a specific asset's data
   const handleAssetUpdate = async (assetId: number) => {
@@ -236,7 +236,7 @@ export const DisposeAssetPage: React.FC = () => {
       await axios.post(`https://${baseUrl}/pms/asset_disposal`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
         },
       });
 
@@ -345,6 +345,8 @@ export const DisposeAssetPage: React.FC = () => {
                 <CommentsAttachmentsSection
                   comments={comments}
                   onCommentsChange={setComments}
+                  attachments={attachments}
+                  onAttachmentsChange={setAttachments}
                 />
               </div>
 

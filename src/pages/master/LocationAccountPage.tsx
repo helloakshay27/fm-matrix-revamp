@@ -38,7 +38,7 @@ export const LocationAccountPage = () => {
   const { getFullUrl, getAuthHeader } = useApiConfig();
   const [activeTab, setActiveTab] = useState('organization');
   const [searchQuery, setSearchQuery] = useState('');
-  const [companyName, setCompanyName] = useState('Lockated HO');
+  const [companyName, setCompanyName] = useState("");
   const [removeLogo, setRemoveLogo] = useState(false);
   const [dailyReport, setDailyReport] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState('25');
@@ -109,7 +109,7 @@ export const LocationAccountPage = () => {
 
   const [userCategories, setUserCategories] = useState<any[]>([]);
   const [isEditUserCategoryOpen, setIsEditUserCategoryOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<{id: number, name: string, resource_type?: string, resource_id?: number} | null>(null);
+  const [editingCategory, setEditingCategory] = useState<{ id: number, name: string, resource_type?: string, resource_id?: number } | null>(null);
 
   // Fetch user categories from API
   useEffect(() => {
@@ -127,7 +127,7 @@ export const LocationAccountPage = () => {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setUserCategories(data);
@@ -174,7 +174,7 @@ export const LocationAccountPage = () => {
 
     setEntities([...entities, newEntity]);
     toast.success(`Entity "${entityName}" added successfully`);
-    
+
     // Reset form and close the form section
     setEntityName('');
     setShowEntityForm(false);
@@ -304,7 +304,7 @@ export const LocationAccountPage = () => {
       toast.error('Please select at least one zone to edit');
       return;
     }
-    
+
     // Pre-fill form with data from the first selected zone
     const firstSelectedZone = selectedZonesForEdit[0];
     setEditZoneData({
@@ -312,7 +312,7 @@ export const LocationAccountPage = () => {
       headquarter: 'India', // Default value
       region: 'west' // Default value
     });
-    
+
     setIsEditZoneOpen(false);
     setIsEditZoneFormOpen(true);
   };
@@ -322,7 +322,7 @@ export const LocationAccountPage = () => {
       toast.error('Please fill in all required fields');
       return;
     }
-    
+
     toast.success(`Zone "${editZoneData.zoneName}" updated successfully`);
     setIsEditZoneFormOpen(false);
     setSelectedZonesForEdit([]);
@@ -351,7 +351,7 @@ export const LocationAccountPage = () => {
 
     setRegions([...regions, newRegion]);
     toast.success(`Region "${newRegionData.regionName}" added successfully`);
-    
+
     // Reset form and close dialog
     setNewRegionData({ country: '', regionName: '' });
     setIsAddRegionOpen(false);
@@ -378,7 +378,7 @@ export const LocationAccountPage = () => {
 
     setCountries([...countries, newCountry]);
     toast.success(`Country "${selectedCountryToAdd}" added successfully`);
-    
+
     // Reset form and close dialog
     setSelectedCountryToAdd('');
     setIsAddCountryOpen(false);
@@ -391,12 +391,12 @@ export const LocationAccountPage = () => {
     }
 
     // Check if zone already exists
-    const zoneExists = zones.some(zone => 
-      zone.country === newZoneData.country && 
-      zone.region === newZoneData.region && 
+    const zoneExists = zones.some(zone =>
+      zone.country === newZoneData.country &&
+      zone.region === newZoneData.region &&
       zone.zone === newZoneData.zoneName
     );
-    
+
     if (zoneExists) {
       toast.error('This zone already exists in the selected country and region');
       return;
@@ -413,7 +413,7 @@ export const LocationAccountPage = () => {
 
     setZones([...zones, newZone]);
     toast.success(`Zone "${newZoneData.zoneName}" added successfully`);
-    
+
     // Reset form and close dialog
     setNewZoneData({ country: '', region: '', zoneName: '' });
     setIsAddZoneOpen(false);
@@ -443,7 +443,7 @@ export const LocationAccountPage = () => {
               <div className="w-16 h-16 bg-gray-100 rounded-lg mb-4 flex items-center justify-center">
                 <Upload className="w-8 h-8 text-gray-400" />
               </div>
-              <h2 className="text-xl font-semibold text-[#1a1a1a] mb-2">Lockated H.O</h2>
+              <h2 className="text-xl font-semibold text-[#1a1a1a] mb-2">{localStorage.getItem('selectedOrg')}</h2>
             </CardContent>
           </Card>
         </TabsContent>
@@ -475,7 +475,8 @@ export const LocationAccountPage = () => {
                 </label>
                 <input
                   type="text"
-                  value={companyName}
+                  disabled
+                  value={localStorage.getItem('selectedCompany')}
                   onChange={(e) => setCompanyName(e.target.value)}
                   className="w-full max-w-md p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                 />
@@ -548,7 +549,7 @@ export const LocationAccountPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Country Name
                     </label>
-                    <select 
+                    <select
                       value={selectedCountryToAdd}
                       onChange={(e) => setSelectedCountryToAdd(e.target.value)}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] bg-white"
@@ -563,7 +564,7 @@ export const LocationAccountPage = () => {
                     <Button variant="outline" onClick={() => setIsAddCountryOpen(false)}>
                       Cancel
                     </Button>
-                    <Button 
+                    <Button
                       className="bg-[#C72030] hover:bg-[#A01020] text-white"
                       onClick={handleAddCountry}
                     >
@@ -606,14 +607,14 @@ export const LocationAccountPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {countries.filter(country => 
+                  {countries.filter(country =>
                     country.name.toLowerCase().includes(searchQuery.toLowerCase())
                   ).map((country, index) => (
                     <TableRow key={index}>
                       <TableCell>{country.name}</TableCell>
                       <TableCell>
-                        <Switch 
-                          checked={country.status} 
+                        <Switch
+                          checked={country.status}
                           onCheckedChange={(checked) => handleCountryStatusChange(index, checked)}
                           className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
                         />
@@ -651,9 +652,9 @@ export const LocationAccountPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Country
                     </label>
-                    <select 
+                    <select
                       value={newRegionData.country}
-                      onChange={(e) => setNewRegionData({...newRegionData, country: e.target.value})}
+                      onChange={(e) => setNewRegionData({ ...newRegionData, country: e.target.value })}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                     >
                       <option value="">Select Country</option>
@@ -669,7 +670,7 @@ export const LocationAccountPage = () => {
                     <input
                       type="text"
                       value={newRegionData.regionName}
-                      onChange={(e) => setNewRegionData({...newRegionData, regionName: e.target.value})}
+                      onChange={(e) => setNewRegionData({ ...newRegionData, regionName: e.target.value })}
                       className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                       placeholder="Enter region name"
                     />
@@ -678,7 +679,7 @@ export const LocationAccountPage = () => {
                     <Button variant="outline" onClick={() => setIsAddRegionOpen(false)}>
                       Cancel
                     </Button>
-                    <Button 
+                    <Button
                       className="bg-[#C72030] hover:bg-[#A01020] text-white"
                       onClick={handleAddRegion}
                     >
@@ -727,8 +728,8 @@ export const LocationAccountPage = () => {
                       <TableCell>{region.country}</TableCell>
                       <TableCell>{region.region}</TableCell>
                       <TableCell>
-                        <Switch 
-                          checked={region.status} 
+                        <Switch
+                          checked={region.status}
                           onCheckedChange={(checked) => handleRegionStatusChange(index, checked)}
                           className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
                         />
@@ -767,9 +768,9 @@ export const LocationAccountPage = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Country
                       </label>
-                      <select 
+                      <select
                         value={newZoneData.country}
-                        onChange={(e) => setNewZoneData({...newZoneData, country: e.target.value})}
+                        onChange={(e) => setNewZoneData({ ...newZoneData, country: e.target.value })}
                         className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                       >
                         <option value="">Select Country</option>
@@ -782,9 +783,9 @@ export const LocationAccountPage = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Region
                       </label>
-                      <select 
+                      <select
                         value={newZoneData.region}
-                        onChange={(e) => setNewZoneData({...newZoneData, region: e.target.value})}
+                        onChange={(e) => setNewZoneData({ ...newZoneData, region: e.target.value })}
                         className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                       >
                         <option value="">Select Region</option>
@@ -800,7 +801,7 @@ export const LocationAccountPage = () => {
                       <input
                         type="text"
                         value={newZoneData.zoneName}
-                        onChange={(e) => setNewZoneData({...newZoneData, zoneName: e.target.value})}
+                        onChange={(e) => setNewZoneData({ ...newZoneData, zoneName: e.target.value })}
                         className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                         placeholder="Enter zone name"
                       />
@@ -809,7 +810,7 @@ export const LocationAccountPage = () => {
                       <Button variant="outline" onClick={() => setIsAddZoneOpen(false)}>
                         Cancel
                       </Button>
-                      <Button 
+                      <Button
                         className="bg-[#C72030] hover:bg-[#A01020] text-white"
                         onClick={handleAddZone}
                       >
@@ -855,7 +856,7 @@ export const LocationAccountPage = () => {
                       ))}
                     </div>
                     <div className="flex justify-end pt-4">
-                      <Button 
+                      <Button
                         className="bg-blue-600 hover:bg-blue-700 text-white px-6"
                         onClick={handleEditSelectedZones}
                       >
@@ -902,7 +903,7 @@ export const LocationAccountPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {zones.filter(zone => 
+                  {zones.filter(zone =>
                     zone.country.toLowerCase().includes(searchQuery.toLowerCase())
                   ).map((zone, index) => (
                     <TableRow key={index}>
@@ -910,8 +911,8 @@ export const LocationAccountPage = () => {
                       <TableCell>{zone.region}</TableCell>
                       <TableCell>{zone.zone}</TableCell>
                       <TableCell>
-                        <Switch 
-                          checked={zone.status} 
+                        <Switch
+                          checked={zone.status}
                           onCheckedChange={(checked) => handleZoneStatusChange(index, checked)}
                           className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
                         />
@@ -955,8 +956,8 @@ export const LocationAccountPage = () => {
                       <TableCell>{site.latitude}</TableCell>
                       <TableCell>{site.longitude}</TableCell>
                       <TableCell>
-                        <Switch 
-                          checked={site.status} 
+                        <Switch
+                          checked={site.status}
                           onCheckedChange={(checked) => handleSiteStatusChange(index, checked)}
                           className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
                         />
@@ -976,7 +977,7 @@ export const LocationAccountPage = () => {
 
         <TabsContent value="entity" className="space-y-4">
           <div className="flex items-center justify-between mb-4">
-            <Button 
+            <Button
               className="bg-[#C72030] hover:bg-[#A01020] text-white"
               onClick={() => setShowEntityForm(!showEntityForm)}
             >
@@ -1040,8 +1041,8 @@ export const LocationAccountPage = () => {
                         </Button>
                       </TableCell>
                       <TableCell>
-                        <Switch 
-                          checked={entity.status} 
+                        <Switch
+                          checked={entity.status}
                           onCheckedChange={(checked) => handleEntityStatusChange(index, checked)}
                           className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
                         />
@@ -1085,7 +1086,7 @@ export const LocationAccountPage = () => {
                     <Button variant="outline" onClick={() => setIsAddUserCategoryOpen(false)}>
                       Cancel
                     </Button>
-                    <Button 
+                    <Button
                       className="bg-[#C72030] hover:bg-[#A01020] text-white"
                       onClick={handleSubmitUserCategory}
                     >
@@ -1152,9 +1153,9 @@ export const LocationAccountPage = () => {
                         <TableCell>{category.resource_type}</TableCell>
                         <TableCell>{new Date(category.created_at).toLocaleDateString()}</TableCell>
                         <TableCell>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             className="h-8 w-8 p-0"
                             onClick={() => handleEditUserCategory(category)}
                           >
@@ -1183,7 +1184,7 @@ export const LocationAccountPage = () => {
                   <input
                     type="text"
                     value={editingCategory?.name || ''}
-                    onChange={(e) => setEditingCategory(editingCategory ? {...editingCategory, name: e.target.value} : null)}
+                    onChange={(e) => setEditingCategory(editingCategory ? { ...editingCategory, name: e.target.value } : null)}
                     className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                     placeholder="Enter user category name"
                   />
@@ -1192,7 +1193,7 @@ export const LocationAccountPage = () => {
                   <Button variant="outline" onClick={() => setIsEditUserCategoryOpen(false)}>
                     Cancel
                   </Button>
-                  <Button 
+                  <Button
                     className="bg-[#C72030] hover:bg-[#A01020] text-white"
                     onClick={handleUpdateUserCategory}
                   >
@@ -1227,12 +1228,12 @@ export const LocationAccountPage = () => {
               <input
                 type="text"
                 value={editZoneData.zoneName}
-                onChange={(e) => setEditZoneData({...editZoneData, zoneName: e.target.value})}
+                onChange={(e) => setEditZoneData({ ...editZoneData, zoneName: e.target.value })}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] bg-white"
                 placeholder="Enter zone name"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Headquarter
@@ -1240,12 +1241,12 @@ export const LocationAccountPage = () => {
               <input
                 type="text"
                 value={editZoneData.headquarter}
-                onChange={(e) => setEditZoneData({...editZoneData, headquarter: e.target.value})}
+                onChange={(e) => setEditZoneData({ ...editZoneData, headquarter: e.target.value })}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] bg-white"
                 placeholder="Enter headquarter"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Region
@@ -1253,12 +1254,12 @@ export const LocationAccountPage = () => {
               <input
                 type="text"
                 value={editZoneData.region}
-                onChange={(e) => setEditZoneData({...editZoneData, region: e.target.value})}
+                onChange={(e) => setEditZoneData({ ...editZoneData, region: e.target.value })}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] bg-white"
                 placeholder="Enter region"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Upload Image
@@ -1280,9 +1281,9 @@ export const LocationAccountPage = () => {
                 <span className="ml-3 text-sm text-gray-500">No file chosen</span>
               </div>
             </div>
-            
+
             <div className="flex justify-end pt-4">
-              <Button 
+              <Button
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2"
                 onClick={handleSaveZoneChanges}
               >

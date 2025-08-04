@@ -22,6 +22,9 @@ import { AMCTypeDistributionCard } from '@/components/AMCTypeDistributionCard';
 import { AMCExpiryAnalysisCard } from '@/components/AMCExpiryAnalysisCard';
 import { AMCServiceTrackingCard } from '@/components/AMCServiceTrackingCard';
 import { AMCVendorPerformanceCard } from '@/components/AMCVendorPerformanceCard';
+import { AMCUnitResourceCard } from '@/components/AMCUnitResourceCard';
+import { AMCServiceStatsCard } from '@/components/AMCServiceStatsCard';
+import { AMCCoverageByLocationCard } from '@/components/AMCCoverageByLocationCard';
 import { InventoryAnalyticsCard } from '@/components/InventoryAnalyticsCard';
 import { ScheduleAnalyticsCard } from '@/components/dashboard/ScheduleAnalyticsCard';
 // Import individual asset analytics components
@@ -246,11 +249,20 @@ export const Dashboard = () => {
                 case 'type_distribution':
                   promises.push(amcAnalyticsAPI.getAMCTypeDistribution(dateRange.from, dateRange.to));
                   break;
+                case 'unit_resource_wise':
+                  promises.push(amcAnalyticsAPI.getAMCUnitResourceWise(dateRange.from, dateRange.to));
+                  break;
+                case 'service_stats':
+                  promises.push(amcAnalyticsAPI.getAMCServiceStats(dateRange.from, dateRange.to));
+                  break;
                 case 'expiry_analysis':
                   promises.push(amcAnalyticsAPI.getAMCExpiryAnalysis(dateRange.from, dateRange.to));
                   break;
                 case 'service_tracking':
                   promises.push(amcAnalyticsAPI.getAMCServiceTracking(dateRange.from, dateRange.to));
+                  break;
+                case 'coverage_by_location':
+                  promises.push(amcAnalyticsAPI.getAMCCoverageByLocation(dateRange.from, dateRange.to));
                   break;
                 case 'vendor_performance':
                   promises.push(amcAnalyticsAPI.getAMCVendorPerformance(dateRange.from, dateRange.to));
@@ -731,6 +743,32 @@ export const Dashboard = () => {
                 />
               </SortableChartItem>
             );
+          case 'unit_resource_wise':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <AMCUnitResourceCard
+                  data={data}
+                  onDownload={async () => {
+                    if (dateRange?.from && dateRange?.to) {
+                      await amcAnalyticsDownloadAPI.downloadAMCUnitResourceWise(dateRange.from, dateRange.to);
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+          case 'service_stats':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <AMCServiceStatsCard
+                  data={data}
+                  onDownload={async () => {
+                    if (dateRange?.from && dateRange?.to) {
+                      await amcAnalyticsDownloadAPI.downloadAMCServiceStats(dateRange.from, dateRange.to);
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
           case 'expiry_analysis':
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
@@ -752,6 +790,19 @@ export const Dashboard = () => {
                   onDownload={async () => {
                     if (dateRange?.from && dateRange?.to) {
                       await amcAnalyticsDownloadAPI.downloadAMCServiceTracking(dateRange.from, dateRange.to);
+                    }
+                  }}
+                />
+              </SortableChartItem>
+            );
+          case 'coverage_by_location':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <AMCCoverageByLocationCard
+                  data={data}
+                  onDownload={async () => {
+                    if (dateRange?.from && dateRange?.to) {
+                      await amcAnalyticsDownloadAPI.downloadAMCCoverageByLocation(dateRange.from, dateRange.to);
                     }
                   }}
                 />

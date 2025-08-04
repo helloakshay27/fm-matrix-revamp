@@ -5,7 +5,6 @@ import { ArrowLeft, X, Plus, FileText, FileSpreadsheet, File, Eye, Download } fr
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText } from '@mui/material';
-import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
 import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
@@ -35,8 +34,7 @@ export const EditAMCPage = () => {
     details: '',
     type: 'Individual',
     assetName: '',
-    asset_ids: [] as string[],
-    vendor: '',
+    asset_ids: [] as number[],
     group: '',
     subgroup: '',
     service: '',
@@ -44,7 +42,7 @@ export const EditAMCPage = () => {
     startDate: '',
     endDate: '',
     cost: '',
-    contractName: '', // Added new field
+    contractName: '',
     paymentTerms: '',
     firstService: '',
     noOfVisits: '',
@@ -54,14 +52,13 @@ export const EditAMCPage = () => {
   // Error state for validation
   const [errors, setErrors] = useState({
     asset_ids: '',
-    vendor: '',
     group: '',
     supplier: '',
     service: '',
     startDate: '',
     endDate: '',
     cost: '',
-    contractName: '', // Added new error field
+    contractName: '',
     paymentTerms: '',
     firstService: '',
     noOfVisits: ''
@@ -95,12 +92,95 @@ export const EditAMCPage = () => {
   }, [dispatch, id]);
 
   // Update form data when AMC data is loaded
+  // useEffect(() => {
+  //   if (amcData && typeof amcData === 'object') {
+  //     const data = amcData as any;
+  //     const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
+  //     const isGroupType = data.resource_type === 'Pms::Asset';
+
+  //     // Set existing files from API response
+  //     if (data.amc_contracts && Array.isArray(data.amc_contracts)) {
+  //       const contractFiles = data.amc_contracts.flatMap((contract: any) =>
+  //         contract.documents ? contract.documents.map((doc: any) => ({
+  //           document_url: doc.document_url,
+  //           document_name: doc.document_name,
+  //           attachment_id: doc.attachment_id
+  //         })) : []
+  //       );
+  //       setExistingFiles(prev => ({ ...prev, contracts: contractFiles }));
+  //     }
+
+  //     if (data.amc_invoices && Array.isArray(data.amc_invoices)) {
+  //       const invoiceFiles = data.amc_invoices.flatMap((invoice: any) =>
+  //         invoice.documents ? invoice.documents.map((doc: any) => ({
+  //           document_url: doc.document_url,
+  //           document_name: doc.document_name,
+  //           attachment_id: doc.attachment_id
+  //         })) : []
+  //       );
+  //       setExistingFiles(prev => ({ ...prev, invoices: invoiceFiles }));
+  //     }
+
+  //     // Determine the correct form values based on API response
+  //     const isAssetType = data.asset_id ? true : false;
+  //     const isServiceType = data.service_id ? true : false;
+  //     const isIndividualType = data.resource_type === 'Pms::Asset';
+
+  //     // Handle asset IDs
+  //     let assetIds = [];
+  //     if (data.asset_id) {
+  //       if (typeof data.asset_id === 'string') {
+  //         try {
+  //           const parsed = JSON.parse(data.asset_id);
+  //           assetIds = Array.isArray(parsed) ? parsed : [data.asset_id];
+  //         } catch {
+  //           assetIds = [data.asset_id];
+  //         }
+  //       } else if (Array.isArray(data.asset_id)) {
+  //         assetIds = data.asset_id;
+  //       } else {
+  //         assetIds = [data.asset_id];
+  //       }
+  //       assetIds = assetIds.map(id => id.toString());
+  //     }
+
+  //     const supplierId = data.supplier_id?.toString();
+  //     const foundSupplier = suppliers.find(supplier => supplier.id.toString() === supplierId);
+  //     const serviceId = data.service_id?.toString();
+  //     const foundService = services.find(service => service.id.toString() === serviceId);
+
+  //     setFormData({
+  //       details: detailType,
+  //       type: isGroupType ? 'Group' : 'Individual',
+  //       assetName: foundService ? serviceId : '',
+  //       asset_ids: assetIds,
+  //       group: isGroupType ? (data.group_id?.toString() || '') : '',
+  //       subgroup: data.sub_group_id || '',
+  //       service: foundService ? serviceId : '',
+  //       supplier: foundSupplier ? supplierId : '',
+  //       startDate: data.amc_start_date || '',
+  //       endDate: data.amc_end_date || '',
+  //       cost: data.amc_cost?.toString() || '',
+  //       contractName: data.contract_name || '',
+  //       paymentTerms: data.payment_term || '',
+  //       firstService: data.amc_first_service || '',
+  //       noOfVisits: data.no_of_visits?.toString() || '',
+  //       remarks: data.remarks || ''
+  //     });
+
+  //     // Ensure handleGroupChange is called with the group_id
+  //     if (isGroupType && data.group_id) {
+  //       handleGroupChange(data.group_id.toString());
+  //     }
+  //   }
+  // }, [amcData, assets, suppliers, services]);
+
   useEffect(() => {
     if (amcData && typeof amcData === 'object') {
       const data = amcData as any;
       const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
       const isGroupType = data.resource_type === 'Pms::Asset';
-
+  
       // Set existing files from API response
       if (data.amc_contracts && Array.isArray(data.amc_contracts)) {
         const contractFiles = data.amc_contracts.flatMap((contract: any) =>
@@ -112,74 +192,39 @@ export const EditAMCPage = () => {
         );
         setExistingFiles(prev => ({ ...prev, contracts: contractFiles }));
       }
-
-      if (data.amc_invoices && Array.isArray(data.amc_invoices)) {
-        const invoiceFiles = data.amc_invoices.flatMap((invoice: any) =>
-          invoice.documents ? invoice.documents.map((doc: any) => ({
-            document_url: doc.document_url,
-            document_name: doc.document_name,
-            attachment_id: doc.attachment_id
-          })) : []
-        );
-        setExistingFiles(prev => ({ ...prev, invoices: invoiceFiles }));
-      }
-
-      // Determine the correct form values based on API response
-      const isAssetType = data.asset_id ? true : false;
-      const isServiceType = data.service_id ? true : false;
-      const isIndividualType = data.resource_type === 'Pms::Asset';
-
-      // Handle asset IDs
-      let assetIds = [];
-      if (data.asset_id) {
-        if (typeof data.asset_id === 'string') {
-          try {
-            const parsed = JSON.parse(data.asset_id);
-            assetIds = Array.isArray(parsed) ? parsed : [data.asset_id];
-          } catch {
-            assetIds = [data.asset_id];
-          }
-        } else if (Array.isArray(data.asset_id)) {
-          assetIds = data.asset_id;
-        } else {
-          assetIds = [data.asset_id];
-        }
-        assetIds = assetIds.map(id => id.toString());
-      }
-
-      const supplierId = data.supplier_id?.toString();
-      const foundSupplier = suppliers.find(supplier => supplier.id.toString() === supplierId);
-      const serviceId = data.service_id?.toString();
-      const foundService = services.find(service => service.id.toString() === serviceId);
-
-      setFormData({
+  
+      // Preserve user-selected service
+      const serviceId = data.service_id?.toString() || '';
+      const currentService = formData.service; // Check formData.service
+      const newService = currentService || serviceId; // Use currentService if set
+  
+      setFormData(prev => ({
+        ...prev,
         details: detailType,
         type: isGroupType ? 'Group' : 'Individual',
-        assetName: foundService ? serviceId : '',
-        asset_ids: assetIds,
-        vendor: foundSupplier ? supplierId : '',
+        assetName: detailType === 'Service' && prev.type === 'Individual' ? newService : '',
+        asset_ids: data.asset_id ? (Array.isArray(data.asset_id) ? data.asset_id.map(id => id.toString()) : [data.asset_id.toString()]) : [],
         group: isGroupType ? (data.group_id?.toString() || '') : '',
-        subgroup: data.sub_group_id || '',
-        service: '',
-        supplier: foundSupplier ? supplierId : '',
+        subgroup: data.sub_group_id?.toString() || '',
+        service: detailType === 'Service' ? newService : '', // Use newService to preserve user input
+        supplier: data.supplier_id?.toString() || '',
         startDate: data.amc_start_date || '',
         endDate: data.amc_end_date || '',
         cost: data.amc_cost?.toString() || '',
-        contractName: data.contract_name || '', // Added new field
+        contractName: data.contract_name || '',
         paymentTerms: data.payment_term || '',
         firstService: data.amc_first_service || '',
         noOfVisits: data.no_of_visits?.toString() || '',
         remarks: data.remarks || ''
-      });
-
-      // Ensure handleGroupChange is called with the group_id
+      }));
+  
       if (isGroupType && data.group_id) {
         handleGroupChange(data.group_id.toString());
       }
     }
   }, [amcData, assets, suppliers, services]);
-
   const handleInputChange = (field: string, value: string) => {
+    console.log(`Updating ${field} to ${value}`);
     setFormData(prev => {
       if (field === 'details' && prev.details !== value) {
         return {
@@ -204,7 +249,6 @@ export const EditAMCPage = () => {
         [field]: value
       };
     });
-    // Clear error for the field being updated
     setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
@@ -342,7 +386,7 @@ export const EditAMCPage = () => {
         newErrors.asset_ids = 'Please select at least one asset.';
         isValid = false;
       }
-      if (!formData.vendor) {
+      if (!formData.supplier) {
         newErrors.vendor = 'Please select a supplier.';
         isValid = false;
       }
@@ -351,7 +395,7 @@ export const EditAMCPage = () => {
         newErrors.service = 'Please select a service.';
         isValid = false;
       }
-      if (!formData.vendor) {
+      if (!formData.supplier) {
         newErrors.vendor = 'Please select a supplier.';
         isValid = false;
       }
@@ -421,58 +465,62 @@ export const EditAMCPage = () => {
     try {
       const sendData = new FormData();
 
-      // Append form data
-      sendData.append('pms_asset_amc[amc_cost]', (parseFloat(formData.cost) || '0').toString());
-      sendData.append('pms_asset_amc[contract_name]', formData.contractName); // Added new field
-      sendData.append('pms_asset_amc[amc_start_date]', formData.startDate || '');
-      sendData.append('pms_asset_amc[amc_end_date]', formData.endDate || '');
-      sendData.append('pms_asset_amc[amc_first_service]', formData.firstService || '');
-      sendData.append('pms_asset_amc[amc_frequency]', formData.paymentTerms || '');
-      sendData.append('pms_asset_amc[amc_period]', `${formData.startDate} - ${formData.endDate}`);
-      sendData.append('pms_asset_amc[no_of_visits]', (parseInt(formData.noOfVisits) || 0).toString());
-      sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms || '');
-      sendData.append('pms_asset_amc[remarks]', formData.remarks || '');
-      sendData.append('pms_asset_amc[pms_site_id]', (amcData as any)?.pms_site_id || '');
-      sendData.append('pms_asset_amc[site_name]', (amcData as any)?.site_name || '');
-      sendData.append('pms_asset_amc[resource_id]', (amcData as any)?.resource_id || '');
-      sendData.append('pms_asset_amc[resource_name]', (amcData as any)?.resource_name || '');
-      sendData.append('pms_asset_amc[resource_type]', (amcData as any)?.resource_type || '');
-      sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier || '');
 
-      // Add supplier details
-      const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
-      if (selectedSupplier) {
-        sendData.append('pms_asset_amc[amc_vendor_name]', selectedSupplier.company_name || '');
-        sendData.append('pms_asset_amc[amc_vendor_mobile]', selectedSupplier.mobile || '');
-        sendData.append('pms_asset_amc[amc_vendor_email]', selectedSupplier.email || '');
+      // sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
+      sendData.append('pms_asset_amc[checklist_type]', formData.details);
+      sendData.append('pms_asset_amc[amc_cost]', formData.cost);
+      sendData.append('pms_asset_amc[contract_name]', formData.contractName);
+      sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
+      sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
+      sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
+      sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
+      sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
+      sendData.append('pms_asset_amc[remarks]', formData.remarks);
+      sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Service");
+      if (action === 'schedule') {
+        sendData.append('pms_asset_amc[schedule_immediately]', 'true');
       }
 
-      // Add asset_ids, group_id, sub_group_id, or service_id based on details and type
       if (formData.details === 'Asset') {
         if (formData.type === 'Individual' && formData.asset_ids.length > 0) {
-          formData.asset_ids.forEach((id, index) => {
-            sendData.append(`pms_asset_amc[asset_ids][${index}]`, id);
+          sendData.append('pms_asset_amc[asset_id]', formData.asset_ids[0]);
+          formData.asset_ids.forEach((id: number) => {
+            sendData.append('asset_ids[]', id.toString());
           });
+
         } else if (formData.type === 'Group' && formData.group) {
-          sendData.append('pms_asset_amc[group_id]', formData.group);
+          sendData.append('group_id', formData.group);
+          sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
           if (formData.subgroup) {
-            sendData.append('pms_asset_amc[sub_group_id]', formData.subgroup);
+            sendData.append('sub_group_id', formData.subgroup);
           }
         }
-      } else if (formData.details === 'Service' && formData.assetName) {
-        sendData.append('pms_asset_amc[service_id]', formData.assetName);
+      } else if (formData.details === 'Service') {
+        if (formData.type === 'Individual' && formData.service) {
+          sendData.append('pms_asset_amc[resource_id]', formData.service);
+        } else if (formData.type === 'Group' && formData.service) {
+          sendData.append('pms_asset_amc[resource_id]', formData.service);
+          if (formData.group) {
+            sendData.append('group_id', formData.group);
+          }
+          if (formData.subgroup) {
+            sendData.append('sub_group_id', formData.subgroup);
+          }
+        }
       }
 
-      // Append attachments
-      attachments.contracts.forEach(file => {
+
+
+      attachments.contracts.forEach((file) => {
         sendData.append('amc_contracts[content][]', file);
       });
-      attachments.invoices.forEach(file => {
+
+      attachments.invoices.forEach((file) => {
         sendData.append('amc_invoices[content][]', file);
       });
 
+
       // Add subaction to indicate save action
-      sendData.append('subaction', 'save');
 
       // Make API call
       const response = await apiClient.put(`/pms/asset_amcs/${id}.json`, sendData, {
@@ -492,7 +540,6 @@ export const EditAMCPage = () => {
       } else if (action === 'updated new service') {
         navigate('/maintenance/amc');
       }
-
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -589,7 +636,6 @@ export const EditAMCPage = () => {
       console.error('Error downloading file:', err);
     }
   };
-
 
   return (
     <div className="p-6">
@@ -689,10 +735,13 @@ export const EditAMCPage = () => {
                         const value = e.target.value;
                         setFormData(prev => ({
                           ...prev,
-                          asset_ids: typeof value === 'string' ? value.split(',') : value
+                          asset_ids: typeof value === 'string'
+                            ? value.split(',').map(Number) // Convert to number[]
+                            : value
                         }));
                         setErrors(prev => ({ ...prev, asset_ids: '' }));
                       }}
+
                       sx={fieldStyles}
                       disabled={true}
                       renderValue={(selected) => {
@@ -721,43 +770,43 @@ export const EditAMCPage = () => {
                   </FormControl>
                 ) : (
                   <FormControl fullWidth variant="outlined" error={!!errors.service}>
-                    <InputLabel id="service-select-label" shrink>Service</InputLabel>
-                    <MuiSelect
-                      labelId="service-select-label"
-                      label="Service"
-                      displayEmpty
-                      value={formData.assetName}
-                      onChange={e => handleInputChange('assetName', e.target.value)}
-                      sx={fieldStyles}
-                      disabled={loading || servicesLoading || updateLoading}
-                      renderValue={(selected) => {
-                        if (!selected) {
-                          return <em>Select a Service...</em>;
-                        }
-                        const service = services.find(s => s.id.toString() === selected);
-                        return service ? service.service_name : selected;
-                      }}
-                    >
-                      <MenuItem value=""><em>Select a Service...</em></MenuItem>
-                      {Array.isArray(services) && services.map((service) => (
-                        <MenuItem key={service.id} value={service.id.toString()}>
-                          {service.service_name}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                    {errors.service && <FormHelperText>{errors.service}</FormHelperText>}
-                  </FormControl>
+                  <InputLabel id="service-select-label" shrink>Service</InputLabel>
+                  <MuiSelect
+                    labelId="service-select-label"
+                    label="Service"
+                    displayEmpty
+                    value={formData.service} // Use formData.service instead of assetName
+                    onChange={e => handleInputChange('service', e.target.value)} // Update service key
+                    sx={fieldStyles}
+                    disabled={loading || servicesLoading || updateLoading}
+                    renderValue={(selected) => {
+                      if (!selected) {
+                        return <em>Select a Service...</em>;
+                      }
+                      const service = services.find(s => s.id.toString() === selected);
+                      return service ? service.service_name : selected;
+                    }}
+                  >
+                    <MenuItem value=""><em>Select a Service...</em></MenuItem>
+                    {Array.isArray(services) && services.map((service) => (
+                      <MenuItem key={service.id} value={service.id.toString()}>
+                        {service.service_name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                  {errors.service && <FormHelperText>{errors.service}</FormHelperText>}
+                </FormControl>
                 )}
 
                 <div>
-                  <FormControl fullWidth variant="outlined" error={!!errors.vendor}>
+                  <FormControl fullWidth variant="outlined" error={!!errors.supplier}>
                     <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
                     <MuiSelect
                       labelId="vendor-select-label"
                       label="Supplier"
                       displayEmpty
-                      value={formData.vendor}
-                      onChange={e => handleInputChange('vendor', e.target.value)}
+                      value={formData.supplier}
+                      onChange={e => handleInputChange('supplier', e.target.value)}
                       sx={fieldStyles}
                       disabled={loading || suppliersLoading || updateLoading}
                       renderValue={(selected) => {
@@ -775,7 +824,7 @@ export const EditAMCPage = () => {
                         </MenuItem>
                       ))}
                     </MuiSelect>
-                    {errors.vendor && <FormHelperText>{errors.vendor}</FormHelperText>}
+                    {errors.supplier && <FormHelperText>{errors.supplier}</FormHelperText>}
                   </FormControl>
                 </div>
               </>
@@ -838,12 +887,21 @@ export const EditAMCPage = () => {
                           value={formData.service}
                           onChange={e => handleInputChange('service', e.target.value)}
                           sx={fieldStyles}
+                          disabled={loading || servicesLoading || updateLoading}
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <em>Select a Service...</em>;
+                            }
+                            const service = services.find(s => s.id.toString() === selected);
+                            return service ? service.service_name : selected;
+                          }}
                         >
-                          <MenuItem value=""><em>Select Service</em></MenuItem>
-                          <MenuItem value="preventive-maintenance">Preventive Maintenance</MenuItem>
-                          <MenuItem value="corrective-maintenance">Corrective Maintenance</MenuItem>
-                          <MenuItem value="emergency-service">Emergency Service</MenuItem>
-                          <MenuItem value="inspection-service">Inspection Service</MenuItem>
+                          <MenuItem value=""><em>Select a Service...</em></MenuItem>
+                          {Array.isArray(services) && services.map((service) => (
+                            <MenuItem key={service.id} value={service.id.toString()}>
+                              {service.service_name}
+                            </MenuItem>
+                          ))}
                         </MuiSelect>
                         {errors.service && <FormHelperText>{errors.service}</FormHelperText>}
                       </FormControl>
@@ -1138,7 +1196,6 @@ export const EditAMCPage = () => {
                           <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(file)}>
                             <Download className="w-3 h-3" />
                           </Button>
-
                         </div>
                       );
                     })}
@@ -1192,10 +1249,9 @@ export const EditAMCPage = () => {
                             </div>
                           )}
                           <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
-                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(file)}>
-                            <Download className="w-3 h-3" />
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-600" onClick={() => removeFile('invoices', index)}>
+                            <X className="w-3 h-3" />
                           </Button>
-
                         </div>
                       );
                     })}
@@ -1228,8 +1284,8 @@ export const EditAMCPage = () => {
                             </div>
                           )}
                           <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.document_name}</span>
-                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => window.open(file.document_url, '_blank')}>
-                            <Eye className="w-3 h-3" />
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(file)}>
+                            <Download className="w-3 h-3" />
                           </Button>
                         </div>
                       );
@@ -1249,7 +1305,7 @@ export const EditAMCPage = () => {
             style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90"
           >
-            {updateLoading ? 'Submiting...' : 'Submit'}
+            {updateLoading ? 'Submitting...' : 'Submit'}
           </Button>
         </div>
       </form>

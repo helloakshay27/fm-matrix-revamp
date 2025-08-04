@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Eye, Trash2, BarChart3, Download, Settings, Flag, Filter, Pencil } from 'lucide-react';
 import { AMCAnalyticsFilterDialog } from '@/components/AMCAnalyticsFilterDialog';
-import { amcAnalyticsAPI, AMCStatusData, AMCStatusSummary, AMCTypeDistribution, AMCExpiryAnalysis, AMCServiceTracking, AMCVendorPerformance, AMCComplianceReport } from '@/services/amcAnalyticsAPI';
+import { amcAnalyticsAPI, AMCStatusData, AMCStatusSummary, AMCTypeDistribution, AMCExpiryAnalysis, AMCServiceTrackingLog, AMCVendorPerformance, AMCComplianceReport, AMCUnitResourceData, AMCServiceStatsData, AMCLocationCoverageNode } from '@/services/amcAnalyticsAPI';
 import { amcAnalyticsDownloadAPI } from '@/services/amcAnalyticsDownloadAPI';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -16,7 +16,9 @@ import { AMCTypeDistributionCard } from '@/components/AMCTypeDistributionCard';
 import { AMCExpiryAnalysisCard } from '@/components/AMCExpiryAnalysisCard';
 import { AMCServiceTrackingCard } from '@/components/AMCServiceTrackingCard';
 import { AMCVendorPerformanceCard } from '@/components/AMCVendorPerformanceCard';
-import { AMCComplianceReportCard } from '@/components/AMCComplianceReportCard';
+import { AMCUnitResourceCard } from '@/components/AMCUnitResourceCard';
+import { AMCServiceStatsCard } from '@/components/AMCServiceStatsCard';
+import { AMCCoverageByLocationCard } from '@/components/AMCCoverageByLocationCard';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -168,11 +170,14 @@ export const AMCDashboard = () => {
   const [amcStatusSummary, setAmcStatusSummary] = useState<AMCStatusSummary | null>(null);
   const [amcTypeDistribution, setAmcTypeDistribution] = useState<AMCTypeDistribution[] | null>(null);
   const [amcExpiryAnalysis, setAmcExpiryAnalysis] = useState<AMCExpiryAnalysis[] | null>(null);
-  const [amcServiceTracking, setAmcServiceTracking] = useState<AMCServiceTracking[] | null>(null);
+  const [amcServiceTracking, setAmcServiceTracking] = useState<AMCServiceTrackingLog[] | null>(null);
   const [amcVendorPerformance, setAmcVendorPerformance] = useState<AMCVendorPerformance[] | null>(null);
   const [amcComplianceReport, setAmcComplianceReport] = useState<AMCComplianceReport | null>(null);
-  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview', 'type_distribution', 'expiry_analysis', 'service_tracking', 'vendor_performance']);
-  const [analyticsChartOrder, setAnalyticsChartOrder] = useState<string[]>(['status_overview', 'type_distribution', 'expiry_analysis', 'service_tracking', 'vendor_performance']);
+  const [amcUnitResourceData, setAmcUnitResourceData] = useState<AMCUnitResourceData[] | null>(null);
+  const [amcServiceStatsData, setAmcServiceStatsData] = useState<AMCServiceStatsData[] | null>(null);
+  const [amcCoverageData, setAmcCoverageData] = useState<AMCLocationCoverageNode[] | null>(null);
+  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'service_tracking', 'coverage_by_location']);
+  const [analyticsChartOrder, setAnalyticsChartOrder] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'service_tracking', 'coverage_by_location']);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
 
   const getDefaultDateRange = () => {
@@ -229,27 +234,36 @@ export const AMCDashboard = () => {
         statusData,
         statusSummary,
         typeDistribution,
+        unitResourceData,
         expiryAnalysis,
         serviceTracking,
+        serviceStatsData,
         vendorPerformance,
-        complianceReport
+        complianceReport,
+        coverageData
       ] = await Promise.all([
         amcAnalyticsAPI.getAMCStatusData(startDate, endDate),
         amcAnalyticsAPI.getAMCStatusSummary(startDate, endDate),
         amcAnalyticsAPI.getAMCTypeDistribution(startDate, endDate),
+        amcAnalyticsAPI.getAMCUnitResourceWise(startDate, endDate),
         amcAnalyticsAPI.getAMCExpiryAnalysis(startDate, endDate),
         amcAnalyticsAPI.getAMCServiceTracking(startDate, endDate),
+        amcAnalyticsAPI.getAMCServiceStats(startDate, endDate),
         amcAnalyticsAPI.getAMCVendorPerformance(startDate, endDate),
-        amcAnalyticsAPI.getAMCComplianceReport(startDate, endDate)
+        amcAnalyticsAPI.getAMCComplianceReport(startDate, endDate),
+        amcAnalyticsAPI.getAMCCoverageByLocation(startDate, endDate)
       ]);
 
       setAmcAnalyticsData(statusData);
       setAmcStatusSummary(statusSummary);
       setAmcTypeDistribution(typeDistribution);
+      setAmcUnitResourceData(unitResourceData);
       setAmcExpiryAnalysis(expiryAnalysis);
       setAmcServiceTracking(serviceTracking);
+      setAmcServiceStatsData(serviceStatsData);
       setAmcVendorPerformance(vendorPerformance);
       setAmcComplianceReport(complianceReport);
+      setAmcCoverageData(coverageData);
     } catch (error) {
       console.error('Error fetching AMC analytics data:', error);
       toast.error('Failed to fetch AMC analytics data');
@@ -268,16 +282,16 @@ export const AMCDashboard = () => {
   const amcData = apiData && typeof apiData === 'object' && 'asset_amcs' in apiData && Array.isArray((apiData as any).asset_amcs) ? (apiData as any).asset_amcs : initialAmcData;
   const pagination = (apiData && typeof apiData === 'object' && 'pagination' in apiData) ? (apiData as any).pagination : { current_page: 1, total_count: 0, total_pages: 1 };
 
-  const totalAMCs = amcAnalyticsData ? (amcAnalyticsData.active_amc + amcAnalyticsData.inactive_amc) :
+  const totalAMCs = amcAnalyticsData ? (amcAnalyticsData.active_amcs + amcAnalyticsData.inactive_amcs) :
     ((apiData && typeof apiData === 'object' && 'total_amcs_count' in apiData) ? (apiData as any).total_amcs_count : pagination.total_count || 0);
-  const activeAMCs = amcAnalyticsData?.active_amc ||
+  const activeAMCs = amcAnalyticsData?.active_amcs ||
     ((apiData && typeof apiData === 'object' && 'active_amcs_count' in apiData) ? (apiData as any).active_amcs_count : 0);
-  const inactiveAMCs = amcAnalyticsData?.inactive_amc ||
+  const inactiveAMCs = amcAnalyticsData?.inactive_amcs ||
     ((apiData && typeof apiData === 'object' && 'inactive_amcs_count' in apiData) ? (apiData as any).inactive_amcs_count : 0);
   const flaggedAMCs = (apiData && typeof apiData === 'object' && 'flagged_amcs_count' in apiData) ? (apiData as any).flagged_amcs_count : 0;
   const expiringIn90Days = (apiData && typeof apiData === 'object' && 'expiring_in_fifteen_days' in apiData) ? (apiData as any).expiring_in_fifteen_days : 0;
-  const serviceTotalAMCs = amcAnalyticsData?.service_total || 0;
-  const assetTotalAMCs = amcAnalyticsData?.assets_total || 0;
+  const serviceTotalAMCs = amcUnitResourceData?.find(item => item.type === 'Services')?.count || 0;
+  const assetTotalAMCs = amcUnitResourceData?.find(item => item.type === 'Assets')?.count || 0;
 
   // Inside AMCDashboard component
 
@@ -418,12 +432,12 @@ export const AMCDashboard = () => {
         ...apiData,
         asset_amcs: updatedAmcData,
         active_amcs_count: updatedStatus
-          ? apiData.active_amcs_count + 1
-          : apiData.active_amcs_count - 1,
+          ? (apiData as any).active_amcs_count + 1
+          : (apiData as any).active_amcs_count - 1,
         inactive_amcs_count: updatedStatus
-          ? apiData.inactive_amcs_count - 1
-          : apiData.inactive_amcs_count + 1,
-        total_amcs_count: apiData.total_amcs_count,
+          ? (apiData as any).inactive_amcs_count - 1
+          : (apiData as any).inactive_amcs_count + 1,
+        total_amcs_count: (apiData as any).total_amcs_count,
       };
 
       dispatch(fetchAMCData.fulfilled(updatedApiData, 'fetchAMCData', undefined));
@@ -1018,94 +1032,114 @@ export const AMCDashboard = () => {
                 <div className="text-gray-600">Loading analytics data...</div>
               </div>
             ) : (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAnalyticsDragEnd}>
-                <SortableContext items={analyticsChartOrder} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {analyticsChartOrder.map(chartType => {
-                      if (!selectedAnalyticsOptions?.includes(chartType)) return null;
+              <div className="space-y-6">
+                {/* Row 1: Status Overview + Type Distribution */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-120">
+                  {selectedAnalyticsOptions?.includes('status_overview') && (
+                    <div className="h-full">
+                      <AMCStatusCard
+                        data={amcStatusSummary}
+                        onDownload={async () => {
+                          const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                          const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                          await amcAnalyticsDownloadAPI.downloadAMCStatusData(startDate, endDate);
+                        }}
+                      />
+                    </div>
+                  )}
+                  {selectedAnalyticsOptions?.includes('type_distribution') && (
+                    <div className="h-full">
+                      <AMCTypeDistributionCard
+                        data={amcTypeDistribution}
+                        onDownload={async () => {
+                          const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                          const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                          await amcAnalyticsDownloadAPI.downloadAMCTypeDistribution(startDate, endDate);
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
 
-                      switch (chartType) {
-                        case 'status_overview':
-                          return (
-                            <SortableChartItem key="status_overview" id="status_overview">
-                              <AMCStatusCard
-                                data={amcStatusSummary}
-                                onDownload={async () => {
-                                  const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                  const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                  await amcAnalyticsDownloadAPI.downloadAMCStatusData(startDate, endDate);
-                                }}
-                              />
-                            </SortableChartItem>
-                          );
-                        case 'type_distribution':
-                          return (
-                            <SortableChartItem key="type_distribution" id="type_distribution">
-                              <AMCTypeDistributionCard
-                                data={amcTypeDistribution}
-                                onDownload={async () => {
-                                  const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                  const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                  await amcAnalyticsDownloadAPI.downloadAMCTypeDistribution(startDate, endDate);
-                                }}
-                              />
-                            </SortableChartItem>
-                          );
-                        case 'expiry_analysis':
-                          return (
-                            <SortableChartItem key="expiry_analysis" id="expiry_analysis">
-                              <AMCExpiryAnalysisCard
-                                data={amcExpiryAnalysis}
-                                onDownload={async () => {
-                                  const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                  const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                  await amcAnalyticsDownloadAPI.downloadAMCExpiryAnalysis(startDate, endDate);
-                                }}
-                              />
-                            </SortableChartItem>
-                          );
-                        case 'service_tracking':
-                          return (
-                            <SortableChartItem key="service_tracking" id="service_tracking">
-                              <AMCServiceTrackingCard
-                                data={amcServiceTracking}
-                                onDownload={async () => {
-                                  const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                  const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                  await amcAnalyticsDownloadAPI.downloadAMCServiceTracking(startDate, endDate);
-                                }}
-                              />
-                            </SortableChartItem>
-                          );
-                        case 'vendor_performance':
-                          return (
-                            <SortableChartItem key="vendor_performance" id="vendor_performance">
-                              <AMCVendorPerformanceCard
-                                data={amcVendorPerformance}
-                                onDownload={async () => {
-                                  const startDate = convertDateStringToDate(analyticsDateRange.startDate);
-                                  const endDate = convertDateStringToDate(analyticsDateRange.endDate);
-                                  await amcAnalyticsDownloadAPI.downloadAMCVendorPerformance(startDate, endDate);
-                                }}
-                              />
-                            </SortableChartItem>
-                          );
-                        default:
-                          return null;
-                      }
-                    })}
+                {/* Row 2: Unit Resource Distribution + Service Statistics */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                  {selectedAnalyticsOptions?.includes('unit_resource_wise') && (
+                    <div className="h-full">
+                      <AMCUnitResourceCard
+                        data={amcUnitResourceData}
+                        onDownload={async () => {
+                          const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                          const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                          await amcAnalyticsDownloadAPI.downloadAMCUnitResourceWise(startDate, endDate);
+                        }}
+                      />
+                    </div>
+                  )}
+                  {selectedAnalyticsOptions?.includes('service_stats') && (
+                    <div className="h-full">
+                      <AMCServiceStatsCard
+                        data={amcServiceStatsData}
+                        onDownload={async () => {
+                          const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                          const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                          await amcAnalyticsDownloadAPI.downloadAMCServiceStats(startDate, endDate);
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
 
-                    {selectedAnalyticsOptions?.length === 0 && (
-                      <div className="col-span-2 flex items-center justify-center py-12">
-                        <div className="text-center">
-                          <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                          <p className="text-muted-foreground">No analytics selected. Please select at least one report to view.</p>
-                        </div>
-                      </div>
-                    )}
+                {/* Row 3: Service Tracking - Full Width with Fixed Height */}
+                {selectedAnalyticsOptions?.includes('service_tracking') && (
+                  <div className="h-96">
+                    <AMCServiceTrackingCard
+                      data={amcServiceTracking}
+                      onDownload={async () => {
+                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                        await amcAnalyticsDownloadAPI.downloadAMCServiceTracking(startDate, endDate);
+                      }}
+                    />
                   </div>
-                </SortableContext>
-              </DndContext>
+                )}
+
+                {/* Row 4: Coverage by Location - Full Width with Fixed Height */}
+                {selectedAnalyticsOptions?.includes('coverage_by_location') && (
+                  <div className="h-full">
+                    <AMCCoverageByLocationCard
+                      data={amcCoverageData}
+                      onDownload={async () => {
+                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                        await amcAnalyticsDownloadAPI.downloadAMCCoverageByLocation(startDate, endDate);
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Row 5: Expiry Analysis - 60% Width */}
+                {selectedAnalyticsOptions?.includes('expiry_analysis') && (
+                  <div className="w-full lg:w-3/5 h-full">
+                    <AMCExpiryAnalysisCard
+                      data={amcExpiryAnalysis}
+                      onDownload={async () => {
+                        const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+                        const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+                        await amcAnalyticsDownloadAPI.downloadAMCExpiryAnalysis(startDate, endDate);
+                      }}
+                    />
+                  </div>
+                )}
+
+                {selectedAnalyticsOptions?.length === 0 && (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">No analytics selected. Please select at least one report to view.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </TabsContent>
 
@@ -1123,7 +1157,7 @@ export const AMCDashboard = () => {
                     {(apiData as any)?.total_amcs_count || 0}
                   </div>
                   <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                  {`${localStorage.getItem("currency") ?? ''} ${(apiData as any)?.total_amc_cost?.toLocaleString() || 0}`}
+                    {`${localStorage.getItem("currency") ?? ''} ${(apiData as any)?.total_amc_cost?.toLocaleString() || 0}`}
                   </span>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
                     Total AMC
