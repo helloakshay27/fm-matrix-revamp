@@ -130,7 +130,7 @@ export const FMUserMasterDashboard = () => {
 
         // Make API call with search query
         const response = await axios.get(
-          `https://${baseUrl}/pms/account_setups/fm_users.json?q[search_all_fields_cont]=${encodeURIComponent(searchQuery)}&per_page=10&page=${pagination.current_page}`,
+          `https://${baseUrl}/pms/account_setups/fm_users.json?q[search_all_fields_cont]=${searchQuery}&per_page=10&page=${pagination.current_page}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -145,8 +145,6 @@ export const FMUserMasterDashboard = () => {
           total_count: response.data.total_count,
           total_pages: response.data.total_pages
         });
-
-        toast.success("Search completed successfully!");
       } catch (error) {
         console.error("Search error:", error);
         toast.error("Failed to perform search.");
