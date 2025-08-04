@@ -354,7 +354,7 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
     sendData.append('pms_asset_amc[remarks]', formData.remarks);
     sendData.append('pms_asset_amc[resource_id]', formData.details === 'Asset' ? (formData.type === 'Individual' ? JSON.stringify(formData.asset_ids) : formData.group) : '1');
-    sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Site");
+    sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Service");
     if (action === 'schedule') {
       sendData.append('pms_asset_amc[schedule_immediately]', 'true');
     }
