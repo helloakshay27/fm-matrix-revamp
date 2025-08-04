@@ -23,11 +23,33 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
   onClose,
   onApplyFilters
 }) => {
-  const [filters, setFilters] = useState<CalendarFilters>({
-    dateFrom: '01/07/2025',
-    dateTo: '31/07/2025',
-    's[task_custom_form_schedule_type_eq]': '',
-    's[task_task_of_eq]': ''
+  // Helper function to get default date range (today to one week ago)
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const oneWeekAgo = new Date(today);
+    oneWeekAgo.setDate(today.getDate() - 7);
+    
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+    
+    return {
+      dateFrom: formatDate(oneWeekAgo),
+      dateTo: formatDate(today)
+    };
+  };
+
+  const [filters, setFilters] = useState<CalendarFilters>(() => {
+    const defaultRange = getDefaultDateRange();
+    return {
+      dateFrom: defaultRange.dateFrom,
+      dateTo: defaultRange.dateTo,
+      's[task_custom_form_schedule_type_eq]': '',
+      's[task_task_of_eq]': ''
+    };
   });
   const [isLoading, setIsLoading] = useState(false);
   const handleFilterChange = (key: keyof CalendarFilters, value: string) => {
@@ -49,9 +71,10 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
     }
   };
   const handleClear = () => {
+    const defaultRange = getDefaultDateRange();
     const clearedFilters: CalendarFilters = {
-      dateFrom: '01/07/2025',
-      dateTo: '31/07/2025',
+      dateFrom: defaultRange.dateFrom,
+      dateTo: defaultRange.dateTo,
       's[task_custom_form_schedule_type_eq]': '',
       's[task_task_of_eq]': ''
     };
