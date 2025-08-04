@@ -3454,13 +3454,13 @@ export const AddSchedulePage = () => {
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                   options={[
-                    { id: 'technical', label: 'Technical', value: 'technical' },
-                    { id: 'non-technical', label: 'Non-Technical', value: 'non-technical' }
+                    { id: 'Technical', label: 'Technical', value: 'Technical' },
+                    { id: 'Non Technical', label: 'Non-Technical', value: 'Non Technical' }
                   ]}
                   getOptionLabel={(option) => option.label}
                   value={[
-                    { id: 'technical', label: 'Technical', value: 'technical' },
-                    { id: 'non-technical', label: 'Non-Technical', value: 'non-technical' }
+                    { id: 'Technical', label: 'Technical', value: 'Technical' },
+                    { id: 'Non Technical', label: 'Non-Technical', value: 'Non Technical' }
                   ].find(option => option.value === formData.category) || null}
                   onChange={(event, newValue) => {
                     const selectedValue = newValue ? newValue.value : '';
