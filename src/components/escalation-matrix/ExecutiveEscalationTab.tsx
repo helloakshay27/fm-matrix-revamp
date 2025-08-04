@@ -72,7 +72,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
           </div>
 
           {/* Header Row 2 */}
-          <div className="grid grid-cols-6 gap-6 font-medium text-gray-700 text-sm">
+          <div className="grid grid-cols-6 gap-6 font-medium text-gray-700 text-sm bg-amber-50">
             <div></div>
             <div className="col-span-2"></div>
             <div className="text-center">Days</div>
