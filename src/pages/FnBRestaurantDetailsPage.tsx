@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   TextField,
@@ -10,6 +10,8 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  FormControlLabel,
+  Checkbox as MuiCheckbox,
 } from "@mui/material";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { StatusSetupTable } from "../components/StatusSetupTable";
@@ -50,8 +52,8 @@ interface Restaurant {
   delivery_charge: string;
   min_amount: string;
   order_not_allowed: string;
-  bookingAllowed: boolean;
-  orderAllowed: boolean;
+  booking_allowed: boolean;
+  order_allowed: boolean;
   active: boolean;
 }
 
@@ -80,9 +82,10 @@ interface DaySchedule {
 }
 
 interface BlockedDay {
-  date: string;
-  orderBlocked: boolean;
-  bookingBlocked: boolean;
+  id?: number; // Changed to optional to handle new blocked days
+  ondate: string;
+  order_allowed: boolean;
+  booking_allowed: boolean;
 }
 
 interface Image {
@@ -127,8 +130,8 @@ const mapRestaurantData = (
     delivery_charge: apiData.delivery_charge || "0",
     min_amount: apiData.min_amount || "",
     order_not_allowed: apiData.order_not_allowed || "",
-    bookingAllowed: !!apiData.booking_allowed,
-    orderAllowed: !!apiData.can_order,
+    booking_allowed: !!apiData.booking_allowed,
+    order_allowed: !!apiData.can_order,
     active: !!apiData.status,
   };
 
@@ -148,7 +151,7 @@ const mapRestaurantData = (
       id: img.id,
       url: img?.document,
     })) || [];
-  const blockedDays: BlockedDay[] = apiData.blocked_days || [];
+  const blockedDays: BlockedDay[] = apiData.restaurant_blockings || [];
 
   return {
     restaurant,
@@ -220,8 +223,8 @@ export const FnBRestaurantDetailsPage = () => {
     delivery_charge: "0",
     min_amount: "",
     order_not_allowed: "",
-    bookingAllowed: true,
-    orderAllowed: false,
+    booking_allowed: true,
+    order_allowed: false,
     active: true,
   });
   const [scheduleData, setScheduleData] = useState<DaySchedule[]>([]);
@@ -230,6 +233,7 @@ export const FnBRestaurantDetailsPage = () => {
   const [menuImages, setMenuImages] = useState<Image[]>([]);
   const [mainImages, setMainImages] = useState<Image[]>([]);
   const [removedImageIds, setRemovedImageIds] = useState<number[]>([]);
+  const [removedBlockedDayIds, setRemovedBlockedDayIds] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -293,6 +297,13 @@ export const FnBRestaurantDetailsPage = () => {
     }
   };
 
+  const handleRemoveBlockedDay = (index: number, id?: number) => {
+    setBlockedDays((prev) => prev.filter((_, i) => i !== index));
+    if (id) {
+      setRemovedBlockedDayIds((prev) => [...prev, id]);
+    }
+  };
+
   useEffect(() => {
     const fetchDetails = async () => {
       try {
@@ -344,12 +355,8 @@ export const FnBRestaurantDetailsPage = () => {
   const addBlockedDay = () => {
     setBlockedDays((prev) => [
       ...prev,
-      { date: "", orderBlocked: false, bookingBlocked: false },
+      { ondate: "", order_allowed: false, booking_allowed: false },
     ]);
-  };
-
-  const removeBlockedDay = (index: number) => {
-    setBlockedDays((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
@@ -484,17 +491,35 @@ export const FnBRestaurantDetailsPage = () => {
       });
 
       blockedDays.forEach((day, index) => {
+        if (day.id) {
+          dataToSubmit.append(
+            `restaurant[restaurant_blockings_attributes][${index}][id]`,
+            day.id.toString()
+          );
+        }
         dataToSubmit.append(
-          `restaurant[blocked_days_attributes][${index}][date]`,
-          day.date
+          `restaurant[restaurant_blockings_attributes][${index}][ondate]`,
+          day.ondate
         );
         dataToSubmit.append(
-          `restaurant[blocked_days_attributes][${index}][order_blocked]`,
-          day.orderBlocked ? "1" : "0"
+          `restaurant[restaurant_blockings_attributes][${index}][order_allowed]`,
+          day.order_allowed ? "1" : "0"
         );
         dataToSubmit.append(
-          `restaurant[blocked_days_attributes][${index}][booking_blocked]`,
-          day.bookingBlocked ? "1" : "0"
+          `restaurant[restaurant_blockings_attributes][${index}][booking_allowed]`,
+          day.booking_allowed ? "1" : "0"
+        );
+      });
+
+      removedBlockedDayIds.forEach((id, index) => {
+        const removeIndex = blockedDays.length + index;
+        dataToSubmit.append(
+          `restaurant[restaurant_blockings_attributes][${removeIndex}][id]`,
+          id.toString()
+        );
+        dataToSubmit.append(
+          `restaurant[restaurant_blockings_attributes][${removeIndex}][_destroy]`,
+          "true"
         );
       });
 
@@ -512,6 +537,13 @@ export const FnBRestaurantDetailsPage = () => {
 
   const handleGoBack = () => {
     navigate(-1);
+  };
+
+  const checkboxStyles = {
+    color: '#C72030',
+    '&.Mui-checked': {
+      color: '#C72030',
+    },
   };
 
   return (
@@ -1220,6 +1252,79 @@ export const FnBRestaurantDetailsPage = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="bg-[#F6F4EE]" style={{ border: '1px solid #D9D9D9' }}>
+                <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
+                  <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">3</span>
+                  BLOCKED DAYS
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="py-[31px] bg-[#F6F7F7]" style={{ border: '1px solid #D9D9D9' }}>
+                <div className="space-y-4">
+                  {blockedDays.map((day, index) => (
+                    <div key={index} className="flex items-center gap-6 p-3 border border-gray-200 rounded">
+                      <TextField
+                        type="date"
+                        value={day.ondate}
+                        onChange={(e) => {
+                          setBlockedDays((prev) =>
+                            prev.map((item, i) =>
+                              i === index ? { ...item, ondate: e.target.value } : item
+                            )
+                          );
+                        }}
+                        sx={fieldStyles}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <MuiCheckbox
+                            checked={day.order_allowed}
+                            onChange={(e) =>
+                              setBlockedDays((prev) =>
+                                prev.map((item, i) => (i === index ? { ...item, order_allowed: e.target.checked } : item))
+                              )
+                            }
+                            sx={checkboxStyles}
+                          />
+                        }
+                        label="Order Blocked"
+                      />
+                      <FormControlLabel
+                        control={
+                          <MuiCheckbox
+                            checked={day.booking_allowed}
+                            onChange={(e) =>
+                              setBlockedDays((prev) =>
+                                prev.map((item, i) => (i === index ? { ...item, booking_allowed: e.target.checked } : item))
+                              )
+                            }
+                            sx={checkboxStyles}
+                          />
+                        }
+                        label="Booking Blocked"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRemoveBlockedDay(index, day.id)}
+                        className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    variant="outline"
+                    onClick={addBlockedDay}
+                    className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                  >
+                    Add Blocked Day
+                  </Button>
                 </div>
               </CardContent>
             </Card>
