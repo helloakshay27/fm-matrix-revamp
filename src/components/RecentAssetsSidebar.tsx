@@ -48,17 +48,17 @@ export const RecentAssetsSidebar = () => {
   // Transform API data to match local interface
   const transformAsset = (apiAsset: RecentAsset): Asset => {
     // Calculate TAT display string
-    let tatDisplay = '0 hrs '; // Default TAT display
+    let tatDisplay = '0 hrs / Fully Operational'; // Default TAT display
     let tatStatus: 'normal' | 'warning' | 'critical' = 'normal';
 
     if (apiAsset.tat) {
       const { tat_status, average_tat_days, current_breakdown_tat_days, last_breakdown_tat_days } = apiAsset.tat;
-      
+
       // Use appropriate TAT value - prioritize current breakdown, then last breakdown, then average
       const tatDays = current_breakdown_tat_days !== null ? current_breakdown_tat_days :
-                      last_breakdown_tat_days !== null ? last_breakdown_tat_days :
-                      average_tat_days;
-      
+        last_breakdown_tat_days !== null ? last_breakdown_tat_days :
+          average_tat_days;
+
       if (tatDays !== null && tatDays > 0) {
         // Convert days to days and hours format
         const days = Math.floor(tatDays);
@@ -137,33 +137,33 @@ export const RecentAssetsSidebar = () => {
       {/* Header */}
       <div className="mb-6">
         <h3 className="text-lg font-bold mb-1" style={{ color: 'black' }}>Recent Assets</h3>
-        <p className="text-sm text-gray-600">{new Date().toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
+        <p className="text-sm text-gray-600">{new Date().toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
         })}</p>
       </div>
-      
+
       <div className="max-h-[600px] overflow-y-auto space-y-4">
         {isLoading && (
           <div className="flex items-center justify-center py-8">
             <div className="text-sm text-gray-600">Loading recent assets...</div>
           </div>
         )}
-        
+
         {isError && (
           <div className="flex items-center justify-center py-8">
             <div className="text-sm text-red-600">Failed to load recent assets</div>
           </div>
         )}
-        
+
         {!isLoading && !isError && recentAssets.length === 0 && (
           <div className="flex items-center justify-center py-8">
             <div className="text-sm text-gray-600">No recent assets found</div>
           </div>
         )}
-        
+
         {!isLoading && !isError && recentAssets.map((asset) => (
           <div key={asset.id} className="bg-[#C4B89D]/20 border border-[#C4B89D]/40 rounded-lg p-4">
             {/* Header with Asset No and Star */}
@@ -172,7 +172,7 @@ export const RecentAssetsSidebar = () => {
                 <Hash className="w-4 h-4" style={{ color: '#C72030' }} />
                 <span className="font-medium text-sm">{asset.assetNo}</span>
               </div>
-              
+
             </div>
 
             {/* Asset Name */}
@@ -192,14 +192,14 @@ export const RecentAssetsSidebar = () => {
                   {asset.status}
                 </span>
               </div>
-              
-              
+
+
             </div>
 
             {/* Action Buttons */}
             <div className="flex items-center justify-between">
-              
-              
+
+
               <button
                 className="text-sm text-blue-600 hover:text-blue-800 font-medium underline"
                 onClick={() => handleViewDetails(asset.id)}

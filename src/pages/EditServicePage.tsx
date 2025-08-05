@@ -650,7 +650,7 @@ export const EditServicePage = () => {
               className="hidden"
               id="file-upload"
               onChange={handleFileUpload}
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png"
               multiple
               disabled={isSubmitting}
             />
@@ -673,34 +673,23 @@ export const EditServicePage = () => {
               <Upload className="w-4 h-4 mr-1" />
               Upload Files
             </Button>
-
           </div>
 
           {(existingFiles.length > 0 || selectedFile.length > 0) && (
             <div className="flex flex-wrap gap-3 mt-4">
               {/* EXISTING FILES */}
               {existingFiles.map((file) => {
-                const isImage = file.doctype.startsWith('image');
+                const fileName = file.document?.split('/').pop() || '';
+                const isImage = file.doctype?.startsWith('image');
+                const isPdf = fileName.endsWith('.pdf');
+                const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls') || fileName.endsWith('.csv');
+                const isWord = fileName.endsWith('.doc') || fileName.endsWith('.docx');
 
                 const handleDownload = async () => {
-                  if (!file?.id) {
-                    console.error('Attachment ID is undefined', file);
-                    const fallbackLink = document.createElement('a');
-                    fallbackLink.href = file.document;
-                    fallbackLink.download = `Document_${file.filename || 'unknown'}`;
-                    document.body.appendChild(fallbackLink);
-                    fallbackLink.click();
-                    document.body.removeChild(fallbackLink);
-                    return;
-                  }
-
                   try {
                     const token = localStorage.getItem('token');
                     const baseUrl = localStorage.getItem('baseUrl');
-                    if (!token || !baseUrl) {
-                      console.error('Missing token or base URL');
-                      return;
-                    }
+                    if (!token || !baseUrl) return;
 
                     const apiUrl = `https://${baseUrl}/attachfiles/${file.id}?show_file=true`;
 
@@ -712,9 +701,7 @@ export const EditServicePage = () => {
                       },
                     });
 
-                    if (!response.ok) {
-                      throw new Error('Failed to fetch the file');
-                    }
+                    if (!response.ok) throw new Error('Download failed');
 
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
@@ -726,10 +713,9 @@ export const EditServicePage = () => {
                     document.body.removeChild(link);
                     window.URL.revokeObjectURL(url);
                   } catch (error) {
-                    console.error('Error downloading file:', error);
                     const fallbackLink = document.createElement('a');
                     fallbackLink.href = file.document;
-                    fallbackLink.download = `Document_${file.id || file.filename || 'unknown'}`;
+                    fallbackLink.download = fileName;
                     document.body.appendChild(fallbackLink);
                     fallbackLink.click();
                     document.body.removeChild(fallbackLink);
@@ -741,32 +727,43 @@ export const EditServicePage = () => {
                     key={file.id}
                     className="relative flex flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm hover:shadow-md transition"
                   >
-                    {/* Download Icon (only for existing files) */}
                     <button
                       type="button"
                       className="absolute top-1 right-1 p-1 text-gray-600 hover:text-black"
                       onClick={(e) => {
-                        e.stopPropagation(); // prevents triggering the entire card click
+                        e.stopPropagation();
                         handleDownload();
                       }}
                     >
                       <Download className="w-3.5 h-3.5" />
                     </button>
 
-                    {/* Image or file icon */}
+                    {/* File Icon */}
                     {isImage ? (
                       <img
                         src={file.document}
                         alt="Existing"
                         className="w-[40px] h-[40px] object-cover rounded border mb-1"
                       />
-                    ) : (
-                      <div className="w-10 h-10 flex items-center justify-center border rounded text-blue-600 bg-white mb-1">
+                    ) : isPdf ? (
+                      <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
                         <FileText className="w-4 h-4" />
+                      </div>
+                    ) : isExcel ? (
+                      <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                        <FileSpreadsheet className="w-4 h-4" />
+                      </div>
+                    ) : isWord ? (
+                      <div className="w-10 h-10 flex items-center justify-center border rounded text-blue-700 bg-white mb-1">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-500 bg-white mb-1">
+                        <File className="w-4 h-4" />
                       </div>
                     )}
                     <span className="text-[10px] text-center truncate max-w-[100px] mb-1">
-                      {file.document.split('/').pop()}
+                      {fileName}
                     </span>
                   </div>
                 );
@@ -776,8 +773,8 @@ export const EditServicePage = () => {
               {selectedFile.map((file, index) => {
                 const isImage = file.type.startsWith('image');
                 const isPdf = file.type === 'application/pdf';
-                const isExcel =
-                  file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                const isWord = file.name.endsWith('.doc') || file.name.endsWith('.docx');
                 const fileURL = URL.createObjectURL(file);
 
                 return (
@@ -799,6 +796,10 @@ export const EditServicePage = () => {
                       <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
                         <FileSpreadsheet className="w-4 h-4" />
                       </div>
+                    ) : isWord ? (
+                      <div className="w-10 h-10 flex items-center justify-center border rounded text-blue-700 bg-white mb-1">
+                        <FileText className="w-4 h-4" />
+                      </div>
                     ) : (
                       <div className="w-[40px] h-[40px] flex items-center justify-center bg-gray-100 border rounded text-gray-500 mb-1">
                         <File className="w-4 h-4" />
@@ -819,9 +820,8 @@ export const EditServicePage = () => {
               })}
             </div>
           )}
-
-
         </CardContent>
+
       </Card>
 
 
