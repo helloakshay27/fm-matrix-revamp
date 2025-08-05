@@ -450,18 +450,13 @@ export const ScheduledTaskDashboard = () => {
   useEffect(() => {
     const loadCalendarEvents = async () => {
       try {
+        // Always send all filter parameters (including empty ones) to the API
         const params: any = {
           'q[start_date_gteq]': calendarFilters.dateFrom,
-          'q[start_date_lteq]': calendarFilters.dateTo
+          'q[start_date_lteq]': calendarFilters.dateTo,
+          's[task_custom_form_schedule_type_eq]': calendarFilters['s[task_custom_form_schedule_type_eq]'] || '',
+          's[task_task_of_eq]': calendarFilters['s[task_task_of_eq]'] || ''
         };
-
-        // Add filter parameters if they have values
-        if (calendarFilters['s[task_custom_form_schedule_type_eq]']) {
-          params['s[task_custom_form_schedule_type_eq]'] = calendarFilters['s[task_custom_form_schedule_type_eq]'];
-        }
-        if (calendarFilters['s[task_task_of_eq]']) {
-          params['s[task_task_of_eq]'] = calendarFilters['s[task_task_of_eq]'];
-        }
 
         const events = await calendarService.fetchCalendarEvents(params);
         setCalendarEvents(events);

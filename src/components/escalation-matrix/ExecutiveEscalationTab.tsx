@@ -77,7 +77,6 @@ export const ExecutiveEscalationTab: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   
   const [escalationData, setEscalationData] = useState<EscalationLevel[]>([
-    { level: 'E0', escalationTo: [], days: '', hours: '', minutes: '' },
     { level: 'E1', escalationTo: [], days: '', hours: '', minutes: '' },
     { level: 'E2', escalationTo: [], days: '', hours: '', minutes: '' },
     { level: 'E3', escalationTo: [], days: '', hours: '', minutes: '' }
@@ -265,7 +264,6 @@ export const ExecutiveEscalationTab: React.FC = () => {
       
       // Clear the form inputs after successful submission
       setEscalationData([
-        { level: 'E0', escalationTo: [], days: '', hours: '', minutes: '' },
         { level: 'E1', escalationTo: [], days: '', hours: '', minutes: '' },
         { level: 'E2', escalationTo: [], days: '', hours: '', minutes: '' },
         { level: 'E3', escalationTo: [], days: '', hours: '', minutes: '' }
@@ -412,7 +410,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
             <div>P1</div>
           </div>
 
-          {['E0', 'E1', 'E2', 'E3'].map((level) => {
+                            {['E1', 'E2', 'E3'].map((level) => {
             const rule = savedRules.find(r => r.level === level);
             return (
               <div key={level} className="grid grid-cols-3 gap-8 text-sm py-2">
@@ -526,7 +524,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {['E0', 'E1', 'E2', 'E3'].map((levelName) => {
+                        {[ 'E1', 'E2', 'E3'].map((levelName) => {
                           const escalation = ruleGroup.find(esc => esc.name === levelName);
                           return (
                             <TableRow key={levelName} className="border-b border-gray-100 hover:bg-gray-50/50">

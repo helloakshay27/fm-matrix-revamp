@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from '@/utils/apiClient';
+import { SurveyListFilterModal } from '@/components/SurveyListFilterModal';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -22,6 +23,11 @@ interface SurveyItem {
   active: number;
 }
 
+interface FilterState {
+  surveyName: string;
+  categoryId: string;
+}
+
 export const SurveyListDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,19 +35,47 @@ export const SurveyListDashboard = () => {
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [surveys, setSurveys] = useState<SurveyItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<FilterState>({
+    surveyName: '',
+    categoryId: 'all'
+  });
+  const [allSurveys, setAllSurveys] = useState<SurveyItem[]>([]); // Store all surveys for filtering
 
   useEffect(() => {
     fetchSurveyData();
   }, []);
 
-  const fetchSurveyData = async () => {
+  const fetchSurveyData = async (filters?: FilterState) => {
     try {
       setLoading(true);
       // Get the site_id from localStorage or use a default value
       const siteId = localStorage.getItem('site_id') || '2189';
-      const response = await apiClient.get(`/pms/admin/snag_checklists.json?site_id=${siteId}`);
+      
+      // Build query parameters for filtering
+      let url = `/pms/admin/snag_checklists.json?site_id=${siteId}`;
+      
+      if (filters) {
+        if (filters.surveyName) {
+          url += `&q[name_cont]=${encodeURIComponent(filters.surveyName)}`;
+        }
+        if (filters.categoryId && filters.categoryId !== 'all') {
+          url += `&q[snag_audit_category_id_eq]=${filters.categoryId}`;
+        }
+      } else {
+        // Default params when no filters
+        url += `&q[name_cont]=&q[snag_audit_sub_category_id_eq]=&q[snag_audit_category_id_eq]=`;
+      }
+      
+      const response = await apiClient.get(url);
       console.log('Survey data response:', response.data);
-      setSurveys(response.data || []);
+      const surveyData = response.data || [];
+      setSurveys(surveyData);
+      
+      // Store all surveys when no filters are applied
+      if (!filters) {
+        setAllSurveys(surveyData);
+      }
     } catch (error) {
       console.error('Error fetching survey data:', error);
       setSurveys([]); // Set empty array on error
@@ -57,6 +91,29 @@ export const SurveyListDashboard = () => {
 
   const handleAddSurvey = () => {
     navigate('/maintenance/survey/add');
+  };
+
+  const handleOpenFilterModal = () => {
+    setIsFilterModalOpen(true);
+  };
+
+  const handleCloseFilterModal = () => {
+    setIsFilterModalOpen(false);
+  };
+
+  const handleApplyFilters = (filters: FilterState) => {
+    setAppliedFilters(filters);
+    // Fetch filtered data from API
+    fetchSurveyData(filters);
+  };
+
+  const handleResetFilters = () => {
+    setAppliedFilters({
+      surveyName: '',
+      categoryId: 'all'
+    });
+    // Fetch all data without filters
+    fetchSurveyData();
   };
 
   const handleStatusChange = (item: SurveyItem, newStatus: string) => {
@@ -159,11 +216,13 @@ export const SurveyListDashboard = () => {
     }
   };
 
-  // Filter surveys based on search term
-  const filteredSurveys = surveys.filter(survey =>
-    survey.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    survey.snag_audit_category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter surveys based on search term (API filtering handles the main filters)
+  const filteredSurveys = surveys.filter(survey => {
+    const matchesSearch = survey.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         survey.snag_audit_category.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesSearch;
+  });
 
   if (loading) {
     return (
@@ -177,9 +236,9 @@ export const SurveyListDashboard = () => {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <p className="text-muted-foreground text-sm mb-2">
+          {/* <p className="text-muted-foreground text-sm mb-2">
             Survey &gt; Survey List
-          </p>
+          </p> */}
           <Heading level="h1" variant="default">Survey List</Heading>
         </div>
       </div>
@@ -210,13 +269,18 @@ export const SurveyListDashboard = () => {
               </Button>
             </div>
           }
-          rightActions={
-            <Button variant="outline" className="h-[36px] w-[36px] p-0 border-gray-300 text-gray-700 flex items-center justify-center">
-              <Filter className="w-4 h-4" />
-            </Button>
-          }
+          onFilterClick={handleOpenFilterModal}
         />
       </div>
+
+      {/* Filter Modal */}
+      <SurveyListFilterModal
+        open={isFilterModalOpen}
+        onClose={handleCloseFilterModal}
+        onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
+        currentFilters={appliedFilters}
+      />
     </div>
   );
 };

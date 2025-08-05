@@ -476,99 +476,83 @@
   background-color: #555;
 }
 
-/* Ensure the scrollbar container maintains proper spacing */
-.sticky-scrollbar {
-  padding-bottom: 0;
-  margin-bottom: 0;
+/* FullCalendar Custom Styles */
+.fc {
+  font-family: 'Inter', 'Work Sans', system-ui, -apple-system, sans-serif;
 }
 
-/* Alternative approach - Sticky bottom scrollbar */
-.sticky-scrollbar-container {
-  position: relative;
-  overflow: hidden;
+.fc-theme-standard .fc-scrollgrid {
+  border: 1px solid hsl(var(--border));
 }
 
-.sticky-scrollbar-wrapper {
-  overflow-x: auto;
-  overflow-y: hidden;
-  max-height: calc(100vh - 300px);
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: hsl(var(--border));
 }
 
-/* Make sure table cells don't wrap and maintain minimum widths */
-.sticky-scrollbar table {
-  table-layout: fixed;
-  min-width: 100%;
-  width: max-content;
+.fc-col-header-cell {
+  background-color: hsl(var(--muted));
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
 }
 
-.sticky-scrollbar th,
-.sticky-scrollbar td {
-  white-space: nowrap;
-  min-width: 120px;
-  text-overflow: ellipsis;
-  overflow: hidden;
+.fc-daygrid-day-number {
+  color: hsl(var(--foreground));
+  font-weight: 500;
 }
 
-/* First column (actions) should be narrower */
-.sticky-scrollbar th[data-actions],
-.sticky-scrollbar td[data-actions],
-.sticky-scrollbar th[data-checkbox],
-.sticky-scrollbar td[data-checkbox] {
-  min-width: 60px;
-  width: 60px;
+.fc-day-today {
+  background-color: hsl(var(--accent)) !important;
 }
 
-/* Sticky Table Header Styles */
-.sticky-header th {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 10 !important;
-  background-color: #f6f4ee !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+.fc-event {
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
-/* Enhanced table container for better scrolling */
-.table-container {
-  position: relative;
-  overflow: auto;
-  max-height: calc(100vh - 300px);
+.fc-event:hover {
+  filter: brightness(0.9);
 }
 
-.table-container table {
-  border-collapse: separate;
-  border-spacing: 0;
+.fc-button {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
 }
 
-/* Ensure header stays on top during scroll */
-.table-container thead th {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background-color: #f6f4ee;
-  border-bottom: 1px solid #d5dbdb;
+.fc-button:hover:not(:disabled) {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  filter: brightness(0.9);
 }
 
-/* Fix for sticky header with horizontal scroll */
-.sticky-scrollbar {
-  position: relative;
+.fc-button:focus {
+  box-shadow: 0 0 0 2px hsl(var(--ring));
 }
 
-.sticky-scrollbar::-webkit-scrollbar {
-  height: 12px;
-  position: sticky;
-  bottom: 0;
+.fc-timegrid-slot-label {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
 }
 
-.sticky-scrollbar::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 6px;
+.fc-list-event-title {
+  font-weight: 500;
 }
 
-.sticky-scrollbar::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 6px;
+.fc-popover {
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
 
-.sticky-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #555;
+.fc-more-link {
+  color: hsl(var(--primary));
+  font-weight: 500;
+}
+
+.fc-more-link:hover {
+  color: hsl(var(--primary));
+  text-decoration: underline;
 }

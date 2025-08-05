@@ -34,6 +34,7 @@ export const AssetDetailsPage = () => {
   const [isRepairReplaceOpen, setIsRepairReplaceOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [showEnable, setShowEnable] = useState(false);
+  const [activeTab, setActiveTab] = useState("asset-info");
 
   useEffect(() => {
     const fetchAsset = async () => {
@@ -140,71 +141,73 @@ export const AssetDetailsPage = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* <Button
-              onClick={handleCreateChecklist}
-              className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Checklist
-            </Button> */}
-            <Button
-              onClick={() => setIsQRModalOpen(true)}
-              className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-            >
-              <svg
-                width="14"
-                height="15"
-                viewBox="0 0 14 15"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+          {activeTab === "asset-info" && (
+            <div className="flex items-center gap-3">
+              {/* <Button
+                onClick={handleCreateChecklist}
+                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
               >
-                <path
-                  d="M0.332031 4.20609V0.935059H3.66536V2.24347H1.66536V4.20609H0.332031ZM0.332031 14.0192V10.7481H1.66536V12.7108H3.66536V14.0192H0.332031ZM10.332 14.0192V12.7108H12.332V10.7481H13.6654V14.0192H10.332ZM12.332 4.20609V2.24347H10.332V0.935059H13.6654V4.20609H12.332ZM10.6654 11.0752H11.6654V12.0566H10.6654V11.0752ZM10.6654 9.11263H11.6654V10.0939H10.6654V9.11263ZM9.66536 10.0939H10.6654V11.0752H9.66536V10.0939ZM8.66536 11.0752H9.66536V12.0566H8.66536V11.0752ZM7.66536 10.0939H8.66536V11.0752H7.66536V10.0939ZM9.66536 8.13132H10.6654V9.11263H9.66536V8.13132ZM8.66536 9.11263H9.66536V10.0939H8.66536V9.11263ZM7.66536 8.13132H8.66536V9.11263H7.66536V8.13132ZM11.6654 2.89768V6.82291H7.66536V2.89768H11.6654ZM6.33203 8.13132V12.0566H2.33203V8.13132H6.33203ZM6.33203 2.89768V6.82291H2.33203V2.89768H6.33203ZM5.33203 11.0752V9.11263H3.33203V11.0752H5.33203ZM5.33203 5.8416V3.87898H3.33203V5.8416H5.33203ZM10.6654 5.8416V3.87898H8.66536V5.8416H10.6654Z"
-                  fill="#C72030"
-                />
-              </svg>
-              View QR
-            </Button>
-
-            <Button
-              onClick={handleEditDetails}
-              variant="outline"
-              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
-            >
-              <svg
-                width="21"
-                height="21"
-                viewBox="0 0 21 21"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+                <Plus className="w-4 h-4 mr-2" />
+                Checklist
+              </Button> */}
+              <Button
+                onClick={() => setIsQRModalOpen(true)}
+                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
               >
-                <mask
-                  id="mask0_107_2076"
-                  style={{ maskType: "alpha" }}
-                  maskUnits="userSpaceOnUse"
-                  x="0"
-                  y="0"
-                  width="21"
-                  height="21"
+                <svg
+                  width="14"
+                  height="15"
+                  viewBox="0 0 14 15"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <rect width="21" height="21" fill="#C72030" />
-                </mask>
-                <g mask="url(#mask0_107_2076)">
                   <path
-                    d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
+                    d="M0.332031 4.20609V0.935059H3.66536V2.24347H1.66536V4.20609H0.332031ZM0.332031 14.0192V10.7481H1.66536V12.7108H3.66536V14.0192H0.332031ZM10.332 14.0192V12.7108H12.332V10.7481H13.6654V14.0192H10.332ZM12.332 4.20609V2.24347H10.332V0.935059H13.6654V4.20609H12.332ZM10.6654 11.0752H11.6654V12.0566H10.6654V11.0752ZM10.6654 9.11263H11.6654V10.0939H10.6654V9.11263ZM9.66536 10.0939H10.6654V11.0752H9.66536V10.0939ZM8.66536 11.0752H9.66536V12.0566H8.66536V11.0752ZM7.66536 10.0939H8.66536V11.0752H7.66536V10.0939ZM9.66536 8.13132H10.6654V9.11263H9.66536V8.13132ZM8.66536 9.11263H9.66536V10.0939H8.66536V9.11263ZM7.66536 8.13132H8.66536V9.11263H7.66536V8.13132ZM11.6654 2.89768V6.82291H7.66536V2.89768H11.6654ZM6.33203 8.13132V12.0566H2.33203V8.13132H6.33203ZM6.33203 2.89768V6.82291H2.33203V2.89768H6.33203ZM5.33203 11.0752V9.11263H3.33203V11.0752H5.33203ZM5.33203 5.8416V3.87898H3.33203V5.8416H5.33203ZM10.6654 5.8416V3.87898H8.66536V5.8416H10.6654Z"
                     fill="#C72030"
                   />
-                </g>
-              </svg>
-            </Button>
-          </div>
+                </svg>
+                View QR
+              </Button>
+
+              <Button
+                onClick={handleEditDetails}
+                variant="outline"
+                className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
+              >
+                <svg
+                  width="21"
+                  height="21"
+                  viewBox="0 0 21 21"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <mask
+                    id="mask0_107_2076"
+                    style={{ maskType: "alpha" }}
+                    maskUnits="userSpaceOnUse"
+                    x="0"
+                    y="0"
+                    width="21"
+                    height="21"
+                  >
+                    <rect width="21" height="21" fill="#C72030" />
+                  </mask>
+                  <g mask="url(#mask0_107_2076)">
+                    <path
+                      d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
+                      fill="#C72030"
+                    />
+                  </g>
+                </svg>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Tabs */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <Tabs defaultValue="asset-info" className="w-full">
+        <Tabs defaultValue="asset-info" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-auto p-0 text-sm justify-stretch">
             <TabsTrigger
               value="asset-info"
