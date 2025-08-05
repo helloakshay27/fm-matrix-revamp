@@ -114,6 +114,7 @@ interface AMCRecord {
   is_flagged?: boolean;
   contract_name?: string;
   total_days_remaining?: number;
+  service_name?: string;
 }
 
 const initialAmcData: AMCRecord[] = [];
@@ -627,7 +628,14 @@ export const AMCDashboard = () => {
       case 'id':
         return <span className="font-medium">{item.id}</span>;
       case 'asset_name':
-        return item.asset_name || '-';
+        if (item.amc_type === 'Asset') {
+          return item.asset_name || '-';
+        } else if (item.amc_type === 'Service') {
+          return item.service_name || '-';
+        } else {
+          return '-';
+        }
+
       case 'amc_type':
         return item.amc_type || '-';
       case 'vendor_name':

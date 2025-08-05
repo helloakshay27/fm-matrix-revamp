@@ -8,7 +8,7 @@ import { StatusBadge } from "./ui/status-badge";
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
-import { createMenu, fetchMenu } from '@/store/slices/f&bSlice';
+import { createMenu, fetchMenu, updateMenu } from '@/store/slices/f&bSlice';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from './enhanced-table/EnhancedTable';
 import { SelectionPanel } from './water-asset-details/PannelTab';
@@ -51,13 +51,17 @@ export const RestaurantMenuTable = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
   const [showActionPanel, setShowActionPanel] = useState(false);
+  const [loading, setLoading] = useState(false)
 
   const fetchMenuItems = async () => {
+    setLoading(true)
     try {
       const response = await dispatch(fetchMenu({ baseUrl, token, id: Number(id) })).unwrap();
       setMenuItems(response);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -74,7 +78,7 @@ export const RestaurantMenuTable = () => {
     menuItem.append('manage_restaurant_menu[master_price]', menuItemData.masterPrice);
     menuItem.append('manage_restaurant_menu[display_price]', menuItemData.displayPrice);
     menuItem.append('manage_restaurant_menu[stock]', menuItemData.stock);
-    menuItem.append('manage_restaurant_menu[active]', menuItemData.active);
+    menuItem.append('manage_restaurant_menu[active]', "1");
     menuItem.append('manage_restaurant_menu[category_id]', menuItemData.category);
     menuItem.append('manage_restaurant_menu[sub_category_id]', menuItemData.subCategory);
     menuItem.append('manage_restaurant_menu[sgst_rate]', menuItemData.sgstRate);
@@ -118,6 +122,27 @@ export const RestaurantMenuTable = () => {
     navigate(`/vas/fnb/details/${id}/restaurant-menu/edit/${menuItem.id}`);
   };
 
+  const toggleActive = async (mid: number, active: number) => {
+    const payload = {
+      manage_restaurant_menu: {
+        active: active === 1 ? 0 : 1
+      }
+    };
+    try {
+      await dispatch(updateMenu({ baseUrl, token, id: Number(id), mid: Number(mid), data: payload })).unwrap();
+      // Update the local state only on success
+      setMenuItems(prevItems =>
+        prevItems.map(item =>
+          item.id === mid ? { ...item, active: active === 1 ? 0 : 1 } : item
+        )
+      );
+      toast.success('Menu item status updated successfully');
+    } catch (error) {
+      console.log(error);
+      toast.error('Failed to update menu item status');
+    }
+  };
+
   const columns: ColumnConfig[] = [
     {
       key: 'sku',
@@ -144,13 +169,13 @@ export const RestaurantMenuTable = () => {
       draggable: true,
     },
     {
-      key: 'category_id',
+      key: 'category_name',
       label: 'Category',
       sortable: true,
       draggable: true,
     },
     {
-      key: 'sub_category_id',
+      key: 'sub_category_name',
       label: 'Subcategory',
       sortable: true,
       draggable: true,
@@ -195,9 +220,14 @@ export const RestaurantMenuTable = () => {
         return item.updated_at.split('T')[0] || '';
       case 'active':
         return (
-          <StatusBadge status={item.active === 1 ? 'accepted' : 'rejected'}>
-            {item.active ? 'Active' : 'Inactive'}
-          </StatusBadge>
+          <div className="flex items-center justify-center">
+            <div
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.active ? "bg-green-500" : "bg-gray-300"}`}
+              onClick={() => toggleActive(item.id, item.active)}
+            >
+              <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? "translate-x-6" : "translate-x-1"}`} />
+            </div>
+          </div>
         );
       default:
         return item[columnKey as keyof MenuItem]?.toString() || '';
@@ -229,19 +259,11 @@ export const RestaurantMenuTable = () => {
     <div className="flex gap-2">
       <Button
         className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
-        // onClick={() => setIsAddModalOpen(true)}
         onClick={() => setShowActionPanel(true)}
       >
         <Plus className="w-4 h-4" />
         Actions
       </Button>
-      {/* <Button
-        onClick={() => setIsImportModalOpen(true)}
-        className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
-      >
-        <Upload className="w-4 h-4" />
-        Import
-      </Button> */}
     </div>
   );
 
@@ -249,7 +271,6 @@ export const RestaurantMenuTable = () => {
     <div className="space-y-4">
       {showActionPanel && (
         <SelectionPanel
-          // actions={selectionActions}
           onAdd={() => setIsAddModalOpen(true)}
           onClearSelection={() => setShowActionPanel(false)}
         />
@@ -268,6 +289,7 @@ export const RestaurantMenuTable = () => {
         hideTableExport={true}
         pagination={true}
         pageSize={5}
+        loading={loading}
       />
 
       <AddMenuItemModal
