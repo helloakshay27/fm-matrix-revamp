@@ -334,7 +334,7 @@ export const AMCDashboard = () => {
       if (!isNaN(Number(searchTerm))) {
         queryParams.push(`q[id_eq]=${encodeURIComponent(searchTerm.trim())}`);
       }
-      queryParams.push(`q[asset_name_cont]=${encodeURIComponent(searchTerm.trim())}`);
+      queryParams.push(`q[search_all_fields_cont]=${encodeURIComponent(searchTerm.trim())}`);
     }
 
     if (queryParams.length > 0) {
