@@ -279,6 +279,7 @@ export const SurveyListDashboard = () => {
         onClose={handleCloseFilterModal}
         onApplyFilters={handleApplyFilters}
         onResetFilters={handleResetFilters}
+        currentFilters={appliedFilters}
       />
     </div>
   );
