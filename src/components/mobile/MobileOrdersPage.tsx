@@ -24,6 +24,7 @@ interface Order {
   facilityId?: number;
   facilityName?: string;
   meetingRoom?: string;
+  location?: string;
 }
 
 // Helper function to convert FoodOrder to Order format
@@ -40,7 +41,9 @@ const convertFoodOrderToOrder = (foodOrder: FoodOrder): Order => {
   const diffInMinutes = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60));
   const timeAgo = diffInMinutes < 60 
     ? `${diffInMinutes} min. Ago`
-    : `${Math.floor(diffInMinutes / 60)} hour${Math.floor(diffInMinutes / 60) > 1 ? 's' : ''} ago`;
+    : diffInMinutes < 1440 // 24 hours = 1440 minutes
+      ? `${Math.floor(diffInMinutes / 60)} hour${Math.floor(diffInMinutes / 60) > 1 ? 's' : ''} ago`
+      : `${Math.floor(diffInMinutes / 1440)} day${Math.floor(diffInMinutes / 1440) > 1 ? 's' : ''} ago`;
 
   // Use actual API status instead of mapping
   const status = foodOrder.order_status || 'Pending';
@@ -90,6 +93,7 @@ const convertFoodOrderToOrder = (foodOrder: FoodOrder): Order => {
     facilityId: foodOrder.facility_id,
     facilityName: foodOrder.facility_name,
     meetingRoom: foodOrder.meeting_room,
+    location: foodOrder.location,
   };
 };
 
@@ -348,7 +352,8 @@ export const MobileOrdersPage: React.FC = () => {
           requests: 'Previous order details',
           facility_id: order.facilityId,
           facility_name: order.facilityName,
-          meeting_room: order.meetingRoom
+          meeting_room: order.meetingRoom,
+          location: order.location
         }
       };
 
@@ -477,15 +482,15 @@ export const MobileOrdersPage: React.FC = () => {
                       <p className="text-gray-600 text-base">
                         {order.restaurantName}
                       </p>
-                      {(order.facilityName || order.meetingRoom) && (
+                      {(order.facilityName || order.meetingRoom || order.location) && (
                         <p className="text-gray-600 text-sm flex items-center mt-1">
                           <span className="text-xs mr-1">🏢</span>
-                          {order.facilityName || order.meetingRoom}
+                          {order.facilityName || order.meetingRoom || order.location}
                         </p>
                       )}
                       {order.totalAmount > 0 && (
                         <p className="text-gray-800 font-medium text-sm mt-1">
-                          ₹{order.totalAmount}
+                          OMR{order.totalAmount}
                         </p>
                       )}
                     </div>
@@ -499,8 +504,8 @@ export const MobileOrdersPage: React.FC = () => {
 
                   <div className="flex items-center justify-between mt-3">
                     <div className="flex items-center text-gray-600">
-                      <DeliveryDining className="w-4 h-4 mr-2" />
-                      <span className="text-sm">{order.statusMessage}</span>
+                      {/* <DeliveryDining className="w-4 h-4 mr-2" /> */}
+                      {/* <span className="text-sm">{order.statusMessage}</span> */}
                     </div>
                     <span className="text-gray-500 text-sm">{order.timeAgo}</span>
                   </div>

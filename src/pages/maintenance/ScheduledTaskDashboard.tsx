@@ -234,11 +234,15 @@ export const ScheduledTaskDashboard = () => {
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [showSelectionPanel, setShowSelectionPanel] = useState(false);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
-  const [calendarFilters, setCalendarFilters] = useState<CalendarFilters>({
-    dateFrom: '01/07/2025',
-    dateTo: '31/07/2025',
-    's[task_custom_form_schedule_type_eq]': '',
-    's[task_task_of_eq]': ''
+  const [calendarFilters, setCalendarFilters] = useState<CalendarFilters>(() => {
+    // Use the same default date range as analytics (today to one week ago)
+    const defaultRange = getDefaultDateRange();
+    return {
+      dateFrom: defaultRange.startDate,
+      dateTo: defaultRange.endDate,
+      's[task_custom_form_schedule_type_eq]': '',
+      's[task_task_of_eq]': ''
+    };
   });
   const [taskData, setTaskData] = useState<TaskRecord[]>([]);
   const [loading, setLoading] = useState(false);
