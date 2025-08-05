@@ -6,7 +6,16 @@ import { Button } from '@/components/ui/button';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModal';
 import { surveyApi, SurveyResponseData } from '@/services/surveyApi';
+import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
+
+interface FilterState {
+  surveyTitle: string;
+  surveyMappingId: string;
+  surveyType: string;
+  startDate: Date | null;
+  endDate: Date | null;
+}
 
 export const SurveyResponsePage = () => {
   console.log('SurveyResponsePage component loaded successfully with EnhancedTable');
@@ -16,16 +25,30 @@ export const SurveyResponsePage = () => {
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [responseData, setResponseData] = useState<SurveyResponseData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<FilterState>({
+    surveyTitle: '',
+    surveyMappingId: '',
+    surveyType: '',
+    startDate: null,
+    endDate: null
+  });
 
   // Fetch survey responses on component mount
   useEffect(() => {
     fetchSurveyResponses();
   }, []);
 
-  const fetchSurveyResponses = async () => {
+  const fetchSurveyResponses = async (filters?: FilterState) => {
     setIsLoading(true);
     try {
-      const data = await surveyApi.getAllSurveyResponses();
+      let data;
+      if (filters && (filters.surveyTitle || filters.surveyMappingId)) {
+        // Use filter API when filters are applied
+        data = await fetchFilteredSurveyResponses(filters);
+      } else {
+        // Use default API when no filters
+        data = await surveyApi.getAllSurveyResponses();
+      }
       console.log('Fetched survey responses:', data);
       setResponseData(data);
     } catch (error) {
@@ -34,6 +57,34 @@ export const SurveyResponsePage = () => {
       setResponseData([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchFilteredSurveyResponses = async (filters: FilterState) => {
+    try {
+      // Build query parameters
+      let url = '/survey_mapping_responses/all_responses.json?';
+      const params = new URLSearchParams();
+      
+      if (filters.surveyTitle) {
+        params.append('q[survey_mapping_survey_name_cont]', filters.surveyTitle);
+      } else {
+        params.append('q[survey_mapping_survey_name_cont]', '');
+      }
+      
+      if (filters.surveyMappingId) {
+        params.append('q[survey_mapping_id_eq]', filters.surveyMappingId);
+      } else {
+        params.append('q[survey_mapping_id_eq]', '');
+      }
+      
+      url += params.toString();
+      
+      const response = await apiClient.get(url);
+      return response.data || [];
+    } catch (error) {
+      console.error('Error fetching filtered survey responses:', error);
+      throw error;
     }
   };
 
@@ -52,9 +103,23 @@ export const SurveyResponsePage = () => {
     setIsFilterModalOpen(false);
   };
 
-  const handleApplyFilters = (filters: any) => {
+  const handleApplyFilters = (filters: FilterState) => {
     console.log('Applied filters:', filters);
-    // Handle filter application logic here
+    setAppliedFilters(filters);
+    // Fetch filtered data from API
+    fetchSurveyResponses(filters);
+  };
+
+  const handleResetFilters = () => {
+    setAppliedFilters({
+      surveyTitle: '',
+      surveyMappingId: '',
+      surveyType: '',
+      startDate: null,
+      endDate: null
+    });
+    // Fetch all data without filters
+    fetchSurveyResponses();
   };
 
   const columns = [
@@ -102,16 +167,16 @@ export const SurveyResponsePage = () => {
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
       {/* Breadcrumb */}
       <div className="mb-6">
-        <nav className="flex items-center text-sm text-gray-600 mb-4">
+        {/* <nav className="flex items-center text-sm text-gray-600 mb-4">
           <span>Survey</span>
           <span className="mx-2">{'>'}</span>
           <span>Response</span>
-        </nav>
+        </nav> */}
         <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-6">Response List</h1>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
           <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
             <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
@@ -150,7 +215,7 @@ export const SurveyResponsePage = () => {
             <div className="text-sm text-gray-600 truncate">Survey</div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Search and Action Buttons */}
 
@@ -189,6 +254,7 @@ export const SurveyResponsePage = () => {
         open={isFilterModalOpen}
         onClose={handleCloseFilterModal}
         onApplyFilters={handleApplyFilters}
+        onResetFilters={handleResetFilters}
       />
     </div>
   );
