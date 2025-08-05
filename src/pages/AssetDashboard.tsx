@@ -78,6 +78,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import AssetStatisticsSelector from "@/components/AssetStatisticsSelector";
 import { AssetAnalyticsSelector } from "@/components/AssetAnalyticsSelector";
+import { ca } from "date-fns/locale";
 
 // Analytics data interfaces are now handled by AssetAnalyticsComponents
 
@@ -351,6 +352,8 @@ export const AssetDashboard = () => {
     purchaseCost: asset.purchase_cost,
     currentBookValue: asset.current_book_value,
     floor: asset.pms_floor || null,
+    category: asset.asset_type_category || "N/A",
+    
   }));
 
   const transformedSearchedAssets = searchAssets.map((asset, index) => ({
@@ -368,6 +371,7 @@ export const AssetDashboard = () => {
     assetSubGroup: asset.assetSubGroup || "",
     assetType: asset.assetType,
     floor: null, // Search results don't include floor data
+    category: asset.asset_type_category || "N/A",
   }));
 
   // Use search results if search term exists, otherwise use Redux assets
