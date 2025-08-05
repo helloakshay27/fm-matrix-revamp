@@ -20,7 +20,7 @@ export const TicketAnalyticsFilterDialog: React.FC<TicketAnalyticsFilterDialogPr
   const getDefaultDates = () => {
     const today = new Date();
     const lastYear = new Date();
-    lastYear.setFullYear(today.getFullYear());
+    lastYear.setFullYear(today.getFullYear() - 1); // Actually subtract 1 year
     
     const formatDate = (date: Date) => {
       const day = date.getDate().toString().padStart(2, '0');
@@ -41,14 +41,32 @@ export const TicketAnalyticsFilterDialog: React.FC<TicketAnalyticsFilterDialogPr
 
   const handleSubmit = () => {
     if (startDate && endDate) {
-      onApplyFilters({ startDate, endDate });
+      // Ensure consistent date format for API
+      const formatDateForAPI = (dateStr: string) => {
+        // If dateStr is already in DD/MM/YYYY format, keep it
+        if (dateStr.includes('/')) {
+          return dateStr;
+        }
+        // If it's in another format, convert it
+        const date = new Date(dateStr);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      };
+
+      onApplyFilters({ 
+        startDate: formatDateForAPI(startDate), 
+        endDate: formatDateForAPI(endDate) 
+      });
       onClose();
     }
   };
 
   const handleReset = () => {
-    setStartDate('');
-    setEndDate('');
+    const defaultDates = getDefaultDates();
+    setStartDate(defaultDates.startDate);
+    setEndDate(defaultDates.endDate);
   };
 
   const handleClose = () => {
