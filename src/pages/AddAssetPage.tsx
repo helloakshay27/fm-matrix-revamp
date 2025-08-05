@@ -590,7 +590,17 @@ const AddAssetPage = () => {
 
     // Start with the default IT asset details (system_details and hardware)
     Object.entries(itAssetDetails).forEach(([section, fields]) => {
-      result[section] = { ...fields };
+      const nonEmptyFields = {};
+      Object.entries(fields).forEach(([key, value]) => {
+        // Only include fields with values (not empty, null, or undefined)
+        if (value && value.toString().trim() !== "") {
+          nonEmptyFields[key] = value;
+        }
+      });
+      // Only add section if it has non-empty fields
+      if (Object.keys(nonEmptyFields).length > 0) {
+        result[section] = nonEmptyFields;
+      }
     });
 
     // Add any additional custom fields from itAssetsCustomFields
@@ -610,9 +620,12 @@ const AddAssetPage = () => {
         result[sectionKey] = {};
       }
       fields.forEach((field) => {
-        // Convert field name to snake_case as well
-        const fieldKey = field.name.trim().toLowerCase().replace(/\s+/g, "_");
-        result[sectionKey][fieldKey] = field.value;
+        // Only add field if it has a value (not empty, null, or undefined)
+        if (field.value && field.value.toString().trim() !== "") {
+          // Convert field name to snake_case as well
+          const fieldKey = field.name.trim().toLowerCase().replace(/\s+/g, "_");
+          result[sectionKey][fieldKey] = field.value;
+        }
       });
     });
 
@@ -1539,29 +1552,35 @@ const AddAssetPage = () => {
       return value;
     };
 
-    // Custom fields
+    // Custom fields - only include fields with values
     Object.keys(customFields).forEach((sectionKey) => {
       (customFields[sectionKey] || []).forEach((field) => {
-        extraFields.push({
-          field_name: field.name,
-          field_value: field.value,
-          group_name: sectionKey,
-          field_description: field.name,
-          _destroy: false,
-        });
+        // Only add field if it has a value (not empty, null, or undefined)
+        if (field.value && field.value.toString().trim() !== "") {
+          extraFields.push({
+            field_name: field.name,
+            field_value: field.value,
+            group_name: sectionKey,
+            field_description: field.name,
+            _destroy: false,
+          });
+        }
       });
     });
 
-    // IT Assets custom fields
+    // IT Assets custom fields - only include fields with values
     Object.keys(itAssetsCustomFields).forEach((sectionKey) => {
       (itAssetsCustomFields[sectionKey] || []).forEach((field) => {
-        extraFields.push({
-          field_name: field.name,
-          field_value: field.value,
-          group_name: sectionKey,
-          field_description: field.name,
-          _destroy: false,
-        });
+        // Only add field if it has a value (not empty, null, or undefined)
+        if (field.value && field.value.toString().trim() !== "") {
+          extraFields.push({
+            field_name: field.name,
+            field_value: field.value,
+            group_name: sectionKey,
+            field_description: field.name,
+            _destroy: false,
+          });
+        }
       });
     });
 
