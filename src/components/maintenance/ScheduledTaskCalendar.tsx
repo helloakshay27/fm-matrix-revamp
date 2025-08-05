@@ -647,9 +647,13 @@ const YearlyView: React.FC<{
         <div
           className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-xl p-4 max-w-sm"
           style={{
-            left: mousePosition.x + 10,
-            top: mousePosition.y - 10,
-            pointerEvents: 'none'
+            left: Math.min(mousePosition.x + 10, window.innerWidth - 320), // Prevent overflow to the right
+            top: mousePosition.y > window.innerHeight / 2 
+              ? mousePosition.y - 300 // Show above cursor if in bottom half
+              : mousePosition.y + 10, // Show below cursor if in top half
+            pointerEvents: 'none',
+            maxHeight: '250px',
+            overflowY: 'auto'
           }}
         >
           {(() => {
@@ -676,11 +680,7 @@ const YearlyView: React.FC<{
                 </div>
 
                 {/* Debug Info */}
-                <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                  <div>Date Key: {hoveredDay}</div>
-                  <div>Total Events Available: {events.length}</div>
-                  <div>Events for this day: {dayEvents.length}</div>
-                </div>
+          
 
                 {dayEvents.length > 0 ? (
                   <>
