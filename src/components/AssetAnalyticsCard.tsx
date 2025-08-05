@@ -39,8 +39,8 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
           <ResponsiveContainer width="100%" height={320}>
             <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis 
-                dataKey="name" 
+              <XAxis
+                dataKey="name"
                 tick={{ fontSize: 11, fill: '#6B7280' }}
                 angle={-45}
                 textAnchor="end"
@@ -48,24 +48,24 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                 axisLine={{ stroke: '#D1D5DB' }}
                 tickLine={{ stroke: '#D1D5DB' }}
               />
-              <YAxis 
+              <YAxis
                 tick={{ fontSize: 11, fill: '#6B7280' }}
                 axisLine={{ stroke: '#D1D5DB' }}
                 tickLine={{ stroke: '#D1D5DB' }}
               />
-              <Tooltip 
+              <Tooltip
                 formatter={(value) => [value, 'Assets']}
                 labelStyle={{ color: '#374151', fontWeight: 'bold' }}
-                contentStyle={{ 
-                  backgroundColor: '#FFFFFF', 
+                contentStyle={{
+                  backgroundColor: '#FFFFFF',
                   border: '1px solid #E5E7EB',
                   borderRadius: '8px',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                 }}
               />
-              <Bar 
-                dataKey="value" 
-                fill="#C72030" 
+              <Bar
+                dataKey="value"
+                fill="#C72030"
                 radius={[4, 4, 0, 0]}
                 stroke="#C72030"
                 strokeWidth={1}
@@ -95,11 +95,11 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip 
+              <Tooltip
                 formatter={(value) => [value, 'Assets']}
                 labelStyle={{ color: '#374151', fontWeight: 'bold' }}
-                contentStyle={{ 
-                  backgroundColor: '#FFFFFF', 
+                contentStyle={{
+                  backgroundColor: '#FFFFFF',
                   border: '1px solid #E5E7EB',
                   borderRadius: '8px',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
@@ -169,7 +169,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
       <CardHeader className="pb-4 px-6 pt-6">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold text-[#C72030]">{title}</CardTitle>
-          {onDownload && (
+          {onDownload && title !== "Asset Status" && (
             <Button
               variant="outline"
               size="sm"
@@ -181,7 +181,7 @@ export const AssetAnalyticsCard: React.FC<AssetAnalyticsCardProps> = ({
             </Button>
           )}
         </div>
-       
+
       </CardHeader>
       <CardContent className="px-6 pb-6">
         {data && Array.isArray(data) && data.length > 0 ? (
