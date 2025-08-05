@@ -790,7 +790,7 @@ export const AddRestaurantPage = () => {
         )}
 
         {/* Blocked Days */}
-        {renderSectionHeader('BLOCKED DAYS', 'blockedDays', Ban)}
+        {/* {renderSectionHeader('BLOCKED DAYS', 'blockedDays', Ban)}
         {expandedSections.blockedDays && (
           <div className="p-4 border border-gray-200 rounded-lg">
             <div className="space-y-4">
@@ -848,7 +848,7 @@ export const AddRestaurantPage = () => {
               </Button>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Table Booking Configuration */}
         {renderSectionHeader('TABLE BOOKING CONFIGURATION', 'tableBooking', Users)}
