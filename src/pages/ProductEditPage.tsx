@@ -582,7 +582,7 @@ export const ProductEditPage = () => {
                   onChange={(e) => handleInputChange("stock", e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="active">Active</Label>
                 <Select value={formData.active} onValueChange={(value) => handleInputChange("active", value)}>
                   <SelectTrigger>
@@ -593,7 +593,7 @@ export const ProductEditPage = () => {
                     <SelectItem value="0">No</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </div> */}
 
               {/* Row 3 */}
               <div className="space-y-2">

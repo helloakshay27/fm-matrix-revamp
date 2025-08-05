@@ -38,7 +38,6 @@ export const AddMenuItemModal = ({
     cgstAmount: "",
     description: "",
     masterPrice: "",
-    active: ""
   });
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -84,7 +83,6 @@ export const AddMenuItemModal = ({
         cgstAmount: "",
         description: "",
         masterPrice: "",
-        active: ""
       });
       setSelectedFile(null);
       onClose();
@@ -288,7 +286,7 @@ export const AddMenuItemModal = ({
             />
           </div>
 
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <FormControl fullWidth variant="outlined" sx={selectFieldStyles}>
               <InputLabel shrink>Active</InputLabel>
               <MuiSelect
@@ -301,7 +299,7 @@ export const AddMenuItemModal = ({
                 <MenuItem value="0">No</MenuItem>
               </MuiSelect>
             </FormControl>
-          </div>
+          </div> */}
 
           <div className="space-y-2">
             <FormControl fullWidth variant="outlined" sx={selectFieldStyles}>

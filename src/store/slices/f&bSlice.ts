@@ -486,7 +486,7 @@ export const fetchMenu = createAsyncThunk(
     async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: number }, { rejectWithValue }) => {
         try {
             const response = await axios.get(
-                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_menus.json`,
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_menus.json?active`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
