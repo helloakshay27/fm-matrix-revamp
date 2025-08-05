@@ -467,7 +467,7 @@ export const MobileItemsDetails: React.FC = () => {
         </div>
       </div>
 
-      { ( sourceParam === "app") && (
+      {(sourceParam === "app" && !sessionStorage.getItem("facility_id")) && (
         <div className="mx-4 mt-4">
           <div className="flex items-center mb-3">
             <div className="bg-white rounded-xl w-full p-4 gap-2">

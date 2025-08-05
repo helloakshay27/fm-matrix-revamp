@@ -133,8 +133,12 @@ export const MobileContactForm: React.FC = () => {
 
   // Validation functions
   const validateMobile = (mobile: string) => {
-    const mobileRegex = /^[6-9]\d{9}$/; // Indian mobile number format
-    return mobileRegex.test(mobile);
+    // Oman mobile number format: 8-9 digits
+    // 8 digits: starting with 9, 8, 7, or 6
+    // 9 digits: various prefixes like 24, 25, 26, etc.
+    const mobile8Regex = /^[9876]\d{7}$/; // 8 digits starting with 9,8,7,6
+    const mobile9Regex = /^(23|24|25|26)\d{7}$/; // 9 digits starting with 24,25,26
+    return mobile8Regex.test(mobile) || mobile9Regex.test(mobile);
   };
 
   const validateEmail = (email: string) => {
@@ -153,7 +157,7 @@ export const MobileContactForm: React.FC = () => {
     if (!formData.customer_mobile.trim()) {
       errors.push("Mobile number is required");
     } else if (!validateMobile(formData.customer_mobile)) {
-      errors.push("Please enter a valid 10-digit mobile number");
+      errors.push("Please enter a valid Oman mobile number (8 or 9) digit");
     }
     
     if (!formData.customer_email.trim()) {
@@ -326,7 +330,7 @@ export const MobileContactForm: React.FC = () => {
 
         const orderData = {
           customer_name: formData.customer_name,
-          customer_mobile: formData.customer_mobile, // API expects customer_mobile field
+          customer_mobile: formData.customer_mobile,
           customer_email: formData.customer_email,
           delivery_address: deliveryLocation,
           facility_id: parseInt(finalFacilityId || "0"),
@@ -429,30 +433,35 @@ export const MobileContactForm: React.FC = () => {
             {/* Contact Number */}
             <div>
               <Label
-                htmlFor="customer_mobile"
-                className="text-sm font-medium text-gray-700 mb-2 block"
+              htmlFor="customer_mobile"
+              className="text-sm font-medium text-gray-700 mb-2 block"
               >
-                Contact Number <span className="text-red-500">*</span>
-                {appToken && userInfo?.mobile && (
-                  <span className="text-xs text-gray-500 ml-2">(From App)</span>
-                )}
+              Contact Number <span className="text-red-500">*</span>
+              {appToken && userInfo?.mobile && (
+                <span className="text-xs text-gray-500 ml-2">(From App)</span>
+              )}
               </Label>
-              <Input
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 text-sm">+968</span>
+                </div>
+                <Input
                 id="customer_mobile"
                 type="tel"
-                placeholder="Enter Your 10-digit Mobile Number"
+                placeholder="24XXXXXX"
                 value={formData.customer_mobile}
                 onChange={(e) => {
-                  // Only allow digits and limit to 10 characters
-                  const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                  // Only allow digits and limit to 9 characters for Oman (8 or 9 digits)
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 9);
                   handleInputChange("customer_mobile", value);
                 }}
-                maxLength={10}
+                maxLength={9}
                 readOnly={appToken && userInfo?.mobile}
-                className={`w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
+                className={`w-full pl-16 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 ${
                   appToken && userInfo?.mobile ? 'bg-gray-50 cursor-not-allowed' : ''
                 }`}
-              />
+                />
+              </div>
             </div>
 
             {/* Name */}

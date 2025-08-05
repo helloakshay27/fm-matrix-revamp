@@ -260,7 +260,7 @@ export const restaurantApi = {
           restaurant.address || restaurant.location || "Unknown Location",
         rating: restaurant.rating || 4.0,
         timeRange: restaurant.delivery_time || "30-40 mins",
-        discount: restaurant.discount || "10% OFF",
+        discount: restaurant.discount || "",
         image: coverImage,
         images: coverImages, // Add array of images for carousel
         menuItems,
@@ -444,7 +444,7 @@ export const restaurantApi = {
           location: r.location || r.address || "Location not specified",
           rating: r.rating || 4.0,
           timeRange: r.delivery_time || "30-45 mins",
-          discount: r.discount || "10% OFF",
+          discount: r.discount || "",
           image: r.cover_image || r.cover_images?.[0]?.document || "/placeholder.svg",
           images: r.cover_images?.map((img: CoverImage) => img.document) || [],
           menuItems: [], // Will be loaded when restaurant is selected

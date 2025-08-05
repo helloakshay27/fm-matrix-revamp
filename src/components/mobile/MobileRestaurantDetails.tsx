@@ -16,6 +16,7 @@ import {
 } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Restaurant as ApiRestaurant } from "@/services/restaurantApi";
+import { DeliveryDining, DirtyLensOutlined } from "@mui/icons-material";
 
 interface MenuItem {
   id: string;
@@ -37,6 +38,7 @@ interface Restaurant {
   id: string;
   name: string;
   location: string;
+  delivery_time: string;
   rating: number;
   timeRange: string;
   discount: string;
@@ -320,6 +322,10 @@ export const MobileRestaurantDetails: React.FC<
           <MapPin className="w-4 h-4 mr-1" />
           <span>{restaurant.location}</span>
         </div>
+        {/* <div className="flex items-center text-gray-500 text-sm mb-2">
+          <DeliveryDining className="w-4 h-4 mr-1" />
+          <span>{restaurant?.delivery_time}</span>
+        </div> */}
 
         <div className="flex items-center text-gray-500 text-sm">
           {/* <Users className="w-4 h-4 mr-1" /> */}
