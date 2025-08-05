@@ -179,11 +179,12 @@ export const ScheduleListDashboard = () => {
   const handleExport = () => navigate('/maintenance/schedule/export');
   
   // Handle toggle click
-  const handleToggleActive = (scheduleId: string) => {
-    const currentSchedule = schedules.find(schedule => schedule.id === scheduleId);
+  const handleToggleActive = (customFormCode: string) => {
+    // Find by custom_form_code
+    const currentSchedule = schedules.find(schedule => schedule.custom_form_code === customFormCode);
     // Use the same logic as the toggle UI for determining ON/OFF
-    const isActive = (optimisticActive[scheduleId] !== undefined)
-      ? optimisticActive[scheduleId]
+    const isActive = (optimisticActive[customFormCode] !== undefined)
+      ? optimisticActive[customFormCode]
       : (
           currentSchedule?.active === null ||
           currentSchedule?.active === true ||
@@ -191,24 +192,21 @@ export const ScheduleListDashboard = () => {
         );
     if (isActive) {
       // If ON, show modal to turn OFF
-      setDeactivateModal({ open: true, scheduleId });
+      setDeactivateModal({ open: true, scheduleId: customFormCode });
       setDeactivateOption('upcoming');
     } else {
       // If OFF, turn ON directly
-      updateScheduleActive(scheduleId, 1);
+      updateScheduleActive(customFormCode, 1);
     }
   };
 
   // API call for activation/deactivation
-  const updateScheduleActive = async (scheduleId: string, active: 0 | 1, deactivated_tasks?: 'upcoming' | 'all') => {
+  const updateScheduleActive = async (customFormCode: string, active: 0 | 1, deactivated_tasks?: 'upcoming' | 'all') => {
     setOptimisticActive(prev => ({
       ...prev,
-      [scheduleId]: !!active
+      [customFormCode]: !!active
     }));
     try {
-      // Find the custom_form_code for this schedule
-      const schedule = schedules.find(s => s.id === scheduleId);
-      const code = schedule?.custom_form_code || scheduleId;
       const payload: any = { pms_custom_form: { active } };
       // Only include deactivated_tasks if deactivating
       if (active === 0 && deactivated_tasks) {
@@ -217,7 +215,7 @@ export const ScheduleListDashboard = () => {
         delete payload.pms_custom_form.deactivated_tasks;
       }
       // Always use the update_custom_form_update endpoint with custom_form_code
-      const response = await apiClient.put(`/pms/custom_forms/update_custom_form_update.json?id=${code}`, payload);
+      const response = await apiClient.put(`/pms/custom_forms/update_custom_form_update.json?id=${customFormCode}`, payload);
       toast.success(`Schedule ${active ? 'activated' : 'deactivated'} successfully.`, {
         position: 'top-right',
         duration: 4000,
@@ -231,7 +229,7 @@ export const ScheduleListDashboard = () => {
     } catch (error) {
       setOptimisticActive(prev => ({
         ...prev,
-        [scheduleId]: schedules.find(s => s.id === scheduleId)?.active
+        [customFormCode]: schedules.find(s => s.custom_form_code === customFormCode)?.active
       }));
       toast.error('Failed to update schedule status. Please try again.', {
         position: 'top-right',
@@ -355,8 +353,8 @@ export const ScheduleListDashboard = () => {
     if (columnKey === 'active') {
       // Treat null, true, or 1 as active (ON)
       console.log("item", item, item.active, typeof item.active);
-      const isActive = (optimisticActive[item.id] !== undefined)
-        ? optimisticActive[item.id]
+      const isActive = (optimisticActive[item.custom_form_code] !== undefined)
+        ? optimisticActive[item.custom_form_code]
         : (
             item.active === null ||
             item.active === true ||
@@ -366,7 +364,7 @@ export const ScheduleListDashboard = () => {
         <div className="flex items-center justify-center">
           <div
             className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-300'}`}
-            onClick={() => handleToggleActive(item.id)}
+            onClick={() => handleToggleActive(item.custom_form_code)}
             aria-label={isActive ? 'Deactivate schedule' : 'Activate schedule'}
           >
             <span
