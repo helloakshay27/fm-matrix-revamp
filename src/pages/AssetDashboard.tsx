@@ -492,7 +492,7 @@ export const AssetDashboard = () => {
         filters = {};
         break;
       case "non_it":
-        filters = { it_asset_eq: [false, null] };
+        filters = { it_asset_eq: false };
         break;
       case "it":
         filters = { it_asset_eq: true };

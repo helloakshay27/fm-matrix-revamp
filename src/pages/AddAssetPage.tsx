@@ -2901,19 +2901,18 @@ const AddAssetPage = () => {
         purchase_cost: formData.purchase_cost,
 
         // Asset type flags
-        it_asset: formData.it_asset,
+        it_asset: selectedAssetCategory === "IT Equipment" ? true : formData.it_asset,
         it_meter: formData.it_meter,
         is_meter: formData.is_meter,
         asset_loaned: formData.asset_loaned,
         depreciation_applicable: formData.depreciation_applicable,
-        it_asset_eq: selectedAssetCategory === "IT Equipment",
 
         // Meter fields
         meter_tag_type: formData.meter_tag_type,
         parent_meter_id: formData.parent_meter_id,
 
         // Warranty
-        warranty: formData.warranty,
+        warranty: formData.warranty === "Yes" ? true : false,
         warranty_period: formData.warranty_period,
 
         // Other fields
@@ -3397,7 +3396,7 @@ const AddAssetPage = () => {
         purchase_cost: formData.purchase_cost,
 
         // Asset type flags
-        it_asset: formData.it_asset,
+        it_asset: selectedAssetCategory === "IT Equipment" ? true : formData.it_asset,
         it_meter: formData.it_meter,
         is_meter: formData.is_meter,
         asset_loaned: formData.asset_loaned,
@@ -6463,7 +6462,7 @@ const AddAssetPage = () => {
                           />
                           <label
                             htmlFor="vehicle-warranty-yes"
-                            className="text-sm"
+                            className="text-sm" 
                           >
                             Yes
                           </label>
@@ -6479,7 +6478,7 @@ const AddAssetPage = () => {
                               setUnderWarranty(e.target.value);
                               handleFieldChange(
                                 "warranty",
-                                e.target.value === "yes"
+                                e.target.value === "no"
                               );
                             }}
                             className="w-4 h-4 text-[#C72030] border-gray-300"
