@@ -163,7 +163,11 @@ export const MobileItemsDetails: React.FC = () => {
     if (isSubmitting) return; // Prevent double submission
 
     // Validate delivery location for app users
-    if (finalSourceParam === "app" && (!inputLocation || inputLocation.trim() === "")) {
+    if (
+      finalSourceParam === "app" &&
+      !sessionStorage.getItem("facility_id") &&
+      (!inputLocation || inputLocation.trim() === "")
+    ) {
       setShowLocationError(true);
       return;
     }
@@ -467,7 +471,7 @@ export const MobileItemsDetails: React.FC = () => {
         </div>
       </div>
 
-      {(sourceParam === "app" && !sessionStorage.getItem("facility_id")) && (
+      {sourceParam === "app" && !sessionStorage.getItem("facility_id") && (
         <div className="mx-4 mt-4">
           <div className="flex items-center mb-3">
             <div className="bg-white rounded-xl w-full p-4 gap-2">
@@ -491,7 +495,7 @@ export const MobileItemsDetails: React.FC = () => {
                   value={inputLocation || ""}
                   type="text"
                   className={`w-full bg-white resize-none text-gray-600 mt-2 p-1 rounded-md border ${
-                    showLocationError ? 'border-red-500' : 'border-gray-300'
+                    showLocationError ? "border-red-500" : "border-gray-300"
                   } focus:ring-2 focus:ring-red-500 outline-none`}
                   placeholder="Enter delivery location"
                 />

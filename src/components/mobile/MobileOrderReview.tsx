@@ -270,7 +270,7 @@ export const MobileOrderReview: React.FC = () => {
   }, [showSuccess]);
 
   const handleBack = () => {
-    navigate(-1);
+    navigate('/mobile/restaurant');
   };
 
   const handleViewOrderDetails = () => {
