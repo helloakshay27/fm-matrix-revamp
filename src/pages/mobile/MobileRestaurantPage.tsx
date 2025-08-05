@@ -286,7 +286,7 @@ export const MobileRestaurantPage: React.FC = () => {
             location: r.location || r?.address || "Location not specified",
             rating: r.rating || 4.0,
             timeRange: r.delivery_time || "30-45 mins",
-            discount: r.discount || "10% OFF",
+            discount: r.discount || "",
             image:
               r.cover_image ||
               r.cover_images?.[0]?.document ||
