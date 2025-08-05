@@ -68,6 +68,7 @@ export const AddInventoryPage = () => {
     igstRate: ''
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const [sacList, setSacList] = useState([])
 
   useEffect(() => {
     dispatch(fetchInventoryAssets());
@@ -339,6 +340,37 @@ export const AddInventoryPage = () => {
       alignItems: 'center',
     },
   };
+
+
+  const fetchSAC = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem("token"); // Get token from localStorage
+
+    try {
+      const response = await fetch(`https://${baseUrl}/pms/hsns/get_hsns.json`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Ensure token is a Bearer token if needed
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setSacList(data)
+      console.log('SAC data:', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching SAC:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSAC();
+  }, []);
+
 
   return (
     <div className="p-6 min-h-screen bg-gray-50">
@@ -761,15 +793,21 @@ export const AddInventoryPage = () => {
                         displayEmpty
                       >
                         <MenuItem value="">Select SAC/HSN Code</MenuItem>
-                        <MenuItem value="19">73021011</MenuItem>
-                        <MenuItem value="918">0</MenuItem>
-                        <MenuItem value="919">0</MenuItem>
-                        <MenuItem value="951">0</MenuItem>
+                        {sacList
+                          ?.filter((item: any) => item.code !== null && item.code !== '')
+                          .map((item: any) => (
+                            <MenuItem key={item.id} value={item.id}>
+                              {item.code}
+                            </MenuItem>
+                          ))}
                       </MuiSelect>
+
                       {errors.sacHsnCode && (
                         <p className="text-red-500 text-sm mt-1">{errors.sacHsnCode}</p>
                       )}
                     </FormControl>
+
+
                   </div>
 
                   <div>

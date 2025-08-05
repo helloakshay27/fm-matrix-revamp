@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { restaurantApi, FoodOrder } from "@/services/restaurantApi";
-import { DeliveryDining } from "@mui/icons-material";
+import { DeliveryDining, DeliveryDiningOutlined } from "@mui/icons-material";
 
 interface Restaurant {
   id: number;
@@ -144,8 +144,8 @@ export const MobileRestaurantDashboard: React.FC<
       name: order.restaurant_name || "Restaurant",
       location: "Restaurant Location",
       rating: 4.1,
-      timeRange: "60-65 mins",
-      discount: "20% OFF",
+      timeRange: "",
+      discount: "",
       image: order.restaurant_cover_images?.[0]?.document || "",
     };
 
@@ -257,8 +257,13 @@ export const MobileRestaurantDashboard: React.FC<
     }
   };
 
-  // Show all restaurants (remove status filtering)
-  const activeRestaurants = restaurants;
+  // Filter out restaurants with status 0 (inactive restaurants)
+  const activeRestaurants = restaurants.filter(restaurant => restaurant.status !== 0);
+  
+  console.log("🍽️ RESTAURANT FILTERING:");
+  console.log("  - Total restaurants:", restaurants.length);
+  console.log("  - Active restaurants (status !== 0):", activeRestaurants.length);
+  console.log("  - Filtered restaurants:", restaurants.filter(r => r.status === 0).length);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -354,9 +359,9 @@ export const MobileRestaurantDashboard: React.FC<
                           {restaurant.rating && (
                             <div className="flex items-center bg-orange-100 px-2 py-1 rounded-lg">
                               <span className="text-sm font-semibold text-gray-900 mr-1">
-                                {restaurant.rating}
+                                {/* {restaurant.rating} */}
                               </span>
-                              <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
+                              {/* <Star className="w-4 h-4 fill-orange-400 text-orange-400" /> */}
                             </div>
                           )}
                         </div>
@@ -370,12 +375,12 @@ export const MobileRestaurantDashboard: React.FC<
                           </span>
                         </div>
 
-                        {restaurant.cuisines && (
+                        {/* {restaurant.cuisines && (
                           <div className="flex items-center text-gray-500 text-sm mb-2">
                             <Users className="w-4 h-4 mr-1" />
                             <span>{restaurant.cuisines}</span>
                           </div>
-                        )}
+                        )} */}
 
                         {restaurant.cost_for_two > 0 && (
                           <div className="flex items-center text-gray-500 text-sm mb-3">
@@ -385,7 +390,7 @@ export const MobileRestaurantDashboard: React.FC<
 
                         {restaurant.timeRange && (
                           <div className="flex items-center text-gray-500 text-sm mb-3">
-                            <Users className="w-4 h-4 mr-1" />
+                            <DeliveryDiningOutlined className="w-4 h-4 mr-1" />
                             <span>{restaurant.timeRange}</span>
                           </div>
                         )}
@@ -455,7 +460,7 @@ export const MobileRestaurantDashboard: React.FC<
                         <p className="text-gray-600 text-sm">{order?.location || order?.facility_name || ""}</p>
                       </div>
                     </div>
-                    
+
                     <div
                       className="px-3 py-1 rounded-full text-xs font-medium"
                       style={{

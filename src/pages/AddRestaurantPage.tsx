@@ -266,9 +266,9 @@ export const AddRestaurantPage = () => {
 
       // Append blocked days
       blockedDays.forEach((day, index) => {
-        dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][date]`, day.date);
-        dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][order_blocked]`, day.orderBlocked ? '1' : '0');
-        dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][booking_blocked]`, day.bookingBlocked ? '1' : '0');
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][ondate]`, day.date);
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][order_allowed]`, day.orderBlocked);
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][booking_allowed]`, day.bookingBlocked);
       });
 
       await dispatch(createRestaurant({ baseUrl, token, data: dataToSubmit })).unwrap();
