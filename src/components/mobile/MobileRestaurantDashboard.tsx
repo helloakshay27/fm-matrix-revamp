@@ -257,8 +257,13 @@ export const MobileRestaurantDashboard: React.FC<
     }
   };
 
-  // Show all restaurants (remove status filtering)
-  const activeRestaurants = restaurants;
+  // Filter out restaurants with status 0 (inactive restaurants)
+  const activeRestaurants = restaurants.filter(restaurant => restaurant.status !== 0);
+  
+  console.log("🍽️ RESTAURANT FILTERING:");
+  console.log("  - Total restaurants:", restaurants.length);
+  console.log("  - Active restaurants (status !== 0):", activeRestaurants.length);
+  console.log("  - Filtered restaurants:", restaurants.filter(r => r.status === 0).length);
 
   return (
     <div className="min-h-screen bg-gray-50">
