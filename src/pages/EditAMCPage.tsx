@@ -83,7 +83,6 @@ export const EditAMCPage = () => {
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
-  const [previousGroupData, setPreviousGroupData] = useState({ group: '', subgroup: '' });
 
   // Extract data from Redux state
   // const assets = Array.isArray((assetsData as any)?.assets) ? (assetsData as any).assets : Array.isArray(assetsData) ? assetsData : [];
@@ -130,7 +129,7 @@ export const EditAMCPage = () => {
     if (amcData && typeof amcData === 'object') {
       const data = amcData as any;
       const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
-      const isGroupType = data.amc_details_type === 'group';
+      const isGroupType = data.amc_details_type === 'group'; // Use amc_details_type to determine group or individual
 
       let assetIds: string[] = [];
       if (Array.isArray(data.amc_assets)) {
@@ -140,42 +139,48 @@ export const EditAMCPage = () => {
       }
 
       const supplierId = data.supplier_id?.toString();
-      const foundSupplier = suppliers.find((supplier) => supplier.id.toString() === supplierId);
-      const serviceId = data.service_id?.toString();
-      const foundService = services.find((service) => service.id.toString() === serviceId);
+      const foundSupplier = suppliers.find(
+        (supplier) => supplier.id.toString() === supplierId
+      );
 
-      setFormData(prev => ({
-        ...prev,
+      const serviceId = data.service_id?.toString();
+      const foundService = services.find(
+        (service) => service.id.toString() === serviceId
+      );
+
+      setFormData({
         details: detailType,
-        type: isGroupType ? 'Group' : 'Individual',
+        type: isGroupType ? 'Group' : 'Individual', // Set type based on amc_details_type
         assetName: foundService
           ? serviceId
           : data.resource_id === 'Pms::Service'
             ? data.resource_id
-            : prev.assetName,
-        asset_ids: assetIds.length > 0 ? assetIds : prev.asset_ids,
-        vendor: foundSupplier ? supplierId : prev.vendor,
-        group: data.group_id || prev.group, // Preserve prev.group if data.group_id is undefined
-        subgroup: data.sub_group_id || prev.subgroup, // Preserve prev.subgroup if data.sub_group_id is undefined
+            : '',
+        asset_ids: assetIds,
+        vendor: foundSupplier ? supplierId : '',
+        group: data.group_id || formData.group,
+        subgroup: data.sub_group_id || formData.subgroup,
         service: foundService
           ? serviceId
-          : data.service_id?.toString() || prev.service,
-        supplier: foundSupplier ? supplierId : prev.supplier,
-        startDate: data.amc_start_date || prev.startDate,
-        endDate: data.amc_end_date || prev.endDate,
-        cost: data.amc_cost?.toString() || prev.cost,
-        contractName: data.contract_name || prev.contractName,
-        paymentTerms: data.payment_term || prev.paymentTerms,
-        firstService: data.amc_first_service || prev.firstService,
-        noOfVisits: data.no_of_visits?.toString() || prev.noOfVisits,
-        remarks: data.remarks || prev.remarks
-      }));
+          : data.service_id?.toString() || formData.service,
+        supplier: foundSupplier ? supplierId : '',
+        startDate: data.amc_start_date || '',
+        endDate: data.amc_end_date || '',
+        cost: data.amc_cost?.toString() || '',
+        contractName: data.contract_name || '',
+        paymentTerms: data.payment_term || '',
+        firstService: data.amc_first_service || '',
+        noOfVisits: data.no_of_visits?.toString() || '',
+        remarks: data.remarks || ''
+      });
 
       if (isGroupType && data.group_id) {
         handleGroupChange(data.group_id.toString());
       }
     }
   }, [amcData, assetList, suppliers, services]);
+
+
   const handleInputChange = (field: string, value: string) => {
     console.log(`Updating ${field} to ${value}`);
     setFormData(prev => {
@@ -187,25 +192,12 @@ export const EditAMCPage = () => {
           asset_ids: []
         };
       }
+      // Do NOT clear group, subgroup, service, or supplier when switching type
       if (field === 'type' && prev.type !== value) {
-        if (value === 'Individual') {
-          // Save current group and subgroup before clearing
-          setPreviousGroupData({ group: prev.group, subgroup: prev.subgroup });
-          return {
-            ...prev,
-            [field]: value,
-            group: '',
-            subgroup: ''
-          };
-        } else if (value === 'Group') {
-          // Restore previous group and subgroup when switching back to Group
-          return {
-            ...prev,
-            [field]: value,
-            group: previousGroupData.group || prev.group,
-            subgroup: previousGroupData.subgroup || prev.subgroup
-          };
-        }
+        return {
+          ...prev,
+          [field]: value
+        };
       }
       return {
         ...prev,
