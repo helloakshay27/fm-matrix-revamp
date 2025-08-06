@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Users, FileText, Download, Upload, Filter, Copy, Eye, Trash2 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { TicketPagination } from '@/components/TicketPagination';
+import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
 
 // Sample data for FM Users
 const fmUsersData = [{
@@ -215,6 +216,7 @@ export const MSafeDashboard = () => {
   const location = useLocation();
   const isSafetyRoute = location.pathname.startsWith('/safety');
   const [users, setUsers] = useState(fmUsersData);
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -246,6 +248,11 @@ export const MSafeDashboard = () => {
   const handlePerPageChange = (newPerPage: number) => {
     setPerPage(newPerPage);
     setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  const handleApplyFilters = (filters: { name: string; email: string }) => {
+    console.log('Filters applied:', filters);
+    // TODO: Implement actual filtering logic
   };
 
   if (isSafetyRoute) {
@@ -298,7 +305,7 @@ export const MSafeDashboard = () => {
           <Upload className="h-4 w-4 mr-2" />
           Export
         </Button>
-        <Button variant="outline">
+        <Button variant="outline" onClick={() => setIsFilterDialogOpen(true)}>
           <Filter className="h-4 w-4 mr-2" />
           Filters
         </Button>
@@ -371,5 +378,12 @@ export const MSafeDashboard = () => {
 
       {/* Pagination */}
       <TicketPagination currentPage={currentPage} totalPages={totalPages} totalRecords={totalRecords} perPage={perPage} isLoading={isLoading} onPageChange={handlePageChange} onPerPageChange={handlePerPageChange} />
+
+      {/* Filter Dialog */}
+      <MSafeFilterDialog
+        isOpen={isFilterDialogOpen}
+        onClose={() => setIsFilterDialogOpen(false)}
+        onApplyFilters={handleApplyFilters}
+      />
     </div>;
 };
