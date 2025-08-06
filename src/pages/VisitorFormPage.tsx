@@ -129,65 +129,9 @@ export const VisitorFormPage = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Camera Section */}
-            <div className="lg:col-span-1">
-              <div className="bg-gray-100 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-700">Camera Preview</h3>
-                  <Camera className="h-5 w-5 text-gray-600" />
-                </div>
-                
-                {/* Camera Selection */}
-                <div className="mb-4">
-                  <Select value={selectedCamera || undefined} onValueChange={handleCameraChange}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Camera" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cameras.filter(camera => camera.deviceId && camera.deviceId.trim() !== '').map((camera) => (
-                        <SelectItem key={camera.deviceId} value={camera.deviceId}>
-                          {camera.label || `Camera ${camera.deviceId.slice(0, 8)}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Video Preview */}
-                <div className="relative mb-4">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    className="w-full h-48 bg-black rounded-lg object-cover"
-                  />
-                  {capturedImage && (
-                    <div className="absolute inset-0 bg-black rounded-lg">
-                      <img 
-                        src={capturedImage} 
-                        alt="Captured" 
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* Capture Button */}
-                <Button
-                  onClick={capturePhoto}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white"
-                >
-                  <Camera className="h-4 w-4 mr-2" />
-                  Capture Photo
-                </Button>
-
-                <canvas ref={canvasRef} className="hidden" />
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 gap-6">
             {/* Form Section */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-1">
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Visitor Type and Frequency */}
                 <div className="grid grid-cols-2 gap-6">
