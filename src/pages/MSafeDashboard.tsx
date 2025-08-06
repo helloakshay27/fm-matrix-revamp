@@ -1,236 +1,518 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Plus, 
-  Search, 
-  Download, 
-  Filter, 
-  Eye,
-  Edit,
-  Trash2,
-  Users,
-  UserCheck,
-  Clock,
-  Settings
-} from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Users, FileText, Download, Upload, Filter, Copy, Eye, Trash2, Plus, Search, Settings } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { TicketPagination } from '@/components/TicketPagination';
+import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
+import { MSafeImportModal } from '@/components/MSafeImportModal';
+import { MSafeExportModal } from '@/components/MSafeExportModal';
+
+// Sample data for FM Users
+const fmUsersData = [{
+  id: '230825',
+  userName: 'Vinayak T test19',
+  gender: 'Male',
+  mobileNumber: '8898',
+  email: 'vinayaktest19@yopmail.com',
+  vendorCompanyName: 'N/A',
+  entityName: 'N/A',
+  unit: '',
+  role: 'Admin',
+  employeeId: 'Vinayak T test1',
+  createdBy: 'Site',
+  accessLevel: 'Admin',
+  type: 'Admin',
+  active: true,
+  status: 'Approved',
+  faceRecognition: 'No',
+  appDownloaded: 'No'
+}, {
+  id: '228520',
+  userName: 'Vinayak T test1',
+  gender: 'Male',
+  mobileNumber: '8898444896',
+  email: 'vinayaktest1@yopmail.com',
+  vendorCompanyName: 'N/A',
+  entityName: 'N/A',
+  unit: '',
+  role: 'Admin',
+  employeeId: 'Vinayak Mane',
+  createdBy: 'Company',
+  accessLevel: 'Admin',
+  type: 'Admin',
+  active: true,
+  status: 'Approved',
+  faceRecognition: 'No',
+  appDownloaded: 'No'
+}, {
+  id: '224346',
+  userName: 'Bhakti Test',
+  gender: 'Female',
+  mobileNumber: '9765588931',
+  email: 'bngagare21@gmail.com',
+  vendorCompanyName: 'N/A',
+  entityName: 'N/A',
+  unit: '',
+  role: 'Engineer',
+  employeeId: 'Bhakti Gagare',
+  createdBy: 'Site',
+  accessLevel: 'Admin',
+  type: 'Admin',
+  active: true,
+  status: 'Approved',
+  faceRecognition: 'No',
+  appDownloaded: 'No'
+}, {
+  id: '220680',
+  userName: 'Bhakti Gagare',
+  gender: 'Male',
+  mobileNumber: '7030715846',
+  email: 'bhakti.gagre@lockated.com',
+  vendorCompanyName: 'N/A',
+  entityName: 'N/A',
+  unit: '',
+  role: 'Engineer',
+  employeeId: '',
+  createdBy: 'Site',
+  accessLevel: 'Admin',
+  type: 'Admin',
+  active: true,
+  status: 'Approved',
+  faceRecognition: 'No',
+  appDownloaded: 'No'
+}, {
+  id: '217972',
+  userName: 'Test Step1',
+  gender: 'Female',
+  mobileNumber: '932663309',
+  email: 'teststep1@yopmail.com',
+  vendorCompanyName: 'N/A',
+  entityName: 'N/A',
+  unit: '',
+  role: 'Admin',
+  employeeId: 'Sohail Ansari',
+  createdBy: 'Company',
+  accessLevel: 'Admin',
+  type: 'Admin',
+  active: true,
+  status: 'Approved',
+  faceRecognition: 'No',
+  appDownloaded: 'No'
+}, {
+  id: '214504',
+  userName: 'Nancy Dsouza',
+  gender: 'Female',
+  mobileNumber: '8884558390',
+  email: 'nancyssdsouza@gmail.com',
+  vendorCompanyName: 'N/A',
+  entityName: 'N/A',
+  unit: '',
+  role: 'Distributor',
+  employeeId: 'Karthik N',
+  createdBy: 'Company',
+  accessLevel: 'Admin',
+  type: 'Admin',
+  active: true,
+  status: 'Approved',
+  faceRecognition: 'No',
+  appDownloaded: 'No'
+}, {
+  id: '211529',
+  userName: 'Swapnilkumar Darji',
+  gender: '',
+  mobileNumber: '19879004764',
+  email: 'swapnilkumar.darji@vodafoneidea.com',
+  vendorCompanyName: 'N/A',
+  entityName: 'N/A',
+  unit: '',
+  role: 'Specialist - Order to Cash',
+  employeeId: '',
+  createdBy: 'Site',
+  accessLevel: 'Admin',
+  type: 'Admin',
+  active: true,
+  status: 'Approved',
+  faceRecognition: 'No',
+  appDownloaded: 'No'
+}, {
+  id: '180909',
+  userName: 'Admin Kolkata',
+  gender: '',
+  mobileNumber: '7766543209',
+  email: 'admin.kwb@vodafoneidea.com',
+  vendorCompanyName: 'N/A',
+  entityName: 'N/A',
+  unit: '',
+  role: 'Admin',
+  employeeId: '',
+  createdBy: 'Site',
+  accessLevel: 'Admin',
+  type: 'Admin',
+  active: true,
+  status: 'Approved',
+  faceRecognition: 'No',
+  appDownloaded: 'No'
+},
+// Add more sample data to demonstrate pagination
+{
+  id: '180908',
+  userName: 'Test User 1',
+  gender: 'Male',
+  mobileNumber: '9876543210',
+  email: 'test1@example.com',
+  vendorCompanyName: 'N/A',
+  entityName: 'N/A',
+  unit: '',
+  role: 'Admin',
+  employeeId: '',
+  createdBy: 'Site',
+  accessLevel: 'Admin',
+  type: 'Admin',
+  active: true,
+  status: 'Approved',
+  faceRecognition: 'No',
+  appDownloaded: 'No'
+}, {
+  id: '180907',
+  userName: 'Test User 2',
+  gender: 'Female',
+  mobileNumber: '9876543211',
+  email: 'test2@example.com',
+  vendorCompanyName: 'N/A',
+  entityName: 'N/A',
+  unit: '',
+  role: 'Admin',
+  employeeId: '',
+  createdBy: 'Site',
+  accessLevel: 'Admin',
+  type: 'Admin',
+  active: true,
+  status: 'Approved',
+  faceRecognition: 'No',
+  appDownloaded: 'No'
+}, {
+  id: '180906',
+  userName: 'Test User 3',
+  gender: 'Male',
+  mobileNumber: '9876543212',
+  email: 'test3@example.com',
+  vendorCompanyName: 'N/A',
+  entityName: 'N/A',
+  unit: '',
+  role: 'Admin',
+  employeeId: '',
+  createdBy: 'Site',
+  accessLevel: 'Admin',
+  type: 'Admin',
+  active: true,
+  status: 'Approved',
+  faceRecognition: 'No',
+  appDownloaded: 'No'
+}];
 
 export const MSafeDashboard = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [sortColumn, setSortColumn] = useState('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
+  const location = useLocation();
+  const isSafetyRoute = location.pathname.startsWith('/safety');
+  const [users, setUsers] = useState(fmUsersData);
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
-  const [data, setData] = useState([
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      role: 'Admin',
-      status: 'Active',
-      lastLogin: '2024-03-15 10:00',
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      role: 'Editor',
-      status: 'Inactive',
-      lastLogin: '2024-03-10 14:30',
-    },
-    {
-      id: '3',
-      name: 'Alice Johnson',
-      email: 'alice.johnson@example.com',
-      role: 'Viewer',
-      status: 'Active',
-      lastLogin: '2024-03-20 08:45',
-    },
-    {
-      id: '4',
-      name: 'Bob Williams',
-      email: 'bob.williams@example.com',
-      role: 'Admin',
-      status: 'Active',
-      lastLogin: '2024-03-22 16:20',
-    },
-    {
-      id: '5',
-      name: 'Charlie Brown',
-      email: 'charlie.brown@example.com',
-      role: 'Editor',
-      status: 'Inactive',
-      lastLogin: '2024-03-18 11:15',
-    },
-  ]);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const statusCards = [
-    { count: 125, label: 'User Management', icon: Users },
-    { count: 89, label: 'Active Users', icon: UserCheck },
-    { count: 23, label: 'Pending Approvals', icon: Clock },
-    { count: 45, label: 'System Settings', icon: Settings }
-  ];
+  // Calculate pagination
+  const totalRecords = users.length;
+  const totalPages = Math.ceil(totalRecords / perPage);
+  const startIndex = (currentPage - 1) * perPage;
+  const endIndex = startIndex + perPage;
+  const currentUsers = users.slice(startIndex, endIndex);
 
-  return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
-      {/* Breadcrumb and Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>Dashboard</span>
-          <span>&gt;</span>
-          <span>MSafe</span>
-        </div>
+  const toggleUserStatus = (userId: string) => {
+    setUsers(prevUsers => 
+      prevUsers.map(user => 
+        user.id === userId 
+          ? { ...user, active: !user.active }
+          : user
+      )
+    );
+    console.log(`Toggled user ${userId} status`);
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    const userToDelete = users.find(user => user.id === userId);
+    if (userToDelete && window.confirm(`Are you sure you want to delete user "${userToDelete.userName}"?`)) {
+      setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+      console.log(`Deleted user ${userId}`);
+      
+      // Adjust current page if necessary after deletion
+      const newTotalRecords = users.length - 1;
+      const newTotalPages = Math.ceil(newTotalRecords / perPage);
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      }
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePerPageChange = (newPerPage: number) => {
+    setPerPage(newPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  const handleApplyFilters = (filters: { name: string; email: string }) => {
+    console.log('Filters applied:', filters);
+    // TODO: Implement actual filtering logic
+  };
+
+  const handleImportUsers = (file: File) => {
+    console.log('Importing users from file:', file.name);
+    // Here you would typically parse the CSV/Excel file and add users to the state
+    // For now, we'll just log the file name and show a success message
+    alert(`Successfully imported users from ${file.name}`);
+  };
+
+  if (isSafetyRoute) {
+    return <div className="p-6 space-y-6">
+        <h1 className="text-2xl font-semibold text-gray-900">M Safe</h1>
         
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">MSafe Dashboard</h1>
-          <div className="flex gap-2">
-            <Button 
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add User
-            </Button>
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Link to="/safety/m-safe/non-fte-users">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">NON FTE USERS</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  Manage non-FTE users and their details
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+          
+          <Link to="/safety/m-safe/krcc-form-list">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">KRCC FORM LIST</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">
+                  View and manage KRCC forms
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
+      </div>;
+  }
 
-        {/* Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {statusCards.map((card, index) => {
-            const IconComponent = card.icon;
-            return (
-              <div 
-                key={index} 
-                className="p-4 rounded-lg flex items-center gap-3"
-                style={{ backgroundColor: '#F6F4EE' }}
-              >
-                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                  <IconComponent className="w-5 h-5" style={{ color: '#C72030' }} />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-black">
-                    {card.count.toString().padStart(2, '0')}
-                  </div>
-                  <div className="text-sm font-medium text-black">
-                    {card.label}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+  // Maintenance M Safe page with FM Users table
+  return (
+    <div className="p-6 space-y-6">
+      <h1 className="text-2xl font-semibold text-gray-900">M Safe</h1>
+      
+      {/* Functionality Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-primary">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">User Management</CardTitle>
+            <Users className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">{users.length}</div>
+            <p className="text-xs text-muted-foreground">Total Users</p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+            <Users className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {users.filter(user => user.active).length}
+            </div>
+            <p className="text-xs text-muted-foreground">Currently Active</p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-orange-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
+            <FileText className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">0</div>
+            <p className="text-xs text-muted-foreground">Awaiting Review</p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-blue-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">System Settings</CardTitle>
+            <Settings className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              <Settings className="h-6 w-6" />
+            </div>
+            <p className="text-xs text-muted-foreground">Configuration</p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Filters and Search */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="All" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64 min-w-[200px]"
-            />
-          </div>
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4" />
-          </Button>
-        </div>
+      {/* Action Buttons */}
+      <div className="flex gap-3 flex-wrap">
+        <Button 
+          variant="outline" 
+          className="bg-purple-700 hover:bg-purple-800 text-white border-purple-700"
+          onClick={() => setIsImportModalOpen(true)}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Import
+        </Button>
+        <Button 
+          variant="outline" 
+          className="bg-purple-700 hover:bg-purple-800 text-white border-purple-700"
+          onClick={() => setIsExportModalOpen(true)}
+        >
+          <Upload className="h-4 w-4 mr-2" />
+          Export
+        </Button>
+        <Button variant="outline" onClick={() => setIsFilterDialogOpen(true)}>
+          <Filter className="h-4 w-4 mr-2" />
+          Filters
+        </Button>
+        <Button variant="outline">
+          <Plus className="h-4 w-4 mr-2" />
+          Add User
+        </Button>
+        <Button variant="outline">
+          <Search className="h-4 w-4 mr-2" />
+          Search
+        </Button>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border overflow-x-auto">
+      {/* FM Users Table */}
+      <div className="bg-white rounded-lg border border-gray-200">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">
-                <input
-                  type="checkbox"
-                  checked={selectAll}
-                  onChange={(e) => {
-                    setSelectAll(e.target.checked);
-                    setSelectedRows(e.target.checked ? data.map(row => row.id) : []);
-                  }}
-                />
-              </TableHead>
-              <TableHead>Name</TableHead>
+            <TableRow className="bg-gray-50">
+              <TableHead>Actions</TableHead>
+              <TableHead>Active</TableHead>
+              <TableHead>ID</TableHead>
+              <TableHead>User Name</TableHead>
+              <TableHead>Gender</TableHead>
+              <TableHead>Mobile Number</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Vendor Company Name</TableHead>
+              <TableHead>Entity Name</TableHead>
+              <TableHead>Unit</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>Employee ID</TableHead>
+              <TableHead>Created By</TableHead>
+              <TableHead>Access Level</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Last Login</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Face Recognition</TableHead>
+              <TableHead>App Downloaded</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell className="font-medium">
-                  <input
-                    type="checkbox"
-                    checked={selectedRows.includes(row.id)}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setSelectedRows(prev =>
-                        checked
-                          ? [...prev, row.id]
-                          : prev.filter(id => id !== row.id)
-                      );
-                      setSelectAll(checked && selectedRows.length === data.length - 1);
-                    }}
-                  />
-                </TableCell>
-                <TableCell>{row.name}</TableCell>
-                <TableCell>{row.email}</TableCell>
-                <TableCell>{row.role}</TableCell>
+            {currentUsers.map(user => (
+              <TableRow key={user.id}>
                 <TableCell>
-                  <Badge variant="outline">{row.status}</Badge>
-                </TableCell>
-                <TableCell>{row.lastLogin}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="ghost" size="sm">
-                      <Eye className="w-4 h-4 mr-2" />
-                      View
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="sm" className="p-1 h-8 w-8 hover:bg-gray-100">
+                      <Eye className="h-4 w-4 text-gray-600 hover:text-[#C72030]" />
                     </Button>
-                    <Button variant="ghost" size="sm">
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit
-                    </Button>
-                    <Button variant="ghost" size="sm" className="text-red-500">
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleDeleteUser(user.id)} 
+                      className="p-1 h-8 w-8 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4 text-gray-600 hover:text-red-600" />
                     </Button>
                   </div>
                 </TableCell>
+                <TableCell>
+                  <Switch 
+                    checked={user.active} 
+                    onCheckedChange={() => toggleUserStatus(user.id)} 
+                    className="data-[state=checked]:bg-green-500" 
+                  />
+                </TableCell>
+                <TableCell className="font-medium">{user.id}</TableCell>
+                <TableCell>{user.userName}</TableCell>
+                <TableCell>{user.gender}</TableCell>
+                <TableCell>{user.mobileNumber}</TableCell>
+                <TableCell className="text-blue-600">{user.email}</TableCell>
+                <TableCell>{user.vendorCompanyName}</TableCell>
+                <TableCell>{user.entityName}</TableCell>
+                <TableCell>{user.unit}</TableCell>
+                <TableCell>{user.role}</TableCell>
+                <TableCell>{user.employeeId}</TableCell>
+                <TableCell>{user.createdBy}</TableCell>
+                <TableCell>{user.accessLevel}</TableCell>
+                <TableCell>{user.type}</TableCell>
+                <TableCell>
+                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                    {user.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>{user.faceRecognition}</TableCell>
+                <TableCell>{user.appDownloaded}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      <TicketPagination 
+        currentPage={currentPage} 
+        totalPages={totalPages} 
+        totalRecords={totalRecords} 
+        perPage={perPage} 
+        isLoading={isLoading} 
+        onPageChange={handlePageChange} 
+        onPerPageChange={handlePerPageChange} 
+      />
+
+      {/* Import Modal */}
+      <MSafeImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleImportUsers}
+      />
+
+      {/* Export Modal */}
+      <MSafeExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        users={users}
+      />
+
+      {/* Filter Dialog */}
+      <MSafeFilterDialog
+        isOpen={isFilterDialogOpen}
+        onClose={() => setIsFilterDialogOpen(false)}
+        onApplyFilters={handleApplyFilters}
+      />
     </div>
   );
 };
