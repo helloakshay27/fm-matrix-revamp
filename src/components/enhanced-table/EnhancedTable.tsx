@@ -484,10 +484,10 @@ export function EnhancedTable<T extends Record<string, any>>({
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                     {renderActions && (
-                      <TableHead className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0 z-20" data-actions>Actions</TableHead>
+                      <TableHead className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0" data-actions>Actions</TableHead>
                     )}
                     {selectable && (
-                      <TableHead className="bg-[#f6f4ee] w-12 min-w-12 text-center sticky top-0 z-20" data-checkbox>
+                      <TableHead className="bg-[#f6f4ee] w-12 min-w-12 text-center sticky top-0" data-checkbox>
                         <div className="flex justify-center">
                           <Checkbox
                             checked={isAllSelected}
@@ -506,7 +506,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#f6f4ee] text-center text-black min-w-32 sticky top-0 z-20"
+                        className="bg-[#f6f4ee] text-center text-black min-w-32 sticky top-0"
                       >
                         {column.label}
                       </SortableColumnHeader>
