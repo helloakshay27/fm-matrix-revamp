@@ -183,28 +183,33 @@ export const SurveyDetailsPage = () => {
     }
   };
 
-  // Fetch zones
+  // Fetch zones (disabled due to API endpoint not found)
   const fetchZones = async () => {
     try {
       setLoadingZones(true);
-      const response = await fetch(getFullUrl('/pms/zones.json'), {
-        headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json'
-        }
-      });
+      // Note: /pms/zones.json endpoint returns 404, might need different endpoint
+      // const response = await fetch(getFullUrl('/pms/zones.json'), {
+      //   headers: {
+      //     'Authorization': getAuthHeader(),
+      //     'Content-Type': 'application/json'
+      //   }
+      // });
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch zones');
-      }
+      // if (!response.ok) {
+      //   throw new Error('Failed to fetch zones');
+      // }
       
-      const zonesData = await response.json();
-      setZones(zonesData.zones.map((zone: any) => ({
-        id: zone.id,
-        name: zone.name
-      })));
+      // const zonesData = await response.json();
+      // setZones(zonesData.zones.map((zone: any) => ({
+      //   id: zone.id,
+      //   name: zone.name
+      // })));
+      
+      // For now, set empty zones array since API endpoint not available
+      setZones([]);
     } catch (error) {
       console.error('Error fetching zones:', error);
+      setZones([]);
     } finally {
       setLoadingZones(false);
     }
@@ -676,7 +681,7 @@ export const SurveyDetailsPage = () => {
                   </div>
 
                   {/* Zone */}
-                  <div>
+                  {/* <div>
                     <div className="flex items-center space-x-2">
                       <Checkbox 
                         id="zone" 
@@ -686,7 +691,7 @@ export const SurveyDetailsPage = () => {
                       />
                       <label htmlFor="zone" className="text-sm font-medium">Zone</label>
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Room */}
                   <div>
@@ -859,15 +864,15 @@ export const SurveyDetailsPage = () => {
                   )}
 
                   {/* Zones Dropdown */}
-                  {locationConfig.zone && (
+                  {/* {locationConfig.zone && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Zones</h4>
                        <Select onValueChange={(value) => {
-                         // value contains the zone ID, find the zone name for display
+                      
                          const selectedZone = zones.find(z => z.id.toString() === value);
                          if (selectedZone && !locationConfig.selectedZones.includes(selectedZone.name)) {
                            addSelectedItem('zone', selectedZone.name);
-                           // You can also store the ID separately if needed for backend
+                         
                            console.log('Selected zone ID:', value, 'Name:', selectedZone.name);
                          }
                        }}>
@@ -886,7 +891,7 @@ export const SurveyDetailsPage = () => {
                            )}
                          </SelectContent>
                        </Select>
-                      {/* Selected zones */}
+                    
                       {locationConfig.selectedZones.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {locationConfig.selectedZones.map((zone) => (
@@ -903,18 +908,18 @@ export const SurveyDetailsPage = () => {
                         </div>
                       )}
                     </div>
-                  )}
+                  )} */}
 
                   {/* Rooms Dropdown */}
                   {locationConfig.room && (
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-900">Rooms</h4>
                        <Select onValueChange={(value) => {
-                         // value contains the room ID, find the room name for display
+                     
                          const selectedRoom = rooms.find(r => r.id.toString() === value);
                          if (selectedRoom && !locationConfig.selectedRooms.includes(selectedRoom.name)) {
                            addSelectedItem('room', selectedRoom.name);
-                           // Also store the room ID for the API call
+                         
                            setLocationConfig(prev => ({
                              ...prev,
                              selectedRoomIds: [...prev.selectedRoomIds, selectedRoom.id]
@@ -937,7 +942,7 @@ export const SurveyDetailsPage = () => {
                            )}
                          </SelectContent>
                        </Select>
-                      {/* Selected rooms */}
+                     
                       {locationConfig.selectedRooms.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {locationConfig.selectedRooms.map((room) => (
@@ -979,9 +984,9 @@ export const SurveyDetailsPage = () => {
             <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
               Floor
             </div>
-            <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
+            {/* <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
               Zone
-            </div>
+            </div> */}
             <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
               Room
             </div>
@@ -1001,9 +1006,16 @@ export const SurveyDetailsPage = () => {
                   <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.building_name || mapping.building_id || '-'}</div>
                   <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.wing_name || mapping.wing_id || '-'}</div>
                   <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor_name || mapping.floor_id || '-'}</div>
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.area_name || mapping.area_id || '-'}</div>
+                  {/* <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.area_name || mapping.area_id || '-'}</div> */}
                   <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.room_name || mapping.room_id || '-'}</div>
-                  <div className="p-4 text-gray-700">{mapping.qr_code || '-'}</div>
+                  <div className="p-4 text-gray-700">
+                    {mapping.qr_code 
+                      ? (typeof mapping.qr_code === 'object' 
+                          ? mapping.qr_code.document_file_name || 'QR Code Available' 
+                          : mapping.qr_code)
+                      : '-'
+                    }
+                  </div>
                 </div>
             ))
           ) : (

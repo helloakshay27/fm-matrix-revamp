@@ -498,7 +498,7 @@ export const EditAMCPage = () => {
         if (formData.type === 'Individual') {
           sendData.append('pms_asset_amc[resource_id]', formData.asset_ids.join(','));
         } else if (formData.type === 'Group') {
-          sendData.append('pms_asset_amc[resource_id]', formData.group || '');
+          sendData.append('pms_asset_amc[group_id]', formData.group || '');
           sendData.append('pms_asset_amc[sub_group_id]', formData.subgroup || '');
         }
       } else if (formData.details === 'Service') {

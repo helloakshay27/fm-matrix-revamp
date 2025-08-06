@@ -112,13 +112,13 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
       draggable: true,
       defaultVisible: true,
     },
-    {
-      key: 'documents',
-      label: 'Attachments',
-      sortable: false,
-      draggable: true,
-      defaultVisible: true,
-    },
+    // {
+    //   key: 'documents',
+    //   label: 'Attachments',
+    //   sortable: false,
+    //   draggable: true,
+    //   defaultVisible: true,
+    // },
   ];
 
   // Fetch all counts on mount
@@ -199,6 +199,15 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
   const filteredTickets = tickets.filter((ticket) =>
     ticket.heading?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+    const handleExport = () => {
+    if (!assetId) return;
+
+    const token = getAuthHeader().replace('Bearer ', '');
+    const downloadUrl = `${API_CONFIG.BASE_URL}/pms/assets/${assetId}/tickets.xlsx?access_token=${token}`;
+    window.open(downloadUrl, '_blank');
+  };
+
 
   // Custom cell renderer for the enhanced table
   const renderCell = (item: Ticket, columnKey: string) => {
@@ -297,13 +306,14 @@ export const TicketTab: React.FC<TicketTabProps> = ({ assetId }) => {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search tickets..."
-        // enableExport={true}
+        enableExport={true} 
         // exportFileName="tickets-export"
         pagination={true}
         pageSize={10}
         loading={loading}
         enableSearch={true}
         className="w-full"
+        handleExport={handleExport}
       />
     </div>
   );

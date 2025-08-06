@@ -13,7 +13,6 @@ interface FilterModalProps {
   onClose: () => void;
   onApplyFilters: (filters: FilterState) => void;
   onResetFilters: () => void;
-  currentFilters?: FilterState;
 }
 
 interface FilterState {
@@ -30,8 +29,7 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
   open,
   onClose,
   onApplyFilters,
-  onResetFilters,
-  currentFilters
+  onResetFilters
 }) => {
   const [filters, setFilters] = useState<FilterState>({
     surveyName: '',
@@ -40,13 +38,6 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
-
-  // Sync internal filters with current filters when modal opens
-  useEffect(() => {
-    if (open && currentFilters) {
-      setFilters(currentFilters);
-    }
-  }, [open, currentFilters]);
 
   // Fetch categories when modal opens
   useEffect(() => {
@@ -69,11 +60,10 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
   };
 
   const handleReset = () => {
-    const resetFilters = {
+    setFilters({
       surveyName: '',
       categoryId: 'all'
-    };
-    setFilters(resetFilters);
+    });
     onResetFilters();
     onClose();
   };
