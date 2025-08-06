@@ -219,10 +219,6 @@ export const MSafeDashboard = () => {
       
       {/* Action Buttons */}
       <div className="flex gap-3 flex-wrap">
-        <Button className="bg-purple-700 hover:bg-purple-800 text-white">
-          <Plus className="h-4 w-4 mr-2" />
-          Add FM User
-        </Button>
         <Button variant="outline" className="bg-purple-700 hover:bg-purple-800 text-white border-purple-700">
           <Download className="h-4 w-4 mr-2" />
           Import
