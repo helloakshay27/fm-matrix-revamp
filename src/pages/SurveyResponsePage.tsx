@@ -248,7 +248,7 @@ export const SurveyResponsePage = () => {
   };
 
   return (
-    <div className="flex-1 p-4 sm:p-6 bg-gray-50 min-h-screen">
+    <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
       {/* Header Tabs */}
       <div className="mb-6">
         <Tabs defaultValue="response-list" className="w-full">
