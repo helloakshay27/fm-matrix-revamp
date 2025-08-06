@@ -54,6 +54,7 @@ export const ServiceDetailsPage = () => {
   const [showAssociateModal, setShowAssociateModal] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<{ id: string; name: string } | null>(null);
   const [assetHierarchy, setAssetHierarchy] = useState<AssetNode | null>(null);
+  const [downloadingQR, setDownloadingQR] = useState(false);
 
   // Fetch service details and asset hierarchy
   useEffect(() => {
@@ -237,6 +238,7 @@ export const ServiceDetailsPage = () => {
       </div>
     );
   }
+
 
   const handleEditClick = () => navigate(`/maintenance/service/edit/${id}`);
   const handleAssociateServiceClick = () => setShowAssociateModal(true);
@@ -475,62 +477,50 @@ export const ServiceDetailsPage = () => {
                     </div>
                     <Button
                       onClick={async () => {
-                        if (!details?.qr_code_id) {
-                          console.error('Attachment ID is undefined', details);
-                          const link = document.createElement('a');
-                          link.href = details.document;
-                          link.download = `Document_${details.qr_code_id || details.filename || 'unknown'}`;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          return;
-                        }
-
+                        if (downloadingQR) return;
+                        setDownloadingQR(true);
                         try {
-                          const token = localStorage.getItem('token');
-                          const baseUrl = localStorage.getItem('baseUrl');
-                          if (!token) {
-                            console.error('No token found in localStorage');
+                          if (!details?.id) {
+                            console.error('Service ID is undefined', details);
                             return;
                           }
-
-                          const apiUrl = `https://${baseUrl}/attachfiles/${details.qr_code_id}?show_file=true`;
-
+                          const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                          const token = localStorage.getItem('token');
+                          const apiUrl = `https://${baseUrl}/pms/services/service_qr_codes.pdf?service_ids=${details.id}`;
                           const response = await fetch(apiUrl, {
                             method: 'GET',
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                              'Content-Type': 'application/json',
-                            },
+                            headers: token ? { Authorization: `Bearer ${token}` } : {},
                           });
-
                           if (!response.ok) {
-                            throw new Error('Failed to fetch the file');
+                            throw new Error('Failed to fetch the QR PDF');
                           }
-
                           const blob = await response.blob();
                           const url = window.URL.createObjectURL(blob);
                           const link = document.createElement('a');
                           link.href = url;
-                          link.download = `Document_${details.id}`;
+                          link.download = `Service_QR_${details.id}.pdf`;
                           document.body.appendChild(link);
                           link.click();
                           document.body.removeChild(link);
                           window.URL.revokeObjectURL(url);
                         } catch (error) {
-                          console.error('Error downloading file:', error);
-                          const fallbackLink = document.createElement('a');
-                          fallbackLink.href = details.document;
-                          fallbackLink.download = `Document_${details.id || details.filename || 'unknown'}`;
-                          document.body.appendChild(fallbackLink);
-                          fallbackLink.click();
-                          document.body.removeChild(fallbackLink);
+                          console.error('Error downloading QR PDF:', error);
+                        } finally {
+                          setDownloadingQR(false);
                         }
                       }}
                       className="bg-[#C72030] mb-4 text-white hover:bg-[#C72030]/90"
+                      disabled={downloadingQR}
                     >
-                      <Download className="w-4 h-4 mr-1" />
-                      Download
+                      {downloadingQR ? (
+                        <svg className="animate-spin h-4 w-4 mr-2 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                      ) : (
+                        <Download className="w-4 h-4 mr-1" />
+                      )}
+                      {downloadingQR ? 'Downloading...' : 'Download QR'}
                     </Button>
 
                   </>

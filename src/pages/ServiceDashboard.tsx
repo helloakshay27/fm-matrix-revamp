@@ -206,73 +206,130 @@ export const ServiceDashboard = () => {
   };
 
   const handleQRDownload = async (serviceId?: string) => {
-    const servicesToDownload = serviceId
-      ? servicesData.filter((service) => service.id.toString() === serviceId)
-      : servicesData.filter((service) => selectedItems.includes(service.id.toString()));
-
-    for (const service of servicesToDownload) {
-      if (service.qr_code && service.qr_code_id) {
-        const serviceIdStr = service.id.toString();
-        if (downloadedQRCodes.has(serviceIdStr)) {
-          // Show toast with confirmation buttons
-          const downloadPromise = new Promise<void>((resolve) => {
-            toast.custom((t) => (
-              <div
-                className="bg-white p-5 rounded-xl shadow-none w-full max-w-sm border-0 ring-0"
-              >
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-6 h-6 text-yellow-500 mt-1" />
-                  <div className="flex-1 text-sm text-gray-800">
-                    <p className="font-semibold mb-1">QR Code Already Downloaded</p>
-                    <p className="text-sm text-gray-800">
-                      QR for <span className="font-medium text-gray-900">"{service.service_name}"</span> (ID: {service.id}) already downloaded. Download again?
-                    </p>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 border-red-500 hover:bg-red-50"
-                    onClick={() => {
-                      toast.dismiss(t);
-                      resolve();
-                    }}
-                  >
-                    No
-                  </Button>
-                  <Button
-                    className="bg-primary text-white hover:bg-primary/90"
-                    size="sm"
-                    onClick={async () => {
-                      toast.dismiss(t);
-                      await downloadAttachment({
-                        attachment_id: service.qr_code_id!,
-                        document_name: `${service.service_name || 'service'}_${service.id}_qr.png`,
-                      });
-                      setDownloadedQRCodes((prev) => new Set(prev).add(serviceIdStr));
-                      resolve();
-                    }}
-                  >
-                    Yes
-                  </Button>
+    let serviceIds: string[] = [];
+    if (serviceId) {
+      serviceIds = [serviceId];
+    } else {
+      serviceIds = selectedItems;
+    }
+    // Filter to only those with QR codes
+    const validServices = servicesData.filter((service) => serviceIds.includes(service.id.toString()) && service.qr_code && service.qr_code_id);
+    if (validServices.length === 0) {
+      toast.error('No valid QR codes to download');
+      return;
+    }
+    // If only one, keep old logic (with already downloaded check)
+    if (validServices.length === 1) {
+      const service = validServices[0];
+      const serviceIdStr = service.id.toString();
+      const downloadQR = async () => {
+        try {
+          const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+          const token = localStorage.getItem('token');
+          const apiUrl = `https://${baseUrl}/pms/services/service_qr_codes.pdf?service_ids=${service.id}`;
+          const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (!response.ok) {
+            throw new Error('Failed to fetch the QR PDF');
+          }
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${service.service_name || 'service'}_${service.id}_qr.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          setDownloadedQRCodes((prev) => new Set(prev).add(serviceIdStr));
+        } catch (err) {
+          console.error('Error downloading QR PDF:', err);
+          toast.error('Error downloading QR PDF');
+        }
+      };
+      if (downloadedQRCodes.has(serviceIdStr)) {
+        // Show toast with confirmation buttons
+        const downloadPromise = new Promise<void>((resolve) => {
+          toast.custom((t) => (
+            <div
+              className="bg-white p-5 rounded-xl shadow-none w-full max-w-sm border-0 ring-0"
+            >
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-6 h-6 text-yellow-500 mt-1" />
+                <div className="flex-1 text-sm text-gray-800">
+                  <p className="font-semibold mb-1">QR Code Already Downloaded</p>
+                  <p className="text-sm text-gray-800">
+                    QR for <span className="font-medium text-gray-900">"{service.service_name}"</span> (ID: {service.id}) already downloaded. Download again?
+                  </p>
                 </div>
               </div>
-            ));
-
-          });
-
-          await downloadPromise;
-        } else {
-          await downloadAttachment({
-            attachment_id: service.qr_code_id,
-            document_name: `${service.service_name || 'service'}_${service.id}_qr.png`,
-          });
-          setDownloadedQRCodes((prev) => new Set(prev).add(serviceIdStr));
-        }
+              <div className="flex justify-end gap-3 mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-500 hover:bg-red-50"
+                  onClick={() => {
+                    toast.dismiss(t);
+                    resolve();
+                  }}
+                >
+                  No
+                </Button>
+                <Button
+                  className="bg-primary text-white hover:bg-primary/90"
+                  size="sm"
+                  onClick={async () => {
+                    toast.dismiss(t);
+                    await downloadQR();
+                    resolve();
+                  }}
+                >
+                  Yes
+                </Button>
+              </div>
+            </div>
+          ));
+        });
+        await downloadPromise;
       } else {
-        console.warn(`QR code not available for service ID ${service.id}`);
-        toast.error(`QR code not available for service ID ${service.id}`);
+        await downloadQR();
+      }
+    } else {
+      // Multiple: download one PDF with all selected service IDs, send as array
+      try {
+        const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+        const token = localStorage.getItem('token');
+        const idsArray = validServices.map((s) => s.id);
+        // Build query string with repeated service_ids[]=id1&service_ids[]=id2
+        const params = idsArray.map((id) => `service_ids[]=${encodeURIComponent(id)}`).join('&');
+        const apiUrl = `https://${baseUrl}/pms/services/service_qr_codes.pdf?${params}`;
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch the QR PDF');
+        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Service_QR_Bulk_${idsArray.join('_')}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        // Mark all as downloaded
+        setDownloadedQRCodes((prev) => {
+          const newSet = new Set(prev);
+          validServices.forEach((s) => newSet.add(s.id.toString()));
+          return newSet;
+        });
+      } catch (err) {
+        console.error('Error downloading QR PDF:', err);
+        toast.error('Error downloading QR PDF');
       }
     }
   };
