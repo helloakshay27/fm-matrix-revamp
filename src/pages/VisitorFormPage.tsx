@@ -35,6 +35,8 @@ export const VisitorFormPage = () => {
     { id: 2, name: '', mobile: '' }
   ]);
 
+  const [showCameraModal, setShowCameraModal] = useState(true);
+
   useEffect(() => {
     // Don't auto-initialize camera, let user choose
     getCameraDevices();
@@ -149,8 +151,19 @@ export const VisitorFormPage = () => {
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Camera Permission Modal */}
-          {stream === null && (
+          {showCameraModal && stream === null && (
             <div className="fixed top-20 left-8 z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 p-4">
+              {/* Close Button */}
+              <div className="flex justify-end mb-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCameraModal(false)}
+                  className="h-6 w-6 p-0 hover:bg-gray-100"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
               {/* Camera permissions checkbox */}
               <div className="mb-4">
                 <div className="flex items-center space-x-2">
@@ -213,6 +226,7 @@ export const VisitorFormPage = () => {
                 <Button
                   onClick={() => {
                     initializeCamera();
+                    setShowCameraModal(false);
                   }}
                   className="w-full bg-pink-200 hover:bg-pink-300 text-gray-800 rounded-full"
                 >
@@ -221,6 +235,7 @@ export const VisitorFormPage = () => {
                 <Button
                   onClick={() => {
                     initializeCamera();
+                    setShowCameraModal(false);
                   }}
                   className="w-full bg-pink-200 hover:bg-pink-300 text-gray-800 rounded-full"
                 >
@@ -228,6 +243,7 @@ export const VisitorFormPage = () => {
                 </Button>
                 <Button
                   variant="outline"
+                  onClick={() => setShowCameraModal(false)}
                   className="w-full bg-pink-200 hover:bg-pink-300 text-gray-800 rounded-full border-none"
                 >
                   Never allow
