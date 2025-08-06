@@ -49,6 +49,7 @@ export const VisitorFormPage = () => {
   ]);
 
   const [showCameraModal, setShowCameraModal] = useState(true);
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     // Don't auto-initialize camera, let user choose
@@ -190,6 +191,36 @@ export const VisitorFormPage = () => {
     }
   };
 
+  const handleCameraClick = () => {
+    if (videoRef.current && canvasRef.current && stream) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg');
+        setCapturedPhoto(imageData);
+      }
+    } else {
+      // If no camera stream, open camera modal
+      setShowCameraModal(true);
+      initializeCamera();
+    }
+  };
+
+  const handleRetakePhoto = () => {
+    setCapturedPhoto(null);
+  };
+
+  const handleSavePhoto = () => {
+    // Photo is already saved in capturedPhoto state
+    console.log('Photo saved:', capturedPhoto);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
@@ -300,11 +331,44 @@ export const VisitorFormPage = () => {
 
           {/* Form Section */}
           <div>
-          {/* Camera Icon */}
+          {/* Camera Section */}
           <div className="flex justify-center mb-6">
-            <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
-              <Camera className="h-6 w-6 text-white" />
-            </div>
+            {!capturedPhoto ? (
+              <button
+                type="button"
+                onClick={handleCameraClick}
+                className="w-12 h-12 bg-black rounded-lg flex items-center justify-center hover:bg-gray-800 transition-colors"
+              >
+                <Camera className="h-6 w-6 text-white" />
+              </button>
+            ) : (
+              <div className="text-center">
+                <div className="w-64 h-48 bg-black rounded-lg mb-4 overflow-hidden">
+                  <img 
+                    src={capturedPhoto} 
+                    alt="Captured photo" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex gap-4 justify-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleRetakePhoto}
+                    className="px-6"
+                  >
+                    Retake
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleSavePhoto}
+                    className="px-6 bg-purple-900 hover:bg-purple-800 text-white"
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
