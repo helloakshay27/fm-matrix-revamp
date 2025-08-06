@@ -3741,7 +3741,7 @@ export const AddSchedulePage = () => {
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                       {...params}
-                      label="Supplier *"
+                      label="Supplier"
                       placeholder="Select Supplier"
                       fullWidth
                     />
