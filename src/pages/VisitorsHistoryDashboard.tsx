@@ -1,54 +1,53 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, RefreshCw, MapPin, User, Car, CreditCard, Filter } from 'lucide-react';
+import { Search, RefreshCw, MapPin, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { VisitorsHistoryFilterModal } from '@/components/VisitorsHistoryFilterModal';
 
 const visitorsData = [
   {
     id: 1,
-    name: 'Test',
+    name: 'Sohail',
     status: 'Approved',
-    location: 'Delhi',
-    purpose: 'business bay',
-    category: 'Courier',
+    host: 'Mahendra Lunagre',
+    location: 'Gophygital',
+    purpose: 'Meeting',
     passNumber: '2345',
-    checkedIn: '',
+    checkedIn: '06/08/25, 1:17 PM',
     checkedOut: ''
   },
   {
     id: 2,
-    name: 'ajit',
+    name: 'Test',
     status: 'Approved',
-    location: 'Pune',
-    purpose: '',
-    category: 'Personal',
+    host: 'Abdul A',
+    location: 'Sam',
+    purpose: 'Personal',
     passNumber: '2222',
-    checkedIn: '',
+    checkedIn: '06/08/25, 3:15 PM',
     checkedOut: ''
   },
   {
     id: 3,
-    name: 'Deepak',
+    name: 'Aquil',
     status: 'Approved',
+    host: 'Abdul A',
     location: 'Mumbai',
-    purpose: '',
-    category: 'meeting',
+    purpose: 'Meeting',
     passNumber: 'HK7658',
-    checkedIn: '',
+    checkedIn: '06/08/25, 12:34 PM',
     checkedOut: ''
   },
   {
     id: 4,
-    name: 'sunil',
+    name: 'rohan',
     status: 'Approved',
-    location: 'jaipur',
-    purpose: 'Devesh Jain',
-    category: 'Personal',
-    passNumber: '',
-    checkedIn: '',
+    host: 'Sunil Kumar',
+    location: 'Jaipur',
+    purpose: 'Personal',
+    passNumber: 'RH1234',
+    checkedIn: '06/08/25, 2:45 PM',
     checkedOut: ''
   }
 ];
@@ -85,12 +84,6 @@ export const VisitorsHistoryDashboard = () => {
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>visitors</span>
-          <span>&gt;</span>
-          <span>Visitors History</span>
-        </div>
-        
         <div className="bg-white rounded-lg border border-gray-200">
           {/* Tab Navigation */}
           <div className="flex border-b border-gray-200">
@@ -100,7 +93,7 @@ export const VisitorsHistoryDashboard = () => {
                 onClick={() => handleTabClick(tab)}
                 className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab
-                    ? 'border-[#C72030] text-[#C72030] bg-[#C72030]/5'
+                    ? 'border-orange-500 text-orange-600 bg-orange-50'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -109,38 +102,36 @@ export const VisitorsHistoryDashboard = () => {
             ))}
           </div>
 
-          {/* Action Buttons and Search Bar */}
+          {/* Search Bar */}
           <div className="p-4 border-b border-gray-200">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
-            </div>
-            
-            <div className="flex items-center gap-2 max-w-md">
+            <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
                 <Input
-                  placeholder="Search using Guest's Name or Pass Number"
+                  placeholder="Search using Guest's Name or Pass Number."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="pl-10"
+                  className="pl-4 pr-20 border-gray-300"
                 />
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+                  <Button 
+                    onClick={handleSearch}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                  >
+                    <Search className="w-4 h-4 text-gray-500" />
+                  </Button>
+                  <Button 
+                    onClick={handleReset}
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                  >
+                    <RefreshCw className="w-4 h-4 text-gray-500" />
+                  </Button>
+                </div>
               </div>
-              <Button 
-                onClick={handleSearch}
-                style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:bg-[#C72030]/90"
-                size="sm"
-              >
-                <Search className="w-4 h-4" />
-              </Button>
-              <Button 
-                onClick={handleReset}
-                style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:bg-[#C72030]/90"
-                size="sm"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </Button>
             </div>
           </div>
 
@@ -155,66 +146,39 @@ export const VisitorsHistoryDashboard = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900">{visitor.name}</h3>
-                      {visitor.purpose && (
-                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                        <div className="flex items-center gap-1">
                           <User className="w-3 h-3" />
-                          <span>{visitor.purpose}</span>
+                          <span>{visitor.host}</span>
                         </div>
-                      )}
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          <span>{visitor.location}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 text-sm text-gray-600 mt-1">
+                        <span className="w-3 h-3 rounded-sm bg-blue-500 inline-block"></span>
+                        <span>{visitor.purpose}</span>
+                      </div>
                     </div>
                   </div>
-                  <span className="px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm font-medium">
+                  <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                     {visitor.status}
                   </span>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    <span>{visitor.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-4 h-4 flex items-center justify-center text-xs bg-gray-200 rounded">?</span>
-                    <span>{visitor.category}</span>
-                  </div>
-                  {visitor.passNumber && (
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="w-4 h-4" />
-                      <span>{visitor.passNumber}</span>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex justify-between mt-3 pt-3 border-t border-green-200 text-sm">
+                <div className="grid grid-cols-2 gap-4 mt-4">
                   <div>
-                    <span className="font-medium text-blue-600">Checked In at:</span>
-                    <span className="ml-1 text-gray-600">{visitor.checkedIn || 'N/A'}</span>
+                    <span className="text-sm font-medium text-gray-700">Checked In at:</span>
+                    <p className="text-sm text-blue-600 font-medium">{visitor.checkedIn}</p>
                   </div>
                   <div>
-                    <span className="font-medium text-blue-600">Checked Out at:</span>
-                    <span className="ml-1 text-gray-600">{visitor.checkedOut || 'N/A'}</span>
+                    <span className="text-sm font-medium text-gray-700">Checked Out at:</span>
+                    <p className="text-sm text-gray-400">{visitor.checkedOut || '-'}</p>
                   </div>
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Pagination */}
-          <div className="flex justify-center items-center gap-2 p-4 border-t border-gray-200">
-            <Button 
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90"
-              size="sm"
-            >
-              1
-            </Button>
-            <Button variant="outline" size="sm">2</Button>
-            <Button variant="outline" size="sm">3</Button>
-            <Button variant="outline" size="sm">4</Button>
-            <Button variant="outline" size="sm">5</Button>
-            <span className="text-gray-500">...</span>
-            <Button variant="outline" size="sm">»</Button>
-            <Button variant="outline" size="sm" className="text-blue-600">Last »</Button>
           </div>
         </div>
       </div>
