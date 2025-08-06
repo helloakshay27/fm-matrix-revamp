@@ -399,8 +399,7 @@ export const ServiceDashboard = () => {
     { key: 'serviceName', label: 'Service Name', sortable: true },
     { key: 'id', label: 'ID', sortable: true },
     { key: 'referenceNumber', label: 'Reference Number', sortable: true },
-    {key: 'executionType', label: 'Type', sortable: true },
-    { key: 'category', label: 'Category', sortable: true },
+    { key: 'executionType', label: 'Type', sortable: true },
     { key: 'group', label: 'Group', sortable: true },
     { key: 'subGroup', label: 'Sub Group', sortable: true },
     { key: 'uom', label: 'UOM', sortable: true },
@@ -411,6 +410,8 @@ export const ServiceDashboard = () => {
     { key: 'room', label: 'Room', sortable: true },
     { key: 'status', label: 'Status', sortable: true },
     { key: 'createdOn', label: 'Created On', sortable: true },
+    { key: 'category', label: 'Category', sortable: true },
+
   ];
 
   const bulkActions = [
@@ -486,8 +487,6 @@ export const ServiceDashboard = () => {
         return item.service_code || '-';
       case 'executionType':
         return item.execution_type || '-';
-      case 'category':
-        return '-';
       case 'group':
         return item.group_name || '-';
       case 'uom':
@@ -521,6 +520,8 @@ export const ServiceDashboard = () => {
         );
       case 'createdOn':
         return item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB') : '-';
+      case 'category':
+        return '-';
       default:
         return '-';
     }
