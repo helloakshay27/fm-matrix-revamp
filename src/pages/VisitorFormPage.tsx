@@ -12,14 +12,14 @@ export const VisitorFormPage = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [selectedCamera, setSelectedCamera] = useState<string>('');
+  const [selectedCamera, setSelectedCamera] = useState<string | undefined>(undefined);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
 
   const [formData, setFormData] = useState({
     visitorType: 'guest',
     frequency: 'once',
-    host: '',
-    visitPurpose: '',
+    host: undefined,
+    visitPurpose: undefined,
     passNumber: '',
     vehicleNumber: '',
     visitorName: '',
@@ -93,7 +93,7 @@ export const VisitorFormPage = () => {
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean | undefined) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
