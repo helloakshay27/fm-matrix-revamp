@@ -38,6 +38,7 @@ export const AddAMCPage = () => {
   // Local state for submission tracking
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittingAction, setSubmittingAction] = useState<'show' | 'schedule' | null>(null);
+  const [assetList, setAssetList] = useState<any[]>([]); // [setAssetList]
 
   // Form state
   const [formData, setFormData] = useState({
@@ -82,6 +83,7 @@ export const AddAMCPage = () => {
   const [assetGroups, setAssetGroups] = useState<Array<{ id: number, name: string, sub_groups: Array<{ id: number, name: string }> }>>([]);
   const [subGroups, setSubGroups] = useState<Array<{ id: number, name: string }>>([]);
   const { assets, loading: AssetsLoading } = inventoryAssetsState as unknown as { assets: Array<{ id: number; name: string }> | null, loading: boolean };
+
   const [loading, setLoading] = useState(false);
 
   const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
@@ -335,8 +337,8 @@ export const AddAMCPage = () => {
     }
 
     const sendData = new FormData();
-
-    // sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
+    // sendData.append('pms_asset_amc);
+    sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
     sendData.append('pms_asset_amc[checklist_type]', formData.details);
     sendData.append('pms_asset_amc[amc_cost]', formData.cost);
     sendData.append('pms_asset_amc[contract_name]', formData.contractName);
@@ -347,6 +349,8 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
     sendData.append('pms_asset_amc[remarks]', formData.remarks);
     sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Service");
+    sendData.append('pms_asset_amc[amc_details_type]', formData.type.toLowerCase()); // Add amc_details_type parameter
+
     if (action === 'schedule') {
       sendData.append('pms_asset_amc[schedule_immediately]', 'true');
     }
@@ -357,7 +361,6 @@ export const AddAMCPage = () => {
         formData.asset_ids.forEach((id: number) => {
           sendData.append('asset_ids[]', id.toString());
         });
-
       } else if (formData.type === 'Group' && formData.group) {
         sendData.append('group_id', formData.group);
         sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
@@ -379,8 +382,6 @@ export const AddAMCPage = () => {
       }
     }
 
-
-
     attachments.contracts.forEach((file) => {
       sendData.append('amc_contracts[content][]', file);
     });
@@ -397,9 +398,20 @@ export const AddAMCPage = () => {
         if (amcId) {
           navigate(`/maintenance/amc/details/${amcId}`);
         } else {
-          toast.error("AMC created, but no ID returned for redirection.");
+          const errorMessage =
+            result?.message || result?.error || "AMC created, but no ID returned for redirection.";
+          toast.error(errorMessage);
         }
-      } else if (action === 'schedule') {
+      }
+      else if (action === 'schedule') {
+        const amcId = result?.id;
+        if (!amcId) {
+          const errorMessage =
+            result?.message || result?.error || result?.errors?.[0] || "AMC was not scheduled: no ID returned.";
+          toast.error(errorMessage);
+          return;
+        }
+
         setFormData({
           details: 'Asset',
           type: 'Individual',
@@ -459,6 +471,37 @@ export const AddAMCPage = () => {
       }
     }
   };
+
+  const fetchAsset = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem("token"); // Get token from localStorage
+
+    try {
+      const response = await fetch(`https://${baseUrl}/pms/assets/get_assets.json`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Ensure token is a Bearer token if needed
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setAssetList(data)
+      console.log('SAC data:', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching SAC:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAsset();
+  }, []);
+
+  console.log(assetList)
 
   return (
     <div className="p-6">
@@ -551,20 +594,19 @@ export const AddAMCPage = () => {
                     multiple
                     size="small"
                     disableCloseOnSelect
-                    options={assets || []}
-                    loading={AssetsLoading}
+                    options={assetList || []}
+                    loading={loading}
                     getOptionLabel={(option) => option.name}
                     value={
-                      assets?.filter(asset => formData.asset_ids.includes(asset.id)) || []
+                      assetList?.filter(asset => formData.asset_ids.includes(asset.id)) || []
                     }
                     onChange={(event, newValue) => {
                       setFormData(prev => ({
                         ...prev,
-                        asset_ids: newValue.map(asset => asset.id) // keep as number
+                        asset_ids: newValue.map(asset => asset.id)
                       }));
                       setErrors(prev => ({ ...prev, asset_ids: '' }));
                     }}
-
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                     renderOption={(props, option, { selected }) => (
                       <li {...props}>
@@ -609,14 +651,14 @@ export const AddAMCPage = () => {
                           ...params.InputProps,
                           endAdornment: (
                             <>
-                              {AssetsLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                              {loading ? <CircularProgress color="inherit" size={20} /> : null}
                               {params.InputProps.endAdornment}
                             </>
                           ),
                         }}
                       />
                     )}
-                    disabled={loading || AssetsLoading || isSubmitting}
+                    disabled={loading || isSubmitting}
                   />
                 ) : (
                   <FormControl fullWidth variant="outlined" error={!!errors.service}>
@@ -894,6 +936,8 @@ export const AddAMCPage = () => {
                     <MenuItem value="quarterly">Quarterly</MenuItem>
                     <MenuItem value="half-yearly">Half Yearly</MenuItem>
                     <MenuItem value="yearly">Yearly</MenuItem>
+                    <MenuItem value="full_payment" >Full Payment</MenuItem>
+                    <MenuItem value="visit_based_payment" >Visit Based Payment</MenuItem>
                   </MuiSelect>
                   {errors.paymentTerms && <FormHelperText>{errors.paymentTerms}</FormHelperText>}
                 </FormControl>

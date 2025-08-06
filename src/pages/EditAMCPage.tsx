@@ -85,8 +85,37 @@ export const EditAMCPage = () => {
   const [services, setServices] = useState<Service[]>([]);
 
   // Extract data from Redux state
-  const assets = Array.isArray((assetsData as any)?.assets) ? (assetsData as any).assets : Array.isArray(assetsData) ? assetsData : [];
+  // const assets = Array.isArray((assetsData as any)?.assets) ? (assetsData as any).assets : Array.isArray(assetsData) ? assetsData : [];
+  const [assetList, setAssetList] = useState<any[]>([]);
   const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
+  const fetchAsset = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem("token"); // Get token from localStorage
+
+    try {
+      const response = await fetch(`https://${baseUrl}/pms/assets/get_assets.json`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Ensure token is a Bearer token if needed
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setAssetList(data)
+      console.log('SAC data:', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching SAC:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAsset();
+  }, []);
 
   // Fetch AMC data when component mounts
   useEffect(() => {
@@ -100,132 +129,131 @@ export const EditAMCPage = () => {
     if (amcData && typeof amcData === 'object') {
       const data = amcData as any;
       const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
-      const isGroupType = data.resource_type === 'Pms::Asset';
+      const isGroupType = data.amc_details_type === 'group'; // Use amc_details_type to determine group or individual
 
-      // Set existing files from API response
-      if (data.amc_contracts && Array.isArray(data.amc_contracts)) {
-        const contractFiles = data.amc_contracts.flatMap((contract: any) =>
-          contract.documents ? contract.documents.map((doc: any) => ({
-            document_url: doc.document_url,
-            document_name: doc.document_name,
-            attachment_id: doc.attachment_id
-          })) : []
-        );
-        setExistingFiles(prev => ({ ...prev, contracts: contractFiles }));
-      }
-
-      if (data.amc_invoices && Array.isArray(data.amc_invoices)) {
-        const invoiceFiles = data.amc_invoices.flatMap((invoice: any) =>
-          invoice.documents ? invoice.documents.map((doc: any) => ({
-            document_url: doc.document_url,
-            document_name: doc.document_name,
-            attachment_id: doc.attachment_id
-          })) : []
-        );
-        setExistingFiles(prev => ({ ...prev, invoices: invoiceFiles }));
-      }
-
-      // Determine the correct form values based on API response
-      const isAssetType = data.asset_id ? true : false;
-      const isServiceType = data.service_id ? true : false;
-      const isIndividualType = data.resource_type === 'Pms::Asset';
-
-      // Handle asset IDs
-      let assetIds = [];
-      if (data.asset_id) {
-        if (typeof data.asset_id === 'string') {
-          try {
-            const parsed = JSON.parse(data.asset_id);
-            assetIds = Array.isArray(parsed) ? parsed : [data.asset_id];
-          } catch {
-            assetIds = [data.asset_id];
-          }
-        } else if (Array.isArray(data.asset_id)) {
-          assetIds = data.asset_id;
-        } else {
-          assetIds = [data.asset_id];
-        }
-        assetIds = assetIds.map(id => id.toString());
+      let assetIds: string[] = [];
+      if (Array.isArray(data.amc_assets)) {
+        assetIds = data.amc_assets
+          .map((item: any) => item.asset_id?.toString())
+          .filter(Boolean);
       }
 
       const supplierId = data.supplier_id?.toString();
-      const foundSupplier = suppliers.find(supplier => supplier.id.toString() === supplierId);
+      const foundSupplier = suppliers.find(
+        (supplier) => supplier.id.toString() === supplierId
+      );
+
       const serviceId = data.service_id?.toString();
-      const foundService = services.find(service => service.id.toString() === serviceId);
+      const foundService = services.find(
+        (service) => service.id.toString() === serviceId
+      );
 
       setFormData({
         details: detailType,
-        type: isGroupType ? 'Group' : 'Individual',
-        assetName: foundService ? serviceId : '',
+        type: isGroupType ? 'Group' : 'Individual', // Set type based on amc_details_type
+        assetName: foundService
+          ? serviceId
+          : data.resource_id === 'Pms::Service'
+            ? data.resource_id
+            : '',
         asset_ids: assetIds,
         vendor: foundSupplier ? supplierId : '',
-        group: isGroupType ? (data.group_id?.toString() || '') : '',
-        subgroup: data.sub_group_id || '',
-        service: '',
+        group: data.group_id || formData.group,
+        subgroup: data.sub_group_id || formData.subgroup,
+        service: foundService
+          ? serviceId
+          : data.service_id?.toString() || formData.service,
         supplier: foundSupplier ? supplierId : '',
         startDate: data.amc_start_date || '',
         endDate: data.amc_end_date || '',
         cost: data.amc_cost?.toString() || '',
-        contractName: data.contract_name || '', // Added new field
+        contractName: data.contract_name || '',
         paymentTerms: data.payment_term || '',
         firstService: data.amc_first_service || '',
         noOfVisits: data.no_of_visits?.toString() || '',
         remarks: data.remarks || ''
       });
 
-      // Ensure handleGroupChange is called with the group_id
       if (isGroupType && data.group_id) {
         handleGroupChange(data.group_id.toString());
       }
     }
-  }, [amcData, assets, suppliers, services]);
+  }, [amcData, assetList, suppliers, services]);
+  // const debouncedHandleInputChange = useCallback(
+  //   debounce((field: string, value: string) => {
+  //     if (field === 'cost') {
+  //       if (value === '' || !isNaN(parseFloat(value))) {
+  //         console.log(`Updating ${field} to ${value}`);
+  //         setFormData(prev => ({
+  //           ...prev,
+  //           [field]: value,
+  //         }));
+  //         setErrors(prev => ({ ...prev, [field]: '' }));
+  //       }
+  //       return;
+  //     }
+  //     console.log(`Updating ${field} to ${value}`);
+  //     setFormData(prev => {
+  //       if (field === 'details' && prev.details !== value) {
+  //         return {
+  //           ...prev,
+  //           [field]: value,
+  //           // Only clear asset-related fields if details change, but keep other fields
+  //           assetName: '',
+  //           asset_ids: [],
+  //         };
+  //       }
+  //       if (field === 'type' && prev.type !== value) {
+  //         return {
+  //           ...prev,
+  //           [field]: value,
+  //           // Do not clear group, subgroup, service, or supplier here
+  //         };
+  //       }
+  //       return {
+  //         ...prev,
+  //         [field]: value,
+  //       };
+  //     });
+  //     setErrors(prev => ({ ...prev, [field]: '' }));
+  //   }, 300),
+  //   []
+  // );
 
-  const debouncedHandleInputChange = useCallback(
-    debounce((field: string, value: string) => {
-      if (field === 'cost') {
-        if (value === '' || !isNaN(parseFloat(value))) {
-          console.log(`Updating ${field} to ${value}`);
-          setFormData(prev => ({
-            ...prev,
-            [field]: value,
-          }));
-          setErrors(prev => ({ ...prev, [field]: '' }));
-        }
-        return;
-      }
-      console.log(`Updating ${field} to ${value}`);
-      setFormData(prev => {
-        if (field === 'details' && prev.details !== value) {
-          return {
-            ...prev,
-            [field]: value,
-            assetName: '',
-            asset_ids: [],
-          };
-        }
-        if (field === 'type' && prev.type !== value) {
-          return {
-            ...prev,
-            [field]: value,
-            group: '',
-            subgroup: '',
-            service: '',
-            supplier: '',
-          };
-        }
+  // const handleInputChange = (field: string, value: string) => {
+  //   debouncedHandleInputChange(field, value);
+  // };
+
+  const handleInputChange = (field: string, value: string) => {
+    console.log(`Updating ${field} to ${value}`);
+    setFormData(prev => {
+      if (field === 'details' && prev.details !== value) {
         return {
           ...prev,
           [field]: value,
+          assetName: '',
+          asset_ids: []
         };
-      });
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }, 300),
-    []
-  );
-
-  const handleInputChange = (field: string, value: string) => {
-    debouncedHandleInputChange(field, value);
+      }
+      if (field === 'type' && prev.type !== value) {
+        return {
+          ...prev,
+          [field]: value,
+          group: '',
+          subgroup: '',
+          service: '',
+          supplier: ''
+        };
+      }
+      return {
+        ...prev,
+        [field]: value
+      };
+    });
+    setErrors(prev => ({ ...prev, [field]: '' }));
   };
+
+
   const handleFileUpload = (type: 'contracts' | 'invoices', files: FileList | null) => {
     if (files) {
       const fileArray = Array.from(files);
@@ -425,6 +453,7 @@ export const EditAMCPage = () => {
   };
   const handleSubmit = useCallback(async (action: string) => {
     if (!id) return;
+
     if (assetsLoading || suppliersLoading || servicesLoading || loading) {
       toast({
         title: 'Error',
@@ -433,6 +462,7 @@ export const EditAMCPage = () => {
       });
       return;
     }
+
     if (!validateForm()) {
       toast({
         title: 'Error',
@@ -441,12 +471,14 @@ export const EditAMCPage = () => {
       });
       return;
     }
+
     setUpdateLoading(true);
-  
+
     try {
       const sendData = new FormData();
-  
-      // Append form data
+
+      // Append common form data
+      sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
       sendData.append('pms_asset_amc[amc_cost]', parseFloat(formData.cost).toString());
       sendData.append('pms_asset_amc[contract_name]', formData.contractName);
       sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
@@ -458,46 +490,28 @@ export const EditAMCPage = () => {
       sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
       sendData.append('pms_asset_amc[remarks]', formData.remarks || '');
       sendData.append('pms_asset_amc[pms_site_id]', (amcData as any)?.pms_site_id || '');
-      sendData.append('pms_asset_amc[site_name]', (amcData as any)?.site_name || '');
-  
-      // Set resource type and ID
+      sendData.append('pms_asset_amc[type]', formData.type);
+
+      // Set resource details
       if (formData.details === 'Asset') {
         sendData.append('pms_asset_amc[resource_type]', 'Pms::Asset');
         if (formData.type === 'Individual') {
           sendData.append('pms_asset_amc[resource_id]', formData.asset_ids.join(','));
-        } else {
-          sendData.append('pms_asset_amc[resource_id]', formData.group);
+        } else if (formData.type === 'Group') {
+          sendData.append('pms_asset_amc[resource_id]', formData.group || '');
+          sendData.append('pms_asset_amc[sub_group_id]', formData.subgroup || '');
         }
       } else if (formData.details === 'Service') {
         sendData.append('pms_asset_amc[resource_type]', 'Pms::Service');
-        sendData.append('pms_asset_amc[resource_id]', formData.assetName || formData.service);
-      }
-  
-      // Append supplier details
-      const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
-      if (selectedSupplier) {
-        sendData.append('pms_asset_amc[supplier_id]', selectedSupplier.id.toString());
-        sendData.append('pms_asset_amc[amc_vendor_name]', selectedSupplier.company_name || '');
-        sendData.append('pms_asset_amc[amc_vendor_mobile]', selectedSupplier.mobile || '');
-        sendData.append('pms_asset_amc[amc_vendor_email]', selectedSupplier.email || '');
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Selected supplier not found.',
-          variant: 'destructive',
-        });
-        setUpdateLoading(false);
-        return;
-      }
-  
-      // Append group/subgroup for Group type
-      if (formData.type === 'Group' && formData.group) {
-        sendData.append('pms_asset_amc[group_id]', formData.group);
-        if (formData.subgroup) {
-          sendData.append('pms_asset_amc[sub_group_id]', formData.subgroup);
+        if (formData.type === 'Group') {
+          sendData.append('pms_asset_amc[resource_id]', formData.service);
+          sendData.append('pms_asset_amc[group_id]', formData.group || '');
+          sendData.append('pms_asset_amc[sub_group_id]', formData.subgroup || '');
+        } else if (formData.type === 'Individual') {
+          sendData.append('pms_asset_amc[resource_id]', formData.assetName || formData.service);
         }
       }
-  
+
       // Append attachments
       attachments.contracts.forEach(file => {
         sendData.append('amc_contracts[content][]', file);
@@ -505,7 +519,7 @@ export const EditAMCPage = () => {
       attachments.invoices.forEach(file => {
         sendData.append('amc_invoices[content][]', file);
       });
-  
+
       // Append existing file IDs
       existingFiles.contracts.forEach(file => {
         sendData.append('pms_asset_amc[existing_contract_ids][]', file.attachment_id.toString());
@@ -513,25 +527,39 @@ export const EditAMCPage = () => {
       existingFiles.invoices.forEach(file => {
         sendData.append('pms_asset_amc[existing_invoice_ids][]', file.attachment_id.toString());
       });
-  
+
       sendData.append('subaction', 'save');
-  
-      // Log payload for debugging
-      for (const [key, value] of sendData.entries()) {
-        console.log(`${key}: ${value}`);
-      }
-  
+
+      // Log payload (optional debugging)
+      // for (const [key, value] of sendData.entries()) {
+      //   console.log(`${key}: ${value}`);
+      // }
+
       const response = await apiClient.put(`/pms/asset_amcs/${id}.json`, sendData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-  
+
+      const result = response?.data;
+
+      // ✅ Check backend response validity
+      if (!result?.id) {
+        toast({
+          title: 'Error',
+          description:
+            result?.message || result?.error || result?.errors?.[0] || 'Failed to update AMC: No ID returned.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // ✅ Show success and navigate
       toast({
         title: 'AMC Updated',
         description: 'AMC has been successfully updated.',
       });
-  
+
       if (action === 'updated with details') {
         navigate(`/maintenance/amc/details/${id}`);
       } else if (action === 'updated new service') {
@@ -541,13 +569,31 @@ export const EditAMCPage = () => {
       console.error('API Error:', error.response?.data);
       toast({
         title: 'Error',
-        description: `Failed to update AMC: ${error.response?.data?.message || error.message || 'Please try again.'}`,
+        description:
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          'Please try again.',
         variant: 'destructive',
       });
     } finally {
       setUpdateLoading(false);
     }
-  }, [id, formData, attachments, amcData, suppliers, toast, navigate, assetsLoading, suppliersLoading, servicesLoading, loading]);
+  }, [
+    id,
+    formData,
+    attachments,
+    existingFiles,
+    amcData,
+    suppliers,
+    toast,
+    navigate,
+    assetsLoading,
+    suppliersLoading,
+    servicesLoading,
+    loading,
+  ]);
+
   // Responsive styles for TextField and Select
   const fieldStyles = {
     height: {
@@ -733,7 +779,6 @@ export const EditAMCPage = () => {
                         const value = e.target.value;
                         setFormData(prev => ({
                           ...prev,
-                          asset_ids: typeof value === 'string' ? value.split(',') : value
                         }));
                         setErrors(prev => ({ ...prev, asset_ids: '' }));
                       }}
@@ -744,12 +789,12 @@ export const EditAMCPage = () => {
                           return <em>Select Assets...</em>;
                         }
                         return selected.map(id => {
-                          const asset = assets.find(a => a.id.toString() === id);
+                          const asset = assetList.find(a => a.id.toString() === id);
                           return asset?.name;
                         }).join(', ');
                       }}
                     >
-                      {Array.isArray(assets) && assets.map((asset) => (
+                      {Array.isArray(assetList) && assetList.map((asset) => (
                         <MenuItem key={asset.id} value={asset.id.toString()}>
                           <input
                             type="checkbox"
@@ -840,7 +885,7 @@ export const EditAMCPage = () => {
                       >
                         <MenuItem value=""><em>Select Group</em></MenuItem>
                         {Array.isArray(assetGroups) && assetGroups.map((group) => (
-                          <MenuItem key={group.id} value={group.id.toString()}>
+                          <MenuItem key={group.id} value={group.id}>
                             {group.name}
                           </MenuItem>
                         ))}
@@ -874,23 +919,34 @@ export const EditAMCPage = () => {
                   {formData.details === 'Service' && (
                     <div>
                       <FormControl fullWidth variant="outlined" error={!!errors.service}>
-                        <InputLabel id="group-service-select-label" shrink>Service</InputLabel>
+                        <InputLabel id="service-select-label" shrink>Service</InputLabel>
                         <MuiSelect
-                          labelId="group-service-select-label"
+                          labelId="service-select-label"
                           label="Service"
                           displayEmpty
-                          value={formData.service}
-                          onChange={e => handleInputChange('service', e.target.value)}
+                          value={formData.service} // Use formData.service instead of assetName
+                          onChange={e => handleInputChange('service', e.target.value)} // Update service key
                           sx={fieldStyles}
+                          disabled={loading || servicesLoading || updateLoading}
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <em>Select a Service...</em>;
+                            }
+                            const service = services.find(s => s.id.toString() === selected);
+                            return service ? service.service_name : selected;
+                          }}
                         >
-                          <MenuItem value=""><em>Select Service</em></MenuItem>
-                          <MenuItem value="preventive-maintenance">Preventive Maintenance</MenuItem>
-                          <MenuItem value="corrective-maintenance">Corrective Maintenance</MenuItem>
-                          <MenuItem value="emergency-service">Emergency Service</MenuItem>
-                          <MenuItem value="inspection-service">Inspection Service</MenuItem>
+                          <MenuItem value=""><em>Select a Service...</em></MenuItem>
+                          {Array.isArray(services) && services.map((service) => (
+                            <MenuItem key={service.id} value={service.id.toString()}>
+                              {service.service_name}
+                            </MenuItem>
+                          ))}
                         </MuiSelect>
                         {errors.service && <FormHelperText>{errors.service}</FormHelperText>}
                       </FormControl>
+
+
                     </div>
                   )}
 
@@ -1012,6 +1068,8 @@ export const EditAMCPage = () => {
                     <MenuItem value="quarterly">Quarterly</MenuItem>
                     <MenuItem value="half-yearly">Half Yearly</MenuItem>
                     <MenuItem value="yearly">Yearly</MenuItem>
+                    <MenuItem value="full_payment" >Full Payment</MenuItem>
+                    <MenuItem value="visit_based_payment" >Visit Based Payment</MenuItem>
                   </MuiSelect>
                   {errors.paymentTerms && <FormHelperText>{errors.paymentTerms}</FormHelperText>}
                 </FormControl>
@@ -1036,11 +1094,28 @@ export const EditAMCPage = () => {
               <div>
                 <TextField
                   label="No. of Visits*"
-                  placeholder="Enter No. of Visit"
+                  placeholder="Enter No. of Visits"
                   name="noOfVisits"
-                  type="number"
+                  type="text"
                   value={formData.noOfVisits}
-                  onChange={e => handleInputChange('noOfVisits', e.target.value)}
+                  onChange={e => {
+                    const value = e.target.value;
+                    if (/^\d*$/.test(value)) {
+                      handleInputChange('noOfVisits', value);
+                    }
+                  }}
+                  onKeyDown={e => {
+                    const allowedKeys = [
+                      'Backspace',
+                      'Delete',
+                      'ArrowLeft',
+                      'ArrowRight',
+                      'Tab'
+                    ];
+                    if (!/[0-9]/.test(e.key) && !allowedKeys.includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
