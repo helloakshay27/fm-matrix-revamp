@@ -444,7 +444,8 @@ export const FMUserMasterDashboard = () => {
       };
     } else {
       return {
-        className: "bg-red-600 text-white hover:bg-red-700 cursor-pointer",
+        className:
+          "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
         children: "Pending",
       };
     }
