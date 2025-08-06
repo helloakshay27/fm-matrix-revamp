@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModal';
 
@@ -171,6 +172,50 @@ export const SurveyResponsePage = () => {
     item.id.toString().includes(searchTerm)
   );
 
+  // Process data for pie chart
+  const surveyCategories = responseData.reduce((acc: any, item) => {
+    const category = item.surveyTitle;
+    if (acc[category]) {
+      acc[category] += item.responses;
+    } else {
+      acc[category] = item.responses;
+    }
+    return acc;
+  }, {});
+
+  const pieChartData = Object.entries(surveyCategories).map(([name, value]) => ({
+    name,
+    value: value as number,
+    count: responseData.filter(item => item.surveyTitle === name).length
+  }));
+
+  const COLORS = ['#C72030', '#D4AC0D', '#E67E22', '#27AE60', '#3498DB', '#9B59B6', '#E74C3C', '#F39C12'];
+
+  const customLabel = (entry: any) => {
+    return `${entry.name} (${entry.value})`;
+  };
+
+  const handleExportChart = () => {
+    const chartData = pieChartData.map(item => ({
+      'Survey Type': item.name,
+      'Total Responses': item.value,
+      'Number of Surveys': item.count
+    }));
+    
+    const csvContent = [
+      Object.keys(chartData[0]).join(','),
+      ...chartData.map(row => Object.values(row).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'survey-response-analytics.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex-1 p-4 sm:p-6 bg-gray-50 min-h-screen">
       {/* Header Tabs */}
@@ -299,8 +344,54 @@ export const SurveyResponsePage = () => {
           
           <TabsContent value="analytics" className="mt-0">
             {/* Analytics Content */}
-            <div className="p-8 text-center text-gray-500">
-              Analytics content will be displayed here
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-[#C72030]">Category-wise Responses</h2>
+                <Button
+                  onClick={handleExportChart}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              <div className="h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={customLabel}
+                      outerRadius={120}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {pieChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: any, name: any, props: any) => [
+                        `${value} responses`,
+                        props.payload.name
+                      ]}
+                    />
+                    <Legend 
+                      verticalAlign="bottom" 
+                      height={36}
+                      formatter={(value: any, entry: any) => (
+                        <span style={{ color: entry.color }}>
+                          {value} ({entry.payload.value})
+                        </span>
+                      )}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
