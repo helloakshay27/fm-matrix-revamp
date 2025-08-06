@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Users, FileText, Plus, Download, Upload, Filter, Copy, Eye } from 'lucide-react';
+import { Users, FileText, Plus, Download, Upload, Filter, Copy, Eye, Trash2 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 // Sample data for FM Users
@@ -271,7 +271,10 @@ export const MSafeDashboard = () => {
                 {users.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <Eye className="h-4 w-4 text-gray-500 cursor-pointer hover:text-gray-700" />
+                      <div className="flex gap-2">
+                        <Eye className="h-4 w-4 text-gray-500 cursor-pointer hover:text-gray-700" />
+                        <Trash2 className="h-4 w-4 text-red-500 cursor-pointer hover:text-red-700" />
+                      </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <Switch 
