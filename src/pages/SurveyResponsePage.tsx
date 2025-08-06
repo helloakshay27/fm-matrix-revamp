@@ -370,29 +370,29 @@ export const SurveyResponsePage = () => {
           
           <TabsContent value="analytics" className="mt-0">
             {/* Analytics Content */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-[#C72030]">Category-wise Responses</h2>
+                <h2 className="text-lg font-semibold text-[#C72030]">Category-wise Assets</h2>
                 <Button
                   onClick={handleExportChart}
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                  className="flex items-center gap-2 border-gray-300 text-gray-600 hover:bg-gray-50"
                 >
                   <Download className="w-4 h-4" />
                 </Button>
               </div>
               
-              <div className="h-96">
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={pieChartData}
                       cx="50%"
-                      cy="50%"
+                      cy="40%"
                       labelLine={false}
-                      label={customLabel}
-                      outerRadius={120}
+                      outerRadius={100}
+                      innerRadius={40}
                       fill="#8884d8"
                       dataKey="value"
                     >
@@ -402,39 +402,51 @@ export const SurveyResponsePage = () => {
                     </Pie>
                     <Tooltip 
                       formatter={(value: any, name: any, props: any) => [
-                        `${value} responses`,
+                        `${value}`,
                         props.payload.name
                       ]}
-                    />
-                    <Legend 
-                      verticalAlign="bottom" 
-                      height={36}
-                       formatter={(value: any, entry: any) => (
-                         <span style={{ color: entry.color }}>
-                           {value}
-                         </span>
-                       )}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '6px',
+                        fontSize: '12px'
+                      }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
+              
+              {/* Legend positioned at the bottom */}
+              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                {pieChartData.map((entry, index) => (
+                  <div key={entry.name} className="flex items-center gap-2">
+                    <div 
+                      className="w-3 h-3 rounded-sm flex-shrink-0" 
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    ></div>
+                    <span className="text-gray-600 truncate">
+                      {entry.name} ({entry.value})
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
             
             {/* Bar Chart */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-[#C72030]">Group-wise Responses</h2>
+                <h2 className="text-lg font-semibold text-[#C72030]">Group-wise Assets</h2>
                 <Button
                   onClick={handleExportBarChart}
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                  className="flex items-center gap-2 border-gray-300 text-gray-600 hover:bg-gray-50"
                 >
                   <Download className="w-4 h-4" />
                 </Button>
               </div>
               
-              <div className="h-96">
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={barChartData}
@@ -442,22 +454,29 @@ export const SurveyResponsePage = () => {
                       top: 20,
                       right: 30,
                       left: 20,
-                      bottom: 60,
+                      bottom: 100,
                     }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
                     <XAxis 
                       dataKey="name" 
                       angle={-45}
                       textAnchor="end"
-                      height={60}
+                      height={100}
                       interval={0}
-                      fontSize={12}
-                      stroke="#666"
+                      fontSize={11}
+                      tick={{ fill: '#6b7280' }}
+                      axisLine={false}
+                      tickLine={false}
                     />
-                    <YAxis stroke="#666" fontSize={12} />
+                    <YAxis 
+                      fontSize={11}
+                      tick={{ fill: '#6b7280' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
                     <Tooltip 
-                      formatter={(value: any, name: any, props: any) => [
+                      formatter={(value: any, name: any) => [
                         value,
                         name === 'responses' ? 'Responses' : 'Tickets'
                       ]}
@@ -465,12 +484,18 @@ export const SurveyResponsePage = () => {
                         const item = barChartData.find(d => d.name === label);
                         return item ? item.fullName : label;
                       }}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '6px',
+                        fontSize: '12px'
+                      }}
                     />
                     <Bar 
                       dataKey="responses" 
                       fill="#C72030" 
-                      name="responses"
                       radius={[2, 2, 0, 0]}
+                      maxBarSize={40}
                     />
                   </BarChart>
                 </ResponsiveContainer>
