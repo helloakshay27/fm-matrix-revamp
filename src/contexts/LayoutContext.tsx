@@ -6,6 +6,7 @@ interface LayoutContextType {
   setCurrentSection: (section: string) => void;
   isSidebarCollapsed: boolean;
   setIsSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSidebarCollapse: () => void;
 }
 
 const LayoutContext = createContext<LayoutContextType | undefined>(undefined);
@@ -25,13 +26,15 @@ interface LayoutProviderProps {
 export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
   const [currentSection, setCurrentSection] = useState<string>('');
   
-  // Get initial collapsed state from localStorage, default to false if not set
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
     const savedState = localStorage.getItem('sidebarCollapsed');
     return savedState ? JSON.parse(savedState) : false;
   });
 
-  // Save sidebar collapsed state to localStorage whenever it changes
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed(prev => !prev);
+  };
+
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', JSON.stringify(isSidebarCollapsed));
   }, [isSidebarCollapsed]);
@@ -41,7 +44,8 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
       currentSection, 
       setCurrentSection,
       isSidebarCollapsed,
-      setIsSidebarCollapsed
+      setIsSidebarCollapsed,
+      toggleSidebarCollapse
     }}>
       {children}
     </LayoutContext.Provider>

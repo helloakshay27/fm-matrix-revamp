@@ -119,7 +119,7 @@ const mockNotifications = [
   }
 ];
 
-const sidebarItems = [
+const sidebarItems: SidebarItem[] = [
   {
     name: 'Dashboard',
     icon: Home,
@@ -130,11 +130,11 @@ const sidebarItems = [
     icon: Package,
     hasChildren: true,
     children: [
-      { name: 'Asset Register', href: '/asset-management/asset-register' },
-      { name: 'Asset Transfer', href: '/asset-management/asset-transfer' },
-      { name: 'Asset Disposal', href: '/asset-management/asset-disposal' },
-      { name: 'AMC', href: '/asset-management/amc' },
-      { name: 'Warranty', href: '/asset-management/warranty' }
+      { name: 'Asset Register', icon: Package, href: '/asset-management/asset-register' },
+      { name: 'Asset Transfer', icon: Package, href: '/asset-management/asset-transfer' },
+      { name: 'Asset Disposal', icon: Package, href: '/asset-management/asset-disposal' },
+      { name: 'AMC', icon: Package, href: '/asset-management/amc' },
+      { name: 'Warranty', icon: Package, href: '/asset-management/warranty' }
     ]
   },
   {
@@ -142,12 +142,12 @@ const sidebarItems = [
     icon: Wrench,
     hasChildren: true,
     children: [
-      { name: 'Work Order', href: '/maintenance/work-order' },
-      { name: 'PPM', href: '/maintenance/ppm' },
-      { name: 'Breakdown', href: '/maintenance/breakdown' },
-      { name: 'Checklist', href: '/maintenance/checklist' },
-      { name: 'Attendance', href: '/maintenance/attendance' },
-      { name: 'M Safe', href: '/maintenance/m-safe' }
+      { name: 'Work Order', icon: Wrench, href: '/maintenance/work-order' },
+      { name: 'PPM', icon: Wrench, href: '/maintenance/ppm' },
+      { name: 'Breakdown', icon: Wrench, href: '/maintenance/breakdown' },
+      { name: 'Checklist', icon: Wrench, href: '/maintenance/checklist' },
+      { name: 'Attendance', icon: Wrench, href: '/maintenance/attendance' },
+      { name: 'M Safe', icon: Shield, href: '/maintenance/m-safe' }
     ]
   },
   {
@@ -155,9 +155,9 @@ const sidebarItems = [
     icon: ShoppingCart,
     hasChildren: true,
     children: [
-      { name: 'Stock Management', href: '/inventory/stock-management' },
-      { name: 'Purchase Order', href: '/inventory/purchase-order' },
-      { name: 'Vendor Management', href: '/inventory/vendor-management' }
+      { name: 'Stock Management', icon: ShoppingCart, href: '/inventory/stock-management' },
+      { name: 'Purchase Order', icon: ShoppingCart, href: '/inventory/purchase-order' },
+      { name: 'Vendor Management', icon: ShoppingCart, href: '/inventory/vendor-management' }
     ]
   },
   {
@@ -165,8 +165,8 @@ const sidebarItems = [
     icon: Zap,
     hasChildren: true,
     children: [
-      { name: 'Energy Dashboard', href: '/energy/dashboard' },
-      { name: 'Consumption Analysis', href: '/energy/consumption' }
+      { name: 'Energy Dashboard', icon: Zap, href: '/energy/dashboard' },
+      { name: 'Consumption Analysis', icon: Zap, href: '/energy/consumption' }
     ]
   },
   {
@@ -179,9 +179,9 @@ const sidebarItems = [
     icon: BarChart3,
     hasChildren: true,
     children: [
-      { name: 'Asset Reports', href: '/reports/asset' },
-      { name: 'Maintenance Reports', href: '/reports/maintenance' },
-      { name: 'Inventory Reports', href: '/reports/inventory' }
+      { name: 'Asset Reports', icon: BarChart3, href: '/reports/asset' },
+      { name: 'Maintenance Reports', icon: BarChart3, href: '/reports/maintenance' },
+      { name: 'Inventory Reports', icon: BarChart3, href: '/reports/inventory' }
     ]
   }
 ];
@@ -216,7 +216,7 @@ export const Sidebar = () => {
 
   const renderMenuItem = (item: SidebarItem, level: number = 0) => {
     const isExpanded = expandedItems.includes(item.name);
-    const hasActiveChild = item.children?.some((child: SidebarItem) => isActiveRoute(child.href));
+    const hasActiveChild = item.children?.some((child: SidebarItem) => child.href && isActiveRoute(child.href));
     const isActive = item.href && isActiveRoute(item.href);
 
     if (item.hasChildren) {
@@ -238,11 +238,11 @@ export const Sidebar = () => {
           </button>
           {isExpanded && (
             <div className="space-y-1">
-              {item.children.map((child: SidebarItem) => (
+              {item.children?.map((child: SidebarItem) => (
                 <div key={child.name}>
                   <button
-                    onClick={() => handleNavigation(child.href)}
-                    className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${isActiveRoute(child.href) ? 'text-primary' : 'text-muted-foreground'}`}
+                    onClick={() => child.href && handleNavigation(child.href)}
+                    className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground ${child.href && isActiveRoute(child.href) ? 'text-primary' : 'text-muted-foreground'}`}
                     style={{ paddingLeft: `${28 + (level * 12)}px` }}
                   >
                     {child.name}
