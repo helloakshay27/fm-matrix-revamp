@@ -210,6 +210,7 @@ const fmUsersData = [{
   faceRecognition: 'No',
   appDownloaded: 'No'
 }];
+
 export const MSafeDashboard = () => {
   const location = useLocation();
   const isSafetyRoute = location.pathname.startsWith('/safety');
@@ -226,22 +227,27 @@ export const MSafeDashboard = () => {
   const startIndex = (currentPage - 1) * perPage;
   const endIndex = startIndex + perPage;
   const currentUsers = users.slice(startIndex, endIndex);
+
   const toggleUserStatus = (userId: string) => {
     setUsers(users.map(user => user.id === userId ? {
       ...user,
       active: !user.active
     } : user));
   };
+
   const handleDeleteUser = (userId: string) => {
     setUsers(users.filter(user => user.id !== userId));
   };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
+
   const handlePerPageChange = (newPerPage: number) => {
     setPerPage(newPerPage);
     setCurrentPage(1); // Reset to first page when changing items per page
   };
+
   if (isSafetyRoute) {
     return <div className="p-6 space-y-6">
         <h1 className="text-2xl font-semibold text-gray-900">M Safe</h1>
@@ -365,11 +371,5 @@ export const MSafeDashboard = () => {
 
       {/* Pagination */}
       <TicketPagination currentPage={currentPage} totalPages={totalPages} totalRecords={totalRecords} perPage={perPage} isLoading={isLoading} onPageChange={handlePageChange} onPerPageChange={handlePerPageChange} />
-
-      {/* Footer */}
-      <div className="text-center text-sm text-gray-500 flex items-center justify-center gap-2">
-        <span>Powered by</span>
-        <span className="font-semibold text-orange-500">Phygitalwork</span>
-      </div>
     </div>;
 };
