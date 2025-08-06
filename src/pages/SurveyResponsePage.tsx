@@ -298,11 +298,6 @@ export const SurveyResponsePage = () => {
           <TabsContent value="response-list" className="mt-0">
             {/* Breadcrumb */}
             <div className="mb-6">
-              <nav className="flex items-center text-sm text-gray-600 mb-4">
-                <span>Survey</span>
-                <span className="mx-2">{'>'}</span>
-                <span>Response</span>
-              </nav>
               <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-6">Response List</h1>
             </div>
 
