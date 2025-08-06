@@ -196,6 +196,13 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       hideable: true,
       defaultVisible: visibleColumns.assetType,
     },
+    {
+      key: "category",
+      label: "Category Type",
+      sortable: true,
+      hideable: true,
+      defaultVisible: visibleColumns.category,
+    },
   ];
 
   const renderCell = (asset: Asset, columnKey: string) => {
@@ -287,6 +294,12 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
             {asset.assetType ? "Comprehensive" : "Non-Comprehensive"}
           </span>
         );
+      case "category":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.category || "N/A"}
+          </span>
+        );
       default:
         return null;
     }
@@ -296,7 +309,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
     setShowActionPanel(true);
   };
 
-  return (
+  return (  
     <>
       {showActionPanel && (
         <SelectionPanel

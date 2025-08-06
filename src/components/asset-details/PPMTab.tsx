@@ -289,7 +289,7 @@ export const PPMTab: React.FC<PPMTabProps> = ({ assetId }) => {
               <TableHead>Schedule</TableHead>
               <TableHead>Assign To</TableHead>
               <TableHead>Grace Time</TableHead>
-              <TableHead>Status</TableHead>
+              {/* <TableHead>Status</TableHead> */}
               <TableHead>%</TableHead>
             </TableRow>
           </TableHeader>
@@ -315,11 +315,11 @@ export const PPMTab: React.FC<PPMTabProps> = ({ assetId }) => {
                   <TableCell>{item.schedule}</TableCell>
                   <TableCell>{item.assigned_to || "—"}</TableCell>
                   <TableCell>{item.grace_time}</TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     <div className="bg-blue-500 text-white px-3 py-1 rounded text-sm font-medium inline-flex items-center gap-1">
                       {item.task_status}
                     </div>
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full flex items-center justify-center bg-red-700">

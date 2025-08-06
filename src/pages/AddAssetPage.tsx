@@ -590,7 +590,17 @@ const AddAssetPage = () => {
 
     // Start with the default IT asset details (system_details and hardware)
     Object.entries(itAssetDetails).forEach(([section, fields]) => {
-      result[section] = { ...fields };
+      const nonEmptyFields = {};
+      Object.entries(fields).forEach(([key, value]) => {
+        // Only include fields with values (not empty, null, or undefined)
+        if (value && value.toString().trim() !== "") {
+          nonEmptyFields[key] = value;
+        }
+      });
+      // Only add section if it has non-empty fields
+      if (Object.keys(nonEmptyFields).length > 0) {
+        result[section] = nonEmptyFields;
+      }
     });
 
     // Add any additional custom fields from itAssetsCustomFields
@@ -610,9 +620,12 @@ const AddAssetPage = () => {
         result[sectionKey] = {};
       }
       fields.forEach((field) => {
-        // Convert field name to snake_case as well
-        const fieldKey = field.name.trim().toLowerCase().replace(/\s+/g, "_");
-        result[sectionKey][fieldKey] = field.value;
+        // Only add field if it has a value (not empty, null, or undefined)
+        if (field.value && field.value.toString().trim() !== "") {
+          // Convert field name to snake_case as well
+          const fieldKey = field.name.trim().toLowerCase().replace(/\s+/g, "_");
+          result[sectionKey][fieldKey] = field.value;
+        }
       });
     });
 
@@ -1539,29 +1552,35 @@ const AddAssetPage = () => {
       return value;
     };
 
-    // Custom fields
+    // Custom fields - only include fields with values
     Object.keys(customFields).forEach((sectionKey) => {
       (customFields[sectionKey] || []).forEach((field) => {
-        extraFields.push({
-          field_name: field.name,
-          field_value: field.value,
-          group_name: sectionKey,
-          field_description: field.name,
-          _destroy: false,
-        });
+        // Only add field if it has a value (not empty, null, or undefined)
+        if (field.value && field.value.toString().trim() !== "") {
+          extraFields.push({
+            field_name: field.name,
+            field_value: field.value,
+            group_name: sectionKey,
+            field_description: field.name,
+            _destroy: false,
+          });
+        }
       });
     });
 
-    // IT Assets custom fields
+    // IT Assets custom fields - only include fields with values
     Object.keys(itAssetsCustomFields).forEach((sectionKey) => {
       (itAssetsCustomFields[sectionKey] || []).forEach((field) => {
-        extraFields.push({
-          field_name: field.name,
-          field_value: field.value,
-          group_name: sectionKey,
-          field_description: field.name,
-          _destroy: false,
-        });
+        // Only add field if it has a value (not empty, null, or undefined)
+        if (field.value && field.value.toString().trim() !== "") {
+          extraFields.push({
+            field_name: field.name,
+            field_value: field.value,
+            group_name: sectionKey,
+            field_description: field.name,
+            _destroy: false,
+          });
+        }
       });
     });
 
@@ -2901,19 +2920,18 @@ const AddAssetPage = () => {
         purchase_cost: formData.purchase_cost,
 
         // Asset type flags
-        it_asset: formData.it_asset,
+        it_asset: selectedAssetCategory === "IT Equipment" ? true : formData.it_asset,
         it_meter: formData.it_meter,
         is_meter: formData.is_meter,
         asset_loaned: formData.asset_loaned,
         depreciation_applicable: formData.depreciation_applicable,
-        it_asset_eq: selectedAssetCategory === "IT Equipment",
 
         // Meter fields
         meter_tag_type: formData.meter_tag_type,
         parent_meter_id: formData.parent_meter_id,
 
         // Warranty
-        warranty: formData.warranty,
+        warranty: formData.warranty === "Yes" ? true : false,
         warranty_period: formData.warranty_period,
 
         // Other fields
@@ -3397,7 +3415,7 @@ const AddAssetPage = () => {
         purchase_cost: formData.purchase_cost,
 
         // Asset type flags
-        it_asset: formData.it_asset,
+        it_asset: selectedAssetCategory === "IT Equipment" ? true : formData.it_asset,
         it_meter: formData.it_meter,
         is_meter: formData.is_meter,
         asset_loaned: formData.asset_loaned,
@@ -6463,7 +6481,7 @@ const AddAssetPage = () => {
                           />
                           <label
                             htmlFor="vehicle-warranty-yes"
-                            className="text-sm"
+                            className="text-sm" 
                           >
                             Yes
                           </label>
@@ -6479,7 +6497,7 @@ const AddAssetPage = () => {
                               setUnderWarranty(e.target.value);
                               handleFieldChange(
                                 "warranty",
-                                e.target.value === "yes"
+                                e.target.value === "no"
                               );
                             }}
                             className="w-4 h-4 text-[#C72030] border-gray-300"

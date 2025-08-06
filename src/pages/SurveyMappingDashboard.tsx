@@ -1,11 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SurveyMappingTable } from '../components/SurveyMappingTable';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, Filter, Download, RotateCcw, Search, Eye } from 'lucide-react';
+import { Plus, Upload, Filter, Download, RotateCcw, Search, Eye, Loader2 } from 'lucide-react';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { Switch } from "@/components/ui/switch";
 import { QRCodeModal } from '../components/QRCodeModal';
+import { apiClient } from '@/utils/apiClient';
+import { toast } from 'sonner';
+
+interface SurveyMapping {
+  id: number;
+  survey_id: number;
+  created_by_id: number;
+  site_id: number;
+  building_id: number;
+  wing_id: number | null;
+  floor_id: number | null;
+  area_id: number | null;
+  room_id: number | null;
+  qr_code: {
+    id: number;
+    document_file_name: string;
+    document_content_type: string;
+    document_file_size: number;
+    document_updated_at: string;
+    relation: string;
+    relation_id: number;
+    active: boolean | null;
+    created_at: string;
+    updated_at: string;
+    changed_by: string | null;
+    added_from: string | null;
+    comments: string | null;
+  };
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  survey_title: string;
+  site_name: string;
+  building_name: string;
+  wing_name: string | null;
+  floor_name: string | null;
+  area_name: string | null;
+  room_name: string | null;
+  qr_code_url: string;
+  snag_checklist: {
+    id: number;
+    name: string;
+    snag_audit_category_id: number;
+    snag_audit_sub_category_id: number | null;
+    active: number;
+    project_id: number | null;
+    company_id: number;
+    created_at: string;
+    updated_at: string;
+    check_type: string;
+    user_id: number | null;
+    resource_id: number;
+    resource_type: string;
+    snag_audit_category: string;
+    snag_audit_sub_category: string | null;
+    questions_count: number;
+    snag_questions: any[];
+  };
+}
 
 export const SurveyMappingDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,236 +76,44 @@ export const SurveyMappingDashboard = () => {
     site: string;
   } | null>(null);
   
-  const [mappings, setMappings] = useState([
-    {
-      id: 1,
-      serviceId: "12345",
-      serviceName: "Survey Title 123",
-      site: "Lockated",
-      building: "Tower A",
-      wing: "Wing A",
-      area: "Area A",
-      floor: "Basement",
-      room: "EV Room",
-      status: true,
-      createdOn: "01/07/2025",
-      qrCode: "QR001"
-    },
-    {
-      id: 2,
-      serviceId: "12345",
-      serviceName: "Survey Title 123", 
-      site: "Panchashil",
-      building: "Tower A",
-      wing: "Wing A",
-      area: "Area A",
-      floor: "Third",
-      room: "EV Room",
-      status: true,
-      createdOn: "01/07/2025",
-      qrCode: "QR002"
-    },
-    {
-      id: 3,
-      serviceId: "12345",
-      serviceName: "Survey Title 123",
-      site: "Lockated",
-      building: "Tower A",
-      wing: "Wing A",
-      area: "Area A",
-      floor: "Basement",
-      room: "EV Room",
-      status: true,
-      createdOn: "01/07/2025",
-      qrCode: "QR003"
-    },
-    {
-      id: 4,
-      serviceId: "12345",
-      serviceName: "Survey Title 123",
-      site: "Panchashil",
-      building: "Tower A",
-      wing: "Wing A",
-      area: "Area A",
-      floor: "First",
-      room: "EV Room",
-      status: true,
-      createdOn: "01/07/2025",
-      qrCode: "QR004"
-    },
-    {
-      id: 5,
-      serviceId: "12345",
-      serviceName: "Survey Title 123",
-      site: "Panchashil",
-      building: "Tower A",
-      wing: "Wing A",
-      area: "Area A",
-      floor: "Basement",
-      room: "EV Room",
-      status: true,
-      createdOn: "01/07/2025",
-      qrCode: "QR005"
-    },
-    {
-      id: 6,
-      serviceId: "12345",
-      serviceName: "Survey Title 123",
-      site: "Lockated",
-      building: "Tower A",
-      wing: "Wing A",
-      area: "Area A",
-      floor: "Second",
-      room: "EV Room",
-      status: true,
-      createdOn: "01/07/2025",
-      qrCode: "QR006"
-    },
-    {
-      id: 7,
-      serviceId: "12345",
-      serviceName: "Survey Title 123",
-      site: "Lockated",
-      building: "Tower A",
-      wing: "Wing A",
-      area: "Area A",
-      floor: "Basement",
-      room: "EV Room",
-      status: true,
-      createdOn: "01/07/2025",
-      qrCode: "QR007"
-    },
-    {
-      id: 8,
-      serviceId: "12345",
-      serviceName: "Survey Title 123",
-      site: "Panchashil",
-      building: "Tower A",
-      wing: "Wing A",
-      area: "Area A",
-      floor: "Third",
-      room: "EV Room",
-      status: true,
-      createdOn: "01/07/2025",
-      qrCode: "QR008"
-    },
-    {
-      id: 9,
-      serviceId: "12346",
-      serviceName: "Customer Satisfaction Survey",
-      site: "TechPark",
-      building: "Tower B",
-      wing: "Wing B",
-      area: "Area B",
-      floor: "Fourth",
-      room: "Conference Room",
-      status: false,
-      createdOn: "02/07/2025",
-      qrCode: "QR009"
-    },
-    {
-      id: 10,
-      serviceId: "12347",
-      serviceName: "Employee Feedback Survey", 
-      site: "Corporate",
-      building: "Main Building",
-      wing: "East Wing",
-      area: "HR Area",
-      floor: "Fifth",
-      room: "Meeting Room 1",
-      status: true,
-      createdOn: "03/07/2025",
-      qrCode: "QR010"
-    },
-    {
-      id: 11,
-      serviceId: "12348",
-      serviceName: "Product Quality Assessment",
-      site: "Manufacturing",
-      building: "Factory A",
-      wing: "Production Wing",
-      area: "QC Area",
-      floor: "Ground",
-      room: "Lab 1",
-      status: true,
-      createdOn: "04/07/2025",
-      qrCode: "QR011"
-    },
-    {
-      id: 12,
-      serviceId: "12349",
-      serviceName: "Service Quality Survey",
-      site: "ServiceCenter",
-      building: "Support Building",
-      wing: "Customer Wing",
-      area: "Service Area",
-      floor: "Second",
-      room: "Help Desk",
-      status: false,
-      createdOn: "05/07/2025",
-      qrCode: "QR012"
-    },
-    {
-      id: 13,
-      serviceId: "12350",
-      serviceName: "Market Research Survey",
-      site: "Research Hub",
-      building: "Innovation Center",
-      wing: "Research Wing",
-      area: "Analytics Area",
-      floor: "Sixth",
-      room: "Data Room",
-      status: true,
-      createdOn: "06/07/2025",
-      qrCode: "QR013"
-    },
-    {
-      id: 14,
-      serviceId: "12351",
-      serviceName: "Training Effectiveness Survey",
-      site: "Training Center",
-      building: "Education Building",
-      wing: "Learning Wing",
-      area: "Training Area",
-      floor: "Third",
-      room: "Classroom A",
-      status: true,
-      createdOn: "07/07/2025",
-      qrCode: "QR014"
-    },
-    {
-      id: 15,
-      serviceId: "12352",
-      serviceName: "Event Feedback Survey",
-      site: "Event Hall",
-      building: "Convention Center",
-      wing: "Main Wing",
-      area: "Event Area",
-      floor: "Ground",
-      room: "Auditorium",
-      status: false,
-      createdOn: "08/07/2025",
-      qrCode: "QR015"
-    }
-  ]);
+  const [mappings, setMappings] = useState<SurveyMapping[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleStatusToggle = (item: any) => {
+  // Fetch survey mappings from API
+  useEffect(() => {
+    fetchSurveyMappings();
+  }, []);
+
+  const fetchSurveyMappings = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get('/survey_mappings.json');
+      setMappings(response.data || []);
+    } catch (error: any) {
+      console.error('Error fetching survey mappings:', error);
+      toast.error('Failed to fetch survey mappings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusToggle = (item: SurveyMapping) => {
     setMappings(prev => prev.map(mapping => 
       mapping.id === item.id 
-        ? { ...mapping, status: !mapping.status }
+        ? { ...mapping, active: !mapping.active }
         : mapping
     ));
   };
 
-  const handleQRClick = (mapping: any) => {
+  const handleQRClick = (mapping: SurveyMapping) => {
     setSelectedQR({
-      qrCode: mapping.qrCode,
-      serviceName: mapping.serviceName,
-      site: mapping.site
+      qrCode: mapping.qr_code_url || '',
+      serviceName: mapping.snag_checklist?.name || mapping.survey_title || '',
+      site: mapping.site_name || ''
     });
   };
 
-  const handleViewClick = (item: any) => {
+  const handleViewClick = (item: SurveyMapping) => {
     console.log('View clicked for item:', item.id);
   };
 
@@ -264,7 +132,7 @@ export const SurveyMappingDashboard = () => {
     { key: 'qrCode', label: 'QR', sortable: false, draggable: true }
   ];
 
-  const renderCell = (item: any, columnKey: string) => {
+  const renderCell = (item: SurveyMapping, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
         return (
@@ -275,13 +143,31 @@ export const SurveyMappingDashboard = () => {
             <Eye className="w-4 h-4" />
           </button>
         );
+      case 'serviceId':
+        return item.snag_checklist?.id || '-';
+      case 'serviceName':
+        return item.snag_checklist?.name || item.survey_title || '-';
+      case 'site':
+        return item.site_name || '-';
+      case 'building':
+        return item.building_name || '-';
+      case 'wing':
+        return item.wing_name || '-';
+      case 'area':
+        return item.area_name || '-';
+      case 'floor':
+        return item.floor_name || '-';
+      case 'room':
+        return item.room_name || '-';
       case 'status':
         return (
           <Switch
-            checked={item.status}
+            checked={item.active}
             onCheckedChange={() => handleStatusToggle(item)}
           />
         );
+      case 'createdOn':
+        return item.created_at ? new Date(item.created_at).toLocaleDateString() : '-';
       case 'qrCode':
         return (
           <button 
@@ -298,41 +184,46 @@ export const SurveyMappingDashboard = () => {
           </button>
         );
       default:
-        return item[columnKey];
+        return '-';
     }
   };
 
 
   // Filter mappings based on search term
   const filteredMappings = mappings.filter(mapping =>
-    mapping.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.site.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.building.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.wing.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.area.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.floor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.room.toLowerCase().includes(searchTerm.toLowerCase())
+    mapping.snag_checklist?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.survey_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.site_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.building_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.wing_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.area_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.floor_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.room_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <p className="text-muted-foreground text-sm mb-2">
+          {/* <p className="text-muted-foreground text-sm mb-2">
             Survey &gt; Mapping
-          </p>
+          </p> */}
           <Heading level="h1" variant="default">Mapping List</Heading>
         </div>
       </div>
       
-      {/* Action Buttons Row - Responsive */}
-
-      {/* Enhanced Survey Mapping Table */}
-      <div>
-        <EnhancedTable
+      {loading ? (
+        <div className="flex items-center justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Loading survey mappings...</span>
+        </div>
+      ) : (
+        /* Enhanced Survey Mapping Table */
+        <div>
+          <EnhancedTable
           data={filteredMappings}
           columns={columns}
-          selectable={true}
+          // selectable={true}
           renderCell={renderCell}
           storageKey="survey-mapping-table"
           enableExport={true}
@@ -349,7 +240,7 @@ export const SurveyMappingDashboard = () => {
                 Add
               </Button>
               
-              <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
+              {/* <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
                 <Upload className="w-4 h-4" />
                 <span className="hidden sm:inline">Import</span>
               </Button>
@@ -361,11 +252,12 @@ export const SurveyMappingDashboard = () => {
               
               <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
                 <span className="hidden sm:inline">Print QR</span>
-              </Button>
+              </Button> */}
             </div>
           }
         />
       </div>
+      )}
 
       {/* QR Code Modal */}
       <QRCodeModal

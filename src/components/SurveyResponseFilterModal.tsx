@@ -6,15 +6,19 @@ import { DateField } from '@mui/x-date-pickers/DateField';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { X } from 'lucide-react';
+import { apiClient } from '@/utils/apiClient';
+import { toast } from 'sonner';
 
 interface FilterModalProps {
   open: boolean;
   onClose: () => void;
   onApplyFilters: (filters: FilterState) => void;
+  onResetFilters?: () => void;
 }
 
 interface FilterState {
   surveyTitle: string;
+  surveyMappingId: string;
   surveyType: string;
   startDate: Date | null;
   endDate: Date | null;
@@ -23,10 +27,12 @@ interface FilterState {
 export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
   open,
   onClose,
-  onApplyFilters
+  onApplyFilters,
+  onResetFilters
 }) => {
   const [filters, setFilters] = useState<FilterState>({
     surveyTitle: '',
+    surveyMappingId: '',
     surveyType: '',
     startDate: null,
     endDate: null
@@ -35,10 +41,15 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
   const handleReset = () => {
     setFilters({
       surveyTitle: '',
+      surveyMappingId: '',
       surveyType: '',
       startDate: null,
       endDate: null
     });
+    if (onResetFilters) {
+      onResetFilters();
+    }
+    onClose();
   };
 
   const handleApply = () => {
@@ -126,7 +137,7 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
                 </Box>
 
                 {/* Survey Type Filter */}
-                <Box>
+                {/* <Box>
                   <FormControl fullWidth variant="outlined" sx={fieldSx}>
                     <InputLabel shrink>Survey Type</InputLabel>
                     <Select 
@@ -142,15 +153,15 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
                       <MenuItem value="research">Research</MenuItem>
                     </Select>
                   </FormControl>
-                </Box>
+                </Box> */}
               </div>
             </div>
 
             {/* Date Range Section */}
-            <div className="mb-6">
+            {/* <div className="mb-6">
               <h3 className="text-lg font-semibold text-[#C72030] mb-4">Date Range</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* From Date */}
+               
                 <Box>
                   <DateField 
                     label="From Date" 
@@ -164,7 +175,7 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
                   />
                 </Box>
 
-                {/* To Date */}
+               
                 <Box>
                   <DateField 
                     label="To Date" 
@@ -178,7 +189,7 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
                   />
                 </Box>
               </div>
-            </div>
+            </div> */}
           </div>
 
           <DialogFooter className="flex justify-end gap-3">

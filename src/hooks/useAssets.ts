@@ -10,11 +10,13 @@ export interface Asset {
   siteName: string;
   building: { name: string } | null;
   wing: { name: string } | null;
+  floor: { name: string } | null;
   area: { name: string } | null;
   pmsRoom: { name: string } | null;
   assetGroup: string;
   assetSubGroup: string;
   assetType?: boolean;
+  category?: string;
 }
 
 export interface AssetResponse {
@@ -40,11 +42,13 @@ export interface AssetResponse {
     site_name: string;
     building: { name: string } | null;
     wing: { name: string } | null;
+    floor: { name: string } | null;
     area: { name: string } | null;
     pms_room: { name: string } | null;
     asset_group: string;
     asset_sub_group: string;
     asset_type?: boolean;
+    category?: string;
   }>;
 }
 
@@ -88,11 +92,13 @@ export const useAssets = (page: number = 1) => {
     siteName: apiAsset.site_name,
     building: apiAsset.building,
     wing: apiAsset.wing,
+    floor: apiAsset.floor,
     area: apiAsset.area,
     pmsRoom: apiAsset.pms_room,
     assetGroup: apiAsset.asset_group,
     assetSubGroup: apiAsset.asset_sub_group,
     assetType: apiAsset.asset_type,
+    category: apiAsset.asset_type_category,
   });
 
   const formatStatusLabel = (status: string): string => {

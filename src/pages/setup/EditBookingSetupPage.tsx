@@ -84,14 +84,12 @@ export const EditBookingSetupPage = () => {
 
     const coverImageRef = useRef(null);
     const bookingImageRef = useRef(null);
-    const [selectedFile, setSelectedFile] = useState();
+    const [selectedFile, setSelectedFile] = useState(null);
     const [selectedBookingFiles, setSelectedBookingFiles] = useState([]);
     const [additionalOpen, setAdditionalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [departments, setDepartments] = useState([]);
     const [loadingDepartments, setLoadingDepartments] = useState(false);
-
-    console.log(selectedFile)
 
     const [formData, setFormData] = useState({
         facilityName: "",
@@ -202,25 +200,6 @@ export const EditBookingSetupPage = () => {
             );
             const responseData = response.data.facility_setup;
 
-            // const amenitiesMap = {
-            //     TV: "tv",
-            //     Whiteboard: "whiteboard",
-            //     Casting: "casting",
-            //     "Smart Pen for TV": "smartPenForTV",
-            //     "Wireless Charging": "wirelessCharging",
-            //     "Meeting Room Inventory": "meetingRoomInventory",
-            // };
-
-            // const amenitiesState = Object.values(amenitiesMap).reduce((acc, key) => {
-            //     acc[key] = false;
-            //     return acc;
-            // }, {});
-
-            // responseData.generic_tags?.forEach((tag) => {
-            //     const mappedKey = amenitiesMap[tag.category_name];
-            //     if (mappedKey) amenitiesState[mappedKey] = true;
-            // });
-
             setFormData({
                 facilityName: responseData.fac_name,
                 isBookable: responseData.fac_type === "bookable",
@@ -281,9 +260,9 @@ export const EditBookingSetupPage = () => {
                 })),
             });
 
-            setSelectedFile(responseData?.cover_image?.document);
+            setSelectedFile(responseData?.cover_image?.document || null);
             setSelectedBookingFiles(
-                responseData?.documents.map((doc) => doc.document.document)
+                responseData?.documents.map((doc) => doc.document.document) || []
             );
         } catch (error) {
             console.error("Error fetching facility details:", error);
@@ -291,15 +270,25 @@ export const EditBookingSetupPage = () => {
         }
     };
 
-
     useEffect(() => {
         fetchDepartments();
         fetchFacilityBookingDetails();
     }, [id]);
 
     const handleCoverImageChange = (e) => {
-        const files = Array.from(e.target.files || []);
-        setSelectedFile(files);
+        const file = e.target.files?.[0] || null;
+        if (file) {
+            const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+            if (!["image/png", "image/jpeg"].includes(file.type)) {
+                toast.error("Only PNG or JPEG files are allowed");
+                return;
+            }
+            if (file.size > maxSize) {
+                toast.error("File size must not exceed 5MB");
+                return;
+            }
+        }
+        setSelectedFile(file);
     };
 
     const handleBookingImageChange = (e) => {
@@ -377,22 +366,33 @@ export const EditBookingSetupPage = () => {
             formDataToSend.append("facility_setup[book_by]", "slot");
             formDataToSend.append("facility_setup[create_by]", JSON.parse(localStorage.getItem("user")).id);
 
-            // Generic Tags (Amenities)
-            // const amenities = [];
-            // if (formData.amenities.tv) amenities.push("TV");
-            // if (formData.amenities.whiteboard) amenities.push("Whiteboard");
-            // if (formData.amenities.casting) amenities.push("Casting");
-            // if (formData.amenities.smartPenForTV) amenities.push("Smart Pen for TV");
-            // if (formData.amenities.wirelessCharging) amenities.push("Wireless Charging");
-            // if (formData.amenities.meetingRoomInventory) amenities.push("Meeting Room Inventory");
+            // Append cover image (single file)
+            if (selectedFile && typeof selectedFile !== "string") {
+                formDataToSend.append("cover_image", selectedFile);
+            }
 
-            // amenities.forEach((name, index) => {
-            //     console.log(name)
-            //     formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, "amenity_things");
-            //     formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, name);
-            //     formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, "0");
-            //     formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, "1");
-            // });
+            // Append booking files (multiple files)
+            selectedBookingFiles.forEach((file) => {
+                if (typeof file !== "string") {
+                    formDataToSend.append(`attachments[]`, file);
+                }
+            });
+
+            // Generic Tags (Amenities)
+            const amenities = [];
+            if (formData.amenities.tv) amenities.push("TV");
+            if (formData.amenities.whiteboard) amenities.push("Whiteboard");
+            if (formData.amenities.casting) amenities.push("Casting");
+            if (formData.amenities.smartPenForTV) amenities.push("Smart Pen for TV");
+            if (formData.amenities.wirelessCharging) amenities.push("Wireless Charging");
+            if (formData.amenities.meetingRoomInventory) amenities.push("Meeting Room Inventory");
+
+            amenities.forEach((name, index) => {
+                formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, "amenity_things");
+                formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, name);
+                formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, "0");
+                formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, "1");
+            });
 
             // Facility Slots
             formData.slots.forEach((slot, index) => {
@@ -456,130 +456,6 @@ export const EditBookingSetupPage = () => {
         }
     };
 
-    // const handleSave = async () => {
-    //     if (!validateForm()) return;
-    //     setIsSubmitting(true);
-    //     try {
-    //         const formDataToSend = new FormData();
-
-    //         formDataToSend.append("facility_setup[fac_type]", formData.isBookable ? "bookable" : "request");
-    //         formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
-    //         formDataToSend.append("facility_setup[active]", formData.active);
-    //         formDataToSend.append("facility_setup[department_id]", formData.department);
-    //         formDataToSend.append("facility_setup[app_key]", formData.appKey);
-    //         formDataToSend.append("facility_setup[postpaid]", formData.postpaid ? "1" : "0");
-    //         formDataToSend.append("facility_setup[prepaid]", formData.prepaid ? "1" : "0");
-    //         formDataToSend.append("facility_setup[pay_on_facility]", formData.payOnFacility ? "1" : "0");
-    //         formDataToSend.append("facility_setup[complementary]", formData.complimentary ? "1" : "0");
-    //         formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
-    //         formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
-    //         formDataToSend.append("facility_setup[facility_charge_attributes][per_slot_charge]", formData.perSlotCharge);
-    //         formDataToSend.append("facility_setup[booking_limit]", formData.facilityBookedTimes || "3");
-    //         formDataToSend.append("facility_setup[description]", formData.description || "");
-    //         formDataToSend.append("facility_setup[terms]", formData.termsConditions || "");
-    //         formDataToSend.append("facility_setup[cancellation_policy]", formData.cancellationText || "");
-    //         formDataToSend.append("facility_setup[cutoff_day]", cancellationRules[0].time.day);
-    //         formDataToSend.append("facility_setup[cutoff_hr]", cancellationRules[0].time.type);
-    //         formDataToSend.append("facility_setup[cutoff_min]", cancellationRules[0].time.value);
-    //         formDataToSend.append("facility_setup[return_percentage]", cancellationRules[0].deduction);
-    //         formDataToSend.append("facility_setup[cutoff_second_day]", cancellationRules[1].time.day);
-    //         formDataToSend.append("facility_setup[cutoff_second_hr]", cancellationRules[1].time.type);
-    //         formDataToSend.append("facility_setup[cutoff_second_min]", cancellationRules[1].time.value);
-    //         formDataToSend.append("facility_setup[return_second_percentage]", cancellationRules[1].deduction);
-    //         formDataToSend.append("facility_setup[cutoff_third_day]", cancellationRules[2].time.day);
-    //         formDataToSend.append("facility_setup[cutoff_third_hr]", cancellationRules[2].time.type);
-    //         formDataToSend.append("facility_setup[cutoff_third_min]", cancellationRules[2].time.value);
-    //         formDataToSend.append("facility_setup[return_third_percentage]", cancellationRules[2].deduction);
-    //         formDataToSend.append("facility_setup[book_by]", "slot");
-    //         formDataToSend.append("facility_setup[create_by]", JSON.parse(localStorage.getItem("user")).id);
-
-    //         // Generic Tags
-    //         const amenitiesMap = {
-    //             tv: "TV",
-    //             whiteboard: "Whiteboard",
-    //             casting: "Casting",
-    //             smartPenForTV: "Smart Pen for TV",
-    //             wirelessCharging: "Wireless Charging",
-    //             meetingRoomInventory: "Meeting Room Inventory",
-    //         };
-    //         const amenities = Object.keys(amenitiesMap).filter(key => formData.amenities[key]);
-    //         amenities.forEach((name, index) => {
-    //             formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, "amenity_things");
-    //             formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, amenitiesMap[name]);
-    //             formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, "0");
-    //             formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, "1");
-    //         });
-
-    //         // Facility Slots
-    //         formData.slots.forEach((slot, index) => {
-    //             const prefix = `facility_slots[${index}]`;
-
-    // if (slot.id) {
-    //     formDataToSend.append(`${prefix}[id]`, slot.id);
-    // }
-
-    //             formDataToSend.append(`${prefix}[slot_no]`, (index + 1).toString());
-    //             formDataToSend.append(`${prefix}[dayofweek]`, slot.dayofweek || "");
-    //             formDataToSend.append(`${prefix}[start_hour]`, slot.startTime.hour);
-    //             formDataToSend.append(`${prefix}[start_min]`, slot.startTime.minute);
-    //             formDataToSend.append(`${prefix}[break_start_hour]`, slot.breakTimeStart.hour);
-    //             formDataToSend.append(`${prefix}[break_start_min]`, slot.breakTimeStart.minute);
-    //             formDataToSend.append(`${prefix}[break_end_hour]`, slot.breakTimeEnd.hour);
-    //             formDataToSend.append(`${prefix}[break_end_min]`, slot.breakTimeEnd.minute);
-    //             formDataToSend.append(`${prefix}[end_hour]`, slot.endTime.hour);
-    //             formDataToSend.append(`${prefix}[end_min]`, slot.endTime.minute);
-    //             formDataToSend.append(`${prefix}[max_bookings]`, slot.concurrentSlots || "1");
-    //             formDataToSend.append(`${prefix}[breakminutes]`, slot.slotBy.toString());
-    //             formDataToSend.append(`${prefix}[wrap_time]`, slot.wrapTime);
-
-    //             if (slot._destroy) {
-    //                 formDataToSend.append(`${prefix}[_destroy]`, "1");
-    //             }
-    //         });
-
-    //         // Booking Windows
-    //         formDataToSend.append("book_before_day", formData.bookingAllowedBefore.day);
-    //         formDataToSend.append("book_before_hour", formData.bookingAllowedBefore.hour);
-    //         formDataToSend.append("book_before_min", formData.bookingAllowedBefore.minute);
-    //         formDataToSend.append("advance_booking_day", formData.advanceBooking.day);
-    //         formDataToSend.append("advance_booking_hour", formData.advanceBooking.hour);
-    //         formDataToSend.append("advance_booking_min", formData.advanceBooking.minute);
-    //         formDataToSend.append("cancel_day", formData.canCancelBefore.day);
-    //         formDataToSend.append("cancel_hour", formData.canCancelBefore.hour);
-    //         formDataToSend.append("cancel_min", formData.canCancelBefore.minute);
-
-    //         // Additional Info
-    //         formDataToSend.append("seater_info", formData.seaterInfo !== "Select a seater" ? formData.seaterInfo : "");
-    //         formDataToSend.append("location_info", formData.floorInfo !== "Select a floor" ? formData.floorInfo : "");
-    //         formDataToSend.append("shared_content_info", formData.sharedContentInfo || "");
-
-    //         const response = await fetch(
-    //             `https://${baseUrl}/pms/admin/facility_setups/${id}.json`,
-    //             {
-    //                 method: "PUT",
-    //                 headers: {
-    //                     Authorization: `Bearer ${token}`,
-    //                 },
-    //                 body: formDataToSend,
-    //             }
-    //         );
-
-    //         if (response.ok) {
-    //             toast.success("Booking setup updated successfully");
-    //             navigate("/settings/vas/booking/setup");
-    //         } else {
-    //             console.error("Failed to update booking setup:", response.statusText);
-    //             toast.error("Failed to update booking setup");
-    //         }
-    //     } catch (error) {
-    //         console.error("Error updating booking setup:", error);
-    //         toast.error("Error updating booking setup");
-    //     } finally {
-    //         setIsSubmitting(false);
-    //     }
-    // };
-
-
     const handleClose = () => {
         navigate("/settings/vas/booking/setup");
     };
@@ -596,8 +472,6 @@ export const EditBookingSetupPage = () => {
         };
         setFormData({ ...formData, slots: [...formData.slots, newSlot] });
     };
-
-    console.log(formData)
 
     return (
         <ThemeProvider theme={muiTheme}>
@@ -1247,7 +1121,7 @@ export const EditBookingSetupPage = () => {
                                             <span className="text-[#C72030] cursor-pointer">
                                                 Choose File
                                             </span>{" "}
-                                            No file chosen
+                                            {selectedFile ? "File selected" : "No file chosen"}
                                         </p>
                                         <p className="text-xs text-gray-500 mt-1">
                                             Accepted file formats: PNG/JPEG (height: 142px, width: 328px) (max 5 mb)
@@ -1263,7 +1137,7 @@ export const EditBookingSetupPage = () => {
                                     {selectedFile && (
                                         <div className="mt-4 flex gap-2 flex-wrap">
                                             <img
-                                                src={selectedFile}
+                                                src={typeof selectedFile === "string" ? selectedFile : URL.createObjectURL(selectedFile)}
                                                 alt="cover-preview"
                                                 className="h-[80px] w-20 rounded border border-gray-200"
                                             />
