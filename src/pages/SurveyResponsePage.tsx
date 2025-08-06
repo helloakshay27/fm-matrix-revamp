@@ -172,23 +172,23 @@ export const SurveyResponsePage = () => {
   );
 
   return (
-    <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
+    <div className="flex-1 p-4 sm:p-6 bg-gray-50 min-h-screen">
       {/* Header Tabs */}
       <div className="mb-6">
         <Tabs defaultValue="response-list" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-gray-100 h-12 p-0 rounded-lg border border-gray-200">
+          <TabsList className="grid w-full grid-cols-2 bg-white h-14 p-1 rounded-lg border border-gray-200 shadow-sm">
             <TabsTrigger 
               value="response-list" 
-              className="flex items-center gap-2 h-full rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#C72030] data-[state=active]:shadow-none text-gray-600 font-medium"
+              className="flex items-center gap-2 h-full rounded-md data-[state=active]:bg-gray-100 data-[state=active]:text-[#C72030] data-[state=active]:shadow-none text-gray-700 font-medium transition-all"
             >
-              <ClipboardList className="w-5 h-5" />
+              <ClipboardList className="w-4 h-4" />
               Response List
             </TabsTrigger>
             <TabsTrigger 
               value="analytics" 
-              className="flex items-center gap-2 h-full rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#C72030] data-[state=active]:shadow-none text-gray-600 font-medium"
+              className="flex items-center gap-2 h-full rounded-md data-[state=active]:bg-gray-100 data-[state=active]:text-[#C72030] data-[state=active]:shadow-none text-gray-700 font-medium transition-all"
             >
-              <BarChart3 className="w-5 h-5" />
+              <BarChart3 className="w-4 h-4" />
               Analytics
             </TabsTrigger>
           </TabsList>
