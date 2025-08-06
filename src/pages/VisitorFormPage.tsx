@@ -36,13 +36,24 @@ export const VisitorFormPage = () => {
   ]);
 
   useEffect(() => {
-    initializeCamera();
+    // Don't auto-initialize camera, let user choose
+    getCameraDevices();
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
+
+  const getCameraDevices = async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter(device => device.kind === 'videoinput');
+      setCameras(videoDevices);
+    } catch (error) {
+      console.error('Error getting camera devices:', error);
+    }
+  };
 
   const initializeCamera = async () => {
     try {
@@ -136,17 +147,17 @@ export const VisitorFormPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8 grid grid-cols-3 gap-8">
-          {/* Camera Section */}
-          <div className="col-span-1">
-            <div className="bg-white rounded-lg border p-4">
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          {/* Camera Permission Modal */}
+          {stream === null && (
+            <div className="fixed top-20 left-8 z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 p-4">
               {/* Camera permissions checkbox */}
               <div className="mb-4">
                 <div className="flex items-center space-x-2">
                   <input 
                     type="checkbox" 
                     id="useCamera" 
-                    checked={stream !== null}
+                    checked={false}
                     readOnly
                     className="w-4 h-4"
                   />
@@ -200,13 +211,17 @@ export const VisitorFormPage = () => {
               {/* Camera Control Buttons */}
               <div className="space-y-2">
                 <Button
-                  onClick={capturePhoto}
+                  onClick={() => {
+                    initializeCamera();
+                  }}
                   className="w-full bg-pink-200 hover:bg-pink-300 text-gray-800 rounded-full"
                 >
                   Allow while visiting the site
                 </Button>
                 <Button
-                  onClick={capturePhoto}
+                  onClick={() => {
+                    initializeCamera();
+                  }}
                   className="w-full bg-pink-200 hover:bg-pink-300 text-gray-800 rounded-full"
                 >
                   Allow this time
@@ -221,10 +236,10 @@ export const VisitorFormPage = () => {
 
               <canvas ref={canvasRef} className="hidden" />
             </div>
-          </div>
+          )}
 
           {/* Form Section */}
-          <div className="col-span-2">
+          <div>
           {/* Camera Icon */}
           <div className="flex justify-center mb-6">
             <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center">
