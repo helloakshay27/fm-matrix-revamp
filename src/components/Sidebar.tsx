@@ -315,7 +315,7 @@ const modulesByPackage = {
         { name: 'Response', href: '/maintenance/survey/response', color: 'text-[#1a1a1a]' }
       ]
     },
-    { name: 'M Safe', icon: Shield, href: '/safety/m-safe' }
+    { name: 'M Safe', icon: Shield, href: '/maintenance/m-safe' }
   ],
   'Safety': [
     { name: 'Incident', icon: AlertTriangle, href: '/safety/incident' },
