@@ -109,6 +109,7 @@ import { VisitorsDashboard } from './pages/VisitorsDashboard';
 import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
 import { PatrollingDashboard } from './pages/PatrollingDashboard';
 import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
+import { VisitorFormPage } from './pages/VisitorFormPage';
 
 // Import new dashboard pages
 import { IncidentDashboard } from './pages/IncidentDashboard';
@@ -790,6 +791,7 @@ function App() {
                 <Route path="/security/gate-pass/inwards" element={<GatePassInwardsDashboard />} />
                 <Route path="/security/gate-pass/outwards" element={<GatePassOutwardsDashboard />} />
                 <Route path="/security/visitor" element={<VisitorsDashboard />} />
+                <Route path="/visitor-form" element={<VisitorFormPage />} />
                 <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
                 <Route path="/security/staff" element={<StaffsDashboard />} />
                 <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
