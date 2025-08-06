@@ -260,6 +260,10 @@ export const MSafeDashboard = () => {
     }
   };
 
+  const handleViewUser = (userId: string) => {
+    window.location.href = `/maintenance/m-safe/user/${userId}`;
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -376,7 +380,12 @@ export const MSafeDashboard = () => {
               <TableRow key={user.id}>
                 <TableCell>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" className="p-1 h-8 w-8 hover:bg-gray-100">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleViewUser(user.id)}
+                      className="p-1 h-8 w-8 hover:bg-gray-100"
+                    >
                       <Eye className="h-4 w-4 text-gray-600 hover:text-[#C72030]" />
                     </Button>
                     <Button 
