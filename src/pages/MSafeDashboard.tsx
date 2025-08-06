@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users, FileText, Download, Upload, Filter, Copy, Eye, Trash2 } from 'lucide-react';
+import { Users, FileText, Download, Upload, Filter, Copy, Eye, Trash2, Plus, Search, Settings } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { TicketPagination } from '@/components/TicketPagination';
 import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
@@ -322,6 +323,57 @@ export const MSafeDashboard = () => {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-semibold text-gray-900">M Safe</h1>
       
+      {/* Functionality Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-primary">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">User Management</CardTitle>
+            <Users className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-primary">{users.length}</div>
+            <p className="text-xs text-muted-foreground">Total Users</p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+            <Users className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">
+              {users.filter(user => user.active).length}
+            </div>
+            <p className="text-xs text-muted-foreground">Currently Active</p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-orange-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
+            <FileText className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">0</div>
+            <p className="text-xs text-muted-foreground">Awaiting Review</p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-blue-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">System Settings</CardTitle>
+            <Settings className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              <Settings className="h-6 w-6" />
+            </div>
+            <p className="text-xs text-muted-foreground">Configuration</p>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Action Buttons */}
       <div className="flex gap-3 flex-wrap">
         <Button 
@@ -343,6 +395,14 @@ export const MSafeDashboard = () => {
         <Button variant="outline" onClick={() => setIsFilterDialogOpen(true)}>
           <Filter className="h-4 w-4 mr-2" />
           Filters
+        </Button>
+        <Button variant="outline">
+          <Plus className="h-4 w-4 mr-2" />
+          Add User
+        </Button>
+        <Button variant="outline">
+          <Search className="h-4 w-4 mr-2" />
+          Search
         </Button>
       </div>
 
