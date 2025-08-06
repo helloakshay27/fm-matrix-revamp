@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from "@/components/ui/sonner";
+import { LayoutProvider } from './contexts/LayoutContext';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { TicketsPage } from './pages/TicketsPage';
@@ -30,36 +31,38 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <div className="min-h-screen bg-background">
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="tickets" element={<TicketsPage />} />
-              <Route path="tickets/:id" element={<TicketDetails />} />
-              <Route path="tickets/create" element={<CreateTicket />} />
-              <Route path="tasks" element={<TasksPage />} />
-              <Route path="tasks/:id" element={<TaskDetails />} />
-              <Route path="maintenance" element={<MaintenancePage />} />
-              <Route path="maintenance/m-safe" element={<MSafeDashboard />} />
-              <Route path="maintenance/m-safe/user/:userId" element={<MSafeUserDetailsPage />} />
-              <Route path="maintenance/meter-readings" element={<MeterReadingsPage />} />
-              <Route path="maintenance/spare-parts" element={<SparePartsPage />} />
-              <Route path="maintenance/pms" element={<PMSPage />} />
-              <Route path="safety" element={<SafetyMainPage />} />
-              <Route path="safety/dashboard" element={<SafetyDashboard />} />
-              <Route path="safety/m-safe" element={<MSafeDashboard />} />
-              <Route path="safety/m-safe/non-fte-users" element={<NonFTEUsersPage />} />
-              <Route path="safety/m-safe/krcc-form-list" element={<KRCCFormsPage />} />
-              <Route path="audit" element={<AuditPage />} />
-              <Route path="compliance" element={<CompliancePage />} />
-              <Route path="reports" element={<ReportsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-            </Route>
-          </Routes>
-          <Toaster />
-        </div>
-      </Router>
+      <LayoutProvider>
+        <Router>
+          <div className="min-h-screen bg-background">
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="tickets" element={<TicketsPage />} />
+                <Route path="tickets/:id" element={<TicketDetails />} />
+                <Route path="tickets/create" element={<CreateTicket />} />
+                <Route path="tasks" element={<TasksPage />} />
+                <Route path="tasks/:id" element={<TaskDetails />} />
+                <Route path="maintenance" element={<MaintenancePage />} />
+                <Route path="maintenance/m-safe" element={<MSafeDashboard />} />
+                <Route path="maintenance/m-safe/user/:userId" element={<MSafeUserDetailsPage />} />
+                <Route path="maintenance/meter-readings" element={<MeterReadingsPage />} />
+                <Route path="maintenance/spare-parts" element={<SparePartsPage />} />
+                <Route path="maintenance/pms" element={<PMSPage />} />
+                <Route path="safety" element={<SafetyMainPage />} />
+                <Route path="safety/dashboard" element={<SafetyDashboard />} />
+                <Route path="safety/m-safe" element={<MSafeDashboard />} />
+                <Route path="safety/m-safe/non-fte-users" element={<NonFTEUsersPage />} />
+                <Route path="safety/m-safe/krcc-form-list" element={<KRCCFormsPage />} />
+                <Route path="audit" element={<AuditPage />} />
+                <Route path="compliance" element={<CompliancePage />} />
+                <Route path="reports" element={<ReportsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+              </Route>
+            </Routes>
+            <Toaster />
+          </div>
+        </Router>
+      </LayoutProvider>
     </QueryClientProvider>
   );
 }
