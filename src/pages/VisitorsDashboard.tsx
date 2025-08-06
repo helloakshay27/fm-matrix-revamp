@@ -101,13 +101,13 @@ export const VisitorsDashboard = () => {
         </div>
 
         {/* Visitor Type Tabs */}
-        <div className="flex gap-1 mb-6 bg-gray-200 p-1 rounded-lg w-fit">
+        <div className="flex gap-8 mb-6 border-b border-gray-200">
           <Button 
             onClick={() => setActiveVisitorType('unexpected')}
-            className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`px-0 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
               activeVisitorType === 'unexpected' 
-                ? 'bg-[#C72030] text-white shadow-sm' 
-                : 'bg-transparent text-gray-600 hover:text-gray-900'
+                ? 'text-orange-500 border-orange-500' 
+                : 'text-gray-500 border-transparent hover:text-gray-700'
             }`}
             variant="ghost"
           >
@@ -115,10 +115,10 @@ export const VisitorsDashboard = () => {
           </Button>
           <Button 
             onClick={() => setActiveVisitorType('expected')}
-            className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`px-0 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
               activeVisitorType === 'expected' 
-                ? 'bg-[#C72030] text-white shadow-sm' 
-                : 'bg-transparent text-gray-600 hover:text-gray-900'
+                ? 'text-orange-500 border-orange-500' 
+                : 'text-gray-500 border-transparent hover:text-gray-700'
             }`}
             variant="ghost"
           >
