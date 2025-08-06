@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Users, UserCheck, UserClock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw } from 'lucide-react';
+import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -8,7 +7,7 @@ export const MSafeDashboard = () => {
   const cardData = [
     { title: "User Management", count: 25, icon: Users },
     { title: "Active Users", count: 18, icon: UserCheck },
-    { title: "Pending Approvals", count: 7, icon: UserClock },
+    { title: "Pending Approvals", count: 7, icon: Clock },
     { title: "System Settings", count: 12, icon: Settings },
   ];
 
