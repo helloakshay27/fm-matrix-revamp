@@ -30,6 +30,19 @@ export const VisitorFormPage = () => {
     goodsInwards: false,
   });
 
+  const [goodsData, setGoodsData] = useState({
+    selectType: '',
+    category: '',
+    modeOfTransport: '',
+    lrNumber: '',
+    tripId: ''
+  });
+
+  const [showGoodsForm, setShowGoodsForm] = useState(false);
+  const [items, setItems] = useState([
+    { id: 1, selectItem: '', uicInvoiceNo: '', quantity: '' }
+  ]);
+
   const [additionalVisitors, setAdditionalVisitors] = useState([
     { id: 1, name: '', mobile: '' },
     { id: 2, name: '', mobile: '' }
@@ -144,6 +157,37 @@ export const VisitorFormPage = () => {
     setAdditionalVisitors(additionalVisitors.map(visitor =>
       visitor.id === id ? { ...visitor, [field]: value } : visitor
     ));
+  };
+
+  const handleGoodsInputChange = (field: string, value: string) => {
+    setGoodsData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const addItem = () => {
+    const newId = items.length > 0 ? Math.max(...items.map(item => item.id)) + 1 : 1;
+    setItems([...items, { id: newId, selectItem: '', uicInvoiceNo: '', quantity: '' }]);
+  };
+
+  const removeItem = (id: number) => {
+    if (items.length > 1) {
+      setItems(items.filter(item => item.id !== id));
+    }
+  };
+
+  const updateItem = (id: number, field: string, value: string) => {
+    setItems(items.map(item =>
+      item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const handleGoodsInwardsChange = (checked: boolean) => {
+    handleInputChange('goodsInwards', checked);
+    if (checked) {
+      setShowGoodsForm(false); // Reset goods form visibility when toggling
+    }
   };
 
   return (
@@ -442,11 +486,180 @@ export const VisitorFormPage = () => {
                 <Checkbox
                   id="goodsInwards"
                   checked={formData.goodsInwards}
-                  onCheckedChange={(checked) => handleInputChange('goodsInwards', checked as boolean)}
+                  onCheckedChange={(checked) => handleGoodsInwardsChange(checked as boolean)}
                 />
                 <label htmlFor="goodsInwards" className="text-sm text-gray-700">Goods Inwards</label>
               </div>
             </div>
+
+            {/* Goods Inwards Form */}
+            {formData.goodsInwards && (
+              <div className="border-t pt-6 space-y-6">
+                {!showGoodsForm && (
+                  <div className="flex justify-start">
+                    <Button
+                      type="button"
+                      onClick={() => setShowGoodsForm(true)}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 flex items-center space-x-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Add Goods</span>
+                    </Button>
+                  </div>
+                )}
+
+                {showGoodsForm && (
+                  <div className="space-y-6">
+                    {/* Goods Form Fields */}
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Type</label>
+                        <Select value={goodsData.selectType} onValueChange={(value) => handleGoodsInputChange('selectType', value)}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select Movement Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="inward">Inward</SelectItem>
+                            <SelectItem value="outward">Outward</SelectItem>
+                            <SelectItem value="internal">Internal</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <Select value={goodsData.category} onValueChange={(value) => handleGoodsInputChange('category', value)}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select Category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="electronics">Electronics</SelectItem>
+                            <SelectItem value="furniture">Furniture</SelectItem>
+                            <SelectItem value="documents">Documents</SelectItem>
+                            <SelectItem value="equipment">Equipment</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Mode of Transport</label>
+                        <Select value={goodsData.modeOfTransport} onValueChange={(value) => handleGoodsInputChange('modeOfTransport', value)}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Mode of Transport" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="truck">Truck</SelectItem>
+                            <SelectItem value="van">Van</SelectItem>
+                            <SelectItem value="bike">Bike</SelectItem>
+                            <SelectItem value="hand">Hand Carry</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">LR Number</label>
+                        <Input
+                          placeholder="LR Number"
+                          value={goodsData.lrNumber}
+                          onChange={(e) => handleGoodsInputChange('lrNumber', e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Trip Id</label>
+                        <Input
+                          placeholder="Trip Id"
+                          value={goodsData.tripId}
+                          onChange={(e) => handleGoodsInputChange('tripId', e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Items Section */}
+                    <div className="space-y-4">
+                      {items.map((item, index) => (
+                        <div key={item.id} className="grid grid-cols-3 gap-4 items-end">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Select Item <span className="text-red-500">*</span>
+                            </label>
+                            <Select value={item.selectItem} onValueChange={(value) => updateItem(item.id, 'selectItem', value)}>
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select Movement Type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="laptop">Laptop</SelectItem>
+                                <SelectItem value="documents">Documents</SelectItem>
+                                <SelectItem value="equipment">Equipment</SelectItem>
+                                <SelectItem value="furniture">Furniture</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">UIC/Invoice No</label>
+                            <Input
+                              placeholder="UIC/Invoice No"
+                              value={item.uicInvoiceNo}
+                              onChange={(e) => updateItem(item.id, 'uicInvoiceNo', e.target.value)}
+                              className="w-full"
+                            />
+                          </div>
+
+                          <div className="flex items-end space-x-2">
+                            <div className="flex-1">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                              <Input
+                                placeholder="Quantity"
+                                value={item.quantity}
+                                onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
+                                className="w-full"
+                              />
+                            </div>
+                            {items.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeItem(item.id)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Add Item Button */}
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          onClick={addItem}
+                          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 flex items-center space-x-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span>Add Item</span>
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Save Changes Button */}
+                    <div className="flex justify-center pt-4">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="px-8 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+                      >
+                        Save Changes
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Additional Visitors */}
             {additionalVisitors.map((visitor, index) => (
