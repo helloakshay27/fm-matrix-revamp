@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users, FileText, Download, Upload, Filter, Copy, Eye, Trash2 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { TicketPagination } from '@/components/TicketPagination';
 import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
 import { MSafeImportModal } from '@/components/MSafeImportModal';
@@ -216,6 +216,7 @@ const fmUsersData = [{
 
 export const MSafeDashboard = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isSafetyRoute = location.pathname.startsWith('/safety');
   const [users, setUsers] = useState(fmUsersData);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
@@ -258,6 +259,10 @@ export const MSafeDashboard = () => {
         setCurrentPage(newTotalPages);
       }
     }
+  };
+
+  const handleViewUser = (userId: string) => {
+    navigate(`/maintenance/m-safe/user/${userId}`);
   };
 
   const handlePageChange = (page: number) => {
@@ -376,7 +381,12 @@ export const MSafeDashboard = () => {
               <TableRow key={user.id}>
                 <TableCell>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" className="p-1 h-8 w-8 hover:bg-gray-100">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleViewUser(user.id)}
+                      className="p-1 h-8 w-8 hover:bg-gray-100"
+                    >
                       <Eye className="h-4 w-4 text-gray-600 hover:text-[#C72030]" />
                     </Button>
                     <Button 
