@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModal';
 
@@ -172,100 +173,111 @@ export const SurveyResponsePage = () => {
 
   return (
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
-      {/* Header Navigation */}
-      <div className="bg-gray-100 border border-gray-200 rounded-lg mb-6">
-        <div className="flex">
-          <div className="flex-1 p-4 border-r border-gray-200">
-            <div className="flex items-center gap-2">
-              <ClipboardList className="w-5 h-5 text-[#C72030]" />
-              <span className="font-medium text-[#C72030]">Response List</span>
-            </div>
-          </div>
-          <div className="flex-1 p-4">
-            <div className="flex items-center gap-2 text-gray-600 hover:text-[#C72030] cursor-pointer transition-colors">
-              <BarChart3 className="w-5 h-5" />
-              <span className="font-medium">Analytics</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Breadcrumb */}
+      {/* Header Tabs */}
       <div className="mb-6">
-        <nav className="flex items-center text-sm text-gray-600 mb-4">
-          <span>Survey</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Response</span>
-        </nav>
-        <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-6">Response List</h1>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
-          <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
-            <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
-            <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-              <Activity className="w-4 h-4 text-white" />
+        <Tabs defaultValue="response-list" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-gray-100 h-12 p-0 rounded-lg border border-gray-200">
+            <TabsTrigger 
+              value="response-list" 
+              className="flex items-center gap-2 h-full rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#C72030] data-[state=active]:shadow-none text-gray-600 font-medium"
+            >
+              <ClipboardList className="w-5 h-5" />
+              Response List
+            </TabsTrigger>
+            <TabsTrigger 
+              value="analytics" 
+              className="flex items-center gap-2 h-full rounded-lg data-[state=active]:bg-white data-[state=active]:text-[#C72030] data-[state=active]:shadow-none text-gray-600 font-medium"
+            >
+              <BarChart3 className="w-5 h-5" />
+              Analytics
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="response-list" className="mt-0">
+            {/* Breadcrumb */}
+            <div className="mb-6">
+              <nav className="flex items-center text-sm text-gray-600 mb-4">
+                <span>Survey</span>
+                <span className="mx-2">{'>'}</span>
+                <span>Response</span>
+              </nav>
+              <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-6">Response List</h1>
             </div>
-          </div>
-          <div className="min-w-0">
-            <div className="text-xl sm:text-2xl font-bold text-[#C72030]">20</div>
-            <div className="text-sm text-gray-600 truncate">Total Active</div>
-          </div>
-        </div>
 
-        <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
-          <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
-            <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
-            <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-              <ThumbsUp className="w-4 h-4 text-white" />
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
+                <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
+                  <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
+                  <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
+                    <Activity className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xl sm:text-2xl font-bold text-[#C72030]">20</div>
+                  <div className="text-sm text-gray-600 truncate">Total Active</div>
+                </div>
+              </div>
+
+              <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
+                <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
+                  <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
+                  <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
+                    <ThumbsUp className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xl sm:text-2xl font-bold text-[#C72030]">10</div>
+                  <div className="text-sm text-gray-600 truncate">Feedback</div>
+                </div>
+              </div>
+
+              <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3 sm:col-span-2 lg:col-span-1">
+                <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
+                  <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
+                  <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
+                    <ClipboardList className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xl sm:text-2xl font-bold text-[#C72030]">10</div>
+                  <div className="text-sm text-gray-600 truncate">Survey</div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="min-w-0">
-            <div className="text-xl sm:text-2xl font-bold text-[#C72030]">10</div>
-            <div className="text-sm text-gray-600 truncate">Feedback</div>
-          </div>
-        </div>
 
-        <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3 sm:col-span-2 lg:col-span-1">
-          <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
-            <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
-            <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-              <ClipboardList className="w-4 h-4 text-white" />
+            {/* Enhanced Data Table */}
+            <div>
+              <EnhancedTable
+                data={filteredResponses}
+                columns={columns}
+                selectable={true}
+                renderCell={renderCell}
+                storageKey="survey-response-table"
+                enableExport={true}
+                exportFileName="survey-response-data"
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                searchPlaceholder="Search responses..."
+                pagination={true}
+                pageSize={10}
+                leftActions={
+                  <div className="flex flex-wrap gap-2">
+                    {/* Filter button is now positioned next to search input in EnhancedTable */}
+                  </div>
+                }
+                onFilterClick={handleFilterClick}
+              />
             </div>
-          </div>
-          <div className="min-w-0">
-            <div className="text-xl sm:text-2xl font-bold text-[#C72030]">10</div>
-            <div className="text-sm text-gray-600 truncate">Survey</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Search and Action Buttons */}
-
-      {/* Enhanced Data Table */}
-      <div>
-        <EnhancedTable
-          data={filteredResponses}
-          columns={columns}
-          selectable={true}
-          renderCell={renderCell}
-          storageKey="survey-response-table"
-          enableExport={true}
-          exportFileName="survey-response-data"
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          searchPlaceholder="Search responses..."
-          pagination={true}
-          pageSize={10}
-          leftActions={
-            <div className="flex flex-wrap gap-2">
-              {/* Filter button is now positioned next to search input in EnhancedTable */}
+          </TabsContent>
+          
+          <TabsContent value="analytics" className="mt-0">
+            {/* Analytics Content */}
+            <div className="p-8 text-center text-gray-500">
+              Analytics content will be displayed here
             </div>
-          }
-          onFilterClick={handleFilterClick}
-        />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Filter Modal */}
