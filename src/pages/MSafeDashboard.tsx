@@ -8,6 +8,8 @@ import { Users, FileText, Download, Upload, Filter, Copy, Eye, Trash2 } from 'lu
 import { Link, useLocation } from 'react-router-dom';
 import { TicketPagination } from '@/components/TicketPagination';
 import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
+import { MSafeImportModal } from '@/components/MSafeImportModal';
+import { MSafeExportModal } from '@/components/MSafeExportModal';
 
 // Sample data for FM Users
 const fmUsersData = [{
@@ -217,6 +219,8 @@ export const MSafeDashboard = () => {
   const isSafetyRoute = location.pathname.startsWith('/safety');
   const [users, setUsers] = useState(fmUsersData);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -253,6 +257,13 @@ export const MSafeDashboard = () => {
   const handleApplyFilters = (filters: { name: string; email: string }) => {
     console.log('Filters applied:', filters);
     // TODO: Implement actual filtering logic
+  };
+
+  const handleImportUsers = (file: File) => {
+    console.log('Importing users from file:', file.name);
+    // Here you would typically parse the CSV/Excel file and add users to the state
+    // For now, we'll just log the file name and show a success message
+    alert(`Successfully imported users from ${file.name}`);
   };
 
   if (isSafetyRoute) {
@@ -297,11 +308,19 @@ export const MSafeDashboard = () => {
       
       {/* Action Buttons */}
       <div className="flex gap-3 flex-wrap">
-        <Button variant="outline" className="bg-purple-700 hover:bg-purple-800 text-white border-purple-700">
+        <Button 
+          variant="outline" 
+          className="bg-purple-700 hover:bg-purple-800 text-white border-purple-700"
+          onClick={() => setIsImportModalOpen(true)}
+        >
           <Download className="h-4 w-4 mr-2" />
           Import
         </Button>
-        <Button variant="outline" className="bg-purple-700 hover:bg-purple-800 text-white border-purple-700">
+        <Button 
+          variant="outline" 
+          className="bg-purple-700 hover:bg-purple-800 text-white border-purple-700"
+          onClick={() => setIsExportModalOpen(true)}
+        >
           <Upload className="h-4 w-4 mr-2" />
           Export
         </Button>
@@ -378,6 +397,20 @@ export const MSafeDashboard = () => {
 
       {/* Pagination */}
       <TicketPagination currentPage={currentPage} totalPages={totalPages} totalRecords={totalRecords} perPage={perPage} isLoading={isLoading} onPageChange={handlePageChange} onPerPageChange={handlePerPageChange} />
+
+      {/* Import Modal */}
+      <MSafeImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleImportUsers}
+      />
+
+      {/* Export Modal */}
+      <MSafeExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        users={users}
+      />
 
       {/* Filter Dialog */}
       <MSafeFilterDialog
