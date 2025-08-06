@@ -10,6 +10,7 @@ export const VisitorsDashboard = () => {
   const [activeTab, setActiveTab] = useState('visitor-in');
   const [selectedPerson, setSelectedPerson] = useState('');
   const [isNewVisitorDialogOpen, setIsNewVisitorDialogOpen] = useState(false);
+  const [activeVisitorType, setActiveVisitorType] = useState('unexpected');
   const navigate = useNavigate();
 
   const handleHistoryClick = () => {
@@ -99,19 +100,27 @@ export const VisitorsDashboard = () => {
           </Button>
         </div>
 
-        {/* Visitor Type Buttons */}
-        <div className="flex gap-4 mb-6">
+        {/* Visitor Type Tabs */}
+        <div className="flex gap-1 mb-6 bg-gray-200 p-1 rounded-lg w-fit">
           <Button 
-            onClick={handleUnexpectedVisitor}
-            style={{ backgroundColor: '#C72030' }}
-            className="px-8 py-3 text-white hover:bg-[#C72030]/90 rounded-lg"
+            onClick={() => setActiveVisitorType('unexpected')}
+            className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeVisitorType === 'unexpected' 
+                ? 'bg-[#C72030] text-white shadow-sm' 
+                : 'bg-transparent text-gray-600 hover:text-gray-900'
+            }`}
+            variant="ghost"
           >
             Unexpected Visitor
           </Button>
           <Button 
-            onClick={handleExpectedVisitor}
-            style={{ backgroundColor: '#C72030' }}
-            className="px-8 py-3 text-white hover:bg-[#C72030]/90 rounded-lg"
+            onClick={() => setActiveVisitorType('expected')}
+            className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeVisitorType === 'expected' 
+                ? 'bg-[#C72030] text-white shadow-sm' 
+                : 'bg-transparent text-gray-600 hover:text-gray-900'
+            }`}
+            variant="ghost"
           >
             Expected Visitor
           </Button>
