@@ -414,11 +414,11 @@ export const SurveyResponsePage = () => {
                     <Legend 
                       verticalAlign="bottom" 
                       height={36}
-                      formatter={(value: any, entry: any) => (
-                        <span style={{ color: entry.color }}>
-                          {value} ({entry.payload.value})
-                        </span>
-                      )}
+                       formatter={(value: any, entry: any) => (
+                         <span style={{ color: entry.color }}>
+                           {value}
+                         </span>
+                       )}
                     />
                   </PieChart>
                 </ResponsiveContainer>
