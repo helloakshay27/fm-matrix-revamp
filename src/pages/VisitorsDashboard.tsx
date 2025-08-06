@@ -38,9 +38,9 @@ export const VisitorsDashboard = () => {
         <div className="flex border-b border-gray-200 bg-white">
           <Button 
             onClick={() => setActiveTab('visitor-in')}
-            className={`px-8 py-4 text-sm font-medium border-b-2 transition-colors ${
+            className={`px-8 py-4 text-sm font-medium border-b-2 transition-colors relative ${
               activeTab === 'visitor-in' 
-                ? 'border-blue-500 text-blue-600 bg-white' 
+                ? 'border-red-500 text-red-600 bg-white' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 bg-white'
             }`}
             variant="ghost"
@@ -49,9 +49,9 @@ export const VisitorsDashboard = () => {
           </Button>
           <Button 
             onClick={() => setActiveTab('visitor-out')}
-            className={`px-8 py-4 text-sm font-medium border-b-2 transition-colors ${
+            className={`px-8 py-4 text-sm font-medium border-b-2 transition-colors relative ${
               activeTab === 'visitor-out' 
-                ? 'border-blue-500 text-blue-600 bg-white' 
+                ? 'border-red-500 text-red-600 bg-white' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 bg-white'
             }`}
             variant="ghost"
@@ -59,10 +59,10 @@ export const VisitorsDashboard = () => {
             Visitor Out
           </Button>
           <Button 
-            onClick={handleHistoryClick}
-            className={`px-8 py-4 text-sm font-medium border-b-2 transition-colors ${
+            onClick={() => setActiveTab('history')}
+            className={`px-8 py-4 text-sm font-medium border-b-2 transition-colors relative ${
               activeTab === 'history' 
-                ? 'border-blue-500 text-blue-600 bg-white' 
+                ? 'border-red-500 text-red-600 bg-white' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 bg-white'
             }`}
             variant="ghost"
