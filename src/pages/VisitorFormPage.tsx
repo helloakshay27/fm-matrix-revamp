@@ -139,13 +139,49 @@ export const VisitorFormPage = () => {
         <div className="bg-white rounded-lg shadow-lg p-8 grid grid-cols-3 gap-8">
           {/* Camera Section */}
           <div className="col-span-1">
-            <div className="bg-gray-100 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-gray-700">Camera Preview</h3>
-                <Camera className="h-5 w-5 text-gray-600" />
+            <div className="bg-white rounded-lg border p-4">
+              {/* Camera permissions checkbox */}
+              <div className="mb-4">
+                <div className="flex items-center space-x-2">
+                  <input 
+                    type="checkbox" 
+                    id="useCamera" 
+                    checked={stream !== null}
+                    readOnly
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="useCamera" className="text-sm text-gray-700">
+                    Use available cameras ({cameras.length})
+                  </label>
+                </div>
               </div>
-              
-              {/* Camera Selection */}
+
+              {/* Camera Preview */}
+              <div className="relative mb-4 bg-gray-900 rounded-lg overflow-hidden">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-48 object-cover"
+                />
+                {capturedImage && (
+                  <div className="absolute inset-0 bg-black">
+                    <img 
+                      src={capturedImage} 
+                      alt="Captured" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div className="absolute top-2 right-2">
+                  <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs font-medium">
+                    📹 Preview
+                  </span>
+                </div>
+              </div>
+
+              {/* Camera Selection Dropdown */}
               <div className="mb-4">
                 <Select value={selectedCamera || undefined} onValueChange={handleCameraChange}>
                   <SelectTrigger className="w-full">
@@ -154,40 +190,34 @@ export const VisitorFormPage = () => {
                   <SelectContent>
                     {cameras.filter(camera => camera.deviceId && camera.deviceId.trim() !== '').map((camera) => (
                       <SelectItem key={camera.deviceId} value={camera.deviceId}>
-                        {camera.label || `Camera ${camera.deviceId.slice(0, 8)}`}
+                        {camera.label || `USB2.0 HD UVC WebCam (${camera.deviceId.slice(0, 4)}:...)`}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Video Preview */}
-              <div className="relative mb-4">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  className="w-full h-48 bg-black rounded-lg object-cover"
-                />
-                {capturedImage && (
-                  <div className="absolute inset-0 bg-black rounded-lg">
-                    <img 
-                      src={capturedImage} 
-                      alt="Captured" 
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  </div>
-                )}
+              {/* Camera Control Buttons */}
+              <div className="space-y-2">
+                <Button
+                  onClick={capturePhoto}
+                  className="w-full bg-pink-200 hover:bg-pink-300 text-gray-800 rounded-full"
+                >
+                  Allow while visiting the site
+                </Button>
+                <Button
+                  onClick={capturePhoto}
+                  className="w-full bg-pink-200 hover:bg-pink-300 text-gray-800 rounded-full"
+                >
+                  Allow this time
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full bg-pink-200 hover:bg-pink-300 text-gray-800 rounded-full border-none"
+                >
+                  Never allow
+                </Button>
               </div>
-
-              {/* Capture Button */}
-              <Button
-                onClick={capturePhoto}
-                className="w-full bg-red-600 hover:bg-red-700 text-white"
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Capture Photo
-              </Button>
 
               <canvas ref={canvasRef} className="hidden" />
             </div>
