@@ -140,12 +140,12 @@ export const VisitorFormPage = () => {
                 
                 {/* Camera Selection */}
                 <div className="mb-4">
-                  <Select value={selectedCamera} onValueChange={handleCameraChange}>
+                  <Select value={selectedCamera || undefined} onValueChange={handleCameraChange}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Camera" />
                     </SelectTrigger>
                     <SelectContent>
-                      {cameras.map((camera) => (
+                      {cameras.filter(camera => camera.deviceId && camera.deviceId.trim() !== '').map((camera) => (
                         <SelectItem key={camera.deviceId} value={camera.deviceId}>
                           {camera.label || `Camera ${camera.deviceId.slice(0, 8)}`}
                         </SelectItem>
@@ -256,7 +256,7 @@ export const VisitorFormPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-700">Host *</label>
-                    <Select value={formData.host} onValueChange={(value) => handleInputChange('host', value)}>
+                    <Select value={formData.host || undefined} onValueChange={(value) => handleInputChange('host', value)}>
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Select Person To Meet" />
                       </SelectTrigger>
@@ -281,7 +281,7 @@ export const VisitorFormPage = () => {
 
                   <div>
                     <label className="text-sm font-medium text-gray-700">Visit Purpose *</label>
-                    <Select value={formData.visitPurpose} onValueChange={(value) => handleInputChange('visitPurpose', value)}>
+                    <Select value={formData.visitPurpose || undefined} onValueChange={(value) => handleInputChange('visitPurpose', value)}>
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Select your Purpose" />
                       </SelectTrigger>
