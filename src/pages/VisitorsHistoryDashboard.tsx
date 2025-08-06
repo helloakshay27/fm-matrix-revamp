@@ -84,7 +84,7 @@ export const VisitorsHistoryDashboard = () => {
   );
 
   return (
-    <div className="p-6 bg-muted min-h-screen">
+    <div className="p-6 min-h-screen">
       <div className="mb-6">
         <div className="bg-white rounded-lg border border-gray-200">
           {/* Tab Navigation */}
