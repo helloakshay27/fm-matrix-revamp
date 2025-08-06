@@ -35,18 +35,14 @@ export const VisitorsDashboard = () => {
   return (
     <div className="p-6  min-h-screen">
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-          <span>visitors</span>
-        </div>
-        
         {/* Tab Navigation */}
-        <div className="flex gap-1 mb-6 bg-white p-1 rounded-lg w-fit border">
+        <div className="flex mb-6 border-b border-border">
           <Button 
             onClick={() => setActiveTab('visitor-in')}
-            className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
               activeTab === 'visitor-in' 
-                ? 'bg-[hsl(35_35%_85%)] text-foreground shadow-sm' 
-                : 'bg-transparent text-muted-foreground hover:text-foreground'
+                ? 'text-primary border-primary' 
+                : 'text-muted-foreground border-transparent hover:text-foreground'
             }`}
             variant="ghost"
           >
@@ -54,10 +50,10 @@ export const VisitorsDashboard = () => {
           </Button>
           <Button 
             onClick={() => setActiveTab('visitor-out')}
-            className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
               activeTab === 'visitor-out' 
-                ? 'bg-[hsl(35_35%_85%)] text-foreground shadow-sm' 
-                : 'bg-transparent text-muted-foreground hover:text-foreground'
+                ? 'text-primary border-primary' 
+                : 'text-muted-foreground border-transparent hover:text-foreground'
             }`}
             variant="ghost"
           >
@@ -65,10 +61,10 @@ export const VisitorsDashboard = () => {
           </Button>
           <Button 
             onClick={handleHistoryClick}
-            className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
               activeTab === 'history' 
-                ? 'bg-[hsl(35_35%_85%)] text-foreground shadow-sm' 
-                : 'bg-transparent text-muted-foreground hover:text-foreground'
+                ? 'text-primary border-primary' 
+                : 'text-muted-foreground border-transparent hover:text-foreground'
             }`}
             variant="ghost"
           >
