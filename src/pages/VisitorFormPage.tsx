@@ -192,6 +192,11 @@ export const VisitorFormPage = () => {
   };
 
   const handleCameraClick = () => {
+    console.log('handleCameraClick called');
+    console.log('videoRef.current:', videoRef.current);
+    console.log('canvasRef.current:', canvasRef.current);
+    console.log('stream:', stream);
+    
     if (videoRef.current && canvasRef.current && stream) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -207,6 +212,7 @@ export const VisitorFormPage = () => {
       }
     } else {
       // If no camera stream, open camera modal
+      console.log('Opening camera modal and initializing camera');
       setShowCameraModal(true);
       initializeCamera();
     }
