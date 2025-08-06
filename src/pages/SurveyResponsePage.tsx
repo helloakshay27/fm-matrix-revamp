@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList } from 'lucide-react';
+import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModal';
@@ -172,6 +172,24 @@ export const SurveyResponsePage = () => {
 
   return (
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
+      {/* Header Navigation */}
+      <div className="bg-gray-100 border border-gray-200 rounded-lg mb-6">
+        <div className="flex">
+          <div className="flex-1 p-4 border-r border-gray-200">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-[#C72030]" />
+              <span className="font-medium text-[#C72030]">Response List</span>
+            </div>
+          </div>
+          <div className="flex-1 p-4">
+            <div className="flex items-center gap-2 text-gray-600 hover:text-[#C72030] cursor-pointer transition-colors">
+              <BarChart3 className="w-5 h-5" />
+              <span className="font-medium">Analytics</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Breadcrumb */}
       <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
