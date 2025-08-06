@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModal';
 
@@ -216,6 +216,37 @@ export const SurveyResponsePage = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  // Process data for bar chart
+  const barChartData = pieChartData.map(item => ({
+    name: item.name.length > 15 ? item.name.substring(0, 15) + '...' : item.name,
+    fullName: item.name,
+    responses: item.value,
+    tickets: responseData
+      .filter(survey => survey.surveyTitle === item.name)
+      .reduce((sum, survey) => sum + survey.tickets, 0)
+  }));
+
+  const handleExportBarChart = () => {
+    const chartData = barChartData.map(item => ({
+      'Survey Type': item.fullName,
+      'Total Responses': item.responses,
+      'Total Tickets': item.tickets
+    }));
+    
+    const csvContent = [
+      Object.keys(chartData[0]).join(','),
+      ...chartData.map(row => Object.values(row).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'survey-response-bar-chart.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex-1 p-4 sm:p-6 bg-gray-50 min-h-screen">
       {/* Header Tabs */}
@@ -390,6 +421,63 @@ export const SurveyResponsePage = () => {
                       )}
                     />
                   </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            
+            {/* Bar Chart */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6 mt-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-[#C72030]">Group-wise Responses</h2>
+                <Button
+                  onClick={handleExportBarChart}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              <div className="h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={barChartData}
+                    margin={{
+                      top: 20,
+                      right: 30,
+                      left: 20,
+                      bottom: 60,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis 
+                      dataKey="name" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                      interval={0}
+                      fontSize={12}
+                      stroke="#666"
+                    />
+                    <YAxis stroke="#666" fontSize={12} />
+                    <Tooltip 
+                      formatter={(value: any, name: any, props: any) => [
+                        value,
+                        name === 'responses' ? 'Responses' : 'Tickets'
+                      ]}
+                      labelFormatter={(label: any) => {
+                        const item = barChartData.find(d => d.name === label);
+                        return item ? item.fullName : label;
+                      }}
+                    />
+                    <Bar 
+                      dataKey="responses" 
+                      fill="#C72030" 
+                      name="responses"
+                      radius={[2, 2, 0, 0]}
+                    />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
