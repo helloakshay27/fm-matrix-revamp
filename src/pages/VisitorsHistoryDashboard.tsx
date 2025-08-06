@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, RefreshCw, MapPin, User } from 'lucide-react';
+import { Search, RefreshCw, MapPin, User, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { VisitorsHistoryFilterModal } from '@/components/VisitorsHistoryFilterModal';
+import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 
 const visitorsData = [
   {
@@ -57,6 +58,7 @@ export const VisitorsHistoryDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentSearchTerm, setCurrentSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isNewVisitorDialogOpen, setIsNewVisitorDialogOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleTabClick = (tab: string) => {
@@ -183,9 +185,25 @@ export const VisitorsHistoryDashboard = () => {
         </div>
       </div>
 
+      {/* Floating Add Button */}
+      <div className="fixed bottom-8 right-8">
+        <Button 
+          onClick={() => setIsNewVisitorDialogOpen(true)}
+          style={{ backgroundColor: '#C72030' }}
+          className="w-12 h-12 rounded-full text-white hover:bg-[#C72030]/90 shadow-lg"
+        >
+          <Plus className="w-6 h-6" />
+        </Button>
+      </div>
+
       <VisitorsHistoryFilterModal 
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
+      />
+
+      <NewVisitorDialog 
+        isOpen={isNewVisitorDialogOpen}
+        onClose={() => setIsNewVisitorDialogOpen(false)}
       />
     </div>
   );
