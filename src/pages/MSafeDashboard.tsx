@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users, FileText, Plus, Download, Upload, Filter, Copy, Eye, Trash2 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -241,75 +242,71 @@ export const MSafeDashboard = () => {
       </div>
 
       {/* FM Users Table */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor Company Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entity Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Access Level</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Face Recognition</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">App Downloaded</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex gap-2">
-                        <Eye className="h-4 w-4 text-gray-500 cursor-pointer hover:text-gray-700" />
-                        <Trash2 className="h-4 w-4 text-red-500 cursor-pointer hover:text-red-700" />
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <Switch 
-                        checked={user.active}
-                        onCheckedChange={() => toggleUserStatus(user.id)}
-                        className="data-[state=checked]:bg-green-500"
-                      />
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.id}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.userName}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.gender}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.mobileNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{user.email}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.vendorCompanyName}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.entityName}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.unit}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.role}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.employeeId}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.createdBy}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.accessLevel}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.type}</td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                        {user.status}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.faceRecognition}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{user.appDownloaded}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50">
+              <TableHead>Actions</TableHead>
+              <TableHead>Active</TableHead>
+              <TableHead>ID</TableHead>
+              <TableHead>User Name</TableHead>
+              <TableHead>Gender</TableHead>
+              <TableHead>Mobile Number</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Vendor Company Name</TableHead>
+              <TableHead>Entity Name</TableHead>
+              <TableHead>Unit</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Employee ID</TableHead>
+              <TableHead>Created By</TableHead>
+              <TableHead>Access Level</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Face Recognition</TableHead>
+              <TableHead>App Downloaded</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Eye className="h-4 w-4 text-gray-600 cursor-pointer hover:text-[#C72030]" />
+                    <Trash2 className="h-4 w-4 text-gray-600 cursor-pointer hover:text-red-600" />
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Switch 
+                    checked={user.active}
+                    onCheckedChange={() => toggleUserStatus(user.id)}
+                    className="data-[state=checked]:bg-green-500"
+                  />
+                </TableCell>
+                <TableCell className="font-medium">{user.id}</TableCell>
+                <TableCell>{user.userName}</TableCell>
+                <TableCell>{user.gender}</TableCell>
+                <TableCell>{user.mobileNumber}</TableCell>
+                <TableCell className="text-blue-600">{user.email}</TableCell>
+                <TableCell>{user.vendorCompanyName}</TableCell>
+                <TableCell>{user.entityName}</TableCell>
+                <TableCell>{user.unit}</TableCell>
+                <TableCell>{user.role}</TableCell>
+                <TableCell>{user.employeeId}</TableCell>
+                <TableCell>{user.createdBy}</TableCell>
+                <TableCell>{user.accessLevel}</TableCell>
+                <TableCell>{user.type}</TableCell>
+                <TableCell>
+                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                    {user.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>{user.faceRecognition}</TableCell>
+                <TableCell>{user.appDownloaded}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       {/* Footer */}
       <div className="text-center text-sm text-gray-500 flex items-center justify-center gap-2">
