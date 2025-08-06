@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -247,7 +246,18 @@ export const MSafeDashboard = () => {
   };
 
   const handleDeleteUser = (userId: string) => {
-    setUsers(users.filter(user => user.id !== userId));
+    const userToDelete = users.find(user => user.id === userId);
+    if (userToDelete && window.confirm(`Are you sure you want to delete user "${userToDelete.userName}"?`)) {
+      setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+      console.log(`Deleted user ${userId}`);
+      
+      // Adjust current page if necessary after deletion
+      const newTotalRecords = users.length - 1;
+      const newTotalPages = Math.ceil(newTotalRecords / perPage);
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      }
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -369,7 +379,12 @@ export const MSafeDashboard = () => {
                     <Button variant="ghost" size="sm" className="p-1 h-8 w-8 hover:bg-gray-100">
                       <Eye className="h-4 w-4 text-gray-600 hover:text-[#C72030]" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDeleteUser(user.id)} className="p-1 h-8 w-8 hover:bg-gray-100">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleDeleteUser(user.id)} 
+                      className="p-1 h-8 w-8 hover:bg-red-50"
+                    >
                       <Trash2 className="h-4 w-4 text-gray-600 hover:text-red-600" />
                     </Button>
                   </div>
