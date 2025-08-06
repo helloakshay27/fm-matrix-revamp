@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -235,10 +236,14 @@ export const MSafeDashboard = () => {
   const currentUsers = users.slice(startIndex, endIndex);
 
   const toggleUserStatus = (userId: string) => {
-    setUsers(users.map(user => user.id === userId ? {
-      ...user,
-      active: !user.active
-    } : user));
+    setUsers(prevUsers => 
+      prevUsers.map(user => 
+        user.id === userId 
+          ? { ...user, active: !user.active }
+          : user
+      )
+    );
+    console.log(`Toggled user ${userId} status`);
   };
 
   const handleDeleteUser = (userId: string) => {
@@ -303,7 +308,8 @@ export const MSafeDashboard = () => {
   }
 
   // Maintenance M Safe page with FM Users table
-  return <div className="p-6 space-y-6">
+  return (
+    <div className="p-6 space-y-6">
       <h1 className="text-2xl font-semibold text-gray-900">M Safe</h1>
       
       {/* Action Buttons */}
@@ -356,7 +362,8 @@ export const MSafeDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentUsers.map(user => <TableRow key={user.id}>
+            {currentUsers.map(user => (
+              <TableRow key={user.id}>
                 <TableCell>
                   <div className="flex gap-2">
                     <Button variant="ghost" size="sm" className="p-1 h-8 w-8 hover:bg-gray-100">
@@ -368,7 +375,11 @@ export const MSafeDashboard = () => {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Switch checked={user.active} onCheckedChange={() => toggleUserStatus(user.id)} className="data-[state=checked]:bg-green-500" />
+                  <Switch 
+                    checked={user.active} 
+                    onCheckedChange={() => toggleUserStatus(user.id)} 
+                    className="data-[state=checked]:bg-green-500" 
+                  />
                 </TableCell>
                 <TableCell className="font-medium">{user.id}</TableCell>
                 <TableCell>{user.userName}</TableCell>
@@ -390,13 +401,22 @@ export const MSafeDashboard = () => {
                 </TableCell>
                 <TableCell>{user.faceRecognition}</TableCell>
                 <TableCell>{user.appDownloaded}</TableCell>
-              </TableRow>)}
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
 
       {/* Pagination */}
-      <TicketPagination currentPage={currentPage} totalPages={totalPages} totalRecords={totalRecords} perPage={perPage} isLoading={isLoading} onPageChange={handlePageChange} onPerPageChange={handlePerPageChange} />
+      <TicketPagination 
+        currentPage={currentPage} 
+        totalPages={totalPages} 
+        totalRecords={totalRecords} 
+        perPage={perPage} 
+        isLoading={isLoading} 
+        onPageChange={handlePageChange} 
+        onPerPageChange={handlePerPageChange} 
+      />
 
       {/* Import Modal */}
       <MSafeImportModal
@@ -418,5 +438,6 @@ export const MSafeDashboard = () => {
         onClose={() => setIsFilterDialogOpen(false)}
         onApplyFilters={handleApplyFilters}
       />
-    </div>;
+    </div>
+  );
 };
