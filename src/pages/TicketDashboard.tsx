@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,7 +11,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { TicketSelector } from '@/components/TicketSelector';
 import { RecentTicketsSidebar } from '@/components/RecentTicketsSidebar';
 import { TicketSelectionPanel } from '@/components/TicketSelectionPanel';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -29,6 +29,7 @@ import {
   TicketAgingMatrixCard
 } from '@/components/ticket-analytics';
 import { useToast } from '@/hooks/use-toast';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -100,6 +101,7 @@ export const TicketDashboard = () => {
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'responseTat', 'categoryWiseProactiveReactive', 'categoryChart', 'agingMatrix', 'resolutionTat']);
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalTickets, setTotalTickets] = useState(0);
@@ -187,6 +189,9 @@ export const TicketDashboard = () => {
     pending_tickets: 0
   });
   const [filters, setFilters] = useState<TicketFilters>({});
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300); // Reduced debounce for faster response
+  const isSearchingRef = useRef(false);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [selectedTicketForEdit, setSelectedTicketForEdit] = useState<TicketResponse | null>(null);
   const perPage = 20;
@@ -197,7 +202,7 @@ export const TicketDashboard = () => {
   }));
 
   // Fetch analytics data from API
-  const fetchAnalyticsData = async (startDate: Date, endDate: Date) => {
+  const fetchAnalyticsData = useCallback(async (startDate: Date, endDate: Date) => {
     setAnalyticsLoading(true);
     try {
       const [
@@ -241,7 +246,7 @@ export const TicketDashboard = () => {
     } finally {
       setAnalyticsLoading(false);
     }
-  };
+  }, [toast]);
 
   // Handle analytics filter apply
   const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
@@ -255,7 +260,7 @@ export const TicketDashboard = () => {
   };
 
   // Fetch ticket summary from API
-  const fetchTicketSummary = async () => {
+  const fetchTicketSummary = useCallback(async () => {
     try {
       const summary = await ticketManagementAPI.getTicketSummary();
       setTicketSummary(summary);
@@ -272,11 +277,18 @@ export const TicketDashboard = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [filters, initialTotalTickets, toast]);
 
   // Fetch tickets from API
-  const fetchTickets = async (page: number = 1) => {
-    setLoading(true);
+  const fetchTickets = useCallback(async (page: number = 1) => {
+    // Use different loading states based on whether it's a search operation
+    const isSearch = filters.search_all_fields_cont;
+    if (isSearch) {
+      setSearchLoading(true);
+    } else {
+      setLoading(true);
+    }
+    
     try {
       const response = await ticketManagementAPI.getTickets(page, perPage, filters);
       setTickets(response.complaints);
@@ -294,13 +306,60 @@ export const TicketDashboard = () => {
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      if (isSearch) {
+        setSearchLoading(false);
+      } else {
+        setLoading(false);
+      }
     }
-  };
+  }, [filters, perPage, toast]);
+
+  // Handle search input change
+  const handleSearch = useCallback((query: string) => {
+    isSearchingRef.current = true;
+    setSearchQuery(query);
+  }, []);
+
+  // Effect to handle debounced search
   useEffect(() => {
-    fetchTickets(currentPage);
-    fetchTicketSummary();
-  }, [currentPage, filters]);
+    // Skip if search query is the same as current filter
+    const currentSearch = filters.search_all_fields_cont || '';
+    const newSearch = debouncedSearchQuery.trim();
+    
+    if (currentSearch === newSearch) {
+      return; // No change needed
+    }
+    
+    // Update filters when debounced search query changes
+    setFilters(prevFilters => {
+      const newFilters = { ...prevFilters };
+      if (newSearch) {
+        newFilters.search_all_fields_cont = newSearch;
+      } else {
+        delete newFilters.search_all_fields_cont;
+      }
+      return newFilters;
+    });
+    
+    // Reset to first page when searching, but only if it's a new search
+    if (isSearchingRef.current || (newSearch && !currentSearch)) {
+      setCurrentPage(1);
+      isSearchingRef.current = false;
+    }
+  }, [debouncedSearchQuery, filters.search_all_fields_cont]);
+
+  useEffect(() => {
+    // Only fetch tickets if we're not in the middle of rapid filter changes
+    const timeoutId = setTimeout(() => {
+      fetchTickets(currentPage);
+      // Only fetch summary when filters change significantly (not during search)
+      if (!filters.search_all_fields_cont) {
+        fetchTicketSummary();
+      }
+    }, 50); // Reduced delay for faster response
+
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, filters, fetchTickets, fetchTicketSummary]);
 
   // Load analytics data with default date range on component mount
   useEffect(() => {
@@ -308,7 +367,7 @@ export const TicketDashboard = () => {
     const startDate = convertDateStringToDate(defaultRange.startDate);
     const endDate = convertDateStringToDate(defaultRange.endDate);
     fetchAnalyticsData(startDate, endDate);
-  }, []);
+  }, [fetchAnalyticsData]);
 
   // Use ticket summary data from API
   const openTickets = ticketSummary.open_tickets;
@@ -653,7 +712,7 @@ export const TicketDashboard = () => {
   // Handle status card click for filtering
   const handleStatusCardClick = (cardType: string) => {
     console.log('Status card clicked:', cardType);
-    let newFilters: TicketFilters = {};
+    const newFilters: TicketFilters = {};
 
     if (cardType === 'total') {
       // Clear all filters to show all records
@@ -712,15 +771,15 @@ export const TicketDashboard = () => {
   };
 
   // Handle drag end for chart reordering
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const {
       active,
       over
     } = event;
-    if (active.id !== over.id) {
+    if (active.id !== over?.id) {
       setChartOrder(items => {
-        const oldIndex = items.indexOf(active.id);
-        const newIndex = items.indexOf(over.id);
+        const oldIndex = items.indexOf(active.id.toString());
+        const newIndex = items.indexOf(over?.id.toString() || '');
         return arrayMove(items, oldIndex, newIndex);
       });
     }
@@ -1219,12 +1278,6 @@ export const TicketDashboard = () => {
             })}
           </div>
 
-
-
-
-
-
-
           {/* Tickets Table */}
           <div className="overflow-x-auto animate-fade-in">
             {loading ? (
@@ -1233,6 +1286,14 @@ export const TicketDashboard = () => {
               </div>
             ) : (
               <>
+                {/* {searchLoading && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
+                    <div className="flex items-center gap-2 text-blue-600">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span className="text-sm">Searching tickets...</span>
+                    </div>
+                  </div>
+                )} */}
                 <EnhancedTable
                   data={tickets || []}
                   columns={columns}
@@ -1255,6 +1316,7 @@ export const TicketDashboard = () => {
                   onFilterClick={() => setIsFilterOpen(true)}
                   rightActions={null}
                   searchPlaceholder="Search Tickets"
+                  onSearchChange={handleSearch}
                   hideTableExport={false}
                   hideColumnsButton={false}
                 />
@@ -1265,7 +1327,7 @@ export const TicketDashboard = () => {
                     {/* Previous Button */}
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1 || loading}
+                      disabled={currentPage === 1 || loading || searchLoading}
                       className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1280,7 +1342,7 @@ export const TicketDashboard = () => {
                         <>
                           <button
                             onClick={() => setCurrentPage(1)}
-                            disabled={loading}
+                            disabled={loading || searchLoading}
                             className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
                           >
                             1
@@ -1308,7 +1370,7 @@ export const TicketDashboard = () => {
                           <button
                             key={pageNum}
                             onClick={() => setCurrentPage(pageNum)}
-                            disabled={loading}
+                            disabled={loading || searchLoading}
                             className={`w-8 h-8 flex items-center justify-center text-sm rounded disabled:opacity-50 ${currentPage === pageNum
                               ? 'bg-[#C72030] text-white'
                               : 'text-gray-700 hover:bg-gray-100'
@@ -1327,7 +1389,7 @@ export const TicketDashboard = () => {
                           )}
                           <button
                             onClick={() => setCurrentPage(totalPages)}
-                            disabled={loading}
+                            disabled={loading || searchLoading}
                             className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
                           >
                             {totalPages}
@@ -1339,7 +1401,7 @@ export const TicketDashboard = () => {
                     {/* Next Button */}
                     <button
                       onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages || loading}
+                      disabled={currentPage === totalPages || loading || searchLoading}
                       className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
