@@ -1,11 +1,13 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Users, FileText, Plus, Download, Upload, Filter, Copy, Eye, Trash2 } from 'lucide-react';
+import { Users, FileText, Download, Upload, Filter, Copy, Eye, Trash2 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { TicketPagination } from '@/components/TicketPagination';
 
 // Sample data for FM Users
 const fmUsersData = [
@@ -160,6 +162,64 @@ const fmUsersData = [
     status: 'Approved',
     faceRecognition: 'No',
     appDownloaded: 'No'
+  },
+  // Add more sample data to demonstrate pagination
+  {
+    id: '180908',
+    userName: 'Test User 1',
+    gender: 'Male',
+    mobileNumber: '9876543210',
+    email: 'test1@example.com',
+    vendorCompanyName: 'N/A',
+    entityName: 'N/A',
+    unit: '',
+    role: 'Admin',
+    employeeId: '',
+    createdBy: 'Site',
+    accessLevel: 'Admin',
+    type: 'Admin',
+    active: true,
+    status: 'Approved',
+    faceRecognition: 'No',
+    appDownloaded: 'No'
+  },
+  {
+    id: '180907',
+    userName: 'Test User 2',
+    gender: 'Female',
+    mobileNumber: '9876543211',
+    email: 'test2@example.com',
+    vendorCompanyName: 'N/A',
+    entityName: 'N/A',
+    unit: '',
+    role: 'Admin',
+    employeeId: '',
+    createdBy: 'Site',
+    accessLevel: 'Admin',
+    type: 'Admin',
+    active: true,
+    status: 'Approved',
+    faceRecognition: 'No',
+    appDownloaded: 'No'
+  },
+  {
+    id: '180906',
+    userName: 'Test User 3',
+    gender: 'Male',
+    mobileNumber: '9876543212',
+    email: 'test3@example.com',
+    vendorCompanyName: 'N/A',
+    entityName: 'N/A',
+    unit: '',
+    role: 'Admin',
+    employeeId: '',
+    createdBy: 'Site',
+    accessLevel: 'Admin',
+    type: 'Admin',
+    active: true,
+    status: 'Approved',
+    faceRecognition: 'No',
+    appDownloaded: 'No'
   }
 ];
 
@@ -167,11 +227,36 @@ export const MSafeDashboard = () => {
   const location = useLocation();
   const isSafetyRoute = location.pathname.startsWith('/safety');
   const [users, setUsers] = useState(fmUsersData);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Calculate pagination
+  const totalRecords = users.length;
+  const totalPages = Math.ceil(totalRecords / perPage);
+  const startIndex = (currentPage - 1) * perPage;
+  const endIndex = startIndex + perPage;
+  const currentUsers = users.slice(startIndex, endIndex);
 
   const toggleUserStatus = (userId: string) => {
     setUsers(users.map(user => 
       user.id === userId ? { ...user, active: !user.active } : user
     ));
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    setUsers(users.filter(user => user.id !== userId));
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePerPageChange = (newPerPage: number) => {
+    setPerPage(newPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   if (isSafetyRoute) {
@@ -238,7 +323,7 @@ export const MSafeDashboard = () => {
       </div>
 
       {/* FM Users Table */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-200">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
@@ -263,12 +348,25 @@ export const MSafeDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
+            {currentUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>
                   <div className="flex gap-2">
-                    <Eye className="h-4 w-4 text-gray-600 cursor-pointer hover:text-[#C72030]" />
-                    <Trash2 className="h-4 w-4 text-gray-600 cursor-pointer hover:text-red-600" />
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="p-1 h-8 w-8 hover:bg-gray-100"
+                    >
+                      <Eye className="h-4 w-4 text-gray-600 hover:text-[#C72030]" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleDeleteUser(user.id)}
+                      className="p-1 h-8 w-8 hover:bg-gray-100"
+                    >
+                      <Trash2 className="h-4 w-4 text-gray-600 hover:text-red-600" />
+                    </Button>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -303,6 +401,17 @@ export const MSafeDashboard = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      <TicketPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalRecords={totalRecords}
+        perPage={perPage}
+        isLoading={isLoading}
+        onPageChange={handlePageChange}
+        onPerPageChange={handlePerPageChange}
+      />
 
       {/* Footer */}
       <div className="text-center text-sm text-gray-500 flex items-center justify-center gap-2">
