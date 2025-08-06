@@ -102,14 +102,6 @@ export const VisitorsHistoryDashboard = () => {
           {/* Action Buttons and Search Bar */}
           <div className="p-4 border-b border-gray-200">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
-              <Button 
-                onClick={() => setIsFilterModalOpen(true)}
-                style={{ backgroundColor: '#C72030' }}
-                className="text-white hover:bg-[#C72030]/90"
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filters
-              </Button>
             </div>
             
             <div className="flex items-center gap-2 max-w-md">
