@@ -179,50 +179,7 @@ export const EditAMCPage = () => {
       }
     }
   }, [amcData, assetList, suppliers, services]);
-  // const debouncedHandleInputChange = useCallback(
-  //   debounce((field: string, value: string) => {
-  //     if (field === 'cost') {
-  //       if (value === '' || !isNaN(parseFloat(value))) {
-  //         console.log(`Updating ${field} to ${value}`);
-  //         setFormData(prev => ({
-  //           ...prev,
-  //           [field]: value,
-  //         }));
-  //         setErrors(prev => ({ ...prev, [field]: '' }));
-  //       }
-  //       return;
-  //     }
-  //     console.log(`Updating ${field} to ${value}`);
-  //     setFormData(prev => {
-  //       if (field === 'details' && prev.details !== value) {
-  //         return {
-  //           ...prev,
-  //           [field]: value,
-  //           // Only clear asset-related fields if details change, but keep other fields
-  //           assetName: '',
-  //           asset_ids: [],
-  //         };
-  //       }
-  //       if (field === 'type' && prev.type !== value) {
-  //         return {
-  //           ...prev,
-  //           [field]: value,
-  //           // Do not clear group, subgroup, service, or supplier here
-  //         };
-  //       }
-  //       return {
-  //         ...prev,
-  //         [field]: value,
-  //       };
-  //     });
-  //     setErrors(prev => ({ ...prev, [field]: '' }));
-  //   }, 300),
-  //   []
-  // );
 
-  // const handleInputChange = (field: string, value: string) => {
-  //   debouncedHandleInputChange(field, value);
-  // };
 
   const handleInputChange = (field: string, value: string) => {
     console.log(`Updating ${field} to ${value}`);
@@ -235,14 +192,11 @@ export const EditAMCPage = () => {
           asset_ids: []
         };
       }
+      // Do NOT clear group, subgroup, service, or supplier when switching type
       if (field === 'type' && prev.type !== value) {
         return {
           ...prev,
-          [field]: value,
-          group: '',
-          subgroup: '',
-          service: '',
-          supplier: ''
+          [field]: value
         };
       }
       return {
@@ -498,15 +452,15 @@ export const EditAMCPage = () => {
         if (formData.type === 'Individual') {
           sendData.append('pms_asset_amc[resource_id]', formData.asset_ids.join(','));
         } else if (formData.type === 'Group') {
-          sendData.append('pms_asset_amc[resource_id]', formData.group || '');
-          sendData.append('pms_asset_amc[sub_group_id]', formData.subgroup || '');
+          sendData.append('group_id', formData.group || '');
+          sendData.append('sub_group_id', formData.subgroup || '');
         }
       } else if (formData.details === 'Service') {
         sendData.append('pms_asset_amc[resource_type]', 'Pms::Service');
         if (formData.type === 'Group') {
           sendData.append('pms_asset_amc[resource_id]', formData.service);
-          sendData.append('pms_asset_amc[group_id]', formData.group || '');
-          sendData.append('pms_asset_amc[sub_group_id]', formData.subgroup || '');
+          sendData.append('group_id', formData.group || '');
+          sendData.append('sub_group_id', formData.subgroup || '');
         } else if (formData.type === 'Individual') {
           sendData.append('pms_asset_amc[resource_id]', formData.assetName || formData.service);
         }

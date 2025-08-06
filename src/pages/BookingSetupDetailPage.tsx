@@ -249,7 +249,7 @@ export const BookingSetupDetailPage = () => {
         },
         allowMultipleSlots: response.multi_slot,
         maximumSlots: response.max_slots,
-        facilityBookedTimes: "",
+        facilityBookedTimes: response.booking_limit,
         description: response.description,
         termsConditions: response.terms,
         cancellationText: response.cancellation_policy,
@@ -275,6 +275,7 @@ export const BookingSetupDetailPage = () => {
         })),
       });
       const transformedRules = response.cancellation_rules.map((rule: any) => ({
+        description: rule.description,
         time: {
           type: rule.hour, // You can dynamically determine this if needed
           value: rule.min,
@@ -285,7 +286,7 @@ export const BookingSetupDetailPage = () => {
 
       setCancellationRules([...transformedRules]);
 
-      setCancellationRules(response.cancellation_rules)
+      // setCancellationRules(response.cancellation_rules)
       setSelectedFile(response?.cover_image?.document);
       setSelectedBookingFiles(
         response?.documents.map((doc) => doc.document.document)
@@ -992,12 +993,12 @@ export const BookingSetupDetailPage = () => {
                         size="small"
                         style={{ width: "80px" }}
                         variant="outlined"
-                        value={rule.day}
+                        value={rule.time.day}
                         InputProps={{ readOnly: true }}
                       />
                       <FormControl size="small" style={{ width: "80px" }}>
                         <Select
-                          value={rule.hour ?? ''}
+                          value={rule.time.type}
                           disabled
                         >
                           {Array.from({ length: 24 }, (_, i) => (
@@ -1010,7 +1011,7 @@ export const BookingSetupDetailPage = () => {
 
                       <FormControl size="small" style={{ width: "80px" }}>
                         <Select
-                          value={rule.min}
+                          value={rule.time.value}
                           disabled
                         >
                           {Array.from({ length: 24 }, (_, i) => (
