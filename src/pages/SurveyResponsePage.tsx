@@ -248,7 +248,98 @@ export const SurveyResponsePage = () => {
   };
 
   return (
-    <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
+    <div className="flex min-h-screen bg-white">
+      {/* Left Sidebar */}
+      <div className="w-80 bg-gray-50 border-r border-gray-200 p-4">
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+              >
+                <Filter className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+              >
+                4 Analytics Selected
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg p-4">
+          <div className="mb-4">
+            <h3 className="font-semibold text-gray-800 mb-1">Recent Surveys</h3>
+            <p className="text-sm text-gray-500">Wednesday, August 6, 2025</p>
+          </div>
+
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="border-b border-gray-200 pb-3">
+              <div className="flex items-start gap-2 mb-2">
+                <span className="text-[#C72030] font-medium">#</span>
+                <span className="text-[#C72030] font-medium">204000</span>
+              </div>
+              <h4 className="font-medium text-gray-800 mb-1">Customer Satisfaction Survey</h4>
+              <p className="text-sm text-blue-600 mb-2">"15 responses / Active"</p>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm text-gray-600">Status:</span>
+                <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">Active</span>
+              </div>
+              <button className="text-blue-600 text-sm hover:underline">View Details &gt;&gt;</button>
+            </div>
+
+            <div className="border-b border-gray-200 pb-3">
+              <div className="flex items-start gap-2 mb-2">
+                <span className="text-[#C72030] font-medium">#</span>
+                <span className="text-[#C72030] font-medium">203989</span>
+              </div>
+              <h4 className="font-medium text-gray-800 mb-1">Employee Feedback Survey</h4>
+              <p className="text-sm text-blue-600 mb-2">"8 responses / Expired"</p>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm text-gray-600">Status:</span>
+                <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded">Expired</span>
+              </div>
+              <button className="text-blue-600 text-sm hover:underline">View Details &gt;&gt;</button>
+            </div>
+
+            <div className="border-b border-gray-200 pb-3">
+              <div className="flex items-start gap-2 mb-2">
+                <span className="text-[#C72030] font-medium">#</span>
+                <span className="text-[#C72030] font-medium">203999</span>
+              </div>
+              <h4 className="font-medium text-gray-800 mb-1">Product Quality Assessment</h4>
+              <p className="text-sm text-blue-600 mb-2">"22 responses / Active"</p>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm text-gray-600">Status:</span>
+                <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">Active</span>
+              </div>
+              <button className="text-blue-600 text-sm hover:underline">View Details &gt;&gt;</button>
+            </div>
+
+            <div className="pb-3">
+              <div className="flex items-start gap-2 mb-2">
+                <span className="text-[#C72030] font-medium">#</span>
+                <span className="text-[#C72030] font-medium">203950</span>
+              </div>
+              <h4 className="font-medium text-gray-800 mb-1">Training Effectiveness Survey</h4>
+              <p className="text-sm text-blue-600 mb-2">"12 responses / Draft"</p>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm text-gray-600">Status:</span>
+                <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded">Draft</span>
+              </div>
+              <button className="text-blue-600 text-sm hover:underline">View Details &gt;&gt;</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
       {/* Header Tabs */}
       <div className="mb-6">
         <Tabs defaultValue="response-list" className="w-full">
@@ -492,6 +583,7 @@ export const SurveyResponsePage = () => {
             </div>
           </TabsContent>
         </Tabs>
+      </div>
       </div>
 
       {/* Filter Modal */}
