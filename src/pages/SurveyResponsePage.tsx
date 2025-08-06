@@ -7,8 +7,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModal';
-import { ResponseAnalyticsFilterDialog } from '@/components/ResponseAnalyticsFilterDialog';
-import { ResponseAnalyticsSelector } from '@/components/ResponseAnalyticsSelector';
 
 const mockResponseData = [
   {
@@ -116,7 +114,6 @@ export const SurveyResponsePage = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [responseData, setResponseData] = useState(mockResponseData);
 
@@ -138,16 +135,6 @@ export const SurveyResponsePage = () => {
   const handleApplyFilters = (filters: any) => {
     console.log('Applied filters:', filters);
     // Handle filter application logic here
-  };
-
-  const handleAnalyticsFilterApply = (startDate: string, endDate: string) => {
-    console.log('Applied analytics filters:', { startDate, endDate });
-    // Handle analytics filter application logic here
-  };
-
-  const handleAnalyticsSelectionChange = (selectedOptions: string[]) => {
-    console.log('Selected analytics:', selectedOptions);
-    // Handle analytics selection change logic here
   };
 
   const columns = [
@@ -382,166 +369,55 @@ export const SurveyResponsePage = () => {
           </TabsContent>
           
           <TabsContent value="analytics" className="mt-0">
-            {/* Analytics Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-xl sm:text-2xl font-semibold text-gray-800">Response Analytics</h1>
-              <div className="flex items-center gap-3">
+            {/* Analytics Content */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-[#C72030]">Category-wise Assets</h2>
                 <Button
+                  onClick={handleExportChart}
                   variant="outline"
-                  onClick={() => setIsAnalyticsFilterOpen(true)}
-                  className="flex items-center gap-2 border-gray-300 hover:bg-gray-50"
+                  size="sm"
+                  className="flex items-center gap-2 border-gray-300 text-gray-600 hover:bg-gray-50"
                 >
-                  <Filter className="w-4 h-4" />
+                  <Download className="w-4 h-4" />
                 </Button>
-                <ResponseAnalyticsSelector onSelectionChange={handleAnalyticsSelectionChange} />
               </div>
-            </div>
-
-            {/* Main Analytics Layout */}
-            <div className="flex gap-6">
-              {/* Left Sidebar - Recent Responses */}
-              <div className="w-80 bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Recent Responses</h3>
-                  <p className="text-sm text-gray-500">Wednesday, August 6, 2025</p>
-                </div>
-                
-                <div className="space-y-4">
-                  {mockResponseData.slice(0, 3).map((response, index) => (
-                    <div key={response.id} className="p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-start justify-between mb-2">
-                        <span className="text-sm font-medium text-[#C72030]">#{response.id}</span>
-                      </div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-1">{response.surveyTitle}</h4>
-                      <p className="text-xs text-blue-600 mb-2">"{response.responses} hrs / Fully Operational"</p>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-600">
-                          Status: <span className={index === 1 ? "text-red-500" : "text-green-500"}>
-                            {index === 1 ? "Breakdown" : "In Use"}
-                          </span>
-                        </span>
-                      </div>
-                      <button className="text-xs text-blue-600 hover:underline mt-2">
-                        View Detail&gt;&gt;
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Right Content - Charts */}
-              <div className="flex-1 space-y-6">
-                {/* Response Status Chart */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold text-[#C72030]">Response Status</h2>
-                    <Button
-                      onClick={handleExportChart}
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2 border-gray-300 text-gray-600 hover:bg-gray-50"
+              
+              <div className="h-96">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={{
+                        stroke: '#666',
+                        strokeWidth: 1
+                      }}
+                      label={({ name, value }) => `${name} (${value})`}
+                      outerRadius={100}
+                      innerRadius={40}
+                      fill="#8884d8"
+                      dataKey="value"
                     >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: 'In Use', value: 125, color: '#C19A6B' },
-                            { name: 'Breakdown', value: 35, color: '#E5E5E5' }
-                          ]}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={120}
-                          innerRadius={50}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          <Cell fill="#C19A6B" />
-                          <Cell fill="#E5E5E5" />
-                        </Pie>
-                        <Tooltip 
-                          formatter={(value: any) => [`${value}`, '']}
-                          contentStyle={{
-                            backgroundColor: 'white',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '6px',
-                            fontSize: '12px'
-                          }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    
-                    {/* Custom Labels positioned around the chart */}
-                    <div className="relative">
-                      <div className="absolute -top-60 left-10 text-sm">
-                        <div className="text-gray-600">In Use (125)</div>
-                      </div>
-                      <div className="absolute -top-40 right-10 text-sm">
-                        <div className="text-gray-600">Breakdown (35)</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Response Type Distribution Chart */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold text-[#C72030]">Response Type Distribution</h2>
-                    <Button
-                      onClick={handleExportBarChart}
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2 border-gray-300 text-gray-600 hover:bg-gray-50"
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: 'IT Equipment', value: 67, color: '#C19A6B' },
-                            { name: 'Non-IT Equipment', value: 178, color: '#E5E5E5' }
-                          ]}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={120}
-                          innerRadius={50}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          <Cell fill="#C19A6B" />
-                          <Cell fill="#E5E5E5" />
-                        </Pie>
-                        <Tooltip 
-                          formatter={(value: any) => [`${value}`, '']}
-                          contentStyle={{
-                            backgroundColor: 'white',
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '6px',
-                            fontSize: '12px'
-                          }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    
-                    {/* Custom Labels positioned around the chart */}
-                    <div className="relative">
-                      <div className="absolute -top-60 left-10 text-sm">
-                        <div className="text-gray-600">IT Equipment (67)</div>
-                      </div>
-                      <div className="absolute -top-40 right-10 text-sm">
-                        <div className="text-gray-600">Non-IT Equipment (178)</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                      {pieChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: any, name: any, props: any) => [
+                        `${value}`,
+                        props.payload.name
+                      ]}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '6px',
+                        fontSize: '12px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </div>
             
@@ -618,18 +494,12 @@ export const SurveyResponsePage = () => {
         </Tabs>
       </div>
 
-        {/* Filter Modals */}
-        <SurveyResponseFilterModal
-          open={isFilterModalOpen}
-          onClose={handleCloseFilterModal}
-          onApplyFilters={handleApplyFilters}
-        />
-        
-        <ResponseAnalyticsFilterDialog
-          isOpen={isAnalyticsFilterOpen}
-          onClose={() => setIsAnalyticsFilterOpen(false)}
-          onApplyFilters={handleAnalyticsFilterApply}
-        />
-      </div>
-    );
+      {/* Filter Modal */}
+      <SurveyResponseFilterModal
+        open={isFilterModalOpen}
+        onClose={handleCloseFilterModal}
+        onApplyFilters={handleApplyFilters}
+      />
+    </div>
+  );
 };
