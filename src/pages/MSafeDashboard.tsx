@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -315,10 +314,6 @@ export const MSafeDashboard = () => {
         <Button variant="outline">
           <Filter className="h-4 w-4 mr-2" />
           Filters
-        </Button>
-        <Button variant="outline">
-          <Copy className="h-4 w-4 mr-2" />
-          Clone Role
         </Button>
       </div>
 
