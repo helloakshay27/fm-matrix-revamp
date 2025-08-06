@@ -11,15 +11,12 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { currentSection, isSidebarCollapsed, setIsSidebarCollapsed } = useLayout();
+  const { currentSection, isSidebarCollapsed } = useLayout();
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
       <Header />
-      <Sidebar 
-        isOpen={!isSidebarCollapsed} 
-        onClose={() => setIsSidebarCollapsed(true)} 
-      />
+      <Sidebar />
       <DynamicHeader />
       
       <main className={`${isSidebarCollapsed ? 'ml-16' : 'ml-64'} pt-28 transition-all duration-300`}>
