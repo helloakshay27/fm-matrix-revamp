@@ -383,14 +383,18 @@ export const SurveyResponsePage = () => {
                 </Button>
               </div>
               
-              <div className="h-80">
+              <div className="h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={pieChartData}
                       cx="50%"
-                      cy="40%"
-                      labelLine={false}
+                      cy="50%"
+                      labelLine={{
+                        stroke: '#666',
+                        strokeWidth: 1
+                      }}
+                      label={({ name, value }) => `${name} (${value})`}
                       outerRadius={100}
                       innerRadius={40}
                       fill="#8884d8"
@@ -414,21 +418,6 @@ export const SurveyResponsePage = () => {
                     />
                   </PieChart>
                 </ResponsiveContainer>
-              </div>
-              
-              {/* Legend positioned at the bottom */}
-              <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                {pieChartData.map((entry, index) => (
-                  <div key={entry.name} className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-sm flex-shrink-0" 
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    ></div>
-                    <span className="text-gray-600 truncate">
-                      {entry.name} ({entry.value})
-                    </span>
-                  </div>
-                ))}
               </div>
             </div>
             
