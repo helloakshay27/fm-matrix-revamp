@@ -56,6 +56,7 @@ const visitorsData = [
 export const VisitorsHistoryDashboard = () => {
   const [activeTab, setActiveTab] = useState('History');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentSearchTerm, setCurrentSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -67,9 +68,18 @@ export const VisitorsHistoryDashboard = () => {
     }
   };
 
+  const handleSearch = () => {
+    setCurrentSearchTerm(searchTerm);
+  };
+
+  const handleReset = () => {
+    setSearchTerm('');
+    setCurrentSearchTerm('');
+  };
+
   const filteredVisitors = visitorsData.filter(visitor =>
-    visitor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    visitor.passNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    visitor.name.toLowerCase().includes(currentSearchTerm.toLowerCase()) ||
+    visitor.passNumber.toLowerCase().includes(currentSearchTerm.toLowerCase())
   );
 
   return (
@@ -111,10 +121,12 @@ export const VisitorsHistoryDashboard = () => {
                   placeholder="Search using Guest's Name or Pass Number"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   className="pl-10"
                 />
               </div>
               <Button 
+                onClick={handleSearch}
                 style={{ backgroundColor: '#C72030' }}
                 className="text-white hover:bg-[#C72030]/90"
                 size="sm"
@@ -122,6 +134,7 @@ export const VisitorsHistoryDashboard = () => {
                 <Search className="w-4 h-4" />
               </Button>
               <Button 
+                onClick={handleReset}
                 style={{ backgroundColor: '#C72030' }}
                 className="text-white hover:bg-[#C72030]/90"
                 size="sm"
