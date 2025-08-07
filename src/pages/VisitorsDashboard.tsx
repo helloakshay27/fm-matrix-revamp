@@ -112,8 +112,16 @@ export const VisitorsDashboard = () => {
               {/* Show content only for Visitor In tab */}
               {visitorSubTab === 'visitor-in' && (
                 <div className="p-4">
-                  {/* Person Selection Dropdown */}
-                  <div className="mb-6 flex justify-end">
+                  {/* Top Row with Add Button and Person Selection */}
+                  <div className="mb-6 flex justify-between items-center">
+                    <Button 
+                      onClick={() => setIsNewVisitorDialogOpen(true)}
+                      style={{ backgroundColor: '#C72030' }}
+                      className="w-12 h-12 rounded-full text-white hover:bg-[#C72030]/90 shadow-lg"
+                    >
+                      <Plus className="w-6 h-6" />
+                    </Button>
+                    
                     <div className="flex items-center">
                       <Select value={selectedPerson} onValueChange={setSelectedPerson}>
                         <SelectTrigger className="w-64 bg-white border border-gray-300">
@@ -261,18 +269,6 @@ export const VisitorsDashboard = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Floating Add Button - only show for Visitor In */}
-        {mainTab === 'visitor' && visitorSubTab === 'visitor-in' && (
-          <div className="fixed bottom-8 right-8">
-            <Button 
-              onClick={() => setIsNewVisitorDialogOpen(true)}
-              style={{ backgroundColor: '#C72030' }}
-              className="w-12 h-12 rounded-full text-white hover:bg-[#C72030]/90 shadow-lg"
-            >
-              <Plus className="w-6 h-6" />
-            </Button>
-          </div>
-        )}
       </div>
 
       <NewVisitorDialog 
