@@ -1,12 +1,12 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, Calendar, Clock, Users } from 'lucide-react';
-
 export const CRMEventDetailsPage = () => {
-  const { id } = useParams();
+  const {
+    id
+  } = useParams();
   const navigate = useNavigate();
 
   // Sample event data - in a real app, this would be fetched based on the ID
@@ -26,28 +26,18 @@ export const CRMEventDetailsPage = () => {
     attendeeCount: 0,
     image: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=600&h=400&fit=crop'
   };
-
   const handleDisable = () => {
     console.log('Disable event clicked');
     // Implement disable functionality
   };
-
-  return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+  return <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header with back button */}
       <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/crm/events')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
-        >
+        <Button variant="ghost" onClick={() => navigate('/crm/events')} className="flex items-center gap-2 text-gray-600 hover:text-gray-800">
           <ArrowLeft className="w-4 h-4" />
           Back to Events
         </Button>
-        <Button
-          onClick={handleDisable}
-          className="ml-auto bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2"
-        >
+        <Button onClick={handleDisable} className="ml-auto bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2">
           Disable
         </Button>
       </div>
@@ -137,20 +127,7 @@ export const CRMEventDetailsPage = () => {
       </div>
 
       {/* Logs Section */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">
-            L
-          </div>
-          <h2 className="text-lg font-bold text-gray-900">LOGS</h2>
-        </div>
-        
-        <div className="p-6">
-          <div className="text-center py-8 text-gray-500">
-            No logs available for this event.
-          </div>
-        </div>
-      </div>
+      
 
       {/* Footer branding */}
       <div className="text-center text-xs text-gray-500 mt-8">
@@ -162,6 +139,5 @@ export const CRMEventDetailsPage = () => {
           <span className="font-semibold">LOCATED</span>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
