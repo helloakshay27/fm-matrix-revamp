@@ -101,73 +101,85 @@ export const GatePassOutwardsDashboard = () => {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
-
-        {/* Data Table */}
-        <div>
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50 border-b border-gray-200">
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">S No.</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Preview</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">ID</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Type</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Returnable/Non Returnable</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Expected Return Date</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Category</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Person Name</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Profile Image</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Pass No.</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Mode of Transport</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">LR No.</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Trip ID</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Gate Entry</TableHead>
-                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Item Details</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {outwardData.map((entry, index) => (
-                <TableRow key={entry.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <TableCell className="px-6 py-4 text-gray-900">{String(index + 1).padStart(1, '0')}</TableCell>
-                  <TableCell className="px-6 py-4">
-                    <button 
-                      onClick={() => handleViewDetails(entry.id)}
-                      className="text-gray-600 hover:text-gray-800 transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </TableCell>
-                  <TableCell className="px-6 py-4">
-                    <button
-                      className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors font-medium"
-                      onClick={() => handleViewDetails(entry.id)}
-                    >
-                      {entry.id}
-                    </button>
-                  </TableCell>
-                  <TableCell className="px-6 py-4 text-gray-900">{entry.type}</TableCell>
-                  <TableCell className="px-6 py-4 text-gray-900">{entry.returnableNonReturnable}</TableCell>
-                  <TableCell className="px-6 py-4 text-gray-900">{entry.expectedReturnDate}</TableCell>
-                  <TableCell className="px-6 py-4 text-gray-900">{entry.category}</TableCell>
-                  <TableCell className="px-6 py-4 text-gray-900 font-medium">{entry.personName}</TableCell>
-                  <TableCell className="px-6 py-4">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                      <span className="text-gray-500 text-xs font-medium">
-                        {entry.personName.charAt(0).toUpperCase()}
-                      </span>
+      <div className="border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50">
+              <TableHead>S No.</TableHead>
+              <TableHead>Action</TableHead>
+              <TableHead>ID</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Returnable/Non Returnable</TableHead>
+              <TableHead>Expected Return Date</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Person Name</TableHead>
+              <TableHead>Profile Image</TableHead>
+              <TableHead>Pass No.</TableHead>
+              <TableHead>Mode of Transport</TableHead>
+              <TableHead>LR No.</TableHead>
+              <TableHead>Trip ID</TableHead>
+              <TableHead>Gate Entry</TableHead>
+              <TableHead className="w-48">Item Details</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {outwardData.map((entry, index) => (
+              <TableRow key={entry.id}>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <div title="View details">
+                      <Eye 
+                        className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+                        onClick={() => handleViewDetails(entry.id)}
+                      />
                     </div>
-                  </TableCell>
-                  <TableCell className="px-6 py-4 text-gray-900">{entry.passNo}</TableCell>
-                  <TableCell className="px-6 py-4 text-gray-900">{entry.modeOfTransport}</TableCell>
-                  <TableCell className="px-6 py-4 text-gray-900">{entry.lrNo}</TableCell>
-                  <TableCell className="px-6 py-4 text-gray-900">{entry.tripId}</TableCell>
-                  <TableCell className="px-6 py-4 text-gray-900">{entry.gateEntry}</TableCell>
-                  <TableCell className="px-6 py-4 text-gray-900 max-w-xs truncate">{entry.itemDetails}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                  </div>
+                </TableCell>
+                <TableCell className="font-medium">
+                  <button
+                    onClick={() => handleViewDetails(entry.id)}
+                    className="text-[#C72030] hover:underline hover:text-[#C72030]/80 transition-colors font-medium"
+                  >
+                    {entry.id}
+                  </button>
+                </TableCell>
+                <TableCell>{entry.type || '--'}</TableCell>
+                <TableCell>{entry.returnableNonReturnable}</TableCell>
+                <TableCell>{entry.expectedReturnDate || '--'}</TableCell>
+                <TableCell>{entry.category}</TableCell>
+                <TableCell>{entry.personName}</TableCell>
+                <TableCell>
+                  <img 
+                    src={entry.profileImage} 
+                    alt={`${entry.personName} profile`}
+                    className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                  />
+                </TableCell>
+                <TableCell>{entry.passNo || '--'}</TableCell>
+                <TableCell>{entry.modeOfTransport || '--'}</TableCell>
+                <TableCell>{entry.lrNo || '--'}</TableCell>
+                <TableCell>{entry.tripId || '--'}</TableCell>
+                <TableCell>{entry.gateEntry || '--'}</TableCell>
+                <TableCell className="max-w-xs">
+                  <div className="truncate" title={entry.itemDetails}>
+                    {entry.itemDetails}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {outwardData.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={15} className="text-center py-12">
+                  <div className="flex flex-col items-center text-gray-500">
+                    <div className="text-lg font-medium mb-2">No outward entries available</div>
+                    <div className="text-sm">There are no gate pass entries to display</div>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       <GatePassOutwardsFilterModal 
