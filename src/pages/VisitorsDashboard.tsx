@@ -73,42 +73,40 @@ export const VisitorsDashboard = () => {
 
           <TabsContent value="visitor" className="bg-white rounded-lg border border-gray-200 mt-4">
             <Tabs value={visitorSubTab} onValueChange={setVisitorSubTab} className="w-full">
-              <div className="border-b border-gray-200 bg-gray-50 px-1 py-1">
-                <div className="flex gap-1">
-                  <Button 
-                    onClick={() => setVisitorSubTab('visitor-in')}
-                    className={`px-4 py-2 text-sm font-medium transition-colors rounded-md ${
-                      visitorSubTab === 'visitor-in' 
-                        ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
-                        : 'bg-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                    variant="ghost"
-                  >
-                    Visitor In
-                  </Button>
-                  <Button 
-                    onClick={() => setVisitorSubTab('visitor-out')}
-                    className={`px-4 py-2 text-sm font-medium transition-colors rounded-md ${
-                      visitorSubTab === 'visitor-out' 
-                        ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
-                        : 'bg-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                    variant="ghost"
-                  >
-                    Visitor Out
-                  </Button>
-                  <Button 
-                    onClick={handleHistoryClick}
-                    className={`px-4 py-2 text-sm font-medium transition-colors rounded-md ${
-                      visitorSubTab === 'history' 
-                        ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
-                        : 'bg-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                    variant="ghost"
-                  >
-                    History
-                  </Button>
-                </div>
+              <div className="flex border-b border-gray-200">
+                <Button 
+                  onClick={() => setVisitorSubTab('visitor-in')}
+                  className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                    visitorSubTab === 'visitor-in' 
+                      ? 'text-primary border-primary bg-primary/5' 
+                      : 'text-muted-foreground border-transparent hover:text-foreground'
+                  }`}
+                  variant="ghost"
+                >
+                  Visitor In
+                </Button>
+                <Button 
+                  onClick={() => setVisitorSubTab('visitor-out')}
+                  className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                    visitorSubTab === 'visitor-out' 
+                      ? 'text-primary border-primary bg-primary/5' 
+                      : 'text-muted-foreground border-transparent hover:text-foreground'
+                  }`}
+                  variant="ghost"
+                >
+                  Visitor Out
+                </Button>
+                <Button 
+                  onClick={handleHistoryClick}
+                  className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                    visitorSubTab === 'history' 
+                      ? 'text-primary border-primary bg-primary/5' 
+                      : 'text-muted-foreground border-transparent hover:text-foreground'
+                  }`}
+                  variant="ghost"
+                >
+                  History
+                </Button>
               </div>
 
               {/* Show content only for Visitor In tab */}
