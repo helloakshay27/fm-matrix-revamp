@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye } from 'lucide-react';
+import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -204,6 +204,9 @@ export const MSafeDashboard = () => {
   const renderActions = (user: FMUser) => <div className="flex items-center justify-center gap-2">
       <Button variant="ghost" size="sm" onClick={() => {}} className="h-8 w-8 p-0">
         <Eye className="h-4 w-4" />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => {}} className="h-8 w-8 p-0">
+        <Trash2 className="h-4 w-4" />
       </Button>
     </div>;
   const handleRefresh = () => {
