@@ -144,34 +144,70 @@ export const MSafeUserDetail = () => {
         <TabsContent value="other" className="mt-0">
           <div className="bg-white rounded-lg border p-6">
             <h3 className="text-lg font-semibold mb-4">Other Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="text-sm font-medium text-gray-600">Company Name</label>
-                <p className="text-gray-900 mt-1">{user.company_name || 'N/A'}</p>
+                <label className="text-sm font-medium text-gray-600">Site</label>
+                <p className="text-gray-900 mt-1">{user.company_name || 'Corporate, Birla Centurion'}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-600">Entity ID</label>
-                <p className="text-gray-900 mt-1">{user.entity_id || 'N/A'}</p>
+                <label className="text-sm font-medium text-gray-600">Employee</label>
+                <p className="text-gray-900 mt-1">{user.employee_id || 'N/A'}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-600">Unit ID</label>
-                <p className="text-gray-900 mt-1">{user.unit_id || 'N/A'}</p>
+                <label className="text-sm font-medium text-gray-600">Last Working Day</label>
+                <p className="text-gray-900 mt-1">Last Working Day</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-600">Created By</label>
-                <p className="text-gray-900 mt-1">{user.created_by_id || 'N/A'}</p>
+                <label className="text-sm font-medium text-gray-600">Base Unit</label>
+                <p className="text-gray-900 mt-1">{user.unit_id || 'Select Base Unit'}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-600">Access Level</label>
-                <p className="text-gray-900 mt-1">{user.lock_user_permission?.access_level?.toString() || 'N/A'}</p>
+                <label className="text-sm font-medium text-gray-600">Department</label>
+                <p className="text-gray-900 mt-1">Admin</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Designation</label>
+                <p className="text-gray-900 mt-1">{user.designation || 'Tester'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-600">User Type</label>
                 <div className="mt-1">{getTypeBadge(user.user_type)}</div>
               </div>
               <div>
+                <label className="text-sm font-medium text-gray-600">Role</label>
+                <p className="text-gray-900 mt-1">Admin</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Vendor Company Name</label>
+                <p className="text-gray-900 mt-1">Select Vendor Company</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Entity Name</label>
+                <p className="text-gray-900 mt-1">{user.entity_id || 'Select Entity'}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Access Level</label>
+                <p className="text-gray-900 mt-1">{user.lock_user_permission?.access_level?.toString() || 'Site'}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Access</label>
+                <p className="text-gray-900 mt-1">Corporate, Birla Centurion</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Email Preference</label>
+                <p className="text-gray-900 mt-1">All Emails</p>
+              </div>
+              <div>
                 <label className="text-sm font-medium text-gray-600">Status</label>
                 <div className="mt-1">{getStatusBadge(user.lock_user_permission_status)}</div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Daily Helpdesk Report Email</label>
+                <div className="mt-1">{getYesNoBadge(false)}</div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-600">Created By</label>
+                <p className="text-gray-900 mt-1">{user.created_by_id || 'N/A'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-600">App Downloaded</label>
