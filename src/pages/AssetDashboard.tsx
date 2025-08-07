@@ -502,7 +502,7 @@ export const AssetDashboard = () => {
         filters = { it_asset_eq: true };
         break;
       case "in_use":
-        filters = { breakdown_eq: false };
+        filters = { breakdown_eq: false, status_eq: "in_use" };
         break;
       case "breakdown":
         filters = { breakdown_eq: true };
