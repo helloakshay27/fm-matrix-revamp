@@ -836,10 +836,10 @@ export const VisitorFormPage = () => {
             {/* Additional Visitors */}
             {additionalVisitors.map((visitor, index) => (
               <div key={visitor.id} className="border-t pt-4">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <TextField
                     label="Name"
-                    placeholder="Name"
+                    placeholder="Enter Name"
                     value={visitor.name}
                     onChange={(e) => updateAdditionalVisitor(visitor.id, 'name', e.target.value)}
                     fullWidth
@@ -854,12 +854,11 @@ export const VisitorFormPage = () => {
                       sx: fieldStyles,
                     }}
                   />
-                </div>
-                <div className="relative">
+                  
                   <div className="flex items-center space-x-2">
                     <TextField
                       label="Mobile"
-                      placeholder="Mobile"
+                      placeholder="Enter Mobile"
                       value={visitor.mobile}
                       onChange={(e) => updateAdditionalVisitor(visitor.id, 'mobile', e.target.value)}
                       fullWidth
@@ -879,7 +878,7 @@ export const VisitorFormPage = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => removeAdditionalVisitor(visitor.id)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 flex-shrink-0"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
