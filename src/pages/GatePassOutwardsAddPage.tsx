@@ -51,7 +51,7 @@ export const GatePassOutwardsAddPage = () => {
           Back to Outward List
         </Button>
         
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4 mb-4">
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span>Goods Outwards</span>
             <span>›</span>
