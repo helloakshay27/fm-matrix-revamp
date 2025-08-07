@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { RefreshCw, Plus } from 'lucide-react';
+import { RefreshCw, Plus, Search, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
@@ -16,6 +16,7 @@ export const VisitorsDashboard = () => {
   const [activeVisitorType, setActiveVisitorType] = useState('unexpected');
   const [mainTab, setMainTab] = useState('visitor');
   const [visitorSubTab, setVisitorSubTab] = useState('visitor-in');
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
   const handleHistoryClick = () => {
@@ -35,6 +36,16 @@ export const VisitorsDashboard = () => {
   const handleNumberUpdate = (newNumber: string) => {
     console.log('Updating number from', currentVisitorNumber, 'to', newNumber);
     // Handle number update logic here
+  };
+
+  const handleSearch = () => {
+    console.log('Searching for:', searchTerm);
+    // Handle search logic here
+  };
+
+  const handleReset = () => {
+    setSearchTerm('');
+    console.log('Search reset');
   };
 
   return (
@@ -289,12 +300,30 @@ export const VisitorsDashboard = () => {
                       Add
                     </Button>
                     
-                    <div className="flex-1 max-w-md ml-4">
-                      <input
-                        type="text"
-                        placeholder="Search using Guest's Name or Pass Number."
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
-                      />
+                    <div className="flex items-center gap-2 flex-1 max-w-md ml-4">
+                      <div className="relative flex-1">
+                        <input
+                          type="text"
+                          placeholder="Search using Guest's Name or Pass Number."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+                        />
+                        <button
+                          onClick={handleSearch}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700"
+                        >
+                          <Search className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <Button
+                        onClick={handleReset}
+                        variant="ghost"
+                        size="sm"
+                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
 
