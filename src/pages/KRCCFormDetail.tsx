@@ -107,91 +107,89 @@ export const KRCCFormDetail = () => {
         </Button>
       </div>
 
+      {/* Personal Details Section */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+        <h2 className="text-lg font-semibold text-[#C72030] mb-6">Personal Details</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div>
+            <span className="text-sm font-medium text-gray-700">First Name:</span>
+            <span className="ml-2 text-gray-900">{formData.personalDetails.firstName}</span>
+          </div>
+          
+          <div>
+            <span className="text-sm font-medium text-gray-700">Last Name:</span>
+            <span className="ml-2 text-gray-900">{formData.personalDetails.lastName}</span>
+          </div>
+          
+          <div>
+            <span className="text-sm font-medium text-gray-700">Email ID:</span>
+            <span className="ml-2 text-gray-900">{formData.personalDetails.email}</span>
+          </div>
+          
+          <div>
+            <span className="text-sm font-medium text-gray-700">Gender:</span>
+            <span className="ml-2 text-gray-900">{formData.personalDetails.gender}</span>
+          </div>
+          
+          <div>
+            <span className="text-sm font-medium text-gray-700">Blood Group:</span>
+            <span className="ml-2 text-gray-900">{formData.personalDetails.bloodGroup}</span>
+          </div>
+          
+          <div>
+            <span className="text-sm font-medium text-gray-700">DOB:</span>
+            <span className="ml-2 text-gray-900">{formData.personalDetails.dob}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* KRCC Details Section */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        {/* Personal Details Section */}
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold text-[#C72030] mb-6">Personal Details</h2>
+        <h2 className="text-lg font-semibold text-[#C72030] mb-6">KRCC Details (Ride a 2 Wheeler)</h2>
+        
+        {/* Driving License Details */}
+        <div className="mb-6">
+          <h3 className="text-base font-medium text-gray-900 mb-4">Driving License Details</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <span className="text-sm font-medium text-gray-700">First Name:</span>
-              <span className="ml-2 text-gray-900">{formData.personalDetails.firstName}</span>
+              <span className="text-sm font-medium text-gray-700">Driving License Number:</span>
+              <span className="ml-2 text-gray-900">{formData.krccDetails.drivingLicenseNumber}</span>
             </div>
             
             <div>
-              <span className="text-sm font-medium text-gray-700">Last Name:</span>
-              <span className="ml-2 text-gray-900">{formData.personalDetails.lastName}</span>
+              <span className="text-sm font-medium text-gray-700">2 Wheeler Reg. Number:</span>
+              <span className="ml-2 text-gray-900">{formData.krccDetails.twoWheelerRegNumber}</span>
             </div>
             
             <div>
-              <span className="text-sm font-medium text-gray-700">Email ID:</span>
-              <span className="ml-2 text-gray-900">{formData.personalDetails.email}</span>
-            </div>
-            
-            <div>
-              <span className="text-sm font-medium text-gray-700">Gender:</span>
-              <span className="ml-2 text-gray-900">{formData.personalDetails.gender}</span>
-            </div>
-            
-            <div>
-              <span className="text-sm font-medium text-gray-700">Blood Group:</span>
-              <span className="ml-2 text-gray-900">{formData.personalDetails.bloodGroup}</span>
-            </div>
-            
-            <div>
-              <span className="text-sm font-medium text-gray-700">DOB:</span>
-              <span className="ml-2 text-gray-900">{formData.personalDetails.dob}</span>
+              <span className="text-sm font-medium text-gray-700">Valid Till:</span>
+              <span className="ml-2 text-gray-900">{formData.krccDetails.validTill}</span>
             </div>
           </div>
         </div>
 
-        {/* KRCC Details Section */}
-        <div>
-          <h2 className="text-lg font-semibold text-[#C72030] mb-6">KRCC Details (Ride a 2 Wheeler)</h2>
-          
-          {/* Driving License Details */}
-          <div className="mb-6">
-            <h3 className="text-base font-medium text-gray-900 mb-4">Driving License Details</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <span className="text-sm font-medium text-gray-700">Driving License Number:</span>
-                <span className="ml-2 text-gray-900">{formData.krccDetails.drivingLicenseNumber}</span>
-              </div>
-              
-              <div>
-                <span className="text-sm font-medium text-gray-700">2 Wheeler Reg. Number:</span>
-                <span className="ml-2 text-gray-900">{formData.krccDetails.twoWheelerRegNumber}</span>
-              </div>
-              
-              <div>
-                <span className="text-sm font-medium text-gray-700">Valid Till:</span>
-                <span className="ml-2 text-gray-900">{formData.krccDetails.validTill}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Attachments */}
-          <AttachmentSection 
-            title="M-Parivahan Attachments" 
-            attachments={formData.krccDetails.attachments.mParivahan}
-          />
-          
-          <AttachmentSection 
-            title="Vehicle Attachments" 
-            attachments={formData.krccDetails.attachments.vehicle}
-          />
-          
-          <AttachmentSection 
-            title="Insurance Attachments" 
-            attachments={formData.krccDetails.attachments.insurance}
-          />
-          
-          <AttachmentSection 
-            title="Helmet Attachments" 
-            attachments={formData.krccDetails.attachments.helmet}
-          />
-        </div>
+        {/* Attachments */}
+        <AttachmentSection 
+          title="M-Parivahan Attachments" 
+          attachments={formData.krccDetails.attachments.mParivahan}
+        />
+        
+        <AttachmentSection 
+          title="Vehicle Attachments" 
+          attachments={formData.krccDetails.attachments.vehicle}
+        />
+        
+        <AttachmentSection 
+          title="Insurance Attachments" 
+          attachments={formData.krccDetails.attachments.insurance}
+        />
+        
+        <AttachmentSection 
+          title="Helmet Attachments" 
+          attachments={formData.krccDetails.attachments.helmet}
+        />
       </div>
     </div>
   );
