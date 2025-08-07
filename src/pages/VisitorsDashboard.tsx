@@ -186,7 +186,7 @@ export const VisitorsDashboard = () => {
                   </div>
 
                   {/* Content Area */}
-                  <div className="bg-[#F8F5F0] rounded-lg border border-gray-200 min-h-[400px]">
+                  <div className="bg-white rounded-lg border border-gray-200 min-h-[400px]">
                     {activeVisitorType === 'unexpected' && (
                       <div className="overflow-x-auto">
                         <table className="w-full caption-bottom text-sm border-separate border-spacing-0">
