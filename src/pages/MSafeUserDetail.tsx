@@ -103,39 +103,55 @@ export const MSafeUserDetail = () => {
 
         <TabsContent value="personal" className="mt-0">
           <div className="bg-white rounded-lg border p-6">
-            <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-sm font-medium text-gray-600">First Name</label>
-                <p className="text-gray-900 mt-1">{user.firstname || 'N/A'}</p>
+            <h3 className="text-lg font-semibold mb-6">Personal Information</h3>
+            <div className="flex gap-8">
+              {/* Profile Picture Section */}
+              <div className="flex-shrink-0">
+                <div className="w-48 h-48 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                  <div className="w-32 h-32 bg-yellow-400 rounded-full flex items-center justify-center">
+                    <User className="h-16 w-16 text-yellow-600" />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-600">Last Name</label>
-                <p className="text-gray-900 mt-1">{user.lastname || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-600">Email</label>
-                <p className="text-gray-900 mt-1">{user.email || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-600">Mobile Number</label>
-                <p className="text-gray-900 mt-1">{user.mobile || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-600">Gender</label>
-                <p className="text-gray-900 mt-1">{user.gender || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-600">Employee ID</label>
-                <p className="text-gray-900 mt-1">{user.employee_id || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-600">Designation</label>
-                <p className="text-gray-900 mt-1">{user.designation || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-600">Face Recognition</label>
-                <div className="mt-1">{getYesNoBadge(user.face_added)}</div>
+              
+              {/* Information Fields */}
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="text-sm font-medium text-gray-600">First Name</label>
+                  <p className="text-gray-900 mt-1">{user.firstname || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Last Name</label>
+                  <p className="text-gray-900 mt-1">{user.lastname || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Gender</label>
+                  <p className="text-gray-900 mt-1">{user.gender || 'Male'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Company Cluster</label>
+                  <p className="text-gray-900 mt-1">GUI</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Mobile</label>
+                  <p className="text-gray-900 mt-1">{user.mobile || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Email</label>
+                  <p className="text-gray-900 mt-1">{user.email || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Employee ID</label>
+                  <p className="text-gray-900 mt-1">{user.employee_id || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Designation</label>
+                  <p className="text-gray-900 mt-1">{user.designation || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Face Recognition</label>
+                  <div className="mt-1">{getYesNoBadge(user.face_added)}</div>
+                </div>
               </div>
             </div>
           </div>
