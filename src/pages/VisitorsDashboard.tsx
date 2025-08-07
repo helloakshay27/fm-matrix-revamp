@@ -272,7 +272,7 @@ export const VisitorsDashboard = () => {
                               </td>
                               <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
                                 <button 
-                                  className="w-4 h-4 text-blue-500 hover:text-blue-700"
+                                  className="w-4 h-4 text-black hover:text-gray-700"
                                   onClick={() => handleEditClick('9555625186')}
                                 >
                                   <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
