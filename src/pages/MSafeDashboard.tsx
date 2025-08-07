@@ -232,7 +232,7 @@ export const MSafeDashboard = () => {
       
 
       {/* Enhanced Table */}
-      <div className="rounded-lg shadow-sm border">
+      <div className="rounded-lg shadow-sm">
         <div className="p-6">
           <EnhancedTable data={fm_users || []} columns={columns} renderCell={renderCell} renderActions={renderActions} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search FM users..." enableExport={true} exportFileName="fm-users" pagination={true} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
         </div>
