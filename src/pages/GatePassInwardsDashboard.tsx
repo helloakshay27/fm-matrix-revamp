@@ -136,50 +136,50 @@ export const GatePassInwardsDashboard = () => {
       </div>
 
       {/* Data Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+      <div className="bg-white border border-gray-200 overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50 border-b border-gray-200">
-              <TableHead className="px-6 py-4 text-left text-sm font-semibold text-gray-900">ID</TableHead>
-              <TableHead className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Type</TableHead>
-              <TableHead className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Category</TableHead>
-              <TableHead className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Person Name</TableHead>
-              <TableHead className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Profile Image</TableHead>
-              <TableHead className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Pass No.</TableHead>
-              <TableHead className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Mode of Transport</TableHead>
-              <TableHead className="px-6 py-4 text-left text-sm font-semibold text-gray-900">LR No.</TableHead>
-              <TableHead className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Trip ID</TableHead>
-              <TableHead className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Gate Entry</TableHead>
-              <TableHead className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Item Details</TableHead>
+            <TableRow className="bg-gray-100/80 border-b border-gray-300">
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-300">ID</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-300">Type</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-300">Category</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-300">Person Name</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-300">Profile Image</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-300">Pass No.</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-300">Mode of Transport</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-300">LR No.</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-300">Trip ID</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider border-r border-gray-300">Gate Entry</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Item Details</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {inwardData.map((entry, index) => (
-              <TableRow key={entry.id} className={`border-b border-gray-100 hover:bg-gray-50 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                <TableCell className="px-6 py-4 font-medium text-blue-600">
+              <TableRow key={entry.id} className={`border-b border-gray-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}>
+                <TableCell className="px-4 py-3 text-sm border-r border-gray-200">
                   <button
                     onClick={() => handleViewDetails(entry.id)}
-                    className="text-blue-600 hover:underline hover:text-blue-800 transition-colors"
+                    className="text-blue-600 hover:underline hover:text-blue-800 transition-colors font-medium"
                   >
                     {entry.id}
                   </button>
                 </TableCell>
-                <TableCell className="px-6 py-4 text-sm text-gray-900">{entry.type}</TableCell>
-                <TableCell className="px-6 py-4 text-sm text-gray-900">{entry.category}</TableCell>
-                <TableCell className="px-6 py-4 font-medium text-sm text-gray-900">{entry.personName}</TableCell>
-                <TableCell className="px-6 py-4">
+                <TableCell className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">{entry.type}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">{entry.category}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">{entry.personName}</TableCell>
+                <TableCell className="px-4 py-3 border-r border-gray-200">
                   <img 
                     src={entry.profileImage} 
                     alt={`${entry.personName} profile`}
                     className="w-8 h-8 rounded-full object-cover border border-gray-200"
                   />
                 </TableCell>
-                <TableCell className="px-6 py-4 text-sm text-gray-900">{entry.passNo}</TableCell>
-                <TableCell className="px-6 py-4 text-sm text-gray-900">{entry.modeOfTransport}</TableCell>
-                <TableCell className="px-6 py-4 text-sm text-gray-900">{entry.lrNo}</TableCell>
-                <TableCell className="px-6 py-4 text-sm text-gray-900">{entry.tripId}</TableCell>
-                <TableCell className="px-6 py-4 text-sm text-gray-900">{entry.gateEntry}</TableCell>
-                <TableCell className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">{entry.itemDetails}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">{entry.passNo}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">{entry.modeOfTransport}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">{entry.lrNo}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">{entry.tripId}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">{entry.gateEntry}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate">{entry.itemDetails}</TableCell>
               </TableRow>
             ))}
           </TableBody>
