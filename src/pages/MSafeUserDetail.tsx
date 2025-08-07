@@ -84,28 +84,22 @@ export const MSafeUserDetail = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="personal" className="w-full">
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="flex space-x-8">
-            <TabsTrigger 
-              value="personal" 
-              className="group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-6 text-center text-sm font-medium text-gray-500 hover:text-gray-700 focus:z-10 data-[state=active]:text-red-600 data-[state=active]:bg-red-50 border-0 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-red-600"
-            >
-              <div className="flex items-center justify-center gap-2">
-                <UserCircle className="h-5 w-5" />
-                <span className="font-semibold">Personal Information</span>
-              </div>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="other" 
-              className="group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-6 text-center text-sm font-medium text-gray-500 hover:text-gray-700 focus:z-10 data-[state=active]:text-red-600 data-[state=active]:bg-red-50 border-0 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-red-600"
-            >
-              <div className="flex items-center justify-center gap-2">
-                <Settings className="h-5 w-5" />
-                <span className="font-semibold">Other Information</span>
-              </div>
-            </TabsTrigger>
-          </nav>
-        </div>
+        <TabsList className="grid w-full grid-cols-2 h-auto bg-transparent border-b border-gray-200 rounded-none p-0 mb-6">
+          <TabsTrigger 
+            value="personal" 
+            className="relative flex items-center justify-center gap-2 py-4 px-6 text-sm font-semibold text-gray-500 hover:text-gray-700 bg-transparent border-0 rounded-none data-[state=active]:text-red-600 data-[state=active]:bg-red-50 data-[state=active]:border-b-2 data-[state=active]:border-red-600 data-[state=active]:shadow-none"
+          >
+            <UserCircle className="h-5 w-5" />
+            Personal Information
+          </TabsTrigger>
+          <TabsTrigger 
+            value="other" 
+            className="relative flex items-center justify-center gap-2 py-4 px-6 text-sm font-semibold text-gray-500 hover:text-gray-700 bg-transparent border-0 rounded-none data-[state=active]:text-red-600 data-[state=active]:bg-red-50 data-[state=active]:border-b-2 data-[state=active]:border-red-600 data-[state=active]:shadow-none"
+          >
+            <Settings className="h-5 w-5" />
+            Other Information
+          </TabsTrigger>
+        </TabsList>
 
         <TabsContent value="personal" className="mt-6">
           <div className="bg-white rounded-lg border p-6">
