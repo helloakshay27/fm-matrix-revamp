@@ -47,7 +47,7 @@ export const ExternalUsersDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  // Dummy External User data (10 records) in state
+  // Dummy External User data (25 records) in state
   const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([
     {
       id: 1, firstname: 'Anand', lastname: 'Pawar', gender: 'Male', mobile: '8355857800', email: 'anandpawar54136@gmail.com', company_name: 'External Vendor A', entity_id: 1, unit_id: 1, designation: 'Shift Engineer', employee_id: 'EXT001', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 3 }, department: 'FM', line_manager_name: 'Manager A', line_manager_mobile: '9876543210'
@@ -78,6 +78,51 @@ export const ExternalUsersDashboard = () => {
     },
     {
       id: 10, firstname: 'Parveen', lastname: 'Kumar', gender: 'Male', mobile: '9785669937', email: '9785669937@gmail.com', company_name: 'Catering Services', entity_id: 10, unit_id: 10, designation: 'Cook', employee_id: 'EXT010', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: false, lock_user_permission: { access_level: 3 }, department: 'Catering', line_manager_name: 'Manager D', line_manager_mobile: '9876543213'
+    },
+    {
+      id: 11, firstname: 'Rajesh', lastname: 'Singh', gender: 'Male', mobile: '8855443322', email: 'rajesh.singh@vendor.com', company_name: 'IT Services Ltd', entity_id: 11, unit_id: 11, designation: 'IT Support', employee_id: 'EXT011', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 2 }, department: 'IT', circle: 'North', cluster: 'Zone 7', line_manager_name: 'Manager E', line_manager_mobile: '9876543214'
+    },
+    {
+      id: 12, firstname: 'Priya', lastname: 'Sharma', gender: 'Female', mobile: '7766554433', email: 'priya.sharma@cleaning.com', company_name: 'CleanTech Solutions', entity_id: 12, unit_id: 12, designation: 'Cleaning Supervisor', employee_id: 'EXT012', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'pending', face_added: false, app_downloaded: true, lock_user_permission: { access_level: 3 }, department: 'Housekeeping', circle: 'South', cluster: 'Zone 8'
+    },
+    {
+      id: 13, firstname: 'Suresh', lastname: 'Kumar', gender: 'Male', mobile: '9988776655', email: 'suresh.kumar@security.com', company_name: 'Elite Security', entity_id: 13, unit_id: 13, designation: 'Security Head', employee_id: 'EXT013', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: false, lock_user_permission: { access_level: 2 }, department: 'Security', circle: 'East', cluster: 'Zone 9', line_manager_name: 'Manager F', line_manager_mobile: '9876543215'
+    },
+    {
+      id: 14, firstname: 'Meera', lastname: 'Patel', gender: 'Female', mobile: '8877665544', email: 'meera.patel@catering.com', company_name: 'Royal Catering', entity_id: 14, unit_id: 14, designation: 'Chef', employee_id: 'EXT014', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: false, lock_user_permission: { access_level: 3 }, department: 'Catering', circle: 'West', cluster: 'Zone 10'
+    },
+    {
+      id: 15, firstname: 'Arjun', lastname: 'Verma', gender: 'Male', mobile: '7799886655', email: 'arjun.verma@transport.com', company_name: 'Swift Transport', entity_id: 15, unit_id: 15, designation: 'Fleet Manager', employee_id: 'EXT015', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 2 }, department: 'Transport', circle: 'Central', cluster: 'Zone 11', line_manager_name: 'Manager G', line_manager_mobile: '9876543216'
+    },
+    {
+      id: 16, firstname: 'Kavita', lastname: 'Reddy', gender: 'Female', mobile: '6688997755', email: 'kavita.reddy@landscaping.com', company_name: 'Green Gardens', entity_id: 16, unit_id: 16, designation: 'Landscape Designer', employee_id: 'EXT016', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'pending', face_added: false, app_downloaded: true, lock_user_permission: { access_level: 3 }, department: 'Landscaping', circle: 'North', cluster: 'Zone 12'
+    },
+    {
+      id: 17, firstname: 'Vikram', lastname: 'Joshi', gender: 'Male', mobile: '5577889966', email: 'vikram.joshi@maintenance.com', company_name: 'TechFix Solutions', entity_id: 17, unit_id: 17, designation: 'Maintenance Lead', employee_id: 'EXT017', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: false, lock_user_permission: { access_level: 2 }, department: 'Maintenance', circle: 'South', cluster: 'Zone 13', line_manager_name: 'Manager H', line_manager_mobile: '9876543217'
+    },
+    {
+      id: 18, firstname: 'Sunita', lastname: 'Gupta', gender: 'Female', mobile: '4466778899', email: 'sunita.gupta@admin.com', company_name: 'Admin Pro Services', entity_id: 18, unit_id: 18, designation: 'Admin Executive', employee_id: 'EXT018', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: false, lock_user_permission: { access_level: 3 }, department: 'Administration', circle: 'East', cluster: 'Zone 14'
+    },
+    {
+      id: 19, firstname: 'Manoj', lastname: 'Tiwari', gender: 'Male', mobile: '3355667788', email: 'manoj.tiwari@logistics.com', company_name: 'LogiMove Corp', entity_id: 19, unit_id: 19, designation: 'Logistics Coordinator', employee_id: 'EXT019', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'pending', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 2 }, department: 'Logistics', circle: 'West', cluster: 'Zone 15', line_manager_name: 'Manager I', line_manager_mobile: '9876543218'
+    },
+    {
+      id: 20, firstname: 'Asha', lastname: 'Nair', gender: 'Female', mobile: '2244556677', email: 'asha.nair@hospitality.com', company_name: 'Hospitality Plus', entity_id: 20, unit_id: 20, designation: 'Guest Relations', employee_id: 'EXT020', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 3 }, department: 'Hospitality', circle: 'Central', cluster: 'Zone 16'
+    },
+    {
+      id: 21, firstname: 'Rohit', lastname: 'Agarwal', gender: 'Male', mobile: '1133445566', email: 'rohit.agarwal@finance.com', company_name: 'FinanceGuru Ltd', entity_id: 21, unit_id: 21, designation: 'Accounts Assistant', employee_id: 'EXT021', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'approved', face_added: false, app_downloaded: true, lock_user_permission: { access_level: 2 }, department: 'Finance', circle: 'North', cluster: 'Zone 17', line_manager_name: 'Manager J', line_manager_mobile: '9876543219'
+    },
+    {
+      id: 22, firstname: 'Deepika', lastname: 'Sinha', gender: 'Female', mobile: '9911223344', email: 'deepika.sinha@hr.com', company_name: 'HR Solutions Inc', entity_id: 22, unit_id: 22, designation: 'HR Coordinator', employee_id: 'EXT022', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'pending', face_added: true, app_downloaded: false, lock_user_permission: { access_level: 3 }, department: 'Human Resources', circle: 'South', cluster: 'Zone 18'
+    },
+    {
+      id: 23, firstname: 'Amit', lastname: 'Chopra', gender: 'Male', mobile: '8822334455', email: 'amit.chopra@marketing.com', company_name: 'MarketPro Agency', entity_id: 23, unit_id: 23, designation: 'Marketing Executive', employee_id: 'EXT023', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: false, lock_user_permission: { access_level: 2 }, department: 'Marketing', circle: 'East', cluster: 'Zone 19'
+    },
+    {
+      id: 24, firstname: 'Pooja', lastname: 'Malhotra', gender: 'Female', mobile: '7733445566', email: 'pooja.malhotra@legal.com', company_name: 'Legal Advisors LLC', entity_id: 24, unit_id: 24, designation: 'Legal Assistant', employee_id: 'EXT024', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 3 }, department: 'Legal', circle: 'West', cluster: 'Zone 20', line_manager_name: 'Manager K', line_manager_mobile: '9876543220'
+    },
+    {
+      id: 25, firstname: 'Sanjay', lastname: 'Mishra', gender: 'Male', mobile: '6644556677', email: 'sanjay.mishra@procurement.com', company_name: 'ProcureTech Solutions', entity_id: 25, unit_id: 25, designation: 'Procurement Officer', employee_id: 'EXT025', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: false, lock_user_permission: { access_level: 2 }, department: 'Procurement', circle: 'Central', cluster: 'Zone 21'
     },
   ]);
   const loading = false;
