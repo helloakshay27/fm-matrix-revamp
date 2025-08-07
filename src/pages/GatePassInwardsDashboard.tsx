@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, Eye } from 'lucide-react';
 import { GatePassInwardsFilterModal } from '@/components/GatePassInwardsFilterModal';
 
 export const GatePassInwardsDashboard = () => {
@@ -140,6 +140,8 @@ export const GatePassInwardsDashboard = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">S No.</TableHead>
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Preview</TableHead>
               <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">ID</TableHead>
               <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Type</TableHead>
               <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Category</TableHead>
@@ -156,6 +158,10 @@ export const GatePassInwardsDashboard = () => {
           <TableBody>
             {inwardData.map((entry, index) => (
               <TableRow key={entry.id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}>
+                <TableCell className="px-4 py-3 text-sm text-gray-900">{index + 1}</TableCell>
+                <TableCell className="px-4 py-3 text-sm">
+                  <Eye className="w-4 h-4 text-gray-600 cursor-pointer hover:text-blue-600" />
+                </TableCell>
                 <TableCell className="px-4 py-3 text-sm">
                   <button
                     onClick={() => handleViewDetails(entry.id)}
