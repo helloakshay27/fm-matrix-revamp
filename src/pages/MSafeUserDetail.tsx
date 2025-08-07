@@ -77,7 +77,16 @@ export const MSafeUserDetail = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
+          <Button variant="ghost" onClick={() => {
+            console.log('Back button clicked');
+            try {
+              navigate(-1);
+            } catch (error) {
+              console.error('Navigation error:', error);
+              // Fallback navigation
+              navigate('/maintenance/m-safe');
+            }
+          }}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
