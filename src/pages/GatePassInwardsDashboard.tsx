@@ -1,11 +1,13 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { SlidersHorizontal } from 'lucide-react';
 import { GatePassInwardsFilterModal } from '@/components/GatePassInwardsFilterModal';
 
 export const GatePassInwardsDashboard = () => {
+  const navigate = useNavigate();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   // Data matching the screenshot
@@ -119,7 +121,7 @@ export const GatePassInwardsDashboard = () => {
             <Button 
               variant="outline"
               className="bg-[#F2EEE9] border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-md flex items-center gap-2"
-              onClick={() => window.location.href = '/security/gate-pass/inwards/add'}
+              onClick={() => navigate('/security/gate-pass/inwards/add')}
             >
               <span className="text-lg">+</span>
               Add
