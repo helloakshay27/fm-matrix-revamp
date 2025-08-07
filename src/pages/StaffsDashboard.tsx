@@ -177,7 +177,8 @@ export const StaffsDashboard = () => {
 
   const handleSearch = () => {
     console.log('Searching for:', searchTerm);
-    // Search functionality is already implemented via filteredData
+    // Force re-render to update filtered results
+    setSelectedStaffs([]);
   };
 
   const handleViewStaff = (staffId: string) => {
