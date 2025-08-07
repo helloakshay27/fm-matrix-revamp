@@ -406,7 +406,77 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
+      {/* Toolbar Section */}
+      <div className="flex items-center justify-between gap-4">
+        {/* Left Actions */}
+        <div className="flex items-center gap-3">
+          {leftActions}
+        </div>
 
+        {/* Center - Search */}
+        {enableSearch && !hideTableSearch && (
+          <div className="flex-1 max-w-md mx-4 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder={searchPlaceholder}
+              value={externalSearchTerm !== undefined ? externalSearchTerm : searchInput}
+              onChange={(e) => handleSearchInputChange(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {(searchInput || searchTerm) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearSearch}
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Right Actions */}
+        <div className="flex items-center gap-3">
+          {/* Filter Button */}
+          {onFilterClick && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onFilterClick}
+              className="border-gray-300"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filter
+            </Button>
+          )}
+
+          {/* Export Button */}
+          {enableExport && !hideTableExport && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport || onExport}
+              className="border-gray-300"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+          )}
+
+          {/* Column Visibility */}
+          {!hideColumnsButton && (
+            <ColumnVisibilityMenu
+              columns={columns}
+              columnVisibility={columnVisibility}
+              onToggleVisibility={handleToggleColumnVisibility}
+              onResetToDefaults={handleResetToDefaults}
+            />
+          )}
+
+          {rightActions}
+        </div>
+      </div>
       <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
         <div className="overflow-x-auto">
           <DndContext
