@@ -213,40 +213,54 @@ export const GatePassInwardsDetailPage = () => {
             </div>
 
             {/* Details */}
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm font-medium text-gray-700">Employee/Visitor Name:</span>
-                <span className="text-sm text-gray-900">{selectedEntry.personName}</span>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Employee/Visitor Name:
+                </label>
+                <p className="text-sm text-gray-900">{selectedEntry.personName}</p>
               </div>
               
-              <div className="flex justify-between">
-                <span className="text-sm font-medium text-gray-700">Visitor Mobile No.:</span>
-                <span className="text-sm text-gray-900">086907860</span>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Visitor Mobile No.:
+                </label>
+                <p className="text-sm text-gray-900">086907860</p>
               </div>
               
-              <div className="flex justify-between">
-                <span className="text-sm font-medium text-gray-700">Department:</span>
-                <span className="text-sm text-gray-900">UI/UX Designer</span>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Department:
+                </label>
+                <p className="text-sm text-gray-900">UI/UX Designer</p>
               </div>
               
-              <div className="flex justify-between">
-                <span className="text-sm font-medium text-gray-700">Company Name:</span>
-                <span className="text-sm text-gray-900">Lovated</span>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Company Name:
+                </label>
+                <p className="text-sm text-gray-900">Lovated</p>
               </div>
               
-              <div className="flex justify-between">
-                <span className="text-sm font-medium text-gray-700">Date/Time:</span>
-                <span className="text-sm text-gray-900">2 July 2025 12:45 Pm</span>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date/Time:
+                </label>
+                <p className="text-sm text-gray-900">2 July 2025 12:45 Pm</p>
               </div>
               
-              <div className="flex justify-between">
-                <span className="text-sm font-medium text-gray-700">Mode Of Transport:</span>
-                <span className="text-sm text-gray-900">{selectedEntry.modeOfTransport || "By Hand"}</span>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Mode Of Transport:
+                </label>
+                <p className="text-sm text-gray-900">{selectedEntry.modeOfTransport || "By Hand"}</p>
               </div>
               
-              <div className="flex justify-between">
-                <span className="text-sm font-medium text-gray-700">Expected Date:</span>
-                <span className="text-sm text-gray-900">-</span>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Expected Date:
+                </label>
+                <p className="text-sm text-gray-900">-</p>
               </div>
             </div>
           </div>
