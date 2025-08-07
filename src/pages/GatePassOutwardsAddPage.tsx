@@ -42,14 +42,13 @@ export const GatePassOutwardsAddPage = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <Button 
-          variant="outline" 
+        <div 
           onClick={() => navigate('/security/gate-pass/outwards')}
-          className="mb-4"
+          className="mb-4 flex items-center gap-2 text-gray-600 cursor-pointer hover:text-gray-800"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-4 h-4" />
           Back to Outward List
-        </Button>
+        </div>
         
         <div className="flex items-center gap-4 mb-4">
           <div className="flex items-center gap-2 text-sm text-gray-600">
