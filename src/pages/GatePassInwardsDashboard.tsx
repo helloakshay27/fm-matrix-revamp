@@ -9,8 +9,7 @@ import { GatePassInwardsFilterModal } from '@/components/GatePassInwardsFilterMo
 export const GatePassInwardsDashboard = () => {
   const navigate = useNavigate();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Data matching the screenshot
   const inwardData = [
     {
@@ -106,26 +105,6 @@ export const GatePassInwardsDashboard = () => {
     }
   ];
 
-  const [filteredData, setFilteredData] = useState(inwardData);
-
-  // Initialize filtered data when inwardData changes
-  React.useEffect(() => {
-    setFilteredData(inwardData);
-  }, []);
-
-  const handleApplyFilter = (searchTerm: string) => {
-    setSearchTerm(searchTerm);
-    if (!searchTerm.trim()) {
-      setFilteredData(inwardData);
-    } else {
-      const filtered = inwardData.filter((entry) => 
-        entry.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.personName.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredData(filtered);
-    }
-  };
-
   const handleViewDetails = (id: string) => {
     console.log('View details for:', id);
   };
@@ -177,7 +156,7 @@ export const GatePassInwardsDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData.map((entry) => (
+              {inwardData.map((entry) => (
                 <TableRow key={entry.id} className="hover:bg-gray-50">
                   <TableCell className="font-medium text-blue-600">
                     <button
@@ -213,7 +192,6 @@ export const GatePassInwardsDashboard = () => {
       <GatePassInwardsFilterModal 
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
-        onApplyFilter={handleApplyFilter}
       />
     </div>
   );

@@ -4,19 +4,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { X } from 'lucide-react';
 
 interface GatePassInwardsFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onApplyFilter: (searchTerm: string) => void;
 }
 
-export const GatePassInwardsFilterModal = ({ isOpen, onClose, onApplyFilter }: GatePassInwardsFilterModalProps) => {
+export const GatePassInwardsFilterModal = ({ isOpen, onClose }: GatePassInwardsFilterModalProps) => {
   const [searchByNameOrId, setSearchByNameOrId] = useState('');
 
   const handleApply = () => {
-    onApplyFilter(searchByNameOrId);
+    console.log('Filter applied:', { searchByNameOrId });
+    // Here you would implement the actual filter logic
     onClose();
   };
 
@@ -27,15 +26,7 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, onApplyFilter }: G
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white relative">
-        <Button
-          onClick={onClose}
-          variant="ghost"
-          size="icon"
-          className="absolute right-4 top-4 h-6 w-6 rounded-full"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+      <DialogContent className="max-w-md bg-white">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">FILTER</DialogTitle>
         </DialogHeader>
