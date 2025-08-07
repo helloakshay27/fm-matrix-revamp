@@ -88,7 +88,7 @@ export const GatePassOutwardsAddPage = () => {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-[#C72030] mb-4">GOODS DETAIL</h2>
           
-          <div className="grid grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-5 gap-4 mb-4">
             {activeTab === 'RETURNABLE' && (
               <TextField
                 label="Expected Returnable Date"
@@ -106,6 +106,22 @@ export const GatePassOutwardsAddPage = () => {
                 }}
               />
             )}
+            
+            <TextField
+              label="Item Quantity"
+              placeholder="01"
+              fullWidth
+              variant="outlined"
+              required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
             
             <FormControl
               fullWidth
@@ -163,21 +179,6 @@ export const GatePassOutwardsAddPage = () => {
           </div>
 
           <div className="grid grid-cols-4 gap-4 mb-4">
-            <TextField
-              label="Item Quantity"
-              placeholder="01"
-              fullWidth
-              variant="outlined"
-              required
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-              InputProps={{
-                sx: fieldStyles,
-              }}
-            />
             
             <TextField
               label="Unit"
