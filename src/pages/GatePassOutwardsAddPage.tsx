@@ -183,23 +183,7 @@ export const GatePassOutwardsAddPage = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <TextField
-              label="Item Quantity"
-              placeholder="01"
-              fullWidth
-              variant="outlined"
-              required
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-              InputProps={{
-                sx: fieldStyles,
-              }}
-            />
-            
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             <TextField
               label="Unit"
               placeholder="01"
