@@ -51,38 +51,41 @@ export const GatePassOutwardsAddPage = () => {
           Back to Outward List
         </Button>
         
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>Goods Outwards</span>
-          <span>&gt;</span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>Goods Outwards</span>
+            <span>&gt;</span>
+          </div>
+          
+          {/* Tabs */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab('RETURNABLE')}
+              className={`px-4 py-2 border text-sm font-medium ${
+                activeTab === 'RETURNABLE'
+                  ? 'bg-[#C72030] text-white border-[#C72030]'
+                  : 'bg-white text-[#C72030] border-[#C72030]'
+              }`}
+            >
+              RETURNABLE
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('NON RETURNABLE')}
+              className={`px-4 py-2 border text-sm font-medium ${
+                activeTab === 'NON RETURNABLE'
+                  ? 'bg-[#C72030] text-white border-[#C72030]'
+                  : 'bg-white text-[#C72030] border-[#C72030]'
+              }`}
+            >
+              NON RETURNABLE
+            </button>
+          </div>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Tabs */}
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveTab('RETURNABLE')}
-            className={`px-4 py-2 border text-sm font-medium ${
-              activeTab === 'RETURNABLE'
-                ? 'bg-[#C72030] text-white border-[#C72030]'
-                : 'bg-white text-[#C72030] border-[#C72030]'
-            }`}
-          >
-            RETURNABLE
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('NON RETURNABLE')}
-            className={`px-4 py-2 border text-sm font-medium ${
-              activeTab === 'NON RETURNABLE'
-                ? 'bg-[#C72030] text-white border-[#C72030]'
-                : 'bg-white text-[#C72030] border-[#C72030]'
-            }`}
-          >
-            NON RETURNABLE
-          </button>
-        </div>
 
         {/* Goods Detail Section */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
