@@ -450,14 +450,7 @@ export const VisitorsDashboard = () => {
                               </div>
                             </TableCell>
                             <TableCell className="font-medium">
-                              <div className="flex items-center gap-3">
-                                <img 
-                                  src={visitor.avatar} 
-                                  alt={`${visitor.visitorName} avatar`}
-                                  className="w-8 h-8 rounded-full object-cover border border-gray-200"
-                                />
-                                {visitor.visitorName}
-                              </div>
+                              {visitor.visitorName}
                             </TableCell>
                             <TableCell>{visitor.host}</TableCell>
                             <TableCell>{visitor.purpose}</TableCell>
