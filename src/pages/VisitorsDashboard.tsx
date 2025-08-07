@@ -402,13 +402,6 @@ export const VisitorsDashboard = () => {
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-gray-50">
-                          <TableHead className="w-12">
-                            <Checkbox
-                              checked={selectAll}
-                              onCheckedChange={handleSelectAll}
-                            />
-                          </TableHead>
-                          <TableHead>Action</TableHead>
                           <TableHead>Visitor Name</TableHead>
                           <TableHead>Host</TableHead>
                           <TableHead>Purpose</TableHead>
@@ -421,34 +414,6 @@ export const VisitorsDashboard = () => {
                       <TableBody>
                         {visitorOutData.map((visitor) => (
                           <TableRow key={visitor.id}>
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedVisitors.includes(visitor.id)}
-                                onCheckedChange={(checked) => handleSelectVisitor(visitor.id, checked as boolean)}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <div title="View visitor">
-                                  <Eye 
-                                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
-                                    onClick={() => handleViewVisitor(visitor.id)}
-                                  />
-                                </div>
-                                <div title="Edit visitor">
-                                  <Edit 
-                                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
-                                    onClick={() => handleEditVisitor(visitor.id)}
-                                  />
-                                </div>
-                                <div title="Delete visitor">
-                                  <Trash2 
-                                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-red-600" 
-                                    onClick={() => handleDeleteVisitor(visitor.id)}
-                                  />
-                                </div>
-                              </div>
-                            </TableCell>
                             <TableCell className="font-medium">
                               {visitor.visitorName}
                             </TableCell>
@@ -473,7 +438,7 @@ export const VisitorsDashboard = () => {
                         ))}
                         {visitorOutData.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={9} className="text-center py-12">
+                            <TableCell colSpan={7} className="text-center py-12">
                               <div className="flex flex-col items-center text-gray-500">
                                 <div className="text-lg font-medium mb-2">No visitors to check out</div>
                                 <div className="text-sm">There are no checked-in visitors to display</div>
