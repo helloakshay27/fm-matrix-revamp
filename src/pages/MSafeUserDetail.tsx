@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, FileText, UserCircle, Settings } from 'lucide-react';
+import { ArrowLeft, User, FileText, UserCircle, Settings, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -66,17 +66,23 @@ export const MSafeUserDetail = () => {
   };
   return <div className="p-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {user.firstname} {user.lastname}
-          </h1>
-          <p className="text-gray-600">User Details</p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" onClick={() => navigate(-1)}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {user.firstname} {user.lastname}
+            </h1>
+            <p className="text-gray-600">User Details</p>
+          </div>
         </div>
+        <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-50">
+          <Edit className="h-4 w-4 mr-2" />
+          Edit
+        </Button>
       </div>
 
       {/* Status Overview */}
