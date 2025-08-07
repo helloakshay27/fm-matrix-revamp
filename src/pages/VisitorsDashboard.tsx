@@ -276,11 +276,157 @@ export const VisitorsDashboard = () => {
                 </div>
               )}
 
-              {/* History tab content - blank */}
+              {/* History tab content */}
               {visitorSubTab === 'history' && (
-                <div className="p-4 min-h-[400px]">
-                  <div className="text-center text-gray-500 py-16">
-                    History content will be displayed here
+                <div className="p-4 min-h-[400px] space-y-4">
+                  {/* Search Bar */}
+                  <div className="mb-4">
+                    <input
+                      type="text"
+                      placeholder="Search using Guest's Name or Pass Number."
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+                    />
+                  </div>
+
+                  {/* Visitor Cards */}
+                  <div className="space-y-4">
+                    {/* Card 1 - Nadia */}
+                    <div className="bg-[#F8F5F0] rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center">
+                            <svg className="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg">nadia</h3>
+                            <div className="flex items-center text-sm text-gray-600 gap-1">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                              </svg>
+                              Mahendra Lungare
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600 gap-1">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                              </svg>
+                              mumbai
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600 gap-1 mt-1">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3V2h-2v2H8V2H6v2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H3V9h14v11z"/>
+                              </svg>
+                              Meeting
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                          Approved
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600 font-medium">Checked In at:</span>
+                          <div className="text-gray-900"></div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600 font-medium">Checked Out at:</span>
+                          <div className="text-gray-900"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card 2 - Test */}
+                    <div className="bg-[#F8F5F0] rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center">
+                            <svg className="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg">Test</h3>
+                            <div className="flex items-center text-sm text-gray-600 gap-1">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                              </svg>
+                              Test 42.0
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600 gap-1 mt-1">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3V2h-2v2H8V2H6v2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H3V9h14v11z"/>
+                              </svg>
+                              Personal
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                          Approved
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600 font-medium">Checked In at:</span>
+                          <div className="text-gray-900"></div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600 font-medium">Checked Out at:</span>
+                          <div className="text-gray-900"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card 3 - Sohail */}
+                    <div className="bg-[#F8F5F0] rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center">
+                            <svg className="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-lg">Sohail</h3>
+                            <div className="flex items-center text-sm text-gray-600 gap-1">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                              </svg>
+                              Mahendra Lungare
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600 gap-1">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                              </svg>
+                              Gophygital
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600 gap-1 mt-1">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3V2h-2v2H8V2H6v2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H3V9h14v11z"/>
+                              </svg>
+                              Meeting
+                            </div>
+                          </div>
+                        </div>
+                        <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                          Approved
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600 font-medium">Checked In at:</span>
+                          <div className="text-gray-900"></div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600 font-medium">Checked Out at:</span>
+                          <div className="text-gray-900"></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
