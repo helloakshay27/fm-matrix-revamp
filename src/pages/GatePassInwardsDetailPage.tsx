@@ -295,12 +295,12 @@ export const GatePassInwardsDetailPage = () => {
                     <TableCell className="px-4 py-3 text-sm text-gray-900">{item.description}</TableCell>
                     <TableCell className="px-4 py-3 text-sm text-gray-900">{item.attachment}</TableCell>
                     <TableCell className="px-4 py-3 text-sm">
-                      <span 
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 cursor-pointer hover:bg-green-200 transition-colors"
+                      <button 
+                        className="text-[#C72030] underline hover:text-[#C72030]/80 transition-colors font-medium"
                         onClick={() => handleReceiveClick(index)}
                       >
                         {item.updates}
-                      </span>
+                      </button>
                     </TableCell>
                   </TableRow>
                 ))}
