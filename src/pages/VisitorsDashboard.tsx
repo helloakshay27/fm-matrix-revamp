@@ -73,7 +73,7 @@ export const VisitorsDashboard = () => {
 
           <TabsContent value="visitor" className="bg-white rounded-lg border border-gray-200 mt-4">
             <Tabs value={visitorSubTab} onValueChange={setVisitorSubTab} className="w-full">
-              <div className="flex bg-gray-100 p-1 rounded-lg">
+              <div className="flex bg-white p-1 rounded-lg">
                 <Button 
                   onClick={() => setVisitorSubTab('visitor-in')}
                   className={`px-6 py-2 text-sm font-medium transition-colors rounded-md border-none ${
