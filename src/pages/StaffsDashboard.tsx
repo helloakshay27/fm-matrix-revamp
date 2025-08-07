@@ -369,216 +369,182 @@ export const StaffsDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>Staffs</span>
-          <span>&gt;</span>
-          <span>Society Staffs</span>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Status Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-2xl font-bold text-gray-900">{allStaffsData.length}</div>
+              <div className="text-sm text-gray-600">Total Staff</div>
+            </div>
+            <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+              <div className="w-6 h-6 bg-red-500 rounded"></div>
+            </div>
+          </div>
         </div>
         
-        <div className="bg-white rounded-none border border-gray-200 shadow-sm">
-          {/* Header */}
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="font-work-sans font-semibold text-base sm:text-lg lg:text-xl leading-auto tracking-normal mb-4 text-[#1a1a1a] uppercase">SOCIETY STAFFS</h2>
-            
-            {/* Action Buttons */}
-            <div className="flex gap-3 mb-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-2xl font-bold text-gray-900">{allStaffsData.filter(s => s.isIn).length}</div>
+              <div className="text-sm text-gray-600">Checked In</div>
+            </div>
+            <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+              <div className="w-6 h-6 bg-red-500 rounded"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-2xl font-bold text-gray-900">{allStaffsData.filter(s => !s.isIn).length}</div>
+              <div className="text-sm text-gray-600">Checked Out</div>
+            </div>
+            <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+              <div className="w-6 h-6 bg-red-500 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200">
+        {/* Header with Title and Actions */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-red-600">
+                <div className="w-4 h-4 bg-red-600"></div>
+                <h1 className="text-lg font-medium">Staff List</h1>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              <div className="flex items-center gap-1">
+                <div className="w-4 h-4 bg-gray-400"></div>
+                <span className="text-sm">Analytics</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
               <Button 
                 onClick={() => setIsAddModalOpen(true)}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
+                className="bg-white border border-red-600 text-red-600 hover:bg-red-50 px-4 py-2 text-sm"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add
               </Button>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search Staff"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 h-9 w-64 text-sm border-gray-300"
+                />
+              </div>
               <Button 
                 onClick={() => setIsFilterModalOpen(true)}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
+                variant="outline"
+                className="border-red-600 text-red-600 hover:bg-red-50 h-9 px-3"
               >
-                <Filter className="w-4 h-4 mr-2" />
-                Filters
+                <Filter className="w-4 h-4" />
               </Button>
               <Button 
                 onClick={handlePrintQR}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
+                variant="outline"
+                className="h-9 px-3 text-sm"
               >
-                <QrCode className="w-4 h-4 mr-2" />
-                Print QR
+                <QrCode className="w-4 h-4" />
               </Button>
               <Button 
                 onClick={handlePrintAllQR}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
+                variant="outline"
+                className="h-9 px-3 text-sm"
               >
-                <FileText className="w-4 h-4 mr-2" />
-                Print ALL QR
+                <FileText className="w-4 h-4" />
               </Button>
             </div>
+          </div>
 
-            {/* Tab Navigation */}
-            <div className="flex gap-1 bg-gray-200 p-1 rounded-none w-fit mb-4">
-              <Button 
-                onClick={() => setActiveTab('history')}
-                className={`px-4 py-2 rounded-none text-sm font-medium transition-colors ${
-                  activeTab === 'history' 
-                    ? 'text-white shadow-sm' 
-                    : 'bg-transparent text-gray-600 hover:text-gray-900'
-                }`}
-                style={activeTab === 'history' ? { backgroundColor: '#C72030' } : {}}
-              >
-                History
-              </Button>
+          {/* Tab Navigation */}
+          <div className="mt-6">
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg w-fit">
               <Button 
                 onClick={() => setActiveTab('all')}
-                className={`px-4 py-2 rounded-none text-sm font-medium transition-colors ${
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
                   activeTab === 'all' 
-                    ? 'text-white shadow-sm' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
-                style={activeTab === 'all' ? { backgroundColor: '#C72030' } : {}}
               >
                 All
               </Button>
               <Button 
                 onClick={() => setActiveTab('in')}
-                className={`px-4 py-2 rounded-none text-sm font-medium transition-colors ${
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
                   activeTab === 'in' 
-                    ? 'text-white shadow-sm' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
-                style={activeTab === 'in' ? { backgroundColor: '#C72030' } : {}}
               >
                 In
               </Button>
               <Button 
                 onClick={() => setActiveTab('out')}
-                className={`px-4 py-2 rounded-none text-sm font-medium transition-colors ${
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
                   activeTab === 'out' 
-                    ? 'text-white shadow-sm' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
                     : 'bg-transparent text-gray-600 hover:text-gray-900'
                 }`}
-                style={activeTab === 'out' ? { backgroundColor: '#C72030' } : {}}
               >
                 Out
               </Button>
+              <Button 
+                onClick={() => setActiveTab('history')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === 'history' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'bg-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                History
+              </Button>
             </div>
-
-            {/* Search Bar for In/Out tabs */}
-            {(activeTab === 'in' || activeTab === 'out') && (
-              <div className="flex gap-4 items-center">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search using staff's name or mobile number"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white h-10 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSearch();
-                      }
-                    }}
-                  />
-                </div>
-                <Button 
-                  onClick={handleSearch}
-                  style={{ backgroundColor: '#C72030' }}
-                  className="hover:bg-[#C72030]/90 text-white px-6 py-2 h-10 rounded-none text-sm font-medium border-0"
-                >
-                  Go!
-                </Button>
-              </div>
-            )}
-
-            {/* Search Bar for History and All tabs */}
-            {(activeTab === 'history' || activeTab === 'all') && (
-              <div className="flex gap-4 items-center">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search by name, mobile, email or ID"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white h-10 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSearch();
-                      }
-                    }}
-                  />
-                </div>
-                <Button 
-                  onClick={handleSearch}
-                  style={{ backgroundColor: '#C72030' }}
-                  className="hover:bg-[#C72030]/90 text-white px-6 py-2 h-10 rounded-none text-sm font-medium border-0"
-                >
-                  Go!
-                </Button>
-              </div>
-            )}
           </div>
+        </div>
 
-          {/* Content */}
-          <div className="overflow-x-auto animate-fade-in">
-            {(activeTab === 'in' || activeTab === 'out') ? (
-              renderCardView()
-            ) : activeTab === 'history' ? (
-              renderHistoryView()
-            ) : (
-              <div className="border rounded-lg overflow-hidden">
-                <EnhancedTable
-                  data={filteredData()}
-                  columns={columns}
-                  renderRow={renderRow}
-                  enableSearch={false}
-                  enableSelection={true}
-                  enableExport={true}
-                  storageKey="staff-table"
-                  emptyMessage="No staff found"
-                  exportFileName="staff-records"
-                  selectedItems={selectedStaffs}
-                  getItemId={(staff) => staff.id}
-                  onSelectItem={handleStaffSelection}
-                  onSelectAll={handleSelectAll}
-                  leftActions={
-                    <div className="flex gap-3">
-                      <Button 
-                        onClick={() => setIsAddModalOpen(true)}
-                        style={{ backgroundColor: '#C72030' }}
-                        className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add
-                      </Button>
-                      <Button 
-                        onClick={handlePrintQR}
-                        style={{ backgroundColor: '#C72030' }}
-                        className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-                      >
-                        <QrCode className="w-4 h-4 mr-2" />
-                        Print QR
-                      </Button>
-                      <Button 
-                        onClick={handlePrintAllQR}
-                        style={{ backgroundColor: '#C72030' }}
-                        className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Print ALL QR
-                      </Button>
-                    </div>
-                  }
-                  onFilterClick={() => setIsFilterModalOpen(true)}
-                  searchPlaceholder="Search staff by name, ID, email or mobile"
-                  hideTableExport={false}
-                  hideColumnsButton={false}
-                />
-              </div>
-            )}
-          </div>
+        {/* Content */}
+        <div className="overflow-x-auto">
+          {(activeTab === 'in' || activeTab === 'out') ? (
+            renderCardView()
+          ) : activeTab === 'history' ? (
+            renderHistoryView()
+          ) : (
+            <EnhancedTable
+              data={filteredData()}
+              columns={columns}
+              renderRow={renderRow}
+              enableSearch={false}
+              enableSelection={true}
+              enableExport={true}
+              storageKey="staff-table"
+              emptyMessage="No staff found"
+              exportFileName="staff-records"
+              selectedItems={selectedStaffs}
+              getItemId={(staff) => staff.id}
+              onSelectItem={handleStaffSelection}
+              onSelectAll={handleSelectAll}
+              hideTableExport={true}
+              hideColumnsButton={true}
+            />
+          )}
         </div>
       </div>
 
