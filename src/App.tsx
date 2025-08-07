@@ -165,6 +165,7 @@ import { GatePassInwardsDetailPage } from './pages/GatePassInwardsDetailPage';
 import { AddGatePassInwardPage } from './pages/AddGatePassInwardPage';
 import { GatePassOutwardsDashboard } from './pages/GatePassOutwardsDashboard';
 import { GatePassOutwardsAddPage } from './pages/GatePassOutwardsAddPage';
+import { GatePassOutwardsDetailPage } from './pages/GatePassOutwardsDetailPage';
 
 // Import Space Management pages
 import { SpaceManagementBookingsDashboard } from './pages/SpaceManagementBookingsDashboard';
@@ -797,6 +798,7 @@ function App() {
                 <Route path="/security/gate-pass/inwards/add" element={<AddGatePassInwardPage />} />
                 <Route path="/security/gate-pass/outwards" element={<GatePassOutwardsDashboard />} />
                 <Route path="/security/gate-pass/outwards/add" element={<GatePassOutwardsAddPage />} />
+                <Route path="/security/gate-pass/outwards/:id" element={<GatePassOutwardsDetailPage />} />
                 <Route path="/security/visitor" element={<VisitorsDashboard />} />
                 <Route path="/visitor-form" element={<VisitorFormPage />} />
                 <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
