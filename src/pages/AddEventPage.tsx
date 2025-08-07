@@ -106,7 +106,7 @@ export const AddEventPage = () => {
               <Typography variant="h6" sx={{
               fontWeight: 'bold',
               textTransform: 'uppercase',
-              color: '#dc2626'
+              color: 'black'
             }}>
                 Event Information
               </Typography>
