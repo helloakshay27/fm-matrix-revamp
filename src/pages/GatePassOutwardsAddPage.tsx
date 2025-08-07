@@ -213,33 +213,36 @@ export const GatePassOutwardsAddPage = () => {
               }}
             />
             
-            <div className="space-y-2">
-              <TextField
-                label="Attachments"
-                type="file"
-                fullWidth
-                variant="outlined"
-                required
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                  endAdornment: (
-                    <Button type="button" size="sm" variant="outline">
-                      <Upload className="w-4 h-4" />
-                    </Button>
-                  ),
-                }}
-              />
+            <div className="flex items-end">
               <Button 
                 type="button"
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2 h-[45px]"
               >
                 Add Item
               </Button>
+            </div>
+          </div>
+
+          {/* Attachment Section */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Asset Image</label>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+              <div className="space-y-2">
+                <p className="text-[#C72030] font-medium">Choose Asset Image</p>
+                <p className="text-gray-500 text-sm">No image chosen</p>
+                <Button 
+                  type="button"
+                  className="bg-transparent text-[#C72030] border-none hover:bg-[#C72030]/10 text-sm px-4 py-2"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Asset Image
+                </Button>
+              </div>
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+              />
             </div>
           </div>
         </div>
