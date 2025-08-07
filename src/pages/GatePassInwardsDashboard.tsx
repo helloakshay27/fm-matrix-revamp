@@ -115,7 +115,7 @@ export const GatePassInwardsDashboard = () => {
         <h1 className="text-2xl font-bold text-[#1a1a1a] mb-4">Inward List</h1>
         
         {/* Add and Filters Buttons */}
-        <div className="flex gap-3">
+        <div className="flex justify-between items-center">
           <Button 
             variant="outline"
             className="!bg-[#F2EEE9] border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-md flex items-center gap-2"
@@ -126,11 +126,10 @@ export const GatePassInwardsDashboard = () => {
           </Button>
           <Button 
             variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-none flex items-center gap-2"
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white p-2 rounded-md"
             onClick={() => setIsFilterModalOpen(true)}
           >
             <SlidersHorizontal className="w-4 h-4" />
-            Filters
           </Button>
         </div>
       </div>
