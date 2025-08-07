@@ -317,7 +317,10 @@ export const MSafeUserDetail = () => {
           </div>
           
           <div className="flex justify-center">
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2">
+            <Button 
+              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2"
+              onClick={() => setIsEditMode(false)}
+            >
               Submit
             </Button>
           </div>
