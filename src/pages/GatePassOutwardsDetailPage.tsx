@@ -7,93 +7,84 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Upload } from 'lucide-react';
-
 export const GatePassOutwardsDetailPage = () => {
-  const { id } = useParams();
+  const {
+    id
+  } = useParams();
   const navigate = useNavigate();
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
 
   // Sample data - in real app, this would be fetched based on the ID
-  const outwardData = [
-    {
-      id: "850",
-      type: "Fresh",
-      returnableNonReturnable: "Non Returnable",
-      expectedReturnDate: "",
-      category: "Visitor",
-      personName: "Suraj",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "By Hand,By Vehicle",
-      lrNo: "",
-      tripId: "7-10013",
-      gateEntry: "",
-      itemDetails: "Transmission - - MW - -"
-    },
-    {
-      id: "845",
-      type: "SRN",
-      returnableNonReturnable: "Returnable",
-      expectedReturnDate: "20/02/2023",
-      category: "Visitor",
-      personName: "Kshitij R",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "By Courier,By Vehicle",
-      lrNo: "12",
-      tripId: "7-10008",
-      gateEntry: "55",
-      itemDetails: "MW - 4 - 2 Transmission - 8 - 2"
-    },
-    {
-      id: "844",
-      type: "SRN",
-      returnableNonReturnable: "Returnable",
-      expectedReturnDate: "20/02/2023",
-      category: "Visitor",
-      personName: "Sagar Singh",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "By Hand,By Courier",
-      lrNo: "123",
-      tripId: "7-10007",
-      gateEntry: "55",
-      itemDetails: "Transmission - 12 - 55 MW - 4 - 3"
-    },
-    {
-      id: "840",
-      type: "",
-      returnableNonReturnable: "Non Returnable",
-      expectedReturnDate: "",
-      category: "Staff",
-      personName: "demo demo",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "",
-      lrNo: "",
-      tripId: "7-10003",
-      gateEntry: "",
-      itemDetails: "Transmission - 45 - 1 MW - 23 - 5"
-    }
-  ];
-
+  const outwardData = [{
+    id: "850",
+    type: "Fresh",
+    returnableNonReturnable: "Non Returnable",
+    expectedReturnDate: "",
+    category: "Visitor",
+    personName: "Suraj",
+    profileImage: "/placeholder.svg",
+    passNo: "",
+    modeOfTransport: "By Hand,By Vehicle",
+    lrNo: "",
+    tripId: "7-10013",
+    gateEntry: "",
+    itemDetails: "Transmission - - MW - -"
+  }, {
+    id: "845",
+    type: "SRN",
+    returnableNonReturnable: "Returnable",
+    expectedReturnDate: "20/02/2023",
+    category: "Visitor",
+    personName: "Kshitij R",
+    profileImage: "/placeholder.svg",
+    passNo: "",
+    modeOfTransport: "By Courier,By Vehicle",
+    lrNo: "12",
+    tripId: "7-10008",
+    gateEntry: "55",
+    itemDetails: "MW - 4 - 2 Transmission - 8 - 2"
+  }, {
+    id: "844",
+    type: "SRN",
+    returnableNonReturnable: "Returnable",
+    expectedReturnDate: "20/02/2023",
+    category: "Visitor",
+    personName: "Sagar Singh",
+    profileImage: "/placeholder.svg",
+    passNo: "",
+    modeOfTransport: "By Hand,By Courier",
+    lrNo: "123",
+    tripId: "7-10007",
+    gateEntry: "55",
+    itemDetails: "Transmission - 12 - 55 MW - 4 - 3"
+  }, {
+    id: "840",
+    type: "",
+    returnableNonReturnable: "Non Returnable",
+    expectedReturnDate: "",
+    category: "Staff",
+    personName: "demo demo",
+    profileImage: "/placeholder.svg",
+    passNo: "",
+    modeOfTransport: "",
+    lrNo: "",
+    tripId: "7-10003",
+    gateEntry: "",
+    itemDetails: "Transmission - 45 - 1 MW - 23 - 5"
+  }];
   const handleReceiveClick = (itemIndex: number) => {
     setSelectedItemIndex(itemIndex);
     setIsReceiveModalOpen(true);
   };
-
   const handleSubmitReceive = () => {
     // Handle submit logic here
     setIsReceiveModalOpen(false);
     setSelectedItemIndex(null);
   };
-
   const selectedEntry = outwardData.find(entry => entry.id === id);
-
   if (!selectedEntry) {
-    return (
-      <div className="p-6">
+    return <div className="p-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Entry Not Found</h1>
           <Button onClick={() => navigate('/security/gate-pass/outwards')}>
@@ -101,67 +92,56 @@ export const GatePassOutwardsDetailPage = () => {
             Back to Outward List
           </Button>
         </div>
-      </div>
-    );
-  };
+      </div>;
+  }
+  ;
 
   // Sample item data based on the selected entry
-  const itemsData = [
-    {
-      sNo: "01",
-      itemName: "Faulty",
-      itemCategory: "Materials",
-      itemNameDetail: "Credit",
-      unit: "10",
-      quantity: "120kg",
-      description: "---",
-      attachment: "📎",
-      updates: "Receive"
-    },
-    {
-      sNo: "02", 
-      itemName: "faulty",
-      itemCategory: "Materials",
-      itemNameDetail: "Debit",
-      unit: "12",
-      quantity: "180kg",
-      description: "---",
-      attachment: "📎",
-      updates: "Receive"
-    },
-    {
-      sNo: "03",
-      itemName: "faulty",
-      itemCategory: "Materials", 
-      itemNameDetail: "Debit",
-      unit: "4",
-      quantity: "610kg",
-      description: "---",
-      attachment: "📎",
-      updates: "Receive"
-    },
-    {
-      sNo: "04",
-      itemName: "faulty",
-      itemCategory: "Materials",
-      itemNameDetail: "Debit", 
-      unit: "7",
-      quantity: "8kg",
-      description: "---",
-      attachment: "📎",
-      updates: "Receive"
-    }
-  ];
-
-  return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+  const itemsData = [{
+    sNo: "01",
+    itemName: "Faulty",
+    itemCategory: "Materials",
+    itemNameDetail: "Credit",
+    unit: "10",
+    quantity: "120kg",
+    description: "---",
+    attachment: "📎",
+    updates: "Receive"
+  }, {
+    sNo: "02",
+    itemName: "faulty",
+    itemCategory: "Materials",
+    itemNameDetail: "Debit",
+    unit: "12",
+    quantity: "180kg",
+    description: "---",
+    attachment: "📎",
+    updates: "Receive"
+  }, {
+    sNo: "03",
+    itemName: "faulty",
+    itemCategory: "Materials",
+    itemNameDetail: "Debit",
+    unit: "4",
+    quantity: "610kg",
+    description: "---",
+    attachment: "📎",
+    updates: "Receive"
+  }, {
+    sNo: "04",
+    itemName: "faulty",
+    itemCategory: "Materials",
+    itemNameDetail: "Debit",
+    unit: "7",
+    quantity: "8kg",
+    description: "---",
+    attachment: "📎",
+    updates: "Receive"
+  }];
+  return <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/security/gate-pass/outwards')}
-          className="mb-4"
-        >
+        <Button variant="outline" onClick={() => navigate('/security/gate-pass/outwards')} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Outward List
         </Button>
@@ -213,7 +193,7 @@ export const GatePassOutwardsDetailPage = () => {
               <div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-gray-700">Company Name:</span>
-                  <span className="text-sm text-gray-900">Lovated</span>
+                  <span className="text-sm text-gray-900">Lockated</span>
                 </div>
               </div>
               
@@ -259,8 +239,7 @@ export const GatePassOutwardsDetailPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {itemsData.map((item, index) => (
-                  <TableRow key={item.sNo} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}>
+                {itemsData.map((item, index) => <TableRow key={item.sNo} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}>
                     <TableCell className="px-4 py-3 text-sm text-gray-900">{item.sNo}</TableCell>
                     <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemName}</TableCell>
                     <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemCategory}</TableCell>
@@ -270,15 +249,11 @@ export const GatePassOutwardsDetailPage = () => {
                     <TableCell className="px-4 py-3 text-sm text-gray-900">{item.description}</TableCell>
                     <TableCell className="px-4 py-3 text-sm text-gray-900">{item.attachment}</TableCell>
                     <TableCell className="px-4 py-3 text-sm">
-                      <button 
-                        className="text-[#C72030] underline hover:text-[#C72030]/80 transition-colors font-medium"
-                        onClick={() => handleReceiveClick(index)}
-                      >
+                      <button className="text-[#C72030] underline hover:text-[#C72030]/80 transition-colors font-medium" onClick={() => handleReceiveClick(index)}>
                         {item.updates}
                       </button>
                     </TableCell>
-                  </TableRow>
-                ))}
+                  </TableRow>)}
               </TableBody>
             </Table>
           </div>
@@ -297,22 +272,14 @@ export const GatePassOutwardsDetailPage = () => {
               <Label htmlFor="handover" className="text-sm font-medium text-gray-700">
                 Handover To
               </Label>
-              <Input
-                id="handover"
-                placeholder="Enter handover details"
-                className="w-full"
-              />
+              <Input id="handover" placeholder="Enter handover details" className="w-full" />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">
                 Remarks
               </Label>
-              <Textarea
-                id="remarks"
-                placeholder="Enter remarks"
-                className="w-full min-h-[80px]"
-              />
+              <Textarea id="remarks" placeholder="Enter remarks" className="w-full min-h-[80px]" />
             </div>
             
             <div className="space-y-2">
@@ -320,11 +287,7 @@ export const GatePassOutwardsDetailPage = () => {
                 Attachment
               </Label>
               <div className="flex items-center gap-2">
-                <Input
-                  id="attachment"
-                  type="file"
-                  className="w-full"
-                />
+                <Input id="attachment" type="file" className="w-full" />
                 <Button size="sm" variant="outline">
                   <Upload className="w-4 h-4" />
                 </Button>
@@ -333,15 +296,11 @@ export const GatePassOutwardsDetailPage = () => {
           </div>
           
           <div className="flex justify-center pt-4">
-            <Button 
-              onClick={handleSubmitReceive}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
-            >
+            <Button onClick={handleSubmitReceive} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8">
               Submit
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 };
