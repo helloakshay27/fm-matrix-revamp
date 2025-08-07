@@ -162,7 +162,9 @@ export const GatePassOutwardsAddPage = () => {
                 <MenuItem value="tools">Tools</MenuItem>
               </MuiSelect>
             </FormControl>
-            
+          </div>
+
+          <div className="grid grid-cols-4 gap-4 mb-4">
             <TextField
               label="Item Name"
               placeholder="Fill Item Name"
@@ -178,9 +180,6 @@ export const GatePassOutwardsAddPage = () => {
                 sx: fieldStyles,
               }}
             />
-          </div>
-
-          <div className="grid grid-cols-4 gap-4 mb-4">
             
             <TextField
               label="Unit"
