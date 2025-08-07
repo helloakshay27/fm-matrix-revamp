@@ -889,7 +889,7 @@ function App() {
                 <Route path="/maintenance/m-safe/external/user/:userId" element={<ExternalUserDetail />} />
                 <Route path="/maintenance/m-safe/external/user/:userId/edit" element={<EditExternalUserPage />} />
                 <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
-                <Route path="/maintenance/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
+                <Route path="/maintenance/m-safe/krcc-list" element={<KRCCFormListDashboard />} />
 
                 {/* Market Place Routes */}
                 <Route path="/market-place/all" element={<MarketPlaceAllPage />} />

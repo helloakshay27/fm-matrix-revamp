@@ -321,7 +321,8 @@ const modulesByPackage = {
       href: '/maintenance/m-safe',
       subItems: [
         { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]' },
-        { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' }
+        { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' },
+        { name: 'Krcc List', href: '/maintenance/m-safe/krcc-list', color: 'text-[#1a1a1a]' }
       ]
     }
   ],
