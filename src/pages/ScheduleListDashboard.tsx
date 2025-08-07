@@ -292,11 +292,11 @@ export const ScheduleListDashboard = () => {
     sortable: true
   }, {
     key: 'validFrom',
-    label: 'Valid From',
+    label: 'Start Date',
     sortable: true
   }, {
     key: 'validTill',
-    label: 'Valid Till',
+    label: 'End Date',
     sortable: true
   }, {
     key: 'category',
