@@ -216,7 +216,7 @@ export const GatePassOutwardsAddPage = () => {
             <div className="flex items-end">
               <Button 
                 type="button"
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2 h-[45px]"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2 h-[45px] w-full"
               >
                 Add Item
               </Button>
