@@ -6,6 +6,30 @@ import { TextField } from '@mui/material';
 import { ArrowLeft, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+// Field styles for Material-UI components
+const fieldStyles = {
+  height: '45px',
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
+    height: '45px',
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
+
 export const AddGatePassInwardPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -137,12 +161,7 @@ export const AddGatePassInwardPage = () => {
                     variant="outlined"
                     fullWidth
                     size="medium"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: 'white',
-                        height: '44px'
-                      }
-                    }}
+                    sx={fieldStyles}
                   />
                 </div>
               </div>
@@ -157,12 +176,7 @@ export const AddGatePassInwardPage = () => {
                     variant="outlined"
                     fullWidth
                     size="medium"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: 'white',
-                        height: '44px'
-                      }
-                    }}
+                    sx={fieldStyles}
                   />
                 </div>
 
@@ -175,12 +189,7 @@ export const AddGatePassInwardPage = () => {
                     variant="outlined"
                     fullWidth
                     size="medium"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: 'white',
-                        height: '44px'
-                      }
-                    }}
+                    sx={fieldStyles}
                   />
                 </div>
               </div>
@@ -196,9 +205,11 @@ export const AddGatePassInwardPage = () => {
                   multiline
                   rows={4}
                   sx={{
+                    ...fieldStyles,
                     '& .MuiOutlinedInput-root': {
-                      backgroundColor: 'white'
-                    }
+                      ...fieldStyles['& .MuiOutlinedInput-root'],
+                      height: 'auto',
+                    },
                   }}
                 />
               </div>
@@ -240,12 +251,7 @@ export const AddGatePassInwardPage = () => {
                     variant="outlined"
                     fullWidth
                     size="medium"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: 'white',
-                        height: '44px'
-                      }
-                    }}
+                    sx={fieldStyles}
                   />
                 </div>
 
@@ -258,12 +264,7 @@ export const AddGatePassInwardPage = () => {
                     variant="outlined"
                     fullWidth
                     size="medium"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: 'white',
-                        height: '44px'
-                      }
-                    }}
+                    sx={fieldStyles}
                   />
                 </div>
 
@@ -276,12 +277,7 @@ export const AddGatePassInwardPage = () => {
                     variant="outlined"
                     fullWidth
                     size="medium"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: 'white',
-                        height: '44px'
-                      }
-                    }}
+                    sx={fieldStyles}
                   />
                 </div>
               </div>
@@ -296,12 +292,7 @@ export const AddGatePassInwardPage = () => {
                     variant="outlined"
                     fullWidth
                     size="medium"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: 'white',
-                        height: '44px'
-                      }
-                    }}
+                    sx={fieldStyles}
                   />
                 </div>
 
@@ -314,12 +305,7 @@ export const AddGatePassInwardPage = () => {
                     variant="outlined"
                     fullWidth
                     size="medium"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: 'white',
-                        height: '44px'
-                      }
-                    }}
+                    sx={fieldStyles}
                   />
                 </div>
 
