@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, FileText } from 'lucide-react';
+import { ArrowLeft, User, FileText, UserCircle, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -84,16 +84,28 @@ export const MSafeUserDetail = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="personal" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="personal" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            Personal Information
-          </TabsTrigger>
-          <TabsTrigger value="other" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Other Information
-          </TabsTrigger>
-        </TabsList>
+        <div className="border-b border-gray-200 mb-6">
+          <nav className="flex space-x-8">
+            <TabsTrigger 
+              value="personal" 
+              className="group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-6 text-center text-sm font-medium text-gray-500 hover:text-gray-700 focus:z-10 data-[state=active]:text-red-600 data-[state=active]:bg-red-50 border-0 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-red-600"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <UserCircle className="h-5 w-5" />
+                <span className="font-semibold">Personal Information</span>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="other" 
+              className="group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-6 text-center text-sm font-medium text-gray-500 hover:text-gray-700 focus:z-10 data-[state=active]:text-red-600 data-[state=active]:bg-red-50 border-0 rounded-none data-[state=active]:border-b-2 data-[state=active]:border-red-600"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Settings className="h-5 w-5" />
+                <span className="font-semibold">Other Information</span>
+              </div>
+            </TabsTrigger>
+          </nav>
+        </div>
 
         <TabsContent value="personal" className="mt-6">
           <div className="bg-white rounded-lg border p-6">
