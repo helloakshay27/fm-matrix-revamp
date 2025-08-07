@@ -4,9 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Filter, Eye, Edit, FileText, QrCode, Search, Trash2 } from 'lucide-react';
+import { Plus, Filter, Eye, Edit, FileText, QrCode, Search } from 'lucide-react';
 import { StaffsFilterModal } from '@/components/StaffsFilterModal';
 import { AddStaffModal } from '@/components/AddStaffModal';
 
@@ -107,8 +105,6 @@ export const StaffsDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStaffs, setSelectedStaffs] = useState<string[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
 
   const handlePrintQR = () => {
     console.log('Printing QR codes for selected staff...');
@@ -157,42 +153,6 @@ export const StaffsDashboard = () => {
     navigate(`/security/staff/edit/${staffId}`);
   };
 
-  const handleDeleteStaff = (staffId: string) => {
-    console.log('Deleting staff:', staffId);
-    // Add delete logic here
-  };
-
-  const handleSelectStaff = (staffId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedStaffs(prev => [...prev, staffId]);
-    } else {
-      setSelectedStaffs(prev => prev.filter(id => id !== staffId));
-    }
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    setSelectAll(checked);
-    if (checked) {
-      const currentData = filteredData();
-      setSelectedStaffs(currentData.map(staff => staff.id));
-    } else {
-      setSelectedStaffs([]);
-    }
-  };
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'approved':
-        return 'bg-green-100 text-green-800 hover:bg-green-100';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100';
-      case 'rejected':
-        return 'bg-red-100 text-red-800 hover:bg-red-100';
-      default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-100';
-    }
-  };
-
   const filteredData = () => {
     if (activeTab === 'history') {
       return historyData.filter(staff =>
@@ -219,113 +179,67 @@ export const StaffsDashboard = () => {
     const data = filteredData();
     
     return (
-      <div className="border rounded-lg overflow-hidden">
+      <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50">
+            <TableRow >
               <TableHead className="w-12">
-                <Checkbox
-                  checked={selectAll}
-                  onCheckedChange={handleSelectAll}
-                />
+                <input type="checkbox" className="rounded-none" />
               </TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Staff ID</TableHead>
+              <TableHead>View</TableHead>
+              <TableHead>Edit</TableHead>
+              <TableHead>ID</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Unit</TableHead>
               <TableHead>Department</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Mobile</TableHead>
-              <TableHead>Work Type</TableHead>
+              <TableHead>Staff Id</TableHead>
+              <TableHead>Work type</TableHead>
               <TableHead>Vendor Name</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Valid Till</TableHead>
-              <TableHead>Check-In</TableHead>
-              <TableHead>Check-Out</TableHead>
-              <TableHead>Is In</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.map((staff, index) => (
-              <TableRow key={staff.id || index}>
+              <TableRow key={staff.id || index} className="hover:bg-gray-50">
                 <TableCell>
-                  <Checkbox
-                    checked={selectedStaffs.includes(staff.id)}
-                    onCheckedChange={(checked) => handleSelectStaff(staff.id, checked as boolean)}
-                  />
+                  <input type="checkbox" className="rounded-none" />
                 </TableCell>
                 <TableCell>
-                  <div className="flex gap-2">
-                    <div title="View staff">
-                      <Eye 
-                        className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
-                        onClick={() => handleViewStaff(staff.id)}
-                      />
-                    </div>
-                    <div title="Edit staff">
-                      <Edit 
-                        className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
-                        onClick={() => handleEditStaff(staff.id)}
-                      />
-                    </div>
-                    <div title="Delete staff">
-                      <Trash2 
-                        className="w-4 h-4 text-gray-600 cursor-pointer hover:text-red-600" 
-                        onClick={() => handleDeleteStaff(staff.id)}
-                      />
-                    </div>
-                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewStaff(staff.id)}
+                    className="rounded-none"
+                  >
+                    <Eye className="w-4 h-4 text-blue-600" />
+                  </Button>
                 </TableCell>
-                <TableCell className="font-medium">{staff.id}</TableCell>
+                <TableCell>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleEditStaff(staff.id)}
+                    className="rounded-none"
+                  >
+                    <Edit className="w-4 h-4 text-green-600" />
+                  </Button>
+                </TableCell>
+                <TableCell className="text-blue-600">{staff.id}</TableCell>
                 <TableCell>{staff.name}</TableCell>
-                <TableCell>{staff.unit || '--'}</TableCell>
-                <TableCell>{staff.department || '--'}</TableCell>
-                <TableCell>{staff.email || '--'}</TableCell>
+                <TableCell>{staff.unit}</TableCell>
+                <TableCell>{staff.department}</TableCell>
+                <TableCell className="text-blue-600">{staff.email}</TableCell>
                 <TableCell>{staff.mobile}</TableCell>
-                <TableCell>{staff.workType || '--'}</TableCell>
-                <TableCell>{staff.vendorName || '--'}</TableCell>
+                <TableCell></TableCell>
+                <TableCell>{staff.workType}</TableCell>
+                <TableCell>{staff.vendorName}</TableCell>
                 <TableCell>
-                  <Badge className={getStatusBadgeColor(staff.status)}>
-                    {staff.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>{staff.validTill || '--'}</TableCell>
-                <TableCell>{staff.checkIn || '--'}</TableCell>
-                <TableCell>{staff.checkOut || '--'}</TableCell>
-                <TableCell>
-                  <Badge className={staff.isIn ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-red-100 text-red-800 hover:bg-red-100'}>
-                    {staff.isIn ? 'In' : 'Out'}
-                  </Badge>
+                  <span className="text-green-600 font-medium">{staff.status}</span>
                 </TableCell>
               </TableRow>
             ))}
-            {data.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={15} className="text-center py-12">
-                  <div className="flex flex-col items-center text-gray-500">
-                    <div className="text-lg font-medium mb-2">
-                      {searchTerm ? 'No staff found' : 'No staff available'}
-                    </div>
-                    <div className="text-sm mb-4">
-                      {searchTerm 
-                        ? `No results found for "${searchTerm}"` 
-                        : 'There are no staff members to display'
-                      }
-                    </div>
-                    {searchTerm && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSearchTerm('')}
-                        className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                      >
-                        Clear search
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
       </div>
