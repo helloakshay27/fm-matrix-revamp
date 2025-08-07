@@ -189,53 +189,53 @@ export const GatePassOutwardsDetailPage = () => {
 
             {/* Details */}
             <div className="space-y-3">
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-gray-700">
-                  Employee/Visitor Name:
-                </label>
-                <p className="text-sm text-gray-900">{selectedEntry.personName}</p>
+              <div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Employee/Visitor Name:</span>
+                  <span className="text-sm text-gray-900">{selectedEntry.personName}</span>
+                </div>
               </div>
               
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-gray-700">
-                  Visitor Mobile No.:
-                </label>
-                <p className="text-sm text-gray-900">086907860</p>
+              <div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Visitor Mobile No.:</span>
+                  <span className="text-sm text-gray-900">086907860</span>
+                </div>
               </div>
               
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-gray-700">
-                  Department:
-                </label>
-                <p className="text-sm text-gray-900">UI/UX Designer</p>
+              <div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Department:</span>
+                  <span className="text-sm text-gray-900">UI/UX Designer</span>
+                </div>
               </div>
               
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-gray-700">
-                  Company Name:
-                </label>
-                <p className="text-sm text-gray-900">Lovated</p>
+              <div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Company Name:</span>
+                  <span className="text-sm text-gray-900">Lovated</span>
+                </div>
               </div>
               
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-gray-700">
-                  Date/Time:
-                </label>
-                <p className="text-sm text-gray-900">2 July 2025 12:45 Pm</p>
+              <div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Date/Time:</span>
+                  <span className="text-sm text-gray-900">2 July 2025 12:45 Pm</span>
+                </div>
               </div>
               
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-gray-700">
-                  Mode Of Transport:
-                </label>
-                <p className="text-sm text-gray-900">{selectedEntry.modeOfTransport || "By Hand"}</p>
+              <div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Mode Of Transport:</span>
+                  <span className="text-sm text-gray-900">{selectedEntry.modeOfTransport || "By Hand"}</span>
+                </div>
               </div>
               
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-gray-700">
-                  Expected Date:
-                </label>
-                <p className="text-sm text-gray-900">{selectedEntry.expectedReturnDate || "-"}</p>
+              <div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-700">Expected Date:</span>
+                  <span className="text-sm text-gray-900">{selectedEntry.expectedReturnDate || "-"}</span>
+                </div>
               </div>
             </div>
           </div>
