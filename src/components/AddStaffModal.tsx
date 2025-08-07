@@ -67,11 +67,6 @@ export const AddStaffModal = ({ isOpen, onClose }: AddStaffModalProps) => {
       <DialogContent className="max-w-4xl bg-white max-h-[90vh] overflow-y-auto [&>button]:hidden">
         <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
           <div>
-            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-              <span>Quick Gate</span>
-              <span>&gt;</span>
-              <span>Society Staff</span>
-            </div>
             <DialogTitle className="text-lg font-semibold">SOCIETY STAFF</DialogTitle>
           </div>
           <Button
@@ -89,8 +84,8 @@ export const AddStaffModal = ({ isOpen, onClose }: AddStaffModalProps) => {
           {/* Staff Details Section */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm">1</div>
-              <h3 className="text-lg font-semibold text-orange-500">STAFF DETAILS</h3>
+              <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-sm">1</div>
+              <h3 className="text-lg font-semibold text-primary">STAFF DETAILS</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -248,8 +243,8 @@ export const AddStaffModal = ({ isOpen, onClose }: AddStaffModalProps) => {
           {/* Attachments Section */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm">2</div>
-              <h3 className="text-lg font-semibold text-orange-500">ATTACHMENTS</h3>
+              <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-sm">2</div>
+              <h3 className="text-lg font-semibold text-primary">ATTACHMENTS</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -278,8 +273,8 @@ export const AddStaffModal = ({ isOpen, onClose }: AddStaffModalProps) => {
           {/* Schedule Section */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm">3</div>
-              <h3 className="text-lg font-semibold text-orange-500">SCHEDULE</h3>
+              <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white text-sm">3</div>
+              <h3 className="text-lg font-semibold text-primary">SCHEDULE</h3>
             </div>
             
             <div className="overflow-x-auto">
