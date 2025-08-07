@@ -88,25 +88,7 @@ export const GatePassOutwardsAddPage = () => {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-[#C72030] mb-4">GOODS DETAIL</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            {activeTab === 'RETURNABLE' && (
-              <TextField
-                label="Expected Returnable Date"
-                type="date"
-                fullWidth
-                variant="outlined"
-                required
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
-              />
-            )}
-            
+          <div className="grid grid-cols-4 gap-4 mb-4">
             <FormControl
               fullWidth
               variant="outlined"
@@ -160,7 +142,46 @@ export const GatePassOutwardsAddPage = () => {
                 sx: fieldStyles,
               }}
             />
+
+            <TextField
+              label="Item Quantity"
+              placeholder="01"
+              fullWidth
+              variant="outlined"
+              required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
           </div>
+
+          {activeTab === 'RETURNABLE' && (
+            <div className="grid grid-cols-4 gap-4 mb-4">
+              <TextField
+                label="Expected Returnable Date"
+                type="date"
+                fullWidth
+                variant="outlined"
+                required
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <TextField
