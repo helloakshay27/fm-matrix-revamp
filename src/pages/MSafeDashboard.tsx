@@ -1,15 +1,235 @@
-import React from 'react';
-import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
+import { fetchFMUsers, FMUser } from '@/store/slices/fmUserSlice';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 export const MSafeDashboard = () => {
+  const dispatch = useAppDispatch();
+  const { data: fmUsersData, loading, error } = useAppSelector((state) => state.fmUsers);
+  const fm_users = fmUsersData?.fm_users || [];
+  const [searchTerm, setSearchTerm] = useState('');
+
   const cardData = [
-    { title: "User Management", count: 25, icon: Users },
-    { title: "Active Users", count: 18, icon: UserCheck },
-    { title: "Pending Approvals", count: 7, icon: Clock },
+    { title: "User Management", count: fm_users?.length || 25, icon: Users },
+    { title: "Active Users", count: fm_users?.filter(user => user.lock_user_permission_status === 'approved').length || 18, icon: UserCheck },
+    { title: "Pending Approvals", count: fm_users?.filter(user => user.lock_user_permission_status === 'pending').length || 7, icon: Clock },
     { title: "System Settings", count: 12, icon: Settings },
   ];
+
+  useEffect(() => {
+    dispatch(fetchFMUsers());
+  }, [dispatch]);
+
+  const getStatusBadge = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return <Badge className="bg-green-500 text-white hover:bg-green-600">Approved</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-500 text-white hover:bg-yellow-600">Pending</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-500 text-white hover:bg-red-600">Rejected</Badge>;
+      default:
+        return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{status}</Badge>;
+    }
+  };
+
+  const getTypeBadge = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'admin':
+        return <Badge className="bg-blue-500 text-white hover:bg-blue-600">Admin</Badge>;
+      case 'site':
+        return <Badge className="bg-purple-500 text-white hover:bg-purple-600">Site</Badge>;
+      case 'company':
+        return <Badge className="bg-orange-500 text-white hover:bg-orange-600">Company</Badge>;
+      default:
+        return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{type}</Badge>;
+    }
+  };
+
+  const getYesNoBadge = (value: boolean | string) => {
+    const isYes = value === true || value === 'yes' || value === 'Yes';
+    return (
+      <Badge className={isYes ? "bg-green-500 text-white hover:bg-green-600" : "bg-red-500 text-white hover:bg-red-600"}>
+        {isYes ? 'Yes' : 'No'}
+      </Badge>
+    );
+  };
+
+  const columns: ColumnConfig[] = [
+    {
+      key: 'active',
+      label: 'Active',
+      sortable: false,
+      hideable: true,
+      width: '80px',
+    },
+    {
+      key: 'id',
+      label: 'ID',
+      sortable: true,
+      hideable: true,
+      width: '60px',
+    },
+    {
+      key: 'user_name',
+      label: 'User Name',
+      sortable: true,
+      hideable: false,
+      width: '150px',
+    },
+    {
+      key: 'gender',
+      label: 'Gender',
+      sortable: true,
+      hideable: true,
+      width: '80px',
+    },
+    {
+      key: 'mobile',
+      label: 'Mobile Number',
+      sortable: true,
+      hideable: true,
+      width: '120px',
+    },
+    {
+      key: 'email',
+      label: 'Email',
+      sortable: true,
+      hideable: true,
+      width: '200px',
+    },
+    {
+      key: 'company_name',
+      label: 'Vendor Company Name',
+      sortable: true,
+      hideable: true,
+      width: '180px',
+    },
+    {
+      key: 'entity_id',
+      label: 'Entity Name',
+      sortable: true,
+      hideable: true,
+      width: '120px',
+    },
+    {
+      key: 'unit_id',
+      label: 'Unit',
+      sortable: true,
+      hideable: true,
+      width: '80px',
+    },
+    {
+      key: 'designation',
+      label: 'Role',
+      sortable: true,
+      hideable: true,
+      width: '120px',
+    },
+    {
+      key: 'employee_id',
+      label: 'Employee ID',
+      sortable: true,
+      hideable: true,
+      width: '120px',
+    },
+    {
+      key: 'created_by_id',
+      label: 'Created By',
+      sortable: true,
+      hideable: true,
+      width: '100px',
+    },
+    {
+      key: 'access_level',
+      label: 'Access Level',
+      sortable: true,
+      hideable: true,
+      width: '120px',
+    },
+    {
+      key: 'user_type',
+      label: 'Type',
+      sortable: true,
+      hideable: true,
+      width: '100px',
+    },
+    {
+      key: 'lock_user_permission_status',
+      label: 'Status',
+      sortable: true,
+      hideable: true,
+      width: '100px',
+    },
+    {
+      key: 'face_added',
+      label: 'Face Recognition',
+      sortable: true,
+      hideable: true,
+      width: '130px',
+    },
+    {
+      key: 'app_downloaded',
+      label: 'App Downloaded',
+      sortable: true,
+      hideable: true,
+      width: '130px',
+    },
+  ];
+
+  const renderCell = (user: FMUser, columnKey: string): React.ReactNode => {
+    switch (columnKey) {
+      case 'active':
+        return (
+          <div className="flex justify-center">
+            <Switch 
+              checked={user.lock_user_permission_status === 'approved'} 
+              onCheckedChange={() => {}} 
+            />
+          </div>
+        );
+      case 'user_name':
+        return `${user.firstname} ${user.lastname}`;
+      case 'company_name':
+        return user.company_name || 'N/A';
+      case 'access_level':
+        return (user.lock_user_permission?.access_level || 'N/A').toString();
+      case 'user_type':
+        return getTypeBadge(user.user_type);
+      case 'lock_user_permission_status':
+        return getStatusBadge(user.lock_user_permission_status);
+      case 'face_added':
+        return getYesNoBadge(user.face_added);
+      case 'app_downloaded':
+        return getYesNoBadge(user.app_downloaded);
+      default:
+        const value = user[columnKey as keyof FMUser];
+        return value?.toString() || '';
+    }
+  };
+
+  const renderActions = (user: FMUser) => (
+    <div className="flex items-center justify-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => {}}
+        className="h-8 w-8 p-0"
+      >
+        <Eye className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
+  const handleRefresh = () => {
+    dispatch(fetchFMUsers());
+  };
 
   return (
     <div className="p-6">
@@ -41,7 +261,7 @@ export const MSafeDashboard = () => {
         <div className="flex items-center gap-2">
           <Button className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2">
             <UserPlus className="w-4 h-4" />
-            Add User
+            Add FM User
           </Button>
           <Button className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2">
             <Shield className="w-4 h-4" />
@@ -49,18 +269,12 @@ export const MSafeDashboard = () => {
           </Button>
         </div>
 
-        <div className="flex items-center gap-2 flex-1 max-w-md">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search users..."
-              className="pl-10"
-            />
-          </div>
-          <Button variant="outline" size="icon">
-            <Filter className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="icon">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={handleRefresh}
+          >
             <RefreshCw className="w-4 h-4" />
           </Button>
           <Button variant="outline" size="icon">
@@ -69,10 +283,28 @@ export const MSafeDashboard = () => {
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
-        <p className="text-gray-500">No recent activity to display.</p>
+      {/* Enhanced Table */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <div className="p-6">
+          <h2 className="text-lg font-semibold mb-4">FM Users Management</h2>
+          <EnhancedTable
+            data={fm_users || []}
+            columns={columns}
+            renderCell={renderCell}
+            renderActions={renderActions}
+            storageKey="msafe-fm-users"
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search FM users..."
+            enableExport={true}
+            exportFileName="fm-users"
+            pagination={true}
+            pageSize={10}
+            loading={loading}
+            enableSearch={true}
+            onRowClick={(user) => console.log('Row clicked:', user)}
+          />
+        </div>
       </div>
     </div>
   );
