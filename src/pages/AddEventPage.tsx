@@ -3,6 +3,7 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Radi
 import { Button } from '@/components/ui/button';
 import { CalendarToday, LocationOn, Schedule, Group, AttachFile, ArrowBack } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+
 export const AddEventPage = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -18,19 +19,23 @@ export const AddEventPage = () => {
     shareWith: 'all',
     rsvpEnabled: true
   });
+
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleSubmit = () => {
     console.log('Submitting event data:', formData);
     navigate('/crm/events');
   };
+
   const handleFileUpload = () => {
     console.log('File upload clicked');
   };
+
   const fieldStyles = {
     height: {
       xs: 28,
@@ -45,166 +50,259 @@ export const AddEventPage = () => {
       }
     }
   };
-  return <Box sx={{
-    p: 3,
-    bgcolor: '#f5f5f5',
-    minHeight: '100vh'
-  }}>
-      {/* Breadcrumb */}
-      
 
+  return (
+    <Box sx={{
+      p: 3,
+      bgcolor: '#f5f5f5',
+      minHeight: '100vh'
+    }}>
       {/* Header */}
       <Box sx={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 2,
-      mb: 3
-    }}>
-        <MuiButton startIcon={<ArrowBack />} onClick={() => navigate('/crm/events')} sx={{
-        color: '#666',
-        textTransform: 'none'
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        mb: 3
       }}>
+        <MuiButton startIcon={<ArrowBack />} onClick={() => navigate('/crm/events')} sx={{
+          color: '#666',
+          textTransform: 'none'
+        }}>
           Back to Events
         </MuiButton>
-        
       </Box>
 
-      <Card sx={{
-      width: '100%',
-      bgcolor: '#f9f9f9'
-    }}>
-        <CardContent sx={{
-        p: 4
-      }}>
-          
-          {/* Event Information Section */}
-          <Box sx={{
-          mb: 4
+      <Box sx={{ maxWidth: '1200px', margin: '0 auto' }}>
+        {/* Event Information Section */}
+        <Box sx={{
+          bgcolor: 'white',
+          borderRadius: 2,
+          p: 4,
+          mb: 3,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
         }}>
-            <Box sx={{
+          <Box sx={{
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            mb: 3,
-            p: 2,
-            bgcolor: '#f6f4ee',
-            borderRadius: 1
+            mb: 4
           }}>
-              <Box sx={{
-              width: 40,
-              height: 40,
+            <Box sx={{
+              width: 32,
+              height: 32,
               borderRadius: '50%',
               bgcolor: '#dc2626',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'white'
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 'bold'
             }}>
-                <CalendarToday sx={{
-                fontSize: 20
-              }} />
-              </Box>
-              <Typography variant="h6" sx={{
+              1
+            </Box>
+            <Typography variant="h6" sx={{
               fontWeight: 'bold',
               textTransform: 'uppercase',
               color: 'black'
             }}>
-                Event Information
-              </Typography>
-            </Box>
+              Event Information
+            </Typography>
+          </Box>
 
-            <Box sx={{
+          <Box sx={{
             display: 'flex',
             flexDirection: 'column',
             gap: 3
           }}>
-              <Box sx={{
+            <Box sx={{
               display: 'flex',
               gap: 3,
               flexWrap: 'wrap'
             }}>
-                <Box sx={{
-                flex: '1 1 300px'
-              }}>
-                  <TextField label="Title*" placeholder="Title" fullWidth variant="outlined" value={formData.title} onChange={e => handleInputChange('title', e.target.value)} InputLabelProps={{
-                  shrink: true
-                }} sx={fieldStyles} />
-                </Box>
-                <Box sx={{
-                flex: '1 1 300px'
-              }}>
-                  <TextField label="Venue*" placeholder="Enter Venue" fullWidth variant="outlined" value={formData.venue} onChange={e => handleInputChange('venue', e.target.value)} InputLabelProps={{
-                  shrink: true
-                }} sx={fieldStyles} />
-                </Box>
-              </Box>
-              
               <Box sx={{
-              display: 'flex',
-              gap: 3,
-              flexWrap: 'wrap'
-            }}>
-                <Box sx={{
-                flex: '1 1 200px'
+                flex: '1 1 300px'
               }}>
-                  <TextField label="Start date*" type="date" fullWidth variant="outlined" value={formData.startDate} onChange={e => handleInputChange('startDate', e.target.value)} InputLabelProps={{
-                  shrink: true
-                }} sx={fieldStyles} />
-                </Box>
-                <Box sx={{
-                flex: '1 1 200px'
-              }}>
-                  <TextField label="End date*" type="date" fullWidth variant="outlined" value={formData.endDate} onChange={e => handleInputChange('endDate', e.target.value)} InputLabelProps={{
-                  shrink: true
-                }} sx={fieldStyles} />
-                </Box>
-                <Box sx={{
-                flex: '1 1 200px'
-              }}>
-                  <TextField label="Start Time*" type="time" fullWidth variant="outlined" value={formData.startTime} onChange={e => handleInputChange('startTime', e.target.value)} InputLabelProps={{
-                  shrink: true
-                }} sx={fieldStyles} />
-                </Box>
-                <Box sx={{
-                flex: '1 1 200px'
-              }}>
-                  <TextField label="End Time*" type="time" fullWidth variant="outlined" value={formData.endTime} onChange={e => handleInputChange('endTime', e.target.value)} InputLabelProps={{
-                  shrink: true
-                }} sx={fieldStyles} />
-                </Box>
+                <TextField 
+                  label="Title*" 
+                  placeholder="Title" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={formData.title} 
+                  onChange={e => handleInputChange('title', e.target.value)} 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  sx={fieldStyles} 
+                />
               </Box>
-              
-              <Box>
-                <TextField label="Description" placeholder="Enter Description" fullWidth multiline rows={4} variant="outlined" value={formData.description} onChange={e => handleInputChange('description', e.target.value)} InputLabelProps={{
-                shrink: true
-              }} />
+              <Box sx={{
+                flex: '1 1 300px'
+              }}>
+                <TextField 
+                  label="Venue*" 
+                  placeholder="Enter Venue" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={formData.venue} 
+                  onChange={e => handleInputChange('venue', e.target.value)} 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  sx={fieldStyles} 
+                />
               </Box>
             </Box>
-
+            
             <Box sx={{
-            mt: 3,
-            display: 'flex',
-            gap: 4
-          }}>
+              display: 'flex',
+              gap: 3,
+              flexWrap: 'wrap'
+            }}>
               <Box sx={{
+                flex: '1 1 200px'
+              }}>
+                <TextField 
+                  label="Start date*" 
+                  type="date" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={formData.startDate} 
+                  onChange={e => handleInputChange('startDate', e.target.value)} 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  sx={fieldStyles} 
+                />
+              </Box>
+              <Box sx={{
+                flex: '1 1 200px'
+              }}>
+                <TextField 
+                  label="End date*" 
+                  type="date" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={formData.endDate} 
+                  onChange={e => handleInputChange('endDate', e.target.value)} 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  sx={fieldStyles} 
+                />
+              </Box>
+              <Box sx={{
+                flex: '1 1 200px'
+              }}>
+                <TextField 
+                  label="Start Time*" 
+                  type="time" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={formData.startTime} 
+                  onChange={e => handleInputChange('startTime', e.target.value)} 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  sx={fieldStyles} 
+                />
+              </Box>
+              <Box sx={{
+                flex: '1 1 200px'
+              }}>
+                <TextField 
+                  label="End Time*" 
+                  type="time" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={formData.endTime} 
+                  onChange={e => handleInputChange('endTime', e.target.value)} 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  sx={fieldStyles} 
+                />
+              </Box>
+            </Box>
+            
+            <Box>
+              <TextField 
+                label="Description" 
+                placeholder="Enter Description" 
+                fullWidth 
+                multiline 
+                rows={4} 
+                variant="outlined" 
+                value={formData.description} 
+                onChange={e => handleInputChange('description', e.target.value)} 
+                InputLabelProps={{
+                  shrink: true
+                }} 
+              />
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Event Settings Section */}
+        <Box sx={{
+          bgcolor: 'white',
+          borderRadius: 2,
+          p: 4,
+          mb: 3,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            mb: 4
+          }}>
+            <Box sx={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              bgcolor: '#dc2626',
               display: 'flex',
               alignItems: 'center',
-              gap: 1
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 'bold'
             }}>
-                <FormLabel component="legend">RSVP</FormLabel>
-                <RadioGroup row value={formData.rsvpEnabled ? 'yes' : 'no'} onChange={e => handleInputChange('rsvpEnabled', e.target.value === 'yes')}>
-                  <FormControlLabel value="no" control={<Radio />} label="NO" />
-                  <FormControlLabel value="yes" control={<Radio />} label="YES" />
-                </RadioGroup>
-              </Box>
+              2
+            </Box>
+            <Typography variant="h6" sx={{
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+              color: 'black'
+            }}>
+              Event Settings
+            </Typography>
+          </Box>
+
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3
+          }}>
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}>
+              <FormLabel component="legend" sx={{ minWidth: '80px' }}>RSVP</FormLabel>
+              <RadioGroup row value={formData.rsvpEnabled ? 'yes' : 'no'} onChange={e => handleInputChange('rsvpEnabled', e.target.value === 'yes')}>
+                <FormControlLabel value="no" control={<Radio />} label="NO" />
+                <FormControlLabel value="yes" control={<Radio />} label="YES" />
+              </RadioGroup>
             </Box>
 
             <Box sx={{
-            mt: 3,
-            display: 'flex',
-            gap: 4
-          }}>
-              <FormLabel component="legend">Share with</FormLabel>
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}>
+              <FormLabel component="legend" sx={{ minWidth: '80px' }}>Share with</FormLabel>
               <RadioGroup row value={formData.shareWith} onChange={e => handleInputChange('shareWith', e.target.value)}>
                 <FormControlLabel value="all" control={<Radio />} label="All" />
                 <FormControlLabel value="individuals" control={<Radio />} label="Individuals" />
@@ -213,52 +311,53 @@ export const AddEventPage = () => {
             </Box>
 
             <Box sx={{
-            mt: 3,
-            display: 'flex',
-            gap: 4
-          }}>
+              display: 'flex',
+              gap: 4
+            }}>
               <FormControlLabel control={<MuiCheckbox checked={formData.markAsImportant} onChange={e => handleInputChange('markAsImportant', e.target.checked)} />} label="Mark as Important" />
               <FormControlLabel control={<MuiCheckbox checked={formData.sendEmail} onChange={e => handleInputChange('sendEmail', e.target.checked)} />} label="Send Email" />
             </Box>
           </Box>
+        </Box>
 
-          {/* Attachments Section */}
-          <Box sx={{
-          mb: 4
+        {/* Attachments Section */}
+        <Box sx={{
+          bgcolor: 'white',
+          borderRadius: 2,
+          p: 4,
+          mb: 3,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
         }}>
-            <Box sx={{
+          <Box sx={{
             display: 'flex',
             alignItems: 'center',
             gap: 2,
-            mb: 3,
-            p: 2,
-            bgcolor: '#f6f4ee',
-            borderRadius: 1
+            mb: 4
           }}>
-              <Box sx={{
-              width: 40,
-              height: 40,
+            <Box sx={{
+              width: 32,
+              height: 32,
               borderRadius: '50%',
               bgcolor: '#dc2626',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'white'
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 'bold'
             }}>
-                <AttachFile sx={{
-                fontSize: 20
-              }} />
-              </Box>
-              <Typography variant="h6" sx={{
+              3
+            </Box>
+            <Typography variant="h6" sx={{
               fontWeight: 'bold',
               textTransform: 'uppercase',
-              color: '#dc2626'
+              color: 'black'
             }}>
-                Attachments
-              </Typography>
-            </Box>
+              Attachments
+            </Typography>
+          </Box>
 
-            <Box onClick={handleFileUpload} sx={{
+          <Box onClick={handleFileUpload} sx={{
             border: '2px dashed #ccc',
             borderRadius: 2,
             p: 4,
@@ -268,28 +367,28 @@ export const AddEventPage = () => {
               borderColor: '#999'
             }
           }}>
-              <AttachFile sx={{
+            <AttachFile sx={{
               fontSize: 48,
               color: '#ccc',
               mb: 2
             }} />
-              <Typography variant="body2" color="text.secondary">
-                Choose files | No file chosen
-              </Typography>
-            </Box>
+            <Typography variant="body2" color="text.secondary">
+              Choose files | No file chosen
+            </Typography>
           </Box>
+        </Box>
 
-          {/* Submit Button */}
-          <Box sx={{
+        {/* Submit Button */}
+        <Box sx={{
           display: 'flex',
           justifyContent: 'center',
           mt: 4
         }}>
-            <Button onClick={handleSubmit} className="px-8 py-3 text-base">
-              Create Event
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-    </Box>;
+          <Button onClick={handleSubmit} className="px-8 py-3 text-base">
+            Create Event
+          </Button>
+        </Box>
+      </Box>
+    </Box>
+  );
 };
