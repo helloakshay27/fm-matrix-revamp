@@ -406,6 +406,61 @@ export function EnhancedTable<T extends Record<string, any>>({
 
   return (
     <div className="space-y-4">
+      {/* Toolbar Section */}
+      {(leftActions || rightActions || enableSearch || !hideTableExport || !hideColumnsButton || onFilterClick) && (
+        <div className="flex items-center justify-between gap-4 p-4 bg-white border border-[#D5DbDB] rounded-lg">
+          <div className="flex items-center gap-2">
+            {leftActions}
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {enableSearch && !hideTableSearch && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder={searchPlaceholder || "Search..."}
+                  value={searchInput}
+                  onChange={(e) => {
+                    setSearchInput(e.target.value);
+                    if (onSearchChange) {
+                      onSearchChange(e.target.value);
+                    }
+                  }}
+                  className="pl-10 w-64"
+                />
+                {isSearching && (
+                  <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin" />
+                )}
+              </div>
+            )}
+            
+            {onFilterClick && (
+              <Button variant="outline" onClick={onFilterClick}>
+                <Filter className="w-4 h-4 mr-2" />
+                Filter
+              </Button>
+            )}
+            
+            {!hideTableExport && (
+              <Button variant="outline" onClick={() => handleExport ? handleExport() : exportToExcel(data, columns)}>
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
+            )}
+            
+            {!hideColumnsButton && (
+              <ColumnVisibilityMenu
+                columns={columns}
+                columnVisibility={columnVisibility}
+                onToggleVisibility={toggleColumnVisibility}
+                onResetToDefaults={resetToDefaults}
+              />
+            )}
+            
+            {rightActions}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
         <div className="overflow-x-auto">
