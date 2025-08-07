@@ -369,13 +369,8 @@ export const StaffsDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>Staffs</span>
-          <span>&gt;</span>
-          <span>Society Staffs</span>
-        </div>
+    <div className="bg-gray-50 min-h-screen">
+      <div className="p-6">
         
         <div className="bg-white rounded-none border border-gray-200 shadow-sm">
           {/* Header */}
