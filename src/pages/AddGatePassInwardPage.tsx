@@ -118,7 +118,7 @@ export const AddGatePassInwardPage = () => {
               <h2 className="text-lg font-semibold text-gray-900">GOODS DETAIL</h2>
             </div>
             <div className="p-6 space-y-6 bg-gray-50">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <FormControl
                   fullWidth
                   variant="outlined"
@@ -180,9 +180,7 @@ export const AddGatePassInwardPage = () => {
                     sx: fieldStyles,
                   }}
                 />
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <TextField
                   label="Item Quantity"
                   placeholder="01"
@@ -200,7 +198,9 @@ export const AddGatePassInwardPage = () => {
                     sx: fieldStyles,
                   }}
                 />
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                 <TextField
                   label="Unit"
                   placeholder="01"
