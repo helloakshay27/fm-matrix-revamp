@@ -110,6 +110,7 @@ export const ServiceDashboard = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [currentPage, setCurrentPage] = useState(1);
   const [downloadedQRCodes, setDownloadedQRCodes] = useState<Set<string>>(new Set());
+  const [downloadingQR, setDownloadingQR] = useState(false);
 
   useEffect(() => {
     const filtersWithSearch = {
@@ -206,74 +207,142 @@ export const ServiceDashboard = () => {
   };
 
   const handleQRDownload = async (serviceId?: string) => {
-    const servicesToDownload = serviceId
-      ? servicesData.filter((service) => service.id.toString() === serviceId)
-      : servicesData.filter((service) => selectedItems.includes(service.id.toString()));
-
-    for (const service of servicesToDownload) {
-      if (service.qr_code && service.qr_code_id) {
-        const serviceIdStr = service.id.toString();
-        if (downloadedQRCodes.has(serviceIdStr)) {
-          // Show toast with confirmation buttons
-          const downloadPromise = new Promise<void>((resolve) => {
-            toast.custom((t) => (
-              <div
-                className="bg-white p-5 rounded-xl shadow-none w-full max-w-sm border-0 ring-0"
-              >
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-6 h-6 text-yellow-500 mt-1" />
-                  <div className="flex-1 text-sm text-gray-800">
-                    <p className="font-semibold mb-1">QR Code Already Downloaded</p>
-                    <p className="text-sm text-gray-800">
-                      QR for <span className="font-medium text-gray-900">"{service.service_name}"</span> (ID: {service.id}) already downloaded. Download again?
-                    </p>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 border-red-500 hover:bg-red-50"
-                    onClick={() => {
-                      toast.dismiss(t);
-                      resolve();
-                    }}
-                  >
-                    No
-                  </Button>
-                  <Button
-                    className="bg-primary text-white hover:bg-primary/90"
-                    size="sm"
-                    onClick={async () => {
-                      toast.dismiss(t);
-                      await downloadAttachment({
-                        attachment_id: service.qr_code_id!,
-                        document_name: `${service.service_name || 'service'}_${service.id}_qr.png`,
-                      });
-                      setDownloadedQRCodes((prev) => new Set(prev).add(serviceIdStr));
-                      resolve();
-                    }}
-                  >
-                    Yes
-                  </Button>
+    if (downloadingQR) return;
+    setDownloadingQR(true);
+    let serviceIds: string[] = [];
+    if (serviceId) {
+      serviceIds = [serviceId];
+    } else {
+      serviceIds = selectedItems;
+    }
+    // Filter to only those with QR codes
+    const validServices = servicesData.filter((service) => serviceIds.includes(service.id.toString()) && service.qr_code && service.qr_code_id);
+    if (validServices.length === 0) {
+      toast.error('No valid QR codes to download');
+      setDownloadingQR(false);
+      return;
+    }
+    // If only one, keep old logic (with already downloaded check)
+    if (validServices.length === 1) {
+      const service = validServices[0];
+      const serviceIdStr = service.id.toString();
+      const downloadQR = async () => {
+        try {
+          const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+          const token = localStorage.getItem('token');
+          const apiUrl = `https://${baseUrl}/pms/services/service_qr_codes.pdf?service_ids=${service.id}`;
+          const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (!response.ok) {
+            throw new Error('Failed to fetch the QR PDF');
+          }
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${service.service_name || 'service'}_${service.id}_qr.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          setDownloadedQRCodes((prev) => new Set(prev).add(serviceIdStr));
+        } catch (err) {
+          console.error('Error downloading QR PDF:', err);
+          toast.error('Error downloading QR PDF');
+        }
+      };
+      if (downloadedQRCodes.has(serviceIdStr)) {
+        // Show toast with confirmation buttons
+        const downloadPromise = new Promise<void>((resolve) => {
+          toast.custom((t) => (
+            <div
+              className="bg-white p-5 rounded-xl shadow-none w-full max-w-sm border-0 ring-0"
+            >
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-6 h-6 text-yellow-500 mt-1" />
+                <div className="flex-1 text-sm text-gray-800">
+                  <p className="font-semibold mb-1">QR Code Already Downloaded</p>
+                  <p className="text-sm text-gray-800">
+                    QR for <span className="font-medium text-gray-900">"{service.service_name}"</span> (ID: {service.id}) already downloaded. Download again?
+                  </p>
                 </div>
               </div>
-            ));
-
-          });
-
-          await downloadPromise;
-        } else {
-          await downloadAttachment({
-            attachment_id: service.qr_code_id,
-            document_name: `${service.service_name || 'service'}_${service.id}_qr.png`,
-          });
-          setDownloadedQRCodes((prev) => new Set(prev).add(serviceIdStr));
-        }
+              <div className="flex justify-end gap-3 mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-500 hover:bg-red-50"
+                  onClick={() => {
+                    toast.dismiss(t);
+                    setDownloadingQR(false);
+                    resolve();
+                  }}
+                >
+                  No
+                </Button>
+                <Button
+                  className="bg-primary text-white hover:bg-primary/90"
+                  size="sm"
+                  onClick={async () => {
+                    toast.dismiss(t);
+                    await downloadQR();
+                    setDownloadingQR(false);
+                    resolve();
+                  }}
+                >
+                  Yes
+                </Button>
+              </div>
+            </div>
+          ));
+        });
+        await downloadPromise;
       } else {
-        console.warn(`QR code not available for service ID ${service.id}`);
-        toast.error(`QR code not available for service ID ${service.id}`);
+        await downloadQR();
+        setDownloadingQR(false);
       }
+    } else {
+      // Multiple: download one PDF with all selected service IDs, send as array
+      try {
+        const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+        const token = localStorage.getItem('token');
+        const idsArray = validServices.map((s) => s.id);
+        // Build query string with repeated service_ids[]=id1&service_ids[]=id2
+        const params = idsArray.map((id) => `service_ids[]=${encodeURIComponent(id)}`).join('&');
+        const apiUrl = `https://${baseUrl}/pms/services/service_qr_codes.pdf?${params}`;
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch the QR PDF');
+        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Service_QR_Bulk_${idsArray.join('_')}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        // Mark all as downloaded
+        setDownloadedQRCodes((prev) => {
+          const newSet = new Set(prev);
+          validServices.forEach((s) => newSet.add(s.id.toString()));
+          return newSet;
+        });
+      } catch (err) {
+        console.error('Error downloading QR PDF:', err);
+        toast.error('Error downloading QR PDF');
+      } finally {
+        setDownloadingQR(false);
+      }
+    }
+    if (validServices.length === 1 && !downloadedQRCodes.has(validServices[0].id.toString())) {
+      setDownloadingQR(false);
     }
   };
 
@@ -399,8 +468,7 @@ export const ServiceDashboard = () => {
     { key: 'serviceName', label: 'Service Name', sortable: true },
     { key: 'id', label: 'ID', sortable: true },
     { key: 'referenceNumber', label: 'Reference Number', sortable: true },
-    {key: 'executionType', label: 'Type', sortable: true },
-    { key: 'category', label: 'Category', sortable: true },
+    { key: 'executionType', label: 'Type', sortable: true },
     { key: 'group', label: 'Group', sortable: true },
     { key: 'subGroup', label: 'Sub Group', sortable: true },
     { key: 'uom', label: 'UOM', sortable: true },
@@ -411,13 +479,28 @@ export const ServiceDashboard = () => {
     { key: 'room', label: 'Room', sortable: true },
     { key: 'status', label: 'Status', sortable: true },
     { key: 'createdOn', label: 'Created On', sortable: true },
+    { key: 'category', label: 'Category', sortable: true },
+
   ];
 
   const bulkActions = [
     {
-      label: 'Print QR',
+      label: (
+        <span className="flex items-center">
+          {downloadingQR ? (
+            <svg className="animate-spin h-4 w-4 mr-2 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+          ) : (
+            <FileText className="w-4 h-4 mr-2" />
+          )}
+          {downloadingQR ? 'Print QR...' : 'Print QR'}
+        </span>
+      ),
       icon: FileText,
       onClick: () => handleQRDownload(),
+      disabled: downloadingQR,
     },
   ];
 
@@ -486,8 +569,6 @@ export const ServiceDashboard = () => {
         return item.service_code || '-';
       case 'executionType':
         return item.execution_type || '-';
-      case 'category':
-        return '-';
       case 'group':
         return item.group_name || '-';
       case 'uom':
@@ -521,6 +602,8 @@ export const ServiceDashboard = () => {
         );
       case 'createdOn':
         return item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB') : '-';
+      case 'category':
+        return '-';
       default:
         return '-';
     }
@@ -628,8 +711,17 @@ export const ServiceDashboard = () => {
         <Button
           className="bg-primary text-primary-foreground hover:bg-primary/90"
           onClick={() => handleQRDownload()}
+          disabled={downloadingQR}
         >
-          <FileText className="w-4 h-4 mr-2" /> Print QR
+          {downloadingQR ? (
+            <svg className="animate-spin h-4 w-4 mr-2 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+          ) : (
+            <FileText className="w-4 h-4 mr-2" />
+          )}
+          {downloadingQR ? 'Print QR...' : 'Print QR'}
         </Button>
       )}
     </div>

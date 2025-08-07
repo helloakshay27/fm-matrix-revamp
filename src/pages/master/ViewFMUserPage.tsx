@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useLayout } from '@/contexts/LayoutContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { fetchFMUsers, fetchRoles, fetchSuppliers, fetchUnits, FMUser, getUserDetails } from '@/store/slices/fmUserSlice';
@@ -175,7 +174,6 @@ export const ViewFMUserPage = () => {
             <ArrowLeft className="w-4 h-4" />
             Back
           </button>
-
         </div>
         <Button
           variant="outline"
@@ -211,7 +209,7 @@ export const ViewFMUserPage = () => {
               <div className="space-y-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Site</Label>
-                  <Select value={formData.site} onValueChange={(value) => handleInputChange('site', value)}>
+                  <Select value={formData.site} onValueChange={(value) => handleInputChange('site', value)} disabled>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Site" />
                     </SelectTrigger>
@@ -233,7 +231,7 @@ export const ViewFMUserPage = () => {
 
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Base Unit</Label>
-                  <Select value={formData.base_unit} onValueChange={(value) => handleInputChange('base_unit', value)}>
+                  <Select value={formData.base_unit} onValueChange={(value) => handleInputChange('base_unit', value)} disabled>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Base Unit" />
                     </SelectTrigger>
@@ -255,7 +253,7 @@ export const ViewFMUserPage = () => {
 
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">User Type</Label>
-                  <Select value={formData.system_user_type} onValueChange={(value) => handleInputChange('system_user_type', value)}>
+                  <Select value={formData.system_user_type} onValueChange={(value) => handleInputChange('system_user_type', value)} disabled>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select User Type" />
                     </SelectTrigger>
@@ -276,7 +274,7 @@ export const ViewFMUserPage = () => {
 
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Entity Name</Label>
-                  <Select value={formData.entity_id} onValueChange={(value) => handleInputChange('entity_id', value)}>
+                  <Select value={formData.entity_id} onValueChange={(value) => handleInputChange('entity_id', value)} disabled>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Entity" />
                     </SelectTrigger>
@@ -298,7 +296,7 @@ export const ViewFMUserPage = () => {
 
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Email Preference</Label>
-                  <Select value={formData.email_preference} onValueChange={(value) => handleInputChange('email_preference', value)}>
+                  <Select value={formData.email_preference} onValueChange={(value) => handleInputChange('email_preference', value)} disabled>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Email Preference" />
                     </SelectTrigger>
@@ -326,6 +324,7 @@ export const ViewFMUserPage = () => {
                     value={formData.firstname}
                     onChange={(e) => handleInputChange('firstname', e.target.value)}
                     className="w-full"
+                    disabled
                   />
                 </div>
                 <div>
@@ -334,6 +333,7 @@ export const ViewFMUserPage = () => {
                     value={formData.lastname}
                     onChange={(e) => handleInputChange('lastname', e.target.value)}
                     className="w-full"
+                    disabled
                   />
                 </div>
               </div>
@@ -342,7 +342,7 @@ export const ViewFMUserPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Gender</Label>
-                  <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
+                  <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)} disabled>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Gender" />
                     </SelectTrigger>
@@ -355,7 +355,7 @@ export const ViewFMUserPage = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Company Cluster</Label>
-                  <Select value={formData.company_cluster} onValueChange={(value) => handleInputChange('company_cluster', value)}>
+                  <Select value={formData.company_cluster} onValueChange={(value) => handleInputChange('company_cluster', value)} disabled>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Cluster" />
                     </SelectTrigger>
@@ -374,6 +374,7 @@ export const ViewFMUserPage = () => {
                     value={formData.mobile}
                     onChange={(e) => handleInputChange('mobile', e.target.value)}
                     className="w-full"
+                    disabled
                   />
                 </div>
                 <div>
@@ -382,6 +383,7 @@ export const ViewFMUserPage = () => {
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     className="w-full"
+                    disabled
                   />
                 </div>
               </div>
@@ -392,6 +394,7 @@ export const ViewFMUserPage = () => {
                   value={formData.user_type}
                   onValueChange={(value) => handleInputChange('user_type', value)}
                   className="flex gap-6"
+                  disabled
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="internal" id="internal" />
@@ -413,6 +416,7 @@ export const ViewFMUserPage = () => {
                     onChange={(e) => handleInputChange('employee_id', e.target.value)}
                     placeholder="Employee ID"
                     className="w-full"
+                    disabled
                   />
                 </div>
                 <div>
@@ -422,6 +426,7 @@ export const ViewFMUserPage = () => {
                     onChange={(e) => handleInputChange('last_working_day', e.target.value)}
                     placeholder="Last Working Day"
                     className="w-full"
+                    disabled
                   />
                 </div>
               </div>
@@ -430,7 +435,7 @@ export const ViewFMUserPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Department</Label>
-                  <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)}>
+                  <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)} disabled>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Department" />
                     </SelectTrigger>
@@ -455,6 +460,7 @@ export const ViewFMUserPage = () => {
                     value={formData.designation}
                     onChange={(e) => handleInputChange('designation', e.target.value)}
                     className="w-full"
+                    disabled
                   />
                 </div>
               </div>
@@ -463,7 +469,7 @@ export const ViewFMUserPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Role</Label>
-                  <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
+                  <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)} disabled>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Role" />
                     </SelectTrigger>
@@ -484,7 +490,7 @@ export const ViewFMUserPage = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Vendor Company Name</Label>
-                  <Select value={formData.vendor_company} onValueChange={(value) => handleInputChange('vendor_company', value)}>
+                  <Select value={formData.vendor_company} onValueChange={(value) => handleInputChange('vendor_company', value)} disabled>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Vendor Company" />
                     </SelectTrigger>
@@ -509,7 +515,7 @@ export const ViewFMUserPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">Access Level</Label>
-                  <Select value={formData.access_level} onValueChange={(value) => handleInputChange('access_level', value)}>
+                  <Select value={formData.access_level} onValueChange={(value) => handleInputChange('access_level', value)} disabled>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Access Level" />
                     </SelectTrigger>
@@ -539,6 +545,7 @@ export const ViewFMUserPage = () => {
                   id="daily-helpdesk"
                   checked={formData.daily_helpdesk_report}
                   onCheckedChange={(checked) => handleInputChange('daily_helpdesk_report', checked)}
+                  disabled
                 />
                 <Label htmlFor="daily-helpdesk" className="text-sm text-gray-700">
                   Daily Helpdesk Report Email

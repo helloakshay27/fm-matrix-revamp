@@ -285,7 +285,6 @@ export const AddBookingSetupPage = () => {
         "facility_setup[facility_charge_attributes][per_slot_charge]",
         formData.perSlotCharge
       );
-      formDataToSend.append("facility_setup[booking_limit]", "3");
       formDataToSend.append(
         "facility_setup[description]",
         formData.termsConditions || ""
@@ -327,10 +326,7 @@ export const AddBookingSetupPage = () => {
         cancellationRules[1].time.value
       );
       formDataToSend.append(
-        "facility_setup[booking_limit]", formData.facilityBookedTimes
-      )
-      formDataToSend.append(
-        "facility_setup[return_second_percentage]",
+        "facility_setup[return_percentage_second]",
         cancellationRules[1].deduction
       );
       formDataToSend.append(
@@ -346,7 +342,7 @@ export const AddBookingSetupPage = () => {
         cancellationRules[2].time.value
       );
       formDataToSend.append(
-        "facility_setup[return_third_percentage]",
+        "facility_setup[return_percentage_third]",
         cancellationRules[2].deduction
       );
       formDataToSend.append("facility_setup[book_by]", "slot");
@@ -439,6 +435,18 @@ export const AddBookingSetupPage = () => {
           slot.wrapTime || "5"
         );
       });
+
+      formDataToSend.append(
+        "facility_setup[multi_slot]",
+        formData.allowMultipleSlots
+      )
+      formDataToSend.append(
+        "facility_setup[max_slots]",
+        formData.maximumSlots
+      )
+      formDataToSend.append(
+        "facility_setup[booking_limit]", formData.facilityBookedTimes
+      )
 
       // Booking Window Configs
       formDataToSend.append(
