@@ -25,13 +25,9 @@ export const BroadcastDetailsPage = () => {
     endDate: '25-04-2023',
     endTime: '1:45 AM',
     isImportant: true,
-    attachments: 0,
+    attachments: ['document1.pdf', 'image1.jpg'],
     sharedMembers: ['Godrej Living'],
     readBy: []
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   const handleStatusChange = (newStatus: string) => {
@@ -40,172 +36,125 @@ export const BroadcastDetailsPage = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-background min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/crm/broadcast')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 hover:bg-[#C72030]/10"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Broadcasts
-          </Button>
-        </div>
-        <Button 
-          onClick={handlePrint}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 text-sm"
-        >
-          PRINT
-        </Button>
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-foreground">{broadcastDetails.title}</h1>
       </div>
 
-      {/* Godrej Living Logo */}
-      <div className="flex justify-center mb-6">
-        <div className="text-center">
-          <div className="text-pink-500 font-bold text-lg">Godrej | LIVING</div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="bg-white rounded-lg shadow">
-        {/* Title Header */}
-        <div className="bg-cyan-400 text-white px-6 py-4 rounded-t-lg">
-          <h1 className="text-xl font-bold text-center">{broadcastDetails.title}</h1>
-        </div>
-
+      {/* Broadcast Details Section */}
+      <div className="bg-card rounded-lg border mb-6">
         <div className="p-6">
-          {/* Description */}
-          <div className="mb-6">
-            <p className="text-gray-700 mb-4">{broadcastDetails.description}</p>
-            <div className="text-sm text-gray-600">
-              <strong>Created by</strong>
-              <br />
-              {broadcastDetails.createdBy}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+              <span className="text-sm font-semibold text-foreground">B</span>
             </div>
+            <h2 className="text-lg font-semibold text-foreground">BROADCAST DETAILS</h2>
           </div>
 
-          {/* Status Information Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-foreground">{broadcastDetails.id}</div>
+              <div className="text-xs text-muted-foreground">Broadcast ID</div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-foreground">{broadcastDetails.createdBy}</div>
+              <div className="text-xs text-muted-foreground">Created by</div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-foreground">{broadcastDetails.createdOn}</div>
+              <div className="text-xs text-muted-foreground">Created Date</div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-foreground">{broadcastDetails.description}</div>
+              <div className="text-xs text-muted-foreground">Message</div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-foreground">{broadcastDetails.type}</div>
+              <div className="text-xs text-muted-foreground">Type</div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-foreground">{broadcastDetails.endDate}</div>
+              <div className="text-xs text-muted-foreground">End Date</div>
+            </div>
+
+            <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  {broadcastDetails.status}
+                <Badge 
+                  variant="secondary" 
+                  className={broadcastStatus === 'Published' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}
+                >
+                  {broadcastStatus}
                 </Badge>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsStatusDialogOpen(true)}
-                  className="h-6 w-6 p-0 hover:bg-[#C72030]/10 hover:text-[#C72030]"
+                  className="h-6 w-6 p-0"
                 >
-                  <Edit className="h-3 w-3 text-gray-500 hover:text-[#C72030]" />
+                  <Edit className="h-3 w-3" />
                 </Button>
               </div>
-              <div className="text-xs text-gray-500 uppercase">STATUS TYPE</div>
+              <div className="text-xs text-muted-foreground">Status</div>
             </div>
 
-            <div className="space-y-2">
-              <Badge variant="secondary" className="bg-blue-500 text-white">
-                {broadcastDetails.type}
-              </Badge>
-              <div className="text-xs text-gray-500 uppercase">SHARE WITH</div>
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-foreground">{broadcastDetails.shareWith}</div>
+              <div className="text-xs text-muted-foreground">Share With</div>
             </div>
 
-            <div className="space-y-2">
-              <div className="text-sm font-medium">
-                {broadcastDetails.createdOn} / {broadcastDetails.createdTime}
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-foreground">{broadcastDetails.createdTime}</div>
+              <div className="text-xs text-muted-foreground">Created Time</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Attachments Section */}
+      <div className="bg-card rounded-lg border mb-6">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+              <span className="text-sm font-semibold text-foreground">A</span>
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">ATTACHMENTS</h2>
+          </div>
+
+          <div className="text-center text-muted-foreground">
+            {broadcastDetails.attachments.length === 0 ? (
+              <p>No attachments available for this broadcast.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {broadcastDetails.attachments.map((attachment, index) => (
+                  <div key={index} className="flex items-center gap-2 p-3 border rounded-lg">
+                    <Download className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm text-foreground">{attachment}</span>
+                  </div>
+                ))}
               </div>
-              <div className="text-xs text-gray-500 uppercase">CREATED ON</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Logs Section */}
+      <div className="bg-card rounded-lg border">
+        <div className="p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+              <span className="text-sm font-semibold text-foreground">L</span>
             </div>
+            <h2 className="text-lg font-semibold text-foreground">LOGS</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="space-y-2">
-              <div className="text-sm font-medium">
-                {broadcastDetails.endDate} / {broadcastDetails.endTime}
-              </div>
-              <div className="text-xs text-gray-500 uppercase">END DATE & TIME</div>
-            </div>
-
-            <div className="space-y-2">
-              <Badge variant="secondary" className="bg-green-500 text-white">
-                Yes
-              </Badge>
-              <div className="text-xs text-gray-500 uppercase">IMPORTANT</div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Attachments</span>
-                <Badge variant="secondary" className="bg-blue-500 text-white text-xs">
-                  {broadcastDetails.attachments}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          <hr className="my-6" />
-
-          {/* Shared Members List */}
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Shared Members List</h3>
-            <div className="text-sm text-gray-600">
-              {broadcastDetails.sharedMembers.join(', ')}
-            </div>
-          </div>
-
-          {/* Read By Section */}
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Read By</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-4 text-sm font-medium text-gray-700">Name</th>
-                    <th className="text-left py-2 px-4 text-sm font-medium text-gray-700">Site</th>
-                    <th className="text-left py-2 px-4 text-sm font-medium text-gray-700">Department</th>
-                    <th className="text-left py-2 px-4 text-sm font-medium text-gray-700">Designation</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {broadcastDetails.readBy.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="text-center py-4 text-gray-500 text-sm">
-                        No data available
-                      </td>
-                    </tr>
-                  ) : (
-                    broadcastDetails.readBy.map((reader, index) => (
-                      <tr key={index} className="border-b">
-                        <td className="py-2 px-4 text-sm">{reader}</td>
-                        <td className="py-2 px-4 text-sm">-</td>
-                        <td className="py-2 px-4 text-sm">-</td>
-                        <td className="py-2 px-4 text-sm">-</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <hr className="my-6" />
-
-          {/* Property Managed By */}
-          <div className="text-center text-sm text-gray-600 mb-4">
-            <strong>Property Managed By</strong>
-          </div>
-
-          {/* Footer branding */}
-          <div className="text-center text-xs text-gray-500">
-            <p>Powered by</p>
-            <div className="flex items-center justify-center mt-1">
-              <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs mr-2">
-                📍
-              </div>
-              <span className="font-semibold">LOCATED</span>
-            </div>
+          <div className="text-center text-muted-foreground">
+            <p>No logs available for this broadcast.</p>
           </div>
         </div>
       </div>
