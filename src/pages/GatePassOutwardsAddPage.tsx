@@ -89,7 +89,7 @@ export const GatePassOutwardsAddPage = () => {
           <h2 className="text-lg font-semibold text-[#C72030] mb-4">GOODS DETAIL</h2>
           
           <div className="grid grid-cols-4 gap-4 mb-4">
-            {activeTab === 'RETURNABLE' ? (
+            {activeTab === 'RETURNABLE' && (
               <TextField
                 label="Expected Returnable Date"
                 type="date"
@@ -105,8 +105,6 @@ export const GatePassOutwardsAddPage = () => {
                   sx: fieldStyles,
                 }}
               />
-            ) : (
-              <div></div>
             )}
             
             <FormControl
