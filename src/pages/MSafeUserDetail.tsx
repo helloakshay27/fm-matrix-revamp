@@ -87,14 +87,14 @@ export const MSafeUserDetail = () => {
         <TabsList className="flex justify-start bg-gray-50 rounded-t-lg h-auto p-0 w-full">
           <TabsTrigger 
             value="personal" 
-            className="bg-white data-[state=active]:bg-[#EDEAE3] px-4 py-3 data-[state=active]:text-[#C72030] text-gray-600 hover:text-gray-800 flex items-center gap-2 font-medium border-0 rounded-none first:rounded-tl-lg"
+            className="bg-white data-[state=active]:bg-[#EDEAE3] px-8 py-3 data-[state=active]:text-[#C72030] text-gray-600 hover:text-gray-800 flex items-center gap-2 font-medium border-0 rounded-none first:rounded-tl-lg flex-1"
           >
             <UserCircle className="h-5 w-5" />
             Personal Information
           </TabsTrigger>
           <TabsTrigger 
             value="other" 
-            className="bg-white data-[state=active]:bg-[#EDEAE3] px-4 py-3 data-[state=active]:text-[#C72030] text-gray-600 hover:text-gray-800 flex items-center gap-2 font-medium border-0 rounded-none"
+            className="bg-white data-[state=active]:bg-[#EDEAE3] px-8 py-3 data-[state=active]:text-[#C72030] text-gray-600 hover:text-gray-800 flex items-center gap-2 font-medium border-0 rounded-none flex-1"
           >
             <Settings className="h-5 w-5" />
             Other Information
