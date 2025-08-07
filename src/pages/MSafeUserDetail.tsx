@@ -5,18 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useAppSelector } from '@/hooks/useAppDispatch';
-
 export const MSafeUserDetail = () => {
-  const { userId } = useParams();
+  const {
+    userId
+  } = useParams();
   const navigate = useNavigate();
-  const { data: fmUsersData } = useAppSelector(state => state.fmUsers);
+  const {
+    data: fmUsersData
+  } = useAppSelector(state => state.fmUsers);
   const fm_users = fmUsersData?.fm_users || [];
-  
   const user = fm_users.find(u => u.id === Number(userId));
-
   if (!user) {
-    return (
-      <div className="p-6">
+    return <div className="p-6">
         <div className="flex items-center gap-4 mb-6">
           <Button variant="ghost" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -26,10 +26,8 @@ export const MSafeUserDetail = () => {
         <div className="text-center py-8">
           <p className="text-gray-500">User not found</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   const getStatusBadge = (status: string) => {
     if (!status) {
       return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
@@ -45,7 +43,6 @@ export const MSafeUserDetail = () => {
         return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{status}</Badge>;
     }
   };
-
   const getTypeBadge = (type: string) => {
     if (!type) {
       return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
@@ -61,16 +58,13 @@ export const MSafeUserDetail = () => {
         return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{type}</Badge>;
     }
   };
-
   const getYesNoBadge = (value: boolean | string) => {
     const isYes = value === true || value === 'yes' || value === 'Yes';
     return <Badge className={isYes ? "bg-green-500 text-white hover:bg-green-600" : "bg-red-500 text-white hover:bg-red-600"}>
       {isYes ? 'Yes' : 'No'}
     </Badge>;
   };
-
-  return (
-    <div className="p-6">
+  return <div className="p-6">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
         <Button variant="ghost" onClick={() => navigate(-1)}>
@@ -86,16 +80,7 @@ export const MSafeUserDetail = () => {
       </div>
 
       {/* Status Overview */}
-      <div className="bg-[#f6f4ee] rounded-lg p-4 mb-6 flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Status:</span>
-          {getStatusBadge(user.lock_user_permission_status)}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Type:</span>
-          {getTypeBadge(user.user_type)}
-        </div>
-      </div>
+      
 
       {/* Tabs */}
       <Tabs defaultValue="personal" className="w-full">
@@ -190,6 +175,5 @@ export const MSafeUserDetail = () => {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
