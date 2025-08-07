@@ -144,6 +144,24 @@ export const GatePassOutwardsAddPage = () => {
               </MuiSelect>
             </FormControl>
             
+            <TextField
+              label="Item Name"
+              placeholder="Fill Item Name"
+              fullWidth
+              variant="outlined"
+              required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
+          </div>
+
+          <div className="grid grid-cols-4 gap-4 mb-4">
             <FormControl
               fullWidth
               variant="outlined"
@@ -162,24 +180,6 @@ export const GatePassOutwardsAddPage = () => {
                 <MenuItem value="tools">Tools</MenuItem>
               </MuiSelect>
             </FormControl>
-          </div>
-
-          <div className="grid grid-cols-4 gap-4 mb-4">
-            <TextField
-              label="Item Name"
-              placeholder="Fill Item Name"
-              fullWidth
-              variant="outlined"
-              required
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-              InputProps={{
-                sx: fieldStyles,
-              }}
-            />
             
             <TextField
               label="Unit"
