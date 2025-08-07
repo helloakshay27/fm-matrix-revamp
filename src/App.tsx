@@ -218,9 +218,6 @@ import { GVehiclesDashboard } from "./pages/GVehiclesDashboard";
 import { GVehicleOutDashboard } from "./pages/GVehicleOutDashboard";
 
 // Import Gate Pass pages
-import { GatePassDashboard } from "./pages/GatePassDashboard";
-import { GatePassInwardsDashboard } from "./pages/GatePassInwardsDashboard";
-import { GatePassOutwardsDashboard } from "./pages/GatePassOutwardsDashboard";
 import { GatePassDashboard } from './pages/GatePassDashboard';
 import { GatePassInwardsDashboard } from './pages/GatePassInwardsDashboard';
 import { GatePassInwardsDetailPage } from './pages/GatePassInwardsDetailPage';
