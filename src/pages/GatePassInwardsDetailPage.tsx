@@ -1,12 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { ArrowLeft, Upload } from 'lucide-react';
 
 export const GatePassInwardsDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
+  const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
 
   // Sample data - in real app, this would be fetched based on the ID
   const inwardData = [
@@ -102,6 +108,17 @@ export const GatePassInwardsDetailPage = () => {
       itemDetails: "MW - - Transmission - -"
     }
   ];
+
+  const handleReceiveClick = (itemIndex: number) => {
+    setSelectedItemIndex(itemIndex);
+    setIsReceiveModalOpen(true);
+  };
+
+  const handleSubmitReceive = () => {
+    // Handle submit logic here
+    setIsReceiveModalOpen(false);
+    setSelectedItemIndex(null);
+  };
 
   const selectedEntry = inwardData.find(entry => entry.id === id);
 
@@ -278,7 +295,10 @@ export const GatePassInwardsDetailPage = () => {
                     <TableCell className="px-4 py-3 text-sm text-gray-900">{item.description}</TableCell>
                     <TableCell className="px-4 py-3 text-sm text-gray-900">{item.attachment}</TableCell>
                     <TableCell className="px-4 py-3 text-sm">
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span 
+                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 cursor-pointer hover:bg-green-200 transition-colors"
+                        onClick={() => handleReceiveClick(index)}
+                      >
                         {item.updates}
                       </span>
                     </TableCell>
@@ -289,6 +309,64 @@ export const GatePassInwardsDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Receive Modal */}
+      <Dialog open={isReceiveModalOpen} onOpenChange={setIsReceiveModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-gray-900">Return Process</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="handover" className="text-sm font-medium text-gray-700">
+                Handover To
+              </Label>
+              <Input
+                id="handover"
+                placeholder="Enter handover details"
+                className="w-full"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">
+                Remarks
+              </Label>
+              <Textarea
+                id="remarks"
+                placeholder="Enter remarks"
+                className="w-full min-h-[80px]"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="attachment" className="text-sm font-medium text-gray-700">
+                Attachment
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="attachment"
+                  type="file"
+                  className="w-full"
+                />
+                <Button size="sm" variant="outline">
+                  <Upload className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex justify-center pt-4">
+            <Button 
+              onClick={handleSubmitReceive}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
+            >
+              Submit
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
