@@ -113,27 +113,29 @@ export const VisitorsDashboard = () => {
               {visitorSubTab === 'visitor-in' && (
                 <div className="p-4">
                   {/* Person Selection Dropdown */}
-                  <div className="mb-6">
-                    <Select value={selectedPerson} onValueChange={setSelectedPerson}>
-                      <SelectTrigger className="w-full max-w-md bg-white border border-gray-300">
-                        <SelectValue placeholder="Select Person To Meet" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                        <SelectItem value="person1">Abdul Ghaffar</SelectItem>
-                        <SelectItem value="person2">Arun</SelectItem>
-                        <SelectItem value="person3">Aryan</SelectItem>
-                        <SelectItem value="person4">Vinayak Mane</SelectItem>
-                        <SelectItem value="person5">Sohail Ansari</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="ml-2 hover:bg-gray-100"
-                      onClick={handleRefresh}
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                    </Button>
+                  <div className="mb-6 flex justify-end">
+                    <div className="flex items-center">
+                      <Select value={selectedPerson} onValueChange={setSelectedPerson}>
+                        <SelectTrigger className="w-64 bg-white border border-gray-300">
+                          <SelectValue placeholder="Select Person To Meet" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                          <SelectItem value="person1">Abdul Ghaffar</SelectItem>
+                          <SelectItem value="person2">Arun</SelectItem>
+                          <SelectItem value="person3">Aryan</SelectItem>
+                          <SelectItem value="person4">Vinayak Mane</SelectItem>
+                          <SelectItem value="person5">Sohail Ansari</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="ml-2 hover:bg-gray-100"
+                        onClick={handleRefresh}
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Visitor Type Tabs */}
