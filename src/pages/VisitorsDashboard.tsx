@@ -33,7 +33,7 @@ export const VisitorsDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mb-6">
         {/* Tab Navigation */}
         <div className="flex mb-6 border-b border-border">
