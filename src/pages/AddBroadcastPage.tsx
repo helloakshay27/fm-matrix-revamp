@@ -13,7 +13,9 @@ export const AddBroadcastPage = () => {
     markAsImportant: false,
     endDate: '',
     endTime: '',
-    shareWith: 'all'
+    shareWith: 'all',
+    selectedIndividuals: [],
+    selectedGroups: []
   });
 
   const handleInputChange = (field: string, value: any) => {
@@ -243,6 +245,72 @@ export const AddBroadcastPage = () => {
                 <FormControlLabel value="groups" control={<Radio />} label="Groups" />
               </RadioGroup>
             </Box>
+
+            {/* Conditional dropdown for Individuals */}
+            {formData.shareWith === 'individuals' && (
+              <Box sx={{ ml: 4 }}>
+                <FormControl fullWidth sx={{ maxWidth: 400 }}>
+                  <InputLabel>Select Individuals</InputLabel>
+                  <MuiSelect
+                    multiple
+                    value={formData.selectedIndividuals}
+                    onChange={e => handleInputChange('selectedIndividuals', e.target.value)}
+                    label="Select Individuals"
+                    sx={{
+                      bgcolor: 'white',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#ccc'
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#999'
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#dc2626'
+                      }
+                    }}
+                  >
+                    <MenuItem value="john.doe@company.com">John Doe</MenuItem>
+                    <MenuItem value="jane.smith@company.com">Jane Smith</MenuItem>
+                    <MenuItem value="mike.johnson@company.com">Mike Johnson</MenuItem>
+                    <MenuItem value="sarah.wilson@company.com">Sarah Wilson</MenuItem>
+                    <MenuItem value="david.brown@company.com">David Brown</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </Box>
+            )}
+
+            {/* Conditional dropdown for Groups */}
+            {formData.shareWith === 'groups' && (
+              <Box sx={{ ml: 4 }}>
+                <FormControl fullWidth sx={{ maxWidth: 400 }}>
+                  <InputLabel>Select Groups</InputLabel>
+                  <MuiSelect
+                    multiple
+                    value={formData.selectedGroups}
+                    onChange={e => handleInputChange('selectedGroups', e.target.value)}
+                    label="Select Groups"
+                    sx={{
+                      bgcolor: 'white',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#ccc'
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#999'
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#dc2626'
+                      }
+                    }}
+                  >
+                    <MenuItem value="marketing">Marketing Team</MenuItem>
+                    <MenuItem value="sales">Sales Team</MenuItem>
+                    <MenuItem value="development">Development Team</MenuItem>
+                    <MenuItem value="hr">HR Department</MenuItem>
+                    <MenuItem value="finance">Finance Department</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </Box>
+            )}
 
             <Box sx={{
               display: 'flex',
