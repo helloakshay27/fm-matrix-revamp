@@ -71,7 +71,7 @@ export const VisitorsDashboard = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="visitor" className="mt-4">
+          <TabsContent value="visitor" className="bg-white rounded-lg border border-gray-200 mt-4">
             <Tabs value={visitorSubTab} onValueChange={setVisitorSubTab} className="w-full">
               <div className="flex bg-white p-1 rounded-lg">
                 <Button 
