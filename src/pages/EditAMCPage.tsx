@@ -159,8 +159,8 @@ useEffect(() => {
           : '',
       asset_ids: assetIds,
       vendor: foundSupplier ? supplierId : '',
-      group: data.group_id || formData.group,
-      subgroup: data.sub_group_id || formData.subgroup,
+      group: data.group_id ? data.group_id.toString() : formData.group,
+      subgroup: data.sub_group_id ? data.sub_group_id.toString() : formData.subgroup,
       service: foundService
         ? serviceId
         : data.service_id?.toString() || formData.service,
@@ -184,8 +184,9 @@ useEffect(() => {
       : [];
     setExistingFiles({ contracts, invoices });
 
-    if (isGroupType && data.group_id) {
-      handleGroupChange(data.group_id.toString());
+    if (data.group_id) {
+      // Always load subgroups if group_id is present, for both Individual and Group types
+      handleGroupChange(data.group_id.toString(), data.sub_group_id ? data.sub_group_id.toString() : undefined);
     }
   }
 }, [amcData, assetList, suppliers, services]);
@@ -291,7 +292,8 @@ useEffect(() => {
     fetchAssetGroups();
   }, [dispatch, toast]);
 
-  const handleGroupChange = async (groupId: string) => {
+  // Accept optional subgroupId to select after loading subgroups
+  const handleGroupChange = async (groupId: string, subgroupId?: string) => {
     handleInputChange('group', groupId);
 
     if (groupId) {
@@ -311,8 +313,10 @@ useEffect(() => {
         }
         setSubGroups(subgroups);
 
-        if (formData.subgroup && subgroups.some(sub => sub.id.toString() === formData.subgroup)) {
-          handleInputChange('subgroup', formData.subgroup);
+        // Select the intended subgroup if provided and present
+        const intendedSubgroup = subgroupId || formData.subgroup;
+        if (intendedSubgroup && subgroups.some(sub => sub.id.toString() === intendedSubgroup)) {
+          handleInputChange('subgroup', intendedSubgroup);
         }
       } catch (error) {
         console.error('Error fetching subgroups:', error);
