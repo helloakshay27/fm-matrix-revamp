@@ -488,32 +488,6 @@ export const StaffsDashboard = () => {
               </div>
             )}
 
-            {/* Search Bar for History and All tabs */}
-            {(activeTab === 'history' || activeTab === 'all') && (
-              <div className="flex gap-4 items-center">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search by name, mobile, email or ID"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white h-10 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSearch();
-                      }
-                    }}
-                  />
-                </div>
-                <Button 
-                  onClick={handleSearch}
-                  style={{ backgroundColor: '#C72030' }}
-                  className="hover:bg-[#C72030]/90 text-white px-6 py-2 h-10 rounded-none text-sm font-medium border-0"
-                >
-                  Go!
-                </Button>
-              </div>
-            )}
           </div>
 
           {/* Content */}
