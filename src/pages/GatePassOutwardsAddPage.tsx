@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TextField } from '@mui/material';
 import { ArrowLeft, Upload } from 'lucide-react';
 
 export const GatePassOutwardsAddPage = () => {
@@ -69,18 +67,30 @@ export const GatePassOutwardsAddPage = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             {activeTab === 'RETURNABLE' && (
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">
-                  Expected Returnable Date*
-                </Label>
-                <Input type="date" className="w-full" />
+              <div>
+                <TextField
+                  label="Expected Returnable Date*"
+                  type="date"
+                  variant="outlined"
+                  fullWidth
+                  size="medium"
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: 'white',
+                      height: '44px'
+                    }
+                  }}
+                />
               </div>
             )}
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Item Type*
-              </Label>
+              </label>
               <Select>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Item Type" />
@@ -93,10 +103,10 @@ export const GatePassOutwardsAddPage = () => {
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Item Category*
-              </Label>
+              </label>
               <Select>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Category" />
@@ -109,46 +119,89 @@ export const GatePassOutwardsAddPage = () => {
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Item Name*
-              </Label>
-              <Input placeholder="Fill Item Name" className="w-full" />
+            <div>
+              <TextField
+                label="Item Name*"
+                placeholder="Fill Item Name"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'white',
+                    height: '44px'
+                  }
+                }}
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Item Quantity*
-              </Label>
-              <Input placeholder="01" className="w-full" />
+            <div>
+              <TextField
+                label="Item Quantity*"
+                placeholder="01"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'white',
+                    height: '44px'
+                  }
+                }}
+              />
             </div>
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Unit*
-              </Label>
-              <Input placeholder="01" className="w-full" />
+            <div>
+              <TextField
+                label="Unit*"
+                placeholder="01"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'white',
+                    height: '44px'
+                  }
+                }}
+              />
             </div>
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Description*
-              </Label>
-              <Input placeholder="Type Here" className="w-full" />
+            <div>
+              <TextField
+                label="Description*"
+                placeholder="Type Here"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'white',
+                    height: '44px'
+                  }
+                }}
+              />
             </div>
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Attachments*
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input type="file" className="w-full" />
-                <Button type="button" size="sm" variant="outline">
-                  <Upload className="w-4 h-4" />
-                </Button>
-              </div>
+            <div>
+              <TextField
+                label="Attachments*"
+                type="file"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'white',
+                    height: '44px'
+                  }
+                }}
+              />
               <Button 
                 type="button"
                 className="mt-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2"
@@ -164,10 +217,10 @@ export const GatePassOutwardsAddPage = () => {
           <h2 className="text-lg font-semibold text-[#C72030] mb-4">VISITOR DETAIL</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Visitor Name*
-              </Label>
+              </label>
               <Select>
                 <SelectTrigger>
                   <SelectValue placeholder="Enter Name" />
@@ -180,33 +233,60 @@ export const GatePassOutwardsAddPage = () => {
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Mobile No.*
-              </Label>
-              <Input placeholder="+91-" className="w-full" />
+            <div>
+              <TextField
+                label="Mobile No.*"
+                placeholder="+91-"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'white',
+                    height: '44px'
+                  }
+                }}
+              />
             </div>
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Company Name*
-              </Label>
-              <Input placeholder="Located" className="w-full" />
+            <div>
+              <TextField
+                label="Company Name*"
+                placeholder="Located"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'white',
+                    height: '44px'
+                  }
+                }}
+              />
             </div>
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Vehicle No.*
-              </Label>
-              <Input placeholder="MH04L1109" className="w-full" />
+            <div>
+              <TextField
+                label="Vehicle No.*"
+                placeholder="MH04L1109"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'white',
+                    height: '44px'
+                  }
+                }}
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Mode Of Transport*
-              </Label>
+              </label>
               <Select>
                 <SelectTrigger>
                   <SelectValue placeholder="Type here" />
@@ -219,11 +299,20 @@ export const GatePassOutwardsAddPage = () => {
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Reporting Time*
-              </Label>
-              <Input placeholder="12:24 Pm" className="w-full" />
+            <div>
+              <TextField
+                label="Reporting Time*"
+                placeholder="12:24 Pm"
+                variant="outlined"
+                fullWidth
+                size="medium"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'white',
+                    height: '44px'
+                  }
+                }}
+              />
             </div>
           </div>
         </div>
