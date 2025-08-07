@@ -37,9 +37,7 @@ export const CRMEventDetailsPage = () => {
           <ArrowLeft className="w-4 h-4" />
           Back to Events
         </Button>
-        <Button onClick={handleDisable} className="ml-auto bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2">
-          Disable
-        </Button>
+        
       </div>
 
       {/* Event Details Section */}
