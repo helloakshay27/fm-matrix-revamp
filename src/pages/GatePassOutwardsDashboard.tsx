@@ -1,12 +1,18 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, Eye } from 'lucide-react';
 import { GatePassOutwardsFilterModal } from '@/components/GatePassOutwardsFilterModal';
 
 export const GatePassOutwardsDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleViewDetails = (id: string) => {
+    navigate(`/security/gate-pass/outwards/${id}`);
+  };
 
   // Data matching the screenshot
   const outwardData = [
@@ -83,17 +89,28 @@ export const GatePassOutwardsDashboard = () => {
             <span>Outwards</span>
           </div>
           
-          <h1 className="text-xl font-semibold text-gray-900 mb-4">Outward List</h1>
-          
-          {/* Filters Button */}
-          <Button 
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-none flex items-center gap-2"
-            onClick={() => setIsFilterModalOpen(true)}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            Filters
-          </Button>
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-semibold text-gray-900">Outward List</h1>
+            
+            {/* Add and Filters buttons */}
+            <div className="flex items-center gap-3">
+              <Button 
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2"
+                onClick={() => navigate('/security/gate-pass/outwards/add')}
+              >
+                Add
+              </Button>
+              
+              <Button 
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-none flex items-center gap-2"
+                onClick={() => setIsFilterModalOpen(true)}
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                Filters
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Data Table */}
@@ -101,6 +118,7 @@ export const GatePassOutwardsDashboard = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
+                <TableHead className="text-left font-semibold">View</TableHead>
                 <TableHead className="text-left font-semibold">ID</TableHead>
                 <TableHead className="text-left font-semibold">Type</TableHead>
                 <TableHead className="text-left font-semibold">Returnable/Non Returnable</TableHead>
@@ -119,7 +137,20 @@ export const GatePassOutwardsDashboard = () => {
             <TableBody>
               {outwardData.map((entry) => (
                 <TableRow key={entry.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{entry.id}</TableCell>
+                  <TableCell>
+                    <button 
+                      onClick={() => handleViewDetails(entry.id)}
+                      className="text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </TableCell>
+                  <TableCell 
+                    className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
+                    onClick={() => handleViewDetails(entry.id)}
+                  >
+                    {entry.id}
+                  </TableCell>
                   <TableCell>{entry.type}</TableCell>
                   <TableCell>{entry.returnableNonReturnable}</TableCell>
                   <TableCell>{entry.expectedReturnDate}</TableCell>
