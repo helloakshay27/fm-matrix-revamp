@@ -139,6 +139,7 @@ export const StaffsDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); // Actual search query used for filtering
   const [selectedStaffs, setSelectedStaffs] = useState<string[]>([]);
   const [searchTrigger, setSearchTrigger] = useState(0);
 
@@ -178,8 +179,8 @@ export const StaffsDashboard = () => {
 
   const handleSearch = () => {
     console.log('Search triggered for:', searchTerm);
-    // Trigger re-render by updating search trigger
-    setSearchTrigger(prev => prev + 1);
+    // Set the search query to trigger filtering
+    setSearchQuery(searchTerm);
     // Clear selections to show updated results
     setSelectedStaffs([]);
   };
@@ -212,8 +213,8 @@ export const StaffsDashboard = () => {
   const filteredData = () => {
     if (activeTab === 'history') {
       return historyData.filter(staff =>
-        staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        staff.mobile.includes(searchTerm)
+        staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        staff.mobile.includes(searchQuery)
       );
     }
     
@@ -224,10 +225,10 @@ export const StaffsDashboard = () => {
       : allStaffsData;
     
     return baseData.filter(staff =>
-      staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.mobile.includes(searchTerm) ||
-      staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.id.includes(searchTerm)
+      staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      staff.mobile.includes(searchQuery) ||
+      staff.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      staff.id.includes(searchQuery)
     );
   };
 
