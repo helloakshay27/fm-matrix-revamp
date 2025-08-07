@@ -4,8 +4,8 @@ import { Plus, Search, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useNavigate } from 'react-router-dom';
 
 const broadcastData = [
@@ -69,24 +69,85 @@ const broadcastData = [
 export const BroadcastDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [visibleColumns, setVisibleColumns] = useState({
-    action: true,
-    title: true,
-    type: true,
-    createdOn: true,
-    createdBy: true,
-    status: true,
-    expiredOn: true,
-    expired: true,
-    attachment: true
-  });
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-  const handleColumnChange = (columns: typeof visibleColumns) => {
-    setVisibleColumns(columns);
-  };
+  const columns: ColumnConfig[] = [
+    { key: 'title', label: 'Title', sortable: true, hideable: true, defaultVisible: true },
+    { key: 'type', label: 'Type', sortable: true, hideable: true, defaultVisible: true },
+    { key: 'createdOn', label: 'Created On', sortable: true, hideable: true, defaultVisible: true },
+    { key: 'createdBy', label: 'Created by', sortable: true, hideable: true, defaultVisible: true },
+    { key: 'status', label: 'Status', sortable: true, hideable: true, defaultVisible: true },
+    { key: 'expiredOn', label: 'Expired On', sortable: true, hideable: true, defaultVisible: true },
+    { key: 'expired', label: 'Expired', sortable: true, hideable: true, defaultVisible: true },
+    { key: 'attachment', label: 'Attachment', sortable: false, hideable: true, defaultVisible: true },
+  ];
 
   const handleViewDetails = (id: number) => {
     navigate(`/crm/broadcast/details/${id}`);
+  };
+
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case 'title':
+        return <span className="font-medium">{item.title}</span>;
+      case 'type':
+        return (
+          <Badge 
+            variant={item.type === 'General' ? 'default' : 'secondary'}
+            className={item.type === 'General' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}
+          >
+            {item.type}
+          </Badge>
+        );
+      case 'status':
+        return (
+          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+            {item.status}
+          </Badge>
+        );
+      case 'expired':
+        return (
+          <Badge 
+            variant={item.expired === 'No' ? 'secondary' : 'destructive'}
+            className={item.expired === 'No' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+          >
+            {item.expired}
+          </Badge>
+        );
+      case 'attachment':
+        return item.attachment ? (
+          <div className="w-4 h-4 bg-blue-500 rounded mx-auto"></div>
+        ) : null;
+      default:
+        return item[columnKey];
+    }
+  };
+
+  const renderActions = (item: any) => (
+    <Button 
+      variant="ghost" 
+      size="sm"
+      onClick={() => handleViewDetails(item.id)}
+      className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
+    >
+      <Eye className="w-4 h-4" />
+    </Button>
+  );
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(broadcastData.map(item => item.id.toString()));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
   };
 
   return (
@@ -99,9 +160,24 @@ export const BroadcastDashboard = () => {
       {/* Page Title */}
       <h1 className="text-2xl font-bold text-gray-900">BROADCAST LIST</h1>
 
-      {/* Action Bar */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      {/* Enhanced Table */}
+      <EnhancedTable
+        data={broadcastData}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        storageKey="broadcast-table"
+        enableSearch={true}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search broadcasts..."
+        enableSelection={true}
+        selectedItems={selectedItems}
+        onSelectAll={handleSelectAll}
+        onSelectItem={handleSelectItem}
+        getItemId={(item) => item.id.toString()}
+        emptyMessage="No broadcasts found"
+        leftActions={
           <Button 
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
             onClick={() => navigate('/crm/broadcast/add')}
@@ -109,107 +185,18 @@ export const BroadcastDashboard = () => {
             <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Search"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
-            />
+        }
+        rightActions={
+          <div className="flex items-center gap-3">
+            <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+              Go!
+            </Button>
+            <Button variant="outline" className="border-gray-300">
+              Reset
+            </Button>
           </div>
-          <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">
-            Go!
-          </Button>
-          <Button variant="outline" className="border-gray-300">
-            Reset
-          </Button>
-          <ColumnVisibilityDropdown
-            visibleColumns={visibleColumns}
-            onColumnChange={handleColumnChange}
-          />
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b">
-              {visibleColumns.action && <TableHead>Action</TableHead>}
-              {visibleColumns.title && <TableHead>Title</TableHead>}
-              {visibleColumns.type && <TableHead>Type</TableHead>}
-              {visibleColumns.createdOn && <TableHead>Created On</TableHead>}
-              {visibleColumns.createdBy && <TableHead>Created by</TableHead>}
-              {visibleColumns.status && <TableHead>Status</TableHead>}
-              {visibleColumns.expiredOn && <TableHead>Expired On</TableHead>}
-              {visibleColumns.expired && <TableHead>Expired</TableHead>}
-              {visibleColumns.attachment && <TableHead>Attachment</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {broadcastData.map((broadcast) => (
-              <TableRow key={broadcast.id} className="border-b">
-                {visibleColumns.action && (
-                  <TableCell>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleViewDetails(broadcast.id)}
-                      className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                )}
-                {visibleColumns.title && (
-                  <TableCell className="font-medium">{broadcast.title}</TableCell>
-                )}
-                {visibleColumns.type && (
-                  <TableCell>
-                    <Badge 
-                      variant={broadcast.type === 'General' ? 'default' : 'secondary'}
-                      className={broadcast.type === 'General' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}
-                    >
-                      {broadcast.type}
-                    </Badge>
-                  </TableCell>
-                )}
-                {visibleColumns.createdOn && <TableCell>{broadcast.createdOn}</TableCell>}
-                {visibleColumns.createdBy && <TableCell>{broadcast.createdBy}</TableCell>}
-                {visibleColumns.status && (
-                  <TableCell>
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                      {broadcast.status}
-                    </Badge>
-                  </TableCell>
-                )}
-                {visibleColumns.expiredOn && <TableCell>{broadcast.expiredOn}</TableCell>}
-                {visibleColumns.expired && (
-                  <TableCell>
-                    <Badge 
-                      variant={broadcast.expired === 'No' ? 'secondary' : 'destructive'}
-                      className={broadcast.expired === 'No' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
-                    >
-                      {broadcast.expired}
-                    </Badge>
-                  </TableCell>
-                )}
-                {visibleColumns.attachment && (
-                  <TableCell>
-                    {broadcast.attachment && (
-                      <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                    )}
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+        }
+      />
 
       {/* Footer branding */}
       <div className="text-center text-xs text-gray-500 mt-8">
