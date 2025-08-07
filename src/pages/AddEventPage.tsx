@@ -70,7 +70,8 @@ export const AddEventPage = () => {
       </Box>
 
       <Card sx={{
-      maxWidth: '1200px'
+      width: '100%',
+      bgcolor: '#f9f9f9'
     }}>
         <CardContent sx={{
         p: 4
