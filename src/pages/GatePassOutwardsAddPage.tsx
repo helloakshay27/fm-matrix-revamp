@@ -88,7 +88,7 @@ export const GatePassOutwardsAddPage = () => {
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-[#C72030] mb-4">GOODS DETAIL</h2>
           
-          <div className="grid grid-cols-5 gap-4 mb-4">
+          <div className="grid grid-cols-4 gap-4 mb-4">
             {activeTab === 'RETURNABLE' && (
               <TextField
                 label="Expected Returnable Date"
@@ -176,6 +176,9 @@ export const GatePassOutwardsAddPage = () => {
                 sx: fieldStyles,
               }}
             />
+          </div>
+
+          <div className="grid grid-cols-4 gap-4 mb-4">
             
             <TextField
               label="Unit"
@@ -192,9 +195,7 @@ export const GatePassOutwardsAddPage = () => {
                 sx: fieldStyles,
               }}
             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mb-4">
+            
             <TextField
               label="Description"
               placeholder="Type Here"
