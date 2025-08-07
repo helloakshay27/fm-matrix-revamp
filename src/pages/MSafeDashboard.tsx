@@ -232,9 +232,8 @@ export const MSafeDashboard = () => {
       
 
       {/* Enhanced Table */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div className="rounded-lg shadow-sm border">
         <div className="p-6">
-          <h2 className="text-lg font-semibold mb-4">FM Users Management</h2>
           <EnhancedTable data={fm_users || []} columns={columns} renderCell={renderCell} renderActions={renderActions} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search FM users..." enableExport={true} exportFileName="fm-users" pagination={true} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
         </div>
       </div>
