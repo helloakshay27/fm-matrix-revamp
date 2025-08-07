@@ -120,6 +120,7 @@ import { VisitorsDashboard } from './pages/VisitorsDashboard';
 import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
 import { PatrollingDashboard } from './pages/PatrollingDashboard';
 import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
+import { VisitorFormPage } from './pages/VisitorFormPage';
 
 // Import new dashboard pages
 import { IncidentDashboard } from "./pages/IncidentDashboard";
@@ -395,9 +396,11 @@ import { AddInventoryPage } from "./pages/AddInventoryPage";
 import { EditAssetDetailsPage } from "./pages/EditAssetDetailsPage";
 
 // Import M Safe pages
-import { MSafeDashboard } from "./pages/MSafeDashboard";
-import { NonFTEUsersDashboard } from "./pages/NonFTEUsersDashboard";
-import { KRCCFormListDashboard } from "./pages/KRCCFormListDashboard";
+
+import { MSafeDashboard } from './pages/MSafeDashboard';
+import { MSafeUserDetail } from './pages/MSafeUserDetail';
+import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
+import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
 
 // Import Edit Roster Template page
 import { EditRosterTemplatePage } from "./pages/setup/EditRosterTemplatePage";
@@ -1419,6 +1422,12 @@ function App() {
                   path="/security/visitor/history"
                   element={<VisitorsHistoryDashboard />}
                 />
+                <Route path="/security/gate-pass" element={<GatePassDashboard />} />
+                <Route path="/security/gate-pass/inwards" element={<GatePassInwardsDashboard />} />
+                <Route path="/security/gate-pass/outwards" element={<GatePassOutwardsDashboard />} />
+                <Route path="/security/visitor" element={<VisitorsDashboard />} />
+                <Route path="/visitor-form" element={<VisitorFormPage />} />
+                <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
                 <Route path="/security/staff" element={<StaffsDashboard />} />
                 <Route
                   path="/security/staff/details/:id"
@@ -1668,6 +1677,10 @@ function App() {
                   path="/maintenance/m-safe/krcc-form-list"
                   element={<KRCCFormListDashboard />}
                 />
+                <Route path="/maintenance/m-safe" element={<MSafeDashboard />} />
+                <Route path="/maintenance/m-safe/user/:userId" element={<MSafeUserDetail />} />
+                <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
+                <Route path="/maintenance/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
 
                 {/* Market Place Routes */}
                 <Route

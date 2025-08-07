@@ -110,6 +110,7 @@ export const ServiceDashboard = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [currentPage, setCurrentPage] = useState(1);
   const [downloadedQRCodes, setDownloadedQRCodes] = useState<Set<string>>(new Set());
+  const [downloadingQR, setDownloadingQR] = useState(false);
 
   useEffect(() => {
     const filtersWithSearch = {
@@ -206,6 +207,8 @@ export const ServiceDashboard = () => {
   };
 
   const handleQRDownload = async (serviceId?: string) => {
+    if (downloadingQR) return;
+    setDownloadingQR(true);
     let serviceIds: string[] = [];
     if (serviceId) {
       serviceIds = [serviceId];
@@ -216,6 +219,7 @@ export const ServiceDashboard = () => {
     const validServices = servicesData.filter((service) => serviceIds.includes(service.id.toString()) && service.qr_code && service.qr_code_id);
     if (validServices.length === 0) {
       toast.error('No valid QR codes to download');
+      setDownloadingQR(false);
       return;
     }
     // If only one, keep old logic (with already downloaded check)
@@ -272,6 +276,7 @@ export const ServiceDashboard = () => {
                   className="text-red-600 border-red-500 hover:bg-red-50"
                   onClick={() => {
                     toast.dismiss(t);
+                    setDownloadingQR(false);
                     resolve();
                   }}
                 >
@@ -283,6 +288,7 @@ export const ServiceDashboard = () => {
                   onClick={async () => {
                     toast.dismiss(t);
                     await downloadQR();
+                    setDownloadingQR(false);
                     resolve();
                   }}
                 >
@@ -295,6 +301,7 @@ export const ServiceDashboard = () => {
         await downloadPromise;
       } else {
         await downloadQR();
+        setDownloadingQR(false);
       }
     } else {
       // Multiple: download one PDF with all selected service IDs, send as array
@@ -330,7 +337,12 @@ export const ServiceDashboard = () => {
       } catch (err) {
         console.error('Error downloading QR PDF:', err);
         toast.error('Error downloading QR PDF');
+      } finally {
+        setDownloadingQR(false);
       }
+    }
+    if (validServices.length === 1 && !downloadedQRCodes.has(validServices[0].id.toString())) {
+      setDownloadingQR(false);
     }
   };
 
@@ -473,9 +485,22 @@ export const ServiceDashboard = () => {
 
   const bulkActions = [
     {
-      label: 'Print QR',
+      label: (
+        <span className="flex items-center">
+          {downloadingQR ? (
+            <svg className="animate-spin h-4 w-4 mr-2 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+          ) : (
+            <FileText className="w-4 h-4 mr-2" />
+          )}
+          {downloadingQR ? 'Print QR...' : 'Print QR'}
+        </span>
+      ),
       icon: FileText,
       onClick: () => handleQRDownload(),
+      disabled: downloadingQR,
     },
   ];
 
@@ -686,8 +711,17 @@ export const ServiceDashboard = () => {
         <Button
           className="bg-primary text-primary-foreground hover:bg-primary/90"
           onClick={() => handleQRDownload()}
+          disabled={downloadingQR}
         >
-          <FileText className="w-4 h-4 mr-2" /> Print QR
+          {downloadingQR ? (
+            <svg className="animate-spin h-4 w-4 mr-2 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+          ) : (
+            <FileText className="w-4 h-4 mr-2" />
+          )}
+          {downloadingQR ? 'Print QR...' : 'Print QR'}
         </Button>
       )}
     </div>

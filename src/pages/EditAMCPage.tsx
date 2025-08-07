@@ -125,60 +125,71 @@ export const EditAMCPage = () => {
   }, [dispatch, id]);
 
   // Update form data when AMC data is loaded
-  useEffect(() => {
-    if (amcData && typeof amcData === 'object') {
-      const data = amcData as any;
-      const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
-      const isGroupType = data.amc_details_type === 'group'; // Use amc_details_type to determine group or individual
 
-      let assetIds: string[] = [];
-      if (Array.isArray(data.amc_assets)) {
-        assetIds = data.amc_assets
-          .map((item: any) => item.asset_id?.toString())
-          .filter(Boolean);
-      }
+useEffect(() => {
+  if (amcData && typeof amcData === 'object') {
+    const data = amcData as any;
+    const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
+    const isGroupType = data.amc_details_type === 'group';
 
-      const supplierId = data.supplier_id?.toString();
-      const foundSupplier = suppliers.find(
-        (supplier) => supplier.id.toString() === supplierId
-      );
-
-      const serviceId = data.service_id?.toString();
-      const foundService = services.find(
-        (service) => service.id.toString() === serviceId
-      );
-
-      setFormData({
-        details: detailType,
-        type: isGroupType ? 'Group' : 'Individual', // Set type based on amc_details_type
-        assetName: foundService
-          ? serviceId
-          : data.resource_id === 'Pms::Service'
-            ? data.resource_id
-            : '',
-        asset_ids: assetIds,
-        vendor: foundSupplier ? supplierId : '',
-        group: data.group_id || formData.group,
-        subgroup: data.sub_group_id || formData.subgroup,
-        service: foundService
-          ? serviceId
-          : data.service_id?.toString() || formData.service,
-        supplier: foundSupplier ? supplierId : '',
-        startDate: data.amc_start_date || '',
-        endDate: data.amc_end_date || '',
-        cost: data.amc_cost?.toString() || '',
-        contractName: data.contract_name || '',
-        paymentTerms: data.payment_term || '',
-        firstService: data.amc_first_service || '',
-        noOfVisits: data.no_of_visits?.toString() || '',
-        remarks: data.remarks || ''
-      });
-
-      if (isGroupType && data.group_id) {
-        handleGroupChange(data.group_id.toString());
-      }
+    let assetIds: string[] = [];
+    if (Array.isArray(data.amc_assets)) {
+      assetIds = data.amc_assets
+        .map((item: any) => item.asset_id?.toString())
+        .filter(Boolean);
     }
-  }, [amcData, assetList, suppliers, services]);
+
+    const supplierId = data.supplier_id?.toString();
+    const foundSupplier = suppliers.find(
+      (supplier) => supplier.id.toString() === supplierId
+    );
+
+    const serviceId = data.service_id?.toString();
+    const foundService = services.find(
+      (service) => service.id.toString() === serviceId
+    );
+
+    setFormData({
+      details: detailType,
+      type: isGroupType ? 'Group' : 'Individual',
+      assetName: foundService
+        ? serviceId
+        : data.resource_id === 'Pms::Service'
+          ? data.resource_id
+          : '',
+      asset_ids: assetIds,
+      vendor: foundSupplier ? supplierId : '',
+      group: data.group_id ? data.group_id.toString() : formData.group,
+      subgroup: data.sub_group_id ? data.sub_group_id.toString() : formData.subgroup,
+      service: foundService
+        ? serviceId
+        : data.service_id?.toString() || formData.service,
+      supplier: foundSupplier ? supplierId : '',
+      startDate: data.amc_start_date || '',
+      endDate: data.amc_end_date || '',
+      cost: data.amc_cost?.toString() || '',
+      contractName: data.contract_name || '',
+      paymentTerms: data.payment_term || '',
+      firstService: data.amc_first_service || '',
+      noOfVisits: data.no_of_visits?.toString() || '',
+      remarks: data.remarks || ''
+    });
+
+    // Extract and flatten contract/invoice documents for preview
+    const contracts = Array.isArray(data.amc_contracts)
+      ? data.amc_contracts.flatMap((c: any) => Array.isArray(c.documents) ? c.documents : [])
+      : [];
+    const invoices = Array.isArray(data.amc_invoices)
+      ? data.amc_invoices.flatMap((c: any) => Array.isArray(c.documents) ? c.documents : [])
+      : [];
+    setExistingFiles({ contracts, invoices });
+
+    if (data.group_id) {
+      // Always load subgroups if group_id is present, for both Individual and Group types
+      handleGroupChange(data.group_id.toString(), data.sub_group_id ? data.sub_group_id.toString() : undefined);
+    }
+  }
+}, [amcData, assetList, suppliers, services]);
 
 
   const handleInputChange = (field: string, value: string) => {
@@ -281,7 +292,8 @@ export const EditAMCPage = () => {
     fetchAssetGroups();
   }, [dispatch, toast]);
 
-  const handleGroupChange = async (groupId: string) => {
+  // Accept optional subgroupId to select after loading subgroups
+  const handleGroupChange = async (groupId: string, subgroupId?: string) => {
     handleInputChange('group', groupId);
 
     if (groupId) {
@@ -301,8 +313,10 @@ export const EditAMCPage = () => {
         }
         setSubGroups(subgroups);
 
-        if (formData.subgroup && subgroups.some(sub => sub.id.toString() === formData.subgroup)) {
-          handleInputChange('subgroup', formData.subgroup);
+        // Select the intended subgroup if provided and present
+        const intendedSubgroup = subgroupId || formData.subgroup;
+        if (intendedSubgroup && subgroups.some(sub => sub.id.toString() === intendedSubgroup)) {
+          handleInputChange('subgroup', intendedSubgroup);
         }
       } catch (error) {
         console.error('Error fetching subgroups:', error);
@@ -1185,15 +1199,14 @@ export const EditAMCPage = () => {
                 {/* Existing Files */}
                 {existingFiles.contracts.length > 0 && (
                   <div className="flex flex-wrap gap-3 mt-4">
-                    {existingFiles.contracts.map((file) => {
-                      const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
-                      const isPdf = file.document_name.endsWith('.pdf');
-                      const isExcel = file.document_name.endsWith('.xlsx') || file.document_name.endsWith('.xls') || file.document_name.endsWith('.csv');
-
+                    {existingFiles.contracts.map((doc) => {
+                      const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(doc.document_name);
+                      const isPdf = doc.document_name.endsWith('.pdf');
+                      const isExcel = doc.document_name.endsWith('.xlsx') || doc.document_name.endsWith('.xls') || doc.document_name.endsWith('.csv');
                       return (
-                        <div key={`${file.document_name}-${file.attachment_id}`} className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm">
+                        <div key={`${doc.document_name}-${doc.attachment_id}`} className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm">
                           {isImage ? (
-                            <img src={file.document_url} alt={file.document_name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                            <img src={doc.document_url} alt={doc.document_name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
                           ) : isPdf ? (
                             <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
                               <FileText className="w-4 h-4" />
@@ -1207,11 +1220,10 @@ export const EditAMCPage = () => {
                               <File className="w-4 h-4" />
                             </div>
                           )}
-                          <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.document_name}</span>
-                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(file)}>
+                          <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{doc.document_name}</span>
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(doc)}>
                             <Download className="w-3 h-3" />
                           </Button>
-
                         </div>
                       );
                     })}
@@ -1301,8 +1313,8 @@ export const EditAMCPage = () => {
                             </div>
                           )}
                           <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.document_name}</span>
-                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => window.open(file.document_url, '_blank')}>
-                            <Eye className="w-3 h-3" />
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(file)}>
+                            <Download className="w-3 h-3" />
                           </Button>
                         </div>
                       );

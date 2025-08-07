@@ -329,12 +329,23 @@ export const AMCDetailsPage = () => {
                                   className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                                 >
                                   {isImage ? (
-                                    <img
-                                      src={doc.document_url}
-                                      alt={doc.document_name}
-                                      className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                      onClick={handleFileAction}
-                                    />
+                                    <>
+                                      {/* Eye icon absolutely at top right, above image */}
+                                      <button
+                                        className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                        title="View"
+                                        onClick={handleFileAction}
+                                        type="button"
+                                      >
+                                        <Eye className="w-4 h-4" />
+                                      </button>
+                                      <img
+                                        src={doc.document_url}
+                                        alt={doc.document_name}
+                                        className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                        onClick={handleFileAction}
+                                      />
+                                    </>
                                   ) : isPdf ? (
                                     <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
                                       <FileText className="w-6 h-6" />

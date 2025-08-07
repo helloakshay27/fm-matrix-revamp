@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -19,13 +20,14 @@ export const NewVisitorDialog: React.FC<NewVisitorDialogProps> = ({
   isOpen,
   onClose,
 }) => {
+  const navigate = useNavigate();
   const [mobileNumber, setMobileNumber] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Submitting visitor with mobile number:', mobileNumber);
-    // Handle form submission logic here
     onClose();
+    navigate('/visitor-form');
   };
 
   return (
