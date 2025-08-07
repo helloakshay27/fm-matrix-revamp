@@ -6,8 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Camera, X, Plus, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
-// Fixed: All Input components converted to MUI TextField components
-
 export const VisitorFormPage = () => {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
