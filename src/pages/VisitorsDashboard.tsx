@@ -146,134 +146,107 @@ export const VisitorsDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Visitor Table */}
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full caption-bottom text-sm border-separate border-spacing-0">
-                        <thead>
-                          <tr>
-                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                              <input type="checkbox" className="w-4 h-4" />
-                            </th>
-                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                              Actions
-                            </th>
-                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                              Visitor Name
-                            </th>
-                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                              Phone Number
-                            </th>
-                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                              Purpose
-                            </th>
-                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                              Host Name
-                            </th>
-                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                              Check In
-                            </th>
-                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                              Status
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr className="border-b border-gray-200 transition-colors hover:bg-gray-50">
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                              <input type="checkbox" className="w-4 h-4" />
-                            </td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                              <button className="w-5 h-5 text-gray-600 hover:text-gray-800">
-                                <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"></path>
-                                </svg>
-                              </button>
-                            </td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">John Doe</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">+91 9876543210</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Meeting</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Abdul Ghaffar</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">10:30 AM</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                              <span className="bg-orange-200 text-orange-800 px-2 py-1 rounded-full text-xs font-medium">
-                                Pending
-                              </span>
-                            </td>
-                          </tr>
-                          <tr className="border-b border-gray-200 transition-colors hover:bg-gray-50">
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                              <input type="checkbox" className="w-4 h-4" />
-                            </td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                              <button className="w-5 h-5 text-gray-600 hover:text-gray-800">
-                                <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"></path>
-                                </svg>
-                              </button>
-                            </td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Jane Smith</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">+91 8765432109</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Interview</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Arun</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">11:00 AM</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                              <span className="bg-green-200 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                                Approved
-                              </span>
-                            </td>
-                          </tr>
-                          <tr className="border-b border-gray-200 transition-colors hover:bg-gray-50">
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                              <input type="checkbox" className="w-4 h-4" />
-                            </td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                              <button className="w-5 h-5 text-gray-600 hover:text-gray-800">
-                                <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"></path>
-                                </svg>
-                              </button>
-                            </td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Mike Johnson</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">+91 7654321098</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Personal</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Vinayak Mane</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">09:45 AM</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                              <span className="bg-blue-200 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                                Checked In
-                              </span>
-                            </td>
-                          </tr>
-                          <tr className="border-b border-gray-200 transition-colors hover:bg-gray-50">
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                              <input type="checkbox" className="w-4 h-4" />
-                            </td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                              <button className="w-5 h-5 text-gray-600 hover:text-gray-800">
-                                <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
-                                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"></path>
-                                </svg>
-                              </button>
-                            </td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Sarah Wilson</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">+91 6543210987</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Delivery</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Sohail Ansari</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">02:15 PM</td>
-                            <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                              <span className="bg-red-200 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                                Rejected
-                              </span>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
+                  {/* Visitor Type Tabs */}
+                  <div className="flex gap-8 mb-6 border-b border-border">
+                    <Button 
+                      onClick={() => setActiveVisitorType('unexpected')}
+                      className={`px-0 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                        activeVisitorType === 'unexpected' 
+                          ? 'text-primary border-primary' 
+                          : 'text-muted-foreground border-transparent hover:text-foreground'
+                      }`}
+                      variant="ghost"
+                    >
+                      Unexpected Visitor
+                    </Button>
+                    <Button 
+                      onClick={() => setActiveVisitorType('expected')}
+                      className={`px-0 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                        activeVisitorType === 'expected' 
+                          ? 'text-primary border-primary' 
+                          : 'text-muted-foreground border-transparent hover:text-foreground'
+                      }`}
+                      variant="ghost"
+                    >
+                      Expected Visitor
+                    </Button>
+                  </div>
+
+                  {/* Content Area */}
+                  <div className="bg-white rounded-lg border border-gray-200 min-h-[400px]">
+                    {activeVisitorType === 'unexpected' && (
+                      <div className="overflow-x-auto">
+                        <table className="w-full caption-bottom text-sm border-separate border-spacing-0">
+                          <thead>
+                            <tr>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                <input type="checkbox" className="w-4 h-4" />
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Actions
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Visitor Name
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Details
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Purpose
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Status
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b border-gray-200 transition-colors hover:bg-gray-50">
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
+                                <input type="checkbox" className="w-4 h-4" />
+                              </td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
+                                <button className="w-4 h-4 text-blue-500">
+                                  <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                                  </svg>
+                                </button>
+                              </td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Test</td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Test 42.0</td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Personal</td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
+                                <div className="bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+                                  Pending
+                                </div>
+                              </td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
+                                <div className="flex gap-2">
+                                  <Button 
+                                    className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 text-xs rounded"
+                                  >
+                                    Resend OTP
+                                  </Button>
+                                  <Button 
+                                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-xs rounded"
+                                  >
+                                    Skip Host Approval
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    
+                    {activeVisitorType === 'expected' && (
+                      <div className="text-center text-gray-500 py-16">
+                        Expected Visitor content will be displayed here
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
