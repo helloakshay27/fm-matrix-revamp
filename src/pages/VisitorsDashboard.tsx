@@ -73,13 +73,13 @@ export const VisitorsDashboard = () => {
 
           <TabsContent value="visitor" className="bg-white rounded-lg border border-gray-200 mt-4">
             <Tabs value={visitorSubTab} onValueChange={setVisitorSubTab} className="w-full">
-              <div className="flex border-b border-gray-200">
+              <div className="flex bg-gray-100 p-1 rounded-lg">
                 <Button 
                   onClick={() => setVisitorSubTab('visitor-in')}
-                  className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                  className={`px-6 py-2 text-sm font-medium transition-colors rounded-md border-none ${
                     visitorSubTab === 'visitor-in' 
-                      ? 'text-primary border-primary bg-primary/5' 
-                      : 'text-muted-foreground border-transparent hover:text-foreground'
+                      ? 'bg-[#EDEAE3] text-[#C72030] shadow-sm' 
+                      : 'bg-transparent text-gray-600 hover:bg-white/50'
                   }`}
                   variant="ghost"
                 >
@@ -87,10 +87,10 @@ export const VisitorsDashboard = () => {
                 </Button>
                 <Button 
                   onClick={() => setVisitorSubTab('visitor-out')}
-                  className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                  className={`px-6 py-2 text-sm font-medium transition-colors rounded-md border-none ${
                     visitorSubTab === 'visitor-out' 
-                      ? 'text-primary border-primary bg-primary/5' 
-                      : 'text-muted-foreground border-transparent hover:text-foreground'
+                      ? 'bg-[#EDEAE3] text-[#C72030] shadow-sm' 
+                      : 'bg-transparent text-gray-600 hover:bg-white/50'
                   }`}
                   variant="ghost"
                 >
@@ -98,10 +98,10 @@ export const VisitorsDashboard = () => {
                 </Button>
                 <Button 
                   onClick={handleHistoryClick}
-                  className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                  className={`px-6 py-2 text-sm font-medium transition-colors rounded-md border-none ${
                     visitorSubTab === 'history' 
-                      ? 'text-primary border-primary bg-primary/5' 
-                      : 'text-muted-foreground border-transparent hover:text-foreground'
+                      ? 'bg-[#EDEAE3] text-[#C72030] shadow-sm' 
+                      : 'bg-transparent text-gray-600 hover:bg-white/50'
                   }`}
                   variant="ghost"
                 >
