@@ -78,7 +78,7 @@ export const AddEventPage = () => {
         </Typography>
       </Box>
 
-      <Card sx={{ maxWidth: '1200px', boxShadow: 3 }}>
+      <Card sx={{ maxWidth: '1200px' }}>
         <CardContent sx={{ p: 4 }}>
           
           {/* Event Information Section */}
