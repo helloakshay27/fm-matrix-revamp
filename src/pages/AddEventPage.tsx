@@ -86,14 +86,14 @@ export const AddEventPage = () => {
             gap: 2,
             mb: 3,
             p: 2,
-            bgcolor: '#fff3e0',
+            bgcolor: '#f6f4ee',
             borderRadius: 1
           }}>
               <Box sx={{
               width: 40,
               height: 40,
               borderRadius: '50%',
-              bgcolor: '#ff9800',
+              bgcolor: '#dc2626',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -106,7 +106,7 @@ export const AddEventPage = () => {
               <Typography variant="h6" sx={{
               fontWeight: 'bold',
               textTransform: 'uppercase',
-              color: '#ff9800'
+              color: '#dc2626'
             }}>
                 Event Information
               </Typography>
@@ -231,14 +231,14 @@ export const AddEventPage = () => {
             gap: 2,
             mb: 3,
             p: 2,
-            bgcolor: '#fff3e0',
+            bgcolor: '#f6f4ee',
             borderRadius: 1
           }}>
               <Box sx={{
               width: 40,
               height: 40,
               borderRadius: '50%',
-              bgcolor: '#ff9800',
+              bgcolor: '#dc2626',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -251,7 +251,7 @@ export const AddEventPage = () => {
               <Typography variant="h6" sx={{
               fontWeight: 'bold',
               textTransform: 'uppercase',
-              color: '#ff9800'
+              color: '#dc2626'
             }}>
                 Attachments
               </Typography>
