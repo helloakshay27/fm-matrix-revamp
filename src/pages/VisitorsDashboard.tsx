@@ -6,10 +6,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { RefreshCw, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
+import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
 
 export const VisitorsDashboard = () => {
   const [selectedPerson, setSelectedPerson] = useState('');
   const [isNewVisitorDialogOpen, setIsNewVisitorDialogOpen] = useState(false);
+  const [isUpdateNumberDialogOpen, setIsUpdateNumberDialogOpen] = useState(false);
+  const [currentVisitorNumber, setCurrentVisitorNumber] = useState('');
   const [activeVisitorType, setActiveVisitorType] = useState('unexpected');
   const [mainTab, setMainTab] = useState('visitor');
   const [visitorSubTab, setVisitorSubTab] = useState('visitor-in');
@@ -22,6 +25,16 @@ export const VisitorsDashboard = () => {
   const handleRefresh = () => {
     console.log('Refreshing person list...');
     // Handle refresh logic here
+  };
+
+  const handleEditClick = (currentNumber: string) => {
+    setCurrentVisitorNumber(currentNumber);
+    setIsUpdateNumberDialogOpen(true);
+  };
+
+  const handleNumberUpdate = (newNumber: string) => {
+    console.log('Updating number from', currentVisitorNumber, 'to', newNumber);
+    // Handle number update logic here
   };
 
   return (
@@ -208,7 +221,10 @@ export const VisitorsDashboard = () => {
                                 <input type="checkbox" className="w-4 h-4" />
                               </td>
                               <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                                <button className="w-4 h-4 text-blue-500">
+                                <button 
+                                  className="w-4 h-4 text-blue-500 hover:text-blue-700"
+                                  onClick={() => handleEditClick('9555625186')}
+                                >
                                   <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
                                   </svg>
@@ -283,6 +299,13 @@ export const VisitorsDashboard = () => {
       <NewVisitorDialog 
         isOpen={isNewVisitorDialogOpen}
         onClose={() => setIsNewVisitorDialogOpen(false)}
+      />
+      
+      <UpdateNumberDialog 
+        isOpen={isUpdateNumberDialogOpen}
+        onClose={() => setIsUpdateNumberDialogOpen(false)}
+        currentNumber={currentVisitorNumber}
+        onUpdate={handleNumberUpdate}
       />
     </div>
   );
