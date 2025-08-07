@@ -61,7 +61,6 @@ export const BroadcastDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [showFilterModal, setShowFilterModal] = useState(false);
   const columns: ColumnConfig[] = [{
     key: 'title',
     label: 'Title',
@@ -153,15 +152,6 @@ export const BroadcastDashboard = () => {
       setSelectedItems(prev => prev.filter(id => id !== itemId));
     }
   };
-
-  const handleFilterClick = () => {
-    setShowFilterModal(true);
-  };
-
-  const handleExport = () => {
-    // Export functionality for broadcasts
-    console.log('Exporting broadcast data...');
-  };
   return <div className="p-6 space-y-6">
       {/* Breadcrumb */}
       <div className="text-sm text-gray-600">
@@ -172,43 +162,17 @@ export const BroadcastDashboard = () => {
       <h1 className="text-2xl font-bold text-gray-900">BROADCAST LIST</h1>
 
       {/* Enhanced Table */}
-      <EnhancedTable 
-        data={broadcastData} 
-        columns={columns} 
-        renderCell={renderCell} 
-        renderActions={renderActions} 
-        storageKey="broadcast-table" 
-        enableSearch={true} 
-        searchTerm={searchTerm} 
-        onSearchChange={setSearchTerm} 
-        searchPlaceholder="Search broadcasts..." 
-        enableSelection={true} 
-        selectedItems={selectedItems} 
-        onSelectAll={handleSelectAll} 
-        onSelectItem={handleSelectItem} 
-        getItemId={item => item.id.toString()} 
-        emptyMessage="No broadcasts found"
-        enableExport={true}
-        exportFileName="broadcast-list"
-        onFilterClick={handleFilterClick}
-        handleExport={handleExport}
-        leftActions={
-          <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white" onClick={() => navigate('/crm/broadcast/add')}>
+      <EnhancedTable data={broadcastData} columns={columns} renderCell={renderCell} renderActions={renderActions} storageKey="broadcast-table" enableSearch={true} searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search broadcasts..." enableSelection={true} selectedItems={selectedItems} onSelectAll={handleSelectAll} onSelectItem={handleSelectItem} getItemId={item => item.id.toString()} emptyMessage="No broadcasts found" leftActions={<Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white" onClick={() => navigate('/crm/broadcast/add')}>
             <Plus className="w-4 h-4 mr-2" />
             Add
-          </Button>
-        } 
-        rightActions={
-          <div className="flex items-center gap-3">
+          </Button>} rightActions={<div className="flex items-center gap-3">
             <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">
               Go!
             </Button>
             <Button variant="outline" className="border-gray-300">
               Reset
             </Button>
-          </div>
-        } 
-      />
+          </div>} />
 
       {/* Footer branding */}
       
