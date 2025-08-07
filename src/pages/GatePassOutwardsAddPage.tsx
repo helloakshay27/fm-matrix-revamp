@@ -160,9 +160,7 @@ export const GatePassOutwardsAddPage = () => {
                 sx: fieldStyles,
               }}
             />
-          </div>
-
-          <div className="grid grid-cols-4 gap-4 mb-4">
+            
             <TextField
               label="Item Quantity"
               placeholder="01"
@@ -178,6 +176,9 @@ export const GatePassOutwardsAddPage = () => {
                 sx: fieldStyles,
               }}
             />
+          </div>
+
+          <div className="grid grid-cols-4 gap-4 mb-4">
             
             <TextField
               label="Unit"
