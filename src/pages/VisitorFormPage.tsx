@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Camera, X, Plus, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -14,6 +14,30 @@ export const VisitorFormPage = () => {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [selectedCamera, setSelectedCamera] = useState<string | undefined>(undefined);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+
+  // Field styles for Material-UI components
+  const fieldStyles = {
+    height: '45px',
+    backgroundColor: '#fff',
+    borderRadius: '4px',
+    '& .MuiOutlinedInput-root': {
+      height: '45px',
+      '& fieldset': {
+        borderColor: '#ddd',
+      },
+      '&:hover fieldset': {
+        borderColor: '#C72030',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
 
   const [formData, setFormData] = useState({
     visitorType: 'guest',
@@ -461,84 +485,127 @@ export const VisitorFormPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Visitor Name <span className="text-red-500">*</span>
                 </label>
-                <Input
-                  placeholder="Visitor Name"
-                  value={formData.visitorName}
-                  onChange={(e) => handleInputChange('visitorName', e.target.value)}
-                  className="w-full"
-                  required
-                />
-              </div>
+              <TextField
+                label="Visitor Name"
+                placeholder="Visitor Name"
+                value={formData.visitorName}
+                onChange={(e) => handleInputChange('visitorName', e.target.value)}
+                fullWidth
+                variant="outlined"
+                required
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Visit Purpose <span className="text-red-500">*</span>
-                </label>
-                <Select value={formData.visitPurpose || undefined} onValueChange={(value) => handleInputChange('visitPurpose', value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select your Purpose" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="meeting">Meeting</SelectItem>
-                    <SelectItem value="delivery">Delivery</SelectItem>
-                    <SelectItem value="maintenance">Maintenance</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Visit Purpose <span className="text-red-500">*</span>
+              </label>
+              <Select value={formData.visitPurpose || undefined} onValueChange={(value) => handleInputChange('visitPurpose', value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select your Purpose" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="meeting">Meeting</SelectItem>
+                  <SelectItem value="delivery">Delivery</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mobile Number <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  placeholder="9555625186"
-                  value={formData.mobileNumber}
-                  onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
-                  className="w-full"
-                  required
-                />
-              </div>
+            <TextField
+              label="Mobile Number"
+              placeholder="9555625186"
+              value={formData.mobileNumber}
+              onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
+              fullWidth
+              variant="outlined"
+              required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Pass Number</label>
-                <Input
-                  placeholder="Pass Number"
-                  value={formData.passNumber}
-                  onChange={(e) => handleInputChange('passNumber', e.target.value)}
-                  className="w-full"
-                />
-              </div>
+            <TextField
+              label="Pass Number"
+              placeholder="Pass Number"
+              value={formData.passNumber}
+              onChange={(e) => handleInputChange('passNumber', e.target.value)}
+              fullWidth
+              variant="outlined"
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Coming From</label>
-                <Input
-                  placeholder="Visitor Coming From"
-                  value={formData.visitorComingFrom}
-                  onChange={(e) => handleInputChange('visitorComingFrom', e.target.value)}
-                  className="w-full"
-                />
-              </div>
+            <TextField
+              label="Visitor Coming From"
+              placeholder="Visitor Coming From"
+              value={formData.visitorComingFrom}
+              onChange={(e) => handleInputChange('visitorComingFrom', e.target.value)}
+              fullWidth
+              variant="outlined"
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Number</label>
-                <Input
-                  placeholder="Vehicle Number"
-                  value={formData.vehicleNumber}
-                  onChange={(e) => handleInputChange('vehicleNumber', e.target.value)}
-                  className="w-full"
-                />
-              </div>
+            <TextField
+              label="Vehicle Number"
+              placeholder="Vehicle Number"
+              value={formData.vehicleNumber}
+              onChange={(e) => handleInputChange('vehicleNumber', e.target.value)}
+              fullWidth
+              variant="outlined"
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
-                <Input
-                  placeholder="Remarks"
-                  value={formData.remarks}
-                  onChange={(e) => handleInputChange('remarks', e.target.value)}
-                  className="w-full"
-                />
-              </div>
+            <TextField
+              label="Remarks"
+              placeholder="Remarks"
+              value={formData.remarks}
+              onChange={(e) => handleInputChange('remarks', e.target.value)}
+              fullWidth
+              variant="outlined"
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
             </div>
 
             {/* Checkboxes */}
@@ -626,25 +693,39 @@ export const VisitorFormPage = () => {
                         </Select>
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">LR Number</label>
-                        <Input
-                          placeholder="LR Number"
-                          value={goodsData.lrNumber}
-                          onChange={(e) => handleGoodsInputChange('lrNumber', e.target.value)}
-                          className="w-full"
-                        />
-                      </div>
+                      <TextField
+                        label="LR Number"
+                        placeholder="LR Number"
+                        value={goodsData.lrNumber}
+                        onChange={(e) => handleGoodsInputChange('lrNumber', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        slotProps={{
+                          inputLabel: {
+                            shrink: true,
+                          },
+                        }}
+                        InputProps={{
+                          sx: fieldStyles,
+                        }}
+                      />
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Trip Id</label>
-                        <Input
-                          placeholder="Trip Id"
-                          value={goodsData.tripId}
-                          onChange={(e) => handleGoodsInputChange('tripId', e.target.value)}
-                          className="w-full"
-                        />
-                      </div>
+                      <TextField
+                        label="Trip Id"
+                        placeholder="Trip Id"
+                        value={goodsData.tripId}
+                        onChange={(e) => handleGoodsInputChange('tripId', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        slotProps={{
+                          inputLabel: {
+                            shrink: true,
+                          },
+                        }}
+                        InputProps={{
+                          sx: fieldStyles,
+                        }}
+                      />
                     </div>
 
                     {/* Items Section */}
@@ -668,24 +749,40 @@ export const VisitorFormPage = () => {
                             </Select>
                           </div>
 
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">UIC/Invoice No</label>
-                            <Input
-                              placeholder="UIC/Invoice No"
-                              value={item.uicInvoiceNo}
-                              onChange={(e) => updateItem(item.id, 'uicInvoiceNo', e.target.value)}
-                              className="w-full"
-                            />
-                          </div>
+                          <TextField
+                            label="UIC/Invoice No"
+                            placeholder="UIC/Invoice No"
+                            value={item.uicInvoiceNo}
+                            onChange={(e) => updateItem(item.id, 'uicInvoiceNo', e.target.value)}
+                            fullWidth
+                            variant="outlined"
+                            slotProps={{
+                              inputLabel: {
+                                shrink: true,
+                              },
+                            }}
+                            InputProps={{
+                              sx: fieldStyles,
+                            }}
+                          />
 
                           <div className="flex items-end space-x-2">
                             <div className="flex-1">
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-                              <Input
+                              <TextField
+                                label="Quantity"
                                 placeholder="Quantity"
                                 value={item.quantity}
                                 onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
-                                className="w-full"
+                                fullWidth
+                                variant="outlined"
+                                slotProps={{
+                                  inputLabel: {
+                                    shrink: true,
+                                  },
+                                }}
+                                InputProps={{
+                                  sx: fieldStyles,
+                                }}
                               />
                             </div>
                             {items.length > 1 && (
@@ -735,38 +832,52 @@ export const VisitorFormPage = () => {
             {additionalVisitors.map((visitor, index) => (
               <div key={visitor.id} className="border-t pt-4">
                 <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Name <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      placeholder="Name"
-                      value={visitor.name}
-                      onChange={(e) => updateAdditionalVisitor(visitor.id, 'name', e.target.value)}
-                      className="w-full"
+                  <TextField
+                    label="Name"
+                    placeholder="Name"
+                    value={visitor.name}
+                    onChange={(e) => updateAdditionalVisitor(visitor.id, 'name', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    required
+                    slotProps={{
+                      inputLabel: {
+                        shrink: true,
+                      },
+                    }}
+                    InputProps={{
+                      sx: fieldStyles,
+                    }}
+                  />
+                </div>
+                <div className="relative">
+                  <div className="flex items-center space-x-2">
+                    <TextField
+                      label="Mobile"
+                      placeholder="Mobile"
+                      value={visitor.mobile}
+                      onChange={(e) => updateAdditionalVisitor(visitor.id, 'mobile', e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      required
+                      slotProps={{
+                        inputLabel: {
+                          shrink: true,
+                        },
+                      }}
+                      InputProps={{
+                        sx: fieldStyles,
+                      }}
                     />
-                  </div>
-                  <div className="relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Mobile <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex items-center space-x-2">
-                      <Input
-                        placeholder="Mobile"
-                        value={visitor.mobile}
-                        onChange={(e) => updateAdditionalVisitor(visitor.id, 'mobile', e.target.value)}
-                        className="w-full"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeAdditionalVisitor(visitor.id)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeAdditionalVisitor(visitor.id)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </div>
