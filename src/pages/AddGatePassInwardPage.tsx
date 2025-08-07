@@ -200,7 +200,7 @@ export const AddGatePassInwardPage = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <TextField
                   label="Unit"
                   placeholder="01"
@@ -218,45 +218,42 @@ export const AddGatePassInwardPage = () => {
                     sx: fieldStyles,
                   }}
                 />
-              </div>
 
-              <TextField
-                label="Description"
-                placeholder="Type here"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                fullWidth
-                variant="outlined"
-                required
-                multiline
-                rows={4}
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: {
-                    ...fieldStyles,
-                    height: 'auto', // Override height for multiline
-                    '& .MuiOutlinedInput-root': {
-                      ...fieldStyles['& .MuiOutlinedInput-root'],
-                      height: 'auto',
+                <TextField
+                  label="Description"
+                  placeholder="Type here"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
                     },
-                  },
-                }}
-              />
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
+                />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Attachments*
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white">
-                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Attachments*
+                  </label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-2 text-center bg-white h-[45px] flex items-center justify-center">
+                    <span className="text-sm text-gray-400">Upload files</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    &nbsp;
+                  </label>
                   <Button 
                     type="button"
                     variant="outline"
-                    className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                    className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white h-[45px] w-full"
                   >
                     Add Item
                   </Button>
