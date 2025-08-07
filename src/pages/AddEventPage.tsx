@@ -1,13 +1,24 @@
-
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Switch } from '@/components/ui/switch';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { 
+  TextField, 
+  FormControl, 
+  InputLabel, 
+  Select as MuiSelect, 
+  MenuItem, 
+  RadioGroup, 
+  FormControlLabel, 
+  Radio, 
+  Checkbox as MuiCheckbox, 
+  Switch as MuiSwitch, 
+  Button as MuiButton,
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  TextareaAutosize,
+  FormLabel
+} from '@mui/material';
+import { CalendarToday, LocationOn, Schedule, Group, AttachFile, ArrowBack } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 export const AddEventPage = () => {
@@ -17,9 +28,9 @@ export const AddEventPage = () => {
     venue: '',
     description: '',
     startDate: '',
-    startTime: '05:00 PM',
+    startTime: '17:00',
     endDate: '',
-    endTime: '05:00 PM',
+    endTime: '17:00',
     markAsImportant: false,
     sendEmail: false,
     shareWith: 'all',
@@ -32,222 +43,293 @@ export const AddEventPage = () => {
 
   const handleSubmit = () => {
     console.log('Submitting event data:', formData);
-    // In a real app, this would save the event to the backend
     navigate('/crm/events');
   };
 
   const handleFileUpload = () => {
     console.log('File upload clicked');
-    // File upload functionality would be implemented here
+  };
+
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <Box sx={{ p: 3, bgcolor: '#f5f5f5', minHeight: '100vh' }}>
       {/* Breadcrumb */}
-      <div className="text-sm text-gray-600 mb-4">
-        Events &gt; Event List &gt; Add Event
-      </div>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Event List &gt; Create Event
+      </Typography>
 
-      {/* Header with back button */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="ghost"
+      {/* Header */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <MuiButton
+          startIcon={<ArrowBack />}
           onClick={() => navigate('/crm/events')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+          sx={{ color: '#666', textTransform: 'none' }}
         >
-          <ArrowLeft className="w-4 h-4" />
           Back to Events
-        </Button>
-        <h1 className="text-2xl font-bold">Add Event</h1>
-      </div>
+        </MuiButton>
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          NEW Event
+        </Typography>
+      </Box>
 
-      <div className="bg-white rounded-lg shadow max-w-4xl">
-        <div className="p-6">
-          {/* Event Info Section */}
-          <div className="mb-6">
-            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-t text-sm font-medium">
-              EVENT INFO
-            </div>
-            <div className="border border-gray-200 p-4 rounded-b">
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <Label htmlFor="title" className="text-sm font-medium text-gray-700 mb-1 block">Title</Label>
-                  <Input
-                    id="title"
+      <Card sx={{ maxWidth: '1200px', boxShadow: 3 }}>
+        <CardContent sx={{ p: 4 }}>
+          
+          {/* Event Information Section */}
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2, 
+              mb: 3,
+              p: 2,
+              bgcolor: '#fff3e0',
+              borderRadius: 1
+            }}>
+              <Box sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                bgcolor: '#ff9800',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white'
+              }}>
+                <CalendarToday sx={{ fontSize: 20 }} />
+              </Box>
+              <Typography variant="h6" sx={{ 
+                fontWeight: 'bold', 
+                textTransform: 'uppercase',
+                color: '#ff9800'
+              }}>
+                Event Information
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                <Box sx={{ flex: '1 1 300px' }}>
+                  <TextField
+                    label="Title*"
                     placeholder="Title"
+                    fullWidth
+                    variant="outlined"
                     value={formData.title}
                     onChange={(e) => handleInputChange('title', e.target.value)}
-                    className="border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
-                </div>
-                <div>
-                  <Label htmlFor="venue" className="text-sm font-medium text-gray-700 mb-1 block">Venue</Label>
-                  <Input
-                    id="venue"
+                </Box>
+                <Box sx={{ flex: '1 1 300px' }}>
+                  <TextField
+                    label="Venue*"
                     placeholder="Enter Venue"
+                    fullWidth
+                    variant="outlined"
                     value={formData.venue}
                     onChange={(e) => handleInputChange('venue', e.target.value)}
-                    className="border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
-                </div>
-              </div>
+                </Box>
+              </Box>
               
-              <div className="mb-4">
-                <Label htmlFor="description" className="text-sm font-medium text-gray-700 mb-1 block">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Enter Description"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  className="border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-h-20"
-                />
-              </div>
-
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-1 block">Start Time</Label>
-                  <Input
-                    type="time"
-                    value="17:00"
-                    className="border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-1 block">Start Date</Label>
-                  <Input
+              <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                <Box sx={{ flex: '1 1 200px' }}>
+                  <TextField
+                    label="Start date*"
                     type="date"
+                    fullWidth
+                    variant="outlined"
                     value={formData.startDate}
                     onChange={(e) => handleInputChange('startDate', e.target.value)}
-                    className="border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-1 block">End Time</Label>
-                  <Input
-                    type="time"
-                    value="17:00"
-                    className="border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-1 block">End Date</Label>
-                  <Input
+                </Box>
+                <Box sx={{ flex: '1 1 200px' }}>
+                  <TextField
+                    label="End date*"
                     type="date"
+                    fullWidth
+                    variant="outlined"
                     value={formData.endDate}
                     onChange={(e) => handleInputChange('endDate', e.target.value)}
-                    className="border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-6 mb-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="important"
-                    checked={formData.markAsImportant}
-                    onCheckedChange={(checked) => handleInputChange('markAsImportant', checked)}
-                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                </Box>
+                <Box sx={{ flex: '1 1 200px' }}>
+                  <TextField
+                    label="Start Time*"
+                    type="time"
+                    fullWidth
+                    variant="outlined"
+                    value={formData.startTime}
+                    onChange={(e) => handleInputChange('startTime', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
-                  <Label htmlFor="important" className="text-sm text-gray-700">Mark as Important</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="email"
-                    checked={formData.sendEmail}
-                    onCheckedChange={(checked) => handleInputChange('sendEmail', checked)}
-                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                </Box>
+                <Box sx={{ flex: '1 1 200px' }}>
+                  <TextField
+                    label="End Time*"
+                    type="time"
+                    fullWidth
+                    variant="outlined"
+                    value={formData.endTime}
+                    onChange={(e) => handleInputChange('endTime', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
-                  <Label htmlFor="email" className="text-sm text-gray-700">Send Email</Label>
-                </div>
-              </div>
-            </div>
-          </div>
+                </Box>
+              </Box>
+              
+              <Box>
+                <TextField
+                  label="Description"
+                  placeholder="Enter Description"
+                  fullWidth
+                  multiline
+                  rows={4}
+                  variant="outlined"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Box>
+            </Box>
 
-          {/* Upload Files Section */}
-          <div className="mb-6">
-            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-t text-sm font-medium">
-              UPLOAD FILES
-            </div>
-            <div className="border border-gray-200 p-4 rounded-b">
-              <div 
-                onClick={handleFileUpload}
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-gray-400 transition-colors"
-              >
-                <Plus className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500 text-sm">Click to upload files</p>
-              </div>
-            </div>
-          </div>
+            <Box sx={{ mt: 3, display: 'flex', gap: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <FormLabel component="legend">RSVP</FormLabel>
+                <RadioGroup
+                  row
+                  value={formData.rsvpEnabled ? 'yes' : 'no'}
+                  onChange={(e) => handleInputChange('rsvpEnabled', e.target.value === 'yes')}
+                >
+                  <FormControlLabel value="no" control={<Radio />} label="NO" />
+                  <FormControlLabel value="yes" control={<Radio />} label="YES" />
+                </RadioGroup>
+              </Box>
+            </Box>
 
-          {/* Share With Section */}
-          <div className="mb-6">
-            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-t text-sm font-medium">
-              SHARE WITH
-            </div>
-            <div className="border border-gray-200 p-4 rounded-b">
+            <Box sx={{ mt: 3, display: 'flex', gap: 4 }}>
+              <FormLabel component="legend">Share with</FormLabel>
               <RadioGroup
+                row
                 value={formData.shareWith}
-                onValueChange={(value) => handleInputChange('shareWith', value)}
-                className="flex items-center gap-6"
+                onChange={(e) => handleInputChange('shareWith', e.target.value)}
               >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="all" id="all" className="text-blue-600" />
-                  <Label htmlFor="all" className="text-sm text-gray-700">All</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="individuals" id="individuals" className="text-blue-600" />
-                  <Label htmlFor="individuals" className="text-sm text-gray-700">Individuals</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="groups" id="groups" className="text-blue-600" />
-                  <Label htmlFor="groups" className="text-sm text-gray-700">Groups</Label>
-                </div>
+                <FormControlLabel value="all" control={<Radio />} label="All" />
+                <FormControlLabel value="individuals" control={<Radio />} label="Individuals" />
+                <FormControlLabel value="groups" control={<Radio />} label="Groups" />
               </RadioGroup>
-            </div>
-          </div>
+            </Box>
 
-          {/* RSVP Section */}
-          <div className="mb-6">
-            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-t text-sm font-medium">
-              RSVP
-            </div>
-            <div className="border border-gray-200 p-4 rounded-b">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-gray-700">Yes</span>
-                  <Switch
-                    checked={formData.rsvpEnabled}
-                    onCheckedChange={(checked) => handleInputChange('rsvpEnabled', checked)}
-                    className="data-[state=checked]:bg-green-600"
+            <Box sx={{ mt: 3, display: 'flex', gap: 4 }}>
+              <FormControlLabel
+                control={
+                  <MuiCheckbox
+                    checked={formData.markAsImportant}
+                    onChange={(e) => handleInputChange('markAsImportant', e.target.checked)}
                   />
-                  <span className="text-sm text-gray-700">No</span>
-                </div>
-              </div>
-            </div>
-          </div>
+                }
+                label="Mark as Important"
+              />
+              <FormControlLabel
+                control={
+                  <MuiCheckbox
+                    checked={formData.sendEmail}
+                    onChange={(e) => handleInputChange('sendEmail', e.target.checked)}
+                  />
+                }
+                label="Send Email"
+              />
+            </Box>
+          </Box>
+
+          {/* Attachments Section */}
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2, 
+              mb: 3,
+              p: 2,
+              bgcolor: '#fff3e0',
+              borderRadius: 1
+            }}>
+              <Box sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                bgcolor: '#ff9800',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white'
+              }}>
+                <AttachFile sx={{ fontSize: 20 }} />
+              </Box>
+              <Typography variant="h6" sx={{ 
+                fontWeight: 'bold', 
+                textTransform: 'uppercase',
+                color: '#ff9800'
+              }}>
+                Attachments
+              </Typography>
+            </Box>
+
+            <Box
+              onClick={handleFileUpload}
+              sx={{
+                border: '2px dashed #ccc',
+                borderRadius: 2,
+                p: 4,
+                textAlign: 'center',
+                cursor: 'pointer',
+                '&:hover': {
+                  borderColor: '#999'
+                }
+              }}
+            >
+              <AttachFile sx={{ fontSize: 48, color: '#ccc', mb: 2 }} />
+              <Typography variant="body2" color="text.secondary">
+                Choose files | No file chosen
+              </Typography>
+            </Box>
+          </Box>
 
           {/* Submit Button */}
-          <div className="flex justify-center">
-            <Button 
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <MuiButton
+              variant="contained"
               onClick={handleSubmit}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 h-10 text-sm font-medium"
+              sx={{
+                bgcolor: '#8B4A6B',
+                color: 'white',
+                px: 4,
+                py: 1.5,
+                textTransform: 'none',
+                fontSize: '16px',
+                '&:hover': {
+                  bgcolor: '#7A4060'
+                }
+              }}
             >
-              Submit
-            </Button>
-          </div>
-        </div>
-
-        {/* Footer branding */}
-        <div className="text-center text-xs text-gray-500 mt-4 pb-6">
-          <p>Powered by</p>
-          <div className="flex items-center justify-center mt-1">
-            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs mr-2">
-              L
-            </div>
-            <span className="font-semibold">LOCATED</span>
-          </div>
-        </div>
-      </div>
-    </div>
+              Create Event
+            </MuiButton>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
   );
 };
