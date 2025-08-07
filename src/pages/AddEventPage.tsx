@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, RadioGroup, FormControlLabel, Radio, Checkbox as MuiCheckbox, Switch as MuiSwitch, Button as MuiButton, Card, CardContent, Typography, Box, TextareaAutosize, FormLabel } from '@mui/material';
+import { Button } from '@/components/ui/button';
 import { CalendarToday, LocationOn, Schedule, Group, AttachFile, ArrowBack } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 export const AddEventPage = () => {
@@ -283,19 +284,9 @@ export const AddEventPage = () => {
           justifyContent: 'center',
           mt: 4
         }}>
-            <MuiButton variant="contained" onClick={handleSubmit} sx={{
-            bgcolor: '#8B4A6B',
-            color: 'white',
-            px: 4,
-            py: 1.5,
-            textTransform: 'none',
-            fontSize: '16px',
-            '&:hover': {
-              bgcolor: '#7A4060'
-            }
-          }}>
+            <Button onClick={handleSubmit} className="px-8 py-3 text-base">
               Create Event
-            </MuiButton>
+            </Button>
           </Box>
         </CardContent>
       </Card>
