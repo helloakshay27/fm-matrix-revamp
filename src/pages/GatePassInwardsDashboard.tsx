@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Filter, Eye } from 'lucide-react';
+import { Filter, Eye, Plus } from 'lucide-react';
 import { GatePassInwardsFilterModal } from '@/components/GatePassInwardsFilterModal';
 
 export const GatePassInwardsDashboard = () => {
@@ -117,11 +117,11 @@ export const GatePassInwardsDashboard = () => {
         {/* Add and Filters Buttons */}
         <div className="flex justify-between items-center">
           <Button 
-            variant="outline"
-            className="!bg-[#F2EEE9] border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-md flex items-center gap-2"
             onClick={() => navigate('/security/gate-pass/inwards/add')}
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
-            <span className="text-lg">+</span>
+            <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
           <Button 
