@@ -84,17 +84,17 @@ export const MSafeUserDetail = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="personal" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 h-auto bg-transparent border-b border-gray-200 rounded-none p-0 mb-6">
+        <TabsList className="flex justify-start bg-gray-50 rounded-t-lg h-auto p-0 w-full">
           <TabsTrigger 
             value="personal" 
-            className="relative flex items-center justify-center gap-2 py-4 px-6 text-sm font-semibold text-gray-500 hover:text-gray-700 bg-transparent border-0 rounded-none data-[state=active]:text-red-600 data-[state=active]:bg-red-50 data-[state=active]:border-b-2 data-[state=active]:border-red-600 data-[state=active]:shadow-none"
+            className="bg-white data-[state=active]:bg-[#EDEAE3] px-4 py-3 data-[state=active]:text-[#C72030] text-gray-600 hover:text-gray-800 flex items-center gap-2 font-medium border-0 rounded-none first:rounded-tl-lg"
           >
             <UserCircle className="h-5 w-5" />
             Personal Information
           </TabsTrigger>
           <TabsTrigger 
             value="other" 
-            className="relative flex items-center justify-center gap-2 py-4 px-6 text-sm font-semibold text-gray-500 hover:text-gray-700 bg-transparent border-0 rounded-none data-[state=active]:text-red-600 data-[state=active]:bg-red-50 data-[state=active]:border-b-2 data-[state=active]:border-red-600 data-[state=active]:shadow-none"
+            className="bg-white data-[state=active]:bg-[#EDEAE3] px-4 py-3 data-[state=active]:text-[#C72030] text-gray-600 hover:text-gray-800 flex items-center gap-2 font-medium border-0 rounded-none"
           >
             <Settings className="h-5 w-5" />
             Other Information
