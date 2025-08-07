@@ -403,8 +403,12 @@ import { EditAssetDetailsPage } from "./pages/EditAssetDetailsPage";
 
 import { MSafeDashboard } from './pages/MSafeDashboard';
 import { MSafeUserDetail } from './pages/MSafeUserDetail';
+import { ExternalUserDetail } from './pages/ExternalUserDetail';
+import { EditExternalUserPage } from './pages/EditExternalUserPage';
 import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
+import { ExternalUsersDashboard } from './pages/ExternalUsersDashboard';
 import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
+import { KRCCFormDetail } from './pages/KRCCFormDetail';
 
 // Import Edit Roster Template page
 import { EditRosterTemplatePage } from "./pages/setup/EditRosterTemplatePage";
@@ -1686,9 +1690,15 @@ function App() {
                   element={<KRCCFormListDashboard />}
                 />
                 <Route path="/maintenance/m-safe" element={<MSafeDashboard />} />
+                <Route path="/maintenance/m-safe" element={<Navigate to="/maintenance/m-safe/internal" replace />} />
+                <Route path="/maintenance/m-safe/internal" element={<MSafeDashboard />} />
+                <Route path="/maintenance/m-safe/external" element={<ExternalUsersDashboard />} />
                 <Route path="/maintenance/m-safe/user/:userId" element={<MSafeUserDetail />} />
+                <Route path="/maintenance/m-safe/external/user/:userId" element={<ExternalUserDetail />} />
+                <Route path="/maintenance/m-safe/external/user/:userId/edit" element={<EditExternalUserPage />} />
                 <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
-                <Route path="/maintenance/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
+            <Route path="/maintenance/krcc-list" element={<KRCCFormListDashboard />} />
+            <Route path="/maintenance/krcc-list/:id" element={<KRCCFormDetail />} />
 
                 {/* Market Place Routes */}
                 <Route

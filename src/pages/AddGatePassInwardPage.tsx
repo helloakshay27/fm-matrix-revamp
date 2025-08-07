@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { TextField } from '@mui/material';
 import { ArrowLeft, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -130,53 +129,77 @@ export const AddGatePassInwardPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Item Name*
-                  </label>
-                  <Input
+                  <TextField
+                    label="Item Name*"
                     value={formData.itemName}
                     onChange={(e) => handleInputChange('itemName', e.target.value)}
                     placeholder="Fill Item Name"
-                    className="h-11 bg-white border-gray-300"
+                    variant="outlined"
+                    fullWidth
+                    size="medium"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'white',
+                        height: '44px'
+                      }
+                    }}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Item Quantity*
-                  </label>
-                  <Input
+                  <TextField
+                    label="Item Quantity*"
                     value={formData.itemQuantity}
                     onChange={(e) => handleInputChange('itemQuantity', e.target.value)}
                     placeholder="01"
-                    className="h-11 bg-white border-gray-300"
+                    variant="outlined"
+                    fullWidth
+                    size="medium"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'white',
+                        height: '44px'
+                      }
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Unit*
-                  </label>
-                  <Input
+                  <TextField
+                    label="Unit*"
                     value={formData.unit}
                     onChange={(e) => handleInputChange('unit', e.target.value)}
                     placeholder="01"
-                    className="h-11 bg-white border-gray-300"
+                    variant="outlined"
+                    fullWidth
+                    size="medium"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'white',
+                        height: '44px'
+                      }
+                    }}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description*
-                </label>
-                <Textarea
+                <TextField
+                  label="Description*"
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   placeholder="Type here"
-                  className="min-h-[100px] bg-white border-gray-300"
+                  variant="outlined"
+                  fullWidth
+                  multiline
+                  rows={4}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: 'white'
+                    }
+                  }}
                 />
               </div>
 
@@ -209,64 +232,94 @@ export const AddGatePassInwardPage = () => {
             <div className="p-6 space-y-6 bg-gray-50">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Visitor Name*
-                  </label>
-                  <Input
+                  <TextField
+                    label="Visitor Name*"
                     value={formData.visitorName}
                     onChange={(e) => handleInputChange('visitorName', e.target.value)}
                     placeholder="Enter Name"
-                    className="h-11 bg-white border-gray-300"
+                    variant="outlined"
+                    fullWidth
+                    size="medium"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'white',
+                        height: '44px'
+                      }
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mobile No.*
-                  </label>
-                  <Input
+                  <TextField
+                    label="Mobile No.*"
                     value={formData.mobileNo}
                     onChange={(e) => handleInputChange('mobileNo', e.target.value)}
                     placeholder="+91"
-                    className="h-11 bg-white border-gray-300"
+                    variant="outlined"
+                    fullWidth
+                    size="medium"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'white',
+                        height: '44px'
+                      }
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Company Name*
-                  </label>
-                  <Input
+                  <TextField
+                    label="Company Name*"
                     value={formData.companyName}
                     onChange={(e) => handleInputChange('companyName', e.target.value)}
                     placeholder="Lockated"
-                    className="h-11 bg-white border-gray-300"
+                    variant="outlined"
+                    fullWidth
+                    size="medium"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'white',
+                        height: '44px'
+                      }
+                    }}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Vehicle No.*
-                  </label>
-                  <Input
+                  <TextField
+                    label="Vehicle No.*"
                     value={formData.vehicleNo}
                     onChange={(e) => handleInputChange('vehicleNo', e.target.value)}
                     placeholder="MH04BA-1009"
-                    className="h-11 bg-white border-gray-300"
+                    variant="outlined"
+                    fullWidth
+                    size="medium"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'white',
+                        height: '44px'
+                      }
+                    }}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Reporting Time*
-                  </label>
-                  <Input
+                  <TextField
+                    label="Reporting Time*"
                     value={formData.reportingTime}
                     onChange={(e) => handleInputChange('reportingTime', e.target.value)}
                     placeholder="22:24 hrs"
-                    className="h-11 bg-white border-gray-300"
+                    variant="outlined"
+                    fullWidth
+                    size="medium"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'white',
+                        height: '44px'
+                      }
+                    }}
                   />
                 </div>
 

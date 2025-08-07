@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { SlidersHorizontal, Eye } from 'lucide-react';
+import { Filter, Eye, Plus } from 'lucide-react';
 import { GatePassInwardsFilterModal } from '@/components/GatePassInwardsFilterModal';
 
 export const GatePassInwardsDashboard = () => {
@@ -115,82 +115,99 @@ export const GatePassInwardsDashboard = () => {
         <h1 className="text-2xl font-bold text-[#1a1a1a] mb-4">Inward List</h1>
         
         {/* Add and Filters Buttons */}
-        <div className="flex gap-3">
+        <div className="flex justify-between items-center">
           <Button 
-            variant="outline"
-            className="!bg-[#F2EEE9] border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-md flex items-center gap-2"
             onClick={() => navigate('/security/gate-pass/inwards/add')}
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:bg-[#C72030]/90"
           >
-            <span className="text-lg">+</span>
+            <Plus className="w-4 h-4 mr-2" />
             Add
           </Button>
           <Button 
             variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-none flex items-center gap-2"
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white p-2 rounded-md"
             onClick={() => setIsFilterModalOpen(true)}
           >
-            <SlidersHorizontal className="w-4 h-4" />
-            Filters
+            <Filter className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
       {/* Data Table */}
-      <div className="border rounded-lg overflow-hidden bg-white">
+      <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">S No.</TableHead>
-              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Preview</TableHead>
-              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">ID</TableHead>
-              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Type</TableHead>
-              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Category</TableHead>
-              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Person Name</TableHead>
-              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Profile Image</TableHead>
-              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Pass No.</TableHead>
-              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Mode of Transport</TableHead>
-              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">LR No.</TableHead>
-              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Trip ID</TableHead>
-              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Gate Entry</TableHead>
-              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item Details</TableHead>
+              <TableHead>S No.</TableHead>
+              <TableHead>Action</TableHead>
+              <TableHead>ID</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Person Name</TableHead>
+              <TableHead>Profile Image</TableHead>
+              <TableHead>Pass No.</TableHead>
+              <TableHead>Mode of Transport</TableHead>
+              <TableHead>LR No.</TableHead>
+              <TableHead>Trip ID</TableHead>
+              <TableHead>Gate Entry</TableHead>
+              <TableHead className="w-48">Item Details</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {inwardData.map((entry, index) => (
-              <TableRow key={entry.id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}>
-                <TableCell className="px-4 py-3 text-sm text-gray-900">{index + 1}</TableCell>
-                <TableCell className="px-4 py-3 text-sm">
-                  <Eye 
-                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-blue-600" 
-                    onClick={() => handleViewDetails(entry.id)}
-                  />
+              <TableRow key={entry.id}>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <div title="View details">
+                      <Eye 
+                        className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+                        onClick={() => handleViewDetails(entry.id)}
+                      />
+                    </div>
+                  </div>
                 </TableCell>
-                <TableCell className="px-4 py-3 text-sm">
+                <TableCell className="font-medium">
                   <button
                     onClick={() => handleViewDetails(entry.id)}
-                    className="text-blue-600 hover:underline hover:text-blue-800 transition-colors font-medium"
+                    className="text-[#C72030] hover:underline hover:text-[#C72030]/80 transition-colors font-medium"
                   >
                     {entry.id}
                   </button>
                 </TableCell>
-                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.type}</TableCell>
-                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.category}</TableCell>
-                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.personName}</TableCell>
-                <TableCell className="px-4 py-3">
+                <TableCell>{entry.type || '--'}</TableCell>
+                <TableCell>{entry.category}</TableCell>
+                <TableCell>{entry.personName}</TableCell>
+                <TableCell>
                   <img 
                     src={entry.profileImage} 
                     alt={`${entry.personName} profile`}
                     className="w-8 h-8 rounded-full object-cover border border-gray-200"
                   />
                 </TableCell>
-                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.passNo}</TableCell>
-                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.modeOfTransport}</TableCell>
-                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.lrNo}</TableCell>
-                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.tripId}</TableCell>
-                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.gateEntry}</TableCell>
-                <TableCell className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate">{entry.itemDetails}</TableCell>
+                <TableCell>{entry.passNo || '--'}</TableCell>
+                <TableCell>{entry.modeOfTransport || '--'}</TableCell>
+                <TableCell>{entry.lrNo || '--'}</TableCell>
+                <TableCell>{entry.tripId || '--'}</TableCell>
+                <TableCell>{entry.gateEntry}</TableCell>
+                <TableCell className="max-w-xs">
+                  <div className="truncate" title={entry.itemDetails}>
+                    {entry.itemDetails}
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
+            {inwardData.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={13} className="text-center py-12">
+                  <div className="flex flex-col items-center text-gray-500">
+                    <div className="text-lg font-medium mb-2">No inward entries available</div>
+                    <div className="text-sm">There are no gate pass entries to display</div>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

@@ -316,7 +316,16 @@ const modulesByPackage = {
         { name: 'Response', href: '/maintenance/survey/response', color: 'text-[#1a1a1a]' }
       ]
     },
-    { name: 'M Safe', icon: Shield, href: '/maintenance/m-safe' }
+    { 
+      name: 'M Safe', 
+      icon: Shield, 
+      href: '/maintenance/m-safe',
+      subItems: [
+        { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]' },
+        { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    { name: 'Krcc List', icon: ClipboardList, href: '/maintenance/krcc-list' }
   ],
   'Safety': [
     { name: 'Incident', icon: AlertTriangle, href: '/safety/incident' },

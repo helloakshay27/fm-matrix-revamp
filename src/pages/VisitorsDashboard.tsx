@@ -1,9 +1,12 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { RefreshCw, Plus, Search, RotateCcw } from 'lucide-react';
+import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
@@ -17,7 +20,44 @@ export const VisitorsDashboard = () => {
   const [mainTab, setMainTab] = useState('visitor');
   const [visitorSubTab, setVisitorSubTab] = useState('visitor-in');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedVisitors, setSelectedVisitors] = useState<number[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
   const navigate = useNavigate();
+
+  // Mock visitor out data based on the image
+  const visitorOutData = [
+    {
+      id: 1,
+      name: 'Test visitor',
+      visitorName: 'Test visitor',
+      host: 'Sohail Ansari',
+      purpose: 'Meeting',
+      checkedInAt: '21/02/25, 10:56 AM',
+      status: 'Approved',
+      avatar: '/placeholder.svg'
+    },
+    {
+      id: 2,
+      name: 'SY',
+      visitorName: 'SY',
+      host: 'Saumir Yadav',
+      purpose: 'Personal',
+      checkedInAt: '18/02/25, 2:29 PM',
+      status: 'Approved',
+      avatar: '/placeholder.svg'
+    },
+    {
+      id: 3,
+      name: 'Abdul',
+      visitorName: 'Abdul',
+      host: 'abdul abdul',
+      purpose: 'Meeting',
+      location: 'Maumbal',
+      checkedInAt: '20/02/25, 9:30 AM',
+      status: 'Approved',
+      avatar: '/placeholder.svg'
+    }
+  ];
 
   // Mock visitor data for history
   const visitorHistoryData = [
@@ -84,6 +124,44 @@ export const VisitorsDashboard = () => {
   const handleReset = () => {
     setSearchTerm('');
     console.log('Search reset');
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    if (checked) {
+      setSelectedVisitors(visitorOutData.map(visitor => visitor.id));
+    } else {
+      setSelectedVisitors([]);
+    }
+  };
+
+  const handleSelectVisitor = (visitorId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedVisitors(prev => [...prev, visitorId]);
+    } else {
+      setSelectedVisitors(prev => prev.filter(id => id !== visitorId));
+      setSelectAll(false);
+    }
+  };
+
+  const handleCheckOut = (visitorId: number) => {
+    console.log('Checking out visitor:', visitorId);
+    // Handle check out logic here
+  };
+
+  const handleViewVisitor = (visitorId: number) => {
+    console.log('Viewing visitor:', visitorId);
+    // Handle view visitor logic here
+  };
+
+  const handleEditVisitor = (visitorId: number) => {
+    console.log('Editing visitor:', visitorId);
+    // Handle edit visitor logic here
+  };
+
+  const handleDeleteVisitor = (visitorId: number) => {
+    console.log('Deleting visitor:', visitorId);
+    // Handle delete visitor logic here
   };
 
   return (
@@ -178,9 +256,10 @@ export const VisitorsDashboard = () => {
                   <div className="mb-6 flex justify-between items-center">
                     <Button 
                       onClick={() => setIsNewVisitorDialogOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-[#F8F5F0] text-[#C72030] hover:bg-[#F0EBE5] border border-[#E5D8CD] rounded-lg font-medium"
+                      style={{ backgroundColor: '#C72030' }}
+                      className="text-white hover:bg-[#C72030]/90"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4 mr-2" />
                       Add
                     </Button>
                     
@@ -271,7 +350,7 @@ export const VisitorsDashboard = () => {
                               </td>
                               <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
                                 <button 
-                                  className="w-4 h-4 text-blue-500 hover:text-blue-700"
+                                  className="w-4 h-4 text-black hover:text-gray-700"
                                   onClick={() => handleEditClick('9555625186')}
                                 >
                                   <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
@@ -316,11 +395,59 @@ export const VisitorsDashboard = () => {
                 </div>
               )}
 
-              {/* Visitor Out tab content - blank */}
+              {/* Visitor Out tab content */}
               {visitorSubTab === 'visitor-out' && (
                 <div className="p-4 min-h-[400px]">
-                  <div className="text-center text-gray-500 py-16">
-                    Visitor Out content will be displayed here
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead>Visitor Name</TableHead>
+                          <TableHead>Host</TableHead>
+                          <TableHead>Purpose</TableHead>
+                          <TableHead>Location</TableHead>
+                          <TableHead>Checked In At</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Check Out</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {visitorOutData.map((visitor) => (
+                          <TableRow key={visitor.id}>
+                            <TableCell className="font-medium">
+                              {visitor.visitorName}
+                            </TableCell>
+                            <TableCell>{visitor.host}</TableCell>
+                            <TableCell>{visitor.purpose}</TableCell>
+                            <TableCell>{visitor.location || '--'}</TableCell>
+                            <TableCell>{visitor.checkedInAt}</TableCell>
+                            <TableCell>
+                              <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                                {visitor.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button 
+                                onClick={() => handleCheckOut(visitor.id)}
+                                className="bg-[#F97316] hover:bg-[#F97316]/90 text-white px-3 py-1 text-sm rounded"
+                              >
+                                Check Out
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {visitorOutData.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-12">
+                              <div className="flex flex-col items-center text-gray-500">
+                                <div className="text-lg font-medium mb-2">No visitors to check out</div>
+                                <div className="text-sm">There are no checked-in visitors to display</div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               )}
@@ -332,9 +459,10 @@ export const VisitorsDashboard = () => {
                   <div className="flex justify-between items-center mb-4">
                     <Button 
                       onClick={() => setIsNewVisitorDialogOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-[#F8F5F0] text-[#C72030] hover:bg-[#F0EBE5] border border-[#E5D8CD] rounded-lg font-medium"
+                      style={{ backgroundColor: '#C72030' }}
+                      className="text-white hover:bg-[#C72030]/90"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4 mr-2" />
                       Add
                     </Button>
                     
@@ -365,64 +493,63 @@ export const VisitorsDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Visitor Cards */}
-                  <div className="space-y-4">
-                    {filteredVisitors.length > 0 ? (
-                      filteredVisitors.map((visitor) => (
-                        <div key={visitor.id} className="bg-[#F8F5F0] rounded-lg p-4 border border-gray-200">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 bg-orange-200 rounded-full flex items-center justify-center">
-                                <svg className="w-8 h-8 text-orange-600" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                                </svg>
-                              </div>
-                              <div>
-                                <h3 className="font-semibold text-lg">{visitor.name}</h3>
-                                <div className="flex items-center text-sm text-gray-600 gap-1">
-                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                                  </svg>
-                                  {visitor.host}
+                  {/* Visitor History Table */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead>Visitor Name</TableHead>
+                          <TableHead>Host</TableHead>
+                          <TableHead>Location</TableHead>
+                          <TableHead>Purpose</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Pass Number</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredVisitors.map((visitor) => (
+                          <TableRow key={visitor.id}>
+                            <TableCell className="font-medium">{visitor.name}</TableCell>
+                            <TableCell>{visitor.host}</TableCell>
+                            <TableCell>{visitor.location || '--'}</TableCell>
+                            <TableCell>{visitor.purpose}</TableCell>
+                            <TableCell>
+                              <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                                {visitor.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{visitor.passNumber}</TableCell>
+                          </TableRow>
+                        ))}
+                        {filteredVisitors.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-12">
+                              <div className="flex flex-col items-center text-gray-500">
+                                <div className="text-lg font-medium mb-2">
+                                  {searchTerm ? 'No visitors found' : 'No visitor history available'}
                                 </div>
-                                {visitor.location && (
-                                  <div className="flex items-center text-sm text-gray-600 gap-1">
-                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                                    </svg>
-                                    {visitor.location}
-                                  </div>
+                                <div className="text-sm mb-4">
+                                  {searchTerm 
+                                    ? `No results found for "${searchTerm}"` 
+                                    : 'There are no visitor records to display'
+                                  }
+                                </div>
+                                {searchTerm && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSearchTerm('')}
+                                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                                  >
+                                    Clear search
+                                  </Button>
                                 )}
-                                <div className="flex items-center text-sm text-gray-600 gap-1 mt-1">
-                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2-7h-3V2h-2v2H8V2H6v2H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H3V9h14v11z"/>
-                                  </svg>
-                                  {visitor.purpose}
-                                </div>
                               </div>
-                            </div>
-                            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                              {visitor.status}
-                            </div>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <span className="text-gray-600 font-medium">Checked In at:</span>
-                              <div className="text-gray-900"></div>
-                            </div>
-                            <div>
-                              <span className="text-gray-600 font-medium">Checked Out at:</span>
-                              <div className="text-gray-900"></div>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        {searchTerm ? 'No visitors found matching your search.' : 'No visitor history available.'}
-                      </div>
-                    )}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               )}
