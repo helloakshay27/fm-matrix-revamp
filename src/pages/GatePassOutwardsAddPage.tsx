@@ -136,7 +136,7 @@ export const GatePassOutwardsAddPage = () => {
               <Label className="text-sm font-medium text-gray-700">
                 Description*
               </Label>
-              <Textarea placeholder="Type Here" className="w-full min-h-[80px]" />
+              <Input placeholder="Type Here" className="w-full" />
             </div>
             
             <div className="space-y-2">
