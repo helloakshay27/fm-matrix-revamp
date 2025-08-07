@@ -348,6 +348,7 @@ import { EditExternalUserPage } from './pages/EditExternalUserPage';
 import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
 import { ExternalUsersDashboard } from './pages/ExternalUsersDashboard';
 import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
+import { KRCCFormDetail } from './pages/KRCCFormDetail';
 
 // Import Edit Roster Template page
 import { EditRosterTemplatePage } from './pages/setup/EditRosterTemplatePage';
@@ -889,7 +890,8 @@ function App() {
                 <Route path="/maintenance/m-safe/external/user/:userId" element={<ExternalUserDetail />} />
                 <Route path="/maintenance/m-safe/external/user/:userId/edit" element={<EditExternalUserPage />} />
                 <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
-                <Route path="/maintenance/krcc-list" element={<KRCCFormListDashboard />} />
+            <Route path="/maintenance/krcc-list" element={<KRCCFormListDashboard />} />
+            <Route path="/maintenance/krcc-list/:id" element={<KRCCFormDetail />} />
 
                 {/* Market Place Routes */}
                 <Route path="/market-place/all" element={<MarketPlaceAllPage />} />
