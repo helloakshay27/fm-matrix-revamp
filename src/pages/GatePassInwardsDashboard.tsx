@@ -118,7 +118,7 @@ export const GatePassInwardsDashboard = () => {
           <div className="flex gap-3">
             <Button 
               variant="outline"
-              className="bg-[hsl(var(--analytics-background))] border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-md flex items-center gap-2"
+              className="bg-[#F2EEE9] border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-md flex items-center gap-2"
               onClick={() => window.location.href = '/security/gate-pass/inwards/add'}
             >
               <span className="text-lg">+</span>
