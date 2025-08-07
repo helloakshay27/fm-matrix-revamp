@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { SlidersHorizontal, Eye } from 'lucide-react';
+import { Filter, Eye } from 'lucide-react';
 import { GatePassInwardsFilterModal } from '@/components/GatePassInwardsFilterModal';
 
 export const GatePassInwardsDashboard = () => {
@@ -129,7 +129,7 @@ export const GatePassInwardsDashboard = () => {
             className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white p-2 rounded-md"
             onClick={() => setIsFilterModalOpen(true)}
           >
-            <SlidersHorizontal className="w-4 h-4" />
+            <Filter className="w-4 h-4" />
           </Button>
         </div>
       </div>
