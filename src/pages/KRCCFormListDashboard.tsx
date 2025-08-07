@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCheck, Clock, Settings, Shield, Eye, Trash2, Plus, Filter } from 'lucide-react';
+import { Users, UserCheck, Clock, Settings, Shield, Eye, Trash2, Plus, Filter, Download } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -146,14 +146,24 @@ export const KRCCFormListDashboard = () => {
     switch (columnKey) {
       case 'action':
         return (
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-1">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => console.log('View form:', form.id)}
               className="h-8 w-8 p-0"
+              title="View Form"
             >
               <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => console.log('Download form:', form.id)}
+              className="h-8 w-8 p-0"
+              title="Download Form"
+            >
+              <Download className="h-4 w-4" />
             </Button>
           </div>
         );
