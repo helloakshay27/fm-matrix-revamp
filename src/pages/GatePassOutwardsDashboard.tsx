@@ -82,10 +82,10 @@ export const GatePassOutwardsDashboard = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg border border-gray-200">
         {/* Header */}
-        <div className="p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Outward List</h1>
+        <div className="p-4">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Outward List</h1>
           
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-4">
             <Button 
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 flex items-center gap-2"
               onClick={() => navigate('/security/gate-pass/outwards/add')}
