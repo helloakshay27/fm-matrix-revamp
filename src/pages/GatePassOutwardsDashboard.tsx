@@ -82,12 +82,12 @@ export const GatePassOutwardsDashboard = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg border border-gray-200">
         {/* Header */}
-        <div className="p-4">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Outward List</h1>
+        <div className="p-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">Outward List</h1>
           
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 mb-6">
             <Button 
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 flex items-center gap-2"
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 flex items-center gap-2 border border-[#C72030]"
               onClick={() => navigate('/security/gate-pass/outwards/add')}
             >
               <span className="text-lg">+</span>
@@ -96,7 +96,7 @@ export const GatePassOutwardsDashboard = () => {
             
             <Button 
               variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 flex items-center gap-2"
+              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 px-4 py-2 flex items-center gap-2"
               onClick={() => setIsFilterModalOpen(true)}
             >
               <SlidersHorizontal className="w-4 h-4" />
