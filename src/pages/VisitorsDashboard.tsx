@@ -178,9 +178,10 @@ export const VisitorsDashboard = () => {
                   <div className="mb-6 flex justify-between items-center">
                     <Button 
                       onClick={() => setIsNewVisitorDialogOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-[#F8F5F0] text-[#C72030] hover:bg-[#F0EBE5] border border-[#E5D8CD] rounded-lg font-medium"
+                      style={{ backgroundColor: '#C72030' }}
+                      className="text-white hover:bg-[#C72030]/90"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4 mr-2" />
                       Add
                     </Button>
                     
@@ -332,9 +333,10 @@ export const VisitorsDashboard = () => {
                   <div className="flex justify-between items-center mb-4">
                     <Button 
                       onClick={() => setIsNewVisitorDialogOpen(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-[#F8F5F0] text-[#C72030] hover:bg-[#F0EBE5] border border-[#E5D8CD] rounded-lg font-medium"
+                      style={{ backgroundColor: '#C72030' }}
+                      className="text-white hover:bg-[#C72030]/90"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-4 h-4 mr-2" />
                       Add
                     </Button>
                     
