@@ -464,30 +464,31 @@ export const VisitorFormPage = () => {
             </div>
 
             {/* Form Fields */}
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Host <span className="text-red-500">*</span>
-                </label>
-                <Select value={formData.host || undefined} onValueChange={(value) => handleInputChange('host', value)}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Person To Meet" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="john">John Doe</SelectItem>
-                    <SelectItem value="jane">Jane Smith</SelectItem>
-                    <SelectItem value="bob">Bob Johnson</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Host</InputLabel>
+                <MuiSelect
+                  value={formData.host || ''}
+                  onChange={(e) => handleInputChange('host', e.target.value)}
+                  label="Host"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Person To Meet</MenuItem>
+                  <MenuItem value="john">John Doe</MenuItem>
+                  <MenuItem value="jane">Jane Smith</MenuItem>
+                  <MenuItem value="bob">Bob Johnson</MenuItem>
+                </MuiSelect>
+              </FormControl>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Visitor Name <span className="text-red-500">*</span>
-                </label>
               <TextField
                 label="Visitor Name"
-                placeholder="Visitor Name"
+                placeholder="Enter Visitor Name"
                 value={formData.visitorName}
                 onChange={(e) => handleInputChange('visitorName', e.target.value)}
                 fullWidth
@@ -502,110 +503,114 @@ export const VisitorFormPage = () => {
                   sx: fieldStyles,
                 }}
               />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Visit Purpose <span className="text-red-500">*</span>
-              </label>
-              <Select value={formData.visitPurpose || undefined} onValueChange={(value) => handleInputChange('visitPurpose', value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select your Purpose" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="meeting">Meeting</SelectItem>
-                  <SelectItem value="delivery">Delivery</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Visit Purpose</InputLabel>
+                <MuiSelect
+                  value={formData.visitPurpose || ''}
+                  onChange={(e) => handleInputChange('visitPurpose', e.target.value)}
+                  label="Visit Purpose"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Purpose Of Visit</MenuItem>
+                  <MenuItem value="meeting">Meeting</MenuItem>
+                  <MenuItem value="delivery">Delivery</MenuItem>
+                  <MenuItem value="maintenance">Maintenance</MenuItem>
+                  <MenuItem value="other">Other</MenuItem>
+                </MuiSelect>
+              </FormControl>
 
-            <TextField
-              label="Mobile Number"
-              placeholder="9555625186"
-              value={formData.mobileNumber}
-              onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
-              fullWidth
-              variant="outlined"
-              required
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-              InputProps={{
-                sx: fieldStyles,
-              }}
-            />
+              <TextField
+                label="Pass Number"
+                placeholder="Enter Pass Number"
+                value={formData.passNumber}
+                onChange={(e) => handleInputChange('passNumber', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
 
-            <TextField
-              label="Pass Number"
-              placeholder="Pass Number"
-              value={formData.passNumber}
-              onChange={(e) => handleInputChange('passNumber', e.target.value)}
-              fullWidth
-              variant="outlined"
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-              InputProps={{
-                sx: fieldStyles,
-              }}
-            />
+              <TextField
+                label="Mobile Number"
+                placeholder="Enter Mobile Number"
+                value={formData.mobileNumber}
+                onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
+                fullWidth
+                variant="outlined"
+                required
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
 
-            <TextField
-              label="Visitor Coming From"
-              placeholder="Visitor Coming From"
-              value={formData.visitorComingFrom}
-              onChange={(e) => handleInputChange('visitorComingFrom', e.target.value)}
-              fullWidth
-              variant="outlined"
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-              InputProps={{
-                sx: fieldStyles,
-              }}
-            />
+              <TextField
+                label="Vehicle Number"
+                placeholder="Enter Vehicle Number"
+                value={formData.vehicleNumber}
+                onChange={(e) => handleInputChange('vehicleNumber', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
 
-            <TextField
-              label="Vehicle Number"
-              placeholder="Vehicle Number"
-              value={formData.vehicleNumber}
-              onChange={(e) => handleInputChange('vehicleNumber', e.target.value)}
-              fullWidth
-              variant="outlined"
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-              InputProps={{
-                sx: fieldStyles,
-              }}
-            />
+              <TextField
+                label="Visitor Coming From"
+                placeholder="Enter Visitor Coming From"
+                value={formData.visitorComingFrom}
+                onChange={(e) => handleInputChange('visitorComingFrom', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
 
-            <TextField
-              label="Remarks"
-              placeholder="Remarks"
-              value={formData.remarks}
-              onChange={(e) => handleInputChange('remarks', e.target.value)}
-              fullWidth
-              variant="outlined"
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-              InputProps={{
-                sx: fieldStyles,
-              }}
-            />
+              <TextField
+                label="Remarks"
+                placeholder="Enter Remarks"
+                value={formData.remarks}
+                onChange={(e) => handleInputChange('remarks', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
             </div>
 
             {/* Checkboxes */}
