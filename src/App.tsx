@@ -161,6 +161,7 @@ import { GVehicleOutDashboard } from './pages/GVehicleOutDashboard';
 // Import Gate Pass pages
 import { GatePassDashboard } from './pages/GatePassDashboard';
 import { GatePassInwardsDashboard } from './pages/GatePassInwardsDashboard';
+import { AddGatePassInwardPage } from './pages/AddGatePassInwardPage';
 import { GatePassOutwardsDashboard } from './pages/GatePassOutwardsDashboard';
 
 // Import Space Management pages
@@ -790,6 +791,7 @@ function App() {
                 {/* Security/Visitors Routes */}
                 <Route path="/security/gate-pass" element={<GatePassDashboard />} />
                 <Route path="/security/gate-pass/inwards" element={<GatePassInwardsDashboard />} />
+                <Route path="/security/gate-pass/inwards/add" element={<AddGatePassInwardPage />} />
                 <Route path="/security/gate-pass/outwards" element={<GatePassOutwardsDashboard />} />
                 <Route path="/security/visitor" element={<VisitorsDashboard />} />
                 <Route path="/visitor-form" element={<VisitorFormPage />} />

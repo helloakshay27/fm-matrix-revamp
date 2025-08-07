@@ -114,15 +114,24 @@ export const GatePassInwardsDashboard = () => {
         <div className="p-4 border-b border-gray-200">
           <h1 className="text-xl font-semibold text-gray-900 mb-4">Inward List</h1>
           
-          {/* Filters Button */}
-          <Button 
-            variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-none flex items-center gap-2"
-            onClick={() => setIsFilterModalOpen(true)}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            Filters
-          </Button>
+          {/* Add and Filters Buttons */}
+          <div className="flex gap-3">
+            <Button 
+              variant="outline"
+              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-none flex items-center gap-2"
+              onClick={() => window.location.href = '/security/gate-pass/inwards/add'}
+            >
+              Add
+            </Button>
+            <Button 
+              variant="outline"
+              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-none flex items-center gap-2"
+              onClick={() => setIsFilterModalOpen(true)}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filters
+            </Button>
+          </div>
         </div>
 
         {/* Data Table */}
