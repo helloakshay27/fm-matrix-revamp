@@ -344,6 +344,7 @@ import { EditAssetDetailsPage } from './pages/EditAssetDetailsPage';
 import { MSafeDashboard } from './pages/MSafeDashboard';
 import { MSafeUserDetail } from './pages/MSafeUserDetail';
 import { ExternalUserDetail } from './pages/ExternalUserDetail';
+import { EditExternalUserPage } from './pages/EditExternalUserPage';
 import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
 import { ExternalUsersDashboard } from './pages/ExternalUsersDashboard';
 import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
@@ -886,6 +887,7 @@ function App() {
                 <Route path="/maintenance/m-safe/external" element={<ExternalUsersDashboard />} />
                 <Route path="/maintenance/m-safe/user/:userId" element={<MSafeUserDetail />} />
                 <Route path="/maintenance/m-safe/external/user/:userId" element={<ExternalUserDetail />} />
+                <Route path="/maintenance/m-safe/external/user/:userId/edit" element={<EditExternalUserPage />} />
                 <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
                 <Route path="/maintenance/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
 

@@ -21,7 +21,6 @@ export const ExternalUserDetail = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isEditMode, setIsEditMode] = useState(false);
   
   // Get user data from location state or fallback to dummy data
   const user = location.state?.user || {
@@ -103,170 +102,15 @@ export const ExternalUserDetail = () => {
         <Button 
           variant="outline" 
           className="border-red-500 text-red-500 hover:bg-red-50"
-          onClick={() => setIsEditMode(!isEditMode)}
+          onClick={() => navigate(`/maintenance/m-safe/external/user/${userId}/edit`, { state: { user } })}
         >
           <Edit className="h-4 w-4 mr-2" />
-          {isEditMode ? 'Cancel' : 'Edit'}
+          Edit
         </Button>
       </div>
 
-      {/* Edit Form or View Mode */}
-      {isEditMode ? (
-        <div className="bg-white rounded-lg border p-6">
-          <h3 className="text-lg font-semibold mb-6">Edit External User Information</h3>
-          <div className="flex gap-8 mb-8">
-            {/* Profile Picture Section */}
-            <div className="flex-shrink-0">
-              <div className="w-48 h-48 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
-                <div className="w-32 h-32 bg-orange-400 rounded-full flex items-center justify-center">
-                  <User className="h-16 w-16 text-orange-600" />
-                </div>
-              </div>
-            </div>
-            
-            {/* Form Fields */}
-            <div className="flex-1 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextField
-                  label="First Name"
-                  defaultValue={user.firstname || ''}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Last Name"
-                  defaultValue={user.lastname || ''}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <FormControl fullWidth size="small">
-                  <InputLabel>Gender</InputLabel>
-                  <Select
-                    defaultValue={user.gender || 'Male'}
-                    label="Gender"
-                  >
-                    <MenuItem value="Male">Male</MenuItem>
-                    <MenuItem value="Female">Female</MenuItem>
-                    <MenuItem value="Other">Other</MenuItem>
-                  </Select>
-                </FormControl>
-                <TextField
-                  label="Mobile"
-                  defaultValue={user.mobile || ''}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Email"
-                  type="email"
-                  defaultValue={user.email || ''}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Department"
-                  defaultValue={user.department || ''}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Circle"
-                  defaultValue={user.circle || ''}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Cluster"
-                  defaultValue={user.cluster || ''}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-              </div>
-              
-              <div>
-                <FormControl component="fieldset">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">User Type</label>
-                  <RadioGroup
-                    defaultValue="external"
-                    row
-                    sx={{ gap: 3 }}
-                  >
-                    <FormControlLabel value="external" control={<Radio />} label="External" />
-                    <FormControlLabel value="contractor" control={<Radio />} label="Contractor" />
-                    <FormControlLabel value="vendor" control={<Radio />} label="Vendor" />
-                  </RadioGroup>
-                </FormControl>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextField
-                  label="Vendor Company Name"
-                  defaultValue={user.company_name || ''}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Employee ID"
-                  defaultValue={user.employee_id || ''}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Designation"
-                  defaultValue={user.designation || ''}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Line Manager Name"
-                  defaultValue={user.line_manager_name || ''}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Line Manager Mobile"
-                  defaultValue={user.line_manager_mobile || ''}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <FormControl fullWidth size="small">
-                  <InputLabel>Access Level</InputLabel>
-                  <Select
-                    defaultValue="Site"
-                    label="Access Level"
-                  >
-                    <MenuItem value="Site">Site</MenuItem>
-                    <MenuItem value="Building">Building</MenuItem>
-                    <MenuItem value="Floor">Floor</MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex justify-center">
-            <Button 
-              className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-2"
-              onClick={() => setIsEditMode(false)}
-            >
-              Submit
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <Tabs defaultValue="personal" className="w-full">
+      {/* View Mode */}
+      <Tabs defaultValue="personal" className="w-full">
           <TabsList className="flex justify-start bg-gray-50 rounded-t-lg h-auto p-0 w-full">
             <TabsTrigger 
               value="personal" 
@@ -411,7 +255,6 @@ export const ExternalUserDetail = () => {
             </div>
           </TabsContent>
         </Tabs>
-      )}
     </div>
   );
 };
