@@ -2,11 +2,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Plus, Filter, Eye, Edit, FileText, QrCode, Search } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Filter, Eye, Edit, FileText, QrCode, Search, Trash2 } from 'lucide-react';
 import { StaffsFilterModal } from '@/components/StaffsFilterModal';
 import { AddStaffModal } from '@/components/AddStaffModal';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 // Sample data for different views
 const allStaffsData = [
@@ -99,12 +103,44 @@ const historyData = [
   }
 ];
 
+// Column configuration for the enhanced table
+const columns: ColumnConfig[] = [
+  { key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false },
+  { key: 'id', label: 'Staff ID', sortable: true, hideable: true, draggable: true },
+  { key: 'name', label: 'Name', sortable: true, hideable: true, draggable: true },
+  { key: 'unit', label: 'Unit', sortable: true, hideable: true, draggable: true },
+  { key: 'department', label: 'Department', sortable: true, hideable: true, draggable: true },
+  { key: 'email', label: 'Email', sortable: true, hideable: true, draggable: true },
+  { key: 'mobile', label: 'Mobile', sortable: true, hideable: true, draggable: true },
+  { key: 'workType', label: 'Work Type', sortable: true, hideable: true, draggable: true },
+  { key: 'vendorName', label: 'Vendor Name', sortable: true, hideable: true, draggable: true },
+  { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
+  { key: 'validTill', label: 'Valid Till', sortable: true, hideable: true, draggable: true },
+  { key: 'checkIn', label: 'Check In', sortable: true, hideable: true, draggable: true },
+  { key: 'checkOut', label: 'Check Out', sortable: true, hideable: true, draggable: true }
+];
+
+const getStatusBadgeColor = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case 'approved':
+      return 'bg-green-100 text-green-600 border-green-200';
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-600 border-yellow-200';
+    case 'rejected':
+      return 'bg-red-100 text-red-600 border-red-200';
+    default:
+      return 'bg-gray-100 text-gray-600 border-gray-200';
+  }
+};
+
 export const StaffsDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedStaffs, setSelectedStaffs] = useState<string[]>([]);
+  const [searchTrigger, setSearchTrigger] = useState(0);
 
   const handlePrintQR = () => {
     console.log('Printing QR codes for selected staff...');
@@ -141,8 +177,11 @@ export const StaffsDashboard = () => {
   };
 
   const handleSearch = () => {
-    console.log('Searching for:', searchTerm);
-    // Search functionality is already implemented via filteredData
+    console.log('Search triggered for:', searchTerm);
+    // Trigger re-render by updating search trigger
+    setSearchTrigger(prev => prev + 1);
+    // Clear selections to show updated results
+    setSelectedStaffs([]);
   };
 
   const handleViewStaff = (staffId: string) => {
@@ -151,6 +190,23 @@ export const StaffsDashboard = () => {
 
   const handleEditStaff = (staffId: string) => {
     navigate(`/security/staff/edit/${staffId}`);
+  };
+
+  const handleDeleteStaff = (staffId: string) => {
+    console.log('Deleting staff:', staffId);
+    // Add delete functionality here
+  };
+
+  const handleStaffSelection = (staffId: string, checked: boolean) => {
+    setSelectedStaffs(prev => 
+      checked 
+        ? [...prev, staffId]
+        : prev.filter(id => id !== staffId)
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedStaffs(checked ? filteredData().map(staff => staff.id) : []);
   };
 
   const filteredData = () => {
@@ -175,76 +231,64 @@ export const StaffsDashboard = () => {
     );
   };
 
-  const renderTableView = () => {
-    const data = filteredData();
-    
-    return (
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow >
-              <TableHead className="w-12">
-                <input type="checkbox" className="rounded-none" />
-              </TableHead>
-              <TableHead>View</TableHead>
-              <TableHead>Edit</TableHead>
-              <TableHead>ID</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Unit</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Mobile</TableHead>
-              <TableHead>Staff Id</TableHead>
-              <TableHead>Work type</TableHead>
-              <TableHead>Vendor Name</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((staff, index) => (
-              <TableRow key={staff.id || index} className="hover:bg-gray-50">
-                <TableCell>
-                  <input type="checkbox" className="rounded-none" />
-                </TableCell>
-                <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleViewStaff(staff.id)}
-                    className="rounded-none"
-                  >
-                    <Eye className="w-4 h-4 text-blue-600" />
-                  </Button>
-                </TableCell>
-                <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleEditStaff(staff.id)}
-                    className="rounded-none"
-                  >
-                    <Edit className="w-4 h-4 text-green-600" />
-                  </Button>
-                </TableCell>
-                <TableCell className="text-blue-600">{staff.id}</TableCell>
-                <TableCell>{staff.name}</TableCell>
-                <TableCell>{staff.unit}</TableCell>
-                <TableCell>{staff.department}</TableCell>
-                <TableCell className="text-blue-600">{staff.email}</TableCell>
-                <TableCell>{staff.mobile}</TableCell>
-                <TableCell></TableCell>
-                <TableCell>{staff.workType}</TableCell>
-                <TableCell>{staff.vendorName}</TableCell>
-                <TableCell>
-                  <span className="text-green-600 font-medium">{staff.status}</span>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+  const renderRow = (staff: any) => ({
+    actions: (
+      <div className="flex gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleViewStaff(staff.id);
+          }}
+          className="p-2 h-8 w-8 hover:bg-accent"
+          title="View staff"
+        >
+          <Eye className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEditStaff(staff.id);
+          }}
+          className="p-2 h-8 w-8 hover:bg-accent"
+          title="Edit staff"
+        >
+          <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDeleteStaff(staff.id);
+          }}
+          className="p-2 h-8 w-8 hover:bg-accent"
+          title="Delete staff"
+        >
+          <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
+        </Button>
       </div>
-    );
-  };
+    ),
+    id: <span className="font-medium text-blue-600">{staff.id}</span>,
+    name: staff.name,
+    unit: staff.unit,
+    department: staff.department,
+    email: staff.email ? <span className="text-blue-600">{staff.email}</span> : '--',
+    mobile: staff.mobile,
+    workType: staff.workType,
+    vendorName: staff.vendorName || '--',
+    status: (
+      <Badge className={getStatusBadgeColor(staff.status)}>
+        {staff.status}
+      </Badge>
+    ),
+    validTill: staff.validTill || '--',
+    checkIn: staff.checkIn || '--',
+    checkOut: staff.checkOut || '--'
+  });
 
   const renderHistoryView = () => {
     const data = filteredData();
@@ -329,54 +373,51 @@ export const StaffsDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>Staffs</span>
-          <span>&gt;</span>
-          <span>Society Staffs</span>
-        </div>
+    <div className="bg-gray-50 min-h-screen">
+      <div className="p-6">
         
         <div className="bg-white rounded-none border border-gray-200 shadow-sm">
           {/* Header */}
           <div className="p-4 border-b border-gray-200">
             <h2 className="font-work-sans font-semibold text-base sm:text-lg lg:text-xl leading-auto tracking-normal mb-4 text-[#1a1a1a] uppercase">SOCIETY STAFFS</h2>
             
-            {/* Action Buttons */}
-            <div className="flex gap-3 mb-4">
-              <Button 
-                onClick={() => setIsAddModalOpen(true)}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-              </Button>
-              <Button 
-                onClick={() => setIsFilterModalOpen(true)}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                Filters
-              </Button>
-              <Button 
-                onClick={handlePrintQR}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
-              >
-                <QrCode className="w-4 h-4 mr-2" />
-                Print QR
-              </Button>
-              <Button 
-                onClick={handlePrintAllQR}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Print ALL QR
-              </Button>
-            </div>
+            {/* Action Buttons - only show for History and All tabs */}
+            {(activeTab === 'history' || activeTab === 'all') && (
+              <div className="flex gap-3 mb-4">
+                <Button 
+                  onClick={() => setIsAddModalOpen(true)}
+                  style={{ backgroundColor: '#C72030' }}
+                  className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add
+                </Button>
+                <Button 
+                  onClick={() => setIsFilterModalOpen(true)}
+                  style={{ backgroundColor: '#C72030' }}
+                  className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
+                >
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filters
+                </Button>
+                <Button 
+                  onClick={handlePrintQR}
+                  style={{ backgroundColor: '#C72030' }}
+                  className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
+                >
+                  <QrCode className="w-4 h-4 mr-2" />
+                  Print QR
+                </Button>
+                <Button 
+                  onClick={handlePrintAllQR}
+                  style={{ backgroundColor: '#C72030' }}
+                  className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Print ALL QR
+                </Button>
+              </div>
+            )}
 
             {/* Tab Navigation */}
             <div className="flex gap-1 bg-gray-200 p-1 rounded-none w-fit mb-4">
@@ -453,39 +494,65 @@ export const StaffsDashboard = () => {
               </div>
             )}
 
-            {/* Search Bar for History and All tabs */}
-            {(activeTab === 'history' || activeTab === 'all') && (
-              <div className="flex gap-4 items-center">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search by name, mobile, email or ID"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white h-10 border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSearch();
-                      }
-                    }}
-                  />
-                </div>
-                <Button 
-                  onClick={handleSearch}
-                  style={{ backgroundColor: '#C72030' }}
-                  className="hover:bg-[#C72030]/90 text-white px-6 py-2 h-10 rounded-none text-sm font-medium border-0"
-                >
-                  Go!
-                </Button>
-              </div>
-            )}
           </div>
 
           {/* Content */}
-          <div>
-            {activeTab === 'history' && renderHistoryView()}
-            {activeTab === 'all' && renderTableView()}
-            {(activeTab === 'in' || activeTab === 'out') && renderCardView()}
+          <div className="overflow-x-auto animate-fade-in">
+            {(activeTab === 'in' || activeTab === 'out') ? (
+              renderCardView()
+            ) : activeTab === 'history' ? (
+              renderHistoryView()
+            ) : (
+              <div className="border rounded-lg overflow-hidden">
+                <EnhancedTable
+                  data={filteredData()}
+                  columns={columns}
+                  renderRow={renderRow}
+                  enableSearch={false}
+                  enableSelection={true}
+                  enableExport={true}
+                  storageKey="staff-table"
+                  emptyMessage="No staff found"
+                  exportFileName="staff-records"
+                  selectedItems={selectedStaffs}
+                  getItemId={(staff) => staff.id}
+                  onSelectItem={handleStaffSelection}
+                  onSelectAll={handleSelectAll}
+                  leftActions={
+                    <div className="flex gap-3">
+                      <Button 
+                        onClick={() => setIsAddModalOpen(true)}
+                        style={{ backgroundColor: '#C72030' }}
+                        className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add
+                      </Button>
+                      <Button 
+                        onClick={handlePrintQR}
+                        style={{ backgroundColor: '#C72030' }}
+                        className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+                      >
+                        <QrCode className="w-4 h-4 mr-2" />
+                        Print QR
+                      </Button>
+                      <Button 
+                        onClick={handlePrintAllQR}
+                        style={{ backgroundColor: '#C72030' }}
+                        className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Print ALL QR
+                      </Button>
+                    </div>
+                  }
+                  onFilterClick={() => setIsFilterModalOpen(true)}
+                  searchPlaceholder="Search staff by name, ID, email or mobile"
+                  hideTableExport={false}
+                  hideColumnsButton={false}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
