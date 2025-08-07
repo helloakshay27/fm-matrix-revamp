@@ -1,15 +1,37 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { ArrowLeft, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const AddGatePassInwardPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Field styles for Material-UI components
+  const fieldStyles = {
+    height: '45px',
+    backgroundColor: '#fff',
+    borderRadius: '4px',
+    '& .MuiOutlinedInput-root': {
+      height: '45px',
+      '& fieldset': {
+        borderColor: '#ddd',
+      },
+      '&:hover fieldset': {
+        borderColor: '#C72030',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
   
   const [formData, setFormData] = useState({
     // Goods Detail
@@ -95,90 +117,133 @@ export const AddGatePassInwardPage = () => {
             </div>
             <div className="p-6 space-y-6 bg-gray-50">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Item Type*
-                  </label>
-                  <Select value={formData.itemType} onValueChange={(value) => handleInputChange('itemType', value)}>
-                    <SelectTrigger className="h-11 bg-white border-gray-300">
-                      <SelectValue placeholder="Select Item Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="equipment">Equipment</SelectItem>
-                      <SelectItem value="material">Material</SelectItem>
-                      <SelectItem value="document">Document</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  required
+                  sx={{ '& .MuiInputBase-root': fieldStyles }}
+                >
+                  <InputLabel shrink>Item Type</InputLabel>
+                  <MuiSelect
+                    value={formData.itemType}
+                    onChange={(e) => handleInputChange('itemType', e.target.value)}
+                    label="Item Type"
+                    notched
+                    displayEmpty
+                  >
+                    <MenuItem value="">Select Item Type</MenuItem>
+                    <MenuItem value="equipment">Equipment</MenuItem>
+                    <MenuItem value="material">Material</MenuItem>
+                    <MenuItem value="document">Document</MenuItem>
+                    <MenuItem value="other">Other</MenuItem>
+                  </MuiSelect>
+                </FormControl>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Item Category*
-                  </label>
-                  <Select value={formData.itemCategory} onValueChange={(value) => handleInputChange('itemCategory', value)}>
-                    <SelectTrigger className="h-11 bg-white border-gray-300">
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="electronics">Electronics</SelectItem>
-                      <SelectItem value="tools">Tools</SelectItem>
-                      <SelectItem value="supplies">Supplies</SelectItem>
-                      <SelectItem value="personal">Personal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  required
+                  sx={{ '& .MuiInputBase-root': fieldStyles }}
+                >
+                  <InputLabel shrink>Item Category</InputLabel>
+                  <MuiSelect
+                    value={formData.itemCategory}
+                    onChange={(e) => handleInputChange('itemCategory', e.target.value)}
+                    label="Item Category"
+                    notched
+                    displayEmpty
+                  >
+                    <MenuItem value="">Select Category</MenuItem>
+                    <MenuItem value="electronics">Electronics</MenuItem>
+                    <MenuItem value="tools">Tools</MenuItem>
+                    <MenuItem value="supplies">Supplies</MenuItem>
+                    <MenuItem value="personal">Personal</MenuItem>
+                  </MuiSelect>
+                </FormControl>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Item Name*
-                  </label>
-                  <Input
-                    value={formData.itemName}
-                    onChange={(e) => handleInputChange('itemName', e.target.value)}
-                    placeholder="Fill Item Name"
-                    className="h-11 bg-white border-gray-300"
-                  />
-                </div>
+                <TextField
+                  label="Item Name"
+                  placeholder="Fill Item Name"
+                  value={formData.itemName}
+                  onChange={(e) => handleInputChange('itemName', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Item Quantity*
-                  </label>
-                  <Input
-                    value={formData.itemQuantity}
-                    onChange={(e) => handleInputChange('itemQuantity', e.target.value)}
-                    placeholder="01"
-                    className="h-11 bg-white border-gray-300"
-                  />
-                </div>
+                <TextField
+                  label="Item Quantity"
+                  placeholder="01"
+                  value={formData.itemQuantity}
+                  onChange={(e) => handleInputChange('itemQuantity', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Unit*
-                  </label>
-                  <Input
-                    value={formData.unit}
-                    onChange={(e) => handleInputChange('unit', e.target.value)}
-                    placeholder="01"
-                    className="h-11 bg-white border-gray-300"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description*
-                </label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Type here"
-                  className="min-h-[100px] bg-white border-gray-300"
+                <TextField
+                  label="Unit"
+                  placeholder="01"
+                  value={formData.unit}
+                  onChange={(e) => handleInputChange('unit', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
                 />
               </div>
+
+              <TextField
+                label="Description"
+                placeholder="Type here"
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                fullWidth
+                variant="outlined"
+                required
+                multiline
+                rows={4}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: {
+                    ...fieldStyles,
+                    height: 'auto', // Override height for multiline
+                    '& .MuiOutlinedInput-root': {
+                      ...fieldStyles['& .MuiOutlinedInput-root'],
+                      height: 'auto',
+                    },
+                  },
+                }}
+              />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -208,85 +273,120 @@ export const AddGatePassInwardPage = () => {
             </div>
             <div className="p-6 space-y-6 bg-gray-50">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Visitor Name*
-                  </label>
-                  <Input
-                    value={formData.visitorName}
-                    onChange={(e) => handleInputChange('visitorName', e.target.value)}
-                    placeholder="Enter Name"
-                    className="h-11 bg-white border-gray-300"
-                  />
-                </div>
+                <TextField
+                  label="Visitor Name"
+                  placeholder="Enter Name"
+                  value={formData.visitorName}
+                  onChange={(e) => handleInputChange('visitorName', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mobile No.*
-                  </label>
-                  <Input
-                    value={formData.mobileNo}
-                    onChange={(e) => handleInputChange('mobileNo', e.target.value)}
-                    placeholder="+91"
-                    className="h-11 bg-white border-gray-300"
-                  />
-                </div>
+                <TextField
+                  label="Mobile No."
+                  placeholder="+91"
+                  value={formData.mobileNo}
+                  onChange={(e) => handleInputChange('mobileNo', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Company Name*
-                  </label>
-                  <Input
-                    value={formData.companyName}
-                    onChange={(e) => handleInputChange('companyName', e.target.value)}
-                    placeholder="Lockated"
-                    className="h-11 bg-white border-gray-300"
-                  />
-                </div>
+                <TextField
+                  label="Company Name"
+                  placeholder="Lockated"
+                  value={formData.companyName}
+                  onChange={(e) => handleInputChange('companyName', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
+                />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Vehicle No.*
-                  </label>
-                  <Input
-                    value={formData.vehicleNo}
-                    onChange={(e) => handleInputChange('vehicleNo', e.target.value)}
-                    placeholder="MH04BA-1009"
-                    className="h-11 bg-white border-gray-300"
-                  />
-                </div>
+                <TextField
+                  label="Vehicle No."
+                  placeholder="MH04BA-1009"
+                  value={formData.vehicleNo}
+                  onChange={(e) => handleInputChange('vehicleNo', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Reporting Time*
-                  </label>
-                  <Input
-                    value={formData.reportingTime}
-                    onChange={(e) => handleInputChange('reportingTime', e.target.value)}
-                    placeholder="22:24 hrs"
-                    className="h-11 bg-white border-gray-300"
-                  />
-                </div>
+                <TextField
+                  label="Reporting Time"
+                  placeholder="22:24 hrs"
+                  value={formData.reportingTime}
+                  onChange={(e) => handleInputChange('reportingTime', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
+                />
 
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Select Mode Of Transport*
-                  </label>
-                  <Select value={formData.modeOfTransport} onValueChange={(value) => handleInputChange('modeOfTransport', value)}>
-                    <SelectTrigger className="h-11 bg-white border-gray-300">
-                      <SelectValue placeholder="Type Here" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="car">Car</SelectItem>
-                      <SelectItem value="bike">Bike</SelectItem>
-                      <SelectItem value="truck">Truck</SelectItem>
-                      <SelectItem value="walk">Walking</SelectItem>
-                      <SelectItem value="bicycle">Bicycle</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  required
+                  sx={{ '& .MuiInputBase-root': fieldStyles }}
+                >
+                  <InputLabel shrink>Select Mode Of Transport</InputLabel>
+                  <MuiSelect
+                    value={formData.modeOfTransport}
+                    onChange={(e) => handleInputChange('modeOfTransport', e.target.value)}
+                    label="Select Mode Of Transport"
+                    notched
+                    displayEmpty
+                  >
+                    <MenuItem value="">Type Here</MenuItem>
+                    <MenuItem value="car">Car</MenuItem>
+                    <MenuItem value="bike">Bike</MenuItem>
+                    <MenuItem value="truck">Truck</MenuItem>
+                    <MenuItem value="walk">Walking</MenuItem>
+                    <MenuItem value="bicycle">Bicycle</MenuItem>
+                  </MuiSelect>
+                </FormControl>
               </div>
             </div>
           </div>
