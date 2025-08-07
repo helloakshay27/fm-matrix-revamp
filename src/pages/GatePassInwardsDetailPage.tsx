@@ -206,7 +206,7 @@ export const GatePassInwardsDetailPage = () => {
             {/* Profile Section */}
             <div className="text-center mb-6">
               <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-yellow-600 font-bold text-xl">S</span>
+                <span className="text-yellow-600 font-bold text-xl">{selectedEntry.personName.charAt(0).toUpperCase()}</span>
               </div>
               <h2 className="text-lg font-semibold text-gray-900">{selectedEntry.personName}</h2>
               <p className="text-sm text-gray-600">{selectedEntry.category}</p>
