@@ -69,7 +69,7 @@ export const AddGatePassInwardPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--analytics-background))]">
+    <div className="min-h-screen bg-white">
       <div className="p-6">
         {/* Header */}
         <div className="mb-6">
@@ -87,10 +87,13 @@ export const AddGatePassInwardPage = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Goods Detail Section */}
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="px-6 py-3 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-[#C72030]">GOODS DETAIL</h2>
+            <div className="px-6 py-4 bg-[#F2EEE9] border-b border-gray-200 flex items-center">
+              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
+                1
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">GOODS DETAIL</h2>
             </div>
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 bg-gray-50">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -181,7 +184,7 @@ export const AddGatePassInwardPage = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Attachments*
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <Button 
                     type="button"
@@ -197,10 +200,13 @@ export const AddGatePassInwardPage = () => {
 
           {/* Visitor Detail Section */}
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="px-6 py-3 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-[#C72030]">VISITOR DETAIL</h2>
+            <div className="px-6 py-4 bg-[#F2EEE9] border-b border-gray-200 flex items-center">
+              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
+                2
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">VISITOR DETAIL</h2>
             </div>
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 bg-gray-50">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
