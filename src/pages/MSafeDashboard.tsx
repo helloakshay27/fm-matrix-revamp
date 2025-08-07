@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { fetchFMUsers, FMUser } from '@/store/slices/fmUserSlice';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 export const MSafeDashboard = () => {
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const {
     data: fmUsersData,
@@ -202,7 +204,7 @@ export const MSafeDashboard = () => {
     }
   };
   const renderActions = (user: FMUser) => <div className="flex items-center justify-center gap-2">
-      <Button variant="ghost" size="sm" onClick={() => {}} className="h-8 w-8 p-0">
+      <Button variant="ghost" size="sm" onClick={() => navigate(`/maintenance/m-safe/user/${user.id}`)} className="h-8 w-8 p-0">
         <Eye className="h-4 w-4" />
       </Button>
       <Button variant="ghost" size="sm" onClick={() => {}} className="h-8 w-8 p-0">

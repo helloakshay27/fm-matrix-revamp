@@ -338,6 +338,7 @@ import { EditAssetDetailsPage } from './pages/EditAssetDetailsPage';
 
 // Import M Safe pages
 import { MSafeDashboard } from './pages/MSafeDashboard';
+import { MSafeUserDetail } from './pages/MSafeUserDetail';
 import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
 import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
 
@@ -871,6 +872,7 @@ function App() {
 
                 {/* M Safe Routes */}
                 <Route path="/maintenance/m-safe" element={<MSafeDashboard />} />
+                <Route path="/maintenance/m-safe/user/:userId" element={<MSafeUserDetail />} />
                 <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
                 <Route path="/maintenance/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
 
