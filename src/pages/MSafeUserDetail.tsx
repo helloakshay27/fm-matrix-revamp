@@ -4,11 +4,18 @@ import { ArrowLeft, User, FileText, UserCircle, Settings, Edit } from 'lucide-re
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
+import { 
+  TextField, 
+  Select, 
+  MenuItem, 
+  FormControl, 
+  InputLabel, 
+  RadioGroup, 
+  FormControlLabel, 
+  Radio, 
+  Checkbox, 
+  FormGroup 
+} from '@mui/material';
 import { useAppSelector } from '@/hooks/useAppDispatch';
 export const MSafeUserDetail = () => {
   const { userId } = useParams();
@@ -111,191 +118,201 @@ export const MSafeUserDetail = () => {
             {/* Form Fields */}
             <div className="flex-1 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" defaultValue={user.firstname || ''} className="mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" defaultValue={user.lastname || ''} className="mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="gender">Gender</Label>
-                  <Select defaultValue={user.gender || 'Male'}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Male">Male</SelectItem>
-                      <SelectItem value="Female">Female</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
+                <TextField
+                  label="First Name"
+                  defaultValue={user.firstname || ''}
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                />
+                <TextField
+                  label="Last Name"
+                  defaultValue={user.lastname || ''}
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                />
+                <FormControl fullWidth size="small">
+                  <InputLabel>Gender</InputLabel>
+                  <Select
+                    defaultValue={user.gender || 'Male'}
+                    label="Gender"
+                  >
+                    <MenuItem value="Male">Male</MenuItem>
+                    <MenuItem value="Female">Female</MenuItem>
+                    <MenuItem value="Other">Other</MenuItem>
                   </Select>
-                </div>
-                <div>
-                  <Label htmlFor="companyCluster">Company Cluster</Label>
-                  <Select defaultValue="GUI">
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select company cluster" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="GUI">GUI</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
+                </FormControl>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Company Cluster</InputLabel>
+                  <Select
+                    defaultValue="GUI"
+                    label="Company Cluster"
+                  >
+                    <MenuItem value="GUI">GUI</MenuItem>
+                    <MenuItem value="Other">Other</MenuItem>
                   </Select>
-                </div>
-                <div>
-                  <Label htmlFor="mobile">Mobile</Label>
-                  <Input id="mobile" defaultValue={user.mobile || ''} className="mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" defaultValue={user.email || ''} className="mt-1" />
-                </div>
+                </FormControl>
+                <TextField
+                  label="Mobile"
+                  defaultValue={user.mobile || ''}
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                />
+                <TextField
+                  label="Email"
+                  type="email"
+                  defaultValue={user.email || ''}
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                />
               </div>
               
               <div>
-                <Label>Internal/External</Label>
-                <RadioGroup defaultValue="internal" className="flex gap-6 mt-2">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="internal" id="internal" />
-                    <Label htmlFor="internal">Internal</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="external" id="external" />
-                    <Label htmlFor="external">External</Label>
-                  </div>
-                </RadioGroup>
+                <FormControl component="fieldset">
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Internal/External</label>
+                  <RadioGroup
+                    defaultValue="internal"
+                    row
+                    sx={{ gap: 3 }}
+                  >
+                    <FormControlLabel value="internal" control={<Radio />} label="Internal" />
+                    <FormControlLabel value="external" control={<Radio />} label="External" />
+                  </RadioGroup>
+                </FormControl>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <Label htmlFor="site">Site</Label>
-                  <Input id="site" defaultValue={user.company_name || 'Corporate, Birla Centurion'} className="mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="employee">Employee</Label>
-                  <Input id="employee" defaultValue={user.employee_id || ''} className="mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="lastWorkingDay">Last Working Day</Label>
-                  <Input id="lastWorkingDay" defaultValue="" className="mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="baseUnit">Base Unit</Label>
-                  <Select defaultValue="">
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select Base Unit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unit1">Unit 1</SelectItem>
-                      <SelectItem value="unit2">Unit 2</SelectItem>
-                    </SelectContent>
+                <TextField
+                  label="Site"
+                  defaultValue={user.company_name || 'Corporate, Birla Centurion'}
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                />
+                <TextField
+                  label="Employee"
+                  defaultValue={user.employee_id || ''}
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                />
+                <TextField
+                  label="Last Working Day"
+                  defaultValue=""
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                />
+                <FormControl fullWidth size="small">
+                  <InputLabel>Base Unit</InputLabel>
+                  <Select
+                    defaultValue=""
+                    label="Base Unit"
+                  >
+                    <MenuItem value="unit1">Unit 1</MenuItem>
+                    <MenuItem value="unit2">Unit 2</MenuItem>
                   </Select>
-                </div>
-                <div>
-                  <Label htmlFor="department">Department</Label>
-                  <Select defaultValue="Admin">
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="HR">HR</SelectItem>
-                      <SelectItem value="IT">IT</SelectItem>
-                    </SelectContent>
+                </FormControl>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Department</InputLabel>
+                  <Select
+                    defaultValue="Admin"
+                    label="Department"
+                  >
+                    <MenuItem value="Admin">Admin</MenuItem>
+                    <MenuItem value="HR">HR</MenuItem>
+                    <MenuItem value="IT">IT</MenuItem>
                   </Select>
-                </div>
-                <div>
-                  <Label htmlFor="designation">Designation</Label>
-                  <Input id="designation" defaultValue={user.designation || 'Tester'} className="mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="userType">User Type</Label>
-                  <Select defaultValue={user.user_type || 'admin'}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select user type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin(Web & App)</SelectItem>
-                      <SelectItem value="site">Site</SelectItem>
-                      <SelectItem value="company">Company</SelectItem>
-                    </SelectContent>
+                </FormControl>
+                <TextField
+                  label="Designation"
+                  defaultValue={user.designation || 'Tester'}
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                />
+                <FormControl fullWidth size="small">
+                  <InputLabel>User Type</InputLabel>
+                  <Select
+                    defaultValue={user.user_type || 'admin'}
+                    label="User Type"
+                  >
+                    <MenuItem value="admin">Admin(Web & App)</MenuItem>
+                    <MenuItem value="site">Site</MenuItem>
+                    <MenuItem value="company">Company</MenuItem>
                   </Select>
-                </div>
-                <div>
-                  <Label htmlFor="role">Role</Label>
-                  <Select defaultValue="Admin">
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="User">User</SelectItem>
-                    </SelectContent>
+                </FormControl>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Role</InputLabel>
+                  <Select
+                    defaultValue="Admin"
+                    label="Role"
+                  >
+                    <MenuItem value="Admin">Admin</MenuItem>
+                    <MenuItem value="User">User</MenuItem>
                   </Select>
-                </div>
-                <div>
-                  <Label htmlFor="vendorCompany">Vendor Company Name</Label>
-                  <Select defaultValue="">
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select Vendor Company" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="company1">Company 1</SelectItem>
-                      <SelectItem value="company2">Company 2</SelectItem>
-                    </SelectContent>
+                </FormControl>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Vendor Company Name</InputLabel>
+                  <Select
+                    defaultValue=""
+                    label="Vendor Company Name"
+                  >
+                    <MenuItem value="company1">Company 1</MenuItem>
+                    <MenuItem value="company2">Company 2</MenuItem>
                   </Select>
-                </div>
-                <div>
-                  <Label htmlFor="entityName">Entity Name</Label>
-                  <Select defaultValue="">
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select Entity" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="entity1">Entity 1</SelectItem>
-                      <SelectItem value="entity2">Entity 2</SelectItem>
-                    </SelectContent>
+                </FormControl>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Entity Name</InputLabel>
+                  <Select
+                    defaultValue=""
+                    label="Entity Name"
+                  >
+                    <MenuItem value="entity1">Entity 1</MenuItem>
+                    <MenuItem value="entity2">Entity 2</MenuItem>
                   </Select>
-                </div>
-                <div>
-                  <Label htmlFor="accessLevel">Access Level</Label>
-                  <Select defaultValue="Site">
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select access level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Site">Site</SelectItem>
-                      <SelectItem value="Building">Building</SelectItem>
-                      <SelectItem value="Floor">Floor</SelectItem>
-                    </SelectContent>
+                </FormControl>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Access Level</InputLabel>
+                  <Select
+                    defaultValue="Site"
+                    label="Access Level"
+                  >
+                    <MenuItem value="Site">Site</MenuItem>
+                    <MenuItem value="Building">Building</MenuItem>
+                    <MenuItem value="Floor">Floor</MenuItem>
                   </Select>
-                </div>
-                <div>
-                  <Label htmlFor="access">Access</Label>
-                  <Input id="access" defaultValue="Corporate, Birla Centurion" className="mt-1" />
-                </div>
+                </FormControl>
+                <TextField
+                  label="Access"
+                  defaultValue="Corporate, Birla Centurion"
+                  variant="outlined"
+                  fullWidth
+                  size="small"
+                />
               </div>
               
-              <div>
-                <Label htmlFor="emailPreference">Email Preference</Label>
-                <Select defaultValue="All Emails">
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select email preference" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All Emails">All Emails</SelectItem>
-                    <SelectItem value="Important Only">Important Only</SelectItem>
-                    <SelectItem value="None">None</SelectItem>
-                  </SelectContent>
+              <FormControl fullWidth size="small">
+                <InputLabel>Email Preference</InputLabel>
+                <Select
+                  defaultValue="All Emails"
+                  label="Email Preference"
+                >
+                  <MenuItem value="All Emails">All Emails</MenuItem>
+                  <MenuItem value="Important Only">Important Only</MenuItem>
+                  <MenuItem value="None">None</MenuItem>
                 </Select>
-              </div>
+              </FormControl>
               
-              <div className="flex items-center space-x-2">
-                <Checkbox id="dailyReport" />
-                <Label htmlFor="dailyReport">Daily Helpdesk Report Email</Label>
-              </div>
+              <FormGroup>
+                <FormControlLabel 
+                  control={<Checkbox />} 
+                  label="Daily Helpdesk Report Email" 
+                />
+              </FormGroup>
             </div>
           </div>
           
