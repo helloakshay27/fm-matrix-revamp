@@ -101,7 +101,7 @@ export const MSafeUserDetail = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="personal" className="mt-6">
+        <TabsContent value="personal" className="mt-0">
           <div className="bg-white rounded-lg border p-6">
             <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -141,7 +141,7 @@ export const MSafeUserDetail = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="other" className="mt-6">
+        <TabsContent value="other" className="mt-0">
           <div className="bg-white rounded-lg border p-6">
             <h3 className="text-lg font-semibold mb-4">Other Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
