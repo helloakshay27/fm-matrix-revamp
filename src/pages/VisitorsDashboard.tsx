@@ -498,13 +498,6 @@ export const VisitorsDashboard = () => {
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-gray-50">
-                          <TableHead className="w-12">
-                            <Checkbox
-                              checked={selectAll}
-                              onCheckedChange={handleSelectAll}
-                            />
-                          </TableHead>
-                          <TableHead>Action</TableHead>
                           <TableHead>Visitor Name</TableHead>
                           <TableHead>Host</TableHead>
                           <TableHead>Location</TableHead>
@@ -516,34 +509,6 @@ export const VisitorsDashboard = () => {
                       <TableBody>
                         {filteredVisitors.map((visitor) => (
                           <TableRow key={visitor.id}>
-                            <TableCell>
-                              <Checkbox
-                                checked={selectedVisitors.includes(visitor.id)}
-                                onCheckedChange={(checked) => handleSelectVisitor(visitor.id, checked as boolean)}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <div title="View visitor">
-                                  <Eye 
-                                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
-                                    onClick={() => handleViewVisitor(visitor.id)}
-                                  />
-                                </div>
-                                <div title="Edit visitor">
-                                  <Edit 
-                                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
-                                    onClick={() => handleEditVisitor(visitor.id)}
-                                  />
-                                </div>
-                                <div title="Delete visitor">
-                                  <Trash2 
-                                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-red-600" 
-                                    onClick={() => handleDeleteVisitor(visitor.id)}
-                                  />
-                                </div>
-                              </div>
-                            </TableCell>
                             <TableCell className="font-medium">{visitor.name}</TableCell>
                             <TableCell>{visitor.host}</TableCell>
                             <TableCell>{visitor.location || '--'}</TableCell>
@@ -558,7 +523,7 @@ export const VisitorsDashboard = () => {
                         ))}
                         {filteredVisitors.length === 0 && (
                           <TableRow>
-                            <TableCell colSpan={8} className="text-center py-12">
+                            <TableCell colSpan={6} className="text-center py-12">
                               <div className="flex flex-col items-center text-gray-500">
                                 <div className="text-lg font-medium mb-2">
                                   {searchTerm ? 'No visitors found' : 'No visitor history available'}
