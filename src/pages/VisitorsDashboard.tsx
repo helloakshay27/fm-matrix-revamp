@@ -1,9 +1,12 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { RefreshCw, Plus, Search, RotateCcw } from 'lucide-react';
+import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
@@ -17,7 +20,44 @@ export const VisitorsDashboard = () => {
   const [mainTab, setMainTab] = useState('visitor');
   const [visitorSubTab, setVisitorSubTab] = useState('visitor-in');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedVisitors, setSelectedVisitors] = useState<number[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
   const navigate = useNavigate();
+
+  // Mock visitor out data based on the image
+  const visitorOutData = [
+    {
+      id: 1,
+      name: 'Test visitor',
+      visitorName: 'Test visitor',
+      host: 'Sohail Ansari',
+      purpose: 'Meeting',
+      checkedInAt: '21/02/25, 10:56 AM',
+      status: 'Approved',
+      avatar: '/placeholder.svg'
+    },
+    {
+      id: 2,
+      name: 'SY',
+      visitorName: 'SY',
+      host: 'Saumir Yadav',
+      purpose: 'Personal',
+      checkedInAt: '18/02/25, 2:29 PM',
+      status: 'Approved',
+      avatar: '/placeholder.svg'
+    },
+    {
+      id: 3,
+      name: 'Abdul',
+      visitorName: 'Abdul',
+      host: 'abdul abdul',
+      purpose: 'Meeting',
+      location: 'Maumbal',
+      checkedInAt: '20/02/25, 9:30 AM',
+      status: 'Approved',
+      avatar: '/placeholder.svg'
+    }
+  ];
 
   // Mock visitor data for history
   const visitorHistoryData = [
@@ -84,6 +124,44 @@ export const VisitorsDashboard = () => {
   const handleReset = () => {
     setSearchTerm('');
     console.log('Search reset');
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectAll(checked);
+    if (checked) {
+      setSelectedVisitors(visitorOutData.map(visitor => visitor.id));
+    } else {
+      setSelectedVisitors([]);
+    }
+  };
+
+  const handleSelectVisitor = (visitorId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedVisitors(prev => [...prev, visitorId]);
+    } else {
+      setSelectedVisitors(prev => prev.filter(id => id !== visitorId));
+      setSelectAll(false);
+    }
+  };
+
+  const handleCheckOut = (visitorId: number) => {
+    console.log('Checking out visitor:', visitorId);
+    // Handle check out logic here
+  };
+
+  const handleViewVisitor = (visitorId: number) => {
+    console.log('Viewing visitor:', visitorId);
+    // Handle view visitor logic here
+  };
+
+  const handleEditVisitor = (visitorId: number) => {
+    console.log('Editing visitor:', visitorId);
+    // Handle edit visitor logic here
+  };
+
+  const handleDeleteVisitor = (visitorId: number) => {
+    console.log('Deleting visitor:', visitorId);
+    // Handle delete visitor logic here
   };
 
   return (
@@ -317,11 +395,101 @@ export const VisitorsDashboard = () => {
                 </div>
               )}
 
-              {/* Visitor Out tab content - blank */}
+              {/* Visitor Out tab content */}
               {visitorSubTab === 'visitor-out' && (
                 <div className="p-4 min-h-[400px]">
-                  <div className="text-center text-gray-500 py-16">
-                    Visitor Out content will be displayed here
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead className="w-12">
+                            <Checkbox
+                              checked={selectAll}
+                              onCheckedChange={handleSelectAll}
+                            />
+                          </TableHead>
+                          <TableHead>Action</TableHead>
+                          <TableHead>Visitor Name</TableHead>
+                          <TableHead>Host</TableHead>
+                          <TableHead>Purpose</TableHead>
+                          <TableHead>Location</TableHead>
+                          <TableHead>Checked In At</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Check Out</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {visitorOutData.map((visitor) => (
+                          <TableRow key={visitor.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedVisitors.includes(visitor.id)}
+                                onCheckedChange={(checked) => handleSelectVisitor(visitor.id, checked as boolean)}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <div title="View visitor">
+                                  <Eye 
+                                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+                                    onClick={() => handleViewVisitor(visitor.id)}
+                                  />
+                                </div>
+                                <div title="Edit visitor">
+                                  <Edit 
+                                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+                                    onClick={() => handleEditVisitor(visitor.id)}
+                                  />
+                                </div>
+                                <div title="Delete visitor">
+                                  <Trash2 
+                                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-red-600" 
+                                    onClick={() => handleDeleteVisitor(visitor.id)}
+                                  />
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-3">
+                                <img 
+                                  src={visitor.avatar} 
+                                  alt={`${visitor.visitorName} avatar`}
+                                  className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                                />
+                                {visitor.visitorName}
+                              </div>
+                            </TableCell>
+                            <TableCell>{visitor.host}</TableCell>
+                            <TableCell>{visitor.purpose}</TableCell>
+                            <TableCell>{visitor.location || '--'}</TableCell>
+                            <TableCell>{visitor.checkedInAt}</TableCell>
+                            <TableCell>
+                              <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                                {visitor.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button 
+                                onClick={() => handleCheckOut(visitor.id)}
+                                className="bg-[#F97316] hover:bg-[#F97316]/90 text-white px-3 py-1 text-sm rounded"
+                              >
+                                Check Out
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {visitorOutData.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={9} className="text-center py-12">
+                              <div className="flex flex-col items-center text-gray-500">
+                                <div className="text-lg font-medium mb-2">No visitors to check out</div>
+                                <div className="text-sm">There are no checked-in visitors to display</div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               )}
