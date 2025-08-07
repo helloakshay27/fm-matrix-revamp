@@ -154,7 +154,7 @@ export const GatePassOutwardsDetailPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
         {/* Left Panel - Employee/Visitor Details */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-sm border p-4">
@@ -222,7 +222,7 @@ export const GatePassOutwardsDetailPage = () => {
         </div>
 
         {/* Right Panel - Items Table */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-4">
           <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
             <Table>
               <TableHeader>
