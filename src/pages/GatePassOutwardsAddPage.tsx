@@ -212,33 +212,34 @@ export const GatePassOutwardsAddPage = () => {
               }}
             />
             
-            <TextField
-              label="Attachments"
-              type="file"
-              fullWidth
-              variant="outlined"
-              required
-              slotProps={{
-                inputLabel: {
-                  shrink: true,
-                },
-              }}
-              InputProps={{
-                sx: fieldStyles,
-                endAdornment: (
-                  <Button type="button" size="sm" variant="outline">
-                    <Upload className="w-4 h-4" />
-                  </Button>
-                ),
-              }}
-            />
-            
-            <Button 
-              type="button"
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2"
-            >
-              Add Item
-            </Button>
+            <div className="space-y-2">
+              <TextField
+                label="Attachments"
+                type="file"
+                fullWidth
+                variant="outlined"
+                required
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                  endAdornment: (
+                    <Button type="button" size="sm" variant="outline">
+                      <Upload className="w-4 h-4" />
+                    </Button>
+                  ),
+                }}
+              />
+              <Button 
+                type="button"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2"
+              >
+                Add Item
+              </Button>
+            </div>
           </div>
         </div>
 
