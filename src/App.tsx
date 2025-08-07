@@ -344,6 +344,7 @@ import { EditAssetDetailsPage } from './pages/EditAssetDetailsPage';
 import { MSafeDashboard } from './pages/MSafeDashboard';
 import { MSafeUserDetail } from './pages/MSafeUserDetail';
 import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
+import { ExternalUsersDashboard } from './pages/ExternalUsersDashboard';
 import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
 
 // Import Edit Roster Template page
@@ -881,7 +882,7 @@ function App() {
                 {/* M Safe Routes */}
                 <Route path="/maintenance/m-safe" element={<Navigate to="/maintenance/m-safe/internal" replace />} />
                 <Route path="/maintenance/m-safe/internal" element={<MSafeDashboard />} />
-                <Route path="/maintenance/m-safe/external" element={<NonFTEUsersDashboard />} />
+                <Route path="/maintenance/m-safe/external" element={<ExternalUsersDashboard />} />
                 <Route path="/maintenance/m-safe/user/:userId" element={<MSafeUserDetail />} />
                 <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
                 <Route path="/maintenance/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
