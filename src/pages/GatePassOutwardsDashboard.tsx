@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { SlidersHorizontal, Eye } from 'lucide-react';
+import { Filter, Eye } from 'lucide-react';
 import { GatePassOutwardsFilterModal } from '@/components/GatePassOutwardsFilterModal';
 
 export const GatePassOutwardsDashboard = () => {
@@ -82,7 +82,7 @@ export const GatePassOutwardsDashboard = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Outward List</h1>
       
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex justify-between items-center mb-6">
         <Button 
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 flex items-center gap-2 border border-[#C72030]"
           onClick={() => navigate('/security/gate-pass/outwards/add')}
@@ -93,11 +93,10 @@ export const GatePassOutwardsDashboard = () => {
         
         <Button 
           variant="outline"
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 px-4 py-2 flex items-center gap-2"
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white p-2 rounded-md"
           onClick={() => setIsFilterModalOpen(true)}
         >
-          <SlidersHorizontal className="w-4 h-4" />
-          Filters
+          <Filter className="w-4 h-4" />
         </Button>
       </div>
 
