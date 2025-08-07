@@ -106,7 +106,7 @@ export const GatePassInwardsDashboard = () => {
   ];
 
   const handleViewDetails = (id: string) => {
-    console.log('View details for:', id);
+    navigate(`/security/gate-pass/inwards/detail/${id}`);
   };
 
   return (
@@ -160,7 +160,10 @@ export const GatePassInwardsDashboard = () => {
               <TableRow key={entry.id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}>
                 <TableCell className="px-4 py-3 text-sm text-gray-900">{index + 1}</TableCell>
                 <TableCell className="px-4 py-3 text-sm">
-                  <Eye className="w-4 h-4 text-gray-600 cursor-pointer hover:text-blue-600" />
+                  <Eye 
+                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-blue-600" 
+                    onClick={() => handleViewDetails(entry.id)}
+                  />
                 </TableCell>
                 <TableCell className="px-4 py-3 text-sm">
                   <button
