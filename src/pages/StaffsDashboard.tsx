@@ -140,6 +140,7 @@ export const StaffsDashboard = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStaffs, setSelectedStaffs] = useState<string[]>([]);
+  const [searchTrigger, setSearchTrigger] = useState(0);
 
   const handlePrintQR = () => {
     console.log('Printing QR codes for selected staff...');
@@ -176,8 +177,10 @@ export const StaffsDashboard = () => {
   };
 
   const handleSearch = () => {
-    console.log('Searching for:', searchTerm);
-    // Force re-render to update filtered results
+    console.log('Search triggered for:', searchTerm);
+    // Trigger re-render by updating search trigger
+    setSearchTrigger(prev => prev + 1);
+    // Clear selections to show updated results
     setSelectedStaffs([]);
   };
 
