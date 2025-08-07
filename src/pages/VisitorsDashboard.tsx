@@ -33,40 +33,40 @@ export const VisitorsDashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-[hsl(var(--analytics-background))] min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mb-6">
         <div className="bg-white rounded-lg border border-gray-200">
           {/* Tab Navigation */}
           <div className="flex border-b border-gray-200">
             <Button 
               onClick={() => setActiveTab('visitor-in')}
-            className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
-              activeTab === 'visitor-in' 
-                ? 'text-[#C72030] border-[#C72030] bg-[#EDEAE3]' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
+              className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                activeTab === 'visitor-in' 
+                  ? 'text-primary border-primary bg-primary/5' 
+                  : 'text-muted-foreground border-transparent hover:text-foreground'
+              }`}
               variant="ghost"
             >
               Visitor In
             </Button>
             <Button 
               onClick={() => setActiveTab('visitor-out')}
-            className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
-              activeTab === 'visitor-out' 
-                ? 'text-[#C72030] border-[#C72030] bg-[#EDEAE3]' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
+              className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                activeTab === 'visitor-out' 
+                  ? 'text-primary border-primary bg-primary/5' 
+                  : 'text-muted-foreground border-transparent hover:text-foreground'
+              }`}
               variant="ghost"
             >
               Visitor Out
             </Button>
             <Button 
               onClick={handleHistoryClick}
-            className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
-              activeTab === 'history' 
-                ? 'text-[#C72030] border-[#C72030] bg-[#EDEAE3]' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
+              className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                activeTab === 'history' 
+                  ? 'text-primary border-primary bg-primary/5' 
+                  : 'text-muted-foreground border-transparent hover:text-foreground'
+              }`}
               variant="ghost"
             >
               History

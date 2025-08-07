@@ -84,7 +84,7 @@ export const VisitorsHistoryDashboard = () => {
   );
 
   return (
-    <div className="p-6 bg-[hsl(var(--analytics-background))] min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mb-6">
         <div className="bg-white rounded-lg border border-gray-200">
           {/* Tab Navigation */}
@@ -95,7 +95,7 @@ export const VisitorsHistoryDashboard = () => {
                 onClick={() => handleTabClick(tab)}
                 className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab
-                    ? 'border-[#C72030] text-[#C72030] bg-[#EDEAE3]'
+                    ? 'border-primary text-primary bg-primary/5'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
               >
