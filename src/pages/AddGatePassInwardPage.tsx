@@ -5,6 +5,8 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } fro
 import { ArrowLeft, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+// Fixed: Converted all Input components to MUI TextField components
+
 export const AddGatePassInwardPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
