@@ -82,88 +82,89 @@ export const GatePassOutwardsDashboard = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg border border-gray-200">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Button 
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2"
-                onClick={() => navigate('/security/gate-pass/outwards/add')}
-              >
-                Add
-              </Button>
-              
-              <Button 
-                variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-none flex items-center gap-2"
-                onClick={() => setIsFilterModalOpen(true)}
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                Filters
-              </Button>
-            </div>
+        <div className="p-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">Outward List</h1>
+          
+          <div className="flex items-center gap-3 mb-6">
+            <Button 
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 flex items-center gap-2"
+              onClick={() => navigate('/security/gate-pass/outwards/add')}
+            >
+              <span className="text-lg">+</span>
+              Add
+            </Button>
             
-            <h1 className="text-xl font-semibold text-gray-900">Outward List</h1>
+            <Button 
+              variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 flex items-center gap-2"
+              onClick={() => setIsFilterModalOpen(true)}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filters
+            </Button>
           </div>
         </div>
 
         {/* Data Table */}
-        <div className="overflow-x-auto">
+        <div className="border-t border-gray-200">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="text-left font-semibold">S No.</TableHead>
-                <TableHead className="text-left font-semibold">Preview</TableHead>
-                <TableHead className="text-left font-semibold">ID</TableHead>
-                <TableHead className="text-left font-semibold">Type</TableHead>
-                <TableHead className="text-left font-semibold">Returnable/Non Returnable</TableHead>
-                <TableHead className="text-left font-semibold">Expected Return Date</TableHead>
-                <TableHead className="text-left font-semibold">Category</TableHead>
-                <TableHead className="text-left font-semibold">Person Name</TableHead>
-                <TableHead className="text-left font-semibold">Profile Image</TableHead>
-                <TableHead className="text-left font-semibold">Pass No.</TableHead>
-                <TableHead className="text-left font-semibold">Mode of Transport</TableHead>
-                <TableHead className="text-left font-semibold">LR No.</TableHead>
-                <TableHead className="text-left font-semibold">Trip ID</TableHead>
-                <TableHead className="text-left font-semibold">Gate Entry</TableHead>
-                <TableHead className="text-left font-semibold">Item Details</TableHead>
+              <TableRow className="bg-gray-50 border-b border-gray-200">
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">S No.</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Preview</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">ID</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Type</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Returnable/Non Returnable</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Expected Return Date</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Category</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Person Name</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Profile Image</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Pass No.</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Mode of Transport</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">LR No.</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Trip ID</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Gate Entry</TableHead>
+                <TableHead className="text-left font-semibold text-gray-700 px-6 py-4">Item Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {outwardData.map((entry, index) => (
-                <TableRow key={entry.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{String(index + 1).padStart(2, '0')}</TableCell>
-                  <TableCell>
+                <TableRow key={entry.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <TableCell className="px-6 py-4 text-gray-900">{String(index + 1).padStart(1, '0')}</TableCell>
+                  <TableCell className="px-6 py-4">
                     <button 
                       onClick={() => handleViewDetails(entry.id)}
-                      className="text-blue-600 hover:text-blue-800 transition-colors"
+                      className="text-gray-600 hover:text-gray-800 transition-colors"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                   </TableCell>
-                  <TableCell 
-                    className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer transition-colors"
-                    onClick={() => handleViewDetails(entry.id)}
-                  >
-                    {entry.id}
+                  <TableCell className="px-6 py-4">
+                    <button
+                      className="text-blue-600 hover:text-blue-800 cursor-pointer transition-colors font-medium"
+                      onClick={() => handleViewDetails(entry.id)}
+                    >
+                      {entry.id}
+                    </button>
                   </TableCell>
-                  <TableCell>{entry.type}</TableCell>
-                  <TableCell>{entry.returnableNonReturnable}</TableCell>
-                  <TableCell>{entry.expectedReturnDate}</TableCell>
-                  <TableCell>{entry.category}</TableCell>
-                  <TableCell className="font-medium">{entry.personName}</TableCell>
-                  <TableCell>
-                    <img 
-                      src={entry.profileImage} 
-                      alt={`${entry.personName} profile`}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
+                  <TableCell className="px-6 py-4 text-gray-900">{entry.type}</TableCell>
+                  <TableCell className="px-6 py-4 text-gray-900">{entry.returnableNonReturnable}</TableCell>
+                  <TableCell className="px-6 py-4 text-gray-900">{entry.expectedReturnDate}</TableCell>
+                  <TableCell className="px-6 py-4 text-gray-900">{entry.category}</TableCell>
+                  <TableCell className="px-6 py-4 text-gray-900 font-medium">{entry.personName}</TableCell>
+                  <TableCell className="px-6 py-4">
+                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                      <span className="text-gray-500 text-xs font-medium">
+                        {entry.personName.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
                   </TableCell>
-                  <TableCell>{entry.passNo}</TableCell>
-                  <TableCell>{entry.modeOfTransport}</TableCell>
-                  <TableCell>{entry.lrNo}</TableCell>
-                  <TableCell>{entry.tripId}</TableCell>
-                  <TableCell>{entry.gateEntry}</TableCell>
-                  <TableCell className="max-w-xs">{entry.itemDetails}</TableCell>
+                  <TableCell className="px-6 py-4 text-gray-900">{entry.passNo}</TableCell>
+                  <TableCell className="px-6 py-4 text-gray-900">{entry.modeOfTransport}</TableCell>
+                  <TableCell className="px-6 py-4 text-gray-900">{entry.lrNo}</TableCell>
+                  <TableCell className="px-6 py-4 text-gray-900">{entry.tripId}</TableCell>
+                  <TableCell className="px-6 py-4 text-gray-900">{entry.gateEntry}</TableCell>
+                  <TableCell className="px-6 py-4 text-gray-900 max-w-xs truncate">{entry.itemDetails}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
