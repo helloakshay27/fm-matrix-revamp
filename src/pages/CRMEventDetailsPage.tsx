@@ -44,111 +44,110 @@ export const CRMEventDetailsPage = () => {
           <ArrowLeft className="w-4 h-4" />
           Back to Events
         </Button>
+        <Button
+          onClick={handleDisable}
+          className="ml-auto bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2"
+        >
+          Disable
+        </Button>
       </div>
 
-      {/* Main content */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="flex">
-          {/* Left side - Image */}
-          <div className="w-1/2">
-            <img
-              src={eventData.image}
-              alt={eventData.title}
-              className="w-full h-full object-cover rounded-l-lg"
-            />
+      {/* Event Details Section */}
+      <div className="bg-white rounded-lg border border-gray-200 mb-6">
+        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">
+            E
           </div>
-
-          {/* Right side - Event details */}
-          <div className="w-1/2 p-8">
-            {/* Title and action buttons */}
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{eventData.title}</h1>
-                <p className="text-gray-600 mb-4">
-                  Created by {eventData.createdBy} on {eventData.startDate}
-                </p>
-                <div className="flex items-center gap-2 mb-4">
-                  <Badge className="bg-green-600 text-white">{eventData.eventType}</Badge>
-                  <Badge className="bg-green-600 text-white">{eventData.status}</Badge>
-                </div>
-              </div>
-              <Button
-                onClick={handleDisable}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2"
-              >
-                Disable
-              </Button>
+          <h2 className="text-lg font-bold text-gray-900">EVENT DETAILS</h2>
+        </div>
+        
+        <div className="p-6">
+          <div className="grid grid-cols-3 gap-x-8 gap-y-4">
+            <div>
+              <span className="text-gray-500 text-sm">Event ID</span>
+              <p className="text-gray-900 font-medium">{eventData.id}</p>
             </div>
-
-            {/* Event details */}
-            <div className="space-y-4 mb-6">
-              <div className="flex items-center gap-3 text-gray-700">
-                <MapPin className="w-5 h-5 text-gray-400" />
-                <span>{eventData.venue}</span>
-              </div>
-
-              <div className="flex items-center gap-3 text-gray-700">
-                <Calendar className="w-5 h-5 text-gray-400" />
-                <span>{eventData.startDate} To {eventData.endDate}</span>
-              </div>
-
-              <div className="flex items-center gap-3 text-gray-700">
-                <Clock className="w-5 h-5 text-gray-400" />
-                <span>{eventData.startTime} To {eventData.endTime}</span>
-              </div>
-
-              <div className="flex items-center gap-3 text-gray-700">
-                <Users className="w-5 h-5 text-gray-400" />
-                <span>{eventData.attendeeCount}</span>
-              </div>
+            <div>
+              <span className="text-gray-500 text-sm">Created by</span>
+              <p className="text-gray-900 font-medium">{eventData.createdBy}</p>
             </div>
-
-            {/* Sections */}
-            <div className="space-y-6">
-              <div>
-                <div className="border-l-4 border-green-500 pl-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-                </div>
-                <p className="text-gray-700">{eventData.description}</p>
-              </div>
-
-              <div>
-                <div className="border-l-4 border-green-500 pl-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">RSVP</h3>
-                </div>
-                <p className="text-gray-700">No RSVP data available</p>
-              </div>
-
-              <div>
-                <div className="border-l-4 border-green-500 pl-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Files</h3>
-                </div>
-                <p className="text-gray-700">No files attached</p>
-              </div>
-
-              <div className="flex gap-8">
-                <div>
-                  <div className="border-l-4 border-green-500 pl-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Shared With (Member)</h3>
-                  </div>
-                  <p className="text-gray-700">No members shared</p>
-                </div>
-
-                <div>
-                  <div className="border-l-4 border-green-500 pl-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Shared With (Group)</h3>
-                  </div>
-                  <p className="text-gray-700">No groups shared</p>
-                </div>
-              </div>
-
-              <div>
-                <div className="border-l-4 border-green-500 pl-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Feedback</h3>
-                </div>
-                <p className="text-gray-700">No feedback available</p>
-              </div>
+            <div>
+              <span className="text-gray-500 text-sm">Event Type</span>
+              <p className="text-gray-900 font-medium">{eventData.eventType}</p>
             </div>
+            
+            <div>
+              <span className="text-gray-500 text-sm">Title</span>
+              <p className="text-gray-900 font-medium">{eventData.title}</p>
+            </div>
+            <div>
+              <span className="text-gray-500 text-sm">Venue</span>
+              <p className="text-gray-900 font-medium">{eventData.venue}</p>
+            </div>
+            <div>
+              <span className="text-gray-500 text-sm">Attendees</span>
+              <p className="text-gray-900 font-medium">{eventData.attendeeCount}</p>
+            </div>
+            
+            <div>
+              <span className="text-gray-500 text-sm">Status</span>
+              <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                {eventData.status}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500 text-sm">Start Date</span>
+              <p className="text-gray-900 font-medium">{eventData.startDate}</p>
+            </div>
+            <div>
+              <span className="text-gray-500 text-sm">End Date</span>
+              <p className="text-gray-900 font-medium">{eventData.endDate}</p>
+            </div>
+            
+            <div>
+              <span className="text-gray-500 text-sm">Start Time</span>
+              <p className="text-gray-900 font-medium">{eventData.startTime}</p>
+            </div>
+            <div>
+              <span className="text-gray-500 text-sm">End Time</span>
+              <p className="text-gray-900 font-medium">{eventData.endTime}</p>
+            </div>
+            <div>
+              <span className="text-gray-500 text-sm">Description</span>
+              <p className="text-gray-900 font-medium">{eventData.description}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Attachments Section */}
+      <div className="bg-white rounded-lg border border-gray-200 mb-6">
+        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">
+            A
+          </div>
+          <h2 className="text-lg font-bold text-gray-900">ATTACHMENTS</h2>
+        </div>
+        
+        <div className="p-6">
+          <div className="text-center py-8 text-gray-500">
+            No attachments available for this event.
+          </div>
+        </div>
+      </div>
+
+      {/* Logs Section */}
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
+          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">
+            L
+          </div>
+          <h2 className="text-lg font-bold text-gray-900">LOGS</h2>
+        </div>
+        
+        <div className="p-6">
+          <div className="text-center py-8 text-gray-500">
+            No logs available for this event.
           </div>
         </div>
       </div>
