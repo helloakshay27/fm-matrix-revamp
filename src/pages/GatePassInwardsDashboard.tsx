@@ -1,11 +1,13 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, Eye } from 'lucide-react';
 import { GatePassInwardsFilterModal } from '@/components/GatePassInwardsFilterModal';
 
 export const GatePassInwardsDashboard = () => {
+  const navigate = useNavigate();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   // Data matching the screenshot
@@ -104,17 +106,24 @@ export const GatePassInwardsDashboard = () => {
   ];
 
   const handleViewDetails = (id: string) => {
-    console.log('View details for:', id);
+    navigate(`/security/gate-pass/inwards/detail/${id}`);
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg border border-gray-200">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <h1 className="text-xl font-semibold text-gray-900 mb-4">Inward List</h1>
-          
-          {/* Filters Button */}
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-4">Inward List</h1>
+        
+        {/* Add and Filters Buttons */}
+        <div className="flex gap-3">
+          <Button 
+            variant="outline"
+            className="!bg-[#F2EEE9] border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-md flex items-center gap-2"
+            onClick={() => navigate('/security/gate-pass/inwards/add')}
+          >
+            <span className="text-lg">+</span>
+            Add
+          </Button>
           <Button 
             variant="outline"
             className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-none flex items-center gap-2"
@@ -124,57 +133,66 @@ export const GatePassInwardsDashboard = () => {
             Filters
           </Button>
         </div>
+      </div>
 
-        {/* Data Table */}
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="text-left font-semibold">ID</TableHead>
-                <TableHead className="text-left font-semibold">Type</TableHead>
-                <TableHead className="text-left font-semibold">Category</TableHead>
-                <TableHead className="text-left font-semibold">Person Name</TableHead>
-                <TableHead className="text-left font-semibold">Profile Image</TableHead>
-                <TableHead className="text-left font-semibold">Pass No.</TableHead>
-                <TableHead className="text-left font-semibold">Mode of Transport</TableHead>
-                <TableHead className="text-left font-semibold">LR No.</TableHead>
-                <TableHead className="text-left font-semibold">Trip ID</TableHead>
-                <TableHead className="text-left font-semibold">Gate Entry</TableHead>
-                <TableHead className="text-left font-semibold">Item Details</TableHead>
+      {/* Data Table */}
+      <div className="border rounded-lg overflow-hidden bg-white">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50">
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">S No.</TableHead>
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Preview</TableHead>
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">ID</TableHead>
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Type</TableHead>
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Category</TableHead>
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Person Name</TableHead>
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Profile Image</TableHead>
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Pass No.</TableHead>
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Mode of Transport</TableHead>
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">LR No.</TableHead>
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Trip ID</TableHead>
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Gate Entry</TableHead>
+              <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item Details</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {inwardData.map((entry, index) => (
+              <TableRow key={entry.id} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}>
+                <TableCell className="px-4 py-3 text-sm text-gray-900">{index + 1}</TableCell>
+                <TableCell className="px-4 py-3 text-sm">
+                  <Eye 
+                    className="w-4 h-4 text-gray-600 cursor-pointer hover:text-blue-600" 
+                    onClick={() => handleViewDetails(entry.id)}
+                  />
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm">
+                  <button
+                    onClick={() => handleViewDetails(entry.id)}
+                    className="text-blue-600 hover:underline hover:text-blue-800 transition-colors font-medium"
+                  >
+                    {entry.id}
+                  </button>
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.type}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.category}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.personName}</TableCell>
+                <TableCell className="px-4 py-3">
+                  <img 
+                    src={entry.profileImage} 
+                    alt={`${entry.personName} profile`}
+                    className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                  />
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.passNo}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.modeOfTransport}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.lrNo}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.tripId}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900">{entry.gateEntry}</TableCell>
+                <TableCell className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate">{entry.itemDetails}</TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {inwardData.map((entry) => (
-                <TableRow key={entry.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium text-blue-600">
-                    <button
-                      onClick={() => handleViewDetails(entry.id)}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {entry.id}
-                    </button>
-                  </TableCell>
-                  <TableCell>{entry.type}</TableCell>
-                  <TableCell>{entry.category}</TableCell>
-                  <TableCell className="font-medium">{entry.personName}</TableCell>
-                  <TableCell>
-                    <img 
-                      src={entry.profileImage} 
-                      alt={`${entry.personName} profile`}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  </TableCell>
-                  <TableCell>{entry.passNo}</TableCell>
-                  <TableCell>{entry.modeOfTransport}</TableCell>
-                  <TableCell>{entry.lrNo}</TableCell>
-                  <TableCell>{entry.tripId}</TableCell>
-                  <TableCell>{entry.gateEntry}</TableCell>
-                  <TableCell className="max-w-xs">{entry.itemDetails}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       <GatePassInwardsFilterModal 

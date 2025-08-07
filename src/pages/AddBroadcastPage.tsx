@@ -1,12 +1,8 @@
 
 import React, { useState } from 'react';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, RadioGroup, FormControlLabel, Radio, Checkbox as MuiCheckbox, Switch as MuiSwitch, Button as MuiButton, Card, CardContent, Typography, Box, TextareaAutosize, FormLabel } from '@mui/material';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Upload, ArrowLeft } from 'lucide-react';
+import { CalendarToday, LocationOn, Schedule, Group, AttachFile, ArrowBack } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 export const AddBroadcastPage = () => {
@@ -17,7 +13,9 @@ export const AddBroadcastPage = () => {
     markAsImportant: false,
     endDate: '',
     endTime: '',
-    shareWith: 'all'
+    shareWith: 'all',
+    selectedIndividuals: [],
+    selectedGroups: []
   });
 
   const handleInputChange = (field: string, value: any) => {
@@ -32,166 +30,366 @@ export const AddBroadcastPage = () => {
 
   const handleFileUpload = () => {
     console.log('File upload clicked');
-    // File upload functionality would be implemented here
+  };
+
+  const fieldStyles = {
+    height: {
+      xs: 28,
+      sm: 36,
+      md: 45
+    },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: {
+        xs: '8px',
+        sm: '10px',
+        md: '12px'
+      }
+    }
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-600 mb-4">
-        Broadcast &gt; Broadcast List &gt; Add Broadcast
-      </div>
-
-      {/* Header with back button */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/crm/broadcast')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 hover:bg-[#C72030]/10"
-        >
-          <ArrowLeft className="w-4 h-4" />
+    <Box sx={{
+      p: 3,
+      bgcolor: '#f5f5f5',
+      minHeight: '100vh'
+    }}>
+      {/* Header */}
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 2,
+        mb: 3
+      }}>
+        <MuiButton startIcon={<ArrowBack />} onClick={() => navigate('/crm/broadcast')} sx={{
+          color: '#666',
+          textTransform: 'none'
+        }}>
           Back to Broadcasts
-        </Button>
-        <h1 className="text-2xl font-bold">NEW BROADCAST</h1>
-      </div>
+        </MuiButton>
+      </Box>
 
-      <div className="bg-white rounded-lg shadow max-w-4xl">
-        <div className="p-6">
-          {/* Communication Information Section */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-1 h-6 bg-[#C72030] rounded"></div>
-              <h2 className="text-lg font-semibold text-gray-700">Communication Info</h2>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="title" className="text-sm font-medium text-gray-700 mb-1 block">Title</Label>
-                <Input
-                  id="title"
-                  placeholder="Title"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
-                  className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
+      <Box sx={{ maxWidth: '1200px', margin: '0 auto' }}>
+        {/* Communication Information Section */}
+        <Box sx={{
+          bgcolor: 'white',
+          borderRadius: 2,
+          p: 4,
+          mb: 3,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            mb: 4
+          }}>
+            <Box sx={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              bgcolor: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 'bold'
+            }}>
+              1
+            </Box>
+            <Typography variant="h6" sx={{
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+              color: 'black'
+            }}>
+              Communication Information
+            </Typography>
+          </Box>
+
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3
+          }}>
+            <Box sx={{
+              display: 'flex',
+              gap: 3,
+              flexWrap: 'wrap'
+            }}>
+              <Box sx={{
+                flex: '1 1 300px'
+              }}>
+                <TextField 
+                  label="Title*" 
+                  placeholder="Title" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={formData.title} 
+                  onChange={e => handleInputChange('title', e.target.value)} 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  sx={fieldStyles} 
                 />
-              </div>
-              
-              <div>
-                <Label htmlFor="description" className="text-sm font-medium text-gray-700 mb-1 block">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Enter Description"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030] min-h-32"
+              </Box>
+              <Box sx={{
+                flex: '1 1 300px'
+              }}>
+                <TextField 
+                  label="End Date" 
+                  type="date" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={formData.endDate} 
+                  onChange={e => handleInputChange('endDate', e.target.value)} 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  sx={fieldStyles} 
                 />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="important"
-                  checked={formData.markAsImportant}
-                  onCheckedChange={(checked) => handleInputChange('markAsImportant', checked)}
-                  className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+              </Box>
+            </Box>
+            
+            <Box sx={{
+              display: 'flex',
+              gap: 3,
+              flexWrap: 'wrap'
+            }}>
+              <Box sx={{
+                flex: '1 1 300px'
+              }}>
+                <TextField 
+                  label="End Time" 
+                  type="time" 
+                  fullWidth 
+                  variant="outlined" 
+                  value={formData.endTime} 
+                  onChange={e => handleInputChange('endTime', e.target.value)} 
+                  InputLabelProps={{
+                    shrink: true
+                  }} 
+                  sx={fieldStyles} 
                 />
-                <Label htmlFor="important" className="text-sm text-gray-700">Mark as Important</Label>
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">Expire on</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="endDate" className="text-sm font-medium text-gray-700 mb-1 block">End Date</Label>
-                    <Input
-                      id="endDate"
-                      placeholder="End Date"
-                      type="date"
-                      value={formData.endDate}
-                      onChange={(e) => handleInputChange('endDate', e.target.value)}
-                      className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="endTime" className="text-sm font-medium text-gray-700 mb-1 block">End Time</Label>
-                    <Input
-                      id="endTime"
-                      placeholder="End Time"
-                      type="time"
-                      value={formData.endTime}
-                      onChange={(e) => handleInputChange('endTime', e.target.value)}
-                      className="border-gray-300 focus:border-[#C72030] focus:ring-1 focus:ring-[#C72030]"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Upload Files Section */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-1 h-6 bg-[#C72030] rounded"></div>
-              <h2 className="text-lg font-semibold text-gray-700">Upload Files</h2>
-            </div>
+              </Box>
+            </Box>
             
-            <div 
-              onClick={handleFileUpload}
-              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-[#C72030] transition-colors bg-gray-50 hover:bg-[#C72030]/5"
-            >
-              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-500 text-sm">Choose a file...</p>
-            </div>
-          </div>
+            <Box>
+              <TextField 
+                label="Description" 
+                placeholder="Enter Description" 
+                fullWidth 
+                multiline 
+                rows={4} 
+                variant="outlined" 
+                value={formData.description} 
+                onChange={e => handleInputChange('description', e.target.value)} 
+                InputLabelProps={{
+                  shrink: true
+                }} 
+              />
+            </Box>
+          </Box>
+        </Box>
 
-          {/* Share With Section */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-1 h-6 bg-[#C72030] rounded"></div>
-              <h2 className="text-lg font-semibold text-gray-700">Share with</h2>
-            </div>
-            
-            <RadioGroup
-              value={formData.shareWith}
-              onValueChange={(value) => handleInputChange('shareWith', value)}
-              className="flex items-center gap-6"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="all" id="all" className="text-[#C72030] border-[#C72030] data-[state=checked]:bg-[#C72030]" />
-                <Label htmlFor="all" className="text-sm text-gray-700">All</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="individuals" id="individuals" className="text-[#C72030] border-[#C72030] data-[state=checked]:bg-[#C72030]" />
-                <Label htmlFor="individuals" className="text-sm text-gray-700">Individuals</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="groups" id="groups" className="text-[#C72030] border-[#C72030] data-[state=checked]:bg-[#C72030]" />
-                <Label htmlFor="groups" className="text-sm text-gray-700">Groups</Label>
-              </div>
-            </RadioGroup>
-          </div>
+        {/* Broadcast Settings Section */}
+        <Box sx={{
+          bgcolor: 'white',
+          borderRadius: 2,
+          p: 4,
+          mb: 3,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            mb: 4
+          }}>
+            <Box sx={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              bgcolor: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 'bold'
+            }}>
+              2
+            </Box>
+            <Typography variant="h6" sx={{
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+              color: 'black'
+            }}>
+              Broadcast Settings
+            </Typography>
+          </Box>
 
-          {/* Submit Button */}
-          <div className="flex justify-center">
-            <Button 
-              onClick={handleSubmit}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 h-10 text-sm font-medium"
-            >
-              Submit
-            </Button>
-          </div>
-        </div>
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3
+          }}>
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}>
+              <FormLabel component="legend" sx={{ minWidth: '80px' }}>Share with</FormLabel>
+              <RadioGroup row value={formData.shareWith} onChange={e => handleInputChange('shareWith', e.target.value)}>
+                <FormControlLabel value="all" control={<Radio />} label="All" />
+                <FormControlLabel value="individuals" control={<Radio />} label="Individuals" />
+                <FormControlLabel value="groups" control={<Radio />} label="Groups" />
+              </RadioGroup>
+            </Box>
 
-        {/* Footer branding */}
-        <div className="text-center text-xs text-gray-500 mt-4 pb-6">
-          <p>Powered by</p>
-          <div className="flex items-center justify-center mt-1">
-            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs mr-2">
-              L
-            </div>
-            <span className="font-semibold">LOCATED</span>
-          </div>
-        </div>
-      </div>
-    </div>
+            {/* Conditional dropdown for Individuals */}
+            {formData.shareWith === 'individuals' && (
+              <Box sx={{ ml: 4 }}>
+                <FormControl fullWidth sx={{ maxWidth: 400 }}>
+                  <InputLabel>Select Individuals</InputLabel>
+                  <MuiSelect
+                    multiple
+                    value={formData.selectedIndividuals}
+                    onChange={e => handleInputChange('selectedIndividuals', e.target.value)}
+                    label="Select Individuals"
+                    sx={{
+                      bgcolor: 'white',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#ccc'
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#999'
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#dc2626'
+                      }
+                    }}
+                  >
+                    <MenuItem value="john.doe@company.com">John Doe</MenuItem>
+                    <MenuItem value="jane.smith@company.com">Jane Smith</MenuItem>
+                    <MenuItem value="mike.johnson@company.com">Mike Johnson</MenuItem>
+                    <MenuItem value="sarah.wilson@company.com">Sarah Wilson</MenuItem>
+                    <MenuItem value="david.brown@company.com">David Brown</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </Box>
+            )}
+
+            {/* Conditional dropdown for Groups */}
+            {formData.shareWith === 'groups' && (
+              <Box sx={{ ml: 4 }}>
+                <FormControl fullWidth sx={{ maxWidth: 400 }}>
+                  <InputLabel>Select Groups</InputLabel>
+                  <MuiSelect
+                    multiple
+                    value={formData.selectedGroups}
+                    onChange={e => handleInputChange('selectedGroups', e.target.value)}
+                    label="Select Groups"
+                    sx={{
+                      bgcolor: 'white',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#ccc'
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#999'
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#dc2626'
+                      }
+                    }}
+                  >
+                    <MenuItem value="marketing">Marketing Team</MenuItem>
+                    <MenuItem value="sales">Sales Team</MenuItem>
+                    <MenuItem value="development">Development Team</MenuItem>
+                    <MenuItem value="hr">HR Department</MenuItem>
+                    <MenuItem value="finance">Finance Department</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </Box>
+            )}
+
+            <Box sx={{
+              display: 'flex',
+              gap: 4
+            }}>
+              <FormControlLabel control={<MuiCheckbox checked={formData.markAsImportant} onChange={e => handleInputChange('markAsImportant', e.target.checked)} />} label="Mark as Important" />
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Upload Files Section */}
+        <Box sx={{
+          bgcolor: 'white',
+          borderRadius: 2,
+          p: 4,
+          mb: 3,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            mb: 4
+          }}>
+            <Box sx={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              bgcolor: '#dc2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 'bold'
+            }}>
+              3
+            </Box>
+            <Typography variant="h6" sx={{
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+              color: 'black'
+            }}>
+              Attachments
+            </Typography>
+          </Box>
+
+          <Box onClick={handleFileUpload} sx={{
+            border: '2px dashed #ccc',
+            borderRadius: 2,
+            p: 4,
+            textAlign: 'center',
+            cursor: 'pointer',
+            '&:hover': {
+              borderColor: '#999'
+            }
+          }}>
+            <AttachFile sx={{
+              fontSize: 48,
+              color: '#ccc',
+              mb: 2
+            }} />
+            <Typography variant="body2" color="text.secondary">
+              Choose files | No file chosen
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Submit Button */}
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          mt: 4
+        }}>
+          <Button onClick={handleSubmit} className="px-8 py-3 text-base">
+            Submit
+          </Button>
+        </Box>
+      </Box>
+    </Box>
   );
 };
