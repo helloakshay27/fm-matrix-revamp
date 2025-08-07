@@ -89,24 +89,6 @@ export const GatePassOutwardsAddPage = () => {
           <h2 className="text-lg font-semibold text-[#C72030] mb-4">GOODS DETAIL</h2>
           
           <div className="grid grid-cols-4 gap-4 mb-4">
-            {activeTab === 'RETURNABLE' && (
-              <TextField
-                label="Expected Returnable Date"
-                type="date"
-                fullWidth
-                variant="outlined"
-                required
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
-              />
-            )}
-            
             <FormControl
               fullWidth
               variant="outlined"
@@ -160,9 +142,7 @@ export const GatePassOutwardsAddPage = () => {
                 sx: fieldStyles,
               }}
             />
-          </div>
 
-          <div className="grid grid-cols-4 gap-4 mb-4">
             <TextField
               label="Item Quantity"
               placeholder="01"
@@ -178,7 +158,32 @@ export const GatePassOutwardsAddPage = () => {
                 sx: fieldStyles,
               }}
             />
-            
+          </div>
+
+          {activeTab === 'RETURNABLE' && (
+            <div className="grid grid-cols-4 gap-4 mb-4">
+              <TextField
+                label="Expected Returnable Date"
+                type="date"
+                fullWidth
+                variant="outlined"
+                required
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-4 gap-4 mb-4">
             <TextField
               label="Unit"
               placeholder="01"
@@ -211,30 +216,31 @@ export const GatePassOutwardsAddPage = () => {
               }}
             />
             
-            <div className="space-y-2">
-              <TextField
-                label="Attachments"
-                type="file"
-                fullWidth
-                variant="outlined"
-                required
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                  endAdornment: (
-                    <Button type="button" size="sm" variant="outline">
-                      <Upload className="w-4 h-4" />
-                    </Button>
-                  ),
-                }}
-              />
+            <TextField
+              label="Attachments"
+              type="file"
+              fullWidth
+              variant="outlined"
+              required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+                endAdornment: (
+                  <Button type="button" size="sm" variant="outline">
+                    <Upload className="w-4 h-4" />
+                  </Button>
+                ),
+              }}
+            />
+            
+            <div className="flex items-end">
               <Button 
                 type="button"
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2 h-[45px] w-full"
               >
                 Add Item
               </Button>
