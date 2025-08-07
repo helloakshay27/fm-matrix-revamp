@@ -130,14 +130,6 @@ export const CRMEventDetailsPage = () => {
       
 
       {/* Footer branding */}
-      <div className="text-center text-xs text-gray-500 mt-8">
-        <p>Powered by</p>
-        <div className="flex items-center justify-center mt-1">
-          <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs mr-2">
-            L
-          </div>
-          <span className="font-semibold">LOCATED</span>
-        </div>
-      </div>
+      
     </div>;
 };
