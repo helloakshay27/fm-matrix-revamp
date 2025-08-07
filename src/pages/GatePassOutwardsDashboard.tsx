@@ -111,7 +111,8 @@ export const GatePassOutwardsDashboard = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="text-left font-semibold">View</TableHead>
+                <TableHead className="text-left font-semibold">S No.</TableHead>
+                <TableHead className="text-left font-semibold">Preview</TableHead>
                 <TableHead className="text-left font-semibold">ID</TableHead>
                 <TableHead className="text-left font-semibold">Type</TableHead>
                 <TableHead className="text-left font-semibold">Returnable/Non Returnable</TableHead>
@@ -128,8 +129,9 @@ export const GatePassOutwardsDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {outwardData.map((entry) => (
+              {outwardData.map((entry, index) => (
                 <TableRow key={entry.id} className="hover:bg-gray-50">
+                  <TableCell className="font-medium">{String(index + 1).padStart(2, '0')}</TableCell>
                   <TableCell>
                     <button 
                       onClick={() => handleViewDetails(entry.id)}
