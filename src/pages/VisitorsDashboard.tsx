@@ -116,10 +116,10 @@ export const VisitorsDashboard = () => {
                   <div className="mb-6 flex justify-between items-center">
                     <Button 
                       onClick={() => setIsNewVisitorDialogOpen(true)}
-                      style={{ backgroundColor: '#C72030' }}
-                      className="w-12 h-12 rounded-full text-white hover:bg-[#C72030]/90 shadow-lg"
+                      className="flex items-center gap-2 px-4 py-2 bg-[#F8F5F0] text-[#C72030] hover:bg-[#F0EBE5] border border-[#E5D8CD] rounded-lg font-medium"
                     >
-                      <Plus className="w-6 h-6" />
+                      <Plus className="w-4 h-4" />
+                      Add
                     </Button>
                     
                     <div className="flex items-center">
