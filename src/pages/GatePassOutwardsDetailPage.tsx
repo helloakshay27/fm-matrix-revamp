@@ -154,67 +154,67 @@ export const GatePassOutwardsDetailPage = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left Panel - Employee/Visitor Details */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="bg-white rounded-lg shadow-sm border p-4">
             {/* Profile Section */}
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-yellow-600 font-bold text-xl">{selectedEntry.personName.charAt(0).toUpperCase()}</span>
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <span className="text-yellow-600 font-bold text-lg">{selectedEntry.personName.charAt(0).toUpperCase()}</span>
               </div>
-              <h2 className="text-lg font-semibold text-gray-900">{selectedEntry.personName}</h2>
-              <p className="text-sm text-gray-600">{selectedEntry.returnableNonReturnable}</p>
+              <h2 className="text-base font-semibold text-gray-900">{selectedEntry.personName}</h2>
+              <p className="text-xs text-gray-600">{selectedEntry.returnableNonReturnable}</p>
             </div>
 
             {/* Details */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Employee/Visitor Name:</span>
-                  <span className="text-sm text-gray-900">{selectedEntry.personName}</span>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-gray-700">Employee/Visitor Name:</span>
+                  <span className="text-xs text-gray-900">{selectedEntry.personName}</span>
                 </div>
               </div>
               
               <div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Visitor Mobile No.:</span>
-                  <span className="text-sm text-gray-900">086907860</span>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-gray-700">Visitor Mobile No.:</span>
+                  <span className="text-xs text-gray-900">086907860</span>
                 </div>
               </div>
               
               <div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Department:</span>
-                  <span className="text-sm text-gray-900">UI/UX Designer</span>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-gray-700">Department:</span>
+                  <span className="text-xs text-gray-900">UI/UX Designer</span>
                 </div>
               </div>
               
               <div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Company Name:</span>
-                  <span className="text-sm text-gray-900">Lockated</span>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-gray-700">Company Name:</span>
+                  <span className="text-xs text-gray-900">Lockated</span>
                 </div>
               </div>
               
               <div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Date/Time:</span>
-                  <span className="text-sm text-gray-900">2 July 2025 12:45 Pm</span>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-gray-700">Date/Time:</span>
+                  <span className="text-xs text-gray-900">2 July 2025 12:45 Pm</span>
                 </div>
               </div>
               
               <div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Mode Of Transport:</span>
-                  <span className="text-sm text-gray-900">{selectedEntry.modeOfTransport || "By Hand"}</span>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-gray-700">Mode Of Transport:</span>
+                  <span className="text-xs text-gray-900">{selectedEntry.modeOfTransport || "By Hand"}</span>
                 </div>
               </div>
               
               <div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">Expected Date:</span>
-                  <span className="text-sm text-gray-900">{selectedEntry.expectedReturnDate || "-"}</span>
+                <div className="flex flex-col">
+                  <span className="text-xs font-medium text-gray-700">Expected Date:</span>
+                  <span className="text-xs text-gray-900">{selectedEntry.expectedReturnDate || "-"}</span>
                 </div>
               </div>
             </div>
@@ -222,7 +222,7 @@ export const GatePassOutwardsDetailPage = () => {
         </div>
 
         {/* Right Panel - Items Table */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-3">
           <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
             <Table>
               <TableHeader>
