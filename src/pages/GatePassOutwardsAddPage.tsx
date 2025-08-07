@@ -225,17 +225,17 @@ export const GatePassOutwardsAddPage = () => {
 
           {/* Attachment Section */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Asset Image</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Attachment</label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
               <div className="space-y-2">
-                <p className="text-[#C72030] font-medium">Choose Asset Image</p>
+                <p className="text-[#C72030] font-medium">Choose Attachment</p>
                 <p className="text-gray-500 text-sm">No image chosen</p>
                 <Button 
                   type="button"
                   className="bg-transparent text-[#C72030] border-none hover:bg-[#C72030]/10 text-sm px-4 py-2"
                 >
                   <Upload className="w-4 h-4 mr-2" />
-                  Upload Asset Image
+                  Upload Attachment
                 </Button>
               </div>
               <input
