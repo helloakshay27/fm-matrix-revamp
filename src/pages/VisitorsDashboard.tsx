@@ -279,13 +279,23 @@ export const VisitorsDashboard = () => {
               {/* History tab content */}
               {visitorSubTab === 'history' && (
                 <div className="p-4 min-h-[400px] space-y-4">
-                  {/* Search Bar */}
-                  <div className="mb-4">
-                    <input
-                      type="text"
-                      placeholder="Search using Guest's Name or Pass Number."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
-                    />
+                  {/* Add Button and Search Bar */}
+                  <div className="flex justify-between items-center mb-4">
+                    <Button 
+                      onClick={() => setIsNewVisitorDialogOpen(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-[#F8F5F0] text-[#C72030] hover:bg-[#F0EBE5] border border-[#E5D8CD] rounded-lg font-medium"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add
+                    </Button>
+                    
+                    <div className="flex-1 max-w-md ml-4">
+                      <input
+                        type="text"
+                        placeholder="Search using Guest's Name or Pass Number."
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+                      />
+                    </div>
                   </div>
 
                   {/* Visitor Cards */}
