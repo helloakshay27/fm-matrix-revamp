@@ -114,45 +114,33 @@ export const KRCCFormDetail = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
-              <div className="p-2 bg-gray-50 border border-gray-300 rounded">
-                {formData.personalDetails.firstName}
-              </div>
+              <span className="text-sm font-medium text-gray-700">First Name:</span>
+              <span className="ml-2 text-gray-900">{formData.personalDetails.firstName}</span>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
-              <div className="p-2 bg-gray-50 border border-gray-300 rounded">
-                {formData.personalDetails.lastName}
-              </div>
+              <span className="text-sm font-medium text-gray-700">Last Name:</span>
+              <span className="ml-2 text-gray-900">{formData.personalDetails.lastName}</span>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email ID *</label>
-              <div className="p-2 bg-gray-50 border border-gray-300 rounded">
-                {formData.personalDetails.email}
-              </div>
+              <span className="text-sm font-medium text-gray-700">Email ID:</span>
+              <span className="ml-2 text-gray-900">{formData.personalDetails.email}</span>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-              <div className="p-2 bg-gray-50 border border-gray-300 rounded">
-                {formData.personalDetails.gender}
-              </div>
+              <span className="text-sm font-medium text-gray-700">Gender:</span>
+              <span className="ml-2 text-gray-900">{formData.personalDetails.gender}</span>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Blood Group</label>
-              <div className="p-2 bg-gray-50 border border-gray-300 rounded">
-                {formData.personalDetails.bloodGroup}
-              </div>
+              <span className="text-sm font-medium text-gray-700">Blood Group:</span>
+              <span className="ml-2 text-gray-900">{formData.personalDetails.bloodGroup}</span>
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">DOB</label>
-              <div className="p-2 bg-gray-50 border border-gray-300 rounded">
-                {formData.personalDetails.dob}
-              </div>
+              <span className="text-sm font-medium text-gray-700">DOB:</span>
+              <span className="ml-2 text-gray-900">{formData.personalDetails.dob}</span>
             </div>
           </div>
         </div>
@@ -167,24 +155,18 @@ export const KRCCFormDetail = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Driving License Number</label>
-                <div className="p-2 bg-gray-50 border border-gray-300 rounded">
-                  {formData.krccDetails.drivingLicenseNumber}
-                </div>
+                <span className="text-sm font-medium text-gray-700">Driving License Number:</span>
+                <span className="ml-2 text-gray-900">{formData.krccDetails.drivingLicenseNumber}</span>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">2 Wheeler Reg. Number</label>
-                <div className="p-2 bg-gray-50 border border-gray-300 rounded">
-                  {formData.krccDetails.twoWheelerRegNumber}
-                </div>
+                <span className="text-sm font-medium text-gray-700">2 Wheeler Reg. Number:</span>
+                <span className="ml-2 text-gray-900">{formData.krccDetails.twoWheelerRegNumber}</span>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Valid Till</label>
-                <div className="p-2 bg-gray-50 border border-gray-300 rounded">
-                  {formData.krccDetails.validTill}
-                </div>
+                <span className="text-sm font-medium text-gray-700">Valid Till:</span>
+                <span className="ml-2 text-gray-900">{formData.krccDetails.validTill}</span>
               </div>
             </div>
           </div>
