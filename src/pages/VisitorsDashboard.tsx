@@ -146,163 +146,98 @@ export const VisitorsDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Visitors Table */}
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <table className="w-full">
-                      <thead className="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Visitor
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Contact
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Purpose
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Type
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="w-10 h-10 bg-orange-300 rounded-full flex items-center justify-center">
-                                <div className="w-6 h-6 bg-orange-400 rounded-full"></div>
+                  {/* Visitor Type Tabs */}
+                  <div className="flex gap-8 mb-6 border-b border-border">
+                    <Button 
+                      onClick={() => setActiveVisitorType('unexpected')}
+                      className={`px-0 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                        activeVisitorType === 'unexpected' 
+                          ? 'text-primary border-primary' 
+                          : 'text-muted-foreground border-transparent hover:text-foreground'
+                      }`}
+                      variant="ghost"
+                    >
+                      Unexpected Visitor
+                    </Button>
+                    <Button 
+                      onClick={() => setActiveVisitorType('expected')}
+                      className={`px-0 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                        activeVisitorType === 'expected' 
+                          ? 'text-primary border-primary' 
+                          : 'text-muted-foreground border-transparent hover:text-foreground'
+                      }`}
+                      variant="ghost"
+                    >
+                      Expected Visitor
+                    </Button>
+                  </div>
+
+                  {/* Content Area */}
+                  <div className="bg-white rounded-lg border border-gray-200 p-6 min-h-[400px]">
+                    {activeVisitorType === 'unexpected' && (
+                      <div className="space-y-4">
+                        {/* Visitor Card */}
+                        <div className="bg-orange-50 rounded-lg p-4 relative">
+                          <div className="flex items-start gap-4">
+                            {/* Avatar */}
+                            <div className="w-12 h-12 bg-orange-300 rounded-full flex items-center justify-center">
+                              <div className="w-8 h-8 bg-orange-400 rounded-full"></div>
+                            </div>
+                            
+                            {/* Visitor Info */}
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="text-lg font-semibold text-gray-900">Test</h3>
+                                <button className="w-4 h-4 text-blue-500">
+                                  <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                                  </svg>
+                                </button>
                               </div>
-                              <div className="ml-4">
-                                <div className="flex items-center gap-2">
-                                  <div className="text-sm font-medium text-gray-900">Test</div>
-                                  <button className="w-4 h-4 text-blue-500">
-                                    <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
-                                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
-                                    </svg>
-                                  </button>
+                              <div className="space-y-1 text-sm text-gray-600">
+                                <div className="flex items-center gap-1">
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"></path>
+                                  </svg>
+                                  <span>Test 42.0</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd"></path>
+                                  </svg>
+                                  <span>Personal</span>
                                 </div>
                               </div>
                             </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">Test 42.0</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">Personal</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                              Unexpected
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                            
+                            {/* Status Badge */}
+                            <div className="bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
                               Pending
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm"
-                                className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 text-xs"
-                              >
-                                Resend OTP
-                              </Button>
-                              <Button 
-                                size="sm"
-                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-xs"
-                              >
-                                Skip Approval
-                              </Button>
                             </div>
-                          </td>
-                        </tr>
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="w-10 h-10 bg-green-300 rounded-full flex items-center justify-center">
-                                <div className="w-6 h-6 bg-green-400 rounded-full"></div>
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">John Doe</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">+91 98765 43210</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">Business Meeting</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                              Expected
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                              Approved
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm"
-                                variant="outline"
-                                className="px-3 py-1 text-xs"
-                              >
-                                View Details
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                        <tr className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="w-10 h-10 bg-purple-300 rounded-full flex items-center justify-center">
-                                <div className="w-6 h-6 bg-purple-400 rounded-full"></div>
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">Sarah Wilson</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">+91 87654 32109</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">Delivery</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                              Unexpected
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                              Declined
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm"
-                                variant="outline"
-                                className="px-3 py-1 text-xs"
-                              >
-                                View Details
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                          </div>
+                        </div>
+                        
+                        {/* Action Buttons */}
+                        <div className="flex gap-4">
+                          <Button 
+                            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg"
+                          >
+                            Resend OTP
+                          </Button>
+                          <Button 
+                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg"
+                          >
+                            Skip Host Approval
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {activeVisitorType === 'expected' && (
+                      <div className="text-center text-gray-500 py-16">
+                        Expected Visitor content will be displayed here
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
