@@ -81,18 +81,9 @@ export const GatePassOutwardsDashboard = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-lg border border-gray-200">
-        {/* Breadcrumb */}
+        {/* Header */}
         <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-            <span>Outwards</span>
-            <span>&gt;</span>
-            <span>Outwards</span>
-          </div>
-          
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-semibold text-gray-900">Outward List</h1>
-            
-            {/* Add and Filters buttons */}
             <div className="flex items-center gap-3">
               <Button 
                 className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2"
@@ -110,6 +101,8 @@ export const GatePassOutwardsDashboard = () => {
                 Filters
               </Button>
             </div>
+            
+            <h1 className="text-xl font-semibold text-gray-900">Outward List</h1>
           </div>
         </div>
 
