@@ -27,7 +27,7 @@ export const MSafeDashboard = () => {
   // } = useAppSelector(state => state.fmUsers);
   // const fm_users = fmUsersData?.fm_users || [];
 
-  // Dummy FMUser data (10 records) in state
+  // Dummy FMUser data (25 records) in state
   const [fmUsers, setFmUsers] = useState<FMUser[]>([
     {
       id: 1, firstname: 'John', lastname: 'Doe', gender: 'Male', mobile: '1234567890', email: 'john@example.com', company_name: 'Acme Corp', entity_id: 1, unit_id: 1, designation: 'Manager', employee_id: 'EMP001', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '1' }
@@ -58,6 +58,51 @@ export const MSafeDashboard = () => {
     },
     {
       id: 10, firstname: 'Henry', lastname: 'Stone', gender: 'Male', mobile: '0123456789', email: 'henry@example.com', company_name: 'Kappa LLC', entity_id: 10, unit_id: 10, designation: 'Support', employee_id: 'EMP010', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: 'no', lock_user_permission: { access_level: '3' }
+    },
+    {
+      id: 11, firstname: 'Iris', lastname: 'Wilson', gender: 'Female', mobile: '1122334455', email: 'iris@example.com', company_name: 'Lambda Corp', entity_id: 11, unit_id: 11, designation: 'Analyst', employee_id: 'EMP011', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '2' }
+    },
+    {
+      id: 12, firstname: 'Jack', lastname: 'Davis', gender: 'Male', mobile: '2233445566', email: 'jack@example.com', company_name: 'Mu Systems', entity_id: 12, unit_id: 12, designation: 'Developer', employee_id: 'EMP012', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'pending', face_added: false, app_downloaded: 'yes', lock_user_permission: { access_level: '1' }
+    },
+    {
+      id: 13, firstname: 'Kate', lastname: 'Miller', gender: 'Female', mobile: '3344556677', email: 'kate@example.com', company_name: 'Nu Technologies', entity_id: 13, unit_id: 13, designation: 'Coordinator', employee_id: 'EMP013', created_by_id: 1, user_type: 'company', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'no', lock_user_permission: { access_level: '3' }
+    },
+    {
+      id: 14, firstname: 'Leo', lastname: 'Garcia', gender: 'Male', mobile: '4455667788', email: 'leo@example.com', company_name: 'Xi Solutions', entity_id: 14, unit_id: 14, designation: 'Specialist', employee_id: 'EMP014', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: 'no', lock_user_permission: { access_level: '2' }
+    },
+    {
+      id: 15, firstname: 'Mia', lastname: 'Rodriguez', gender: 'Female', mobile: '5566778899', email: 'mia@example.com', company_name: 'Omicron Ltd', entity_id: 15, unit_id: 15, designation: 'Consultant', employee_id: 'EMP015', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '1' }
+    },
+    {
+      id: 16, firstname: 'Noah', lastname: 'Martinez', gender: 'Male', mobile: '6677889900', email: 'noah@example.com', company_name: 'Pi Enterprises', entity_id: 16, unit_id: 16, designation: 'Assistant', employee_id: 'EMP016', created_by_id: 1, user_type: 'company', lock_user_permission_status: 'pending', face_added: false, app_downloaded: 'yes', lock_user_permission: { access_level: '3' }
+    },
+    {
+      id: 17, firstname: 'Olivia', lastname: 'Anderson', gender: 'Female', mobile: '7788990011', email: 'olivia@example.com', company_name: 'Rho Industries', entity_id: 17, unit_id: 17, designation: 'Executive', employee_id: 'EMP017', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'no', lock_user_permission: { access_level: '2' }
+    },
+    {
+      id: 18, firstname: 'Paul', lastname: 'Taylor', gender: 'Male', mobile: '8899001122', email: 'paul@example.com', company_name: 'Sigma Group', entity_id: 18, unit_id: 18, designation: 'Officer', employee_id: 'EMP018', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: 'no', lock_user_permission: { access_level: '1' }
+    },
+    {
+      id: 19, firstname: 'Quinn', lastname: 'Thomas', gender: 'Male', mobile: '9900112233', email: 'quinn@example.com', company_name: 'Tau Ventures', entity_id: 19, unit_id: 19, designation: 'Coordinator', employee_id: 'EMP019', created_by_id: 1, user_type: 'company', lock_user_permission_status: 'pending', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '3' }
+    },
+    {
+      id: 20, firstname: 'Ruby', lastname: 'Jackson', gender: 'Female', mobile: '1011223344', email: 'ruby@example.com', company_name: 'Upsilon Co', entity_id: 20, unit_id: 20, designation: 'Manager', employee_id: 'EMP020', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '2' }
+    },
+    {
+      id: 21, firstname: 'Sam', lastname: 'White', gender: 'Male', mobile: '1112233445', email: 'sam@example.com', company_name: 'Phi Labs', entity_id: 21, unit_id: 21, designation: 'Technician', employee_id: 'EMP021', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'approved', face_added: false, app_downloaded: 'yes', lock_user_permission: { access_level: '1' }
+    },
+    {
+      id: 22, firstname: 'Tina', lastname: 'Harris', gender: 'Female', mobile: '1213344556', email: 'tina@example.com', company_name: 'Chi Systems', entity_id: 22, unit_id: 22, designation: 'Analyst', employee_id: 'EMP022', created_by_id: 1, user_type: 'company', lock_user_permission_status: 'pending', face_added: true, app_downloaded: 'no', lock_user_permission: { access_level: '3' }
+    },
+    {
+      id: 23, firstname: 'Uma', lastname: 'Clark', gender: 'Female', mobile: '1314455667', email: 'uma@example.com', company_name: 'Psi Corp', entity_id: 23, unit_id: 23, designation: 'Supervisor', employee_id: 'EMP023', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: 'no', lock_user_permission: { access_level: '2' }
+    },
+    {
+      id: 24, firstname: 'Victor', lastname: 'Lewis', gender: 'Male', mobile: '1415566778', email: 'victor@example.com', company_name: 'Omega Tech', entity_id: 24, unit_id: 24, designation: 'Lead', employee_id: 'EMP024', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '1' }
+    },
+    {
+      id: 25, firstname: 'Wendy', lastname: 'Walker', gender: 'Female', mobile: '1516677889', email: 'wendy@example.com', company_name: 'Alpha Solutions', entity_id: 25, unit_id: 25, designation: 'Specialist', employee_id: 'EMP025', created_by_id: 1, user_type: 'company', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'no', lock_user_permission: { access_level: '3' }
     },
   ]);
   const loading = false;
