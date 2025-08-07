@@ -35,48 +35,49 @@ export const VisitorsDashboard = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mb-6">
-        {/* Tab Navigation */}
-        <div className="flex mb-6 border-b border-border">
-          <Button 
-            onClick={() => setActiveTab('visitor-in')}
-            className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
-              activeTab === 'visitor-in' 
-                ? 'text-primary border-primary' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
-            variant="ghost"
-          >
-            Visitor In
-          </Button>
-          <Button 
-            onClick={() => setActiveTab('visitor-out')}
-            className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
-              activeTab === 'visitor-out' 
-                ? 'text-primary border-primary' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
-            variant="ghost"
-          >
-            Visitor Out
-          </Button>
-          <Button 
-            onClick={handleHistoryClick}
-            className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
-              activeTab === 'history' 
-                ? 'text-primary border-primary' 
-                : 'text-muted-foreground border-transparent hover:text-foreground'
-            }`}
-            variant="ghost"
-          >
-            History
-          </Button>
-        </div>
+        <div className="bg-white rounded-lg border border-gray-200">
+          {/* Tab Navigation */}
+          <div className="flex border-b border-gray-200">
+            <Button 
+              onClick={() => setActiveTab('visitor-in')}
+              className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                activeTab === 'visitor-in' 
+                  ? 'text-primary border-primary bg-primary/5' 
+                  : 'text-muted-foreground border-transparent hover:text-foreground'
+              }`}
+              variant="ghost"
+            >
+              Visitor In
+            </Button>
+            <Button 
+              onClick={() => setActiveTab('visitor-out')}
+              className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                activeTab === 'visitor-out' 
+                  ? 'text-primary border-primary bg-primary/5' 
+                  : 'text-muted-foreground border-transparent hover:text-foreground'
+              }`}
+              variant="ghost"
+            >
+              Visitor Out
+            </Button>
+            <Button 
+              onClick={handleHistoryClick}
+              className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
+                activeTab === 'history' 
+                  ? 'text-primary border-primary bg-primary/5' 
+                  : 'text-muted-foreground border-transparent hover:text-foreground'
+              }`}
+              variant="ghost"
+            >
+              History
+            </Button>
+          </div>
 
-        {/* Show content only for Visitor In tab */}
-        {activeTab === 'visitor-in' && (
-          <>
-            {/* Person Selection Dropdown */}
-            <div className="mb-6">
+          {/* Show content only for Visitor In tab */}
+          {activeTab === 'visitor-in' && (
+            <div className="p-4">
+              {/* Person Selection Dropdown */}
+              <div className="mb-6">
               <Select value={selectedPerson} onValueChange={setSelectedPerson}>
                 <SelectTrigger className="w-full max-w-md bg-white border border-gray-300">
                   <SelectValue placeholder="Select Person To Meet" />
@@ -97,10 +98,10 @@ export const VisitorsDashboard = () => {
               >
                 <RefreshCw className="w-4 h-4" />
               </Button>
-            </div>
+              </div>
 
-            {/* Visitor Type Tabs */}
-            <div className="flex gap-8 mb-6 border-b border-border">
+              {/* Visitor Type Tabs */}
+              <div className="flex gap-8 mb-6 border-b border-border">
               <Button 
                 onClick={() => setActiveVisitorType('unexpected')}
                 className={`px-0 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
@@ -123,10 +124,10 @@ export const VisitorsDashboard = () => {
               >
                 Expected Visitor
               </Button>
-            </div>
+              </div>
 
-            {/* Content Area */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6 min-h-[400px]">
+              {/* Content Area */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6 min-h-[400px]">
               {activeVisitorType === 'unexpected' && (
                 <div className="space-y-4">
                   {/* Visitor Card */}
@@ -191,16 +192,17 @@ export const VisitorsDashboard = () => {
                   Expected Visitor content will be displayed here
                 </div>
               )}
+              </div>
             </div>
-          </>
-        )}
+          )}
 
-        {/* Visitor Out tab content - blank */}
-        {activeTab === 'visitor-out' && (
-          <div className="min-h-[400px]">
-            {/* This tab is intentionally blank */}
-          </div>
-        )}
+          {/* Visitor Out tab content - blank */}
+          {activeTab === 'visitor-out' && (
+            <div className="p-4 min-h-[400px]">
+              {/* This tab is intentionally blank */}
+            </div>
+          )}
+        </div>
 
         {/* Floating Add Button - only show for Visitor In */}
         {activeTab === 'visitor-in' && (
