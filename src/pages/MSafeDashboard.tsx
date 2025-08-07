@@ -27,6 +27,10 @@ export const MSafeDashboard = () => {
   }, [dispatch]);
 
   const getStatusBadge = (status: string) => {
+    if (!status) {
+      return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
+    }
+    
     switch (status.toLowerCase()) {
       case 'approved':
         return <Badge className="bg-green-500 text-white hover:bg-green-600">Approved</Badge>;
@@ -40,6 +44,10 @@ export const MSafeDashboard = () => {
   };
 
   const getTypeBadge = (type: string) => {
+    if (!type) {
+      return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
+    }
+    
     switch (type.toLowerCase()) {
       case 'admin':
         return <Badge className="bg-blue-500 text-white hover:bg-blue-600">Admin</Badge>;
