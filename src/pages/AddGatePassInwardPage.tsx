@@ -200,7 +200,7 @@ export const AddGatePassInwardPage = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-4 gap-4 items-end">
+              <div className="grid grid-cols-4 gap-4">
                 <TextField
                   label="Unit"
                   placeholder="01"
@@ -237,7 +237,7 @@ export const AddGatePassInwardPage = () => {
                   }}
                 />
 
-                <div>
+                <div className="flex flex-col">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Attachments*
                   </label>
@@ -246,13 +246,16 @@ export const AddGatePassInwardPage = () => {
                   </div>
                 </div>
 
-                <Button 
-                  type="button"
-                  variant="outline"
-                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white h-[45px]"
-                >
-                  Add Item
-                </Button>
+                <div className="flex flex-col">
+                  <div className="h-[24px] mb-2"></div>
+                  <Button 
+                    type="button"
+                    variant="outline"
+                    className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white h-[45px]"
+                  >
+                    Add Item
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
