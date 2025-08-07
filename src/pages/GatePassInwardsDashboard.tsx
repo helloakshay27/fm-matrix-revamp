@@ -136,7 +136,7 @@ export const GatePassInwardsDashboard = () => {
       </div>
 
       {/* Data Table */}
-      <div className="bg-white border border-gray-200 overflow-hidden">
+      <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-100/80 border-b border-gray-300">
