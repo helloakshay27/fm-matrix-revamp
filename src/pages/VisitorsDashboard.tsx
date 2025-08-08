@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,8 +10,6 @@ import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2 } from 'lucide-re
 import { useNavigate } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 export const VisitorsDashboard = () => {
   const [selectedPerson, setSelectedPerson] = useState('');
@@ -164,94 +163,6 @@ export const VisitorsDashboard = () => {
     console.log('Deleting visitor:', visitorId);
     // Handle delete visitor logic here
   };
-  
-  // Column configurations for different tables
-  const visitorOutColumns: ColumnConfig[] = [
-    { key: 'select', label: 'Select', sortable: false, hideable: false, draggable: false },
-    { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
-    { key: 'visitorName', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
-    { key: 'host', label: 'Host', sortable: true, hideable: true, draggable: true },
-    { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
-    { key: 'checkedInAt', label: 'Checked In At', sortable: true, hideable: true, draggable: true },
-    { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true }
-  ];
-
-  const historyColumns: ColumnConfig[] = [
-    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
-    { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
-    { key: 'passNumber', label: 'Pass Number', sortable: true, hideable: true, draggable: true },
-    { key: 'name', label: 'Name', sortable: true, hideable: true, draggable: true },
-    { key: 'host', label: 'Host', sortable: true, hideable: true, draggable: true },
-    { key: 'location', label: 'Location', sortable: true, hideable: true, draggable: true },
-    { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
-    { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true }
-  ];
-
-  const renderVisitorOutRow = (visitor: any) => ({
-    select: (
-      <Checkbox
-        checked={selectedVisitors.includes(visitor.id)}
-        onCheckedChange={(checked) => handleSelectVisitor(visitor.id, checked as boolean)}
-      />
-    ),
-    actions: (
-      <div className="flex gap-2">
-        <Button size="sm" onClick={() => handleCheckOut(visitor.id)}>
-          Check Out
-        </Button>
-      </div>
-    ),
-    visitorName: (
-      <div className="flex items-center gap-3">
-        <img 
-          src={visitor.avatar} 
-          alt={visitor.visitorName}
-          className="w-8 h-8 rounded-full object-cover"
-        />
-        <span>{visitor.visitorName}</span>
-      </div>
-    ),
-    host: visitor.host,
-    purpose: visitor.purpose,
-    checkedInAt: visitor.checkedInAt,
-    status: (
-      <Badge variant="outline" className="text-green-600 border-green-600">
-        {visitor.status}
-      </Badge>
-    )
-  });
-
-  const renderHistoryRow = (visitor: any, index: number) => ({
-    sNo: index + 1,
-    actions: (
-      <div className="flex gap-2">
-        <Button size="sm" variant="ghost" onClick={() => handleViewVisitor(visitor.id)}>
-          <Eye className="w-4 h-4" />
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => handleEditVisitor(visitor.id)}>
-          <Edit className="w-4 h-4" />
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => handleDeleteVisitor(visitor.id)}>
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
-    ),
-    passNumber: visitor.passNumber,
-    name: visitor.name,
-    host: visitor.host,
-    location: visitor.location || '--',
-    purpose: visitor.purpose,
-    status: (
-      <Badge variant="outline" className="text-green-600 border-green-600">
-        {visitor.status}
-      </Badge>
-    )
-  });
-
-  const historyDataWithIndex = visitorHistoryData.map((visitor, index) => ({
-    ...visitor,
-    sNo: index + 1
-  }));
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -405,88 +316,241 @@ export const VisitorsDashboard = () => {
                   {/* Content Area */}
                   <div className="bg-white rounded-lg border border-gray-200 min-h-[400px]">
                     {activeVisitorType === 'unexpected' && (
-                      <div className="p-4">
-                        <div className="text-center py-8 text-gray-500">
-                          <div className="text-lg font-medium mb-2">No unexpected visitors</div>
-                          <div className="text-sm">There are currently no unexpected visitors to display</div>
-                        </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full caption-bottom text-sm border-separate border-spacing-0">
+                          <thead>
+                            <tr>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                <input type="checkbox" className="w-4 h-4" />
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Actions
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Visitor Name
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Details
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Purpose
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Status
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b border-gray-200 transition-colors hover:bg-gray-50">
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
+                                <input type="checkbox" className="w-4 h-4" />
+                              </td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
+                                <button 
+                                  className="w-4 h-4 text-black hover:text-gray-700"
+                                  onClick={() => handleEditClick('9555625186')}
+                                >
+                                  <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                                  </svg>
+                                </button>
+                              </td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Test</td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Test 42.0</td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Personal</td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
+                                <div className="bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+                                  Pending
+                                </div>
+                              </td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
+                                <div className="flex gap-2">
+                                  <Button 
+                                    className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 text-xs rounded"
+                                  >
+                                    Resend OTP
+                                  </Button>
+                                  <Button 
+                                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-xs rounded"
+                                  >
+                                    Skip Host Approval
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
                     )}
                     
                     {activeVisitorType === 'expected' && (
-                      <div className="p-4">
-                        <div className="text-center py-8 text-gray-500">
-                          <div className="text-lg font-medium mb-2">No expected visitors</div>
-                          <div className="text-sm">There are currently no expected visitors to display</div>
-                        </div>
+                      <div className="text-center text-gray-500 py-16">
+                        Expected Visitor content will be displayed here
                       </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Visitor Out Tab */}
+              {/* Visitor Out tab content */}
               {visitorSubTab === 'visitor-out' && (
-                <div className="p-4">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={selectAll}
-                        onCheckedChange={handleSelectAll}
-                      />
-                      <span className="text-sm">Select All</span>
-                    </div>
+                <div className="p-4 min-h-[400px]">
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead>Visitor Name</TableHead>
+                          <TableHead>Host</TableHead>
+                          <TableHead>Purpose</TableHead>
+                          <TableHead>Location</TableHead>
+                          <TableHead>Checked In At</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Check Out</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {visitorOutData.map((visitor) => (
+                          <TableRow key={visitor.id}>
+                            <TableCell className="font-medium">
+                              {visitor.visitorName}
+                            </TableCell>
+                            <TableCell>{visitor.host}</TableCell>
+                            <TableCell>{visitor.purpose}</TableCell>
+                            <TableCell>{visitor.location || '--'}</TableCell>
+                            <TableCell>{visitor.checkedInAt}</TableCell>
+                            <TableCell>
+                              <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                                {visitor.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button 
+                                onClick={() => handleCheckOut(visitor.id)}
+                                className="bg-[#F97316] hover:bg-[#F97316]/90 text-white px-3 py-1 text-sm rounded"
+                              >
+                                Check Out
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                        {visitorOutData.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-12">
+                              <div className="flex flex-col items-center text-gray-500">
+                                <div className="text-lg font-medium mb-2">No visitors to check out</div>
+                                <div className="text-sm">There are no checked-in visitors to display</div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
                   </div>
-                  
-                  <EnhancedTable
-                    data={visitorOutData}
-                    columns={visitorOutColumns}
-                    renderRow={renderVisitorOutRow}
-                    storageKey="visitor-out-table"
-                    emptyMessage="No visitors currently checked in"
-                    enableSearch={true}
-                    enableExport={true}
-                    searchPlaceholder="Search visitors..."
-                    exportFileName="visitor-out-data"
-                  />
                 </div>
               )}
 
-              {/* History Tab */}
+              {/* History tab content */}
               {visitorSubTab === 'history' && (
-                <div className="p-4">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <Search className="w-4 h-4 text-gray-400" />
+                <div className="p-4 min-h-[400px] space-y-4">
+                  {/* Add Button and Search Bar */}
+                  <div className="flex justify-between items-center mb-4">
+                    <Button 
+                      onClick={() => setIsNewVisitorDialogOpen(true)}
+                      style={{ backgroundColor: '#C72030' }}
+                      className="text-white hover:bg-[#C72030]/90"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add
+                    </Button>
+                    
+                    <div className="flex items-center gap-2 flex-1 max-w-md ml-4">
+                      <div className="relative flex-1">
                         <input
                           type="text"
-                          placeholder="Search visitors..."
+                          placeholder="Search using Guest's Name or Pass Number."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg bg-gray-50 text-sm"
                         />
+                        <button
+                          onClick={handleSearch}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700"
+                        >
+                          <Search className="w-4 h-4" />
+                        </button>
                       </div>
-                      <Button size="sm" onClick={handleSearch}>
-                        <Search className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={handleReset}>
+                      <Button
+                        onClick={handleReset}
+                        variant="ghost"
+                        size="sm"
+                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                      >
                         <RotateCcw className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
-                  
-                  <EnhancedTable
-                    data={historyDataWithIndex}
-                    columns={historyColumns}
-                    renderRow={(visitor) => renderHistoryRow(visitor, visitor.sNo - 1)}
-                    storageKey="visitor-history-table"
-                    emptyMessage="No visitor history available"
-                    enableSearch={true}
-                    enableExport={true}
-                    searchPlaceholder="Search visitor history..."
-                    exportFileName="visitor-history"
-                  />
+
+                  {/* Visitor History Table */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50">
+                          <TableHead>Visitor Name</TableHead>
+                          <TableHead>Host</TableHead>
+                          <TableHead>Location</TableHead>
+                          <TableHead>Purpose</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Pass Number</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredVisitors.map((visitor) => (
+                          <TableRow key={visitor.id}>
+                            <TableCell className="font-medium">{visitor.name}</TableCell>
+                            <TableCell>{visitor.host}</TableCell>
+                            <TableCell>{visitor.location || '--'}</TableCell>
+                            <TableCell>{visitor.purpose}</TableCell>
+                            <TableCell>
+                              <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                                {visitor.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{visitor.passNumber}</TableCell>
+                          </TableRow>
+                        ))}
+                        {filteredVisitors.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-12">
+                              <div className="flex flex-col items-center text-gray-500">
+                                <div className="text-lg font-medium mb-2">
+                                  {searchTerm ? 'No visitors found' : 'No visitor history available'}
+                                </div>
+                                <div className="text-sm mb-4">
+                                  {searchTerm 
+                                    ? `No results found for "${searchTerm}"` 
+                                    : 'There are no visitor records to display'
+                                  }
+                                </div>
+                                {searchTerm && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSearchTerm('')}
+                                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                                  >
+                                    Clear search
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               )}
             </Tabs>
