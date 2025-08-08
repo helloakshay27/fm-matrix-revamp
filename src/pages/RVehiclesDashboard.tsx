@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, SlidersHorizontal, Edit, Search } from 'lucide-react';
@@ -6,6 +5,8 @@ import { AddVehicleParkingModal } from '@/components/AddVehicleParkingModal';
 import { RVehicleImportModal } from '@/components/RVehicleImportModal';
 import { RVehicleFilterModal } from '@/components/RVehicleFilterModal';
 import { EditVehicleDialog } from '@/components/EditVehicleDialog';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useNavigate } from 'react-router-dom';
 
 interface Vehicle {
@@ -150,6 +151,25 @@ export const RVehiclesDashboard = () => {
   const [vehicleData, setVehicleData] = useState(initialVehicleData);
   const navigate = useNavigate();
 
+  // Column configuration for the enhanced table
+  const columns: ColumnConfig[] = [
+    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
+    { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
+    { key: 'vehicleNumber', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true },
+    { key: 'parkingSlot', label: 'Parking Slot', sortable: true, hideable: true, draggable: true },
+    { key: 'vehicleCategory', label: 'Vehicle Category', sortable: true, hideable: true, draggable: true },
+    { key: 'vehicleType', label: 'Vehicle Type', sortable: true, hideable: true, draggable: true },
+    { key: 'stickerNumber', label: 'Sticker Number', sortable: true, hideable: true, draggable: true },
+    { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true },
+    { key: 'registrationNumber', label: 'Registration Number', sortable: true, hideable: true, draggable: true },
+    { key: 'activeInactive', label: 'Active/Inactive', sortable: true, hideable: true, draggable: true },
+    { key: 'insuranceNumber', label: 'Insurance Number', sortable: true, hideable: true, draggable: true },
+    { key: 'insuranceValidTill', label: 'Insurance Valid Till', sortable: true, hideable: true, draggable: true },
+    { key: 'staffName', label: 'Staff Name', sortable: true, hideable: true, draggable: true },
+    { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
+    { key: 'qrCode', label: 'QR Code', sortable: false, hideable: true, draggable: true }
+  ];
+
   const handleHistoryClick = () => {
     navigate('/security/vehicle/r-vehicles/history');
   };
@@ -191,8 +211,66 @@ export const RVehiclesDashboard = () => {
     );
   };
 
+  // Add index to data for S No.
+  const dataWithIndex = vehicleData.map((vehicle, index) => ({
+    ...vehicle,
+    sNo: index + 1
+  }));
+
+  // Render row function for enhanced table
+  const renderRow = (vehicle: any) => ({
+    sNo: vehicle.sNo,
+    actions: (
+      <button 
+        onClick={() => handleEditClick(vehicle)}
+        className="text-gray-400 hover:text-[#C72030] transition-colors"
+      >
+        <Edit className="w-4 h-4" />
+      </button>
+    ),
+    vehicleNumber: (
+      <span className="text-[#C72030] font-medium">
+        {vehicle.vehicleNumber}
+      </span>
+    ),
+    parkingSlot: vehicle.parkingSlot || '--',
+    vehicleCategory: vehicle.vehicleCategory,
+    vehicleType: vehicle.vehicleType || '--',
+    stickerNumber: vehicle.stickerNumber || '--',
+    category: vehicle.category,
+    registrationNumber: vehicle.registrationNumber || '--',
+    activeInactive: (
+      <input 
+        type="checkbox" 
+        checked={vehicle.activeInactive} 
+        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" 
+        readOnly
+      />
+    ),
+    insuranceNumber: vehicle.insuranceNumber || '--',
+    insuranceValidTill: vehicle.insuranceValidTill,
+    staffName: vehicle.staffName || '--',
+    status: (
+      <div className="flex items-center">
+        <div
+          className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
+            vehicle.statusCode === 'Active' ? 'bg-green-500' : 'bg-gray-300'
+          }`}
+          onClick={() => handleStatusToggle(vehicle.id)}
+        >
+          <span
+            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+              vehicle.statusCode === 'Active' ? 'translate-x-6' : 'translate-x-1'
+            }`}
+          />
+        </div>
+      </div>
+    ),
+    qrCode: vehicle.qrCode
+  });
+
   return (
-    <div className="p-6 min-h-screen">
+    <div className="p-6 bg-[#f6f4ee] min-h-screen">
       <div className="mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
           <span>vehicle parkings</span>
@@ -200,126 +278,64 @@ export const RVehiclesDashboard = () => {
           <span>Vehicle Parkings</span>
         </div>
         
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">VEHICLE PARKINGS</h1>
+        <h1 className="text-2xl font-bold text-[#1a1a1a] mb-6">VEHICLE PARKINGS</h1>
         
-        <div className="bg-white rounded-lg border border-gray-200">
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-            <Button 
-              onClick={() => setIsAddModalOpen(true)}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </Button>
-            <Button 
-              onClick={() => setIsImportModalOpen(true)}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Import
-            </Button>
-            <Button 
-              onClick={() => setIsFilterModalOpen(true)}
-              style={{ backgroundColor: '#C72030' }}
-              className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-              Filters
-            </Button>
-          </div>
-
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           {/* Tab Navigation */}
-          <div className="flex border-b border-gray-200">
+          <div className="flex bg-white p-1 rounded-lg">
             {['History', 'All', 'In', 'Out'].map((tab) => (
-              <button
+              <Button
                 key={tab}
                 onClick={() => handleTabClick(tab)}
-                className={`px-6 py-3 text-sm font-medium transition-colors ${
+                className={`px-6 py-2 text-sm font-medium transition-colors rounded-md border-none ${
                   activeTab === tab
-                    ? 'text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-[#EDEAE3] text-[#C72030] shadow-sm'
+                    : 'bg-transparent text-gray-600 hover:bg-white/50'
                 }`}
-                style={activeTab === tab ? { backgroundColor: '#C72030' } : {}}
+                variant="ghost"
               >
                 {tab}
-              </button>
+              </Button>
             ))}
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parking Slot</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle Category</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sticker Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registration Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active/Inactive</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Insurance Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Insurance Valid Till</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QR Code</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {vehicleData.map((vehicle) => (
-                  <tr key={vehicle.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <button 
-                        onClick={() => handleEditClick(vehicle)}
-                        className="text-gray-400 hover:text-gray-600"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">{vehicle.vehicleNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.parkingSlot}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.vehicleCategory}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.vehicleType}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.stickerNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.category}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.registrationNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <input 
-                        type="checkbox" 
-                        checked={vehicle.activeInactive} 
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" 
-                        readOnly
-                      />
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.insuranceNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.insuranceValidTill}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.staffName}</td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div
-                          className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-                            vehicle.statusCode === 'Active' ? 'bg-green-500' : 'bg-gray-300'
-                          }`}
-                          onClick={() => handleStatusToggle(vehicle.id)}
-                        >
-                          <span
-                            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                              vehicle.statusCode === 'Active' ? 'translate-x-6' : 'translate-x-1'
-                            }`}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.qrCode}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Data Table */}
+          <div className="border rounded-lg overflow-hidden">
+            <EnhancedTable
+              data={dataWithIndex}
+              columns={columns}
+              renderRow={renderRow}
+              enableSearch={true}
+              enableSelection={false}
+              enableExport={true}
+              storageKey="r-vehicles-table"
+              emptyMessage="No vehicles available"
+              exportFileName="r-vehicles"
+              searchPlaceholder="Search by vehicle number, category, or staff name"
+              hideTableExport={false}
+              hideColumnsButton={false}
+              leftActions={
+                <div className="flex gap-3">
+                  <Button 
+                    onClick={() => setIsAddModalOpen(true)}
+                    style={{ backgroundColor: '#C72030' }}
+                    className="text-white hover:bg-[#C72030]/90"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add
+                  </Button>
+                  <Button 
+                    onClick={() => setIsImportModalOpen(true)}
+                    style={{ backgroundColor: '#C72030' }}
+                    className="text-white hover:bg-[#C72030]/90"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Import
+                  </Button>
+                </div>
+              }
+              onFilterClick={() => setIsFilterModalOpen(true)}
+            />
           </div>
         </div>
       </div>
