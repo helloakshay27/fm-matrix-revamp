@@ -18,6 +18,7 @@ export const GatePassOutwardsDashboard = () => {
   // Column configuration for the enhanced table
   const columns: ColumnConfig[] = [
     { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
+    { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
     { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
     { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
     { key: 'returnableNonReturnable', label: 'Returnable/Non Returnable', sortable: true, hideable: true, draggable: true },
@@ -106,6 +107,16 @@ export const GatePassOutwardsDashboard = () => {
   // Render row function for enhanced table
   const renderRow = (entry: any) => ({
     sNo: entry.sNo,
+    actions: (
+      <div className="flex gap-2 justify-center">
+        <div title="View details">
+          <Eye 
+            className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+            onClick={() => handleViewDetails(entry.id)}
+          />
+        </div>
+      </div>
+    ),
     id: (
       <button
         onClick={() => handleViewDetails(entry.id)}
@@ -140,18 +151,6 @@ export const GatePassOutwardsDashboard = () => {
     )
   });
 
-  // Render actions for each row
-  const renderActions = (entry: any) => (
-    <div className="flex gap-2 justify-center">
-      <div title="View details">
-        <Eye 
-          className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
-          onClick={() => handleViewDetails(entry.id)}
-        />
-      </div>
-    </div>
-  );
-
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Outward List</h1>
@@ -179,7 +178,6 @@ export const GatePassOutwardsDashboard = () => {
         data={dataWithIndex}
         columns={columns}
         renderRow={renderRow}
-        renderActions={renderActions}
         storageKey="outward-gate-pass-table"
         emptyMessage="No outward entries available"
         enableSearch={true}
