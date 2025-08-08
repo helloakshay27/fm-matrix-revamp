@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { SlidersHorizontal } from 'lucide-react';
 import { RVehiclesHistoryFilterModal } from '@/components/RVehiclesHistoryFilterModal';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useNavigate } from 'react-router-dom';
 
 const vehicleHistoryData = [
@@ -148,6 +150,17 @@ const vehicleHistoryData = [
   }
 ];
 
+// Column configuration for the enhanced table
+const historyColumns: ColumnConfig[] = [
+  { key: 'vehicleNumber', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true },
+  { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true },
+  { key: 'staffName', label: 'Staff Name', sortable: true, hideable: true, draggable: true },
+  { key: 'inDate', label: 'In Date', sortable: true, hideable: true, draggable: true },
+  { key: 'inTime', label: 'In Time', sortable: true, hideable: true, draggable: true },
+  { key: 'outDate', label: 'Out Date', sortable: true, hideable: true, draggable: true },
+  { key: 'outTime', label: 'Out Time', sortable: true, hideable: true, draggable: true }
+];
+
 export const RVehiclesHistoryDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const navigate = useNavigate();
@@ -156,70 +169,66 @@ export const RVehiclesHistoryDashboard = () => {
     navigate('/security/vehicle/r-vehicles');
   };
 
-  return (
-    <div className="p-6  min-h-screen">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>vehicles</span>
-          <span>&gt;</span>
-          <span>Vehicle History</span>
-        </div>
-        
-        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900 mb-6 uppercase">VEHICLE HISTORY</h1>
-        
-        <div className="bg-white rounded-lg border border-gray-200">
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <div className="flex gap-3">
-              <Button 
-                onClick={() => setIsFilterModalOpen(true)}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                Filters
-              </Button>
-              <Button 
-                onClick={handleAllVehiclesClick}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:opacity-90 text-white px-6 py-2 rounded"
-              >
-                All Vehicles
-              </Button>
-            </div>
-          </div>
+  // Render row function for enhanced table
+  const renderHistoryRow = (vehicle: any) => ({
+    vehicleNumber: <span className="font-medium text-gray-900">{vehicle.vehicleNumber}</span>,
+    category: vehicle.category || '--',
+    staffName: vehicle.staffName ? <span className="text-blue-600">{vehicle.staffName}</span> : '--',
+    inDate: vehicle.inDate,
+    inTime: vehicle.inTime ? <span className="text-blue-600">{vehicle.inTime}</span> : '--',
+    outDate: vehicle.outDate || '--',
+    outTime: vehicle.outTime ? <span className="text-blue-600">{vehicle.outTime}</span> : '--'
+  });
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">In Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">In Time</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Out Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Out Time</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {vehicleHistoryData.map((vehicle) => (
-                  <tr key={vehicle.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{vehicle.vehicleNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.category}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.staffName}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.inDate}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.inTime}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.outDate}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.outTime}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Vehicle History</h1>
+      
+      {/* Action Buttons */}
+      <div className="flex items-center gap-3 mb-6">
+        <Button 
+          onClick={() => setIsFilterModalOpen(true)}
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:opacity-90 text-white px-4 py-2 rounded flex items-center gap-2"
+        >
+          <SlidersHorizontal className="w-4 h-4" />
+          Filters
+        </Button>
+        <Button 
+          onClick={handleAllVehiclesClick}
+          style={{ backgroundColor: '#C72030' }}
+          className="hover:opacity-90 text-white px-6 py-2 rounded"
+        >
+          All Vehicles
+        </Button>
       </div>
+      {/* Enhanced Table */}
+      <EnhancedTable
+        data={vehicleHistoryData}
+        columns={historyColumns}
+        renderRow={renderHistoryRow}
+        enableSearch={true}
+        enableSelection={false}
+        enableExport={true}
+        storageKey="r-vehicles-history-table"
+        emptyMessage="No vehicle history available"
+        exportFileName="r-vehicles-history"
+        searchPlaceholder="Search by vehicle number, category, or staff name"
+        hideTableExport={false}
+        hideColumnsButton={false}
+        leftActions={
+          <div className="flex gap-3">
+            <Button 
+              onClick={handleAllVehiclesClick}
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:opacity-90 text-white px-4 py-2"
+            >
+              All Vehicles
+            </Button>
+          </div>
+        }
+        onFilterClick={() => setIsFilterModalOpen(true)}
+      />
 
       <RVehiclesHistoryFilterModal 
         isOpen={isFilterModalOpen}
