@@ -87,7 +87,7 @@ export const GatePassOutwardsAddPage = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
 
         {/* Goods Detail Section */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-[#F5F1EC] rounded-lg border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-[#C72030] mb-4">GOODS DETAIL</h2>
           
           <div className="grid grid-cols-4 gap-4 mb-4">
