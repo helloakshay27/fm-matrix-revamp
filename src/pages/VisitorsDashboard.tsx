@@ -136,6 +136,18 @@ export const VisitorsDashboard = () => {
     { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true }
   ];
 
+  // Column configuration for visitor out table
+  const visitorOutColumns: ColumnConfig[] = [
+    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
+    { key: 'visitorName', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
+    { key: 'host', label: 'Host', sortable: true, hideable: true, draggable: true },
+    { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+    { key: 'location', label: 'Location', sortable: true, hideable: true, draggable: true },
+    { key: 'checkedInAt', label: 'Checked In At', sortable: true, hideable: true, draggable: true },
+    { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
+    { key: 'checkOut', label: 'Check Out', sortable: false, hideable: false, draggable: false }
+  ];
+
   // Filter visitors based on search term
   const filteredVisitors = visitorHistoryData.filter(visitor => 
     visitor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -269,6 +281,28 @@ export const VisitorsDashboard = () => {
     )
   });
 
+  const renderVisitorOutRow = (visitor: any) => ({
+    sNo: visitor.sNo,
+    visitorName: visitor.visitorName,
+    host: visitor.host,
+    purpose: visitor.purpose,
+    location: visitor.location || '--',
+    checkedInAt: visitor.checkedInAt,
+    status: (
+      <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+        {visitor.status}
+      </Badge>
+    ),
+    checkOut: (
+      <Button 
+        onClick={() => handleCheckOut(visitor.id)}
+        className="bg-[#F97316] hover:bg-[#F97316]/90 text-white px-3 py-1 text-sm rounded"
+      >
+        Check Out
+      </Button>
+    )
+  });
+
   // Add index to data for S No.
   const unexpectedVisitorDataWithIndex = unexpectedVisitorData.map((visitor, index) => ({
     ...visitor,
@@ -276,6 +310,11 @@ export const VisitorsDashboard = () => {
   }));
 
   const expectedVisitorDataWithIndex = expectedVisitorData.map((visitor, index) => ({
+    ...visitor,
+    sNo: index + 1
+  }));
+
+  const visitorOutDataWithIndex = visitorOutData.map((visitor, index) => ({
     ...visitor,
     sNo: index + 1
   }));
@@ -476,55 +515,20 @@ export const VisitorsDashboard = () => {
               {visitorSubTab === 'visitor-out' && (
                 <div className="p-4 min-h-[400px]">
                   <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-50">
-                          <TableHead>Visitor Name</TableHead>
-                          <TableHead>Host</TableHead>
-                          <TableHead>Purpose</TableHead>
-                          <TableHead>Location</TableHead>
-                          <TableHead>Checked In At</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Check Out</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {visitorOutData.map((visitor) => (
-                          <TableRow key={visitor.id}>
-                            <TableCell className="font-medium">
-                              {visitor.visitorName}
-                            </TableCell>
-                            <TableCell>{visitor.host}</TableCell>
-                            <TableCell>{visitor.purpose}</TableCell>
-                            <TableCell>{visitor.location || '--'}</TableCell>
-                            <TableCell>{visitor.checkedInAt}</TableCell>
-                            <TableCell>
-                              <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                                {visitor.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Button 
-                                onClick={() => handleCheckOut(visitor.id)}
-                                className="bg-[#F97316] hover:bg-[#F97316]/90 text-white px-3 py-1 text-sm rounded"
-                              >
-                                Check Out
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {visitorOutData.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={7} className="text-center py-12">
-                              <div className="flex flex-col items-center text-gray-500">
-                                <div className="text-lg font-medium mb-2">No visitors to check out</div>
-                                <div className="text-sm">There are no checked-in visitors to display</div>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                    <EnhancedTable
+                      data={visitorOutDataWithIndex}
+                      columns={visitorOutColumns}
+                      renderRow={renderVisitorOutRow}
+                      enableSearch={true}
+                      enableSelection={false}
+                      enableExport={true}
+                      storageKey="visitor-out-table"
+                      emptyMessage="No visitors to check out"
+                      exportFileName="visitor-out"
+                      searchPlaceholder="Search by visitor name, host, or purpose"
+                      hideTableExport={false}
+                      hideColumnsButton={false}
+                    />
                   </div>
                 </div>
               )}
