@@ -502,41 +502,37 @@ export const VisitorsDashboard = () => {
                   {/* Content Area */}
                   <div className="bg-white rounded-lg border border-gray-200 min-h-[400px] overflow-hidden shadow-sm">
                     {activeVisitorType === 'unexpected' && (
-                      <div className="border-0">
-                        <EnhancedTable
-                          data={unexpectedVisitorDataWithIndex}
-                          columns={unexpectedVisitorColumns}
-                          renderRow={renderUnexpectedVisitorRow}
-                          enableSearch={true}
-                          enableSelection={false}
-                          enableExport={true}
-                          storageKey="unexpected-visitors-table"
-                          emptyMessage="No unexpected visitors available"
-                          exportFileName="unexpected-visitors"
-                          searchPlaceholder="Search by visitor name, details, or purpose"
-                          hideTableExport={false}
-                          hideColumnsButton={false}
-                        />
-                      </div>
+                      <EnhancedTable
+                        data={unexpectedVisitorDataWithIndex}
+                        columns={unexpectedVisitorColumns}
+                        renderRow={renderUnexpectedVisitorRow}
+                        enableSearch={true}
+                        enableSelection={false}
+                        enableExport={true}
+                        storageKey="unexpected-visitors-table"
+                        emptyMessage="No unexpected visitors available"
+                        exportFileName="unexpected-visitors"
+                        searchPlaceholder="Search by visitor name, details, or purpose"
+                        hideTableExport={false}
+                        hideColumnsButton={false}
+                      />
                     )}
                     
                     {activeVisitorType === 'expected' && (
-                      <div className="border-0">
-                        <EnhancedTable
-                          data={expectedVisitorDataWithIndex}
-                          columns={expectedVisitorColumns}
-                          renderRow={renderExpectedVisitorRow}
-                          enableSearch={true}
-                          enableSelection={false}
-                          enableExport={true}
-                          storageKey="expected-visitors-table"
-                          emptyMessage="No expected visitors available"
-                          exportFileName="expected-visitors"
-                          searchPlaceholder="Search by visitor name, details, or purpose"
-                          hideTableExport={false}
-                          hideColumnsButton={false}
-                        />
-                      </div>
+                      <EnhancedTable
+                        data={expectedVisitorDataWithIndex}
+                        columns={expectedVisitorColumns}
+                        renderRow={renderExpectedVisitorRow}
+                        enableSearch={true}
+                        enableSelection={false}
+                        enableExport={true}
+                        storageKey="expected-visitors-table"
+                        emptyMessage="No expected visitors available"
+                        exportFileName="expected-visitors"
+                        searchPlaceholder="Search by visitor name, details, or purpose"
+                        hideTableExport={false}
+                        hideColumnsButton={false}
+                      />
                     )}
                   </div>
                 </div>
@@ -545,22 +541,20 @@ export const VisitorsDashboard = () => {
               {/* Visitor Out tab content */}
               {visitorSubTab === 'visitor-out' && (
                 <div className="p-4 min-h-[400px]">
-                  <div className="border-0 rounded-lg overflow-hidden">
-                    <EnhancedTable
-                      data={visitorOutDataWithIndex}
-                      columns={visitorOutColumns}
-                      renderRow={renderVisitorOutRow}
-                      enableSearch={true}
-                      enableSelection={false}
-                      enableExport={true}
-                      storageKey="visitor-out-table"
-                      emptyMessage="No visitors to check out"
-                      exportFileName="visitor-out"
-                      searchPlaceholder="Search by visitor name, host, or purpose"
-                      hideTableExport={false}
-                      hideColumnsButton={false}
-                    />
-                  </div>
+                  <EnhancedTable
+                    data={visitorOutDataWithIndex}
+                    columns={visitorOutColumns}
+                    renderRow={renderVisitorOutRow}
+                    enableSearch={true}
+                    enableSelection={false}
+                    enableExport={true}
+                    storageKey="visitor-out-table"
+                    emptyMessage="No visitors to check out"
+                    exportFileName="visitor-out"
+                    searchPlaceholder="Search by visitor name, host, or purpose"
+                    hideTableExport={false}
+                    hideColumnsButton={false}
+                  />
                 </div>
               )}
 
@@ -606,22 +600,20 @@ export const VisitorsDashboard = () => {
                   </div>
 
                   {/* Visitor History Table */}
-                  <div className="border-0 rounded-lg overflow-hidden">
-                    <EnhancedTable
-                      data={visitorHistoryDataWithIndex}
-                      columns={visitorHistoryColumns}
-                      renderRow={renderVisitorHistoryRow}
-                      enableSearch={true}
-                      enableSelection={false}
-                      enableExport={true}
-                      storageKey="visitor-history-table"
-                      emptyMessage="No visitor history available"
-                      exportFileName="visitor-history"
-                      searchPlaceholder="Search by visitor name, host, or pass number"
-                      hideTableExport={false}
-                      hideColumnsButton={false}
-                    />
-                  </div>
+                  <EnhancedTable
+                    data={visitorHistoryDataWithIndex}
+                    columns={visitorHistoryColumns}
+                    renderRow={renderVisitorHistoryRow}
+                    enableSearch={true}
+                    enableSelection={false}
+                    enableExport={true}
+                    storageKey="visitor-history-table"
+                    emptyMessage="No visitor history available"
+                    exportFileName="visitor-history"
+                    searchPlaceholder="Search by visitor name, host, or pass number"
+                    hideTableExport={false}
+                    hideColumnsButton={false}
+                  />
                 </div>
               )}
             </Tabs>
