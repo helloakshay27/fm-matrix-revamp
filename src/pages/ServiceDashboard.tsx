@@ -607,6 +607,7 @@ export const ServiceDashboard = () => {
     const showEllipsis = totalPages > 7;
 
     if (showEllipsis) {
+      // Always show first page
       items.push(
         <PaginationItem key={1}>
           <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(1)} isActive={current === 1}>
@@ -615,45 +616,33 @@ export const ServiceDashboard = () => {
         </PaginationItem>
       );
 
-      if (current > 4) {
+      // Show pages 2, 3, 4 if current is 1, 2, or 3
+      if (current <= 3) {
+        for (let i = 2; i <= 4 && i < totalPages; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        if (totalPages > 5) {
+          items.push(
+            <PaginationItem key="ellipsis1">
+              <PaginationEllipsis />
+            </PaginationItem>
+          );
+        }
+      } else if (current >= totalPages - 2) {
+        // Show ellipsis before last 4 pages
         items.push(
           <PaginationItem key="ellipsis1">
             <PaginationEllipsis />
           </PaginationItem>
         );
-      } else {
-        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      if (current > 3 && current < totalPages - 2) {
-        for (let i = current - 1; i <= current + 1; i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      if (current < totalPages - 3) {
-        items.push(
-          <PaginationItem key="ellipsis2">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      } else {
-        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-          if (!items.find((it: any) => it.key === i)) {
+        for (let i = totalPages - 3; i < totalPages; i++) {
+          if (i > 1) {
             items.push(
               <PaginationItem key={i}>
                 <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
@@ -663,8 +652,30 @@ export const ServiceDashboard = () => {
             );
           }
         }
+      } else {
+        // Show ellipsis, current-1, current, current+1, ellipsis
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        for (let i = current - 1; i <= current + 1; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
       }
 
+      // Always show last page if more than 1 page
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
