@@ -292,17 +292,16 @@ export const RVehiclesDashboard = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-gray-200 bg-white rounded-t-lg">
+      <div className="flex border-b border-border bg-background rounded-t-lg">
         {['History', 'All', 'In', 'Out'].map((tab) => (
           <button
             key={tab}
             onClick={() => handleTabClick(tab)}
             className={`px-6 py-3 text-sm font-medium transition-colors ${
               activeTab === tab
-                ? 'text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }`}
-            style={activeTab === tab ? { backgroundColor: '#C72030' } : {}}
           >
             {tab}
           </button>
