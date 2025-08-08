@@ -148,6 +148,17 @@ export const VisitorsDashboard = () => {
     { key: 'checkOut', label: 'Check Out', sortable: false, hideable: false, draggable: false }
   ];
 
+  // Column configuration for visitor history table
+  const visitorHistoryColumns: ColumnConfig[] = [
+    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
+    { key: 'name', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
+    { key: 'host', label: 'Host', sortable: true, hideable: true, draggable: true },
+    { key: 'location', label: 'Location', sortable: true, hideable: true, draggable: true },
+    { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+    { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
+    { key: 'passNumber', label: 'Pass Number', sortable: true, hideable: true, draggable: true }
+  ];
+
   // Filter visitors based on search term
   const filteredVisitors = visitorHistoryData.filter(visitor => 
     visitor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -303,6 +314,20 @@ export const VisitorsDashboard = () => {
     )
   });
 
+  const renderVisitorHistoryRow = (visitor: any) => ({
+    sNo: visitor.sNo,
+    name: visitor.name,
+    host: visitor.host,
+    location: visitor.location || '--',
+    purpose: visitor.purpose,
+    status: (
+      <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+        {visitor.status}
+      </Badge>
+    ),
+    passNumber: visitor.passNumber
+  });
+
   // Add index to data for S No.
   const unexpectedVisitorDataWithIndex = unexpectedVisitorData.map((visitor, index) => ({
     ...visitor,
@@ -315,6 +340,11 @@ export const VisitorsDashboard = () => {
   }));
 
   const visitorOutDataWithIndex = visitorOutData.map((visitor, index) => ({
+    ...visitor,
+    sNo: index + 1
+  }));
+
+  const visitorHistoryDataWithIndex = visitorHistoryData.map((visitor, index) => ({
     ...visitor,
     sNo: index + 1
   }));
@@ -576,61 +606,20 @@ export const VisitorsDashboard = () => {
 
                   {/* Visitor History Table */}
                   <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-50">
-                          <TableHead>Visitor Name</TableHead>
-                          <TableHead>Host</TableHead>
-                          <TableHead>Location</TableHead>
-                          <TableHead>Purpose</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Pass Number</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredVisitors.map((visitor) => (
-                          <TableRow key={visitor.id}>
-                            <TableCell className="font-medium">{visitor.name}</TableCell>
-                            <TableCell>{visitor.host}</TableCell>
-                            <TableCell>{visitor.location || '--'}</TableCell>
-                            <TableCell>{visitor.purpose}</TableCell>
-                            <TableCell>
-                              <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                                {visitor.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{visitor.passNumber}</TableCell>
-                          </TableRow>
-                        ))}
-                        {filteredVisitors.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center py-12">
-                              <div className="flex flex-col items-center text-gray-500">
-                                <div className="text-lg font-medium mb-2">
-                                  {searchTerm ? 'No visitors found' : 'No visitor history available'}
-                                </div>
-                                <div className="text-sm mb-4">
-                                  {searchTerm 
-                                    ? `No results found for "${searchTerm}"` 
-                                    : 'There are no visitor records to display'
-                                  }
-                                </div>
-                                {searchTerm && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setSearchTerm('')}
-                                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                                  >
-                                    Clear search
-                                  </Button>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                    <EnhancedTable
+                      data={visitorHistoryDataWithIndex}
+                      columns={visitorHistoryColumns}
+                      renderRow={renderVisitorHistoryRow}
+                      enableSearch={true}
+                      enableSelection={false}
+                      enableExport={true}
+                      storageKey="visitor-history-table"
+                      emptyMessage="No visitor history available"
+                      exportFileName="visitor-history"
+                      searchPlaceholder="Search by visitor name, host, or pass number"
+                      hideTableExport={false}
+                      hideColumnsButton={false}
+                    />
                   </div>
                 </div>
               )}
