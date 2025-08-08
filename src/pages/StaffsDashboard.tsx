@@ -355,10 +355,10 @@ export const StaffsDashboard = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="p-6">
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Society Staffs</h1>
         
-        <div className="bg-white rounded-none border border-gray-200 shadow-sm">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           {/* Header */}
           <div className="p-4 border-b border-gray-200">
             <h2 className="font-work-sans font-semibold text-base sm:text-lg lg:text-xl leading-auto tracking-normal mb-4 text-[#1a1a1a] uppercase">SOCIETY STAFFS</h2>
@@ -483,76 +483,71 @@ export const StaffsDashboard = () => {
             {(activeTab === 'in' || activeTab === 'out') ? (
               renderCardView()
             ) : activeTab === 'history' ? (
-              <div className="border rounded-lg overflow-hidden">
-                <EnhancedTable
-                  data={filteredData()}
-                  columns={historyColumns}
-                  renderRow={renderHistoryRow}
-                  enableSearch={true}
-                  enableSelection={false}
-                  enableExport={true}
-                  storageKey="staff-history-table"
-                  emptyMessage="No history found"
-                  exportFileName="staff-history"
-                  searchPlaceholder="Search history by name or mobile"
-                  hideTableExport={false}
-                  hideColumnsButton={false}
-                />
-              </div>
+              <EnhancedTable
+                data={filteredData()}
+                columns={historyColumns}
+                renderRow={renderHistoryRow}
+                enableSearch={true}
+                enableSelection={false}
+                enableExport={true}
+                storageKey="staff-history-table"
+                emptyMessage="No history found"
+                exportFileName="staff-history"
+                searchPlaceholder="Search history by name or mobile"
+                hideTableExport={false}
+                hideColumnsButton={false}
+              />
             ) : (
-              <div className="border rounded-lg overflow-hidden">
-                <EnhancedTable
-                  data={filteredData()}
-                  columns={columns}
-                  renderRow={renderRow}
-                  enableSearch={false}
-                  enableSelection={true}
-                  enableExport={true}
-                  storageKey="staff-table"
-                  emptyMessage="No staff found"
-                  exportFileName="staff-records"
-                  selectedItems={selectedStaffs}
-                  getItemId={(staff) => staff.id}
-                  onSelectItem={handleStaffSelection}
-                  onSelectAll={handleSelectAll}
-                  leftActions={
-                    <div className="flex gap-3">
-                      <Button 
-                        onClick={() => setIsAddModalOpen(true)}
-                        style={{ backgroundColor: '#C72030' }}
-                        className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add
-                      </Button>
-                      <Button 
-                        onClick={handlePrintQR}
-                        style={{ backgroundColor: '#C72030' }}
-                        className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-                      >
-                        <QrCode className="w-4 h-4 mr-2" />
-                        Print QR
-                      </Button>
-                      <Button 
-                        onClick={handlePrintAllQR}
-                        style={{ backgroundColor: '#C72030' }}
-                        className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Print ALL QR
-                      </Button>
-                    </div>
-                  }
-                  onFilterClick={() => setIsFilterModalOpen(true)}
-                  searchPlaceholder="Search staff by name, ID, email or mobile"
-                  hideTableExport={false}
-                  hideColumnsButton={false}
-                />
-              </div>
+              <EnhancedTable
+                data={filteredData()}
+                columns={columns}
+                renderRow={renderRow}
+                enableSearch={false}
+                enableSelection={true}
+                enableExport={true}
+                storageKey="staff-table"
+                emptyMessage="No staff found"
+                exportFileName="staff-records"
+                selectedItems={selectedStaffs}
+                getItemId={(staff) => staff.id}
+                onSelectItem={handleStaffSelection}
+                onSelectAll={handleSelectAll}
+                leftActions={
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={() => setIsAddModalOpen(true)}
+                      style={{ backgroundColor: '#C72030' }}
+                      className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add
+                    </Button>
+                    <Button 
+                      onClick={handlePrintQR}
+                      style={{ backgroundColor: '#C72030' }}
+                      className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+                    >
+                      <QrCode className="w-4 h-4 mr-2" />
+                      Print QR
+                    </Button>
+                    <Button 
+                      onClick={handlePrintAllQR}
+                      style={{ backgroundColor: '#C72030' }}
+                      className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      Print ALL QR
+                    </Button>
+                  </div>
+                }
+                onFilterClick={() => setIsFilterModalOpen(true)}
+                searchPlaceholder="Search staff by name, ID, email or mobile"
+                hideTableExport={false}
+                hideColumnsButton={false}
+              />
             )}
           </div>
         </div>
-      </div>
 
       {/* Filter Modal */}
       <StaffsFilterModal 
