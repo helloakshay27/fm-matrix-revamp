@@ -290,52 +290,34 @@ export const StaffsDashboard = () => {
     checkOut: staff.checkOut || '--'
   });
 
-  const renderHistoryView = () => {
-    const data = filteredData();
-    
-    return (
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#f6f4ee]">
-              <TableHead>Name</TableHead>
-              <TableHead>Mobile Number</TableHead>
-              <TableHead>Work Type</TableHead>
-              <TableHead>Unit</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Vendor Name</TableHead>
-              <TableHead>Valid Till</TableHead>
-              <TableHead>Check-In</TableHead>
-              <TableHead>Check-Out</TableHead>
-              <TableHead>In</TableHead>
-              <TableHead>Out</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((staff, index) => (
-              <TableRow key={index} className="hover:bg-gray-50">
-                <TableCell className="text-blue-600">{staff.name}</TableCell>
-                <TableCell>{staff.mobile}</TableCell>
-                <TableCell>{staff.workType}</TableCell>
-                <TableCell>{staff.unit}</TableCell>
-                <TableCell>{staff.department}</TableCell>
-                <TableCell>{staff.vendorName}</TableCell>
-                <TableCell>{staff.validTill}</TableCell>
-                <TableCell>{staff.checkIn}</TableCell>
-                <TableCell>{staff.checkOut}</TableCell>
-                <TableCell>
-                  <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs">{staff.gate}</span>
-                </TableCell>
-                <TableCell>
-                  <span className="text-gray-600">{staff.gate}</span>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    );
-  };
+  // History columns configuration
+  const historyColumns: ColumnConfig[] = [
+    { key: 'name', label: 'Name', sortable: true, hideable: true, draggable: true },
+    { key: 'mobile', label: 'Mobile Number', sortable: true, hideable: true, draggable: true },
+    { key: 'workType', label: 'Work Type', sortable: true, hideable: true, draggable: true },
+    { key: 'unit', label: 'Unit', sortable: true, hideable: true, draggable: true },
+    { key: 'department', label: 'Department', sortable: true, hideable: true, draggable: true },
+    { key: 'vendorName', label: 'Vendor Name', sortable: true, hideable: true, draggable: true },
+    { key: 'validTill', label: 'Valid Till', sortable: true, hideable: true, draggable: true },
+    { key: 'checkIn', label: 'Check-In', sortable: true, hideable: true, draggable: true },
+    { key: 'checkOut', label: 'Check-Out', sortable: true, hideable: true, draggable: true },
+    { key: 'in', label: 'In', sortable: false, hideable: true, draggable: true },
+    { key: 'out', label: 'Out', sortable: false, hideable: true, draggable: true }
+  ];
+
+  const renderHistoryRow = (staff: any) => ({
+    name: <span className="text-blue-600">{staff.name}</span>,
+    mobile: staff.mobile,
+    workType: staff.workType,
+    unit: staff.unit,
+    department: staff.department,
+    vendorName: staff.vendorName || '--',
+    validTill: staff.validTill,
+    checkIn: staff.checkIn,
+    checkOut: staff.checkOut,
+    in: <span className="bg-blue-500 text-white px-2 py-1 rounded text-xs">{staff.gate}</span>,
+    out: <span className="text-gray-600">{staff.gate}</span>
+  });
 
   const renderCardView = () => {
     const data = filteredData();
@@ -501,7 +483,22 @@ export const StaffsDashboard = () => {
             {(activeTab === 'in' || activeTab === 'out') ? (
               renderCardView()
             ) : activeTab === 'history' ? (
-              renderHistoryView()
+              <div className="border rounded-lg overflow-hidden">
+                <EnhancedTable
+                  data={filteredData()}
+                  columns={historyColumns}
+                  renderRow={renderHistoryRow}
+                  enableSearch={true}
+                  enableSelection={false}
+                  enableExport={true}
+                  storageKey="staff-history-table"
+                  emptyMessage="No history found"
+                  exportFileName="staff-history"
+                  searchPlaceholder="Search history by name or mobile"
+                  hideTableExport={false}
+                  hideColumnsButton={false}
+                />
+              </div>
             ) : (
               <div className="border rounded-lg overflow-hidden">
                 <EnhancedTable
