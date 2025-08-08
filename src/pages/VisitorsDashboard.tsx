@@ -500,7 +500,7 @@ export const VisitorsDashboard = () => {
                   </div>
 
                   {/* Content Area */}
-                  <div className="bg-white rounded-lg border border-gray-200 min-h-[400px] overflow-hidden shadow-sm">
+                  <div className="min-h-[400px]">
                     {activeVisitorType === 'unexpected' && (
                       <EnhancedTable
                         data={unexpectedVisitorDataWithIndex}
