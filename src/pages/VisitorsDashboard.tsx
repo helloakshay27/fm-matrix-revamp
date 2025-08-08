@@ -409,9 +409,6 @@ export const VisitorsDashboard = () => {
                               <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
                                 Status
                               </th>
-                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                                Actions
-                              </th>
                             </tr>
                           </thead>
                           <tbody>
@@ -435,31 +432,6 @@ export const VisitorsDashboard = () => {
                               <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
                                 <div className="bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                                   Confirmed
-                                </div>
-                              </td>
-                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                                <div className="flex gap-2">
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    className="w-8 h-8 p-0 bg-white border border-gray-300 hover:bg-gray-50"
-                                  >
-                                    <Eye className="w-4 h-4 text-gray-600" />
-                                  </Button>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    className="w-8 h-8 p-0 bg-white border border-gray-300 hover:bg-gray-50"
-                                  >
-                                    <Edit className="w-4 h-4 text-gray-600" />
-                                  </Button>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    className="w-8 h-8 p-0 bg-white border border-gray-300 hover:bg-gray-50"
-                                  >
-                                    <Trash2 className="w-4 h-4 text-gray-600" />
-                                  </Button>
                                 </div>
                               </td>
                             </tr>
