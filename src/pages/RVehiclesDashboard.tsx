@@ -194,12 +194,6 @@ export const RVehiclesDashboard = () => {
   return (
     <div className="p-6 min-h-screen">
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>vehicle parkings</span>
-          <span>&gt;</span>
-          <span>Vehicle Parkings</span>
-        </div>
-        
         <h1 className="text-2xl font-bold text-gray-900 mb-6">VEHICLE PARKINGS</h1>
         
         <div className="bg-white rounded-lg border border-gray-200">
