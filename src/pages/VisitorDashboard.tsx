@@ -15,6 +15,8 @@ import {
   Settings,
   Search,
   Calendar,
+  RotateCcw,
+  ArrowRight,
 } from "lucide-react";
 import {
   Table,
@@ -26,72 +28,27 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-
-// Mock data for visitors
-const mockVisitors = [
-  {
-    id: "VIS001",
-    name: "John Smith",
-    company: "ABC Corp",
-    purpose: "Business Meeting",
-    hostName: "Jane Manager",
-    checkInTime: "2024-01-15 09:30",
-    checkOutTime: "2024-01-15 11:45",
-    status: "Checked Out",
-    phoneNumber: "+1-555-0123",
-    email: "john@abccorp.com",
-    idType: "Driver License",
-    vehicleNumber: "ABC-123",
-  },
-  {
-    id: "VIS002",
-    name: "Sarah Johnson",
-    company: "XYZ Ltd",
-    purpose: "Interview",
-    hostName: "HR Manager",
-    checkInTime: "2024-01-15 14:00",
-    checkOutTime: null,
-    status: "Checked In",
-    phoneNumber: "+1-555-0456",
-    email: "sarah@xyz.com",
-    idType: "Passport",
-    vehicleNumber: null,
-  },
-  {
-    id: "VIS003",
-    name: "Mike Wilson",
-    company: "DEF Services",
-    purpose: "Delivery",
-    hostName: "Reception",
-    checkInTime: "2024-01-15 16:20",
-    checkOutTime: "2024-01-15 16:35",
-    status: "Checked Out",
-    phoneNumber: "+1-555-0789",
-    email: "mike@def.com",
-    idType: "Driver License",
-    vehicleNumber: "DEF-456",
-  },
-];
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useUnexpectedVisitors } from "@/hooks/useUnexpectedVisitors";
 
 const calculateStats = (visitors: any[]) => {
   return {
     total: visitors.length,
-    checkedIn: visitors.filter(v => v.status === "Checked In").length,
-    checkedOut: visitors.filter(v => v.status === "Checked Out").length,
-    scheduled: visitors.filter(v => v.status === "Scheduled").length,
-    noShow: visitors.filter(v => v.status === "No Show").length,
-    businessMeetings: visitors.filter(v => v.purpose === "Business Meeting").length,
-    interviews: visitors.filter(v => v.purpose === "Interview").length,
-    deliveries: visitors.filter(v => v.purpose === "Delivery").length,
+    approved: visitors.filter(v => v.status === "Approved").length,
+    pending: visitors.filter(v => v.status === "Pending").length,
+    rejected: visitors.filter(v => v.status === "Rejected").length,
+    checkedIn: visitors.filter(v => v.check_in_available).length,
+    businessMeetings: visitors.filter(v => v.visit_purpose === "Business Meeting").length,
+    interviews: visitors.filter(v => v.visit_purpose === "Interview").length,
+    deliveries: visitors.filter(v => v.visit_purpose === "Delivery" || v.visit_purpose === "Courier").length,
   };
 };
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case "Checked In": return "bg-green-100 text-green-800";
-    case "Checked Out": return "bg-blue-100 text-blue-800";
-    case "Scheduled": return "bg-yellow-100 text-yellow-800";
-    case "No Show": return "bg-red-100 text-red-800";
+    case "Approved": return "bg-green-100 text-green-800";
+    case "Pending": return "bg-yellow-100 text-yellow-800";
+    case "Rejected": return "bg-red-100 text-red-800";
     default: return "bg-gray-100 text-gray-800";
   }
 };
@@ -99,12 +56,14 @@ const getStatusColor = (status: string) => {
 export const VisitorDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const { visitors, loading, error, refetch } = useUnexpectedVisitors();
 
-  const stats = calculateStats(mockVisitors);
-  const filteredVisitors = mockVisitors.filter(visitor =>
-    visitor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    visitor.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    visitor.company.toLowerCase().includes(searchTerm.toLowerCase())
+  const stats = calculateStats(visitors);
+  const filteredVisitors = visitors.filter(visitor =>
+    visitor.guest_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    visitor.id.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    visitor.guest_from.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    visitor.primary_host.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddVisitor = () => {
@@ -150,9 +109,10 @@ export const VisitorDashboard = () => {
         <TabsContent value="list" className="mt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
             <StatCard icon={<Users />} label="Total Visitors" value={stats.total} />
-            <StatCard icon={<CheckCircle />} label="Checked In" value={stats.checkedIn} />
-            <StatCard icon={<XCircle />} label="Checked Out" value={stats.checkedOut} />
-            <StatCard icon={<Calendar />} label="Scheduled" value={stats.scheduled} />
+            <StatCard icon={<CheckCircle />} label="Approved" value={stats.approved} />
+            <StatCard icon={<Clock />} label="Pending" value={stats.pending} />
+            <StatCard icon={<XCircle />} label="Rejected" value={stats.rejected} />
+            <StatCard icon={<Calendar />} label="Check In Available" value={stats.checkedIn} />
             <StatCard icon={<Users />} label="Business Meetings" value={stats.businessMeetings} />
             <StatCard icon={<Users />} label="Interviews" value={stats.interviews} />
             <StatCard icon={<Users />} label="Deliveries" value={stats.deliveries} />
@@ -182,8 +142,8 @@ export const VisitorDashboard = () => {
               <Button variant="outline" size="icon">
                 <Filter className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="icon">
-                <RefreshCw className="w-4 h-4" />
+              <Button variant="outline" size="icon" onClick={refetch} disabled={loading}>
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
               <Button variant="outline" size="icon">
                 <Download className="w-4 h-4" />
@@ -192,55 +152,88 @@ export const VisitorDashboard = () => {
           </div>
 
           <div className="bg-white rounded-lg shadow-sm border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Visitor ID</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Purpose</TableHead>
-                  <TableHead>Host</TableHead>
-                  <TableHead>Check In</TableHead>
-                  <TableHead>Check Out</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Vehicle</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredVisitors.map((visitor) => (
-                  <TableRow key={visitor.id}>
-                    <TableCell className="font-medium">{visitor.id}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{visitor.name}</div>
-                        <div className="text-sm text-gray-500">{visitor.phoneNumber}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{visitor.company}</TableCell>
-                    <TableCell>{visitor.purpose}</TableCell>
-                    <TableCell>{visitor.hostName}</TableCell>
-                    <TableCell>{visitor.checkInTime}</TableCell>
-                    <TableCell>{visitor.checkOutTime || "-"}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(visitor.status)}>
-                        {visitor.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{visitor.vehicleNumber || "-"}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewVisitor(visitor.id)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
+            {loading ? (
+              <div className="flex items-center justify-center p-8">
+                <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+                Loading visitors...
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center p-8 text-red-600">
+                <XCircle className="w-6 h-6 mr-2" />
+                Error: {error}
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Visitor ID</TableHead>
+                    <TableHead>Visitor Image</TableHead>
+                    <TableHead>Visitor Name</TableHead>
+                    <TableHead>Guest From</TableHead>
+                    <TableHead>Visit Purpose</TableHead>
+                    <TableHead>Primary Host</TableHead>
+                    <TableHead>Created At</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Vehicle Number</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredVisitors.map((visitor) => (
+                    <TableRow key={visitor.id}>
+                      <TableCell className="font-medium">{visitor.id}</TableCell>
+                      <TableCell>
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage 
+                            src={visitor.visitor_image.startsWith('http') ? visitor.visitor_image : `/images/${visitor.visitor_image}`} 
+                            alt={visitor.guest_name} 
+                          />
+                          <AvatarFallback>
+                            {visitor.guest_name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{visitor.guest_name}</div>
+                          <div className="text-sm text-gray-500">{visitor.guest_number}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{visitor.guest_from}</TableCell>
+                      <TableCell>{visitor.visit_purpose || "-"}</TableCell>
+                      <TableCell>{visitor.primary_host}</TableCell>
+                      <TableCell>{visitor.created_at_formatted}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(visitor.status)}>
+                          {visitor.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{visitor.guest_vehicle_number || "-"}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center gap-2 justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                          >
+                            <RotateCcw className="w-4 h-4 mr-1" />
+                            Resend OTP
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-gray-600 border-gray-600 hover:bg-gray-50"
+                          >
+                            <ArrowRight className="w-4 h-4 mr-1" />
+                            Skip
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
         </TabsContent>
 
@@ -250,16 +243,16 @@ export const VisitorDashboard = () => {
               <h3 className="text-lg font-semibold mb-4">Visitor Status Distribution</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>Checked In: {stats.checkedIn}</span>
-                  <span>{((stats.checkedIn / stats.total) * 100).toFixed(1)}%</span>
+                  <span>Approved: {stats.approved}</span>
+                  <span>{stats.total > 0 ? ((stats.approved / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Checked Out: {stats.checkedOut}</span>
-                  <span>{((stats.checkedOut / stats.total) * 100).toFixed(1)}%</span>
+                  <span>Pending: {stats.pending}</span>
+                  <span>{stats.total > 0 ? ((stats.pending / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Scheduled: {stats.scheduled}</span>
-                  <span>{((stats.scheduled / stats.total) * 100).toFixed(1)}%</span>
+                  <span>Rejected: {stats.rejected}</span>
+                  <span>{stats.total > 0 ? ((stats.rejected / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
               </div>
             </div>
@@ -269,15 +262,15 @@ export const VisitorDashboard = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Business Meetings: {stats.businessMeetings}</span>
-                  <span>{((stats.businessMeetings / stats.total) * 100).toFixed(1)}%</span>
+                  <span>{stats.total > 0 ? ((stats.businessMeetings / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Interviews: {stats.interviews}</span>
-                  <span>{((stats.interviews / stats.total) * 100).toFixed(1)}%</span>
+                  <span>{stats.total > 0 ? ((stats.interviews / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Deliveries: {stats.deliveries}</span>
-                  <span>{((stats.deliveries / stats.total) * 100).toFixed(1)}%</span>
+                  <span>{stats.total > 0 ? ((stats.deliveries / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
               </div>
             </div>
