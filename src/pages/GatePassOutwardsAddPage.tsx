@@ -1,15 +1,36 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { ArrowLeft, Upload } from 'lucide-react';
 
 export const GatePassOutwardsAddPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'RETURNABLE' | 'NON RETURNABLE'>('RETURNABLE');
+
+  // Field styles for Material-UI components
+  const fieldStyles = {
+    height: '45px',
+    backgroundColor: '#fff',
+    borderRadius: '4px',
+    '& .MuiOutlinedInput-root': {
+      height: '45px',
+      '& fieldset': {
+        borderColor: '#ddd',
+      },
+      '&:hover fieldset': {
+        borderColor: '#C72030',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,210 +42,335 @@ export const GatePassOutwardsAddPage = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <Button 
-          variant="outline" 
+        <div 
           onClick={() => navigate('/security/gate-pass/outwards')}
-          className="mb-4"
+          className="mb-4 flex items-center gap-2 text-gray-600 cursor-pointer hover:text-gray-800"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="w-4 h-4" />
           Back to Outward List
-        </Button>
+        </div>
         
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>Goods Outwards</span>
-          <span>&gt;</span>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>Goods Outwards</span>
+            <span>›</span>
+          </div>
+          
+          {/* Tabs */}
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab('RETURNABLE')}
+              className={`px-6 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'RETURNABLE'
+                  ? 'bg-[#C72030] text-white'
+                  : 'bg-white text-[#C72030] border border-[#C72030]'
+              }`}
+            >
+              RETURNABLE
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('NON RETURNABLE')}
+              className={`px-6 py-2 text-sm font-medium rounded-md transition-colors ${
+                activeTab === 'NON RETURNABLE'
+                  ? 'bg-[#C72030] text-white'
+                  : 'bg-white text-[#C72030] border border-[#C72030]'
+              }`}
+            >
+              NON RETURNABLE
+            </button>
+          </div>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Tabs */}
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveTab('RETURNABLE')}
-            className={`px-4 py-2 border text-sm font-medium ${
-              activeTab === 'RETURNABLE'
-                ? 'bg-[#C72030] text-white border-[#C72030]'
-                : 'bg-white text-[#C72030] border-[#C72030]'
-            }`}
-          >
-            RETURNABLE
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('NON RETURNABLE')}
-            className={`px-4 py-2 border text-sm font-medium ${
-              activeTab === 'NON RETURNABLE'
-                ? 'bg-[#C72030] text-white border-[#C72030]'
-                : 'bg-white text-[#C72030] border-[#C72030]'
-            }`}
-          >
-            NON RETURNABLE
-          </button>
-        </div>
 
         {/* Goods Detail Section */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-[#C72030] mb-4">GOODS DETAIL</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            {activeTab === 'RETURNABLE' && (
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">
-                  Expected Returnable Date*
-                </Label>
-                <Input type="date" className="w-full" />
+        <div className="bg-gray-100 rounded-lg border border-gray-200 p-6">
+          <div className="bg-[#F5F1EC] -m-6 mb-4 p-6 rounded-t-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                1
               </div>
-            )}
-            
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Item Type*
-              </Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Item Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="equipment">Equipment</SelectItem>
-                  <SelectItem value="material">Material</SelectItem>
-                  <SelectItem value="document">Document</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Item Category*
-              </Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="electronics">Electronics</SelectItem>
-                  <SelectItem value="machinery">Machinery</SelectItem>
-                  <SelectItem value="tools">Tools</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Item Name*
-              </Label>
-              <Input placeholder="Fill Item Name" className="w-full" />
+              <h2 className="text-lg font-semibold text-[#C72030]">GOODS DETAIL</h2>
             </div>
           </div>
+          
+          <div className="grid grid-cols-4 gap-4 mb-4">
+            {activeTab === 'RETURNABLE' && (
+              <TextField
+                label="Expected Returnable Date"
+                type="date"
+                fullWidth
+                variant="outlined"
+                required
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+            )}
+            
+            <TextField
+              label="Item Quantity"
+              placeholder="01"
+              fullWidth
+              variant="outlined"
+              required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
+            
+            <FormControl
+              fullWidth
+              variant="outlined"
+              required
+              sx={{ '& .MuiInputBase-root': fieldStyles }}
+            >
+              <InputLabel shrink>Item Type</InputLabel>
+              <MuiSelect
+                label="Item Type"
+                notched
+                displayEmpty
+              >
+                <MenuItem value="">Select Item Type</MenuItem>
+                <MenuItem value="equipment">Equipment</MenuItem>
+                <MenuItem value="material">Material</MenuItem>
+                <MenuItem value="document">Document</MenuItem>
+              </MuiSelect>
+            </FormControl>
+            
+            <FormControl
+              fullWidth
+              variant="outlined"
+              required
+              sx={{ '& .MuiInputBase-root': fieldStyles }}
+            >
+              <InputLabel shrink>Item Category</InputLabel>
+              <MuiSelect
+                label="Item Category"
+                notched
+                displayEmpty
+              >
+                <MenuItem value="">Select Category</MenuItem>
+                <MenuItem value="electronics">Electronics</MenuItem>
+                <MenuItem value="machinery">Machinery</MenuItem>
+                <MenuItem value="tools">Tools</MenuItem>
+              </MuiSelect>
+            </FormControl>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Item Quantity*
-              </Label>
-              <Input placeholder="01" className="w-full" />
-            </div>
+          <div className="grid grid-cols-4 gap-4 mb-4">
+            <TextField
+              label="Item Name"
+              placeholder="Fill Item Name"
+              fullWidth
+              variant="outlined"
+              required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Unit*
-              </Label>
-              <Input placeholder="01" className="w-full" />
-            </div>
+            <TextField
+              label="Unit"
+              placeholder="01"
+              fullWidth
+              variant="outlined"
+              required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Description*
-              </Label>
-              <Input placeholder="Type Here" className="w-full" />
-            </div>
+            <TextField
+              label="Description"
+              placeholder="Type Here"
+              fullWidth
+              variant="outlined"
+              required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Attachments*
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input type="file" className="w-full" />
-                <Button type="button" size="sm" variant="outline">
-                  <Upload className="w-4 h-4" />
-                </Button>
-              </div>
+            <div className="flex items-end">
               <Button 
                 type="button"
-                className="mt-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2"
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2 h-[45px] w-full"
               >
                 Add Item
               </Button>
             </div>
           </div>
+
+          {/* Attachment Section */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-3">Attachment</label>
+            <div className="border border-dashed border-gray-300 rounded-md p-6 bg-gray-50">
+              <div className="flex flex-col items-center justify-center space-y-3">
+                <div className="text-center">
+                  <p className="text-[#C72030] font-medium text-sm">Choose Attachment</p>
+                  <p className="text-gray-500 text-xs mt-1">No image chosen</p>
+                </div>
+                <Button 
+                  type="button"
+                  className="bg-transparent text-[#C72030] border border-[#C72030] hover:bg-[#C72030]/10 text-xs px-4 py-2 rounded-md"
+                >
+                  <Upload className="w-3 h-3 mr-1" />
+                  Upload Attachment
+                </Button>
+              </div>
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Visitor Detail Section */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-[#C72030] mb-4">VISITOR DETAIL</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Visitor Name*
-              </Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Enter Name" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="john">John Doe</SelectItem>
-                  <SelectItem value="jane">Jane Smith</SelectItem>
-                  <SelectItem value="mike">Mike Johnson</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Mobile No.*
-              </Label>
-              <Input placeholder="+91-" className="w-full" />
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Company Name*
-              </Label>
-              <Input placeholder="Located" className="w-full" />
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Vehicle No.*
-              </Label>
-              <Input placeholder="MH04L1109" className="w-full" />
+        <div className="bg-gray-100 rounded-lg border border-gray-200 p-6">
+          <div className="bg-[#F5F1EC] -m-6 mb-4 p-6 rounded-t-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                2
+              </div>
+              <h2 className="text-lg font-semibold text-[#C72030]">VISITOR DETAIL</h2>
             </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Select Mode Of Transport*
-              </Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Type here" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="by-hand">By Hand</SelectItem>
-                  <SelectItem value="by-vehicle">By Vehicle</SelectItem>
-                  <SelectItem value="by-courier">By Courier</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          
+          <div className="grid grid-cols-4 gap-4 mb-4">
+            <FormControl
+              fullWidth
+              variant="outlined"
+              required
+              sx={{ '& .MuiInputBase-root': fieldStyles }}
+            >
+              <InputLabel shrink>Visitor Name</InputLabel>
+              <MuiSelect
+                label="Visitor Name"
+                notched
+                displayEmpty
+              >
+                <MenuItem value="">Enter Name</MenuItem>
+                <MenuItem value="john">John Doe</MenuItem>
+                <MenuItem value="jane">Jane Smith</MenuItem>
+                <MenuItem value="mike">Mike Johnson</MenuItem>
+              </MuiSelect>
+            </FormControl>
             
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Reporting Time*
-              </Label>
-              <Input placeholder="12:24 Pm" className="w-full" />
-            </div>
+            <TextField
+              label="Mobile No."
+              placeholder="+91-"
+              fullWidth
+              variant="outlined"
+              required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
+            
+            <TextField
+              label="Company Name"
+              placeholder="Located"
+              fullWidth
+              variant="outlined"
+              required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
+            
+            <TextField
+              label="Vehicle No."
+              placeholder="MH04L1109"
+              fullWidth
+              variant="outlined"
+              required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormControl
+              fullWidth
+              variant="outlined"
+              required
+              sx={{ '& .MuiInputBase-root': fieldStyles }}
+            >
+              <InputLabel shrink>Select Mode Of Transport</InputLabel>
+              <MuiSelect
+                label="Select Mode Of Transport"
+                notched
+                displayEmpty
+              >
+                <MenuItem value="">Type here</MenuItem>
+                <MenuItem value="by-hand">By Hand</MenuItem>
+                <MenuItem value="by-vehicle">By Vehicle</MenuItem>
+                <MenuItem value="by-courier">By Courier</MenuItem>
+              </MuiSelect>
+            </FormControl>
+            
+            <TextField
+              label="Reporting Time"
+              placeholder="12:24 Pm"
+              fullWidth
+              variant="outlined"
+              required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
           </div>
         </div>
 

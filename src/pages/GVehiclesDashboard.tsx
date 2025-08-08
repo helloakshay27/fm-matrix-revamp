@@ -5,6 +5,8 @@ import { SlidersHorizontal, Plus, Filter } from 'lucide-react';
 import { AddGVehicleModal } from '@/components/AddGVehicleModal';
 import { GVehicleFilterModal } from '@/components/GVehicleFilterModal';
 import { GVehicleOutDashboard } from './GVehicleOutDashboard';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 const gVehicleData = [
   {
@@ -141,11 +143,37 @@ const gVehicleData = [
   }
 ];
 
+// Column configuration for the enhanced table
+const columns: ColumnConfig[] = [
+  { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
+  { key: 'name', label: 'Name', sortable: true, hideable: true, draggable: true },
+  { key: 'vehicleNumber', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true },
+  { key: 'mobileNumber', label: 'Mobile Number', sortable: true, hideable: true, draggable: true },
+  { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+  { key: 'inDate', label: 'In Date', sortable: true, hideable: true, draggable: true },
+  { key: 'inTime', label: 'In Time', sortable: true, hideable: true, draggable: true },
+  { key: 'outDate', label: 'Out Date', sortable: true, hideable: true, draggable: true },
+  { key: 'outTime', label: 'Out Time', sortable: true, hideable: true, draggable: true }
+];
+
 export const GVehiclesDashboard = () => {
   const [activeTab, setActiveTab] = useState('History');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState('history'); // 'history' or 'vehicle-out'
+
+  // Render row function for enhanced table
+  const renderRow = (vehicle: any) => ({
+    type: vehicle.type,
+    name: vehicle.name,
+    vehicleNumber: <span className="text-blue-600 font-medium">{vehicle.vehicleNumber}</span>,
+    mobileNumber: <span className="text-blue-600">{vehicle.mobileNumber}</span>,
+    purpose: vehicle.purpose || '--',
+    inDate: vehicle.inDate || '--',
+    inTime: vehicle.inTime ? <span className="text-blue-600">{vehicle.inTime}</span> : '--',
+    outDate: vehicle.outDate || '--',
+    outTime: vehicle.outTime ? <span className="text-blue-600">{vehicle.outTime}</span> : '--'
+  });
 
   const handleHistoryClick = () => {
     setCurrentView('history');
@@ -163,94 +191,60 @@ export const GVehiclesDashboard = () => {
   }
 
   return (
-    <div className="p-6 min-h-screen">
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>G Vehicles</span>
-          <span>&gt;</span>
-          <span>G Vehicles List</span>
-        </div>
-        
-        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900 mb-6 uppercase">G VEHICLES LIST</h1>
-        
-        <div className="bg-white rounded-lg border border-gray-200">
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <div className="flex gap-3">
-              <Button 
-                onClick={() => setIsAddModalOpen(true)}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2 rounded flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add
-              </Button>
-              <Button 
-                onClick={handleHistoryClick}
-                className={`px-6 py-2 rounded ${
-                  activeTab === 'History' 
-                    ? 'bg-[#C72030] hover:bg-[#C72030]/90 text-white' 
-                    : 'bg-[#C72030] hover:bg-[#C72030]/90 text-white'
-                }`}
-              >
-                History
-              </Button>
-              <Button 
-                onClick={handleVehicleOutClick}
-                className={`px-6 py-2 rounded ${
-                  activeTab === 'Vehicle Out' 
-                    ? 'bg-[#C72030] hover:bg-[#C72030]/90 text-white' 
-                    : 'bg-[#C72030] hover:bg-[#C72030]/90 text-white'
-                }`}
-              >
-                Vehicle Out
-              </Button>
-              <Button 
-                onClick={() => setIsFilterModalOpen(true)}
-                variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded flex items-center gap-2"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                Filters
-              </Button>
-            </div>
-          </div>
-
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile Number</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">In Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">In Time</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Out Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Out Time</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {gVehicleData.map((vehicle) => (
-                  <tr key={vehicle.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.type}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.name}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.vehicleNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.mobileNumber}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.purpose}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.inDate}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.inTime}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.outDate}</td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-blue-600">{vehicle.outTime}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900 mb-6 uppercase">G VEHICLES LIST</h1>
+      
+      {/* Tab Navigation */}
+      <div className="flex gap-3 mb-6">
+        <Button 
+          onClick={handleHistoryClick}
+          className={`px-6 py-2 rounded ${
+            activeTab === 'History' 
+              ? 'bg-primary text-primary-foreground' 
+              : 'bg-primary text-primary-foreground'
+          }`}
+        >
+          History
+        </Button>
+        <Button 
+          onClick={handleVehicleOutClick}
+          className={`px-6 py-2 rounded ${
+            activeTab === 'Vehicle Out' 
+              ? 'bg-primary text-primary-foreground' 
+              : 'bg-primary text-primary-foreground'
+          }`}
+        >
+          Vehicle Out
+        </Button>
       </div>
+
+      {/* Enhanced Table */}
+      <EnhancedTable
+        data={gVehicleData}
+        columns={columns}
+        renderRow={renderRow}
+        enableSearch={true}
+        enableSelection={false}
+        enableExport={true}
+        storageKey="g-vehicles-table"
+        emptyMessage="No vehicles available"
+        exportFileName="g-vehicles"
+        searchPlaceholder="Search by name, vehicle number, or mobile number"
+        hideTableExport={false}
+        hideColumnsButton={false}
+        leftActions={
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
+          </div>
+        }
+        onFilterClick={() => setIsFilterModalOpen(true)}
+      />
 
       <AddGVehicleModal 
         isOpen={isAddModalOpen}

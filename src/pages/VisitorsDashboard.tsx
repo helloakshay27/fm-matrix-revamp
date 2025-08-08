@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -10,6 +9,8 @@ import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2 } from 'lucide-re
 import { useNavigate } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 export const VisitorsDashboard = () => {
   const [selectedPerson, setSelectedPerson] = useState('');
@@ -23,6 +24,30 @@ export const VisitorsDashboard = () => {
   const [selectedVisitors, setSelectedVisitors] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const navigate = useNavigate();
+
+  // Mock visitor data for unexpected visitors
+  const unexpectedVisitorData = [
+    {
+      id: "1",
+      visitorName: "Test",
+      details: "Test 42.0",
+      purpose: "Personal",
+      status: "Pending",
+      avatar: "/placeholder.svg"
+    }
+  ];
+
+  // Mock visitor data for expected visitors
+  const expectedVisitorData = [
+    {
+      id: "1",
+      visitorName: "Expected Visitor",
+      details: "Meeting Host",
+      purpose: "Business Meeting",
+      status: "Confirmed",
+      avatar: "/placeholder.svg"
+    }
+  ];
 
   // Mock visitor out data based on the image
   const visitorOutData = [
@@ -88,6 +113,50 @@ export const VisitorsDashboard = () => {
       status: 'Approved',
       passNumber: 'P003'
     }
+  ];
+
+  // Column configuration for unexpected visitors table
+  const unexpectedVisitorColumns: ColumnConfig[] = [
+    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
+    { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
+    { key: 'visitorName', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
+    { key: 'details', label: 'Details', sortable: true, hideable: true, draggable: true },
+    { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+    { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
+    { key: 'tableActions', label: 'Actions', sortable: false, hideable: false, draggable: false }
+  ];
+
+  // Column configuration for expected visitors table
+  const expectedVisitorColumns: ColumnConfig[] = [
+    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
+    { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
+    { key: 'visitorName', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
+    { key: 'details', label: 'Details', sortable: true, hideable: true, draggable: true },
+    { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+    { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true }
+  ];
+
+  // Column configuration for visitor out table
+  const visitorOutColumns: ColumnConfig[] = [
+    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
+    { key: 'visitorName', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
+    { key: 'host', label: 'Host', sortable: true, hideable: true, draggable: true },
+    { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+    { key: 'location', label: 'Location', sortable: true, hideable: true, draggable: true },
+    { key: 'checkedInAt', label: 'Checked In At', sortable: true, hideable: true, draggable: true },
+    { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
+    { key: 'checkOut', label: 'Check Out', sortable: false, hideable: false, draggable: false }
+  ];
+
+  // Column configuration for visitor history table
+  const visitorHistoryColumns: ColumnConfig[] = [
+    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
+    { key: 'name', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
+    { key: 'host', label: 'Host', sortable: true, hideable: true, draggable: true },
+    { key: 'location', label: 'Location', sortable: true, hideable: true, draggable: true },
+    { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+    { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
+    { key: 'passNumber', label: 'Pass Number', sortable: true, hideable: true, draggable: true }
   ];
 
   // Filter visitors based on search term
@@ -164,8 +233,125 @@ export const VisitorsDashboard = () => {
     // Handle delete visitor logic here
   };
 
+  // Render functions for enhanced tables
+  const renderUnexpectedVisitorRow = (visitor: any) => ({
+    sNo: visitor.sNo,
+    actions: (
+      <button 
+        className="w-4 h-4 text-black hover:text-gray-700"
+        onClick={() => handleEditClick('9555625186')}
+      >
+        <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+        </svg>
+      </button>
+    ),
+    visitorName: visitor.visitorName,
+    details: visitor.details,
+    purpose: visitor.purpose,
+    status: (
+      <div className="bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+        {visitor.status}
+      </div>
+    ),
+    tableActions: (
+      <div className="flex gap-2">
+        <Button 
+          className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 text-xs rounded"
+        >
+          Resend OTP
+        </Button>
+        <Button 
+          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-xs rounded"
+        >
+          Skip Host Approval
+        </Button>
+      </div>
+    )
+  });
+
+  const renderExpectedVisitorRow = (visitor: any) => ({
+    sNo: visitor.sNo,
+    actions: (
+      <button 
+        className="w-4 h-4 text-black hover:text-gray-700"
+        onClick={() => handleEditClick('9555625186')}
+      >
+        <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+        </svg>
+      </button>
+    ),
+    visitorName: visitor.visitorName,
+    details: visitor.details,
+    purpose: visitor.purpose,
+    status: (
+      <div className="bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+        {visitor.status}
+      </div>
+    )
+  });
+
+  const renderVisitorOutRow = (visitor: any) => ({
+    sNo: visitor.sNo,
+    visitorName: visitor.visitorName,
+    host: visitor.host,
+    purpose: visitor.purpose,
+    location: visitor.location || '--',
+    checkedInAt: visitor.checkedInAt,
+    status: (
+      <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+        {visitor.status}
+      </Badge>
+    ),
+    checkOut: (
+      <Button 
+        onClick={() => handleCheckOut(visitor.id)}
+        className="bg-[#F97316] hover:bg-[#F97316]/90 text-white px-3 py-1 text-sm rounded"
+      >
+        Check Out
+      </Button>
+    )
+  });
+
+  const renderVisitorHistoryRow = (visitor: any) => ({
+    sNo: visitor.sNo,
+    name: visitor.name,
+    host: visitor.host,
+    location: visitor.location || '--',
+    purpose: visitor.purpose,
+    status: (
+      <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+        {visitor.status}
+      </Badge>
+    ),
+    passNumber: visitor.passNumber
+  });
+
+  // Add index to data for S No.
+  const unexpectedVisitorDataWithIndex = unexpectedVisitorData.map((visitor, index) => ({
+    ...visitor,
+    sNo: index + 1
+  }));
+
+  const expectedVisitorDataWithIndex = expectedVisitorData.map((visitor, index) => ({
+    ...visitor,
+    sNo: index + 1
+  }));
+
+  const visitorOutDataWithIndex = visitorOutData.map((visitor, index) => ({
+    ...visitor,
+    sNo: index + 1
+  }));
+
+  const visitorHistoryDataWithIndex = visitorHistoryData.map((visitor, index) => ({
+    ...visitor,
+    sNo: index + 1
+  }));
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Visitors Dashboard</h1>
       <div className="mb-6">
         <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
@@ -314,82 +500,39 @@ export const VisitorsDashboard = () => {
                   </div>
 
                   {/* Content Area */}
-                  <div className="bg-white rounded-lg border border-gray-200 min-h-[400px]">
+                  <div className="min-h-[400px]">
                     {activeVisitorType === 'unexpected' && (
-                      <div className="overflow-x-auto">
-                        <table className="w-full caption-bottom text-sm border-separate border-spacing-0">
-                          <thead>
-                            <tr>
-                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                                <input type="checkbox" className="w-4 h-4" />
-                              </th>
-                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                                Actions
-                              </th>
-                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                                Visitor Name
-                              </th>
-                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                                Details
-                              </th>
-                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                                Purpose
-                              </th>
-                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                                Status
-                              </th>
-                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr className="border-b border-gray-200 transition-colors hover:bg-gray-50">
-                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                                <input type="checkbox" className="w-4 h-4" />
-                              </td>
-                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                                <button 
-                                  className="w-4 h-4 text-black hover:text-gray-700"
-                                  onClick={() => handleEditClick('9555625186')}
-                                >
-                                  <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
-                                  </svg>
-                                </button>
-                              </td>
-                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Test</td>
-                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Test 42.0</td>
-                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Personal</td>
-                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                                <div className="bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
-                                  Pending
-                                </div>
-                              </td>
-                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
-                                <div className="flex gap-2">
-                                  <Button 
-                                    className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 text-xs rounded"
-                                  >
-                                    Resend OTP
-                                  </Button>
-                                  <Button 
-                                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-xs rounded"
-                                  >
-                                    Skip Host Approval
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
+                      <EnhancedTable
+                        data={unexpectedVisitorDataWithIndex}
+                        columns={unexpectedVisitorColumns}
+                        renderRow={renderUnexpectedVisitorRow}
+                        enableSearch={true}
+                        enableSelection={false}
+                        enableExport={true}
+                        storageKey="unexpected-visitors-table"
+                        emptyMessage="No unexpected visitors available"
+                        exportFileName="unexpected-visitors"
+                        searchPlaceholder="Search by visitor name, details, or purpose"
+                        hideTableExport={false}
+                        hideColumnsButton={false}
+                      />
                     )}
                     
                     {activeVisitorType === 'expected' && (
-                      <div className="text-center text-gray-500 py-16">
-                        Expected Visitor content will be displayed here
-                      </div>
+                      <EnhancedTable
+                        data={expectedVisitorDataWithIndex}
+                        columns={expectedVisitorColumns}
+                        renderRow={renderExpectedVisitorRow}
+                        enableSearch={true}
+                        enableSelection={false}
+                        enableExport={true}
+                        storageKey="expected-visitors-table"
+                        emptyMessage="No expected visitors available"
+                        exportFileName="expected-visitors"
+                        searchPlaceholder="Search by visitor name, details, or purpose"
+                        hideTableExport={false}
+                        hideColumnsButton={false}
+                      />
                     )}
                   </div>
                 </div>
@@ -398,57 +541,20 @@ export const VisitorsDashboard = () => {
               {/* Visitor Out tab content */}
               {visitorSubTab === 'visitor-out' && (
                 <div className="p-4 min-h-[400px]">
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-50">
-                          <TableHead>Visitor Name</TableHead>
-                          <TableHead>Host</TableHead>
-                          <TableHead>Purpose</TableHead>
-                          <TableHead>Location</TableHead>
-                          <TableHead>Checked In At</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Check Out</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {visitorOutData.map((visitor) => (
-                          <TableRow key={visitor.id}>
-                            <TableCell className="font-medium">
-                              {visitor.visitorName}
-                            </TableCell>
-                            <TableCell>{visitor.host}</TableCell>
-                            <TableCell>{visitor.purpose}</TableCell>
-                            <TableCell>{visitor.location || '--'}</TableCell>
-                            <TableCell>{visitor.checkedInAt}</TableCell>
-                            <TableCell>
-                              <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                                {visitor.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Button 
-                                onClick={() => handleCheckOut(visitor.id)}
-                                className="bg-[#F97316] hover:bg-[#F97316]/90 text-white px-3 py-1 text-sm rounded"
-                              >
-                                Check Out
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {visitorOutData.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={7} className="text-center py-12">
-                              <div className="flex flex-col items-center text-gray-500">
-                                <div className="text-lg font-medium mb-2">No visitors to check out</div>
-                                <div className="text-sm">There are no checked-in visitors to display</div>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                  <EnhancedTable
+                    data={visitorOutDataWithIndex}
+                    columns={visitorOutColumns}
+                    renderRow={renderVisitorOutRow}
+                    enableSearch={true}
+                    enableSelection={false}
+                    enableExport={true}
+                    storageKey="visitor-out-table"
+                    emptyMessage="No visitors to check out"
+                    exportFileName="visitor-out"
+                    searchPlaceholder="Search by visitor name, host, or purpose"
+                    hideTableExport={false}
+                    hideColumnsButton={false}
+                  />
                 </div>
               )}
 
@@ -494,63 +600,20 @@ export const VisitorsDashboard = () => {
                   </div>
 
                   {/* Visitor History Table */}
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-50">
-                          <TableHead>Visitor Name</TableHead>
-                          <TableHead>Host</TableHead>
-                          <TableHead>Location</TableHead>
-                          <TableHead>Purpose</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Pass Number</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredVisitors.map((visitor) => (
-                          <TableRow key={visitor.id}>
-                            <TableCell className="font-medium">{visitor.name}</TableCell>
-                            <TableCell>{visitor.host}</TableCell>
-                            <TableCell>{visitor.location || '--'}</TableCell>
-                            <TableCell>{visitor.purpose}</TableCell>
-                            <TableCell>
-                              <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                                {visitor.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{visitor.passNumber}</TableCell>
-                          </TableRow>
-                        ))}
-                        {filteredVisitors.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center py-12">
-                              <div className="flex flex-col items-center text-gray-500">
-                                <div className="text-lg font-medium mb-2">
-                                  {searchTerm ? 'No visitors found' : 'No visitor history available'}
-                                </div>
-                                <div className="text-sm mb-4">
-                                  {searchTerm 
-                                    ? `No results found for "${searchTerm}"` 
-                                    : 'There are no visitor records to display'
-                                  }
-                                </div>
-                                {searchTerm && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setSearchTerm('')}
-                                    className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                                  >
-                                    Clear search
-                                  </Button>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
+                  <EnhancedTable
+                    data={visitorHistoryDataWithIndex}
+                    columns={visitorHistoryColumns}
+                    renderRow={renderVisitorHistoryRow}
+                    enableSearch={true}
+                    enableSelection={false}
+                    enableExport={true}
+                    storageKey="visitor-history-table"
+                    emptyMessage="No visitor history available"
+                    exportFileName="visitor-history"
+                    searchPlaceholder="Search by visitor name, host, or pass number"
+                    hideTableExport={false}
+                    hideColumnsButton={false}
+                  />
                 </div>
               )}
             </Tabs>
