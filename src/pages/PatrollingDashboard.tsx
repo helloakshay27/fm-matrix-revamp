@@ -88,15 +88,9 @@ export const PatrollingDashboard = () => {
   };
 
   return (
-    <div className="p-6 min-h-screen">
+    <div className="p-6 bg-[#f6f4ee] min-h-screen">
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>security</span>
-          <span>&gt;</span>
-          <span>Patrolling</span>
-        </div>
-        
-        <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a] mb-6 uppercase">PATROLLING LIST</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-6 uppercase">PATROLLING LIST</h1>
         
         {/* Action Buttons */}
         <div className="flex gap-3 mb-6">
@@ -145,26 +139,27 @@ export const PatrollingDashboard = () => {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <Table>
-            <TableHeader className="bg-[#f6f4ee]">
-              <TableRow>
-                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">
-                  <div className="flex items-center gap-2">
-                    <input type="checkbox" className="mr-2" />
-                    Actions
-                  </div>
-                </TableHead>
-                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">Location</TableHead>
-                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">Scheduled Time</TableHead>
-                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">Created On</TableHead>
-                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">Start Date</TableHead>
-                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">End Date</TableHead>
-                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">Grace Time(Hours)</TableHead>
-                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">Active/Inactive</TableHead>
-                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">QR Code</TableHead>
-              </TableRow>
-            </TableHeader>
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead className="text-left text-sm font-medium text-gray-900">
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" className="mr-2" />
+                      Actions
+                    </div>
+                  </TableHead>
+                  <TableHead className="text-left text-sm font-medium text-gray-900">Location</TableHead>
+                  <TableHead className="text-left text-sm font-medium text-gray-900">Scheduled Time</TableHead>
+                  <TableHead className="text-left text-sm font-medium text-gray-900">Created On</TableHead>
+                  <TableHead className="text-left text-sm font-medium text-gray-900">Start Date</TableHead>
+                  <TableHead className="text-left text-sm font-medium text-gray-900">End Date</TableHead>
+                  <TableHead className="text-left text-sm font-medium text-gray-900">Grace Time(Hours)</TableHead>
+                  <TableHead className="text-left text-sm font-medium text-gray-900">Active/Inactive</TableHead>
+                  <TableHead className="text-left text-sm font-medium text-gray-900">QR Code</TableHead>
+                </TableRow>
+              </TableHeader>
             <TableBody>
               {patrollingData.map((patrol) => (
                 <TableRow key={patrol.id} className="hover:bg-gray-50">
@@ -230,7 +225,8 @@ export const PatrollingDashboard = () => {
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </div>
       </div>
 
