@@ -11,6 +11,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings } from 'lucide-react';
+import { Button, Box, Typography, IconButton } from '@mui/material';
+import { Upload, X } from 'lucide-react';
 
 interface BasicDetailsSectionProps {
   category: string;
@@ -31,6 +33,11 @@ interface BasicDetailsSectionProps {
   setTag: (value: string) => void;
   mustHave: boolean;
   handleMustHaveChange: (checked: boolean | "indeterminate") => void;
+  siteList: { id: number; name: string }[];
+  categories: { id: number; name: string }[];
+  subCategories: { id: number; name: string; parent_id: number | null }[];
+  attachments: File[];
+  onAttachmentsChange: (files: File[]) => void;
 }
 
 export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
@@ -51,7 +58,12 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
   tag,
   setTag,
   mustHave,
-  handleMustHaveChange
+  handleMustHaveChange,
+  attachments,
+  onAttachmentsChange,
+  siteList = [],
+  categories = [],
+  subCategories = [],
 }) => {
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
@@ -68,6 +80,19 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
     border: '1px solid #ccc',
     fontFamily: 'inherit',
     resize: 'vertical' as const,
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      onAttachmentsChange([...attachments, ...newFiles]);
+    }
+  };
+
+  const handleRemoveFile = (indexToRemove: number) => {
+    const updatedAttachments = attachments.filter((_, index) => index !== indexToRemove);
+    onAttachmentsChange(updatedAttachments);
   };
 
   return (
@@ -95,10 +120,9 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
               sx={fieldStyles}
             >
               <MenuItem value=""><em>Select Category</em></MenuItem>
-              <MenuItem value="landscape">Landscape</MenuItem>
-              <MenuItem value="facade">Façade</MenuItem>
-              <MenuItem value="security">Security & surveillance</MenuItem>
-              <MenuItem value="inside-units">Inside Units</MenuItem>
+              {categories.map((cat) => (
+                <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
+              ))}
             </MuiSelect>
           </FormControl>
 
@@ -111,12 +135,14 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
               value={subCategory}
               onChange={(e) => setSubCategory(e.target.value)}
               sx={fieldStyles}
+              disabled={!category}
             >
               <MenuItem value=""><em>Select Sub Category</em></MenuItem>
-              <MenuItem value="access-control">Access Control</MenuItem>
-              <MenuItem value="cctv">CCTV</MenuItem>
-              <MenuItem value="bedroom">Bedroom</MenuItem>
-              <MenuItem value="entry-exit">Entry-Exit</MenuItem>
+              {subCategories
+                .filter((sc) => String(sc.parent_id) === String(category))
+                .map((sc) => (
+                  <MenuItem key={sc.id} value={sc.id}>{sc.name}</MenuItem>
+                ))}
             </MuiSelect>
           </FormControl>
 
@@ -131,8 +157,9 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
               sx={fieldStyles}
             >
               <MenuItem value=""><em>Select Site</em></MenuItem>
-              <MenuItem value="lockated">Lockated</MenuItem>
-              <MenuItem value="godrej-prime">Godrej Prime, Gurgaon</MenuItem>
+              {siteList.map((s) => (
+                <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
+              ))}
             </MuiSelect>
           </FormControl>
         </div>
@@ -162,7 +189,9 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
             >
               <MenuItem value=""><em>Select Categorization</em></MenuItem>
               <MenuItem value="safety">Safety</MenuItem>
-              <MenuItem value="workaround">Workaround</MenuItem>
+              <MenuItem value="Security">Security</MenuItem>
+              <MenuItem value="Customer Experience">Customer Experience</MenuItem>
+              <MenuItem value="CAM">CAM</MenuItem>
             </MuiSelect>
           </FormControl>
 
@@ -178,8 +207,8 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
             >
               <MenuItem value=""><em>Select Tag</em></MenuItem>
               <MenuItem value="workaround">Workaround</MenuItem>
-              <MenuItem value="critical">Critical</MenuItem>
-              <MenuItem value="minor">Minor</MenuItem>
+              <MenuItem value="Learning for the future project">Learning for the future project</MenuItem>
+
             </MuiSelect>
           </FormControl>
         </div>
@@ -225,6 +254,126 @@ export const BasicDetailsSection: React.FC<BasicDetailsSectionProps> = ({
               Must Have
             </label>
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Attachments
+          </label>
+          <Box
+            sx={{
+              border: '2px dashed #dc2626',
+              borderRadius: '6px',
+              backgroundColor: '#f9fafb',
+              minHeight: '96px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 2,
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: '#f3f4f6',
+              },
+            }}
+            onClick={() => document.getElementById('file-upload-attachments')?.click()}
+          >
+            <Upload className="w-8 h-8 text-gray-400 mb-2" />
+            <Typography variant="body2" sx={{ color: '#374151', textAlign: 'center' }}>
+              Click to upload files or drag and drop
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#9ca3af', textAlign: 'center' }}>
+              PNG, JPG, PDF up to 10MB
+            </Typography>
+            <input
+              type="file"
+              multiple
+              accept=".png,.jpg,.jpeg,.pdf"
+              id="file-upload-attachments"
+              style={{ display: 'none' }}
+              onChange={handleFileUpload}
+            />
+            <Button
+              variant="outlined"
+              size="small"
+              sx={{
+                mt: 1,
+                borderColor: '#dc2626',
+                color: '#dc2626',
+                '&:hover': {
+                  borderColor: '#b91c1c',
+                  backgroundColor: 'rgba(220, 38, 38, 0.04)',
+                },
+              }}
+            >
+              Choose Files
+            </Button>
+          </Box>
+
+          {/* Preview Section */}
+          {attachments && attachments?.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                Selected Files ({attachments.length})
+              </Typography>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                  gap: 2,
+                }}
+              >
+                {attachments.map((file, index) => (
+                  <Box key={index} sx={{ position: 'relative' }}>
+                    {file.type.startsWith('image/') ? (
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={file.name}
+                        style={{
+                          width: '100%',
+                          height: '100px',
+                          objectFit: 'cover',
+                          borderRadius: '4px',
+                          border: '1px solid #e5e7eb',
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: '100%',
+                          height: '100px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: '#f3f4f6',
+                          borderRadius: '4px',
+                          border: '1px solid #e5e7eb',
+                        }}
+                      >
+                        <Typography variant="caption">{file.name}</Typography>
+                      </Box>
+                    )}
+                    <IconButton
+                      size="small"
+                      sx={{
+                        position: 'absolute',
+                        top: -8,
+                        right: -8,
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: '#b91c1c',
+                        },
+                      }}
+                      onClick={() => handleRemoveFile(index)}
+                    >
+                      <X size={16} />
+                    </IconButton>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          )}
         </div>
       </CardContent>
     </Card>

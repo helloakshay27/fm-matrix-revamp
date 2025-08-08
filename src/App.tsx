@@ -576,6 +576,7 @@ import { useEffect } from 'react';
 import { getCurrency } from './store/slices/currencySlice';
 import { EditBookingSetupPage } from "./pages/setup/EditBookingSetupPage";
 import { MobileAdminOrdersPage } from "./pages/MobileAdminOrdersPage";
+import DesignInsightsSetupDashboard from "./pages/DesignInsightsSetupDashboard";
 
 
 const queryClient = new QueryClient();
@@ -1830,7 +1831,10 @@ function App() {
                   path="/settings/invoice-approvals/add"
                   element={<AddInvoiceApprovalsPage />}
                 />
-
+                <Route
+                  path="/settings/design-insights/setup"
+                  element={<DesignInsightsSetupDashboard />}
+                />
                 <Route path="/settings/checklist-setup/group" element={<ChecklistGroupsPage />} />
                 <Route path="/settings/checklist-setup/email-rule" element={<EmailRuleSetupPage />} />
                 <Route path="/settings/checklist-setup/task-escalation" element={<TaskEscalationPage />} />

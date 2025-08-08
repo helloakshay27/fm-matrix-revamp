@@ -144,7 +144,7 @@ const navigationStructure = {
         subItems: [
           { name: 'Setup', href: '/settings/waste-management/setup' }
         ]
-      }
+      },
     ]
   },
   'Finance': {
@@ -317,16 +317,17 @@ const modulesByPackage = {
         { name: 'Response', href: '/maintenance/survey/response', color: 'text-[#1a1a1a]' }
       ]
     },
-    { 
-      name: 'M Safe', 
-      icon: Shield, 
+    {
+      name: 'M Safe',
+      icon: Shield,
       href: '/maintenance/m-safe',
       subItems: [
         { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]' },
         { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' }
       ]
     },
-    { name: 'Krcc List', icon: ClipboardList, href: '/maintenance/krcc-list' }
+    { name: 'Krcc List', icon: ClipboardList, href: '/maintenance/krcc-list' },
+    // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
   ],
   'Safety': [
     { name: 'Incident', icon: AlertTriangle, href: '/safety/incident' },
@@ -546,6 +547,14 @@ const modulesByPackage = {
             { name: 'Setup', href: '/settings/waste-management/setup' }
           ]
         },
+
+        {
+          name: 'Design Insight Setup',
+          icon: Target,
+          subItems: [
+            { name: 'Setup', href: '/settings/design-insights/setup' }
+          ]
+        }
       ]
     },
     {
