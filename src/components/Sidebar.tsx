@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
+import { useUser } from '../contexts/UserContext';
 import {
   Users, Settings, FileText, Building, Car, Shield, DollarSign,
   Clipboard, AlertTriangle, Bell, Package, Wrench, BarChart3,
@@ -12,7 +13,7 @@ import {
   ChevronRight, ChevronLeft, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
   Archive, TreePine, FlaskConical, Mail, ClipboardList,
-  Currency
+  Currency, Loader2
 } from 'lucide-react';
 
 const navigationStructure = {

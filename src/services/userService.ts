@@ -9,6 +9,14 @@ export interface UsersResponse {
   users: User[];
 }
 
+export interface UserRoleResponse {
+  user_role?: {
+    role_name: string;
+    permissions_hash: string | object;
+  };
+  permissions_hash?: string | object;
+}
+
 export interface TaskRescheduleData {
   scheduleDate: string;
   time: string;
@@ -18,6 +26,16 @@ export interface TaskRescheduleData {
 }
 
 export const userService = {
+  async getUserRole(): Promise<UserRoleResponse> {
+    try {
+      const response = await apiClient.get<UserRoleResponse>('/pms/users/get_user_role.json');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+      throw error;
+    }
+  },
+
   async getEscalateToUsers(): Promise<User[]> {
     try {
       const response = await apiClient.get<UsersResponse>('/pms/users/get_escalate_to_users.json');

@@ -11,6 +11,7 @@ import { store } from "./store/store";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
+import { UserProvider } from "./contexts/UserContext";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Dashboard } from "./pages/Dashboard";
@@ -601,7 +602,8 @@ function App() {
     <Provider store={store}>
       <Router>
         <QueryClientProvider client={queryClient}>
-          <LayoutProvider>
+          <UserProvider>
+            <LayoutProvider>
             <Routes>
               {/* Login Route */}
 
@@ -1915,6 +1917,7 @@ function App() {
               }}
             />
           </LayoutProvider>
+          </UserProvider>
         </QueryClientProvider>
       </Router>
     </Provider>

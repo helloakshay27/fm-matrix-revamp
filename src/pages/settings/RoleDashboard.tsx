@@ -16,11 +16,12 @@ import { useNavigate } from 'react-router-dom';
 import { roleService, ApiRole } from '@/services/roleService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchRoles, updateRolePermissions } from '@/store/slices/roleSlice';
-import { fetchFunctions } from '@/store/slices/functionSlice';
 import { getAuthHeader } from '@/config/apiConfig';
+import sidebarConfig from '@/config/sidebarConfig.json';
 
 interface Permission {
   name: string;
+  module: string;
   all: boolean;
   add: boolean;
   view: boolean;
@@ -28,204 +29,74 @@ interface Permission {
   disable: boolean;
 }
 
-interface Role {
-  id: number;
-  name: string;
-  permissions: {
-    [key: string]: Permission[];
-  };
-}
+// Function to extract all module names and their items from sidebar config
+const extractModulesAndFunctions = () => {
+  const modules: { [key: string]: string[] } = {};
+  
+  // Extract from modulesByPackage
+  Object.keys(sidebarConfig.modulesByPackage).forEach(packageName => {
+    const packageModules = sidebarConfig.modulesByPackage[packageName];
+    
+    packageModules.forEach((module: any) => {
+      if (!modules[packageName]) {
+        modules[packageName] = [];
+      }
+      
+      // Add main module
+      modules[packageName].push(module.name);
+      
+      // Add sub-items if they exist
+      if (module.subItems) {
+        module.subItems.forEach((subItem: any) => {
+          modules[packageName].push(subItem.name);
+          
+          // Add nested sub-items if they exist
+          if (subItem.subItems) {
+            subItem.subItems.forEach((nestedItem: any) => {
+              modules[packageName].push(nestedItem.name);
+            });
+          }
+        });
+      }
+    });
+  });
+  
+  return modules;
+};
+
+// Function to convert function name to API key
+const convertToApiKey = (functionName: string): string => {
+  return functionName
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '') // Remove special characters except spaces
+    .trim()
+    .replace(/\s+/g, '_'); // Replace spaces with underscores
+};
 
 
 export const RoleDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { roles, loading, error } = useAppSelector((state) => state.role);
-  const { functions, loading: functionsLoading } = useAppSelector((state) => state.function);
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all_functions');
+  const [activeTab, setActiveTab] = useState('Master');
   const [selectedRole, setSelectedRole] = useState<ApiRole | null>(null);
   const [rolePermissions, setRolePermissions] = useState<{ [roleId: number]: { [tab: string]: Permission[] } }>({});
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Fetch roles and functions from API
+  // Get modules and functions from static config
+  const modulesAndFunctions = extractModulesAndFunctions();
+  const moduleNames = Object.keys(modulesAndFunctions);
+
+  // Fetch roles from API
   useEffect(() => {
     dispatch(fetchRoles());
-    dispatch(fetchFunctions());
   }, [dispatch]);
 
-  // Helper function to map API permission key to function name
-  const mapApiKeyToFunctionName = (apiKey: string): string => {
-    // Create mapping for common API keys to function names
-    const mapping: { [key: string]: string } = {
-      'pms_notices': 'Broadcast',
-      'pms_complaints': 'Tickets', 
-      'pms_documents': 'Documents',
-      'pms_supplier': 'Supplier',
-      'pms_tasks': 'Tasks',
-      'pms_services': 'Service',
-      'pms_energy': 'Meters',
-      'pms_asset_amcs': 'AMC',
-      'pms_assets': 'Asset',
-      'pms_materials': 'Materials',
-      'pms_purchase_orders': 'PO',
-      'pms_work_orders': 'WO',
-      'pms_complaint_reports': 'Report',
-      'pms_attendances': 'Attendance',
-      'pms_business_directories': 'Business Directory',
-      'pms_purchase_orders_approval': 'PO Approval',
-      'pms_dashboard': 'Dashboard',
-      'pms_tracings': 'Tracing',
-      'pms_bi_reports': 'BI Reports',
-      'pms_restaurants': 'Restaurants',
-      'pms_my_ledgers': 'My Ledgers',
-      'pms_loi': 'Letter Of Indent',
-      'pms_work_order_invoices': 'Wo Invoices',
-      'pms_bills': 'Bill',
-      'pms_engineering_reports': 'Engineering Reports',
-      'pms_events': 'Events',
-      'customers': 'Customers',
-      'quikgate_report': 'QuickGate Report',
-      'task_management': 'Task Management',
-      'pms_ceo_dashboard': 'CEO Dashboard',
-      'operational_audits': 'Operational Audit',
-      'mom_details': 'Mom Details',
-      'pms_design_inputs': 'Pms Design Inputs',
-      'vendor_audit': 'Vendor Audit',
-      'permits': 'Permits',
-      'pending_approvals': 'Pending Approvals',
-      'accounts': 'Accounts',
-      'customer_bills': 'Customer Bills',
-      'my_bills': 'My Bills',
-      'pms_water': 'Water',
-      'pms_stp': 'STP',
-      'daily_readings': 'Daily Readings',
-      'utility_consumption': 'Utility Consumption',
-      'utility_request': 'Utility Request',
-      'space': 'Space',
-      'project_management': 'Project Management',
-      'pms_incidents': 'Pms Incidents',
-      'site_dashboard': 'Site Dashboard',
-      'stepathone_dashboard': 'Steppstone Dashboard',
-      'transport': 'Transport',
-      'waste_generation': 'Waste Generation',
-      'gdn': 'GDN',
-      'parking': 'Parking',
-      'gdn_dispatch': 'GDN Dispatch',
-      'pms_inventories': 'Inventory',
-      'pms_grns': 'GRN',
-      'pms_srns': 'SRNS',
-      'pms_accounts': 'Accounts',
-      'pms_consumption': 'Consumption',
-      'pms_setup': 'Account',
-      'pms_user_roles': 'User & Roles',
-      'pms_meter_types': 'Meter Types',
-      'pms_asset_groups': 'Asset Groups',
-      'pms_helpdesk_categories': 'Ticket',
-      'pms_email_rule_setup': 'Email Rule',
-      'pms_usergroups': 'FM Groups',
-      'pms_export': 'Export',
-      'pms_hsns': 'SAC/HSN Setup',
-      'pms_billing_addresses': 'Addresses',
-      'pms_master_checklist': 'Master Checklist',
-      'pms_visitors': 'Visitors',
-      'pms_rvehicles': 'R Vehicles',
-      'pms_gvehicles': 'G Vehicles',
-      'pms_staffs': 'Staffs',
-      'goods_in_out': 'Goods In Out',
-      'pms_patrolling': 'Patrolling'
-    };
-    
-    return mapping[apiKey] || apiKey;
-  };
-
-  // Helper function to map function name back to API key
-  const mapFunctionNameToApiKey = (functionName: string): string => {
-    const reverseMapping: { [key: string]: string } = {
-      'Broadcast': 'pms_notices',
-      'Tickets': 'pms_complaints', 
-      'Documents': 'pms_documents',
-      'Supplier': 'pms_supplier',
-      'Tasks': 'pms_tasks',
-      'Service': 'pms_services',
-      'Meters': 'pms_energy',
-      'AMC': 'pms_asset_amcs',
-      'Asset': 'pms_assets',
-      'Materials': 'pms_materials',
-      'PO': 'pms_purchase_orders',
-      'WO': 'pms_work_orders',
-      'Report': 'pms_complaint_reports',
-      'Attendance': 'pms_attendances',
-      'Business Directory': 'pms_business_directories',
-      'PO Approval': 'pms_purchase_orders_approval',
-      'Dashboard': 'pms_dashboard',
-      'Tracing': 'pms_tracings',
-      'BI Reports': 'pms_bi_reports',
-      'Restaurants': 'pms_restaurants',
-      'My Ledgers': 'pms_my_ledgers',
-      'Letter Of Indent': 'pms_loi',
-      'Wo Invoices': 'pms_work_order_invoices',
-      'Bill': 'pms_bills',
-      'Engineering Reports': 'pms_engineering_reports',
-      'Events': 'pms_events',
-      'Customers': 'customers',
-      'QuickGate Report': 'quikgate_report',
-      'Task Management': 'task_management',
-      'CEO Dashboard': 'pms_ceo_dashboard',
-      'Operational Audit': 'operational_audits',
-      'Mom Details': 'mom_details',
-      'Pms Design Inputs': 'pms_design_inputs',
-      'Vendor Audit': 'vendor_audit',
-      'Permits': 'permits',
-      'Pending Approvals': 'pending_approvals',
-      'Accounts': 'accounts',
-      'Customer Bills': 'customer_bills',
-      'My Bills': 'my_bills',
-      'Water': 'pms_water',
-      'STP': 'pms_stp',
-      'Daily Readings': 'daily_readings',
-      'Utility Consumption': 'utility_consumption',
-      'Utility Request': 'utility_request',
-      'Space': 'space',
-      'Project Management': 'project_management',
-      'Pms Incidents': 'pms_incidents',
-      'Site Dashboard': 'site_dashboard',
-      'Steppstone Dashboard': 'stepathone_dashboard',
-      'Transport': 'transport',
-      'Waste Generation': 'waste_generation',
-      'GDN': 'gdn',
-      'Parking': 'parking',
-      'GDN Dispatch': 'gdn_dispatch',
-      'Inventory': 'pms_inventories',
-      'GRN': 'pms_grns',
-      'SRNS': 'pms_srns',
-      'Consumption': 'pms_consumption',
-      'Account': 'pms_setup',
-      'User & Roles': 'pms_user_roles',
-      'Meter Types': 'pms_meter_types',
-      'Asset Groups': 'pms_asset_groups',
-      'Ticket': 'pms_helpdesk_categories',
-      'Email Rule': 'pms_email_rule_setup',
-      'FM Groups': 'pms_usergroups',
-      'Export': 'pms_export',
-      'SAC/HSN Setup': 'pms_hsns',
-      'Addresses': 'pms_billing_addresses',
-      'Master Checklist': 'pms_master_checklist',
-      'Visitors': 'pms_visitors',
-      'R Vehicles': 'pms_rvehicles',
-      'G Vehicles': 'pms_gvehicles',
-      'Staffs': 'pms_staffs',
-      'Goods In Out': 'goods_in_out',
-      'Patrolling': 'pms_patrolling'
-    };
-    
-    return reverseMapping[functionName] || functionName.toLowerCase().replace(/\s+/g, '_');
-  };
-
-  // Initialize permissions for roles when functions are loaded
+  // Initialize permissions for roles when they are loaded
   useEffect(() => {
-    if (functions.length > 0 && roles.length > 0 && !isUpdating) {
+    if (roles.length > 0 && !isUpdating) {
       const initialPermissions: { [roleId: number]: { [tab: string]: Permission[] } } = {};
       
       roles.forEach(role => {
@@ -247,36 +118,30 @@ export const RoleDashboard = () => {
             rolePermissionsData = {};
           }
           
-          tabs.forEach(tab => {
-            initialPermissions[role.id][tab] = functions
-              .filter(func => func.parent_function === tab)
-              .map(func => {
-                // Look for matching API permission using the function name directly 
-                // or try to find by mapped name
-                let apiPermissions: any = {};
-                
-                // First try direct match with function name
-                if (rolePermissionsData[func.name]) {
-                  apiPermissions = rolePermissionsData[func.name];
-                } else {
-                  // Try to find by reverse mapping - look for API key that maps to this function name
-                  const apiKey = Object.keys(rolePermissionsData).find(key => 
-                    mapApiKeyToFunctionName(key) === func.name
-                  );
-                  if (apiKey) {
-                    apiPermissions = rolePermissionsData[apiKey];
-                  }
-                }
-                
-                return {
-                  name: func.name,
-                  all: apiPermissions.all === "true",
-                  add: apiPermissions.create === "true", 
-                  view: apiPermissions.show === "true",
-                  edit: apiPermissions.update === "true",
-                  disable: apiPermissions.destroy === "true"
-                };
-              });
+          // Initialize permissions for each module
+          moduleNames.forEach(moduleName => {
+            const functionsInModule = modulesAndFunctions[moduleName];
+            
+            initialPermissions[role.id][moduleName] = functionsInModule.map(functionName => {
+              // Convert function name to API key to look up permissions
+              const apiKey = convertToApiKey(functionName);
+              let apiPermissions: any = {};
+              
+              // Look for permissions using the API key
+              if (rolePermissionsData[apiKey]) {
+                apiPermissions = rolePermissionsData[apiKey];
+              }
+              
+              return {
+                name: functionName,
+                module: moduleName,
+                all: apiPermissions.all === "true",
+                add: apiPermissions.create === "true", 
+                view: apiPermissions.show === "true",
+                edit: apiPermissions.update === "true",
+                disable: apiPermissions.destroy === "true"
+              };
+            });
           });
         }
       });
@@ -289,11 +154,7 @@ export const RoleDashboard = () => {
         }));
       }
     }
-  }, [functions, roles, isUpdating]);
-
-  // Get unique parent_function values as tabs
-  const tabs = ['all_functions', 'inventory', 'setup', 'quickgate'];
-  const tabLabels = ['All Functions', 'Inventory', 'Setup', 'Quickgate'];
+  }, [roles, isUpdating, moduleNames, modulesAndFunctions, rolePermissions]);
 
   const filteredRoles = roles.filter(role =>
     role.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -385,8 +246,8 @@ export const RoleDashboard = () => {
       // Build permissions hash for current tab
       const currentTabPermissionsHash: any = {};
       currentTabPermissions.forEach(permission => {
-        // Use the proper API key mapping instead of lowercase transformation
-        const apiKey = mapFunctionNameToApiKey(permission.name);
+        // Convert function name to API key
+        const apiKey = convertToApiKey(permission.name);
         currentTabPermissionsHash[apiKey] = {
           all: permission.all ? "true" : "false",
           create: permission.add ? "true" : "false", 
@@ -410,6 +271,8 @@ export const RoleDashboard = () => {
         permissions_hash: mergedPermissionsHash,
         lock_modules: null
       };
+
+      console.log('Updating permissions with payload:', JSON.stringify(payload, null, 2));
 
       // Make PATCH request
       const response = await fetch(`https://fm-uat-api.lockated.com/lock_roles/${currentRole.id}.json`, {
@@ -519,17 +382,17 @@ export const RoleDashboard = () => {
             
             {/* Tabs - Responsive scrolling */}
             <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-              {tabs.map((tab, index) => (
+              {moduleNames.map((moduleName) => (
                 <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  key={moduleName}
+                  onClick={() => setActiveTab(moduleName)}
                   className={`px-3 lg:px-4 py-2 rounded border text-xs lg:text-sm font-medium transition-colors whitespace-nowrap ${
-                    activeTab === tab
+                    activeTab === moduleName
                       ? 'bg-[#C72030] text-white border-[#C72030]'
                       : 'bg-white text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10'
                   }`}
                 >
-                  {tabLabels[index]}
+                  {moduleName}
                 </button>
               ))}
             </div>
@@ -562,16 +425,10 @@ export const RoleDashboard = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {functionsLoading ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center py-4">
-                            Loading functions...
-                          </TableCell>
-                        </TableRow>
-                      ) : currentPermissions.length === 0 ? (
+                      {currentPermissions.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={6} className="text-center py-4 text-gray-500">
-                            No functions found for this category
+                            No functions found for this module
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -579,6 +436,9 @@ export const RoleDashboard = () => {
                         <TableRow key={`${currentRole?.id}-${activeTab}-${permission.name}-${index}`} className="hover:bg-gray-50">
                           <TableCell className="font-medium text-xs lg:text-sm py-2 lg:py-3">
                             {permission.name}
+                            <div className="text-xs text-gray-500 mt-1">
+                              API Key: {convertToApiKey(permission.name)}
+                            </div>
                           </TableCell>
                           <TableCell className="text-center py-2 lg:py-3">
                             <div className="flex justify-center">

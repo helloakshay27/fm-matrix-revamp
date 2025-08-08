@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,10 +13,12 @@ import {
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { roleService, CreateRolePayload, LockFunction } from '@/services/roleService';
+import sidebarConfig from '@/config/sidebarConfig.json';
+import { roleService, CreateRolePayload } from '@/services/roleService';
 
 interface Permission {
-  name: string;
+  function: string;
+  module: string;
   all: boolean;
   add: boolean;
   view: boolean;
@@ -24,225 +26,140 @@ interface Permission {
   disable: boolean;
 }
 
-const allFunctionsPermissions: Permission[] = [
-  { name: 'Broadcast', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Asset', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Documents', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Tickets', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Supplier', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Tasks', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Service', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Meters', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'AMC', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Schedule', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Materials', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'PO', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'WO', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Report', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Attendance', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Business Directory', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'PO Approval', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Dashboard', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Tracing', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'BI Reports', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Restaurants', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'My Ledgers', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Letter Of Indent', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Wo Invoices', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Bill', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Engineering Reports', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Events', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Customers', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'QuickGate Report', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Task Management', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'CEO Dashboard', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Operational Audit', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Mom Details', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Pms Design Inputs', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Vendor Audit', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Permits', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Pending Approvals', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Accounts', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Customer Bills', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'My Bills', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Water', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'STP', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Daily Readings', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Utility Consumption', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Utility Request', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Space', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Project Management', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Pms Incidents', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Site Dashboard', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Steppstone Dashboard', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Transport', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Waste Generation', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'GDN', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Parking', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'GDN Dispatch', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'EV Consumption', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Msafe', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Permit Extend', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Local Travel Module', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'KRCC', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Training', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Approve Krcc', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Vi Register User', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Vi DeRegister User', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Line Manager Check', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Senior Management Tour', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Solar Generator', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Customer Permit', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Customer Parkings', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Customer Wallet', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Site Banners', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Testimonials', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Group And Channel Config', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Shared Content Config', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Site And Facility Config', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Occupant Users', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Clear SnagAnswers', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Non Re Users', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Download Msafe Report', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Download Msafe Detailed Report', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'training_list', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Vi Miles', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Krcc List', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Vi MSafe Dashboard', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Vi Miles Dashboard', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Resume Permit', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Permit Checklist', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Send To Sap', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Community Module', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Facility Setup', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Mail Room', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Parking Setup', all: false, add: false, view: false, edit: false, disable: false },
-];
+// Function to extract all module names and their items from sidebar config
+const extractModulesAndFunctions = () => {
+  const modules: { [key: string]: string[] } = {};
+  
+  // Extract from modulesByPackage
+  Object.keys(sidebarConfig.modulesByPackage).forEach(packageName => {
+    const packageModules = sidebarConfig.modulesByPackage[packageName];
+    
+    packageModules.forEach((module: any) => {
+      if (!modules[packageName]) {
+        modules[packageName] = [];
+      }
+      
+      // Add main module
+      modules[packageName].push(module.name);
+      
+      // Add sub-items if they exist
+      if (module.subItems) {
+        module.subItems.forEach((subItem: any) => {
+          modules[packageName].push(subItem.name);
+          
+          // Add nested sub-items if they exist
+          if (subItem.subItems) {
+            subItem.subItems.forEach((nestedItem: any) => {
+              modules[packageName].push(nestedItem.name);
+            });
+          }
+        });
+      }
+    });
+  });
+  
+  return modules;
+};
 
-const inventoryPermissions: Permission[] = [
-  { name: 'Inventory', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'GRN', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'SRNS', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Accounts', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Consumption', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Update Partial Inventory', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Update All Inventory', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Clone Inventory', all: false, add: false, view: false, edit: false, disable: false },
-];
+// Function to convert function name to API key format (spaces to underscores, lowercase)
+const convertToApiKey = (functionName: string): string => {
+  return functionName
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^\w_]/g, '') // Remove special characters except underscore
+    .replace(/_+/g, '_')     // Replace multiple underscores with single
+    .replace(/^_|_$/g, '');  // Remove leading/trailing underscores
+};
 
-const setupPermissions: Permission[] = [
-  { name: 'Account', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'User & Roles', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Meter Types', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Asset Groups', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Ticket', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Email Rule', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'FM Groups', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Export', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'SAC/HSN Setup', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Addresses', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Master Checklist', all: false, add: false, view: false, edit: false, disable: false },
-];
-
-const quickgatePermissions: Permission[] = [
-  { name: 'Visitors', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'R Vehicles', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'G Vehicles', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Staffs', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Goods In Out', all: false, add: false, view: false, edit: false, disable: false },
-  { name: 'Patrolling', all: false, add: false, view: false, edit: false, disable: false },
-];
+// Create initial permissions from sidebar config
+const createInitialPermissions = (): Permission[] => {
+  const modules = extractModulesAndFunctions();
+  const permissions: Permission[] = [];
+  
+  Object.keys(modules).forEach(moduleName => {
+    modules[moduleName].forEach(functionName => {
+      permissions.push({
+        function: functionName,
+        module: moduleName,
+        all: false,
+        add: false,
+        view: false,
+        edit: false,
+        disable: false
+      });
+    });
+  });
+  
+  return permissions;
+};
 
 export const AddRolePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [roleTitle, setRoleTitle] = useState('');
-  const [activeTab, setActiveTab] = useState('All Functions');
-  const [allFunctionsEnabled, setAllFunctionsEnabled] = useState(false);
-  const [inventoryEnabled, setInventoryEnabled] = useState(false);
-  const [setupEnabled, setSetupEnabled] = useState(false);
-  const [quickgateEnabled, setQuickgateEnabled] = useState(false);
+  const [activeTab, setActiveTab] = useState('All');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lockFunctions, setLockFunctions] = useState<LockFunction[]>([]);
-  const [permissions, setPermissions] = useState<{ [key: string]: Permission[] }>({
-    'All Functions': [...allFunctionsPermissions],
-    'Inventory': [...inventoryPermissions],
-    'Setup': [...setupPermissions],
-    'Quickgate': [...quickgatePermissions],
-  });
+  const [permissions, setPermissions] = useState<Permission[]>(createInitialPermissions());
+  
+  // Get unique module names for tabs
+  const moduleNames = ['All', ...Object.keys(extractModulesAndFunctions())];
+  
+  // Filter permissions based on active tab
+  const filteredPermissions = activeTab === 'All' 
+    ? permissions 
+    : permissions.filter(p => p.module === activeTab);
 
-  const tabs = ['All Functions', 'Inventory', 'Setup', 'Quickgate'] as const;
-
-  useEffect(() => {
-    const fetchLockFunctions = async () => {
-      try {
-        const functions = await roleService.getLockFunctions();
-        setLockFunctions(functions);
-      } catch (error) {
-        console.error('Error fetching lock functions:', error);
-      }
-    };
-
-    fetchLockFunctions();
-  }, []);
+  const tabs = moduleNames;
 
   const handleTabOverallChange = (tab: string, enabled: boolean) => {
-    if (tab === 'All Functions') setAllFunctionsEnabled(enabled);
-    if (tab === 'Inventory') setInventoryEnabled(enabled);
-    if (tab === 'Setup') setSetupEnabled(enabled);
-    if (tab === 'Quickgate') setQuickgateEnabled(enabled);
-
-    setPermissions(prev => ({
-      ...prev,
-      [tab]: prev[tab].map(permission => ({
-        ...permission,
-        all: enabled,
-        add: enabled,
-        view: enabled,
-        edit: enabled,
-        disable: enabled,
-      }))
-    }));
+    setPermissions(prev => 
+      prev.map(permission => 
+        permission.module === tab || tab === 'All'
+          ? {
+              ...permission,
+              all: enabled,
+              add: enabled,
+              view: enabled,
+              edit: enabled,
+              disable: enabled,
+            }
+          : permission
+      )
+    );
   };
 
-  const handlePermissionChange = (tab: string, permissionName: string, field: keyof Permission, value: boolean) => {
-    setPermissions(prev => ({
-      ...prev,
-      [tab]: prev[tab].map(permission => {
-        if (permission.name === permissionName) {
-          const updatedPermission = { ...permission, [field]: value };
-          
-          // If "All" is checked, check all other permissions
-          if (field === 'all' && value) {
-            updatedPermission.add = true;
-            updatedPermission.view = true;
-            updatedPermission.edit = true;
-            updatedPermission.disable = true;
-          }
-          // If "All" is unchecked, uncheck all other permissions
-          else if (field === 'all' && !value) {
-            updatedPermission.add = false;
-            updatedPermission.view = false;
-            updatedPermission.edit = false;
-            updatedPermission.disable = false;
-          }
-          // If any individual permission is unchecked, uncheck "All"
-          else if (!value && field !== 'all') {
-            updatedPermission.all = false;
-          }
-          // If all individual permissions are checked, check "All"
-          else if (value && field !== 'all') {
-            const allIndividualChecked = updatedPermission.add && updatedPermission.view && updatedPermission.edit && updatedPermission.disable;
-            if (allIndividualChecked) {
-              updatedPermission.all = true;
-            }
-          }
-          
-          return updatedPermission;
-        }
-        return permission;
-      })
-    }));
+  const handlePermissionChange = (functionName: string, field: keyof Omit<Permission, 'function' | 'module'>, checked: boolean) => {
+    const newPermissions = [...permissions];
+    const index = newPermissions.findIndex(p => p.function === functionName);
+    
+    if (index === -1) return;
+    
+    if (field === 'all') {
+      // If "All" is checked/unchecked, update all other permissions for this row
+      newPermissions[index] = {
+        ...newPermissions[index],
+        all: checked,
+        add: checked,
+        view: checked,
+        edit: checked,
+        disable: checked,
+      };
+    } else {
+      // Update specific permission
+      newPermissions[index] = {
+        ...newPermissions[index],
+        [field]: checked,
+      };
+      
+      // Update "All" checkbox based on other permissions
+      const otherPerms = ['add', 'view', 'edit', 'disable'] as const;
+      const allChecked = otherPerms.every(perm => 
+        perm === field ? checked : newPermissions[index][perm]
+      );
+      newPermissions[index].all = allChecked;
+    }
+    
+    setPermissions(newPermissions);
   };
 
   const handleSubmit = async () => {
@@ -256,88 +173,53 @@ export const AddRolePage = () => {
     }
 
     setIsSubmitting(true);
-    
+
     try {
-      // Build dynamic permissions hash based on API action_names
-      const permissions_hash: Record<string, { create?: string; update?: string; destroy?: string }> = {};
-      let hasAnyPermission = false;
-
-      console.log('Lock functions from API:', lockFunctions);
-      console.log('Current permissions state:', permissions);
-
-      // Iterate through selected permissions and find matching lock functions
-      Object.entries(permissions).forEach(([tabName, tabPermissions]) => {
-        tabPermissions.forEach(permission => {
-          // Check if any permission is selected for this function
-          if (permission.add || permission.view || permission.edit || permission.disable) {
-            console.log(`Processing permission: ${permission.name}`);
-            
-            // Find corresponding lock function - try multiple matching strategies
-            let lockFunction = lockFunctions.find(lf => 
-              lf.function_name?.toLowerCase() === permission.name.toLowerCase() ||
-              lf.action_name?.toLowerCase() === permission.name.toLowerCase() ||
-              lf.function_name?.toLowerCase().replace(/\s+/g, '_') === permission.name.toLowerCase().replace(/\s+/g, '_')
-            );
-            
-            if (!lockFunction) {
-              console.log(`No matching lock function found for: ${permission.name}`);
-              // Fallback to using permission name as action name
-              const fallbackActionName = permission.name.toLowerCase().replace(/\s+/g, '_');
-              console.log(`Using fallback action name: ${fallbackActionName}`);
-              
-              const actions: { create?: string; update?: string; destroy?: string } = {};
-              if (permission.add) actions.create = "true";
-              if (permission.edit) actions.update = "true";
-              if (permission.disable) actions.destroy = "true";
-              
-              if (Object.keys(actions).length > 0) {
-                permissions_hash[fallbackActionName] = actions;
-                hasAnyPermission = true;
-              }
-            } else {
-              console.log(`Found matching lock function: ${lockFunction.function_name} -> ${lockFunction.action_name}`);
-              
-              const actions: { create?: string; update?: string; destroy?: string } = {};
-              if (permission.add) actions.create = "true";
-              if (permission.edit) actions.update = "true";
-              if (permission.disable) actions.destroy = "true";
-              
-              if (Object.keys(actions).length > 0) {
-                permissions_hash[lockFunction.action_name] = actions;
-                hasAnyPermission = true;
-              }
-            }
-          }
-        });
+      console.log('Role Title:', roleTitle);
+      console.log('Permissions:', permissions);
+      
+      // Create payload in the format expected by API
+      const permissionsHash: { [key: string]: any } = {};
+      
+      permissions.forEach(permission => {
+        // Only include permissions that have at least one action selected
+        if (permission.add || permission.view || permission.edit || permission.disable) {
+          const apiKey = convertToApiKey(permission.function);
+          permissionsHash[apiKey] = {
+            all: permission.all ? "true" : "false",
+            create: permission.add ? "true" : "false",
+            show: permission.view ? "true" : "false", 
+            update: permission.edit ? "true" : "false",
+            destroy: permission.disable ? "true" : "false"
+          };
+        }
       });
 
-      console.log('Final permissions_hash:', permissions_hash);
-      console.log('Has any permission:', hasAnyPermission);
-      
-      // Create the API payload
       const payload: CreateRolePayload = {
         lock_role: {
-          name: roleTitle.trim()
+          name: roleTitle.trim(),
         },
-        permissions_hash,
+        permissions_hash: permissionsHash,
         lock_modules: 1
       };
 
-      // Only add parent_function if permissions are selected
-      if (hasAnyPermission) {
-        payload.parent_function = true;
-      }
-
-      console.log('Creating role with payload:', payload);
+      console.log('API Payload:', JSON.stringify(payload, null, 2));
+      console.log('Permissions Hash Keys:', Object.keys(permissionsHash));
       
-      // Call the API
+      // Example of how individual function keys look:
+      console.log('Function Key Examples:');
+      permissions.slice(0, 5).forEach(permission => {
+        console.log(`"${permission.function}" -> "${convertToApiKey(permission.function)}"`);
+      });
+
+      // Call the API to create the role
       const response = await roleService.createRole(payload);
       
       console.log('Role creation response:', response);
-      
+
       toast({
         title: "Success",
-        description: `Role "${roleTitle}" has been successfully created!`,
+        description: `Role "${roleTitle}" has been created successfully!`,
       });
       
       // Navigate back to roles list
@@ -348,7 +230,7 @@ export const AddRolePage = () => {
       
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to create role. Please try again.",
+        description: error.message || "Failed to create role. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -361,11 +243,10 @@ export const AddRolePage = () => {
   };
 
   const getTabEnabled = (tab: string) => {
-    if (tab === 'All Functions') return allFunctionsEnabled;
-    if (tab === 'Inventory') return inventoryEnabled;
-    if (tab === 'Setup') return setupEnabled;
-    if (tab === 'Quickgate') return quickgateEnabled;
-    return false;
+    if (tab === 'All') {
+      return permissions.every(p => p.all);
+    }
+    return permissions.filter(p => p.module === tab).every(p => p.all);
   };
 
   return (
@@ -383,7 +264,7 @@ export const AddRolePage = () => {
           {/* Role Title Input */}
           <div className="flex flex-col gap-2">
             <label htmlFor="roleTitle" className="text-sm font-medium">
-              Role Title
+              Role Titles
             </label>
             <Input
               id="roleTitle"
@@ -415,6 +296,16 @@ export const AddRolePage = () => {
                       onClick={() => setActiveTab(tab)}
                     >
                       {tab}
+                      {tab !== 'All' && (
+                        <span className="ml-2 text-xs opacity-75">
+                          ({permissions.filter(p => p.module === tab).length})
+                        </span>
+                      )}
+                      {tab === 'All' && (
+                        <span className="ml-2 text-xs opacity-75">
+                          ({permissions.length})
+                        </span>
+                      )}
                     </label>
                   </div>
                 ))}
@@ -471,69 +362,78 @@ export const AddRolePage = () => {
                           </TableHead>
                         </TableRow>
                       </TableHeader>
-                      <TableBody>
-                        {permissions[activeTab]?.map((permission) => (
-                          <TableRow key={permission.name} className="hover:bg-gray-50">
-                            <TableCell className="font-medium text-xs lg:text-sm py-2 lg:py-3">
-                              {permission.name}
-                            </TableCell>
-                            <TableCell className="text-center py-2 lg:py-3">
-                              <div className="flex justify-center">
-                                <Checkbox
-                                  checked={permission.all}
-                                  onCheckedChange={(checked) => 
-                                    handlePermissionChange(activeTab, permission.name, 'all', checked as boolean)
-                                  }
-                                  className="w-4 h-4"
-                                />
+                      <TableBody>                      {filteredPermissions.map((permission, index) => (
+                        <TableRow key={`${permission.module}-${permission.function}-${index}`} className="hover:bg-gray-50">
+                          <TableCell className="font-medium text-xs lg:text-sm py-2 lg:py-3">
+                            <div>
+                              <div>{permission.function}</div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                API Key: {convertToApiKey(permission.function)}
                               </div>
-                            </TableCell>
-                            <TableCell className="text-center py-2 lg:py-3">
-                              <div className="flex justify-center">
-                                <Checkbox
-                                  checked={permission.add}
-                                  onCheckedChange={(checked) => 
-                                    handlePermissionChange(activeTab, permission.name, 'add', checked as boolean)
-                                  }
-                                  className="w-4 h-4"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center py-2 lg:py-3">
-                              <div className="flex justify-center">
-                                <Checkbox
-                                  checked={permission.view}
-                                  onCheckedChange={(checked) => 
-                                    handlePermissionChange(activeTab, permission.name, 'view', checked as boolean)
-                                  }
-                                  className="w-4 h-4"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center py-2 lg:py-3">
-                              <div className="flex justify-center">
-                                <Checkbox
-                                  checked={permission.edit}
-                                  onCheckedChange={(checked) => 
-                                    handlePermissionChange(activeTab, permission.name, 'edit', checked as boolean)
-                                  }
-                                  className="w-4 h-4"
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center py-2 lg:py-3">
-                              <div className="flex justify-center">
-                                <Checkbox
-                                  checked={permission.disable}
-                                  onCheckedChange={(checked) => 
-                                    handlePermissionChange(activeTab, permission.name, 'disable', checked as boolean)
-                                  }
-                                  className="w-4 h-4"
-                                />
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                              {activeTab === 'All' && (
+                                <div className="text-xs text-blue-600 mt-1">
+                                  Module: {permission.module}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.all}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(permission.function, 'all', checked as boolean)
+                                }
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.add}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(permission.function, 'add', checked as boolean)
+                                }
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.view}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(permission.function, 'view', checked as boolean)
+                                }
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.edit}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(permission.function, 'edit', checked as boolean)
+                                }
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center py-2 lg:py-3">
+                            <div className="flex justify-center">
+                              <Checkbox
+                                checked={permission.disable}
+                                onCheckedChange={(checked) => 
+                                  handlePermissionChange(permission.function, 'disable', checked as boolean)
+                                }
+                                className="w-4 h-4"
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                       </TableBody>
                     </Table>
                   </div>

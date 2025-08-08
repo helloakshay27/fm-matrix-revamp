@@ -18,8 +18,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-[#fafafa]">
       <Header />
-      <OmanSidebar />
-      <OmanDynamicHeader />
+      <Sidebar />
+      <DynamicHeader />
 
       <main className={`${isSidebarCollapsed ? 'ml-16' : 'ml-64'} pt-28 transition-all duration-300`}>
         <Outlet />
