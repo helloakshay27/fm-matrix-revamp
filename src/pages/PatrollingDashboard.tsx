@@ -144,81 +144,81 @@ export const PatrollingDashboard = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  <TableHead className="text-left text-sm font-medium text-gray-900">
+                  <TableHead className="p-4 text-left text-sm font-semibold text-gray-900">
                     <div className="flex items-center gap-2">
                       <input type="checkbox" className="mr-2" />
                       Actions
                     </div>
                   </TableHead>
-                  <TableHead className="text-left text-sm font-medium text-gray-900">Location</TableHead>
-                  <TableHead className="text-left text-sm font-medium text-gray-900">Scheduled Time</TableHead>
-                  <TableHead className="text-left text-sm font-medium text-gray-900">Created On</TableHead>
-                  <TableHead className="text-left text-sm font-medium text-gray-900">Start Date</TableHead>
-                  <TableHead className="text-left text-sm font-medium text-gray-900">End Date</TableHead>
-                  <TableHead className="text-left text-sm font-medium text-gray-900">Grace Time(Hours)</TableHead>
-                  <TableHead className="text-left text-sm font-medium text-gray-900">Active/Inactive</TableHead>
-                  <TableHead className="text-left text-sm font-medium text-gray-900">QR Code</TableHead>
+                  <TableHead className="p-4 text-left text-sm font-semibold text-gray-900">Location</TableHead>
+                  <TableHead className="p-4 text-left text-sm font-semibold text-gray-900">Scheduled Time</TableHead>
+                  <TableHead className="p-4 text-left text-sm font-semibold text-gray-900">Created On</TableHead>
+                  <TableHead className="p-4 text-left text-sm font-semibold text-gray-900">Start Date</TableHead>
+                  <TableHead className="p-4 text-left text-sm font-semibold text-gray-900">End Date</TableHead>
+                  <TableHead className="p-4 text-left text-sm font-semibold text-gray-900">Grace Time(Hours)</TableHead>
+                  <TableHead className="p-4 text-left text-sm font-semibold text-gray-900">Active/Inactive</TableHead>
+                  <TableHead className="p-4 text-left text-sm font-semibold text-gray-900">QR Code</TableHead>
                 </TableRow>
               </TableHeader>
             <TableBody>
               {patrollingData.map((patrol) => (
                 <TableRow key={patrol.id} className="hover:bg-gray-50">
-                  <TableCell>
+                  <TableCell className="p-4">
                     <div className="flex items-center gap-2">
                       <input type="checkbox" />
                       <button 
                         onClick={() => handleView(patrol.id)}
-                        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                        className="p-1 text-blue-600 hover:bg-blue-100 rounded transition-colors"
                         title="View"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleEdit(patrol.id)}
-                        className="p-1 text-green-600 hover:bg-green-50 rounded"
+                        className="p-1 text-green-600 hover:bg-green-100 rounded transition-colors"
                         title="Edit"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleDelete(patrol.id)}
-                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                        className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm text-gray-900 max-w-xs">
+                  <TableCell className="p-4 text-sm text-gray-900 max-w-xs">
                     <div className="truncate" title={patrol.location}>
                       {patrol.location}
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm text-gray-900">
+                  <TableCell className="p-4 text-sm text-gray-900">
                     {patrol.scheduledTime}
                   </TableCell>
-                  <TableCell className="text-sm text-gray-900">
+                  <TableCell className="p-4 text-sm text-gray-900">
                     {patrol.createdOn}
                   </TableCell>
-                  <TableCell className="text-sm text-gray-900">
+                  <TableCell className="p-4 text-sm text-gray-900">
                     {patrol.startDate}
                   </TableCell>
-                  <TableCell className="text-sm text-gray-900">
+                  <TableCell className="p-4 text-sm text-gray-900">
                     {patrol.endDate}
                   </TableCell>
-                  <TableCell className="text-sm text-gray-900">
+                  <TableCell className="p-4 text-sm text-gray-900">
                     {patrol.graceTime}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="p-4">
                     <input 
                       type="checkbox" 
                       checked={patrol.activeInactive}
-                      className="text-blue-600"
+                      className="text-blue-600 rounded"
                       readOnly
                     />
                   </TableCell>
-                  <TableCell className="text-sm text-gray-900">
-                    <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-xs hover:bg-gray-200">
+                  <TableCell className="p-4 text-sm text-gray-900">
+                    <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-xs hover:bg-gray-200 transition-colors">
                       {patrol.qrCode}
                     </button>
                   </TableCell>
