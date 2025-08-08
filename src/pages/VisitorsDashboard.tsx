@@ -387,8 +387,84 @@ export const VisitorsDashboard = () => {
                     )}
                     
                     {activeVisitorType === 'expected' && (
-                      <div className="text-center text-gray-500 py-16">
-                        Expected Visitor content will be displayed here
+                      <div className="overflow-x-auto">
+                        <table className="w-full caption-bottom text-sm border-separate border-spacing-0">
+                          <thead>
+                            <tr>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                <input type="checkbox" className="w-4 h-4" />
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Actions
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Visitor Name
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Details
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Purpose
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Status
+                              </th>
+                              <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground border-b border-gray-200 whitespace-nowrap" style={{ backgroundColor: "#f6f4ee" }}>
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b border-gray-200 transition-colors hover:bg-gray-50">
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
+                                <input type="checkbox" className="w-4 h-4" />
+                              </td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
+                                <button 
+                                  className="w-4 h-4 text-black hover:text-gray-700"
+                                  onClick={() => handleEditClick('9555625186')}
+                                >
+                                  <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+                                  </svg>
+                                </button>
+                              </td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Expected Visitor</td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Meeting Host</td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">Business Meeting</td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
+                                <div className="bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                                  Confirmed
+                                </div>
+                              </td>
+                              <td className="p-4 align-middle border-b border-gray-200 whitespace-nowrap">
+                                <div className="flex gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="w-8 h-8 p-0 bg-white border border-gray-300 hover:bg-gray-50"
+                                  >
+                                    <Eye className="w-4 h-4 text-gray-600" />
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="w-8 h-8 p-0 bg-white border border-gray-300 hover:bg-gray-50"
+                                  >
+                                    <Edit className="w-4 h-4 text-gray-600" />
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="w-8 h-8 p-0 bg-white border border-gray-300 hover:bg-gray-50"
+                                  >
+                                    <Trash2 className="w-4 h-4 text-gray-600" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
                     )}
                   </div>
