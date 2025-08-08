@@ -13,11 +13,37 @@ export function RecentTicketsSidebar() {
     isOpen: false,
     ticketId: ''
   });
-  const [flaggedTickets, setFlaggedTickets] = useState<Set<string>>(new Set());
-  const [goldenTickets, setGoldenTickets] = useState<Set<string>>(new Set());
+  // Initialize state from localStorage
+  const [flaggedTickets, setFlaggedTickets] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('flaggedTickets');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+  
+  const [goldenTickets, setGoldenTickets] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('goldenTickets');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+  
   const [recentTickets, setRecentTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Save to localStorage whenever state changes
+  useEffect(() => {
+    localStorage.setItem('flaggedTickets', JSON.stringify(Array.from(flaggedTickets)));
+  }, [flaggedTickets]);
+
+  useEffect(() => {
+    localStorage.setItem('goldenTickets', JSON.stringify(Array.from(goldenTickets)));
+  }, [goldenTickets]);
 
   const fetchRecentTickets = async () => {
     try {
@@ -55,8 +81,7 @@ export function RecentTicketsSidebar() {
   };
   const handleFlag = async (ticketId: string) => {
     try {
-      await apiClient.post(`/pms/admin/complaints/mark_as_flagged.json?ids=[${ticketId}]`);
-      
+      // Update local state first for immediate UI feedback
       setFlaggedTickets(prev => {
         const newSet = new Set(prev);
         if (newSet.has(ticketId)) {
@@ -66,17 +91,30 @@ export function RecentTicketsSidebar() {
         }
         return newSet;
       });
+
+      // Make API call
+      await apiClient.post(`/pms/admin/complaints/mark_as_flagged.json?ids=[${ticketId}]`);
       
-      // Refresh the entire page like other list pages
-      window.location.reload();
+      console.log(`Ticket ${ticketId} flagged/unflagged successfully`);
+      
     } catch (error) {
       console.error('Error flagging ticket:', error);
+      
+      // Revert state on error
+      setFlaggedTickets(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(ticketId)) {
+          newSet.delete(ticketId);
+        } else {
+          newSet.add(ticketId);
+        }
+        return newSet;
+      });
     }
   };
   const handleGoldenTicket = async (ticketId: string) => {
     try {
-      await apiClient.post(`/pms/admin/complaints/mark_as_golden_ticket.json?ids=[${ticketId}]`);
-      
+      // Update local state first for immediate UI feedback
       setGoldenTickets(prev => {
         const newSet = new Set(prev);
         if (newSet.has(ticketId)) {
@@ -86,11 +124,25 @@ export function RecentTicketsSidebar() {
         }
         return newSet;
       });
+
+      // Make API call
+      await apiClient.post(`/pms/admin/complaints/mark_as_golden_ticket.json?ids=[${ticketId}]`);
       
-      // Refresh the entire page like other list pages
-      window.location.reload();
+      console.log(`Ticket ${ticketId} marked/unmarked as golden ticket successfully`);
+      
     } catch (error) {
       console.error('Error marking as golden ticket:', error);
+      
+      // Revert state on error
+      setGoldenTickets(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(ticketId)) {
+          newSet.delete(ticketId);
+        } else {
+          newSet.add(ticketId);
+        }
+        return newSet;
+      });
     }
   };
   const handleViewDetails = (ticketId: string) => {
@@ -191,10 +243,15 @@ export function RecentTicketsSidebar() {
                   </button>
                   
                   <button 
-                    className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 ${flaggedTickets.has(ticket.id) ? 'opacity-60' : ''}`} 
-                    onClick={() => handleFlag(ticket.id)}
+                    type="button"
+                    className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 transition-all duration-200 ${flaggedTickets.has(ticket.id) ? 'opacity-60' : ''}`} 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleFlag(ticket.id);
+                    }}
                   >
-                    <Flag className={`h-4 w-4 ${flaggedTickets.has(ticket.id) ? 'text-red-600 fill-red-600' : 'text-red-500'}`} />
+                    <Flag className={`h-4 w-4 transition-colors duration-200 ${flaggedTickets.has(ticket.id) ? 'text-red-600 fill-red-600' : 'text-red-500'}`} />
                     Flag Issue
                   </button>
                 </div>

@@ -4,6 +4,7 @@ import { ArrowLeft, Download, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { surveyApi, SurveyResponseData } from '@/services/surveyApi';
+import { SurveyAnalyticsCard } from '@/components/SurveyAnalyticsCard';
 import { toast } from 'sonner';
 
 export const SurveyResponseDetailPage = () => {
@@ -111,6 +112,60 @@ export const SurveyResponseDetailPage = () => {
     }
   };
 
+  // Prepare pie chart data for response distribution
+  const getResponseDistributionData = () => {
+    if (!surveyData || !surveyData.questions) return [];
+    
+    const responseDistribution = surveyData.questions.map((question: any, index: number) => ({
+      name: `Q${question.id}: ${question.question.substring(0, 20)}...`,
+      value: question.responses.length || question.responseCount || 0,
+      color: ['#C72030', '#c6b692', '#d8dcdd', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#3B82F6'][index % 8]
+    }));
+    
+    return responseDistribution;
+  };
+
+  // Prepare pie chart data for survey type distribution
+  const getSurveyTypeDistributionData = () => {
+    if (!surveyData || !apiData) return [];
+    
+    // Create type distribution based on survey data
+    const typeDistribution = [
+      {
+        name: 'Survey Responses',
+        value: surveyData.totalResponses || 0,
+        color: '#C72030'
+      },
+      {
+        name: 'Total Questions',
+        value: surveyData.questions.length || 0,
+        color: '#c6b692'
+      },
+      {
+        name: 'Active Survey',
+        value: 1, // This survey is active
+        color: '#d8dcdd'
+      },
+      {
+        name: 'Survey Type',
+        value: surveyData.type === 'Survey' ? 1 : 0,
+        color: '#8B5CF6'
+      }
+    ].filter(item => item.value > 0);
+    
+    return typeDistribution;
+  };
+
+  const handleDownloadResponseChart = () => {
+    console.log('Download response distribution chart');
+    toast.success('Chart download initiated');
+  };
+
+  const handleDownloadTypeChart = () => {
+    console.log('Download survey type distribution chart');
+    toast.success('Survey type chart download initiated');
+  };
+
   if (!surveyData || isLoading) {
     return (
       <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
@@ -176,6 +231,7 @@ export const SurveyResponseDetailPage = () => {
 
 
           <TabsContent value="summary" className="space-y-6">
+            {/* Questions and Responses */}
             {surveyData.questions.map((question: any) => (
               <div key={question.id} className="bg-[#F5F3EF] p-4 rounded-lg border">
                 <div className="flex items-center justify-between mb-3">
@@ -221,6 +277,34 @@ export const SurveyResponseDetailPage = () => {
                 </div>
               </div>
             ))}
+
+            {/* Survey Type Distribution Pie Chart - Second Last Position */}
+            <div className="mt-8">
+              <SurveyAnalyticsCard
+                title="Survey Type Distribution"
+                type="surveyDistributions"
+                data={getSurveyTypeDistributionData()}
+                dateRange={{ 
+                  startDate: new Date(apiData?.created_at || Date.now()), 
+                  endDate: new Date() 
+                }}
+                onDownload={handleDownloadTypeChart}
+              />
+            </div>
+
+            {/* Response Distribution Pie Chart - Last Position */}
+            <div className="mt-6">
+              <SurveyAnalyticsCard
+                title="Response Distribution"
+                type="statusDistribution"
+                data={getResponseDistributionData()}
+                dateRange={{ 
+                  startDate: new Date(apiData?.created_at || Date.now()), 
+                  endDate: new Date() 
+                }}
+                onDownload={handleDownloadResponseChart}
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="tabular" className="mt-6">
