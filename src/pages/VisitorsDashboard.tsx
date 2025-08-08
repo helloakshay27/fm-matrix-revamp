@@ -351,6 +351,7 @@ export const VisitorsDashboard = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Visitors Dashboard</h1>
       <div className="mb-6">
         <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
@@ -499,9 +500,9 @@ export const VisitorsDashboard = () => {
                   </div>
 
                   {/* Content Area */}
-                  <div className="bg-white rounded-lg border border-gray-200 min-h-[400px]">
+                  <div className="bg-white rounded-lg border border-gray-200 min-h-[400px] overflow-hidden shadow-sm">
                     {activeVisitorType === 'unexpected' && (
-                      <div className="border rounded-lg overflow-hidden">
+                      <div className="border-0">
                         <EnhancedTable
                           data={unexpectedVisitorDataWithIndex}
                           columns={unexpectedVisitorColumns}
@@ -520,7 +521,7 @@ export const VisitorsDashboard = () => {
                     )}
                     
                     {activeVisitorType === 'expected' && (
-                      <div className="border rounded-lg overflow-hidden">
+                      <div className="border-0">
                         <EnhancedTable
                           data={expectedVisitorDataWithIndex}
                           columns={expectedVisitorColumns}
@@ -544,7 +545,7 @@ export const VisitorsDashboard = () => {
               {/* Visitor Out tab content */}
               {visitorSubTab === 'visitor-out' && (
                 <div className="p-4 min-h-[400px]">
-                  <div className="border rounded-lg overflow-hidden">
+                  <div className="border-0 rounded-lg overflow-hidden">
                     <EnhancedTable
                       data={visitorOutDataWithIndex}
                       columns={visitorOutColumns}
@@ -605,7 +606,7 @@ export const VisitorsDashboard = () => {
                   </div>
 
                   {/* Visitor History Table */}
-                  <div className="border rounded-lg overflow-hidden">
+                  <div className="border-0 rounded-lg overflow-hidden">
                     <EnhancedTable
                       data={visitorHistoryDataWithIndex}
                       columns={visitorHistoryColumns}
