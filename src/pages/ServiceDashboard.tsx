@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, FileText, Filter, Eye, Settings, AlertCircle, Trash2, Clock, Download, X, Flag } from 'lucide-react';
+import { Plus, FileText, Eye, Settings, AlertCircle, X, Flag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
 import { ImportLocationsModal } from '@/components/ImportLocationsModal';
@@ -64,7 +64,7 @@ interface ServiceActionPanelProps {
   onQRDownload: (serviceId: string) => void;
 }
 
-const ServiceActionPanel: React.FC<ServiceActionPanelProps> = ({ isOpen, onClose, service, onQRDownload }) => {
+const ServiceActionPanel = React.memo(function ServiceActionPanel({ isOpen, onClose, service, onQRDownload }: ServiceActionPanelProps) {
   if (!isOpen || !service) return null;
 
   return (
@@ -88,14 +88,17 @@ const ServiceActionPanel: React.FC<ServiceActionPanelProps> = ({ isOpen, onClose
       </div>
     </div>
   );
-};
+});
 
 const initialServiceData: ServiceRecord[] = [];
 
 export const ServiceDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { data: apiData, loading, error } = useAppSelector((state) => state.services);
+  const servicesState = useAppSelector((state) => state.services);
+  const apiData = servicesState.data as ServicesApiData | undefined;
+  const loading = servicesState.loading as boolean;
+  const error = servicesState.error as string | undefined;
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [showImportLocationsModal, setShowImportLocationsModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -115,58 +118,61 @@ export const ServiceDashboard = () => {
   useEffect(() => {
     const filtersWithSearch = {
       ...appliedFilters,
-      serviceName: appliedFilters.serviceName || debouncedSearchQuery || undefined,
+      serviceName: (appliedFilters as any).serviceName || debouncedSearchQuery || undefined,
     };
     dispatch(fetchServicesData({ active: activeFilter, page: currentPage, filters: filtersWithSearch }));
   }, [dispatch, activeFilter, currentPage, appliedFilters, debouncedSearchQuery]);
 
-  const servicesData = apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData;
-  const paginationData: PaginationData = apiData?.pagination || { current_page: 1, total_count: 0, total_pages: 1 };
+  const servicesData = useMemo(
+    () => (apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData),
+    [apiData]
+  );
+  const paginationData: PaginationData = useMemo(
+    () => apiData?.pagination || { current_page: 1, total_count: 0, total_pages: 1 },
+    [apiData]
+  );
 
-  const handleAddClick = () => navigate('/maintenance/service/add');
-  const handleAddSchedule = () => navigate('/maintenance/schedule/add?type=Service');
-  const handleImportClick = () => {
+  // Derived counts to avoid optional chaining on unknown
+  const totalServicesCount = apiData?.total_services_count ?? 0;
+  const activeServicesCount = apiData?.active_services_count ?? 0;
+  const inactiveServicesCount = apiData?.inactive_services_count ?? 0;
+
+  const handleAddClick = useCallback(() => navigate('/maintenance/service/add'), [navigate]);
+  const handleAddSchedule = useCallback(() => navigate('/maintenance/schedule/add?type=Service'), [navigate]);
+  const handleImportClick = useCallback(() => {
     setShowBulkUploadModal(true);
     setShowActionPanel(false);
-  };
-  const handleImportLocationsClick = () => setShowImportLocationsModal(true);
-  const handleFiltersClick = () => {
+  }, []);
+  const handleImportLocationsClick = useCallback(() => setShowImportLocationsModal(true), []);
+  const handleFiltersClick = useCallback(() => {
     setShowFilterModal(true);
     setShowActionPanel(false);
-  };
+  }, []);
 
-  const handleApplyFilters = (filters: any) => {
+  const handleApplyFilters = useCallback((filters: any) => {
     setAppliedFilters(filters);
     setSearchQuery('');
     setCurrentPage(1);
     setShowFilterModal(false);
-  };
+  }, []);
 
-  const handleCloseFilter = () => {
+  const handleCloseFilter = useCallback(() => {
     setShowFilterModal(false);
     setSelectedItems([]);
-  };
+  }, []);
 
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
-  };
+  }, []);
 
-  const handleSelectItem = (itemId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedItems((prev) => [...prev, itemId]);
-    } else {
-      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
-    }
-  };
+  const handleSelectItem = useCallback((itemId: string, checked: boolean) => {
+    setSelectedItems((prev) => (checked ? [...prev, itemId] : prev.filter((id) => id !== itemId)));
+  }, []);
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedItems(servicesData.map((item) => item.id.toString()));
-    } else {
-      setSelectedItems([]);
-    }
-  };
+  const handleSelectAll = useCallback((checked: boolean) => {
+    setSelectedItems(checked ? servicesData.map((item) => item.id.toString()) : []);
+  }, [servicesData]);
 
   const downloadAttachment = async (file: { attachment_id: number; document_name: string }) => {
     try {
@@ -206,7 +212,7 @@ export const ServiceDashboard = () => {
     }
   };
 
-  const handleQRDownload = async (serviceId?: string) => {
+  const handleQRDownload = useCallback(async (serviceId?: string) => {
     if (downloadingQR) return;
     setDownloadingQR(true);
     let serviceIds: string[] = [];
@@ -215,14 +221,12 @@ export const ServiceDashboard = () => {
     } else {
       serviceIds = selectedItems;
     }
-    // Filter to only those with QR codes
     const validServices = servicesData.filter((service) => serviceIds.includes(service.id.toString()) && service.qr_code && service.qr_code_id);
     if (validServices.length === 0) {
       toast.error('No valid QR codes to download');
       setDownloadingQR(false);
       return;
     }
-    // If only one, keep old logic (with already downloaded check)
     if (validServices.length === 1) {
       const service = validServices[0];
       const serviceIdStr = service.id.toString();
@@ -254,12 +258,9 @@ export const ServiceDashboard = () => {
         }
       };
       if (downloadedQRCodes.has(serviceIdStr)) {
-        // Show toast with confirmation buttons
         const downloadPromise = new Promise<void>((resolve) => {
           toast.custom((t) => (
-            <div
-              className="bg-white p-5 rounded-xl shadow-none w-full max-w-sm border-0 ring-0"
-            >
+            <div className="bg-white p-5 rounded-xl shadow-none w-full max-w-sm border-0 ring-0">
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-6 h-6 text-yellow-500 mt-1" />
                 <div className="flex-1 text-sm text-gray-800">
@@ -304,12 +305,10 @@ export const ServiceDashboard = () => {
         setDownloadingQR(false);
       }
     } else {
-      // Multiple: download one PDF with all selected service IDs, send as array
       try {
         const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
         const token = localStorage.getItem('token');
         const idsArray = validServices.map((s) => s.id);
-        // Build query string with repeated service_ids[]=id1&service_ids[]=id2
         const params = idsArray.map((id) => `service_ids[]=${encodeURIComponent(id)}`).join('&');
         const apiUrl = `https://${baseUrl}/pms/services/service_qr_codes.pdf?${params}`;
         const response = await fetch(apiUrl, {
@@ -328,7 +327,6 @@ export const ServiceDashboard = () => {
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-        // Mark all as downloaded
         setDownloadedQRCodes((prev) => {
           const newSet = new Set(prev);
           validServices.forEach((s) => newSet.add(s.id.toString()));
@@ -344,9 +342,9 @@ export const ServiceDashboard = () => {
     if (validServices.length === 1 && !downloadedQRCodes.has(validServices[0].id.toString())) {
       setDownloadingQR(false);
     }
-  };
+  }, [downloadingQR, selectedItems, servicesData, downloadedQRCodes]);
 
-  const handleViewService = (id: number) => navigate(`/maintenance/service/details/${id}`);
+  const handleViewService = useCallback((id: number) => navigate(`/maintenance/service/details/${id}`), [navigate]);
 
   const handleTotalServicesClick = () => {
     setActiveFilter(undefined);
@@ -400,11 +398,13 @@ export const ServiceDashboard = () => {
         item.id === id ? { ...item, active: updatedStatus } : item
       );
 
-      dispatch(fetchServicesData.fulfilled(
-        { ...apiData, pms_services: updatedServicesData },
-        'fetchServicesData',
-        { active: activeFilter, page: currentPage, filters: appliedFilters }
-      ));
+      dispatch(
+        fetchServicesData.fulfilled(
+          { ...(apiData as ServicesApiData), pms_services: updatedServicesData } as ServicesApiData,
+          'fetchServicesData',
+          { active: activeFilter, page: currentPage, filters: appliedFilters }
+        )
+      );
       toast.dismiss();
       toast.success(`Status ${updatedStatus ? 'Active' : 'Inactive'}`);
 
@@ -422,36 +422,42 @@ export const ServiceDashboard = () => {
       );
 
       if (response.status === 200) {
-        const updatedApiData = {
-          ...apiData,
+        const updatedApiData: ServicesApiData = {
+          ...(apiData as ServicesApiData),
           pms_services: updatedServicesData,
           active_services_count: updatedStatus
-            ? apiData.active_services_count + 1
-            : apiData.active_services_count - 1,
+            ? (apiData as ServicesApiData).active_services_count + 1
+            : (apiData as ServicesApiData).active_services_count - 1,
           inactive_services_count: updatedStatus
-            ? apiData.inactive_services_count - 1
-            : apiData.inactive_services_count + 1,
+            ? (apiData as ServicesApiData).inactive_services_count - 1
+            : (apiData as ServicesApiData).inactive_services_count + 1,
         };
-        dispatch(fetchServicesData.fulfilled(
-          updatedApiData,
-          'fetchServicesData',
-          { active: activeFilter, page: currentPage, filters: appliedFilters }
-        ));
+        dispatch(
+          fetchServicesData.fulfilled(
+            updatedApiData,
+            'fetchServicesData',
+            { active: activeFilter, page: currentPage, filters: appliedFilters }
+          )
+        );
       } else {
-        dispatch(fetchServicesData.fulfilled(
-          apiData,
-          'fetchServicesData',
-          { active: activeFilter, page: currentPage, filters: appliedFilters }
-        ));
+        dispatch(
+          fetchServicesData.fulfilled(
+            apiData as ServicesApiData,
+            'fetchServicesData',
+            { active: activeFilter, page: currentPage, filters: appliedFilters }
+          )
+        );
         toast.error('Failed to update service status');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating service status:', error);
-      dispatch(fetchServicesData.fulfilled(
-        apiData,
-        'fetchServicesData',
-        { active: activeFilter, page: currentPage, filters: appliedFilters }
-      ));
+      dispatch(
+        fetchServicesData.fulfilled(
+          apiData as ServicesApiData,
+          'fetchServicesData',
+          { active: activeFilter, page: currentPage, filters: appliedFilters }
+        )
+      );
       const errorMessage = error.response?.data?.message || 'Failed to update service status';
       toast.error(errorMessage);
     } finally {
@@ -463,7 +469,7 @@ export const ServiceDashboard = () => {
     }
   };
 
-  const columns = [
+  const columns = useMemo(() => ([
     { key: 'actions', label: 'Actions', sortable: false },
     { key: 'serviceName', label: 'Service Name', sortable: true },
     { key: 'id', label: 'ID', sortable: true },
@@ -480,29 +486,16 @@ export const ServiceDashboard = () => {
     { key: 'status', label: 'Status', sortable: true },
     { key: 'createdOn', label: 'Created On', sortable: true },
     { key: 'category', label: 'Category', sortable: true },
+  ]), []);
 
-  ];
-
-  const bulkActions = [
+  const bulkActions = useMemo(() => ([
     {
-      label: (
-        <span className="flex items-center">
-          {downloadingQR ? (
-            <svg className="animate-spin h-4 w-4 mr-2 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-            </svg>
-          ) : (
-            <FileText className="w-4 h-4 mr-2" />
-          )}
-          {downloadingQR ? 'Print QR...' : 'Print QR'}
-        </span>
-      ),
+      label: 'Print QR',
       icon: FileText,
       onClick: () => handleQRDownload(),
       disabled: downloadingQR,
     },
-  ];
+  ]), [downloadingQR, handleQRDownload]);
 
   const handleSingleAmcFlag = async (serviceItem: ServiceRecord) => {
     const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
@@ -542,7 +535,7 @@ export const ServiceDashboard = () => {
     }
   };
 
-  const renderCell = (item: ServiceRecord, columnKey: string) => {
+  const renderCell = useCallback((item: ServiceRecord, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
         return (
@@ -590,12 +583,10 @@ export const ServiceDashboard = () => {
           <div className="flex justify-center items-center h-full w-full">
             <div
               onClick={() => !togglingIds.has(item.id) && handleStatusToggle(item.id)}
-              className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-400'
-                } ${togglingIds.has(item.id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-400'} ${togglingIds.has(item.id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <span
-                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'
-                  }`}
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'}`}
               />
             </div>
           </div>
@@ -607,24 +598,24 @@ export const ServiceDashboard = () => {
       default:
         return '-';
     }
-  };
+  }, [handleViewService, handleStatusToggle, handleSingleAmcFlag, togglingIds]);
 
-  const renderPaginationItems = () => {
-    const items = [];
+  const paginationItems = useMemo(() => {
+    const items: React.ReactNode[] = [];
     const totalPages = paginationData.total_pages;
-    const currentPage = paginationData.current_page;
+    const current = paginationData.current_page;
     const showEllipsis = totalPages > 7;
 
     if (showEllipsis) {
       items.push(
         <PaginationItem key={1}>
-          <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(1)} isActive={currentPage === 1}>
+          <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(1)} isActive={current === 1}>
             1
           </PaginationLink>
         </PaginationItem>
       );
 
-      if (currentPage > 4) {
+      if (current > 4) {
         items.push(
           <PaginationItem key="ellipsis1">
             <PaginationEllipsis />
@@ -634,7 +625,7 @@ export const ServiceDashboard = () => {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
                 {i}
               </PaginationLink>
             </PaginationItem>
@@ -642,11 +633,11 @@ export const ServiceDashboard = () => {
         }
       }
 
-      if (currentPage > 3 && currentPage < totalPages - 2) {
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+      if (current > 3 && current < totalPages - 2) {
+        for (let i = current - 1; i <= current + 1; i++) {
           items.push(
             <PaginationItem key={i}>
-              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
                 {i}
               </PaginationLink>
             </PaginationItem>
@@ -654,7 +645,7 @@ export const ServiceDashboard = () => {
         }
       }
 
-      if (currentPage < totalPages - 3) {
+      if (current < totalPages - 3) {
         items.push(
           <PaginationItem key="ellipsis2">
             <PaginationEllipsis />
@@ -662,10 +653,10 @@ export const ServiceDashboard = () => {
         );
       } else {
         for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-          if (!items.find((item) => item.key === i)) {
+          if (!items.find((it: any) => it.key === i)) {
             items.push(
               <PaginationItem key={i}>
-                <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+                <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
                   {i}
                 </PaginationLink>
               </PaginationItem>
@@ -677,7 +668,7 @@ export const ServiceDashboard = () => {
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
-            <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(totalPages)} isActive={currentPage === totalPages}>
+            <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(totalPages)} isActive={current === totalPages}>
               {totalPages}
             </PaginationLink>
           </PaginationItem>
@@ -687,22 +678,21 @@ export const ServiceDashboard = () => {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
-            <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
+            <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
               {i}
             </PaginationLink>
           </PaginationItem>
         );
       }
     }
-
     return items;
-  };
+  }, [paginationData]);
 
-  const handleActionClick = () => {
+  const handleActionClick = useCallback(() => {
     setShowActionPanel(true);
-  };
+  }, []);
 
-  const renderCustomActions = () => (
+  const leftActions = useMemo(() => (
     <div className="flex flex-wrap gap-3">
       <Button onClick={handleActionClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Plus className="w-4 h-4" /> Action
@@ -725,7 +715,7 @@ export const ServiceDashboard = () => {
         </Button>
       )}
     </div>
-  );
+  ), [handleActionClick, selectedItems.length, downloadingQR, handleQRDownload]);
 
   const handleExport = async () => {
     const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
@@ -794,7 +784,7 @@ export const ServiceDashboard = () => {
             </div>
             <div className="flex flex-col min-w-0">
               <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                {apiData?.total_services_count || 0}
+                {totalServicesCount}
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Services</div>
             </div>
@@ -809,7 +799,7 @@ export const ServiceDashboard = () => {
             </div>
             <div className="flex flex-col min-w-0">
               <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                {apiData?.active_services_count || 0}
+                {activeServicesCount}
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active Services</div>
             </div>
@@ -824,7 +814,7 @@ export const ServiceDashboard = () => {
             </div>
             <div className="flex flex-col min-w-0">
               <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                {apiData?.inactive_services_count || 0}
+                {inactiveServicesCount}
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive Services</div>
             </div>
@@ -858,9 +848,9 @@ export const ServiceDashboard = () => {
           exportFileName="services"
           getItemId={(item) => item.id.toString()}
           storageKey="services-table"
-          leftActions={renderCustomActions()}
+          leftActions={leftActions}
           searchPlaceholder="Search..."
-          onSearchChange={(query) => handleSearch(query)}
+          onSearchChange={handleSearch}
           searchTerm={searchQuery}
           enableSearch={true}
           onFilterClick={handleFiltersClick}
@@ -887,7 +877,7 @@ export const ServiceDashboard = () => {
                 />
               </PaginationItem>
 
-              {renderPaginationItems()}
+              {paginationItems}
 
               <PaginationItem>
                 <PaginationNext
