@@ -253,7 +253,9 @@ export const GatePassOutwardsAddPage = () => {
 
         {/* Visitor Detail Section */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-[#C72030] mb-4">VISITOR DETAIL</h2>
+          <div className="bg-[#F5F1EC] -m-6 mb-4 p-6 rounded-t-lg">
+            <h2 className="text-lg font-semibold text-[#C72030]">VISITOR DETAIL</h2>
+          </div>
           
           <div className="grid grid-cols-4 gap-4 mb-4">
             <FormControl
