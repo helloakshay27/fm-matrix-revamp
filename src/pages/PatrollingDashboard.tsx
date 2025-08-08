@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BulkUploadModal } from '@/components/BulkUploadModal';
 import { ExportModal } from '@/components/ExportModal';
 import { PatrollingFilterModal } from '@/components/PatrollingFilterModal';
@@ -11,24 +10,7 @@ import { AddPatrollingModal } from '@/components/AddPatrollingModal';
 import { EditPatrollingModal } from '@/components/EditPatrollingModal';
 import { DeletePatrollingModal } from '@/components/DeletePatrollingModal';
 
-interface PatrollingData {
-  id: number;
-  site: string;
-  building: string;
-  wing: string;
-  floor: string;
-  room: string;
-  location: string;
-  scheduledTime: string;
-  createdOn: string;
-  startDate: string;
-  endDate: string;
-  graceTime: string;
-  activeInactive: boolean;
-  qrCode: string;
-}
-
-const patrollingData: PatrollingData[] = [
+const patrollingData = [
   {
     id: 1,
     site: 'Site - Localized Site 1',
@@ -61,17 +43,6 @@ const patrollingData: PatrollingData[] = [
     activeInactive: true,
     qrCode: '0987654321'
   }
-];
-
-const columns: ColumnConfig[] = [
-  { key: 'location', label: 'Location', sortable: true, hideable: true },
-  { key: 'scheduledTime', label: 'Scheduled Time', sortable: true, hideable: true },
-  { key: 'createdOn', label: 'Created On', sortable: true, hideable: true },
-  { key: 'startDate', label: 'Start Date', sortable: true, hideable: true },
-  { key: 'endDate', label: 'End Date', sortable: true, hideable: true },
-  { key: 'graceTime', label: 'Grace Time(Hours)', sortable: true, hideable: true },
-  { key: 'activeInactive', label: 'Active/Inactive', sortable: true, hideable: true },
-  { key: 'qrCode', label: 'QR Code', sortable: true, hideable: true },
 ];
 
 export const PatrollingDashboard = () => {
@@ -116,65 +87,15 @@ export const PatrollingDashboard = () => {
     // Here you would typically make an API call to delete the record
   };
 
-  const renderActions = (patrol: PatrollingData) => (
-    <div className="flex items-center gap-2">
-      <button 
-        onClick={() => handleView(patrol.id)}
-        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-        title="View"
-      >
-        <Eye className="w-4 h-4" />
-      </button>
-      <button 
-        onClick={() => handleEdit(patrol.id)}
-        className="p-1 text-green-600 hover:bg-green-50 rounded"
-        title="Edit"
-      >
-        <Edit className="w-4 h-4" />
-      </button>
-      <button 
-        onClick={() => handleDelete(patrol.id)}
-        className="p-1 text-red-600 hover:bg-red-50 rounded"
-        title="Delete"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
-    </div>
-  );
-
-  const renderCell = (patrol: PatrollingData, columnKey: string) => {
-    switch (columnKey) {
-      case 'location':
-        return (
-          <div className="max-w-xs">
-            <div className="truncate" title={patrol.location}>
-              {patrol.location}
-            </div>
-          </div>
-        );
-      case 'activeInactive':
-        return (
-          <input 
-            type="checkbox" 
-            checked={patrol.activeInactive}
-            className="text-blue-600"
-            readOnly
-          />
-        );
-      case 'qrCode':
-        return (
-          <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-xs hover:bg-gray-200">
-            {patrol.qrCode}
-          </button>
-        );
-      default:
-        return patrol[columnKey as keyof PatrollingData];
-    }
-  };
-
   return (
     <div className="p-6 min-h-screen">
       <div className="mb-6">
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+          <span>security</span>
+          <span>&gt;</span>
+          <span>Patrolling</span>
+        </div>
+        
         <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a] mb-6 uppercase">PATROLLING LIST</h1>
         
         {/* Action Buttons */}
@@ -223,18 +144,94 @@ export const PatrollingDashboard = () => {
           </Button>
         </div>
 
-        {/* Enhanced Table */}
-        <EnhancedTable<PatrollingData>
-          data={patrollingData}
-          columns={columns}
-          renderCell={renderCell}
-          renderActions={renderActions}
-          storageKey="patrolling-table"
-          emptyMessage="No patrolling records found"
-          enableExport={true}
-          exportFileName="patrolling-records"
-          onFilterClick={() => setIsFilterOpen(true)}
-        />
+        {/* Table */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <Table>
+            <TableHeader className="bg-[#f6f4ee]">
+              <TableRow>
+                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" className="mr-2" />
+                    Actions
+                  </div>
+                </TableHead>
+                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">Location</TableHead>
+                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">Scheduled Time</TableHead>
+                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">Created On</TableHead>
+                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">Start Date</TableHead>
+                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">End Date</TableHead>
+                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">Grace Time(Hours)</TableHead>
+                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">Active/Inactive</TableHead>
+                <TableHead className="text-left text-sm font-medium text-[#1a1a1a]">QR Code</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {patrollingData.map((patrol) => (
+                <TableRow key={patrol.id} className="hover:bg-gray-50">
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" />
+                      <button 
+                        onClick={() => handleView(patrol.id)}
+                        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                        title="View"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleEdit(patrol.id)}
+                        className="p-1 text-green-600 hover:bg-green-50 rounded"
+                        title="Edit"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(patrol.id)}
+                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-900 max-w-xs">
+                    <div className="truncate" title={patrol.location}>
+                      {patrol.location}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-900">
+                    {patrol.scheduledTime}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-900">
+                    {patrol.createdOn}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-900">
+                    {patrol.startDate}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-900">
+                    {patrol.endDate}
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-900">
+                    {patrol.graceTime}
+                  </TableCell>
+                  <TableCell>
+                    <input 
+                      type="checkbox" 
+                      checked={patrol.activeInactive}
+                      className="text-blue-600"
+                      readOnly
+                    />
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-900">
+                    <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-xs hover:bg-gray-200">
+                      {patrol.qrCode}
+                    </button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <AddPatrollingModal 
