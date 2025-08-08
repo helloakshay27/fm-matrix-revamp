@@ -87,9 +87,14 @@ export const GatePassOutwardsAddPage = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
 
         {/* Goods Detail Section */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-gray-100 rounded-lg border border-gray-200 p-6">
           <div className="bg-[#F5F1EC] -m-6 mb-4 p-6 rounded-t-lg">
-            <h2 className="text-lg font-semibold text-[#C72030]">GOODS DETAIL</h2>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                1
+              </div>
+              <h2 className="text-lg font-semibold text-[#C72030]">GOODS DETAIL</h2>
+            </div>
           </div>
           
           <div className="grid grid-cols-4 gap-4 mb-4">
@@ -252,9 +257,14 @@ export const GatePassOutwardsAddPage = () => {
         </div>
 
         {/* Visitor Detail Section */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-gray-100 rounded-lg border border-gray-200 p-6">
           <div className="bg-[#F5F1EC] -m-6 mb-4 p-6 rounded-t-lg">
-            <h2 className="text-lg font-semibold text-[#C72030]">VISITOR DETAIL</h2>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                2
+              </div>
+              <h2 className="text-lg font-semibold text-[#C72030]">VISITOR DETAIL</h2>
+            </div>
           </div>
           
           <div className="grid grid-cols-4 gap-4 mb-4">
