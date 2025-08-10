@@ -51,6 +51,7 @@ export function RecentTicketsSidebar() {
       const response = await ticketAnalyticsAPI.getRecentTickets();
       const mappedTickets = response.complaints.map((ticket: any) => ({
         id: ticket.id,
+        ticketNumber: ticket.ticket_number,
         title: ticket.heading,
         category: ticket.category_type,
         subCategory: ticket.sub_category_type,
@@ -165,10 +166,10 @@ export function RecentTicketsSidebar() {
           {recentTickets.map((ticket, index) => <div key={`${ticket.id}-${index}`} className="bg-[#C4B89D]/20 rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60" style={{ borderWidth: '0.6px' }}>
               {/* Header with ID, Star, and Priority */}
               <div className="flex items-center justify-between mb-3">
-                <span className="font-semibold text-gray-800 text-sm">{ticket.id}</span>
+                <span className="font-semibold text-gray-800 text-sm">{ticket.ticketNumber}</span>
                 <div className="flex items-center gap-2">
                   <button onClick={() => handleGoldenTicket(ticket.id)}>
-                    <Star className={`h-5 w-5 ${goldenTickets.has(ticket.id) ? 'text-yellow-600 fill-yellow-600' : 'text-yellow-500 fill-yellow-500'} cursor-pointer hover:opacity-80`} />
+                    <Star className={`h-5 w-5 ${goldenTickets.has(ticket.id) ? 'text-yellow-600 fill-yellow-600' : 'text-black-200 fill-white-600'} cursor-pointer hover:opacity-80`} />
                   </button>
                   <span className="bg-pink-300 text-pink-800 px-2 py-1 rounded text-xs font-medium">
                     {ticket.priority}

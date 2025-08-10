@@ -140,6 +140,13 @@ export const API_CONFIG = {
     TICKET_RESPONSE_TAT_DOWNLOAD: '/pms/admin/complaints/chart_response_tat_downloads.json',
     COST_APPROVALS_CREATE: '/pms/create_muliple_cost_Approvals.json',
     SURVEY_RESPONSES: '/survey_mapping_responses/all_responses.json',
+    SURVEY_DETAILS: '/pms/admin/snag_checklists/survey_details.json',
+    SUPPORT_STAFF_CATEGORIES: '/pms/admin/support_staff_categories.json',
+    CREATE_VISITOR: '/pms/admin/visitors/new_visitor.json',
+    UNEXPECTED_VISITORS: '/pms/admin/visitors/unexpected_visitors.json',
+    VISITOR_HISTORY: '/pms/admin/visitors/visitor_history.json',
+    ITEM_MOVEMENT_TYPES: '/item_movement_types.json',
+    ITEM_TYPES: '/item_movement_types/movement_types.json',
     
   },
 } as const
