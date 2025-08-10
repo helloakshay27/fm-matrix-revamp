@@ -1,180 +1,381 @@
-import React, { useState } from 'react';
-import { Plus, Search, Eye } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { useNavigate } from 'react-router-dom';
-const broadcastData = [{
-  id: 1,
-  title: 'Mock Drill',
-  type: 'General',
-  createdOn: '11/06/2025',
-  createdBy: '',
-  status: 'Published',
-  expiredOn: '18/06/2025',
-  expired: 'No',
-  attachment: false
-}, {
-  id: 2,
-  title: 'New Demo',
-  type: 'General',
-  createdOn: '29/05/2025',
-  createdBy: 'Atharv Karnekar',
-  status: 'Published',
-  expiredOn: '30/05/2025',
-  expired: 'Yes',
-  attachment: false
-}, {
-  id: 3,
-  title: 'askf',
-  type: 'General',
-  createdOn: '17/05/2025',
-  createdBy: 'Ankit Gupta',
-  status: 'Published',
-  expiredOn: '19/05/2025',
-  expired: 'Yes',
-  attachment: false
-}, {
-  id: 4,
-  title: 'MR',
-  type: 'General',
-  createdOn: '10/05/2025',
-  createdBy: 'Vinayak Mane',
-  status: 'Published',
-  expiredOn: '11/05/2025',
-  expired: 'Yes',
-  attachment: false
-}, {
-  id: 5,
-  title: 'MR',
-  type: 'Personal',
-  createdOn: '10/05/2025',
-  createdBy: 'Vinayak Mane',
-  status: 'Published',
-  expiredOn: '11/05/2025',
-  expired: 'Yes',
-  attachment: false
-}];
+import { useEffect, useState } from "react";
+import { Plus, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchBroadcasts } from "@/store/slices/broadcastSlice";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+
 export const BroadcastDashboard = () => {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const columns: ColumnConfig[] = [{
-    key: 'title',
-    label: 'Title',
-    sortable: true,
-    hideable: true,
-    defaultVisible: true
-  }, {
-    key: 'type',
-    label: 'Type',
-    sortable: true,
-    hideable: true,
-    defaultVisible: true
-  }, {
-    key: 'createdOn',
-    label: 'Created On',
-    sortable: true,
-    hideable: true,
-    defaultVisible: true
-  }, {
-    key: 'createdBy',
-    label: 'Created by',
-    sortable: true,
-    hideable: true,
-    defaultVisible: true
-  }, {
-    key: 'status',
-    label: 'Status',
-    sortable: true,
-    hideable: true,
-    defaultVisible: true
-  }, {
-    key: 'expiredOn',
-    label: 'Expired On',
-    sortable: true,
-    hideable: true,
-    defaultVisible: true
-  }, {
-    key: 'expired',
-    label: 'Expired',
-    sortable: true,
-    hideable: true,
-    defaultVisible: true
-  }, {
-    key: 'attachment',
-    label: 'Attachment',
-    sortable: false,
-    hideable: true,
-    defaultVisible: true
-  }];
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
+
+  const { loading } = useAppSelector(state => state.fetchBroadcasts)
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [broadcasts, setBroadcasts] = useState([]);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await dispatch(
+          fetchBroadcasts({
+            baseUrl,
+            token,
+            per_page: 10,
+            page: pagination.current_page,
+          })
+        ).unwrap();
+        setBroadcasts(response.noticeboards || []);
+        setPagination({
+          current_page: response.pagination.current_page,
+          total_count: response.pagination.total_count,
+          total_pages: response.pagination.total_pages,
+        });
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to fetch Broadcasts");
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const columns: ColumnConfig[] = [
+    {
+      key: "title",
+      label: "Title",
+      sortable: true,
+      hideable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "type",
+      label: "Type",
+      sortable: true,
+      hideable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "createdOn",
+      label: "Created On",
+      sortable: true,
+      hideable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "createdBy",
+      label: "Created by",
+      sortable: true,
+      hideable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      hideable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "expiredOn",
+      label: "Expired On",
+      sortable: true,
+      hideable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "expired",
+      label: "Expired",
+      sortable: true,
+      hideable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "attachments",
+      label: "Attachment",
+      sortable: false,
+      hideable: true,
+      defaultVisible: true,
+    },
+  ];
+
   const handleViewDetails = (id: number) => {
     navigate(`/crm/broadcast/details/${id}`);
   };
+
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
-      case 'title':
-        return <span className="font-medium">{item.title}</span>;
-      case 'type':
-        return <Badge variant={item.type === 'General' ? 'default' : 'secondary'} className={item.type === 'General' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'}>
-            {item.type}
-          </Badge>;
-      case 'status':
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+      case "title":
+        return <span className="font-medium">{item.notice_heading}</span>;
+      case "type":
+        return (
+          <span>
+            {item.notice_type || "-"}
+          </span>
+        );
+      case "createdOn":
+        return new Date(item.created_at).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      case "createdBy":
+        return item.created_by;
+      case "status":
+        return (
+          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
             {item.status}
-          </Badge>;
-      case 'expired':
-        return <Badge variant={item.expired === 'No' ? 'secondary' : 'destructive'} className={item.expired === 'No' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-            {item.expired}
-          </Badge>;
-      case 'attachment':
-        return item.attachment ? <div className="w-4 h-4 bg-blue-500 rounded mx-auto"></div> : null;
+          </Badge>
+        );
+      case "expiredOn":
+        return item.expire_time
+          ? new Date(item.expire_time).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })
+          : "N/A";
+      case "expired":
+        return (
+          <Badge
+            variant={item.is_expired ? "destructive" : "secondary"}
+            className={
+              item.is_expired
+                ? "bg-red-100 text-red-800"
+                : "bg-green-100 text-green-800"
+            }
+          >
+            {item.is_expired ? "Yes" : "No"}
+          </Badge>
+        );
+      case 'attachments':
+        return item.attachments.length > 0 ? (
+          <img
+            style={{ width: "100%", height: "50px" }}
+            src={item.attachments[0].document_url}
+          />
+        ) : (
+          'None'
+        );
       default:
-        return item[columnKey];
+        return item[columnKey] || "N/A";
     }
   };
-  const renderActions = (item: any) => <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item.id)} className="hover:bg-[#C72030]/10 hover:text-[#C72030]">
+
+  const handlePageChange = async (page: number) => {
+    setPagination((prev) => ({
+      ...prev,
+      current_page: page,
+    }));
+    try {
+      const response = await dispatch(
+        fetchBroadcasts({
+          baseUrl,
+          token,
+          per_page: 10,
+          page: page,
+        })
+      ).unwrap();
+      setBroadcasts(response.noticeboards || []);
+      setPagination({
+        current_page: response.pagination.current_page,
+        total_count: response.pagination.total_count,
+        total_pages: response.pagination.total_pages,
+      });
+    } catch (error) {
+      toast.error('Failed to fetch bookings');
+    }
+  };
+
+  const renderPaginationItems = () => {
+    if (!pagination.total_pages || pagination.total_pages <= 0) {
+      return null;
+    }
+    const items = [];
+    const totalPages = pagination.total_pages;
+    const currentPage = pagination.current_page;
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      items.push(
+        <PaginationItem key={1} className='cursor-pointer'>
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+            disabled={loading}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1" >
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                disabled={loading}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                disabled={loading}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find((item) => item.key === i.toString())) {
+            items.push(
+              <PaginationItem key={i} className='cursor-pointer'>
+                <PaginationLink
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                  disabled={loading}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+              disabled={loading}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+              disabled={loading}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
+  const renderActions = (item: any) => (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={() => handleViewDetails(item.id)}
+      className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
+    >
       <Eye className="w-4 h-4" />
-    </Button>;
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedItems(broadcastData.map(item => item.id.toString()));
-    } else {
-      setSelectedItems([]);
-    }
-  };
-  const handleSelectItem = (itemId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedItems(prev => [...prev, itemId]);
-    } else {
-      setSelectedItems(prev => prev.filter(id => id !== itemId));
-    }
-  };
-  return <div className="p-6 space-y-6">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-600">
-        Broadcast &gt; Broadcast List
-      </div>
-      
-      {/* Page Title */}
+    </Button>
+  );
+
+  return (
+    <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">BROADCAST LIST</h1>
 
-      {/* Enhanced Table */}
-      <EnhancedTable data={broadcastData} columns={columns} renderCell={renderCell} renderActions={renderActions} storageKey="broadcast-table" enableSearch={true} searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search broadcasts..." enableSelection={true} selectedItems={selectedItems} onSelectAll={handleSelectAll} onSelectItem={handleSelectItem} getItemId={item => item.id.toString()} emptyMessage="No broadcasts found" leftActions={<Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white" onClick={() => navigate('/crm/broadcast/add')}>
+      <EnhancedTable
+        data={broadcasts}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        storageKey="broadcast-table"
+        enableSearch={true}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search broadcasts..."
+        enableSelection={true}
+        getItemId={(item) => item.id.toString()}
+        emptyMessage="No broadcasts found"
+        pagination={true}
+        pageSize={10}
+        onFilterClick={() => { }}
+        leftActions={
+          <Button
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+            onClick={() => navigate("/crm/broadcast/add")}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Add
-          </Button>} rightActions={<div className="flex items-center gap-3">
-            <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">
-              Go!
-            </Button>
-            <Button variant="outline" className="border-gray-300">
-              Reset
-            </Button>
-          </div>} />
+          </Button>
+        }
+      />
 
-      {/* Footer branding */}
-      
-    </div>;
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                className={pagination.current_page === 1 || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            {renderPaginationItems()}
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                className={pagination.current_page === pagination.total_pages || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    </div>
+  );
 };

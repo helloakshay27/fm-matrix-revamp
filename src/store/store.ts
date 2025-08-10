@@ -43,6 +43,9 @@ import floorsReducer from './slices/floorsSlice'
 import zonesReducer from './slices/zonesSlice'
 import roomsReducer from './slices/roomsSlice'
 import { addCurrencyReducer, getCurrencyReducer } from './slices/currencySlice'
+import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from './slices/eventSlice'
+import { createUserGroupReducer, fetchUserGroupsReducer } from './slices/userGroupSlice'
+import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
 
 export const store = configureStore({
   reducer: {
@@ -141,6 +144,20 @@ export const store = configureStore({
     getUserDetails: getUserDetailsReducer,
     editFMUser: editFMUserReducer,
     updateMenu: updateMenuReducer,
+
+    // Events
+    fetchEvents: fetchEventsReducer,
+    createEvent: createEventReducer,
+    fetchEventById: fetchEventByIdReducer,
+
+    // Broadcast
+    fetchBroadcasts: fetchBroadcastsReducer,
+    createBroadcast: createBroadcastReducer,
+    fetchBroadcastById: fetchBroadcastByIdReducer,
+
+    // User Groups
+    fetchUserGroups: fetchUserGroupsReducer,
+    createUserGroup: createUserGroupReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>
