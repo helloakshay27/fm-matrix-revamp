@@ -12,33 +12,143 @@ import { useParams, useNavigate } from 'react-router-dom';
 export const EditDesignInsightDashboard = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [category, setCategory] = useState('Façade');
+  const [category, setCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
-  const [zone, setZone] = useState('Mumbai');
-  const [site, setSite] = useState('Lockated');
-  const [location, setLocation] = useState('Basement');
+  const [zone, setZone] = useState('');
+  const [site, setSite] = useState('');
+  const [location, setLocation] = useState('');
   const [categorization, setCategorization] = useState('');
-  const [observation, setObservation] = useState('Clean the water');
-  const [recommendation, setRecommendation] = useState('Mark');
-  const [tag, setTag] = useState('Workaround');
-  const [mustHave, setMustHave] = useState(true);
+  const [observation, setObservation] = useState('');
+  const [recommendation, setRecommendation] = useState('');
+  const [tag, setTag] = useState('');
+  const [mustHave, setMustHave] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [subCategories, setSubCategories] = useState<{ id: number; name: string; parent_id: number | null }[]>([]);
+  const [siteList, setSiteList] = useState<{ id: number; name: string }[]>([]);
 
-  const handleSave = () => {
-    console.log('Design Insight updated:', {
-      id,
-      category,
-      subCategory,
-      zone,
-      site,
-      location,
-      categorization,
-      observation,
-      recommendation,
-      tag,
-      mustHave
-    });
-    // Navigate back to details using React Router
-    navigate(`/transitioning/design-insight/details/${id}`);
+  useEffect(() => {
+    const fetchDetails = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token || !id) return;
+        const res = await fetch(`https://${baseUrl}/pms/design_inputs/${id}.json`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error('Failed to fetch');
+        const data = await res.json();
+        setCategory(data.category_id ? String(data.category_id) : '');
+        setSubCategory(data.sub_category_id ? String(data.sub_category_id) : '');
+        setZone(data.zone_name || '');
+        setSite(data.site_id ? String(data.site_id) : '');
+        setLocation(data.sub_loc_name || '');
+        // Normalize categorization to match SelectItem values
+        let cat = (data.categorization || '').toLowerCase();
+        if (cat === 'safety') setCategorization('safety');
+        else if (cat === 'security') setCategorization('Security');
+        else if (cat === 'customer experience') setCategorization('Customer Experience');
+        else if (cat === 'cam') setCategorization('CAM');
+        else setCategorization('');
+        setObservation(data.observation || '');
+        setRecommendation(data.recommendation || '');
+        // Normalize tag to match dropdown options
+        let tagValue = data.tag || '';
+        if (typeof tagValue === 'string') {
+          const tagLower = tagValue.toLowerCase();
+          if (tagLower === 'workaround') tagValue = 'workaround';
+          else if (tagLower === 'learning for the future project') tagValue = 'Learning for the future project';
+        }
+        setTag(tagValue);
+        setMustHave(!!data.must_have);
+      } catch (err) {
+        // Optionally handle error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Fetch categories and subcategories
+    const fetchCategories = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const res = await fetch(`https://${baseUrl}/pms/design_input_tags.json`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error('Failed to fetch categories');
+        const data = await res.json();
+        const cats = (data.data || []).filter((item: any) => item.parent_id === null && item.tag_type === 'DesignInputCategory');
+        const subCats = (data.data || []).filter((item: any) => item.parent_id !== null && item.tag_type === 'DesignInputsSubCategory');
+        setCategories(cats.map((c: any) => ({ id: c.id, name: c.name })));
+        setSubCategories(subCats.map((sc: any) => ({ id: sc.id, name: sc.name, parent_id: sc.parent_id })));
+      } catch (err) {
+        setCategories([]);
+        setSubCategories([]);
+      }
+    };
+
+    // Fetch sites
+    const fetchSites = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const res = await fetch(`https://${baseUrl}/sitelist.json`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error('Failed to fetch sites');
+        const data = await res.json();
+        setSiteList(data.sites || []);
+      } catch (err) {
+        setSiteList([]);
+      }
+    };
+
+    fetchCategories();
+    fetchSites();
+    fetchDetails();
+  }, [id]);
+
+  const handleSave = async () => {
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      if (!baseUrl || !token || !id) throw new Error('Missing baseUrl, token, or id');
+
+      const body = {
+        id,
+        category_id: category,
+        sub_category_id: subCategory,
+        site_id: site,
+        sub_location_name: location,
+        categorization,
+        observation,
+        recommendation,
+        tag,
+        must_have: mustHave ? 1 : 0,
+      };
+
+      const res = await fetch(`https://${baseUrl}/pms/design_inputs/${id}.json`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ pms_design_input: body }),
+      });
+      const responseBody = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        console.error('PUT error:', responseBody);
+        throw new Error(responseBody?.error || 'Failed to update Design Insight');
+      }
+      // Optionally show a toast here
+      navigate(`/transitioning/design-insight/details/${id}`);
+    } catch (err) {
+      // Optionally show a toast here
+      alert(err.message || 'Failed to update Design Insight');
+    }
   };
 
   const handleCancel = () => {
@@ -48,6 +158,10 @@ export const EditDesignInsightDashboard = () => {
   const handleMustHaveChange = (checked: boolean | "indeterminate") => {
     setMustHave(checked === true);
   };
+
+  if (loading) {
+    return <div className="p-6 bg-white min-h-screen">Loading...</div>;
+  }
 
   return (
     <div className="p-6 bg-white min-h-screen">
@@ -80,10 +194,9 @@ export const EditDesignInsightDashboard = () => {
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="landscape">Landscape</SelectItem>
-                  <SelectItem value="facade">Façade</SelectItem>
-                  <SelectItem value="security">Security & surveillance</SelectItem>
-                  <SelectItem value="inside-units">Inside Units</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -95,10 +208,11 @@ export const EditDesignInsightDashboard = () => {
                   <SelectValue placeholder="Select Sub Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="access-control">Access Control</SelectItem>
-                  <SelectItem value="cctv">CCTV</SelectItem>
-                  <SelectItem value="bedroom">Bedroom</SelectItem>
-                  <SelectItem value="entry-exit">Entry-Exit</SelectItem>
+                  {subCategories
+                    .filter((sc) => String(sc.parent_id) === category)
+                    .map((sc) => (
+                      <SelectItem key={sc.id} value={String(sc.id)}>{sc.name}</SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -107,16 +221,14 @@ export const EditDesignInsightDashboard = () => {
               <Label htmlFor="zone" className="text-sm font-medium">
                 Zone<span className="text-red-500">*</span>
               </Label>
-              <Select value={zone} onValueChange={setZone}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Select Zone" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="mumbai">Mumbai</SelectItem>
-                  <SelectItem value="ncr">NCR</SelectItem>
-                  <SelectItem value="bangalore">Bangalore</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                id="zone"
+                type="text"
+                value={zone}
+                onChange={(e) => setZone(e.target.value)}
+                placeholder="Enter Zone"
+                className="mt-1"
+              />
             </div>
 
             <div>
@@ -128,8 +240,9 @@ export const EditDesignInsightDashboard = () => {
                   <SelectValue placeholder="Select Site" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="lockated">Lockated</SelectItem>
-                  <SelectItem value="godrej-prime">Godrej Prime,Gurgaon</SelectItem>
+                  {siteList.map((s) => (
+                    <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -157,8 +270,11 @@ export const EditDesignInsightDashboard = () => {
                   <SelectValue placeholder="Select Categorization" />
                 </SelectTrigger>
                 <SelectContent>
+                  {/* No SelectItem with empty value, use placeholder only */}
                   <SelectItem value="safety">Safety</SelectItem>
-                  <SelectItem value="workaround">Workaround</SelectItem>
+                  <SelectItem value="Security">Security</SelectItem>
+                  <SelectItem value="Customer Experience">Customer Experience</SelectItem>
+                  <SelectItem value="CAM">CAM</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -171,8 +287,7 @@ export const EditDesignInsightDashboard = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="workaround">Workaround</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                  <SelectItem value="minor">Minor</SelectItem>
+                  <SelectItem value="Learning for the future project">Learning for the future project</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -210,8 +325,8 @@ export const EditDesignInsightDashboard = () => {
 
           <div className="mt-6">
             <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="mustHave" 
+              <Checkbox
+                id="mustHave"
                 checked={mustHave}
                 onCheckedChange={handleMustHaveChange}
               />
@@ -224,7 +339,7 @@ export const EditDesignInsightDashboard = () => {
       </Card>
 
       {/* Attachments Section */}
-      <Card className="mb-6">
+      {/* <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2" style={{ color: '#C72030' }}>
             <span className="text-white rounded-full w-6 h-6 flex items-center justify-center text-sm" style={{ backgroundColor: '#C72030' }}>📎</span>
@@ -242,17 +357,17 @@ export const EditDesignInsightDashboard = () => {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-4">
-        <Button 
+        <Button
           onClick={handleSave}
           className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8"
         >
           Save
         </Button>
-        <Button 
+        <Button
           onClick={handleCancel}
           variant="outline"
           className="border-gray-300 text-gray-700 px-8"

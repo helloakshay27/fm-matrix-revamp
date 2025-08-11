@@ -373,6 +373,117 @@ export const ticketManagementAPI = {
     return response.data.suppliers || response.data || [];
   },
 
+  async getSupportStaffCategories(): Promise<{ id: number; name: string }[]> {
+    try {
+      console.log('🔍 Fetching Support Staff Categories from:', ENDPOINTS.SUPPORT_STAFF_CATEGORIES);
+      const response = await apiClient.get(ENDPOINTS.SUPPORT_STAFF_CATEGORIES);
+      console.log('✅ Support Staff Categories API Response:', {
+        endpoint: ENDPOINTS.SUPPORT_STAFF_CATEGORIES,
+        responseData: response.data,
+        categoriesArray: response.data.support_staff_categories,
+        categoriesLength: response.data.support_staff_categories?.length || 0
+      });
+      
+      const rawCategories = response.data.support_staff_categories || response.data || [];
+      
+      // Map the raw category data to standard format
+      const categories = rawCategories.map((category: any) => ({
+        id: category.id,
+        name: category.name || category.category_name || `Category ${category.id}`
+      }));
+      
+      console.log('🔄 Mapped Support Staff Categories:', {
+        originalCount: rawCategories.length,
+        mappedCount: categories.length,
+        sampleMappedCategories: categories.slice(0, 3)
+      });
+      
+      if (categories.length === 0) {
+        console.warn('⚠️ No support staff categories found in response');
+      }
+      
+      return categories;
+    } catch (error) {
+      console.error('❌ Error fetching Support Staff Categories:', error);
+      console.error('❌ Endpoint that failed:', ENDPOINTS.SUPPORT_STAFF_CATEGORIES);
+      throw error;
+    }
+  },
+
+  async getItemMovementTypes(): Promise<{ id: number; name: string }[]> {
+    try {
+      console.log('🔍 Fetching Item Movement Types from:', ENDPOINTS.ITEM_MOVEMENT_TYPES);
+      const response = await apiClient.get(ENDPOINTS.ITEM_MOVEMENT_TYPES);
+      console.log('✅ Item Movement Types API Response:', {
+        endpoint: ENDPOINTS.ITEM_MOVEMENT_TYPES,
+        responseData: response.data,
+        typesArray: response.data.item_movement_types || response.data,
+        typesLength: (response.data.item_movement_types || response.data)?.length || 0
+      });
+      
+      const rawTypes = response.data.item_movement_types || response.data || [];
+      
+      // Map the raw type data to standard format
+      const types = rawTypes.map((type: any) => ({
+        id: type.id,
+        name: type.name || type.movement_type || `Type ${type.id}`
+      }));
+      
+      console.log('🔄 Mapped Item Movement Types:', {
+        originalCount: rawTypes.length,
+        mappedCount: types.length,
+        sampleMappedTypes: types.slice(0, 3)
+      });
+      
+      if (types.length === 0) {
+        console.warn('⚠️ No item movement types found in response');
+      }
+      
+      return types;
+    } catch (error) {
+      console.error('❌ Error fetching Item Movement Types:', error);
+      console.error('❌ Endpoint that failed:', ENDPOINTS.ITEM_MOVEMENT_TYPES);
+      throw error;
+    }
+  },
+
+  async getItemTypes(): Promise<{ id: number; name: string }[]> {
+    try {
+      console.log('🔍 Fetching Item Types from:', ENDPOINTS.ITEM_TYPES);
+      const response = await apiClient.get(ENDPOINTS.ITEM_TYPES);
+      console.log('✅ Item Types API Response:', {
+        endpoint: ENDPOINTS.ITEM_TYPES,
+        responseData: response.data,
+        itemsArray: response.data.item_movement || response.data.movement_types || response.data.item_types || response.data,
+        itemsLength: (response.data.item_movement || response.data.movement_types || response.data.item_types || response.data)?.length || 0
+      });
+      
+      const rawItems = response.data.item_movement || response.data.movement_types || response.data.item_types || response.data || [];
+      
+      // Map the raw item data to standard format
+      const items = rawItems.map((item: any) => ({
+        id: item.id,
+        name: item.name || item.type || item.movement_type || `Item ${item.id}`
+      }));
+      
+      console.log('🔄 Mapped Item Types:', {
+        originalCount: rawItems.length,
+        mappedCount: items.length,
+        sampleMappedItems: items.slice(0, 3)
+      });
+      
+      if (items.length === 0) {
+        console.warn('⚠️ No item types found in response');
+      }
+      
+      return items;
+    } catch (error) {
+      console.error('❌ Error fetching Item Types:', error);
+      console.error('❌ Endpoint that failed:', ENDPOINTS.ITEM_TYPES);
+      throw error;
+    }
+  },
+
   // Categories
   async createCategory(data: CategoryFormData, emailData: CategoryEmailData) {
     const formData = new FormData();
@@ -939,5 +1050,212 @@ export const ticketManagementAPI = {
   async getCreateTaskData(complaintId: string) {
     const response = await apiClient.get(`/pms/admin/complaints/${complaintId}/create_task.json`);
     return response.data;
+  },
+
+  // Create visitor
+  async createVisitor(visitorData: {
+    visitorType: string;
+    frequency: string;
+    host?: string;
+    tower?: string;
+    visitPurpose?: string;
+    supportCategory?: string;
+    passNumber: string;
+    vehicleNumber: string;
+    visitorName: string;
+    mobileNumber: string;
+    visitorComingFrom: string;
+    remarks: string;
+    skipHostApproval: boolean;
+    goodsInwards: boolean;
+    passValidFrom?: string;
+    passValidTo?: string;
+    daysPermitted?: { [key: string]: boolean };
+    capturedPhoto?: string;
+    additionalVisitors?: Array<{ name: string; mobile: string }>;
+    goodsData?: {
+      selectType: string;
+      category: string;
+      modeOfTransport: string;
+      lrNumber: string;
+      tripId: string;
+    };
+    items?: Array<{
+      selectItem: string;
+      uicInvoiceNo: string;
+      quantity: string;
+    }>;
+  }) {
+    try {
+      console.log('🔍 Creating visitor with data:', visitorData);
+      
+      // Get current user account to fetch site_id
+      let currentUserSiteId = '7'; // Default fallback value
+      try {
+        console.log('📡 Fetching current user account details for site_id...');
+        const userAccount = await this.getUserAccount();
+        currentUserSiteId = userAccount.site_id.toString();
+        console.log('✅ Got user site_id:', currentUserSiteId);
+      } catch (accountError) {
+        console.warn('⚠️ Failed to fetch user account, using default site_id:', accountError);
+      }
+      
+      const formData = new FormData();
+      
+      // Static fields
+      formData.append('gatekeeper[created_by]', 'Gatekeeper');
+      formData.append('gatekeeper[IsDelete]', '0');
+      formData.append('gatekeeper[approve]', '0');
+      formData.append('gatekeeper[parent_gk_id]', '');
+      
+      // Dynamic fields based on visitor type
+      if (visitorData.visitorType === 'support') {
+        formData.append('gatekeeper[guest_type]', 'Support Staff');
+        if (visitorData.supportCategory) {
+          formData.append('gatekeeper[support_staff_id]', visitorData.supportCategory);
+        }
+        formData.append('gatekeeper[support_staff_estimated_time]', '0');
+      } else {
+        formData.append('gatekeeper[guest_type]', 'Guest');
+        formData.append('gatekeeper[support_staff_id]', '');
+        formData.append('gatekeeper[support_staff_estimated_time]', '0');
+      }
+      
+      // Host and building
+      if (visitorData.host) {
+        formData.append('gatekeeper[person_to_meet_id]', visitorData.host);
+      }
+      if (visitorData.tower) {
+        formData.append('gatekeeper[building_id]', visitorData.tower);
+      }
+      
+      // Basic visitor details
+      formData.append('gatekeeper[guest_name]', visitorData.visitorName);
+      if (visitorData.visitPurpose) {
+        formData.append('gatekeeper[visit_purpose]', visitorData.visitPurpose);
+      }
+      formData.append('gatekeeper[guest_number]', visitorData.mobileNumber);
+      formData.append('gatekeeper[pass_number]', visitorData.passNumber || 'FILTERED');
+      formData.append('gatekeeper[guest_from]', visitorData.visitorComingFrom);
+      formData.append('gatekeeper[guest_vehicle_number]', visitorData.vehicleNumber || 'FILTERED');
+      formData.append('gatekeeper[remarks]', visitorData.remarks);
+      
+      // Frequency and dates
+      if (visitorData.frequency === 'frequently') {
+        if (visitorData.passValidFrom) {
+          // Convert date from YYYY-MM-DD to DD/MM/YYYY format
+          const fromDate = new Date(visitorData.passValidFrom);
+          const formattedFromDate = `${fromDate.getDate().toString().padStart(2, '0')}/${(fromDate.getMonth() + 1).toString().padStart(2, '0')}/${fromDate.getFullYear()}`;
+          formData.append('gatekeeper[pass_start_date]', formattedFromDate);
+        }
+        if (visitorData.passValidTo) {
+          // Convert date from YYYY-MM-DD to DD/MM/YYYY format
+          const toDate = new Date(visitorData.passValidTo);
+          const formattedToDate = `${toDate.getDate().toString().padStart(2, '0')}/${(toDate.getMonth() + 1).toString().padStart(2, '0')}/${toDate.getFullYear()}`;
+          formData.append('gatekeeper[pass_end_date]', formattedToDate);
+        }
+        
+        // Days permitted (0=Sunday, 1=Monday, ..., 6=Saturday)
+        if (visitorData.daysPermitted) {
+          const dayMapping = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+          Object.entries(visitorData.daysPermitted).forEach(([day, isSelected]) => {
+            if (isSelected && dayMapping[day as keyof typeof dayMapping] !== undefined) {
+              formData.append('gatekeeper[pass_days][]', dayMapping[day as keyof typeof dayMapping].toString());
+            }
+          });
+        }
+      } else {
+        formData.append('gatekeeper[pass_start_date]', '');
+        formData.append('gatekeeper[pass_end_date]', '');
+      }
+      
+      formData.append('gatekeeper[mimo_type]', 'move_in');
+      formData.append('value', visitorData.frequency === 'frequently' ? 'Frequently' : 'Once');
+      formData.append('skip_approval', visitorData.skipHostApproval.toString());
+      
+      // Additional visitors
+      if (visitorData.additionalVisitors && visitorData.additionalVisitors.length > 0) {
+        visitorData.additionalVisitors.forEach((visitor, index) => {
+          if (visitor.name && visitor.mobile) {
+            const timestamp = Date.now() + index;
+            formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][name]`, visitor.name);
+            formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][mobile]`, visitor.mobile);
+            formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][_destroy]`, 'false');
+          }
+        });
+      }
+      
+      // Goods/Items (if goods inwards is enabled)
+      if (visitorData.goodsInwards && visitorData.goodsData && visitorData.items) {
+        const timestamp = Date.now();
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][_destroy]`, 'false');
+        // Pass the selected type ID from the dropdown
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_movement_type_id]`, visitorData.goodsData.selectType || '');
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][resource_type]`, 'Pms::Site');
+        // Use the current user's site_id
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][resource_id]`, currentUserSiteId);
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_of_type]`, 'User');
+        if (visitorData.host) {
+          formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_of_id]`, visitorData.host);
+        }
+        
+        // Transport mode mapping
+        const transportMapping: { [key: string]: string } = {
+          truck: 'By Truck',
+          van: 'By Van',
+          bike: 'By Bike',
+          hand: 'By Hand',
+          courier: 'By Courier'
+        };
+        const mappedTransport = transportMapping[visitorData.goodsData.modeOfTransport] || 'By Hand';
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][mode_of_transport]`, mappedTransport);
+        
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][lr_number]`, visitorData.goodsData.lrNumber || 'FILTERED');
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][trip_id]`, visitorData.goodsData.tripId);
+        
+        // Add items
+        visitorData.items.forEach((item, itemIndex) => {
+          if (item.selectItem && item.quantity) {
+            const itemTimestamp = Date.now() + itemIndex;
+            formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_details_attributes][${itemTimestamp}][item_movement_id]`, item.selectItem);
+            formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_details_attributes][${itemTimestamp}][number]`, item.uicInvoiceNo || 'FILTERED');
+            formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_details_attributes][${itemTimestamp}][quantity]`, item.quantity);
+            formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_details_attributes][${itemTimestamp}][_destroy]`, 'false');
+          }
+        });
+        
+        // Pass the selected item movement type ID instead of hardcoded value
+        formData.append('item_movement_type_id', visitorData.goodsData.selectType || '1');
+      }
+      
+      // Add photo if captured
+      if (visitorData.capturedPhoto) {
+        try {
+          console.log('📷 Processing captured photo for upload...');
+          // Convert base64 to blob
+          const base64Response = await fetch(visitorData.capturedPhoto);
+          const blob = await base64Response.blob();
+          formData.append('gatekeeper[image]', blob, 'visitor_photo.jpg');
+          console.log('✅ Photo successfully added to form data');
+        } catch (photoError) {
+          console.error('❌ Error processing photo:', photoError);
+          // Continue without photo if there's an error
+        }
+      } else {
+        console.log('⚠️ No photo captured - skipping image upload');
+      }
+      
+      console.log('🚀 Sending visitor creation request to:', ENDPOINTS.CREATE_VISITOR);
+      
+      const response = await apiClient.post(ENDPOINTS.CREATE_VISITOR, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      console.log('✅ Visitor created successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error creating visitor:', error);
+      throw error;
+    }
   },
 };

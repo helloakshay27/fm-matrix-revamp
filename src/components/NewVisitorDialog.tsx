@@ -27,7 +27,12 @@ export const NewVisitorDialog: React.FC<NewVisitorDialogProps> = ({
     e.preventDefault();
     console.log('Submitting visitor with mobile number:', mobileNumber);
     onClose();
-    navigate('/visitor-form');
+    // Pass the mobile number as state to the visitor form page
+    navigate('/visitor-form', { 
+      state: { 
+        mobileNumber: mobileNumber 
+      } 
+    });
   };
 
   return (

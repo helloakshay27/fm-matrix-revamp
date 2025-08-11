@@ -762,6 +762,7 @@ export const AMCDashboard = () => {
     const showEllipsis = totalPages > 7;
 
     if (showEllipsis) {
+      // Always show first page
       items.push(
         <PaginationItem key={1}>
           <PaginationLink
@@ -774,53 +775,37 @@ export const AMCDashboard = () => {
         </PaginationItem>
       );
 
-      if (currentPage > 4) {
+      // Show pages 2, 3, 4 if currentPage is 1, 2, or 3
+      if (currentPage <= 3) {
+        for (let i = 2; i <= 4 && i < totalPages; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                className='cursor-pointer'
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        if (totalPages > 5) {
+          items.push(
+            <PaginationItem key="ellipsis1">
+              <PaginationEllipsis />
+            </PaginationItem>
+          );
+        }
+      } else if (currentPage >= totalPages - 2) {
+        // Show ellipsis before last 4 pages
         items.push(
           <PaginationItem key="ellipsis1">
             <PaginationEllipsis />
           </PaginationItem>
         );
-      } else {
-        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink
-                className='cursor-pointer'
-                onClick={() => handlePageChange(i)}
-                isActive={currentPage === i}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      if (currentPage > 3 && currentPage < totalPages - 2) {
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink
-                className='cursor-pointer'
-                onClick={() => handlePageChange(i)}
-                isActive={currentPage === i}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      if (currentPage < totalPages - 3) {
-        items.push(
-          <PaginationItem key="ellipsis2">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      } else {
-        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-          if (!items.find(item => item.key === i.toString())) {
+        for (let i = totalPages - 3; i < totalPages; i++) {
+          if (i > 1) {
             items.push(
               <PaginationItem key={i}>
                 <PaginationLink
@@ -834,8 +819,34 @@ export const AMCDashboard = () => {
             );
           }
         }
+      } else {
+        // Show ellipsis, currentPage-1, currentPage, currentPage+1, ellipsis
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                className='cursor-pointer'
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
       }
 
+      // Always show last page if more than 1 page
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>

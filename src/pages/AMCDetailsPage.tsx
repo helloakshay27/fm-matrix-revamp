@@ -54,7 +54,7 @@ interface AmcVisitLog {
   updated_at: string;
   asset_period: string;
   technician: Technician | null;
-  
+
 }
 
 interface AMCDetailsDataWithVisits extends AMCDetailsData {
@@ -95,9 +95,16 @@ export const AMCDetailsPage = () => {
     }
   };
 
+
   const formatCurrency = (amount: number | null): string => {
     if (amount === null || amount === undefined) return '—';
     return `${localStorage.getItem('currency')}${amount}`;
+  };
+
+  const formatPaymentTerm = (term: string | null | undefined): string => {
+    if (!term) return '—';
+    const formatted = term.replace(/_/g, ' ').toLowerCase();
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   };
 
   if (loading) {
@@ -212,7 +219,7 @@ export const AMCDetailsPage = () => {
                   <div><strong>End Date:</strong> {formatDate(amcDetails.amc_end_date)}</div>
                   <div><strong>First Service:</strong> {formatDate(amcDetails.amc_first_service)}</div>
                   <div><strong>No. of Visits:</strong> {amcDetails.no_of_visits || '—'}</div>
-                  <div><strong>Payment Terms:</strong> {amcDetails.payment_term || '—'}</div>
+                  <div><strong>Payment Terms:</strong> {formatPaymentTerm(amcDetails.payment_term)}</div>
                   <div className="md:col-span-2"><strong>Remarks:</strong> {amcDetails.remarks || '—'}</div>
                 </div>
               </CardContent>

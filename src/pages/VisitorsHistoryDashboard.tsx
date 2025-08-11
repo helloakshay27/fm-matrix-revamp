@@ -105,37 +105,7 @@ export const VisitorsHistoryDashboard = () => {
           </div>
 
           {/* Search Bar */}
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Input
-                  placeholder="Search using Guest's Name or Pass Number."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  className="pl-4 pr-20 border-gray-300"
-                />
-                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-                  <Button 
-                    onClick={handleSearch}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                  >
-                    <Search className="w-4 h-4 text-gray-500" />
-                  </Button>
-                  <Button 
-                    onClick={handleReset}
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                  >
-                    <RefreshCw className="w-4 h-4 text-gray-500" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+          
 
           {/* Visitor Cards */}
           <div className="p-4 space-y-4">
