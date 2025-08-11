@@ -509,12 +509,6 @@ export const IncidentSetupDashboard = () => {
                            </SelectContent>
                          </Select>
                        </div>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Name
-                         </label>
-                         <Input type="text" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="w-full" placeholder="Enter Name" />
-                       </div>
                     </> : selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category' ? <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Category
