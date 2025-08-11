@@ -313,7 +313,9 @@ export const AccountDashboard = () => {
 
   // Handle URL-based tab selection
   useEffect(() => {
+    console.log('AccountDashboard mounted, location:', location.pathname);
     if (location.pathname.includes('/holiday-calendar')) {
+      console.log('Setting tab to holiday-calendar');
       setActiveTab('holiday-calendar');
     }
   }, [location.pathname]);

@@ -508,6 +508,7 @@ import { PermitSetupDashboard } from './pages/PermitSetupDashboard';
 import { IncidentSetupDashboard } from './pages/IncidentSetupDashboard';
 
 // Import Holiday Calendar page
+import { HolidayCalendarPage as SettingsHolidayCalendarPage } from './pages/settings/HolidayCalendarPage';
 import { HolidayCalendarPage } from './pages/HolidayCalendarPage';
 
 import { SpaceManagementBookingDetailsPage } from '@/pages/SpaceManagementBookingDetailsPage';
@@ -560,7 +561,7 @@ function App() {
                 <Route path="/settings/users/edit-details/:id" element={<EditFMUserDetailsPage />} />
                 <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
                 <Route path="/settings/account" element={<AccountDashboard />} />
-                <Route path="/settings/account/holiday-calendar" element={<AccountDashboard />} />
+                <Route path="/settings/account/holiday-calendar" element={<SettingsHolidayCalendarPage />} />
                 <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
                 <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
                 <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
