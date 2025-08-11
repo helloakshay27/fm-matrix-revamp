@@ -419,7 +419,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                     {renderActions && (
-                      <TableHead className="bg-[#f6f4ee] text-center" data-actions>Actions</TableHead>
+                      <TableHead className="bg-[#f6f4ee] text-center font-medium" data-actions>Actions</TableHead>
                     )}
                      {visibleColumns.map((column) => (
                       <SortableColumnHeader
@@ -429,7 +429,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#f6f4ee] text-center text-black"
+                        className="bg-[#f6f4ee] text-center text-black font-medium px-4 py-3"
                       >
                         {column.label}
                       </SortableColumnHeader>
@@ -481,8 +481,8 @@ export function EnhancedTable<T extends Record<string, any>>({
                       )}
                       onClick={(e) => handleRowClick(item, e)}
                     >
-                      {renderActions && (
-                        <TableCell className="p-4 text-center" data-actions>
+                       {renderActions && (
+                        <TableCell className="px-4 py-3 text-center" data-actions>
                           {renderActions(item)}
                         </TableCell>
                       )}
@@ -490,7 +490,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="p-4 text-center">
+                          <TableCell key={column.key} className="px-4 py-3 text-center border-b">
                             {cellContent}
                           </TableCell>
                         );
