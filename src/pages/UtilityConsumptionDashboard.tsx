@@ -123,7 +123,7 @@ const UtilityConsumptionDashboard = () => {
   };
 
   const handleGenerateNew = () => {
-    console.log('Generate new calculation');
+    navigate('/utility/utility-consumption/generate-bill');
   };
 
   const renderCell = (item: any, columnKey: string) => {
