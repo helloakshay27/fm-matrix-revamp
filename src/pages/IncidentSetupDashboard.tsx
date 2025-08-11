@@ -227,8 +227,8 @@ export const IncidentSetupDashboard = () => {
       <div className="flex gap-8">
         {/* Left Side - Category Menu */}
         <div className="w-80">
-          <div className="space-y-1">
-            {menuItems.map(item => <div key={item} onClick={() => setSelectedCategory(item)} className={`px-4 py-3 rounded-lg font-medium cursor-pointer transition-colors ${selectedCategory === item ? 'bg-purple-100 text-purple-800' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}>
+          <div className="space-y-1 bg-gray-100 p-2 rounded-lg">
+            {menuItems.map(item => <div key={item} onClick={() => setSelectedCategory(item)} className={`px-4 py-3 rounded-lg font-medium cursor-pointer transition-colors ${selectedCategory === item ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-700 hover:bg-white/50'}`}>
                 {item}
               </div>)}
           </div>
