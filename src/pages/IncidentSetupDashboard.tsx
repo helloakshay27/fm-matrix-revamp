@@ -222,7 +222,8 @@ export const IncidentSetupDashboard = () => {
       }
     }
   };
-  return <div className="flex-1 p-6 bg-white min-h-screen">
+  return (
+    <div className="flex-1 p-6 bg-white min-h-screen">
       <h1 className="text-2xl font-semibold text-gray-900 mb-8">Incidents Setup</h1>
 
       <div className="flex gap-8">
@@ -431,15 +432,18 @@ export const IncidentSetupDashboard = () => {
                       <FormControl fullWidth size="small">
                         <InputLabel>Select up to 15 Options...</InputLabel>
                         <MuiSelect 
-                          value={selectedApprovalUsers} 
-                          onChange={e => setSelectedApprovalUsers(e.target.value)}
+                          multiple 
+                          value={selectedApprovalUsers.split(',').filter(u => u.trim())} 
+                          onChange={e => {
+                    const value = Array.isArray(e.target.value) ? e.target.value : [e.target.value];
+                    setSelectedApprovalUsers(value.join(', '));
+                  }}
                           label="Select up to 15 Options..."
                         >
                           <MenuItem value="Mahendra Lungare">Mahendra Lungare</MenuItem>
                           <MenuItem value="Vinayak Mane">Vinayak Mane</MenuItem>
                           <MenuItem value="Abdul A">Abdul A</MenuItem>
                           <MenuItem value="John Doe">John Doe</MenuItem>
-                          <MenuItem value="Jane Smith">Jane Smith</MenuItem>
                         </MuiSelect>
                       </FormControl>
                     </div> : selectedCategory === 'Escalations' ? <>
@@ -454,11 +458,9 @@ export const IncidentSetupDashboard = () => {
                             onChange={e => setSelectedEscalationLevel(e.target.value)}
                             label="Select Level"
                           >
-                            {incidenceLevels.map(level => 
-                              <MenuItem key={level.id} value={level.name}>
+                            {incidenceLevels.map(level => <MenuItem key={level.id} value={level.name}>
                                 {level.name}
-                              </MenuItem>
-                            )}
+                              </MenuItem>)}
                           </MuiSelect>
                         </FormControl>
                       </div>
@@ -478,206 +480,268 @@ export const IncidentSetupDashboard = () => {
                       </div>
                       <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Escalate To Users
+                          Escalate to users
                         </label>
-                        <Select value={escalateToUsers} onValueChange={setEscalateToUsers}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select up to 15 Options..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
-                            <SelectItem value="Mahendra Lungare">Mahendra Lungare</SelectItem>
-                            <SelectItem value="Vinayak Mane">Vinayak Mane</SelectItem>
-                            <SelectItem value="Abdul A">Abdul A</SelectItem>
-                            <SelectItem value="John Doe">John Doe</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap gap-2">
+                            {escalateToUsers.split(',').filter(user => user.trim()).map((user, index) => <div key={index} className="bg-gray-200 px-3 py-1 rounded-md flex items-center gap-2">
+                                <span className="text-sm">{user.trim()}</span>
+                                <button onClick={() => {
+                          const userList = escalateToUsers.split(',').filter(u => u.trim() !== user.trim());
+                          setEscalateToUsers(userList.join(', '));
+                        }} className="text-gray-500 hover:text-gray-700">
+                                  ×
+                                </button>
+                              </div>)}
+                          </div>
+                          <Select onValueChange={value => {
+                      const currentUsers = escalateToUsers ? escalateToUsers.split(',').map(u => u.trim()) : [];
+                      if (!currentUsers.includes(value)) {
+                        const newUsers = [...currentUsers, value].filter(u => u);
+                        setEscalateToUsers(newUsers.join(', '));
+                      }
+                    }}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select users to add..." />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white z-50">
+                              <SelectItem value="Mahendra Lungare">Mahendra Lungare</SelectItem>
+                              <SelectItem value="Vinayak Mane">Vinayak Mane</SelectItem>
+                              <SelectItem value="Abdul A">Abdul A</SelectItem>
+                              <SelectItem value="John Doe">John Doe</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                    </> : selectedCategory === 'Secondary Sub Category' ? <>
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Secondry Category
-                        </label>
-                        <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
-                            {secondaryCategories.map(category => <SelectItem key={category.id} value={category.name}>
-                                {category.name}
-                              </SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                       <div className="flex-1">
-                         <TextField 
-                           type="text" 
-                           value={categoryName} 
-                           onChange={e => setCategoryName(e.target.value)} 
-                           placeholder="Enter Name"
-                           variant="outlined"
-                           size="small"
-                           fullWidth
-                         />
-                       </div>
-                     </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Secondry Category
-                         </label>
-                         <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
-                           <SelectTrigger className="w-full">
-                             <SelectValue placeholder="Select Category" />
-                           </SelectTrigger>
-                           <SelectContent className="bg-white z-50">
-                             {secondaryCategories.map(category => <SelectItem key={category.id} value={category.name}>
-                                 {category.name}
-                               </SelectItem>)}
-                           </SelectContent>
-                         </Select>
-                       </div>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Secondary Sub Category
-                         </label>
-                         <Select value={selectedSubCategory} onValueChange={setSelectedSubCategory}>
-                           <SelectTrigger className="w-full">
-                             <SelectValue placeholder="Select Secondry Sub Category" />
-                           </SelectTrigger>
-                           <SelectContent className="bg-white z-50">
-                             {secondarySubCategories
-                               .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
-                               .map(sub => <SelectItem key={sub.id} value={sub.secondarySubCategory}>
-                                   {sub.secondarySubCategory}
+                    </> : selectedCategory === 'Secondary Category' ? <>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Name
+                          </label>
+                          <TextField 
+                            type="text" 
+                            value={categoryName} 
+                            onChange={e => setCategoryName(e.target.value)} 
+                            placeholder="Enter Name"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                          />
+                        </div>
+                     </> : selectedCategory === 'Secondary Sub Category' ? <>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Secondary Category
+                          </label>
+                          <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select Secondary Category" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white z-50">
+                              {secondaryCategories.map(category => <SelectItem key={category.id} value={category.name}>
+                                  {category.name}
+                                </SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Secondary Sub Category
+                          </label>
+                          <TextField 
+                            type="text" 
+                            value={categoryName} 
+                            onChange={e => setCategoryName(e.target.value)} 
+                            placeholder="Enter Secondary Sub Category"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                          />
+                        </div>
+                      </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Secondary Category
+                          </label>
+                          <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select Secondary Category" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white z-50">
+                              {secondaryCategories.map(category => <SelectItem key={category.id} value={category.name}>
+                                  {category.name}
+                                </SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Secondary Sub Category
+                          </label>
+                          <Select>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select Secondary Sub Category" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white z-50">
+                              {secondarySubCategories
+                                .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
+                                .map(sub => <SelectItem key={sub.id} value={sub.secondarySubCategory}>
+                                    {sub.secondarySubCategory}
+                                  </SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Secondary Sub Sub Category
+                          </label>
+                          <Select>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select Secondary Sub Category" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white z-50">
+                              <SelectItem value="Fire Prevention">Fire Prevention</SelectItem>
+                              <SelectItem value="System Malfunction">System Malfunction</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </> : selectedCategory === 'Who got injured' ? <>
+                         <div className="flex-1">
+                           <label className="block text-sm font-medium text-gray-700 mb-1">
+                             Name
+                           </label>
+                           <TextField 
+                             type="text" 
+                             value={categoryName} 
+                             onChange={e => setCategoryName(e.target.value)} 
+                             placeholder="Enter Name"
+                             variant="outlined"
+                             size="small"
+                             fullWidth
+                           />
+                         </div>
+                      </> : selectedCategory === 'Property Damage Category' ? <>
+                         <div className="flex-1">
+                           <label className="block text-sm font-medium text-gray-700 mb-1">
+                             Name
+                           </label>
+                           <TextField 
+                             type="text" 
+                             value={categoryName} 
+                             onChange={e => setCategoryName(e.target.value)} 
+                             placeholder="Enter Name"
+                             variant="outlined"
+                             size="small"
+                             fullWidth
+                           />
+                         </div>
+                      </> : selectedCategory === 'RCA Category' ? <>
+                         <div className="flex-1">
+                           <label className="block text-sm font-medium text-gray-700 mb-1">
+                             Name
+                           </label>
+                           <TextField 
+                             type="text" 
+                             value={categoryName} 
+                             onChange={e => setCategoryName(e.target.value)} 
+                             placeholder="Enter Name"
+                             variant="outlined"
+                             size="small"
+                             fullWidth
+                           />
+                         </div>
+                      </> : selectedCategory === 'Incident Disclaimer' ? <>
+                         <div className="flex-1">
+                           <label className="block text-sm font-medium text-gray-700 mb-1">
+                             Name
+                           </label>
+                           <TextField 
+                             type="text" 
+                             value={categoryName} 
+                             onChange={e => setCategoryName(e.target.value)} 
+                             placeholder="Enter Name"
+                             variant="outlined"
+                             size="small"
+                             fullWidth
+                           />
+                         </div>
+                      </> : selectedCategory === 'Secondary Sub Sub Sub Category' ? <>
+                         <div className="flex-1">
+                           <label className="block text-sm font-medium text-gray-700 mb-1">
+                             Secondary Category
+                           </label>
+                           <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
+                             <SelectTrigger className="w-full">
+                               <SelectValue placeholder="Select Secondary Category" />
+                             </SelectTrigger>
+                             <SelectContent className="bg-white z-50">
+                               {secondaryCategories.map(category => <SelectItem key={category.id} value={category.name}>
+                                   {category.name}
                                  </SelectItem>)}
-                           </SelectContent>
-                         </Select>
-                        </div>
-                     </> : selectedCategory === 'Secondary Sub Sub Sub Category' ? <>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Secondary Category
-                         </label>
-                         <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
-                           <SelectTrigger className="w-full">
-                             <SelectValue placeholder="Select Category" />
-                           </SelectTrigger>
-                           <SelectContent className="bg-white z-50">
-                             {secondaryCategories.map(category => <SelectItem key={category.id} value={category.name}>
-                                 {category.name}
-                               </SelectItem>)}
-                           </SelectContent>
-                         </Select>
-                       </div>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Secondary Sub Category
-                         </label>
-                         <Select value={selectedSubCategory} onValueChange={setSelectedSubCategory}>
-                           <SelectTrigger className="w-full">
-                             <SelectValue placeholder="Select Secondary Sub Category" />
-                           </SelectTrigger>
-                           <SelectContent className="bg-white z-50">
-                             {secondarySubCategories
-                               .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
-                               .map(sub => <SelectItem key={sub.id} value={sub.secondarySubCategory}>
-                                   {sub.secondarySubCategory}
-                                 </SelectItem>)}
-                           </SelectContent>
-                         </Select>
-                       </div>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Secondary Sub Sub Category
-                         </label>
-                         <Select>
-                           <SelectTrigger className="w-full">
-                             <SelectValue placeholder="Select Secondary Sub Category" />
-                           </SelectTrigger>
-                           <SelectContent className="bg-white z-50">
-                             <SelectItem value="Fire Prevention">Fire Prevention</SelectItem>
-                             <SelectItem value="System Malfunction">System Malfunction</SelectItem>
-                           </SelectContent>
-                         </Select>
-                       </div>
-                     </> : selectedCategory === 'Who got injured' ? <>
-                        <div className="flex-1">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Name
-                          </label>
-                          <TextField 
-                            type="text" 
-                            value={categoryName} 
-                            onChange={e => setCategoryName(e.target.value)} 
-                            placeholder="Enter Name"
-                            variant="outlined"
-                            size="small"
-                            fullWidth
-                          />
-                        </div>
-                     </> : selectedCategory === 'Property Damage Category' ? <>
-                        <div className="flex-1">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Name
-                          </label>
-                          <TextField 
-                            type="text" 
-                            value={categoryName} 
-                            onChange={e => setCategoryName(e.target.value)} 
-                            placeholder="Enter Name"
-                            variant="outlined"
-                            size="small"
-                            fullWidth
-                          />
-                        </div>
-                     </> : selectedCategory === 'RCA Category' ? <>
-                        <div className="flex-1">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Name
-                          </label>
-                          <TextField 
-                            type="text" 
-                            value={categoryName} 
-                            onChange={e => setCategoryName(e.target.value)} 
-                            placeholder="Enter Name"
-                            variant="outlined"
-                            size="small"
-                            fullWidth
-                          />
-                        </div>
-                     </> : selectedCategory === 'Incident Disclaimer' ? <>
-                        <div className="flex-1">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Name
-                          </label>
-                          <TextField 
-                            type="text" 
-                            value={categoryName} 
-                            onChange={e => setCategoryName(e.target.value)} 
-                            placeholder="Enter Name"
-                            variant="outlined"
-                            size="small"
-                            fullWidth
-                          />
-                        </div>
-                    </> : selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category' ? <div className="flex-1">
+                             </SelectContent>
+                           </Select>
+                         </div>
+                         <div className="flex-1">
+                           <label className="block text-sm font-medium text-gray-700 mb-1">
+                             Secondary Sub Category
+                           </label>
+                           <Select>
+                             <SelectTrigger className="w-full">
+                               <SelectValue placeholder="Select Secondary Sub Category" />
+                             </SelectTrigger>
+                             <SelectContent className="bg-white z-50">
+                               {secondarySubCategories
+                                 .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
+                                 .map(sub => <SelectItem key={sub.id} value={sub.secondarySubCategory}>
+                                     {sub.secondarySubCategory}
+                                   </SelectItem>)}
+                             </SelectContent>
+                           </Select>
+                         </div>
+                         <div className="flex-1">
+                           <label className="block text-sm font-medium text-gray-700 mb-1">
+                             Secondary Sub Sub Category
+                           </label>
+                           <Select>
+                             <SelectTrigger className="w-full">
+                               <SelectValue placeholder="Select Secondary Sub Sub Category" />
+                             </SelectTrigger>
+                             <SelectContent className="bg-white z-50">
+                               <SelectItem value="Fire Prevention">Fire Prevention</SelectItem>
+                               <SelectItem value="System Malfunction">System Malfunction</SelectItem>
+                             </SelectContent>
+                           </Select>
+                         </div>
+                         <div className="flex-1">
+                           <label className="block text-sm font-medium text-gray-700 mb-1">
+                             Secondary Sub Sub Sub Category
+                           </label>
+                           <TextField 
+                             type="text" 
+                             value={categoryName} 
+                             onChange={e => setCategoryName(e.target.value)} 
+                             placeholder="Enter Category"
+                             variant="outlined"
+                             size="small"
+                             fullWidth
+                           />
+                         </div>
+                      </> : <>
+                  {(selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') && <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Category
                       </label>
-                      <FormControl fullWidth size="small">
-                        <InputLabel>Select Category</InputLabel>
-                        <MuiSelect 
-                          value={selectedParentCategory} 
-                          onChange={e => setSelectedParentCategory(e.target.value)}
-                          label="Select Category"
-                        >
-                          {categories.map(category => 
-                            <MenuItem key={category.id} value={category.name}>
+                      <Select value={selectedParentCategory} onValueChange={setSelectedParentCategory}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          {categories.map(category => <SelectItem key={category.id} value={category.name}>
                               {category.name}
-                            </MenuItem>
-                          )}
-                        </MuiSelect>
-                      </FormControl>
-                    </div> : null}
+                            </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>}
                   {(selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') && <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Sub Category
@@ -732,107 +796,89 @@ export const IncidentSetupDashboard = () => {
               </div>
 
               {/* Table Section */}
-              <div className="bg-white rounded-xl shadow-sm border border-[#D5DbDB] overflow-hidden">
+              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                   <Table>
                   <TableHeader>
-                    <TableRow className="bg-[#f6f4ee] border-b border-[#D5DbDB]">
-                      {selectedCategory === 'Secondary Sub Category' ? <>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                         </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
-                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
-                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
-                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
-                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                          </> : selectedCategory === 'Secondary Sub Sub Sub Category' ? <>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Sub Category</TableHead>
-                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                           </> : selectedCategory === 'Who got injured' ? <>
-                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                            </> : selectedCategory === 'Property Damage Category' ? <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                             </> : selectedCategory === 'RCA Category' ? <>
-                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                              </> : selectedCategory === 'Incident Disclaimer' ? <>
-                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                              </> : selectedCategory === 'Approval Setup' ? <>
-                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Users</TableHead>
-                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                        </> : selectedCategory === 'Escalations' ? <>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Level</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Escalate In Days</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Users</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                        </> : selectedCategory === 'Sub Sub Sub Category' ? <>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Sub Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                        </> : selectedCategory === 'Sub Sub Category' ? <>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                        </> : selectedCategory === 'Sub Category' ? <>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                        </> : <>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
-                        </>}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedCategory === 'Secondary Sub Category' ? secondarySubCategories.map(secondarySub => <TableRow key={secondarySub.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{secondarySub.secondaryCategory}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{secondarySub.secondarySubCategory}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondarySub, 'Secondary Sub Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondarySub, 'Secondary Sub Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                          </TableRow>) : selectedCategory === 'Secondary Sub Sub Category' ? [
-                            { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention' },
-                            { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction' }
-                          ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
-                           <TableCell className="px-4 py-3">
+                     <TableRow className="bg-gray-50">
+                       {selectedCategory === 'Secondary Sub Category' ? <>
+                           <TableHead>Secondary Category</TableHead>
+                           <TableHead>Secondary Sub Category</TableHead>
+                           <TableHead>Action</TableHead>
+                          </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
+                            <TableHead>Secondary Category</TableHead>
+                            <TableHead>Secondary Sub Category</TableHead>
+                            <TableHead>Secondary Sub Sub Category</TableHead>
+                            <TableHead>Action</TableHead>
+                           </> : selectedCategory === 'Secondary Sub Sub Sub Category' ? <>
+                             <TableHead>Secondary Category</TableHead>
+                             <TableHead>Secondary Sub Category</TableHead>
+                             <TableHead>Secondary Sub Sub Category</TableHead>
+                             <TableHead>Secondary Sub Sub Sub Category</TableHead>
+                              <TableHead>Action</TableHead>
+                            </> : selectedCategory === 'Who got injured' ? <>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Action</TableHead>
+                             </> : selectedCategory === 'Property Damage Category' ? <>
+                               <TableHead>Name</TableHead>
+                               <TableHead>Action</TableHead>
+                              </> : selectedCategory === 'RCA Category' ? <>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Action</TableHead>
+                               </> : selectedCategory === 'Incident Disclaimer' ? <>
+                                 <TableHead>Name</TableHead>
+                                 <TableHead>Action</TableHead>
+                               </> : selectedCategory === 'Approval Setup' ? <>
+                                 <TableHead>Users</TableHead>
+                                 <TableHead>Action</TableHead>
+                         </> : selectedCategory === 'Escalations' ? <>
+                           <TableHead>Level</TableHead>
+                           <TableHead>Escalate In Days</TableHead>
+                           <TableHead>Users</TableHead>
+                           <TableHead>Action</TableHead>
+                         </> : selectedCategory === 'Sub Sub Sub Category' ? <>
+                           <TableHead>Category</TableHead>
+                           <TableHead>Sub Category</TableHead>
+                           <TableHead>Sub Sub Category</TableHead>
+                           <TableHead>Sub Sub Sub Category</TableHead>
+                           <TableHead>Action</TableHead>
+                         </> : selectedCategory === 'Sub Sub Category' ? <>
+                           <TableHead>Category</TableHead>
+                           <TableHead>Sub Category</TableHead>
+                           <TableHead>Sub Sub Category</TableHead>
+                           <TableHead>Action</TableHead>
+                         </> : selectedCategory === 'Sub Category' ? <>
+                           <TableHead>Category</TableHead>
+                           <TableHead>Sub Category</TableHead>
+                           <TableHead>Action</TableHead>
+                         </> : <>
+                           <TableHead>Name</TableHead>
+                           <TableHead>Action</TableHead>
+                         </>}
+                     </TableRow>
+                   </TableHeader>
+                   <TableBody>
+                     {selectedCategory === 'Secondary Sub Category' ? secondarySubCategories.map(secondarySub => <TableRow key={secondarySub.id}>
+                           <TableCell className="font-medium">{secondarySub.secondaryCategory}</TableCell>
+                           <TableCell>{secondarySub.secondarySubCategory}</TableCell>
+                           <TableCell>
                              <div className="flex gap-2">
-                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondarySub, 'Secondary Sub Category')}>
                                  <Edit className="w-4 h-4" />
                                </Button>
-                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondarySub, 'Secondary Sub Category')}>
                                  <Trash2 className="w-4 h-4" />
                                </Button>
                              </div>
                            </TableCell>
-                          </TableRow>) : selectedCategory === 'Secondary Sub Sub Sub Category' ? [
-                            { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention', secondarySubSubSubCategory: 'Alarm Systems' },
-                            { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction', secondarySubSubSubCategory: 'Hardware Issues' }
-                          ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubSubCategory}</TableCell>
-                           <TableCell className="px-4 py-3">
+                           </TableRow>) : selectedCategory === 'Secondary Sub Sub Category' ? [
+                             { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention' },
+                             { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction' }
+                           ].map(item => <TableRow key={item.id}>
+                             <TableCell className="font-medium">{item.secondaryCategory}</TableCell>
+                             <TableCell>{item.secondarySubCategory}</TableCell>
+                             <TableCell>{item.secondarySubSubCategory}</TableCell>
+                            <TableCell>
                               <div className="flex gap-2">
                                 <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
                                   <Edit className="w-4 h-4" />
@@ -842,13 +888,15 @@ export const IncidentSetupDashboard = () => {
                                 </Button>
                               </div>
                             </TableCell>
-                           </TableRow>) : selectedCategory === 'Who got injured' ? [
-                             { id: 1, name: 'Employee' },
-                             { id: 2, name: 'Contractor' },
-                             { id: 3, name: 'Visitor' }
-                           ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                             <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                             <TableCell className="px-4 py-3">
+                           </TableRow>) : selectedCategory === 'Secondary Sub Sub Sub Category' ? [
+                             { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention', secondarySubSubSubCategory: 'Alarm Systems' },
+                             { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction', secondarySubSubSubCategory: 'Hardware Issues' }
+                           ].map(item => <TableRow key={item.id}>
+                             <TableCell className="font-medium">{item.secondaryCategory}</TableCell>
+                             <TableCell>{item.secondarySubCategory}</TableCell>
+                             <TableCell>{item.secondarySubSubCategory}</TableCell>
+                             <TableCell>{item.secondarySubSubSubCategory}</TableCell>
+                            <TableCell>
                                <div className="flex gap-2">
                                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
                                    <Edit className="w-4 h-4" />
@@ -858,13 +906,13 @@ export const IncidentSetupDashboard = () => {
                                  </Button>
                                </div>
                              </TableCell>
-                            </TableRow>) : selectedCategory === 'Property Damage Category' ? [
-                              { id: 1, name: 'Building Damage' },
-                              { id: 2, name: 'Equipment Damage' },
-                              { id: 3, name: 'Vehicle Damage' }
-                            ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                              <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                              <TableCell className="px-4 py-3">
+                            </TableRow>) : selectedCategory === 'Who got injured' ? [
+                              { id: 1, name: 'Employee' },
+                              { id: 2, name: 'Contractor' },
+                              { id: 3, name: 'Visitor' }
+                            ].map(item => <TableRow key={item.id}>
+                              <TableCell className="font-medium">{item.name}</TableCell>
+                              <TableCell>
                                 <div className="flex gap-2">
                                   <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
                                     <Edit className="w-4 h-4" />
@@ -874,13 +922,13 @@ export const IncidentSetupDashboard = () => {
                                   </Button>
                                 </div>
                               </TableCell>
-                             </TableRow>) : selectedCategory === 'RCA Category' ? [
-                               { id: 1, name: 'Human Error' },
-                               { id: 2, name: 'Equipment Failure' },
-                               { id: 3, name: 'Process Failure' }
-                             ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                               <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                               <TableCell className="px-4 py-3">
+                             </TableRow>) : selectedCategory === 'Property Damage Category' ? [
+                               { id: 1, name: 'Building Damage' },
+                               { id: 2, name: 'Equipment Damage' },
+                               { id: 3, name: 'Vehicle Damage' }
+                             ].map(item => <TableRow key={item.id}>
+                               <TableCell className="font-medium">{item.name}</TableCell>
+                               <TableCell>
                                  <div className="flex gap-2">
                                    <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
                                      <Edit className="w-4 h-4" />
@@ -890,13 +938,13 @@ export const IncidentSetupDashboard = () => {
                                    </Button>
                                  </div>
                                </TableCell>
-                              </TableRow>) : selectedCategory === 'Incident Disclaimer' ? [
-                                { id: 1, name: 'General Disclaimer' },
-                                { id: 2, name: 'Safety Disclaimer' },
-                                { id: 3, name: 'Legal Disclaimer' }
-                              ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                                <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                                <TableCell className="px-4 py-3">
+                              </TableRow>) : selectedCategory === 'RCA Category' ? [
+                                { id: 1, name: 'Human Error' },
+                                { id: 2, name: 'Equipment Failure' },
+                                { id: 3, name: 'Process Failure' }
+                              ].map(item => <TableRow key={item.id}>
+                                <TableCell className="font-medium">{item.name}</TableCell>
+                                <TableCell>
                                   <div className="flex gap-2">
                                     <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
                                       <Edit className="w-4 h-4" />
@@ -906,130 +954,145 @@ export const IncidentSetupDashboard = () => {
                                     </Button>
                                   </div>
                                 </TableCell>
-                              </TableRow>) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => <TableRow key={approval.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{approval.users}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(approval, 'Approval Setup')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(approval, 'Approval Setup')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>) : selectedCategory === 'Escalations' ? escalations.map(escalation => <TableRow key={escalation.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{escalation.level}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{escalation.escalateInDays}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{escalation.users}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(escalation, 'Escalations')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(escalation, 'Escalations')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>) : selectedCategory === 'Secondary Category' ? secondaryCategories.map(secondary => <TableRow key={secondary.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{secondary.name}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondary, 'Secondary Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondary, 'Secondary Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>) : selectedCategory === 'Incidence level' ? incidenceLevels.map(level => <TableRow key={level.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{level.name}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(level, 'Incidence level')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(level, 'Incidence level')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>) : selectedCategory === 'Incidence status' ? incidenceStatuses.map(status => <TableRow key={status.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{status.name}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(status, 'Incidence status')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(status, 'Incidence status')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>) : selectedCategory === 'Sub Sub Sub Category' ? subSubSubCategories.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubCategory}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubSubCategory}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Sub Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Sub Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>) : selectedCategory === 'Sub Sub Category' ? subSubCategories.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubCategory}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>) : selectedCategory === 'Sub Category' ? subCategories.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>) : categories.map(category => <TableRow key={category.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{category.name}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(category, 'Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(category, 'Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>)}
-                  </TableBody>
-                </Table>
+                               </TableRow>) : selectedCategory === 'Incident Disclaimer' ? [
+                                 { id: 1, name: 'General Disclaimer' },
+                                 { id: 2, name: 'Safety Disclaimer' },
+                                 { id: 3, name: 'Legal Disclaimer' }
+                               ].map(item => <TableRow key={item.id}>
+                                 <TableCell className="font-medium">{item.name}</TableCell>
+                                 <TableCell>
+                                   <div className="flex gap-2">
+                                     <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                       <Edit className="w-4 h-4" />
+                                     </Button>
+                                     <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                       <Trash2 className="w-4 h-4" />
+                                     </Button>
+                                   </div>
+                                 </TableCell>
+                               </TableRow>) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => <TableRow key={approval.id}>
+                           <TableCell className="font-medium">{approval.users}</TableCell>
+                           <TableCell>
+                             <div className="flex gap-2">
+                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(approval, 'Approval Setup')}>
+                                 <Edit className="w-4 h-4" />
+                               </Button>
+                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(approval, 'Approval Setup')}>
+                                 <Trash2 className="w-4 h-4" />
+                               </Button>
+                             </div>
+                           </TableCell>
+                         </TableRow>) : selectedCategory === 'Escalations' ? escalations.map(escalation => <TableRow key={escalation.id}>
+                           <TableCell className="font-medium">{escalation.level}</TableCell>
+                           <TableCell>{escalation.escalateInDays}</TableCell>
+                           <TableCell>{escalation.users}</TableCell>
+                           <TableCell>
+                             <div className="flex gap-2">
+                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(escalation, 'Escalations')}>
+                                 <Edit className="w-4 h-4" />
+                               </Button>
+                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(escalation, 'Escalations')}>
+                                 <Trash2 className="w-4 h-4" />
+                               </Button>
+                             </div>
+                           </TableCell>
+                         </TableRow>) : selectedCategory === 'Secondary Category' ? secondaryCategories.map(secondary => <TableRow key={secondary.id}>
+                           <TableCell className="font-medium">{secondary.name}</TableCell>
+                           <TableCell>
+                             <div className="flex gap-2">
+                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondary, 'Secondary Category')}>
+                                 <Edit className="w-4 h-4" />
+                               </Button>
+                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondary, 'Secondary Category')}>
+                                 <Trash2 className="w-4 h-4" />
+                               </Button>
+                             </div>
+                           </TableCell>
+                         </TableRow>) : selectedCategory === 'Incidence level' ? incidenceLevels.map(level => <TableRow key={level.id}>
+                           <TableCell className="font-medium">{level.name}</TableCell>
+                           <TableCell>
+                             <div className="flex gap-2">
+                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(level, 'Incidence level')}>
+                                 <Edit className="w-4 h-4" />
+                               </Button>
+                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(level, 'Incidence level')}>
+                                 <Trash2 className="w-4 h-4" />
+                               </Button>
+                             </div>
+                           </TableCell>
+                         </TableRow>) : selectedCategory === 'Incidence status' ? incidenceStatuses.map(status => <TableRow key={status.id}>
+                           <TableCell className="font-medium">{status.name}</TableCell>
+                           <TableCell>
+                             <div className="flex gap-2">
+                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(status, 'Incidence status')}>
+                                 <Edit className="w-4 h-4" />
+                               </Button>
+                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(status, 'Incidence status')}>
+                                 <Trash2 className="w-4 h-4" />
+                               </Button>
+                             </div>
+                           </TableCell>
+                         </TableRow>) : selectedCategory === 'Sub Sub Sub Category' ? subSubSubCategories.map(item => <TableRow key={item.id}>
+                           <TableCell className="font-medium">{item.category}</TableCell>
+                           <TableCell>{item.subCategory}</TableCell>
+                           <TableCell>{item.subSubCategory}</TableCell>
+                           <TableCell>{item.subSubSubCategory}</TableCell>
+                           <TableCell>
+                             <div className="flex gap-2">
+                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Sub Category')}>
+                                 <Edit className="w-4 h-4" />
+                               </Button>
+                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Sub Category')}>
+                                 <Trash2 className="w-4 h-4" />
+                               </Button>
+                             </div>
+                           </TableCell>
+                         </TableRow>) : selectedCategory === 'Sub Sub Category' ? subSubCategories.map(item => <TableRow key={item.id}>
+                           <TableCell className="font-medium">{item.category}</TableCell>
+                           <TableCell>{item.subCategory}</TableCell>
+                           <TableCell>{item.subSubCategory}</TableCell>
+                           <TableCell>
+                             <div className="flex gap-2">
+                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Category')}>
+                                 <Edit className="w-4 h-4" />
+                               </Button>
+                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Category')}>
+                                 <Trash2 className="w-4 h-4" />
+                               </Button>
+                             </div>
+                           </TableCell>
+                         </TableRow>) : selectedCategory === 'Sub Category' ? subCategories.map(item => <TableRow key={item.id}>
+                           <TableCell className="font-medium">{item.category}</TableCell>
+                           <TableCell>{item.subCategory}</TableCell>
+                           <TableCell>
+                             <div className="flex gap-2">
+                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Category')}>
+                                 <Edit className="w-4 h-4" />
+                               </Button>
+                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Category')}>
+                                 <Trash2 className="w-4 h-4" />
+                               </Button>
+                             </div>
+                           </TableCell>
+                         </TableRow>) : categories.map(category => <TableRow key={category.id}>
+                           <TableCell className="font-medium">{category.name}</TableCell>
+                           <TableCell>
+                             <div className="flex gap-2">
+                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(category, 'Category')}>
+                                 <Edit className="w-4 h-4" />
+                               </Button>
+                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(category, 'Category')}>
+                                 <Trash2 className="w-4 h-4" />
+                               </Button>
+                             </div>
+                           </TableCell>
+                         </TableRow>)}
+                   </TableBody>
+                 </Table>
                 </div>
               </div>
             </>}
         </div>
       </div>
-    </div>;
+    </div>
 };
-export default IncidentSetupDashboard;
