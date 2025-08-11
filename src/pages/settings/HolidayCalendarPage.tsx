@@ -183,85 +183,65 @@ export const HolidayCalendarPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="p-6">
-        {/* Header Section */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#1a1a1a] mb-2">ACCOUNT</h1>
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-gray-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Holiday Calendar</h2>
-          </div>
-          <p className="text-gray-600 mt-1">Manage Holidays</p>
+    <div className="p-8 bg-gray-50 min-h-screen">
+      {/* Header Section */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Holiday Calendar</h1>
+        <p className="text-gray-600">Manage Holidays</p>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex gap-3">
+          <Button 
+            className="bg-[#C72030] hover:bg-[#A01020] text-white flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Holiday
+          </Button>
+          <Button 
+            variant="outline" 
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white flex items-center gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            Bulk Upload
+          </Button>
         </div>
-
-        <div className="bg-[#f6f4ee] min-h-[calc(100vh-120px)] -mx-6 -mb-6 px-6 py-6">
-          <div className="flex">
-            {/* Main Content */}
-            <div className="flex-1">
-              {/* Action Buttons */}
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex gap-3">
-                  <Button 
-                    className="bg-[#8B5A3C] hover:bg-[#7A4A2A] text-white flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Holiday
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="border-[#8B5A3C] text-[#8B5A3C] hover:bg-[#8B5A3C] hover:text-white flex items-center gap-2"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Bulk Upload
-                  </Button>
-                </div>
-                
-                <div className="flex gap-3">
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filter
-                  </Button>
-                  <Button variant="outline">
-                    Reset
-                  </Button>
-                </div>
-              </div>
-
-              {/* Search Bar */}
-              <div className="mb-6">
-                <Input
-                  placeholder="Search holidays..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="max-w-sm"
-                />
-              </div>
-
-              {/* Table */}
-              <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
-                <div className="max-h-[600px] overflow-auto">
-                  <EnhancedTable
-                    data={mockHolidays}
-                    columns={columns}
-                    renderCell={renderCell}
-                    renderActions={renderActions}
-                    searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
-                    storageKey="holiday-calendar-table"
-                    emptyMessage="No holidays found"
-                    className="min-w-full"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Right Sidebar - Empty as shown in image */}
-            <div className="w-80 bg-gray-300 border-l border-gray-400 ml-6">
-              {/* Empty sidebar as shown in the reference image */}
-            </div>
-          </div>
+        
+        <div className="flex gap-3">
+          <Button variant="outline" className="flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            Filter
+          </Button>
+          <Button variant="outline">
+            Reset
+          </Button>
         </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <Input
+          placeholder="Search holidays..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+      </div>
+
+      {/* Table Card */}
+      <div className="bg-white rounded-lg border border-[#D5DbDB] shadow-sm">
+        <EnhancedTable
+          data={mockHolidays}
+          columns={columns}
+          renderCell={renderCell}
+          renderActions={renderActions}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          storageKey="holiday-calendar-table"
+          emptyMessage="No holidays found"
+          className="min-w-full"
+        />
       </div>
     </div>
   );
