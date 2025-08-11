@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit, Trash2 } from 'lucide-react';
+import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel } from '@mui/material';
 export const IncidentSetupDashboard = () => {
   const [categoryName, setCategoryName] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Category');
@@ -250,29 +251,41 @@ export const IncidentSetupDashboard = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Level
                     </label>
-                    <Select value={editFormData.level} onValueChange={value => setEditFormData({
-                ...editFormData,
-                level: value
-              })}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select Level" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white z-50">
-                        {incidenceLevels.map(level => <SelectItem key={level.id} value={level.name}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Select Level</InputLabel>
+                      <MuiSelect 
+                        value={editFormData.level} 
+                        onChange={e => setEditFormData({
+                          ...editFormData,
+                          level: e.target.value
+                        })}
+                        label="Select Level"
+                      >
+                        {incidenceLevels.map(level => 
+                          <MenuItem key={level.id} value={level.name}>
                             {level.name}
-                          </SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                          </MenuItem>
+                        )}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Escalate In Days
                     </label>
-                    <Input type="text" value={editFormData.escalateInDays} onChange={e => setEditFormData({
-                ...editFormData,
-                escalateInDays: e.target.value
-              })} className="w-full" placeholder="Enter days" />
+                    <TextField 
+                      type="text" 
+                      value={editFormData.escalateInDays} 
+                      onChange={e => setEditFormData({
+                        ...editFormData,
+                        escalateInDays: e.target.value
+                      })} 
+                      placeholder="Enter days"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                    />
                   </div>
 
                   <div>
@@ -387,10 +400,18 @@ export const IncidentSetupDashboard = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Name
                     </label>
-                    <Input type="text" value={editFormData.name} onChange={e => setEditFormData({
-                ...editFormData,
-                name: e.target.value
-              })} className="w-full" placeholder="Enter name" />
+                    <TextField 
+                      type="text" 
+                      value={editFormData.name} 
+                      onChange={e => setEditFormData({
+                        ...editFormData,
+                        name: e.target.value
+                      })} 
+                      placeholder="Enter name"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                    />
                   </div>
 
                   <div className="flex gap-3 pt-2">
@@ -407,39 +428,53 @@ export const IncidentSetupDashboard = () => {
               <div className="mb-6">
                 <div className="flex gap-4 items-end">
                   {selectedCategory === 'Approval Setup' ? <div className="flex-1">
-                      <Select value={selectedApprovalUsers} onValueChange={setSelectedApprovalUsers}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select up to 15 Options..." />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
-                          <SelectItem value="Mahendra Lungare">Mahendra Lungare</SelectItem>
-                          <SelectItem value="Vinayak Mane">Vinayak Mane</SelectItem>
-                          <SelectItem value="Abdul A">Abdul A</SelectItem>
-                          <SelectItem value="John Doe">John Doe</SelectItem>
-                          <SelectItem value="Jane Smith">Jane Smith</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Select up to 15 Options...</InputLabel>
+                        <MuiSelect 
+                          value={selectedApprovalUsers} 
+                          onChange={e => setSelectedApprovalUsers(e.target.value)}
+                          label="Select up to 15 Options..."
+                        >
+                          <MenuItem value="Mahendra Lungare">Mahendra Lungare</MenuItem>
+                          <MenuItem value="Vinayak Mane">Vinayak Mane</MenuItem>
+                          <MenuItem value="Abdul A">Abdul A</MenuItem>
+                          <MenuItem value="John Doe">John Doe</MenuItem>
+                          <MenuItem value="Jane Smith">Jane Smith</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
                     </div> : selectedCategory === 'Escalations' ? <>
                       <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Level
                         </label>
-                        <Select value={selectedEscalationLevel} onValueChange={setSelectedEscalationLevel}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Level" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
-                            {incidenceLevels.map(level => <SelectItem key={level.id} value={level.name}>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Select Level</InputLabel>
+                          <MuiSelect 
+                            value={selectedEscalationLevel} 
+                            onChange={e => setSelectedEscalationLevel(e.target.value)}
+                            label="Select Level"
+                          >
+                            {incidenceLevels.map(level => 
+                              <MenuItem key={level.id} value={level.name}>
                                 {level.name}
-                              </SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                              </MenuItem>
+                            )}
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                       <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Escalate In Days
                         </label>
-                        <Input type="text" value={escalateInDays} onChange={e => setEscalateInDays(e.target.value)} className="w-full" placeholder="Enter days" />
+                        <TextField 
+                          type="text" 
+                          value={escalateInDays} 
+                          onChange={e => setEscalateInDays(e.target.value)} 
+                          placeholder="Enter days"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                        />
                       </div>
                       <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -474,7 +509,15 @@ export const IncidentSetupDashboard = () => {
                         </Select>
                       </div>
                        <div className="flex-1">
-                         <Input type="text" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="w-full" placeholder="Enter Name" />
+                         <TextField 
+                           type="text" 
+                           value={categoryName} 
+                           onChange={e => setCategoryName(e.target.value)} 
+                           placeholder="Enter Name"
+                           variant="outlined"
+                           size="small"
+                           fullWidth
+                         />
                        </div>
                      </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
                        <div className="flex-1">
@@ -557,47 +600,83 @@ export const IncidentSetupDashboard = () => {
                          </Select>
                        </div>
                      </> : selectedCategory === 'Who got injured' ? <>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Name
-                         </label>
-                         <Input type="text" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="w-full" placeholder="Enter Name" />
-                       </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Name
+                          </label>
+                          <TextField 
+                            type="text" 
+                            value={categoryName} 
+                            onChange={e => setCategoryName(e.target.value)} 
+                            placeholder="Enter Name"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                          />
+                        </div>
                      </> : selectedCategory === 'Property Damage Category' ? <>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Name
-                         </label>
-                         <Input type="text" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="w-full" placeholder="Enter Name" />
-                       </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Name
+                          </label>
+                          <TextField 
+                            type="text" 
+                            value={categoryName} 
+                            onChange={e => setCategoryName(e.target.value)} 
+                            placeholder="Enter Name"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                          />
+                        </div>
                      </> : selectedCategory === 'RCA Category' ? <>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Name
-                         </label>
-                         <Input type="text" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="w-full" placeholder="Enter Name" />
-                       </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Name
+                          </label>
+                          <TextField 
+                            type="text" 
+                            value={categoryName} 
+                            onChange={e => setCategoryName(e.target.value)} 
+                            placeholder="Enter Name"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                          />
+                        </div>
                      </> : selectedCategory === 'Incident Disclaimer' ? <>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Name
-                         </label>
-                         <Input type="text" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="w-full" placeholder="Enter Name" />
-                       </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Name
+                          </label>
+                          <TextField 
+                            type="text" 
+                            value={categoryName} 
+                            onChange={e => setCategoryName(e.target.value)} 
+                            placeholder="Enter Name"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                          />
+                        </div>
                     </> : selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category' ? <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Category
                       </label>
-                      <Select value={selectedParentCategory} onValueChange={setSelectedParentCategory}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
-                          {categories.map(category => <SelectItem key={category.id} value={category.name}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Select Category</InputLabel>
+                        <MuiSelect 
+                          value={selectedParentCategory} 
+                          onChange={e => setSelectedParentCategory(e.target.value)}
+                          label="Select Category"
+                        >
+                          {categories.map(category => 
+                            <MenuItem key={category.id} value={category.name}>
                               {category.name}
-                            </SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                            </MenuItem>
+                          )}
+                        </MuiSelect>
+                      </FormControl>
                     </div> : null}
                   {(selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') && <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -636,7 +715,15 @@ export const IncidentSetupDashboard = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Name
                       </label>
-                      <Input type="text" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="w-full" placeholder="Enter name" />
+                      <TextField 
+                        type="text" 
+                        value={categoryName} 
+                        onChange={e => setCategoryName(e.target.value)} 
+                        placeholder="Enter name"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                      />
                     </div>}
                   <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-8">
                     Submit
