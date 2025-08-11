@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit, Trash2 } from 'lucide-react';
-import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel, Switch } from '@mui/material';
 export const IncidentSetupDashboard = () => {
   const [categoryName, setCategoryName] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Category');
@@ -738,79 +738,120 @@ export const IncidentSetupDashboard = () => {
                   <TableHeader>
                     <TableRow className="bg-[#f6f4ee] border-b border-[#D5DbDB]">
                       {selectedCategory === 'Secondary Sub Category' ? <>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Actions</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Active</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                          </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
+                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Actions</TableHead>
+                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Active</TableHead>
                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
-                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                           </> : selectedCategory === 'Secondary Sub Sub Sub Category' ? <>
+                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Actions</TableHead>
+                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Active</TableHead>
                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Sub Category</TableHead>
-                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                            </> : selectedCategory === 'Who got injured' ? <>
-                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Actions</TableHead>
+                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Active</TableHead>
+                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Entity</TableHead>
                             </> : selectedCategory === 'Property Damage Category' ? <>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Actions</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Active</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Entity</TableHead>
                              </> : selectedCategory === 'RCA Category' ? <>
-                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Actions</TableHead>
+                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Active</TableHead>
+                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Entity</TableHead>
                               </> : selectedCategory === 'Incident Disclaimer' ? <>
-                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Actions</TableHead>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Active</TableHead>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Entity</TableHead>
                               </> : selectedCategory === 'Approval Setup' ? <>
-                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Users</TableHead>
-                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Actions</TableHead>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Active</TableHead>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Entity</TableHead>
                         </> : selectedCategory === 'Escalations' ? <>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Actions</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Active</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Level</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Escalate In Days</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Users</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                         </> : selectedCategory === 'Sub Sub Sub Category' ? <>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Actions</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Active</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Sub Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                         </> : selectedCategory === 'Sub Sub Category' ? <>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Actions</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Active</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                         </> : selectedCategory === 'Sub Category' ? <>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Actions</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Active</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                         </> : <>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
-                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Actions</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Active</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Entity</TableHead>
                         </>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {selectedCategory === 'Secondary Sub Category' ? secondarySubCategories.map(secondarySub => <TableRow key={secondarySub.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3">
+                            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800" onClick={() => handleEdit(secondarySub, 'Secondary Sub Category')}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
+                            <Switch 
+                              defaultChecked={true}
+                              size="small"
+                              sx={{
+                                '& .MuiSwitch-switchBase.Mui-checked': {
+                                  color: '#4ade80',
+                                },
+                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                  backgroundColor: '#4ade80',
+                                },
+                              }}
+                            />
+                          </TableCell>
                           <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{secondarySub.secondaryCategory}</TableCell>
                           <TableCell className="px-4 py-3 text-sm text-gray-600">{secondarySub.secondarySubCategory}</TableCell>
-                          <TableCell className="px-4 py-3">
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondarySub, 'Secondary Sub Category')}>
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondarySub, 'Secondary Sub Category')}>
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
                           </TableRow>) : selectedCategory === 'Secondary Sub Sub Category' ? [
                             { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention' },
                             { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction' }
                           ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3">
+                              <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800">
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
+                            <TableCell className="px-4 py-3">
+                              <Switch 
+                                defaultChecked={true}
+                                size="small"
+                                sx={{
+                                  '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: '#4ade80',
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: '#4ade80',
+                                  },
+                                }}
+                              />
+                            </TableCell>
                             <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
                             <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
                             <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
@@ -847,34 +888,52 @@ export const IncidentSetupDashboard = () => {
                              { id: 2, name: 'Contractor' },
                              { id: 3, name: 'Visitor' }
                            ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                             <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
                              <TableCell className="px-4 py-3">
-                               <div className="flex gap-2">
-                                 <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                               <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800">
+                                 <Edit className="w-4 h-4" />
+                               </Button>
+                             </TableCell>
+                             <TableCell className="px-4 py-3">
+                               <Switch 
+                                 defaultChecked={true}
+                                 size="small"
+                                 sx={{
+                                   '& .MuiSwitch-switchBase.Mui-checked': {
+                                     color: '#4ade80',
+                                   },
+                                   '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                     backgroundColor: '#4ade80',
+                                   },
+                                 }}
+                               />
+                             </TableCell>
+                             <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                             </TableRow>) : selectedCategory === 'Property Damage Category' ? [
+                               { id: 1, name: 'Building Damage' },
+                               { id: 2, name: 'Equipment Damage' },
+                               { id: 3, name: 'Vehicle Damage' }
+                             ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                               <TableCell className="px-4 py-3">
+                                 <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800">
                                    <Edit className="w-4 h-4" />
                                  </Button>
-                                 <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
-                                   <Trash2 className="w-4 h-4" />
-                                 </Button>
-                               </div>
-                             </TableCell>
-                            </TableRow>) : selectedCategory === 'Property Damage Category' ? [
-                              { id: 1, name: 'Building Damage' },
-                              { id: 2, name: 'Equipment Damage' },
-                              { id: 3, name: 'Vehicle Damage' }
-                            ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                              <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                              <TableCell className="px-4 py-3">
-                                <div className="flex gap-2">
-                                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                             </TableRow>) : selectedCategory === 'RCA Category' ? [
+                               </TableCell>
+                               <TableCell className="px-4 py-3">
+                                 <Switch 
+                                   defaultChecked={true}
+                                   size="small"
+                                   sx={{
+                                     '& .MuiSwitch-switchBase.Mui-checked': {
+                                       color: '#4ade80',
+                                     },
+                                     '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                       backgroundColor: '#4ade80',
+                                     },
+                                   }}
+                                 />
+                               </TableCell>
+                               <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                              </TableRow>) : selectedCategory === 'RCA Category' ? [
                                { id: 1, name: 'Human Error' },
                                { id: 2, name: 'Equipment Failure' },
                                { id: 3, name: 'Process Failure' }
