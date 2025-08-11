@@ -190,7 +190,7 @@ export const HolidayCalendarPage = () => {
         <p className="text-gray-600">Manage Holidays</p>
       </div>
 
-      {/* Action Buttons */}
+      {/* Action Buttons and Search Bar */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex gap-3">
           <Button 
@@ -208,25 +208,18 @@ export const HolidayCalendarPage = () => {
           </Button>
         </div>
         
-        <div className="flex gap-3">
-          <Button variant="outline" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filter
-          </Button>
+        {/* Search Bar with Go button */}
+        <div className="flex gap-2 items-center">
+          <Input
+            placeholder="Search holidays..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
           <Button variant="outline">
-            Reset
+            Go
           </Button>
         </div>
-      </div>
-
-      {/* Search Bar - Right aligned */}
-      <div className="mb-6 flex justify-end">
-        <Input
-          placeholder="Search holidays..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
       </div>
 
       {/* Table Card */}
