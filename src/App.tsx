@@ -11,6 +11,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 // Import existing pages
 import Index from './pages/Index';
 import NotFound from './pages/NotFound';
+import { HolidayCalendarPage } from './pages/HolidayCalendarPage';
 
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from './pages/InvoiceApprovalsPage';
@@ -956,7 +957,7 @@ function App() {
               {/* Settings Routes */}
 
               <Route path="/settings" element={<ProtectedRoute><Layout><div /></Layout></ProtectedRoute>}>
-
+                <Route path="/settings/account/holiday-calendar" element={<HolidayCalendarPage />} />
                 <Route path="/settings/approval-matrix/setup" element={<ApprovalMatrixSetupPage />} />
                 <Route path="/settings/approval-matrix/setup/add" element={<AddApprovalMatrixPage />} />
                 <Route path="/settings/invoice-approvals/add" element={<AddInvoiceApprovalsPage />} />
