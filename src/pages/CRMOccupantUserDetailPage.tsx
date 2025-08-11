@@ -14,22 +14,30 @@ export const CRMOccupantUserDetailPage = () => {
   // Sample user data - in real app, this would be fetched based on ID
   const userData = {
     id: id,
-    firstName: "Test Pending",
-    lastName: "Getting App access",
-    mobile: "8881418814",
-    email: "shahabmirza3099@gmail.com",
-    gender: "Male",
-    entity: "Vinayak Test",
-    userType: "Member",
-    employeeId: "",
+    firstName: "Test",
+    lastName: "Internal Office",
+    mobile: "2824492828",
+    email: "test234567@yopmail.com",
+    gender: "Female",
+    companyCluster: "Select Cluster",
+    site: "Lockated, Pune",
+    baseUnit: "Lockated HO - 1110",
+    userType: "Admin (Web & App)",
+    entityName: "Select Entity",
+    emailPreference: "Select Email Preference",
+    isInternal: true,
+    employeeId: "Employee ID",
+    lastWorkingDay: "Last Working Day",
+    department: "Housekeeping",
+    designation: "",
+    role: "",
+    vendorCompanyName: "xyz",
     accessLevel: "Company",
-    companies: ["Lockated HO", "Branch Office", "Remote Location"],
-    birthDate: "dd/mm/yyyy",
-    address: "",
-    alternateMobile: "",
+    access: ["Lockated HO"],
+    dailyHelpdeskReport: false,
     profileImage: null
   };
-  const availableCompanies = ["Lockated HO", "Branch Office", "Remote Location", "Regional Office", "Corporate Office"];
+  const availableAccess = ["Lockated HO", "Branch Office", "Remote Location", "Regional Office", "Corporate Office"];
   return <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="flex justify-between items-center p-6 border-b">
@@ -56,127 +64,310 @@ export const CRMOccupantUserDetailPage = () => {
 
       {/* Content */}
       <div className="p-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Profile Section */}
-          <div className="flex justify-center mb-8">
-            <Avatar className="w-32 h-32 border-4 border-border">
-              <AvatarImage src={userData.profileImage} alt="Profile" />
-              <AvatarFallback className="bg-muted text-4xl">
-                <User className="w-16 h-16" />
-              </AvatarFallback>
-            </Avatar>
-          </div>
-
-          {/* User Details Form */}
-          <div className="space-y-8">
-            {/* First Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <TextField id="firstName" label="First Name" value={userData.firstName} InputProps={{
-                readOnly: true
-              }} fullWidth variant="outlined" size="small" />
-              </div>
-              <div>
-                <TextField id="lastName" label="Last Name" value={userData.lastName} InputProps={{
-                readOnly: true
-              }} fullWidth variant="outlined" size="small" />
-              </div>
-              <div>
-                <TextField id="mobile" label="Mobile Number" value={userData.mobile} InputProps={{
-                readOnly: true
-              }} fullWidth variant="outlined" size="small" />
-              </div>
-            </div>
-
-            {/* Second Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <TextField id="email" label="E-mail ID" value={userData.email} InputProps={{
-                readOnly: true
-              }} fullWidth variant="outlined" size="small" />
-              </div>
-              <div>
-                <TextField id="gender" label="Gender" value={userData.gender} InputProps={{
-                readOnly: true
-              }} fullWidth variant="outlined" size="small" />
-              </div>
-              <div>
-                <TextField id="entity" label="Select Entity" value={userData.entity} InputProps={{
-                readOnly: true
-              }} fullWidth variant="outlined" size="small" />
-              </div>
-            </div>
-
-            {/* Third Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <TextField id="userType" label="User Type" value={userData.userType} InputProps={{
-                readOnly: true
-              }} fullWidth variant="outlined" size="small" />
-              </div>
-              <div>
-                <TextField id="employeeId" label="Employee ID" value={userData.employeeId} placeholder="Not provided" InputProps={{
-                readOnly: true
-              }} fullWidth variant="outlined" size="small" />
-              </div>
-              <div>
-                <TextField id="accessLevel" label="Access Level" value={userData.accessLevel} InputProps={{
-                readOnly: true
-              }} fullWidth variant="outlined" size="small" />
-              </div>
-            </div>
-
-            {/* Fourth Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <FormControl fullWidth size="small" variant="outlined">
-                  <InputLabel id="companies-label">Companies</InputLabel>
-                  <Select labelId="companies-label" id="companies" multiple value={userData.companies} label="Companies" readOnly renderValue={selected => <Box sx={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 0.5
-                }}>
-                        {(selected as string[]).map(value => <Chip key={value} label={value} size="small" />)}
-                      </Box>}>
-                    {availableCompanies.map(company => <MenuItem key={company} value={company}>
-                        {company}
-                      </MenuItem>)}
-                  </Select>
-                </FormControl>
-              </div>
-            </div>
-
-            {/* Additional Info Button */}
-            <div className="flex justify-start">
-              <Button onClick={() => setShowAdditionalInfo(!showAdditionalInfo)} className="bg-[#4A1525] hover:bg-[#4A1525]/90 text-white px-6 py-2 rounded-md">
-                {showAdditionalInfo ? '- Hide Additional Info' : '+ Additional Info'}
-              </Button>
-            </div>
-
-            {/* Additional Information Section */}
-            {showAdditionalInfo && <div className="space-y-6 border-t pt-8">
-                <h2 className="text-xl font-bold text-[#BF213E] tracking-wide">
-                  ADDITIONAL INFO
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <TextField id="birthDate" label="Birth Date" value={userData.birthDate} placeholder="dd/mm/yyyy" InputProps={{
-                  readOnly: true
-                }} fullWidth variant="outlined" size="small" />
-                  </div>
-                  <div>
-                    <TextField id="address" label="Address" value={userData.address} placeholder="Not provided" InputProps={{
-                  readOnly: true
-                }} fullWidth variant="outlined" size="small" />
-                  </div>
-                  <div>
-                    <TextField id="alternateMobile" label="Alternate Mobile Number" value={userData.alternateMobile} placeholder="Not provided" InputProps={{
-                  readOnly: true
-                }} fullWidth variant="outlined" size="small" />
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-12 gap-8">
+            {/* Left Sidebar */}
+            <div className="col-span-3 space-y-6">
+              {/* Profile Image */}
+              <div className="flex justify-center mb-8">
+                <div className="w-48 h-48 rounded-full bg-gradient-to-br from-yellow-200 to-yellow-400 flex items-center justify-center border-8 border-yellow-300">
+                  <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center">
+                    <User className="w-16 h-16 text-orange-500" />
                   </div>
                 </div>
-              </div>}
+              </div>
+
+              {/* Site */}
+              <div>
+                <TextField
+                  label="Site"
+                  value={userData.site}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                />
+              </div>
+
+              {/* Base Unit */}
+              <div>
+                <TextField
+                  label="Base Unit"
+                  value={userData.baseUnit}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                />
+              </div>
+
+              {/* User Type */}
+              <div>
+                <TextField
+                  label="User Type"
+                  value={userData.userType}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                />
+              </div>
+
+              {/* Entity Name */}
+              <div>
+                <TextField
+                  label="Entity Name"
+                  value={userData.entityName}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                />
+              </div>
+
+              {/* Email Preference */}
+              <div>
+                <TextField
+                  label="Email Preference"
+                  value={userData.emailPreference}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                />
+              </div>
+            </div>
+
+            {/* Right Content */}
+            <div className="col-span-9 space-y-6">
+              {/* First Row */}
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <TextField
+                    label="First Name"
+                    value={userData.firstName}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+                <div>
+                  <TextField
+                    label="Last Name"
+                    value={userData.lastName}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+              </div>
+
+              {/* Second Row */}
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <TextField
+                    label="Gender"
+                    value={userData.gender}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+                <div>
+                  <TextField
+                    label="Company Cluster"
+                    value={userData.companyCluster}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+              </div>
+
+              {/* Third Row */}
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <TextField
+                    label="Mobile"
+                    value={userData.mobile}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+                <div>
+                  <TextField
+                    label="Email"
+                    value={userData.email}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+              </div>
+
+              {/* Internal/External Radio */}
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={userData.isInternal}
+                    readOnly
+                    className="w-4 h-4 text-red-600"
+                  />
+                  <span className="text-sm">Internal</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={!userData.isInternal}
+                    readOnly
+                    className="w-4 h-4 text-red-600"
+                  />
+                  <span className="text-sm">External</span>
+                </div>
+              </div>
+
+              {/* Fourth Row */}
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <TextField
+                    label="Employee"
+                    value={userData.employeeId}
+                    placeholder="Employee ID"
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+                <div>
+                  <TextField
+                    label="Last Working Day"
+                    value={userData.lastWorkingDay}
+                    placeholder="Last Working Day"
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+              </div>
+
+              {/* Fifth Row */}
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <TextField
+                    label="Department"
+                    value={userData.department}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+                <div>
+                  <TextField
+                    label="Designation"
+                    value={userData.designation}
+                    placeholder="Designation"
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+              </div>
+
+              {/* Sixth Row */}
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <TextField
+                    label="Role"
+                    value={userData.role}
+                    placeholder="Role"
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+                <div>
+                  <TextField
+                    label="Vendor Company Name"
+                    value={userData.vendorCompanyName}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+              </div>
+
+              {/* Seventh Row */}
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <TextField
+                    label="Access Level"
+                    value={userData.accessLevel}
+                    InputProps={{ readOnly: true }}
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                  />
+                </div>
+                <div>
+                  <FormControl fullWidth size="small" variant="outlined">
+                    <InputLabel>Access</InputLabel>
+                    <Select
+                      multiple
+                      value={userData.access}
+                      label="Access"
+                      readOnly
+                      renderValue={(selected) => (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {(selected as string[]).map((value) => (
+                            <Chip
+                              key={value}
+                              label={value}
+                              size="small"
+                              sx={{
+                                backgroundColor: '#FEE2E2',
+                                color: '#DC2626',
+                                fontWeight: 'bold'
+                              }}
+                            />
+                          ))}
+                        </Box>
+                      )}
+                    >
+                      {availableAccess.map((access) => (
+                        <MenuItem key={access} value={access}>
+                          {access}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+              </div>
+
+              {/* Daily Helpdesk Report Email */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={userData.dailyHelpdeskReport}
+                  readOnly
+                  className="w-4 h-4"
+                />
+                <span className="text-sm text-gray-600">Daily Helpdesk Report Email</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
