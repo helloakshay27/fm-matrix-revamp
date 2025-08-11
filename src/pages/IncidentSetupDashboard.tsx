@@ -96,7 +96,13 @@ export const IncidentSetupDashboard = () => {
     'Escalations',
     'Approval Setup',
     'Secondary Category',
-    'Secondary Sub Category'
+    'Secondary Sub Category',
+    'Secondary Sub Sub Category',
+    'Secondary Sub Sub Sub Category',
+    'Who got injured',
+    'Property Damage Category',
+    'RCA Category',
+    'Incident Disclaimer'
   ];
 
   const handleSubmit = () => {
