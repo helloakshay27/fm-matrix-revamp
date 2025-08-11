@@ -52,7 +52,7 @@ export const CRMOccupantUserEditPage = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(`/crm/occupant-users/${id}`)}
             className="text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5" />
