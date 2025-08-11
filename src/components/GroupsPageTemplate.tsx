@@ -400,7 +400,7 @@ export const GroupsPageTemplate = ({
             <DialogContent className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Group Name</InputLabel>
+                  <InputLabel shrink>Group Name *</InputLabel>
                   <Select
                     value={selectedGroupId}
                     onChange={(e) => setSelectedGroupId(e.target.value as string)}
