@@ -101,15 +101,24 @@ export const ComplaintModeTab: React.FC = () => {
         name: data.complaintMode,
         of_phase: 'pms',
         society_id: userAccount.company_id.toString(),
+        active: 1,
       };
 
       await ticketManagementAPI.createComplaintMode(complaintModeData);
       toast.success('Complaint mode created successfully!');
       form.reset();
       fetchComplaintModes();
-    } catch (error) {
-      toast.error('Failed to create complaint mode');
+    } catch (error: any) {
       console.error('Error creating complaint mode:', error);
+      
+      // Check for 422 error with "name has already been taken" message
+      if (error.response?.status === 422 && 
+          error.response?.data?.name && 
+          error.response.data.name.includes('has already been taken')) {
+        toast.error('Complaint mode name has already been taken');
+      } else {
+        toast.error('Failed to create complaint mode');
+      }
     } finally {
       setIsSubmitting(false);
     }

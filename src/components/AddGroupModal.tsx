@@ -1,36 +1,46 @@
 
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { X, Filter } from 'lucide-react';
+import { X } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAppDispatch } from '@/store/hooks';
+import { fetchFMUsers } from '@/store/slices/fmUserSlice';
+import { createUserGroup } from '@/store/slices/userGroupSlice';
 
 interface AddGroupModalProps {
   isOpen: boolean;
   onClose: () => void;
+  fetchGroups: () => void
 }
 
-const members = [
-  'Demo Quikgate : B - 1505',
-  'Secure Test : D - 1702', 
-  'Santosh Naik : B - 1505',
-  'Chetan Bafna : D - 1201',
-  'Bhavesh Chauhan : D - 1702',
-  'Yogesh Video : D - 1701',
-  'Crm Admin : F - 2011',
-  'Agora Secure : B - 1505',
-  'Rahul Verma : B - 1505',
-  'Irfan Shaikh : F - soc_office',
-  'Rahul Kapoor : D - 1702'
-];
+export const AddGroupModal = ({ isOpen, onClose, fetchGroups }: AddGroupModalProps) => {
+  const dispatch = useAppDispatch()
 
-export const AddGroupModal = ({ isOpen, onClose }: AddGroupModalProps) => {
+  const baseUrl = localStorage.getItem("baseUrl")
+  const token = localStorage.getItem("token")
+
   const [groupName, setGroupName] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
-  const [showFilter, setShowFilter] = useState(false);
+  const [members, setMembers] = useState([])
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await dispatch(fetchFMUsers()).unwrap();
+        setMembers(response.fm_users);
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to fetch users")
+      }
+    }
+
+    fetchUsers();
+  }, [])
 
   const handleSelectAll = () => {
     if (selectAll) {
@@ -49,12 +59,30 @@ export const AddGroupModal = ({ isOpen, onClose }: AddGroupModalProps) => {
     }
   };
 
-  const handleSubmit = () => {
-    console.log('Adding group:', { groupName, selectedMembers });
-    setGroupName('');
-    setSelectedMembers([]);
-    setSelectAll(false);
-    onClose();
+  const handleSubmit = async () => {
+    try {
+      const payload = {
+        pms_usergroups: {
+          user_id: localStorage.getItem("userId"),
+          name: groupName,
+          active: true,
+          company_id: localStorage.getItem("selectedCompanyId"),
+          swusersoc: selectedMembers
+        }
+      }
+
+      await dispatch(createUserGroup({ baseUrl, token, data: payload })).unwrap()
+
+      toast.success("Group created successfully")
+      setGroupName('');
+      setSelectedMembers([]);
+      setSelectAll(false);
+      onClose();
+      fetchGroups();
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
   };
 
   return (
@@ -73,7 +101,7 @@ export const AddGroupModal = ({ isOpen, onClose }: AddGroupModalProps) => {
             </Button>
           </div>
         </DialogHeader>
-        
+
         <div className="px-6 py-4 space-y-4 overflow-y-auto flex-1">
           <div className="space-y-2">
             <Label htmlFor="groupName" className="text-sm font-medium text-gray-700">
@@ -91,7 +119,7 @@ export const AddGroupModal = ({ isOpen, onClose }: AddGroupModalProps) => {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium text-gray-700">Add Members</Label>
-              <Button
+              {/* <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFilter(!showFilter)}
@@ -99,9 +127,9 @@ export const AddGroupModal = ({ isOpen, onClose }: AddGroupModalProps) => {
               >
                 <Filter className="w-4 h-4" />
                 Filter
-              </Button>
+              </Button> */}
             </div>
-            
+
             <Button
               onClick={handleSelectAll}
               className="bg-purple-700 hover:bg-purple-800 text-white text-sm px-4 py-2"
@@ -111,21 +139,17 @@ export const AddGroupModal = ({ isOpen, onClose }: AddGroupModalProps) => {
 
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {members.map((member) => (
-                <div key={member} className="flex items-center space-x-3 p-2">
+                <div key={member.id} className="flex items-center space-x-3 p-2">
                   <Checkbox
-                    id={member}
-                    checked={selectedMembers.includes(member)}
-                    onCheckedChange={() => handleMemberToggle(member)}
+                    id={member.id}
+                    checked={selectedMembers.includes(member.id)}
+                    onCheckedChange={() => handleMemberToggle(member.id)}
                   />
                   <Label
-                    htmlFor={member}
                     className="text-sm font-normal cursor-pointer flex-1"
                   >
-                    {member}
+                    {member.firstname + " " + member.lastname}
                   </Label>
-                  <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
-                    Primary
-                  </span>
                 </div>
               ))}
             </div>

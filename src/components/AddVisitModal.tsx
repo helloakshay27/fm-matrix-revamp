@@ -106,11 +106,24 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
   if (!isOpen) return null;
 
   const handleInputChange = (field: string, value: string) => {
+    if (field === 'vendor') {
+      // Only validate for visit number: must not be empty or a number <= 0
+      if (value !== '' && /^\d+$/.test(value) && Number(value) <= 0) {
+        toast.error('Visit Number must be a positive number greater than 0');
+        toast.dismiss();
+      }
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // If vendor is a number, it must be > 0; if not a number, allow any non-empty string
+    // Visit number must be a positive integer (numbers only, > 0)
+    if (!formData.vendor || !/^\d+$/.test(formData.vendor) || Number(formData.vendor) <= 0) {
+      toast.error('Visit Number must be a positive number greater than 0');
+      return;
+    }
     setSubmitting(true);
 
     const form = new FormData();
@@ -139,9 +152,20 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
       setAttachment(null);
       dispatch(fetchAMCDetails(amcId));
       handleClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error('Failed to add visit');
+      // Try to show error message from API response
+      const apiError = error?.response?.data;
+      if (apiError && (apiError.error || apiError.messages)) {
+        let msg = '';
+        if (apiError.error) msg += apiError.error;
+        if (apiError.messages && Array.isArray(apiError.messages)) {
+          msg += (msg ? ': ' : '') + apiError.messages.join(', ');
+        }
+        toast.error(msg || 'Failed to add visit');
+      } else {
+        toast.error('Failed to add visit');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -173,10 +197,15 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
             placeholder="Enter Visit Number"
             name="vendor"
             value={formData.vendor}
-            onChange={(e) => handleInputChange('vendor', e.target.value)}
+            onChange={(e) => {
+              // Only allow digits
+              const val = e.target.value.replace(/[^\d]/g, '');
+              handleInputChange('vendor', val);
+            }}
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
+            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', min: 1 }}
           />
 
           <TextField

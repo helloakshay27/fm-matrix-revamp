@@ -143,7 +143,7 @@ const navigationStructure = {
         subItems: [
           { name: 'Setup', href: '/settings/waste-management/setup' }
         ]
-      }
+      },
     ]
   },
   'Finance': {
@@ -315,7 +315,18 @@ const modulesByPackage = {
         // { name: 'Mapping', href: '/maintenance/survey/mapping', color: 'text-[#1a1a1a]' },
         { name: 'Response', href: '/maintenance/survey/response', color: 'text-[#1a1a1a]' }
       ]
-    }
+    },
+    {
+      name: 'M Safe',
+      icon: Shield,
+      href: '/maintenance/m-safe',
+      subItems: [
+        { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]' },
+        { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    { name: 'Krcc List', icon: ClipboardList, href: '/maintenance/krcc-list' },
+    // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
   ],
   'Safety': [
     { name: 'Incident', icon: AlertTriangle, href: '/safety/incident' },
@@ -368,7 +379,13 @@ const modulesByPackage = {
   'CRM': [
     { name: 'Lead', icon: Target, href: '/crm/lead' },
     { name: 'Opportunity', icon: Star, href: '/crm/opportunity' },
-    { name: 'CRM', icon: Users, href: '/crm/crm' },
+    {
+      name: 'CRM', icon: Users, subItems: [
+        { name: 'Customers', href: '/crm/customers' },
+        { name: 'FM Users', href: '/crm/fm-users' },
+        { name: 'Occupant Users', href: '/crm/occupant-users' }
+      ]
+    },
     { name: 'Events', icon: Calendar, href: '/crm/events' },
     { name: 'Broadcast', icon: Bell, href: '/crm/broadcast' },
     { name: 'Groups', icon: Users, href: '/crm/groups' },
@@ -379,6 +396,9 @@ const modulesByPackage = {
     { name: 'Energy', icon: Zap, href: '/utility/energy' },
     { name: 'Water', icon: Droplets, href: '/utility/water' },
     { name: 'STP', icon: Database, href: '/utility/stp' },
+    { name: 'Daily Readings', icon: ClipboardList, href: '/utility/daily-readings' },
+    { name: 'Utility Request', icon: FileText, href: '/utility/utility-request' },
+    { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
     { name: 'EV Consumption', icon: Car, href: '/utility/ev-consumption' },
     { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' }
   ],
@@ -535,6 +555,14 @@ const modulesByPackage = {
             { name: 'Setup', href: '/settings/waste-management/setup' }
           ]
         },
+
+        {
+          name: 'Design Insight Setup',
+          icon: Target,
+          subItems: [
+            { name: 'Setup', href: '/settings/design-insights/setup' }
+          ]
+        }
       ]
     },
     {

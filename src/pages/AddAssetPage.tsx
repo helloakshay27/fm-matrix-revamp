@@ -506,6 +506,7 @@ const AddAssetPage = () => {
     pms_floor_id: "",
     pms_room_id: "",
     loaned_from_vendor_id: "",
+    asset_type: "true",
     agreement_from_date: "",
     agreement_to_date: "",
     commisioning_date: "",
@@ -590,7 +591,17 @@ const AddAssetPage = () => {
 
     // Start with the default IT asset details (system_details and hardware)
     Object.entries(itAssetDetails).forEach(([section, fields]) => {
-      result[section] = { ...fields };
+      const nonEmptyFields = {};
+      Object.entries(fields).forEach(([key, value]) => {
+        // Only include fields with values (not empty, null, or undefined)
+        if (value && value.toString().trim() !== "") {
+          nonEmptyFields[key] = value;
+        }
+      });
+      // Only add section if it has non-empty fields
+      if (Object.keys(nonEmptyFields).length > 0) {
+        result[section] = nonEmptyFields;
+      }
     });
 
     // Add any additional custom fields from itAssetsCustomFields
@@ -610,9 +621,12 @@ const AddAssetPage = () => {
         result[sectionKey] = {};
       }
       fields.forEach((field) => {
-        // Convert field name to snake_case as well
-        const fieldKey = field.name.trim().toLowerCase().replace(/\s+/g, "_");
-        result[sectionKey][fieldKey] = field.value;
+        // Only add field if it has a value (not empty, null, or undefined)
+        if (field.value && field.value.toString().trim() !== "") {
+          // Convert field name to snake_case as well
+          const fieldKey = field.name.trim().toLowerCase().replace(/\s+/g, "_");
+          result[sectionKey][fieldKey] = field.value;
+        }
       });
     });
 
@@ -1411,6 +1425,7 @@ const AddAssetPage = () => {
     console.log(`Field changed: ${field} = ${value}`);
   };
   console.log("Form data updatedyyyyyyyyyy:", formData);
+  console.log("Asset type value:", formData.asset_type);
 
   // --- For nested fields like asset_move_to, amc_detail ---
   const handleNestedFieldChange = (section, field, value) => {
@@ -1539,29 +1554,35 @@ const AddAssetPage = () => {
       return value;
     };
 
-    // Custom fields
+    // Custom fields - only include fields with values
     Object.keys(customFields).forEach((sectionKey) => {
       (customFields[sectionKey] || []).forEach((field) => {
-        extraFields.push({
-          field_name: field.name,
-          field_value: field.value,
-          group_name: sectionKey,
-          field_description: field.name,
-          _destroy: false,
-        });
+        // Only add field if it has a value (not empty, null, or undefined)
+        if (field.value && field.value.toString().trim() !== "") {
+          extraFields.push({
+            field_name: field.name,
+            field_value: field.value,
+            group_name: sectionKey,
+            field_description: field.name,
+            _destroy: false,
+          });
+        }
       });
     });
 
-    // IT Assets custom fields
+    // IT Assets custom fields - only include fields with values
     Object.keys(itAssetsCustomFields).forEach((sectionKey) => {
       (itAssetsCustomFields[sectionKey] || []).forEach((field) => {
-        extraFields.push({
-          field_name: field.name,
-          field_value: field.value,
-          group_name: sectionKey,
-          field_description: field.name,
-          _destroy: false,
-        });
+        // Only add field if it has a value (not empty, null, or undefined)
+        if (field.value && field.value.toString().trim() !== "") {
+          extraFields.push({
+            field_name: field.name,
+            field_value: field.value,
+            group_name: sectionKey,
+            field_description: field.name,
+            _destroy: false,
+          });
+        }
       });
     });
 
@@ -2933,6 +2954,9 @@ const AddAssetPage = () => {
         // IT Asset custom fields (as nested object)
         custom_fields: buildCustomFieldsPayload(),
 
+        // Asset type
+        asset_type: formData.asset_type,
+
         // Extra fields for other categories (as array)
         extra_fields_attributes: buildExtraFieldsAttributes(),
 
@@ -3425,6 +3449,9 @@ const AddAssetPage = () => {
         // Nested objects
         asset_move_to: formData.asset_move_to,
         amc_detail: formData.amc_detail,
+
+        // Asset type
+        asset_type: formData.asset_type,
 
         ...(selectedAssetCategory === "IT Equipment"
           ? { custom_fields: buildCustomFieldsPayload() }
@@ -8633,104 +8660,159 @@ const AddAssetPage = () => {
 
                     {/* Custom Fields are now handled per section */}
 
-                    {/* Third row: Status */}
+                    {/* Third row: Status and Critical in single row */}
                     <div className="mb-4">
-                      <div>
-                        <label className="text-sm font-medium text-[#C72030] mb-2 block">
-                          Status
-                        </label>
-                        <div className="flex gap-6">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="radio"
-                              id="status-inuse"
-                              name="status"
-                              value="false"
-                              defaultChecked
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
-                              style={{
-                                accentColor: "#C72030",
-                              }}
-                              onChange={(e) =>
-                                handleFieldChange("breakdown", e.target.value)
-                              }
-                            />
-                            <label htmlFor="status-inuse" className="text-sm">
-                              In Use
-                            </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                          <label className="text-sm font-medium text-[#C72030] mb-2 block">
+                            Status
+                          </label>
+                          <div className="flex gap-6">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="radio"
+                                id="status-inuse"
+                                name="status"
+                                value="false"
+                                defaultChecked
+                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                style={{
+                                  accentColor: "#C72030",
+                                }}
+                                onChange={(e) =>
+                                  handleFieldChange("breakdown", e.target.value)
+                                }
+                              />
+                              <label htmlFor="status-inuse" className="text-sm">
+                                In Use
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="radio"
+                                id="status-breakdown"
+                                name="status"
+                                value="true"
+                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                style={{
+                                  accentColor: "#C72030",
+                                }}
+                                onChange={(e) =>
+                                  handleFieldChange("breakdown", e.target.value)
+                                }
+                              />
+                              <label htmlFor="status-breakdown" className="text-sm">
+                                Breakdown
+                              </label>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="radio"
-                              id="status-breakdown"
-                              name="status"
-                              value="true"
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
-                              style={{
-                                accentColor: "#C72030",
-                              }}
-                              onChange={(e) =>
-                                handleFieldChange("breakdown", e.target.value)
-                              }
-                            />
-                            <label htmlFor="status-breakdown" className="text-sm">
-                              Breakdown
-                            </label>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-[#C72030] mb-2 block">
+                            Critical
+                          </label>
+                          <div className="flex gap-6">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="radio"
+                                id="critical-yes"
+                                name="critical"
+                                value="yes"
+                                checked={criticalStatus === "yes"}
+                                onChange={(e) => {
+                                  setCriticalStatus(e.target.value);
+                                  handleFieldChange("critical", e.target.value);
+                                }}
+                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                style={{
+                                  accentColor: "#C72030",
+                                }}
+                              />
+                              <label htmlFor="critical-yes" className="text-sm">
+                                Yes
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="radio"
+                                id="critical-no"
+                                name="critical"
+                                value="no"
+                                checked={criticalStatus === "no"}
+                                onChange={(e) => {
+                                  setCriticalStatus(e.target.value);
+                                  handleFieldChange("critical", e.target.value);
+                                }}
+                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                style={{
+                                  accentColor: "#C72030",
+                                }}
+                              />
+                              <label htmlFor="critical-no" className="text-sm">
+                                No
+                              </label>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Critical - Moved from Meter Details */}
+                    {/* Fourth row: Asset Type */}
                     <div className="mb-4">
-                      <div>
-                        <label className="text-sm font-medium text-[#C72030] mb-2 block">
-                          Critical
-                        </label>
-                        <div className="flex gap-6">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="radio"
-                              id="critical-yes"
-                              name="critical"
-                              value="yes"
-                              checked={criticalStatus === "yes"}
-                              onChange={(e) => {
-                                setCriticalStatus(e.target.value);
-                                handleFieldChange("critical", e.target.value);
-                              }}
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
-                              style={{
-                                accentColor: "#C72030",
-                              }}
-                            />
-                            <label htmlFor="critical-yes" className="text-sm">
-                              Yes
-                            </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                          <label className="text-sm font-medium text-[#C72030] mb-2 block">
+                            Asset Type
+                          </label>
+                          <div className="flex gap-6">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="radio"
+                                id="asset-type-comprehensive"
+                                name="assetType"
+                                value="true"
+                                checked={formData.asset_type === "true"}
+                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                style={{
+                                  accentColor: "#C72030",
+                                }}
+                                onChange={(e) =>
+                                  handleFieldChange("asset_type", e.target.value)
+                                }
+                              />
+                              <label htmlFor="asset-type-comprehensive" className="text-sm">
+                                Comprehensive
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="radio"
+                                id="asset-type-non-comprehensive"
+                                name="assetType"
+                                value="false"
+                                checked={formData.asset_type === "false"}
+                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                style={{
+                                  accentColor: "#C72030",
+                                }}
+                                onChange={(e) =>
+                                  handleFieldChange("asset_type", e.target.value)
+                                }
+                              />
+                              <label htmlFor="asset-type-non-comprehensive" className="text-sm">
+                                Non-Comprehensive
+                              </label>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="radio"
-                              id="critical-no"
-                              name="critical"
-                              value="no"
-                              checked={criticalStatus === "no"}
-                              onChange={(e) => {
-                                setCriticalStatus(e.target.value);
-                                handleFieldChange("critical", e.target.value);
-                              }}
-                              className="w-4 h-4 text-[#C72030] border-gray-300"
-                              style={{
-                                accentColor: "#C72030",
-                              }}
-                            />
-                            <label htmlFor="critical-no" className="text-sm">
-                              No
-                            </label>
-                          </div>
+                        </div>
+                        <div>
+                          {/* Empty div to maintain grid structure */}
                         </div>
                       </div>
                     </div>
+
+                  
+                    
 
                     {/* Custom Fields for Asset Details */}
                     {(customFields.assetDetails || []).map((field) => (

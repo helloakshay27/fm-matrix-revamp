@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ChevronDown, ChevronUp, Upload } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Upload, X } from "lucide-react";
 import {
   TextField,
   Select,
@@ -171,6 +171,16 @@ export const AddBookingSetupPage = () => {
     setSelectedBookingFiles(files);
   };
 
+  const removeCoverImage = (indexToRemove) => {
+    setSelectedFile(selectedFile.filter((_, index) => index !== indexToRemove));
+  };
+
+  const removeBookingImage = (indexToRemove) => {
+    setSelectedBookingFiles(
+      selectedBookingFiles.filter((_, index) => index !== indexToRemove)
+    );
+  };
+
   const triggerFileSelect = () => {
     coverImageRef.current?.click();
   };
@@ -285,7 +295,6 @@ export const AddBookingSetupPage = () => {
         "facility_setup[facility_charge_attributes][per_slot_charge]",
         formData.perSlotCharge
       );
-      formDataToSend.append("facility_setup[booking_limit]", "3");
       formDataToSend.append(
         "facility_setup[description]",
         formData.termsConditions || ""
@@ -327,10 +336,7 @@ export const AddBookingSetupPage = () => {
         cancellationRules[1].time.value
       );
       formDataToSend.append(
-        "facility_setup[booking_limit]", formData.facilityBookedTimes
-      )
-      formDataToSend.append(
-        "facility_setup[return_second_percentage]",
+        "facility_setup[return_percentage_second]",
         cancellationRules[1].deduction
       );
       formDataToSend.append(
@@ -346,7 +352,7 @@ export const AddBookingSetupPage = () => {
         cancellationRules[2].time.value
       );
       formDataToSend.append(
-        "facility_setup[return_third_percentage]",
+        "facility_setup[return_percentage_third]",
         cancellationRules[2].deduction
       );
       formDataToSend.append("facility_setup[book_by]", "slot");
@@ -439,6 +445,18 @@ export const AddBookingSetupPage = () => {
           slot.wrapTime || "5"
         );
       });
+
+      formDataToSend.append(
+        "facility_setup[multi_slot]",
+        formData.allowMultipleSlots
+      )
+      formDataToSend.append(
+        "facility_setup[max_slots]",
+        formData.maximumSlots
+      )
+      formDataToSend.append(
+        "facility_setup[booking_limit]", formData.facilityBookedTimes
+      )
 
       // Booking Window Configs
       formDataToSend.append(
@@ -1204,7 +1222,7 @@ export const AddBookingSetupPage = () => {
             </div>
 
             {/* Cover Image */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-start justify-between gap-4">
               {/* Cover Image */}
               <div className="border rounded-lg w-full"
               >
@@ -1243,15 +1261,23 @@ export const AddBookingSetupPage = () => {
                     ref={coverImageRef}
                     hidden
                   />
+
                   {selectedFile.length > 0 && (
                     <div className="mt-4 flex gap-2 flex-wrap">
                       {selectedFile.map((file, index) => (
-                        <img
-                          key={index}
-                          src={URL.createObjectURL(file)}
-                          alt={`cover-preview-${index}`}
-                          className="h-[80px] w-20 rounded border border-gray-200"
-                        />
+                        <div key={index} className="relative">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`cover-preview-${index}`}
+                            className="h-[80px] w-20 rounded border border-gray-200"
+                          />
+                          <button
+                            onClick={() => removeCoverImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -1295,15 +1321,23 @@ export const AddBookingSetupPage = () => {
                     ref={bookingImageRef}
                     hidden
                   />
+
                   {selectedBookingFiles.length > 0 && (
                     <div className="mt-4 flex gap-2 flex-wrap">
                       {selectedBookingFiles.map((file, index) => (
-                        <img
-                          key={index}
-                          src={URL.createObjectURL(file)}
-                          alt={`cover-preview-${index}`}
-                          className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
-                        />
+                        <div key={index} className="relative">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`booking-preview-${index}`}
+                            className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
+                          />
+                          <button
+                            onClick={() => removeBookingImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}

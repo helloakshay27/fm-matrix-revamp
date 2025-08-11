@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { BasicDetailsSection } from '@/components/BasicDetailsSection';
@@ -11,6 +11,33 @@ export const AddDesignInsightDashboard = () => {
   const navigate = useNavigate();
   const [category, setCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [subCategories, setSubCategories] = useState<{ id: number; name: string; parent_id: number | null }[]>([]);
+  const [attachments, setAttachments] = useState<File[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const res = await fetch(`https://${baseUrl}/pms/design_input_tags.json`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error('Failed to fetch categories');
+        const data = await res.json();
+        const cats = (data.data || []).filter((item: any) => item.parent_id === null && item.tag_type === 'DesignInputCategory');
+        const subCats = (data.data || []).filter((item: any) => item.parent_id !== null && item.tag_type === 'DesignInputsSubCategory');
+        setCategories(cats.map((c: any) => ({ id: c.id, name: c.name })));
+        setSubCategories(subCats.map((sc: any) => ({ id: sc.id, name: sc.name, parent_id: sc.parent_id })));
+      } catch (err) {
+        setCategories([]);
+        setSubCategories([]);
+      }
+    };
+    fetchCategories();
+  }, []);
+
   const [site, setSite] = useState('');
   const [location, setLocation] = useState('');
   const [categorization, setCategorization] = useState('');
@@ -18,24 +45,78 @@ export const AddDesignInsightDashboard = () => {
   const [recommendation, setRecommendation] = useState('');
   const [tag, setTag] = useState('');
   const [mustHave, setMustHave] = useState(false);
+  const [siteList, setSiteList] = useState<{ id: number; name: string }[]>([]);
 
-  const handleSave = () => {
-    console.log('Design Insight saved:', {
-      category,
-      subCategory,
-      site,
-      location,
-      categorization,
-      observation,
-      recommendation,
-      tag,
-      mustHave
-    });
-    toast({
-      title: "Success",
-      description: "Design Insight saved successfully!",
-    });
-    navigate('/transitioning/design-insight');
+  useEffect(() => {
+    const fetchSites = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const res = await fetch(`https://${baseUrl}/sitelist.json`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error('Failed to fetch sites');
+        const data = await res.json();
+        setSiteList(data.sites || []);
+      } catch (err) {
+        setSiteList([]);
+      }
+    };
+    fetchSites();
+  }, []);
+
+  const onAttachmentsChange = (files: File[]) => {
+    setAttachments(files);
+  };
+
+  const handleSave = async () => {
+    console.log("clicked")
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      if (!baseUrl || !token) throw new Error('Missing baseUrl or token');
+
+      const formData = new FormData();
+      formData.append('pms_design_input[category_id]', category);
+      formData.append('pms_design_input[sub_category_id]', subCategory);
+      formData.append('pms_design_input[sub_location_name]', location);
+      formData.append('pms_design_input[categorization]', categorization);
+      formData.append('pms_design_input[observation]', observation);
+      formData.append('pms_design_input[recommendation]', recommendation);
+      formData.append('pms_design_input[tag]', tag);
+      formData.append('pms_design_input[must_have]', mustHave ? '1' : '0');
+      formData.append('pms_design_input[site_id]', site);
+      // Append attachments
+      attachments.forEach((file) => {
+        formData.append('designinput[]', file);
+      });
+
+      const res = await fetch(`https://${baseUrl}/pms/design_inputs.json`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+      const responseBody = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        console.error('POST error:', responseBody);
+        throw new Error(responseBody?.error || 'Failed to save Design Insight');
+      }
+      console.log('POST success:', responseBody);
+      toast({
+        title: "Success",
+        description: "Design Insight saved successfully!",
+      });
+      navigate('/transitioning/design-insight');
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || 'Failed to save Design Insight',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleBack = () => {
@@ -74,11 +155,12 @@ export const AddDesignInsightDashboard = () => {
         setTag={setTag}
         mustHave={mustHave}
         handleMustHaveChange={handleMustHaveChange}
+        siteList={siteList}
+        categories={categories}
+        subCategories={subCategories}
+        attachments={attachments}
+        onAttachmentsChange={onAttachmentsChange}
       />
-
-      {/* Attachments Section */}
-      <AttachmentsSection />
-
       {/* Action Buttons */}
       <ActionButtons onSave={handleSave} onBack={handleBack} />
     </div>

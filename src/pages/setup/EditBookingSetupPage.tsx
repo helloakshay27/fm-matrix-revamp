@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ChevronDown, ChevronUp, Upload } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Upload, X } from "lucide-react";
 import {
     TextField,
     Select,
@@ -84,14 +84,15 @@ export const EditBookingSetupPage = () => {
 
     const coverImageRef = useRef(null);
     const bookingImageRef = useRef(null);
-    const [selectedFile, setSelectedFile] = useState();
+    const [selectedFile, setSelectedFile] = useState(null);
     const [selectedBookingFiles, setSelectedBookingFiles] = useState([]);
+    const [imageIdsToRemove, setImageIdsToRemove] = useState([]);
     const [additionalOpen, setAdditionalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [departments, setDepartments] = useState([]);
     const [loadingDepartments, setLoadingDepartments] = useState(false);
 
-    console.log(selectedFile)
+    console.log(selectedBookingFiles)
 
     const [formData, setFormData] = useState({
         facilityName: "",
@@ -117,12 +118,24 @@ export const EditBookingSetupPage = () => {
         termsConditions: "",
         cancellationText: "",
         amenities: {
-            tv: false,
-            whiteboard: false,
-            casting: false,
-            smartPenForTV: false,
-            wirelessCharging: false,
-            meetingRoomInventory: false,
+            tv: { name: "TV", selected: false, tag_id: null },
+            whiteboard: { name: "Whiteboard", selected: false, tag_id: null },
+            casting: { name: "Casting", selected: false, tag_id: null },
+            smartPenForTV: {
+                name: "Smart Pen for TV",
+                selected: false,
+                tag_id: null,
+            },
+            wirelessCharging: {
+                name: "Wireless Charging",
+                selected: false,
+                tag_id: null,
+            },
+            meetingRoomInventory: {
+                name: "Meeting Room Inventory",
+                selected: false,
+                tag_id: null,
+            },
         },
         seaterInfo: "Select a seater",
         floorInfo: "Select a floor",
@@ -202,25 +215,6 @@ export const EditBookingSetupPage = () => {
             );
             const responseData = response.data.facility_setup;
 
-            // const amenitiesMap = {
-            //     TV: "tv",
-            //     Whiteboard: "whiteboard",
-            //     Casting: "casting",
-            //     "Smart Pen for TV": "smartPenForTV",
-            //     "Wireless Charging": "wirelessCharging",
-            //     "Meeting Room Inventory": "meetingRoomInventory",
-            // };
-
-            // const amenitiesState = Object.values(amenitiesMap).reduce((acc, key) => {
-            //     acc[key] = false;
-            //     return acc;
-            // }, {});
-
-            // responseData.generic_tags?.forEach((tag) => {
-            //     const mappedKey = amenitiesMap[tag.category_name];
-            //     if (mappedKey) amenitiesState[mappedKey] = true;
-            // });
-
             setFormData({
                 facilityName: responseData.fac_name,
                 isBookable: responseData.fac_type === "bookable",
@@ -240,17 +234,41 @@ export const EditBookingSetupPage = () => {
                 canCancelBefore: responseData.cb_dhm,
                 allowMultipleSlots: responseData.multi_slot,
                 maximumSlots: responseData.max_slots,
-                facilityBookedTimes: "",
+                facilityBookedTimes: responseData.booking_limit,
                 description: responseData.description,
                 termsConditions: responseData.terms,
                 cancellationText: responseData.cancellation_policy,
                 amenities: {
-                    tv: responseData.amenity_info[0].selected,
-                    whiteboard: responseData.amenity_info[1].selected,
-                    casting: responseData.amenity_info[2].selected,
-                    smartPenForTV: responseData.amenity_info[3].selected,
-                    wirelessCharging: responseData.amenity_info[4].selected,
-                    meetingRoomInventory: responseData.amenity_info[5].selected,
+                    tv: {
+                        name: "TV",
+                        selected: responseData.amenity_info[0].selected,
+                        tag_id: responseData.amenity_info[0].tag_id
+                    },
+                    whiteboard: {
+                        name: "Whiteboard",
+                        selected: responseData.amenity_info[1].selected,
+                        tag_id: responseData.amenity_info[1].tag_id
+                    },
+                    casting: {
+                        name: "Casting",
+                        selected: responseData.amenity_info[2].selected,
+                        tag_id: responseData.amenity_info[2].tag_id
+                    },
+                    smartPenForTV: {
+                        name: "Smart Pen for TV",
+                        selected: responseData.amenity_info[3].selected,
+                        tag_id: responseData.amenity_info[3].tag_id
+                    },
+                    wirelessCharging: {
+                        name: "Wireless Charging",
+                        selected: responseData.amenity_info[4].selected,
+                        tag_id: responseData.amenity_info[4].tag_id
+                    },
+                    meetingRoomInventory: {
+                        name: "Meeting Room Inventory",
+                        selected: responseData.amenity_info[5].selected,
+                        tag_id: responseData.amenity_info[5].tag_id
+                    },
                 },
                 seaterInfo: responseData.seater_info,
                 floorInfo: responseData.location_info,
@@ -280,10 +298,24 @@ export const EditBookingSetupPage = () => {
                     _destroy: false,
                 })),
             });
+            const transformedRules = responseData.cancellation_rules.map((rule) => ({
+                description: rule.description,
+                time: {
+                    type: rule.hour,
+                    value: rule.min,
+                    day: rule.day,
+                },
+                deduction: rule.deduction?.toString() || "",
+            }));
 
-            setSelectedFile(responseData?.cover_image?.document);
+            setCancellationRules([...transformedRules]);
+
+            setSelectedFile(responseData?.cover_image?.document || null);
             setSelectedBookingFiles(
-                responseData?.documents.map((doc) => doc.document.document)
+                responseData?.documents.map((doc) => ({
+                    file: doc.document.document,
+                    id: doc.document.id
+                })) || []
             );
         } catch (error) {
             console.error("Error fetching facility details:", error);
@@ -291,6 +323,7 @@ export const EditBookingSetupPage = () => {
         }
     };
 
+    console.log(formData);
 
     useEffect(() => {
         fetchDepartments();
@@ -298,14 +331,39 @@ export const EditBookingSetupPage = () => {
     }, [id]);
 
     const handleCoverImageChange = (e) => {
-        const files = Array.from(e.target.files || []);
-        setSelectedFile(files);
+        const file = e.target.files?.[0] || null;
+        if (file) {
+            const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+            if (!["image/png", "image/jpeg"].includes(file.type)) {
+                toast.error("Only PNG or JPEG files are allowed");
+                return;
+            }
+            if (file.size > maxSize) {
+                toast.error("File size must not exceed 5MB");
+                return;
+            }
+        }
+        setSelectedFile(file);
     };
 
     const handleBookingImageChange = (e) => {
-        const files = Array.from(e.target.files || []);
-        setSelectedBookingFiles(files);
+        const files = Array.from(e.target.files || []).map(file => ({
+            file,
+            id: null
+        }));
+        setSelectedBookingFiles((prevFiles) => [...prevFiles, ...files]);
     };
+
+    const handleRemoveBookingImage = (index, imageId) => {
+        setSelectedBookingFiles((prevFiles) =>
+            prevFiles.filter((_, i) => i !== index)
+        );
+        if (imageId) {
+            setImageIdsToRemove((prevIds) => [...prevIds, imageId]);
+        }
+    };
+
+    console.log(imageIdsToRemove)
 
     const triggerFileSelect = () => {
         coverImageRef.current?.click();
@@ -346,77 +404,204 @@ export const EditBookingSetupPage = () => {
             const formDataToSend = new FormData();
 
             // Basic Facility Info
-            formDataToSend.append("facility_setup[fac_type]", formData.isBookable ? "bookable" : "request");
+            formDataToSend.append(
+                "facility_setup[fac_type]",
+                formData.isBookable ? "bookable" : "request"
+            );
             formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
             formDataToSend.append("facility_setup[active]", formData.active);
-            formDataToSend.append("facility_setup[department_id]", formData.department);
+            formDataToSend.append(
+                "facility_setup[department_id]",
+                formData.department
+            );
             formDataToSend.append("facility_setup[app_key]", formData.appKey);
-            formDataToSend.append("facility_setup[postpaid]", formData.postpaid ? "1" : "0");
-            formDataToSend.append("facility_setup[prepaid]", formData.prepaid ? "1" : "0");
-            formDataToSend.append("facility_setup[pay_on_facility]", formData.payOnFacility ? "1" : "0");
-            formDataToSend.append("facility_setup[complementary]", formData.complimentary ? "1" : "0");
+            formDataToSend.append(
+                "facility_setup[postpaid]",
+                formData.postpaid ? "1" : "0"
+            );
+            formDataToSend.append(
+                "facility_setup[prepaid]",
+                formData.prepaid ? "1" : "0"
+            );
+            formDataToSend.append(
+                "facility_setup[pay_on_facility]",
+                formData.payOnFacility ? "1" : "0"
+            );
+            formDataToSend.append(
+                "facility_setup[complementary]",
+                formData.complimentary ? "1" : "0"
+            );
             formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
             formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
-            formDataToSend.append("facility_setup[facility_charge_attributes][per_slot_charge]", formData.perSlotCharge);
-            formDataToSend.append("facility_setup[booking_limit]", formData.facilityBookedTimes || "3");
-            formDataToSend.append("facility_setup[description]", formData.description || "");
-            formDataToSend.append("facility_setup[terms]", formData.termsConditions || "");
-            formDataToSend.append("facility_setup[cancellation_policy]", formData.cancellationText || "");
-            formDataToSend.append("facility_setup[cutoff_day]", cancellationRules[0].time.day);
-            formDataToSend.append("facility_setup[cutoff_hr]", cancellationRules[0].time.type);
-            formDataToSend.append("facility_setup[cutoff_min]", cancellationRules[0].time.value);
-            formDataToSend.append("facility_setup[return_percentage]", cancellationRules[0].deduction);
-            formDataToSend.append("facility_setup[cutoff_second_day]", cancellationRules[1].time.day);
-            formDataToSend.append("facility_setup[cutoff_second_hr]", cancellationRules[1].time.type);
-            formDataToSend.append("facility_setup[cutoff_second_min]", cancellationRules[1].time.value);
-            formDataToSend.append("facility_setup[return_second_percentage]", cancellationRules[1].deduction);
-            formDataToSend.append("facility_setup[cutoff_third_day]", cancellationRules[2].time.day);
-            formDataToSend.append("facility_setup[cutoff_third_hr]", cancellationRules[2].time.type);
-            formDataToSend.append("facility_setup[cutoff_third_min]", cancellationRules[2].time.value);
-            formDataToSend.append("facility_setup[return_third_percentage]", cancellationRules[2].deduction);
+            formDataToSend.append(
+                "facility_setup[facility_charge_attributes][per_slot_charge]",
+                formData.perSlotCharge
+            );
+            formDataToSend.append(
+                "facility_setup[multi_slot]",
+                formData.allowMultipleSlots
+            )
+            formDataToSend.append(
+                "facility_setup[max_slots]",
+                formData.maximumSlots
+            )
+            formDataToSend.append(
+                "facility_setup[booking_limit]", formData.facilityBookedTimes
+            )
+            formDataToSend.append(
+                "facility_setup[description]",
+                formData.description || ""
+            );
+            formDataToSend.append(
+                "facility_setup[terms]",
+                formData.termsConditions || ""
+            );
+            formDataToSend.append(
+                "facility_setup[cancellation_policy]",
+                formData.cancellationText || ""
+            );
+            formDataToSend.append(
+                "facility_setup[cutoff_day]",
+                cancellationRules[0].time.day
+            );
+            formDataToSend.append(
+                "facility_setup[cutoff_hr]",
+                cancellationRules[0].time.type
+            );
+            formDataToSend.append(
+                "facility_setup[cutoff_min]",
+                cancellationRules[0].time.value
+            );
+            formDataToSend.append(
+                "facility_setup[return_percentage]",
+                cancellationRules[0].deduction
+            );
+            formDataToSend.append(
+                "facility_setup[cutoff_second_day]",
+                cancellationRules[1].time.day
+            );
+            formDataToSend.append(
+                "facility_setup[cutoff_second_hr]",
+                cancellationRules[1].time.type
+            );
+            formDataToSend.append(
+                "facility_setup[cutoff_second_min]",
+                cancellationRules[1].time.value
+            );
+            formDataToSend.append(
+                "facility_setup[return_percentage_second]",
+                cancellationRules[1].deduction
+            );
+            formDataToSend.append(
+                "facility_setup[cutoff_third_day]",
+                cancellationRules[2].time.day
+            );
+            formDataToSend.append(
+                "facility_setup[cutoff_third_hr]",
+                cancellationRules[2].time.type
+            );
+            formDataToSend.append(
+                "facility_setup[cutoff_third_min]",
+                cancellationRules[2].time.value
+            );
+            formDataToSend.append(
+                "facility_setup[return_percentage_third]",
+                cancellationRules[2].deduction
+            );
             formDataToSend.append("facility_setup[book_by]", "slot");
-            formDataToSend.append("facility_setup[create_by]", JSON.parse(localStorage.getItem("user")).id);
+            formDataToSend.append(
+                "facility_setup[create_by]",
+                JSON.parse(localStorage.getItem("user")).id
+            );
 
-            // Generic Tags (Amenities)
-            // const amenities = [];
-            // if (formData.amenities.tv) amenities.push("TV");
-            // if (formData.amenities.whiteboard) amenities.push("Whiteboard");
-            // if (formData.amenities.casting) amenities.push("Casting");
-            // if (formData.amenities.smartPenForTV) amenities.push("Smart Pen for TV");
-            // if (formData.amenities.wirelessCharging) amenities.push("Wireless Charging");
-            // if (formData.amenities.meetingRoomInventory) amenities.push("Meeting Room Inventory");
+            // Append cover image (single file)
+            if (selectedFile && typeof selectedFile !== "string") {
+                formDataToSend.append("cover_image", selectedFile);
+            }
 
-            // amenities.forEach((name, index) => {
-            //     console.log(name)
-            //     formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, "amenity_things");
-            //     formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, name);
-            //     formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, "0");
-            //     formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, "1");
-            // });
+            // Append booking files (multiple files)
+            selectedBookingFiles.forEach(({ file }) => {
+                if (typeof file !== "string") {
+                    formDataToSend.append(`attachments[]`, file);
+                }
+            });
+
+            // Append image IDs to remove
+            imageIdsToRemove.forEach((id) => {
+                formDataToSend.append(`image_remove[]`, id);
+            });
+
+            let index = 0;
+            Object.keys(formData.amenities).forEach((key) => {
+                const amenity = formData.amenities[key];
+                if (amenity.tag_id && !amenity.selected) {
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][id]`, amenity.tag_id);
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, "1");
+                    index++;
+                } else if (amenity.selected) {
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, "amenity_things");
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, amenity.name);
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, "1");
+                    if (amenity.tag_id) {
+                        formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][id]`, amenity.tag_id);
+                    }
+                    index++;
+                }
+            });
 
             // Facility Slots
             formData.slots.forEach((slot, index) => {
                 if (slot.id) {
                     formDataToSend.append(`facility_slots[][id]`, slot.id);
                 }
-                formDataToSend.append(`facility_slots[][slot_no]`, (index + 1).toString());
+                formDataToSend.append(
+                    `facility_slots[][slot_no]`,
+                    (index + 1).toString()
+                );
                 formDataToSend.append(`facility_slots[][dayofweek]`, "");
-                formDataToSend.append(`facility_slots[][start_hour]`, slot.startTime.hour);
-                formDataToSend.append(`facility_slots[][start_min]`, slot.startTime.minute);
-                formDataToSend.append(`facility_slots[][break_start_hour]`, slot.breakTimeStart.hour);
-                formDataToSend.append(`facility_slots[][break_start_min]`, slot.breakTimeStart.minute);
-                formDataToSend.append(`facility_slots[][break_end_hour]`, slot.breakTimeEnd.hour);
-                formDataToSend.append(`facility_slots[][break_end_min]`, slot.breakTimeEnd.minute);
+                formDataToSend.append(
+                    `facility_slots[][start_hour]`,
+                    slot.startTime.hour
+                );
+                formDataToSend.append(
+                    `facility_slots[][start_min]`,
+                    slot.startTime.minute
+                );
+                formDataToSend.append(
+                    `facility_slots[][break_start_hour]`,
+                    slot.breakTimeStart.hour
+                );
+                formDataToSend.append(
+                    `facility_slots[][break_start_min]`,
+                    slot.breakTimeStart.minute
+                );
+                formDataToSend.append(
+                    `facility_slots[][break_end_hour]`,
+                    slot.breakTimeEnd.hour
+                );
+                formDataToSend.append(
+                    `facility_slots[][break_end_min]`,
+                    slot.breakTimeEnd.minute
+                );
                 formDataToSend.append(`facility_slots[][end_hour]`, slot.endTime.hour);
                 formDataToSend.append(`facility_slots[][end_min]`, slot.endTime.minute);
-                formDataToSend.append(`facility_slots[][max_bookings]`, slot.concurrentSlots || "1");
-                formDataToSend.append(`facility_slots[][breakminutes]`, slot.slotBy.toString());
+                formDataToSend.append(
+                    `facility_slots[][max_bookings]`,
+                    slot.concurrentSlots || "1"
+                );
+                formDataToSend.append(
+                    `facility_slots[][breakminutes]`,
+                    slot.slotBy.toString()
+                );
                 formDataToSend.append(`facility_slots[][wrap_time]`, slot.wrapTime);
             });
 
             // Booking Window Configs
             formDataToSend.append("book_before_day", formData.bookingAllowedBefore.d);
-            formDataToSend.append("book_before_hour", formData.bookingAllowedBefore.h);
+            formDataToSend.append(
+                "book_before_hour",
+                formData.bookingAllowedBefore.h
+            );
             formDataToSend.append("book_before_min", formData.bookingAllowedBefore.m);
             formDataToSend.append("advance_booking_day", formData.advanceBooking.d);
             formDataToSend.append("advance_booking_hour", formData.advanceBooking.h);
@@ -426,9 +611,18 @@ export const EditBookingSetupPage = () => {
             formDataToSend.append("cancel_min", formData.canCancelBefore.m);
 
             // Extra Info
-            formDataToSend.append("seater_info", formData.seaterInfo !== "Select a seater" ? formData.seaterInfo : "");
-            formDataToSend.append("location_info", formData.floorInfo !== "Select a floor" ? formData.floorInfo : "");
-            formDataToSend.append("shared_content_info", formData.sharedContentInfo || "");
+            formDataToSend.append(
+                "seater_info",
+                formData.seaterInfo !== "Select a seater" ? formData.seaterInfo : ""
+            );
+            formDataToSend.append(
+                "location_info",
+                formData.floorInfo !== "Select a floor" ? formData.floorInfo : ""
+            );
+            formDataToSend.append(
+                "shared_content_info",
+                formData.sharedContentInfo || ""
+            );
 
             const response = await fetch(
                 `https://${baseUrl}/pms/admin/facility_setups/${id}.json`,
@@ -456,130 +650,6 @@ export const EditBookingSetupPage = () => {
         }
     };
 
-    // const handleSave = async () => {
-    //     if (!validateForm()) return;
-    //     setIsSubmitting(true);
-    //     try {
-    //         const formDataToSend = new FormData();
-
-    //         formDataToSend.append("facility_setup[fac_type]", formData.isBookable ? "bookable" : "request");
-    //         formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
-    //         formDataToSend.append("facility_setup[active]", formData.active);
-    //         formDataToSend.append("facility_setup[department_id]", formData.department);
-    //         formDataToSend.append("facility_setup[app_key]", formData.appKey);
-    //         formDataToSend.append("facility_setup[postpaid]", formData.postpaid ? "1" : "0");
-    //         formDataToSend.append("facility_setup[prepaid]", formData.prepaid ? "1" : "0");
-    //         formDataToSend.append("facility_setup[pay_on_facility]", formData.payOnFacility ? "1" : "0");
-    //         formDataToSend.append("facility_setup[complementary]", formData.complimentary ? "1" : "0");
-    //         formDataToSend.append("facility_setup[gst]", formData.gstPercentage);
-    //         formDataToSend.append("facility_setup[sgst]", formData.sgstPercentage);
-    //         formDataToSend.append("facility_setup[facility_charge_attributes][per_slot_charge]", formData.perSlotCharge);
-    //         formDataToSend.append("facility_setup[booking_limit]", formData.facilityBookedTimes || "3");
-    //         formDataToSend.append("facility_setup[description]", formData.description || "");
-    //         formDataToSend.append("facility_setup[terms]", formData.termsConditions || "");
-    //         formDataToSend.append("facility_setup[cancellation_policy]", formData.cancellationText || "");
-    //         formDataToSend.append("facility_setup[cutoff_day]", cancellationRules[0].time.day);
-    //         formDataToSend.append("facility_setup[cutoff_hr]", cancellationRules[0].time.type);
-    //         formDataToSend.append("facility_setup[cutoff_min]", cancellationRules[0].time.value);
-    //         formDataToSend.append("facility_setup[return_percentage]", cancellationRules[0].deduction);
-    //         formDataToSend.append("facility_setup[cutoff_second_day]", cancellationRules[1].time.day);
-    //         formDataToSend.append("facility_setup[cutoff_second_hr]", cancellationRules[1].time.type);
-    //         formDataToSend.append("facility_setup[cutoff_second_min]", cancellationRules[1].time.value);
-    //         formDataToSend.append("facility_setup[return_second_percentage]", cancellationRules[1].deduction);
-    //         formDataToSend.append("facility_setup[cutoff_third_day]", cancellationRules[2].time.day);
-    //         formDataToSend.append("facility_setup[cutoff_third_hr]", cancellationRules[2].time.type);
-    //         formDataToSend.append("facility_setup[cutoff_third_min]", cancellationRules[2].time.value);
-    //         formDataToSend.append("facility_setup[return_third_percentage]", cancellationRules[2].deduction);
-    //         formDataToSend.append("facility_setup[book_by]", "slot");
-    //         formDataToSend.append("facility_setup[create_by]", JSON.parse(localStorage.getItem("user")).id);
-
-    //         // Generic Tags
-    //         const amenitiesMap = {
-    //             tv: "TV",
-    //             whiteboard: "Whiteboard",
-    //             casting: "Casting",
-    //             smartPenForTV: "Smart Pen for TV",
-    //             wirelessCharging: "Wireless Charging",
-    //             meetingRoomInventory: "Meeting Room Inventory",
-    //         };
-    //         const amenities = Object.keys(amenitiesMap).filter(key => formData.amenities[key]);
-    //         amenities.forEach((name, index) => {
-    //             formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, "amenity_things");
-    //             formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, amenitiesMap[name]);
-    //             formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, "0");
-    //             formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, "1");
-    //         });
-
-    //         // Facility Slots
-    //         formData.slots.forEach((slot, index) => {
-    //             const prefix = `facility_slots[${index}]`;
-
-    // if (slot.id) {
-    //     formDataToSend.append(`${prefix}[id]`, slot.id);
-    // }
-
-    //             formDataToSend.append(`${prefix}[slot_no]`, (index + 1).toString());
-    //             formDataToSend.append(`${prefix}[dayofweek]`, slot.dayofweek || "");
-    //             formDataToSend.append(`${prefix}[start_hour]`, slot.startTime.hour);
-    //             formDataToSend.append(`${prefix}[start_min]`, slot.startTime.minute);
-    //             formDataToSend.append(`${prefix}[break_start_hour]`, slot.breakTimeStart.hour);
-    //             formDataToSend.append(`${prefix}[break_start_min]`, slot.breakTimeStart.minute);
-    //             formDataToSend.append(`${prefix}[break_end_hour]`, slot.breakTimeEnd.hour);
-    //             formDataToSend.append(`${prefix}[break_end_min]`, slot.breakTimeEnd.minute);
-    //             formDataToSend.append(`${prefix}[end_hour]`, slot.endTime.hour);
-    //             formDataToSend.append(`${prefix}[end_min]`, slot.endTime.minute);
-    //             formDataToSend.append(`${prefix}[max_bookings]`, slot.concurrentSlots || "1");
-    //             formDataToSend.append(`${prefix}[breakminutes]`, slot.slotBy.toString());
-    //             formDataToSend.append(`${prefix}[wrap_time]`, slot.wrapTime);
-
-    //             if (slot._destroy) {
-    //                 formDataToSend.append(`${prefix}[_destroy]`, "1");
-    //             }
-    //         });
-
-    //         // Booking Windows
-    //         formDataToSend.append("book_before_day", formData.bookingAllowedBefore.day);
-    //         formDataToSend.append("book_before_hour", formData.bookingAllowedBefore.hour);
-    //         formDataToSend.append("book_before_min", formData.bookingAllowedBefore.minute);
-    //         formDataToSend.append("advance_booking_day", formData.advanceBooking.day);
-    //         formDataToSend.append("advance_booking_hour", formData.advanceBooking.hour);
-    //         formDataToSend.append("advance_booking_min", formData.advanceBooking.minute);
-    //         formDataToSend.append("cancel_day", formData.canCancelBefore.day);
-    //         formDataToSend.append("cancel_hour", formData.canCancelBefore.hour);
-    //         formDataToSend.append("cancel_min", formData.canCancelBefore.minute);
-
-    //         // Additional Info
-    //         formDataToSend.append("seater_info", formData.seaterInfo !== "Select a seater" ? formData.seaterInfo : "");
-    //         formDataToSend.append("location_info", formData.floorInfo !== "Select a floor" ? formData.floorInfo : "");
-    //         formDataToSend.append("shared_content_info", formData.sharedContentInfo || "");
-
-    //         const response = await fetch(
-    //             `https://${baseUrl}/pms/admin/facility_setups/${id}.json`,
-    //             {
-    //                 method: "PUT",
-    //                 headers: {
-    //                     Authorization: `Bearer ${token}`,
-    //                 },
-    //                 body: formDataToSend,
-    //             }
-    //         );
-
-    //         if (response.ok) {
-    //             toast.success("Booking setup updated successfully");
-    //             navigate("/settings/vas/booking/setup");
-    //         } else {
-    //             console.error("Failed to update booking setup:", response.statusText);
-    //             toast.error("Failed to update booking setup");
-    //         }
-    //     } catch (error) {
-    //         console.error("Error updating booking setup:", error);
-    //         toast.error("Error updating booking setup");
-    //     } finally {
-    //         setIsSubmitting(false);
-    //     }
-    // };
-
-
     const handleClose = () => {
         navigate("/settings/vas/booking/setup");
     };
@@ -597,15 +667,13 @@ export const EditBookingSetupPage = () => {
         setFormData({ ...formData, slots: [...formData.slots, newSlot] });
     };
 
-    console.log(formData)
-
     return (
         <ThemeProvider theme={muiTheme}>
             <div className="px-5 bg-white min-h-screen">
                 <div className="bg-white rounded-lg max-w-6xl mx-auto">
                     <Button
                         variant="ghost"
-                        onClick={() => navigate('/settings/vas/booking/setup')}
+                        onClick={() => navigate("/settings/vas/booking/setup")}
                         className="mt-2"
                     >
                         <ArrowLeft className="w-4 h-4 mr-2" />
@@ -613,7 +681,10 @@ export const EditBookingSetupPage = () => {
                     </Button>
                     <div className="p-6 space-y-8">
                         <div className="border rounded-lg">
-                            <div className="flex items-center gap-2 bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
+                            <div
+                                className="flex items-center gap-2 bg-[#F6F4EE] p-6"
+                                style={{ border: "1px solid #D9D9D9" }}
+                            >
                                 <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                     1
                                 </div>
@@ -621,7 +692,10 @@ export const EditBookingSetupPage = () => {
                                     Basic Info
                                 </h3>
                             </div>
-                            <div className="p-[31px] bg-[#F6F7F7] space-y-4" style={{ border: "1px solid #D9D9D9" }}>
+                            <div
+                                className="p-[31px] bg-[#F6F7F7] space-y-4"
+                                style={{ border: "1px solid #D9D9D9" }}
+                            >
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <TextField
                                         label="Facility Name*"
@@ -659,7 +733,9 @@ export const EditBookingSetupPage = () => {
                                             defaultValue="Select Department"
                                         >
                                             <MenuItem value="Select Department">
-                                                {loadingDepartments ? "Loading..." : "Select Department"}
+                                                {loadingDepartments
+                                                    ? "Loading..."
+                                                    : "Select Department"}
                                             </MenuItem>
                                             {Array.isArray(departments) &&
                                                 departments.map((dept, index) => (
@@ -709,7 +785,10 @@ export const EditBookingSetupPage = () => {
                             </div>
                         </div>
                         <div className="border rounded-lg">
-                            <div className="flex items-center gap-2 bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
+                            <div
+                                className="flex items-center gap-2 bg-[#F6F4EE] p-6"
+                                style={{ border: "1px solid #D9D9D9" }}
+                            >
                                 <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                     2
                                 </div>
@@ -717,7 +796,10 @@ export const EditBookingSetupPage = () => {
                                     CONFIGURE SLOT
                                 </h3>
                             </div>
-                            <div className="p-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                            <div
+                                className="p-[31px] bg-[#F6F7F7]"
+                                style={{ border: "1px solid #D9D9D9" }}
+                            >
                                 <Button
                                     onClick={addSlot}
                                     className="bg-purple-600 hover:bg-purple-700 mb-4"
@@ -775,7 +857,8 @@ export const EditBookingSetupPage = () => {
                                                     value={slot.breakTimeStart.hour}
                                                     onChange={(e) => {
                                                         const newSlots = [...formData.slots];
-                                                        newSlots[index].breakTimeStart.hour = e.target.value;
+                                                        newSlots[index].breakTimeStart.hour =
+                                                            e.target.value;
                                                         setFormData({ ...formData, slots: newSlots });
                                                     }}
                                                 >
@@ -791,7 +874,8 @@ export const EditBookingSetupPage = () => {
                                                     value={slot.breakTimeStart.minute}
                                                     onChange={(e) => {
                                                         const newSlots = [...formData.slots];
-                                                        newSlots[index].breakTimeStart.minute = e.target.value;
+                                                        newSlots[index].breakTimeStart.minute =
+                                                            e.target.value;
                                                         setFormData({ ...formData, slots: newSlots });
                                                     }}
                                                 >
@@ -825,7 +909,8 @@ export const EditBookingSetupPage = () => {
                                                     value={slot.breakTimeEnd.minute}
                                                     onChange={(e) => {
                                                         const newSlots = [...formData.slots];
-                                                        newSlots[index].breakTimeEnd.minute = e.target.value;
+                                                        newSlots[index].breakTimeEnd.minute =
+                                                            e.target.value;
                                                         setFormData({ ...formData, slots: newSlots });
                                                     }}
                                                 >
@@ -894,7 +979,9 @@ export const EditBookingSetupPage = () => {
                                                 <MenuItem value={"30 Minutes"}>Half hour</MenuItem>
                                                 <MenuItem value={"45 Minutes"}>45 Minutes</MenuItem>
                                                 <MenuItem value={"60 Minutes"}>1 hour</MenuItem>
-                                                <MenuItem value={"90 Minutes"}>1 and a half hours</MenuItem>
+                                                <MenuItem value={"90 Minutes"}>
+                                                    1 and a half hours
+                                                </MenuItem>
                                             </Select>
                                         </FormControl>
                                         <TextField
@@ -1145,7 +1232,10 @@ export const EditBookingSetupPage = () => {
                             </div>
                         </div>
                         <div className="border rounded-lg">
-                            <div className="flex items-center gap-2 bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
+                            <div
+                                className="flex items-center gap-2 bg-[#F6F4EE] p-6"
+                                style={{ border: "1px solid #D9D9D9" }}
+                            >
                                 <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                     3
                                 </div>
@@ -1153,7 +1243,10 @@ export const EditBookingSetupPage = () => {
                                     CONFIGURE PAYMENT
                                 </h3>
                             </div>
-                            <div className="p-[31px] bg-[#F6F7F7] space-y-6" style={{ border: "1px solid #D9D9D9" }}>
+                            <div
+                                className="p-[31px] bg-[#F6F7F7] space-y-6"
+                                style={{ border: "1px solid #D9D9D9" }}
+                            >
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                     <div className="flex items-center space-x-2">
                                         <Checkbox
@@ -1201,7 +1294,10 @@ export const EditBookingSetupPage = () => {
                                         label="SGST(%)"
                                         value={formData.sgstPercentage}
                                         onChange={(e) =>
-                                            setFormData({ ...formData, sgstPercentage: e.target.value })
+                                            setFormData({
+                                                ...formData,
+                                                sgstPercentage: e.target.value,
+                                            })
                                         }
                                         variant="outlined"
                                     />
@@ -1209,7 +1305,10 @@ export const EditBookingSetupPage = () => {
                                         label="GST(%)"
                                         value={formData.gstPercentage}
                                         onChange={(e) =>
-                                            setFormData({ ...formData, gstPercentage: e.target.value })
+                                            setFormData({
+                                                ...formData,
+                                                gstPercentage: e.target.value,
+                                            })
                                         }
                                         variant="outlined"
                                     />
@@ -1224,9 +1323,12 @@ export const EditBookingSetupPage = () => {
                                 />
                             </div>
                         </div>
-                        <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-start justify-between gap-4">
                             <div className="border rounded-lg w-full">
-                                <div className="flex items-center gap-2 bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
+                                <div
+                                    className="flex items-center gap-2 bg-[#F6F4EE] p-6"
+                                    style={{ border: "1px solid #D9D9D9" }}
+                                >
                                     <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                         4
                                     </div>
@@ -1234,7 +1336,10 @@ export const EditBookingSetupPage = () => {
                                         COVER IMAGE
                                     </h3>
                                 </div>
-                                <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                                <div
+                                    className="p-6 bg-[#F6F7F7]"
+                                    style={{ border: "1px solid #D9D9D9" }}
+                                >
                                     <div
                                         className="border-2 border-dashed border-[#C72030]/30 rounded-lg text-center p-6"
                                         onClick={triggerFileSelect}
@@ -1247,10 +1352,11 @@ export const EditBookingSetupPage = () => {
                                             <span className="text-[#C72030] cursor-pointer">
                                                 Choose File
                                             </span>{" "}
-                                            No file chosen
+                                            {selectedFile ? "File selected" : "No file chosen"}
                                         </p>
                                         <p className="text-xs text-gray-500 mt-1">
-                                            Accepted file formats: PNG/JPEG (height: 142px, width: 328px) (max 5 mb)
+                                            Accepted file formats: PNG/JPEG (height: 142px, width:
+                                            328px) (max 5 mb)
                                         </p>
                                     </div>
                                     <input
@@ -1263,7 +1369,11 @@ export const EditBookingSetupPage = () => {
                                     {selectedFile && (
                                         <div className="mt-4 flex gap-2 flex-wrap">
                                             <img
-                                                src={selectedFile}
+                                                src={
+                                                    typeof selectedFile === "string"
+                                                        ? selectedFile
+                                                        : URL.createObjectURL(selectedFile)
+                                                }
                                                 alt="cover-preview"
                                                 className="h-[80px] w-20 rounded border border-gray-200"
                                             />
@@ -1272,7 +1382,10 @@ export const EditBookingSetupPage = () => {
                                 </div>
                             </div>
                             <div className="border rounded-lg w-full">
-                                <div className="flex items-center gap-2 bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
+                                <div
+                                    className="flex items-center gap-2 bg-[#F6F4EE] p-6"
+                                    style={{ border: "1px solid #D9D9D9" }}
+                                >
                                     <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                         5
                                     </div>
@@ -1280,7 +1393,10 @@ export const EditBookingSetupPage = () => {
                                         Booking Summary Image
                                     </h3>
                                 </div>
-                                <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                                <div
+                                    className="p-6 bg-[#F6F7F7]"
+                                    style={{ border: "1px solid #D9D9D9" }}
+                                >
                                     <div
                                         className="border-2 border-dashed border-[#C72030]/30 rounded-lg text-center p-6"
                                         onClick={triggerBookingImgSelect}
@@ -1293,10 +1409,11 @@ export const EditBookingSetupPage = () => {
                                             <span className="text-[#C72030] cursor-pointer">
                                                 Choose File
                                             </span>{" "}
-                                            No file chosen
+                                            {selectedBookingFiles.length > 0 ? "Files selected" : "No file chosen"}
                                         </p>
                                         <p className="text-xs text-gray-500 mt-1">
-                                            Accepted file formats: PNG/JPEG (height: 142px, width: 328px) (max 5 mb)
+                                            Accepted file formats: PNG/JPEG (height: 142px, width:
+                                            328px) (max 5 mb)
                                         </p>
                                     </div>
                                     <input
@@ -1305,16 +1422,28 @@ export const EditBookingSetupPage = () => {
                                         onChange={handleBookingImageChange}
                                         ref={bookingImageRef}
                                         hidden
+                                        multiple
                                     />
                                     {selectedBookingFiles.length > 0 && (
                                         <div className="mt-4 flex gap-2 flex-wrap">
-                                            {selectedBookingFiles.map((file, index) => (
-                                                <img
-                                                    key={index}
-                                                    src={typeof file === "string" ? file : URL.createObjectURL(file)}
-                                                    alt={`cover-preview-${index}`}
-                                                    className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
-                                                />
+                                            {selectedBookingFiles.map(({ file, id }, index) => (
+                                                <div key={index} className="relative">
+                                                    <img
+                                                        src={
+                                                            typeof file === "string"
+                                                                ? file
+                                                                : URL.createObjectURL(file)
+                                                        }
+                                                        alt={`cover-preview-${index}`}
+                                                        className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
+                                                    />
+                                                    <button
+                                                        onClick={() => handleRemoveBookingImage(index, id)}
+                                                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                </div>
                                             ))}
                                         </div>
                                     )}
@@ -1322,7 +1451,10 @@ export const EditBookingSetupPage = () => {
                             </div>
                         </div>
                         <div className="border rounded-lg">
-                            <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
+                            <div
+                                className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                                style={{ border: "1px solid #D9D9D9" }}
+                            >
                                 <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                     6
                                 </div>
@@ -1330,7 +1462,10 @@ export const EditBookingSetupPage = () => {
                                     DESCRIPTION
                                 </h3>
                             </div>
-                            <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                            <div
+                                className="p-6 bg-[#F6F7F7]"
+                                style={{ border: "1px solid #D9D9D9" }}
+                            >
                                 <Textarea
                                     placeholder="Enter description"
                                     value={formData.description}
@@ -1343,7 +1478,10 @@ export const EditBookingSetupPage = () => {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="border rounded-lg">
-                                <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
+                                <div
+                                    className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                                    style={{ border: "1px solid #D9D9D9" }}
+                                >
                                     <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                         7
                                     </div>
@@ -1351,7 +1489,10 @@ export const EditBookingSetupPage = () => {
                                         TERMS & CONDITIONS
                                     </h3>
                                 </div>
-                                <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                                <div
+                                    className="p-6 bg-[#F6F7F7]"
+                                    style={{ border: "1px solid #D9D9D9" }}
+                                >
                                     <Textarea
                                         placeholder="Enter terms and conditions"
                                         value={formData.termsConditions}
@@ -1366,7 +1507,10 @@ export const EditBookingSetupPage = () => {
                                 </div>
                             </div>
                             <div className="border rounded-lg">
-                                <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
+                                <div
+                                    className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                                    style={{ border: "1px solid #D9D9D9" }}
+                                >
                                     <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                         8
                                     </div>
@@ -1374,7 +1518,10 @@ export const EditBookingSetupPage = () => {
                                         CANCELLATION POLICY
                                     </h3>
                                 </div>
-                                <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                                <div
+                                    className="p-6 bg-[#F6F7F7]"
+                                    style={{ border: "1px solid #D9D9D9" }}
+                                >
                                     <Textarea
                                         placeholder="Enter cancellation text"
                                         value={formData.cancellationText}
@@ -1390,7 +1537,10 @@ export const EditBookingSetupPage = () => {
                             </div>
                         </div>
                         <div className="border rounded-lg">
-                            <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
+                            <div
+                                className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                                style={{ border: "1px solid #D9D9D9" }}
+                            >
                                 <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                     9
                                 </div>
@@ -1398,7 +1548,10 @@ export const EditBookingSetupPage = () => {
                                     RULE SETUP
                                 </h3>
                             </div>
-                            <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                            <div
+                                className="p-6 bg-[#F6F7F7]"
+                                style={{ border: "1px solid #D9D9D9" }}
+                            >
                                 <div className="grid grid-cols-3 gap-4 mb-4">
                                     <div className="font-medium text-gray-700">
                                         Rules Description
@@ -1407,7 +1560,10 @@ export const EditBookingSetupPage = () => {
                                     <div className="font-medium text-gray-700">Deduction</div>
                                 </div>
                                 {cancellationRules.map((rule, index) => (
-                                    <div key={index} className="grid grid-cols-3 gap-4 mb-2 items-center">
+                                    <div
+                                        key={index}
+                                        className="grid grid-cols-3 gap-4 mb-2 items-center"
+                                    >
                                         <div className="text-sm text-gray-600">
                                             {rule.description}
                                         </div>
@@ -1473,8 +1629,14 @@ export const EditBookingSetupPage = () => {
                                 ))}
                             </div>
                         </div>
-                        <div className={`border rounded-lg overflow-hidden ${additionalOpen ? 'h-auto' : 'h-[3.8rem]'}`}>
-                            <div className="flex justify-between p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
+                        <div
+                            className={`border rounded-lg overflow-hidden ${additionalOpen ? "h-auto" : "h-[3.8rem]"
+                                }`}
+                        >
+                            <div
+                                className="flex justify-between p-6 bg-[#F6F4EE]"
+                                style={{ border: "1px solid #D9D9D9" }}
+                            >
                                 <div className="flex items-center gap-2">
                                     <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold"></div>
                                     <h3 className="text-lg font-semibold text-[#C72030]">
@@ -1493,9 +1655,16 @@ export const EditBookingSetupPage = () => {
                                     />
                                 )}
                             </div>
-                            <div className="p-6 space-y-4" style={{ border: "1px solid #D9D9D9" }} id="additional">
+                            <div
+                                className="p-6 space-y-4"
+                                style={{ border: "1px solid #D9D9D9" }}
+                                id="additional"
+                            >
                                 <div className="border rounded-lg">
-                                    <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
+                                    <div
+                                        className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                                        style={{ border: "1px solid #D9D9D9" }}
+                                    >
                                         <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                             11
                                         </div>
@@ -1503,91 +1672,42 @@ export const EditBookingSetupPage = () => {
                                             CONFIGURE AMENITY INFO
                                         </h3>
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }} id="amenities">
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="tv"
-                                                checked={formData.amenities.tv}
-                                                onCheckedChange={(checked) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        amenities: { ...formData.amenities, tv: !!checked },
-                                                    })
-                                                }
-                                            />
-                                            <label htmlFor="tv">TV</label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="whiteboard"
-                                                checked={formData.amenities.whiteboard}
-                                                onCheckedChange={(checked) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        amenities: { ...formData.amenities, whiteboard: !!checked },
-                                                    })
-                                                }
-                                            />
-                                            <label htmlFor="whiteboard">Whiteboard</label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="casting"
-                                                checked={formData.amenities.casting}
-                                                onCheckedChange={(checked) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        amenities: { ...formData.amenities, casting: !!checked },
-                                                    })
-                                                }
-                                            />
-                                            <label htmlFor="casting">Casting</label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="smartPenForTV"
-                                                checked={formData.amenities.smartPenForTV}
-                                                onCheckedChange={(checked) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        amenities: { ...formData.amenities, smartPenForTV: !!checked },
-                                                    })
-                                                }
-                                            />
-                                            <label htmlFor="smartPenForTV">Smart Pen for TV</label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="wirelessCharging"
-                                                checked={formData.amenities.wirelessCharging}
-                                                onCheckedChange={(checked) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        amenities: { ...formData.amenities, wirelessCharging: !!checked },
-                                                    })
-                                                }
-                                            />
-                                            <label htmlFor="wirelessCharging">Wireless Charging</label>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Checkbox
-                                                id="meetingRoomInventory"
-                                                checked={formData.amenities.meetingRoomInventory}
-                                                onCheckedChange={(checked) =>
-                                                    setFormData({
-                                                        ...formData,
-                                                        amenities: { ...formData.amenities, meetingRoomInventory: !!checked },
-                                                    })
-                                                }
-                                            />
-                                            <label htmlFor="meetingRoomInventory">
-                                                Meeting Room Inventory
-                                            </label>
-                                        </div>
+                                    <div
+                                        className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]"
+                                        style={{ border: "1px solid #D9D9D9" }}
+                                        id="amenities"
+                                    >
+                                        {Object.keys(formData.amenities).map((key) => (
+                                            <div key={key} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={key}
+                                                    checked={formData.amenities[key].selected}
+                                                    onCheckedChange={(checked) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            amenities: {
+                                                                ...formData.amenities,
+                                                                [key]: {
+                                                                    ...formData.amenities[key],
+                                                                    selected: !!checked,
+                                                                },
+                                                            },
+                                                        })
+                                                    }
+                                                />
+                                                <label htmlFor={key}>
+                                                    {formData.amenities[key].name}
+                                                </label>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                                 <div className="border rounded-lg">
-                                    <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }} id="seater">
+                                    <div
+                                        className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                                        style={{ border: "1px solid #D9D9D9" }}
+                                        id="seater"
+                                    >
                                         <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                             12
                                         </div>
@@ -1595,17 +1715,25 @@ export const EditBookingSetupPage = () => {
                                             SEATER INFO
                                         </h3>
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                                    <div
+                                        className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]"
+                                        style={{ border: "1px solid #D9D9D9" }}
+                                    >
                                         <FormControl>
                                             <InputLabel>Seater Info</InputLabel>
                                             <Select
                                                 value={formData.seaterInfo}
                                                 onChange={(e) =>
-                                                    setFormData({ ...formData, seaterInfo: e.target.value })
+                                                    setFormData({
+                                                        ...formData,
+                                                        seaterInfo: e.target.value,
+                                                    })
                                                 }
                                                 label="Seater Info"
                                             >
-                                                <MenuItem value="Select a seater">Select a seater</MenuItem>
+                                                <MenuItem value="Select a seater">
+                                                    Select a seater
+                                                </MenuItem>
                                                 <MenuItem value="1 Seater">1 Seater</MenuItem>
                                                 <MenuItem value="2 Seater">2 Seater</MenuItem>
                                                 <MenuItem value="3 Seater">3 Seater</MenuItem>
@@ -1626,7 +1754,11 @@ export const EditBookingSetupPage = () => {
                                     </div>
                                 </div>
                                 <div className="border rounded-lg">
-                                    <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }} id="floor">
+                                    <div
+                                        className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                                        style={{ border: "1px solid #D9D9D9" }}
+                                        id="floor"
+                                    >
                                         <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                             13
                                         </div>
@@ -1634,17 +1766,25 @@ export const EditBookingSetupPage = () => {
                                             FLOOR INFO
                                         </h3>
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                                    <div
+                                        className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]"
+                                        style={{ border: "1px solid #D9D9D9" }}
+                                    >
                                         <FormControl>
                                             <InputLabel>Floor Info</InputLabel>
                                             <Select
                                                 value={formData.floorInfo}
                                                 onChange={(e) =>
-                                                    setFormData({ ...formData, floorInfo: e.target.value })
+                                                    setFormData({
+                                                        ...formData,
+                                                        floorInfo: e.target.value,
+                                                    })
                                                 }
                                                 label="Floor Info"
                                             >
-                                                <MenuItem value="Select a floor">Select a floor</MenuItem>
+                                                <MenuItem value="Select a floor">
+                                                    Select a floor
+                                                </MenuItem>
                                                 <MenuItem value="1st Floor">1st Floor</MenuItem>
                                                 <MenuItem value="2nd Floor">2nd Floor</MenuItem>
                                                 <MenuItem value="3rd Floor">3rd Floor</MenuItem>
@@ -1665,7 +1805,11 @@ export const EditBookingSetupPage = () => {
                                     </div>
                                 </div>
                                 <div className="border rounded-lg">
-                                    <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }} id="shared">
+                                    <div
+                                        className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                                        style={{ border: "1px solid #D9D9D9" }}
+                                        id="shared"
+                                    >
                                         <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                             14
                                         </div>
@@ -1673,7 +1817,10 @@ export const EditBookingSetupPage = () => {
                                             Shared Content Info
                                         </h3>
                                     </div>
-                                    <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+                                    <div
+                                        className="p-6 bg-[#F6F7F7]"
+                                        style={{ border: "1px solid #D9D9D9" }}
+                                    >
                                         <Textarea
                                             placeholder="Text content will appear on meeting room share icon in Application"
                                             value={formData.sharedContentInfo}
@@ -1688,7 +1835,11 @@ export const EditBookingSetupPage = () => {
                                     </div>
                                 </div>
                                 <div className="border rounded-lg">
-                                    <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }} id="appKey">
+                                    <div
+                                        className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                                        style={{ border: "1px solid #D9D9D9" }}
+                                        id="appKey"
+                                    >
                                         <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
                                             15
                                         </div>
@@ -1696,7 +1847,11 @@ export const EditBookingSetupPage = () => {
                                             CONFIGURE APP KEY
                                         </h3>
                                     </div>
-                                    <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }} id="appKey">
+                                    <div
+                                        className="p-6 bg-[#F6F7F7]"
+                                        style={{ border: "1px solid #D9D9D9" }}
+                                        id="appKey"
+                                    >
                                         <TextField
                                             label="App Key"
                                             placeholder="Enter Alphanumeric Key"

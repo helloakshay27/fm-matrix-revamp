@@ -125,6 +125,7 @@ export const BookingSetupDashboard = () => {
         })
       ).unwrap();
 
+      toast.success("Booking status updated successfully!");
       setBookingSetupData((prevData) =>
         prevData.map((booking) =>
           booking.id === id
@@ -289,7 +290,7 @@ export const BookingSetupDashboard = () => {
   );
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-white">
       {showActionPanel && (
         <SelectionPanel
           // actions={selectionActions}

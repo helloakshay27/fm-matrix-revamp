@@ -9,7 +9,6 @@ import {
 
 export const BookingDetailsPage = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
   const [bookings, setBookings] = useState<FacilityBookingDetails | null>(null);

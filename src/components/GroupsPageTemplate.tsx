@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Upload, X } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogTitle, TextField, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { apiClient } from '@/utils/apiClient';
@@ -114,69 +113,90 @@ export const GroupsPageTemplate = ({
   }, [apiEndpoint, groupType]);
 
   const toggleGroupStatus = (id: number) => {
-    setGroups(prev => prev.map(group => 
-      group.id === id ? { ...group, status: !group.status } : group
-    ));
+    setGroups(prev => prev.map(group => {
+      if (group.id === id) {
+        const newStatus = !group.status;
+        toast.success(`Group ${newStatus ? 'activated' : 'deactivated'} successfully`);
+        return { ...group, status: newStatus };
+      }
+      return group;
+    }));
   };
 
   const toggleSubGroupStatus = (id: number) => {
-    setSubGroups(prev => prev.map(subGroup => 
-      subGroup.id === id ? { ...subGroup, status: !subGroup.status } : subGroup
-    ));
+    setSubGroups(prev => prev.map(subGroup => {
+      if (subGroup.id === id) {
+        const newStatus = !subGroup.status;
+        toast.success(`Sub group ${newStatus ? 'activated' : 'deactivated'} successfully`);
+        return { ...subGroup, status: newStatus };
+      }
+      return subGroup;
+    }));
   };
 
   const handleAddGroup = async () => {
-    if (groupName.trim()) {
-      setGroupLoading(true);
-      try {
-        const payload = {
-          pms_asset_group: {
-            name: groupName.trim(),
-            group_type: groupType
-          }
-        };
+    if (!groupName.trim()) {
+      toast.error('Please enter a group name');
+      return;
+    }
 
-        const response = await apiClient.post('/pms/asset_groups.json', payload);
-        
-        if (response.data) {
-          await fetchGroupsData();
-          setGroupName('');
-          setAddGroupOpen(false);
-          toast.success('Group created successfully');
+    setGroupLoading(true);
+    try {
+      const payload = {
+        pms_asset_group: {
+          name: groupName.trim(),
+          group_type: groupType
         }
-      } catch (error) {
-        console.error('Error creating group:', error);
-        toast.error('Failed to create group');
-      } finally {
-        setGroupLoading(false);
+      };
+
+      const response = await apiClient.post('/pms/asset_groups.json', payload);
+      
+      if (response.data) {
+        await fetchGroupsData();
+        setGroupName('');
+        setAddGroupOpen(false);
+        toast.success('Group created successfully');
       }
+    } catch (error) {
+      console.error('Error creating group:', error);
+      toast.error('Failed to create group');
+    } finally {
+      setGroupLoading(false);
     }
   };
 
   const handleAddSubGroup = async () => {
-    if (selectedGroupId && subGroupName.trim()) {
-      setSubGroupLoading(true);
-      try {
-        const params = new URLSearchParams({
-          'pms_asset_sub_group[name]': subGroupName.trim(),
-          'pms_asset_sub_group[group_id]': selectedGroupId.toString()
-        });
+    if (!selectedGroupId) {
+      toast.error('Please select a group');
+      return;
+    }
+    
+    if (!subGroupName.trim()) {
+      toast.error('Please enter a sub group name');
+      return;
+    }
 
-        const response = await apiClient.post(`/pms/asset_sub_groups.json?${params.toString()}`);
-        
-        if (response.data) {
-          await fetchGroupsData();
-          setSelectedGroupId('');
-          setSubGroupName('');
-          setAddSubGroupOpen(false);
-          toast.success('Sub group created successfully');
-        }
-      } catch (error) {
-        console.error('Error creating sub group:', error);
-        toast.error('Failed to create sub group');
-      } finally {
-        setSubGroupLoading(false);
+    setSubGroupLoading(true);
+    try {
+      const params = new URLSearchParams({
+        'pms_asset_sub_group[name]': subGroupName.trim(),
+        'pms_asset_sub_group[group_id]': selectedGroupId.toString()
+      });
+
+      const response = await apiClient.post(`/pms/asset_sub_groups.json?${params.toString()}`);
+      
+      if (response.data) {
+        await fetchGroupsData();
+        setSelectedGroupId('');
+        setSubGroupName('');
+        setAddSubGroupOpen(false);
+        toast.success('Sub group created successfully');
       }
+    } catch (error) {
+      console.error('Error creating sub group:', error);
+      toast.error('Failed to create sub group');
+    } finally {
+      setSubGroupLoading(false);
     }
   };
 
@@ -267,10 +287,15 @@ export const GroupsPageTemplate = ({
                       <TableCell className="text-center">{group.srNo}</TableCell>
                       <TableCell>{group.groupName}</TableCell>
                       <TableCell className="text-center">
-                        <Switch 
-                          checked={group.status} 
-                          onCheckedChange={() => toggleGroupStatus(group.id)}
-                        />
+                        <div
+                          className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${group.status ? 'bg-green-500' : 'bg-gray-300'}`}
+                          onClick={() => toggleGroupStatus(group.id)}
+                          aria-label={group.status ? 'Deactivate group' : 'Activate group'}
+                        >
+                          <span
+                            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${group.status ? 'translate-x-6' : 'translate-x-1'}`}
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -301,10 +326,15 @@ export const GroupsPageTemplate = ({
                       <TableCell>{subGroup.groupName}</TableCell>
                       <TableCell>{subGroup.subGroupName}</TableCell>
                       <TableCell className="text-center">
-                        <Switch 
-                          checked={subGroup.status} 
-                          onCheckedChange={() => toggleSubGroupStatus(subGroup.id)}
-                        />
+                        <div
+                          className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${subGroup.status ? 'bg-green-500' : 'bg-gray-300'}`}
+                          onClick={() => toggleSubGroupStatus(subGroup.id)}
+                          aria-label={subGroup.status ? 'Deactivate sub group' : 'Activate sub group'}
+                        >
+                          <span
+                            className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${subGroup.status ? 'translate-x-6' : 'translate-x-1'}`}
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -331,7 +361,7 @@ export const GroupsPageTemplate = ({
             <DialogContent className="p-6">
               <div className="space-y-6">
                 <TextField
-                  label="Group Name"
+                  label="Group Name *"
                   placeholder="Enter Group Name"
                   variant="outlined"
                   fullWidth
@@ -374,7 +404,7 @@ export const GroupsPageTemplate = ({
                   <Select
                     value={selectedGroupId}
                     onChange={(e) => setSelectedGroupId(e.target.value as string)}
-                    label="Group Name"
+                    label="Group Name *"
                     displayEmpty
                     MenuProps={{
                       PaperProps: {
@@ -397,7 +427,7 @@ export const GroupsPageTemplate = ({
                 </FormControl>
                 
                 <TextField
-                  label="Sub Group Name"
+                  label="Sub Group Name *"
                   placeholder="Enter Sub Group Name"
                   variant="outlined"
                   fullWidth

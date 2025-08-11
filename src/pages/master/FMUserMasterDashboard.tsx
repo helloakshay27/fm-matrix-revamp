@@ -436,10 +436,17 @@ export const FMUserMasterDashboard = () => {
           "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
         children: "Pending",
       };
+    } else if (status === "rejected") {
+      return {
+        className:
+          "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
+        children: "Rejected",
+      };
     } else {
       return {
-        className: "bg-red-600 text-white hover:bg-red-700 cursor-pointer",
-        children: "Rejected",
+        className:
+          "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
+        children: "Pending",
       };
     }
   };

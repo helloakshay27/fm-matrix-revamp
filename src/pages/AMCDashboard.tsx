@@ -110,11 +110,12 @@ interface AMCRecord {
   amc_end_date: string;
   amc_first_service: string;
   created_at: string;
-  active: boolean;
+  active: string;
   is_flagged?: boolean;
   contract_name?: string;
   total_days_remaining?: number;
   service_name?: string;
+  status: string;
 }
 
 const initialAmcData: AMCRecord[] = [];
@@ -133,8 +134,6 @@ const columns: ColumnConfig[] = [
   { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
   { key: 'active', label: 'Status', sortable: true, defaultVisible: true },
 ];
-
-
 
 export const AMCDashboard = () => {
   const navigate = useNavigate();
@@ -162,9 +161,7 @@ export const AMCDashboard = () => {
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [isExpiringFilterActive, setIsExpiringFilterActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearchQuery = useDebounce(searchQuery, 600); // Reduced debounce time for quicker response
-
-  // Analytics states
+  const debouncedSearchQuery = useDebounce(searchQuery, 600);
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [amcAnalyticsData, setAmcAnalyticsData] = useState<AMCStatusData | null>(null);
@@ -294,8 +291,6 @@ export const AMCDashboard = () => {
   const serviceTotalAMCs = amcUnitResourceData?.find(item => item.type === 'Services')?.count || 0;
   const assetTotalAMCs = amcUnitResourceData?.find(item => item.type === 'Assets')?.count || 0;
 
-  // Inside AMCDashboard component
-
   const fetchFilteredAMCs = async (filterValue: string | null, page: number = 1, expiryFilter?: string, searchTerm: string = '') => {
     if (!baseUrl || !token) {
       toast.error('Missing base URL, token, or site ID');
@@ -307,15 +302,15 @@ export const AMCDashboard = () => {
     const queryParams: string[] = [];
 
     if (filterValue === 'active') {
-      queryParams.push('q[active_eq]=true');
+      queryParams.push('q[status_eq]=active');
     } else if (filterValue === 'inactive') {
-      queryParams.push('q[active_eq]=false');
-    } else if (filterValue === 'flagged') {
-      queryParams.push('q[is_flagged_eq]=true');
+      queryParams.push('q[status_eq]=inactive');
+    } else if (filterValue === 'UnderObservation') {
+      queryParams.push('q[status_eq]=under_observation');
     }
 
     if (expiryFilter === 'expiring_in_15_days') {
-      queryParams.push('q[expire_in_15_days_eq]=true'); // Use the specified API parameter
+      queryParams.push('q[expire_in_15_days_eq]=true');
     } else if (expiryFilter) {
       queryParams.push(`q[amc_end_date_lteq]=${expiryFilter}`);
     }
@@ -348,7 +343,15 @@ export const AMCDashboard = () => {
         },
       });
       const fetchedData = response.data;
-      dispatch(fetchAMCData.fulfilled(fetchedData, 'fetchAMCData', undefined));
+      // Map API response to AMCRecord, prioritizing `status` over `active`
+      const mappedData = {
+        ...fetchedData,
+        asset_amcs: fetchedData.asset_amcs.map((item: any) => ({
+          ...item,
+          active: item.status, // Map status to active for backward compatibility, if needed
+        })),
+      };
+      dispatch(fetchAMCData.fulfilled(mappedData, 'fetchAMCData', undefined));
       setCurrentPage(fetchedData.pagination.current_page);
     } catch (error) {
       console.error('Error fetching AMC data:', error);
@@ -380,11 +383,9 @@ export const AMCDashboard = () => {
     }
   }, [baseUrl, token, currentPage, filter, amcTypeFilter, debouncedSearchQuery]);
 
-  // Handle search input changes
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setCurrentPage(1); // Reset to first page for new search
-    // Rely on useEffect to handle API call via debouncedSearchQuery
+    setCurrentPage(1);
   };
 
   useEffect(() => {
@@ -400,87 +401,6 @@ export const AMCDashboard = () => {
 
   const handleViewDetails = (id: number) => {
     navigate(`/maintenance/amc/details/${id}`);
-  };
-
-  const handleStatusToggle = async (id: number) => {
-    if (togglingIds.has(id)) return;
-
-    try {
-      if (!baseUrl || !token) {
-        toast.error('Missing base URL, token, or site ID');
-        return;
-      }
-
-      if (!apiData || typeof apiData !== 'object' || !('asset_amcs' in apiData)) {
-        toast.error('Invalid AMC data');
-        return;
-      }
-
-      const amcRecord = amcData.find((item) => item.id === id);
-      if (!amcRecord) {
-        toast.error('AMC record not found');
-        return;
-      }
-
-      setTogglingIds((prev) => new Set(prev).add(id));
-
-      const updatedStatus = !amcRecord.active;
-      const updatedAmcData = amcData.map((item) =>
-        item.id === id ? { ...item, active: updatedStatus } : item
-      );
-
-      const updatedApiData = {
-        ...apiData,
-        asset_amcs: updatedAmcData,
-        active_amcs_count: updatedStatus
-          ? (apiData as any).active_amcs_count + 1
-          : (apiData as any).active_amcs_count - 1,
-        inactive_amcs_count: updatedStatus
-          ? (apiData as any).inactive_amcs_count - 1
-          : (apiData as any).inactive_amcs_count + 1,
-        total_amcs_count: (apiData as any).total_amcs_count,
-      };
-
-      dispatch(fetchAMCData.fulfilled(updatedApiData, 'fetchAMCData', undefined));
-
-      toast.dismiss();
-      toast.success(`Status ${updatedStatus ? 'Active' : 'Inactive'}`);
-
-      const url = `https://${baseUrl}/pms/asset_amcs/${id}.json`;
-      const response = await axios.put(
-        url,
-        {
-          pms_asset_amc: {
-            active: updatedStatus,
-          },
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        const { startDate, endDate } = analyticsDateRange;
-        const startDateObj = convertDateStringToDate(startDate);
-        const endDateObj = convertDateStringToDate(endDate);
-        await fetchAMCAnalyticsData(startDateObj, endDateObj);
-      } else {
-        dispatch(fetchAMCData.fulfilled(apiData, 'fetchAMCData', undefined));
-        toast.error('Failed to update AMC status');
-      }
-    } catch (error) {
-      console.error('Error updating AMC status:', error);
-      dispatch(fetchAMCData.fulfilled(apiData, 'fetchAMCData', undefined));
-      toast.error('Failed to update AMC status');
-    } finally {
-      setTogglingIds((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(id);
-        return newSet;
-      });
-    }
   };
 
   const handleImportClick = () => {
@@ -623,8 +543,6 @@ export const AMCDashboard = () => {
             </Link>
           </div>
         );
-
-
       case 'id':
         return <span className="font-medium">{item.id}</span>;
       case 'asset_name':
@@ -635,7 +553,6 @@ export const AMCDashboard = () => {
         } else {
           return '-';
         }
-
       case 'amc_type':
         return item.amc_type || '-';
       case 'vendor_name':
@@ -651,18 +568,131 @@ export const AMCDashboard = () => {
       case 'total_days_remaining':
         return item.total_days_remaining || '-';
       case 'active':
+
+        const statusColors = {
+          active: '#d5dbdb',
+          inactive: '#c4b89d',
+          under_observation: '#dbc2a9',
+          expired: '#ef4444',
+        };
+
+        const statusLabels: Record<string, string> = {
+          active: 'Active',
+          inactive: 'Inactive',
+          under_observation: 'Under Observation',
+          expired: 'Expired',
+          '': '',
+        };
+
+        const selectedValue = (item.status ?? '').toLowerCase(); // Normalize to lowercase
+        const isExpired = selectedValue === 'expired';
+        const triggerBackgroundColor = statusColors[selectedValue] || '#d3d3d3';
         return (
-          <div className="flex justify-center items-center h-full w-full">
-            <div
-              className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-300'
-                } ${togglingIds.has(item.id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-              onClick={() => !togglingIds.has(item.id) && handleStatusToggle(item.id)}
+          <div className="relative group">
+            <Select
+              value={selectedValue}
+              onValueChange={async (value) => {
+                if (isExpired || togglingIds.has(item.id)) return; // Prevent changes if expired or toggling
+
+                setTogglingIds((prev) => new Set(prev).add(item.id));
+
+                const newStatus = value; // "active", "inactive", or "under_observation"
+                if (!baseUrl || !token) {
+                  toast.error('Missing base URL, token, or site ID');
+                  return;
+                }
+                try {
+                  // Optimistic update
+                  const updatedAmcData = amcData.map((record) =>
+                    record.id === item.id ? { ...record, status: value } : record
+                  );
+                  const updatedApiData = {
+                    ...apiData,
+                    asset_amcs: updatedAmcData,
+                    active_amcs_count:
+                      value === 'active'
+                        ? (apiData as any).active_amcs_count + 1
+                        : (apiData as any).active_amcs_count - (item.status === 'active' ? 1 : 0),
+                    inactive_amcs_count:
+                      value === 'inactive'
+                        ? (apiData as any).inactive_amcs_count + 1
+                        : (apiData as any).inactive_amcs_count - (item.status === 'inactive' ? 1 : 0),
+                    under_observation:
+                      value === 'under_observation'
+                        ? ((apiData as any).under_observation || 0) + 1
+                        : (apiData as any).under_observation - (item.status === 'under_observation' ? 1 : 0),
+                    total_amcs_count: (apiData as any).total_amcs_count,
+                  };
+
+                  dispatch(fetchAMCData.fulfilled(updatedApiData, 'fetchAMCData', undefined));
+
+                  const response = await axios.put(
+                    `https://${baseUrl}/pms/asset_amcs/${item.id}.json`,
+                    {
+                      pms_asset_amc: {
+                        status: newStatus,
+                      },
+                    },
+                    {
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
+                    }
+                  );
+                  if (response.status === 200) {
+                    toast.success(`Status updated to ${value}`);
+                    const { startDate, endDate } = analyticsDateRange;
+                    const startDateObj = convertDateStringToDate(startDate);
+                    const endDateObj = convertDateStringToDate(endDate);
+                    await fetchAMCAnalyticsData(startDateObj, endDateObj);
+                  } else {
+                    dispatch(fetchAMCData.fulfilled(apiData, 'fetchAMCData', undefined));
+                    toast.error('Failed to update AMC status');
+                  }
+                } catch (error) {
+                  console.error('Error updating AMC status:', error);
+                  dispatch(fetchAMCData.fulfilled(apiData, 'fetchAMCData', undefined));
+                  toast.error('Failed to update AMC status');
+                } finally {
+                  setTogglingIds((prev) => {
+                    const newSet = new Set(prev);
+                    newSet.delete(item.id);
+                    return newSet;
+                  });
+                }
+              }}
+              disabled={isExpired || togglingIds.has(item.id)} // Disable if expired or toggling
             >
-              <span
-                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-              />
-            </div>
+              <SelectTrigger
+                className="w-[140px] text-center"
+                style={{
+                  backgroundColor: triggerBackgroundColor,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0 8px',
+                }}
+              >
+                <SelectValue
+                  placeholder="Select Status"
+                  className="text-center"
+                  style={{ textAlign: 'center', marginRight: '8px', color: '#000' }}
+                >
+                  {statusLabels[selectedValue] || 'Select Status'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="text-center">
+                <SelectItem value="active" className="text-center" style={{ backgroundColor: '#d5dbdb', color: '#fff' }}>
+                  Active
+                </SelectItem>
+                <SelectItem value="inactive" className="text-center" style={{ backgroundColor: '#c4b89d', color: '#fff' }}>
+                  Inactive
+                </SelectItem>
+                <SelectItem value="under_observation" className="text-center" style={{ backgroundColor: '#dbc2a9', color: '#fff' }}>
+                  Under Observation
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         );
       case 'created_at':
@@ -732,6 +762,7 @@ export const AMCDashboard = () => {
     const showEllipsis = totalPages > 7;
 
     if (showEllipsis) {
+      // Always show first page
       items.push(
         <PaginationItem key={1}>
           <PaginationLink
@@ -744,53 +775,37 @@ export const AMCDashboard = () => {
         </PaginationItem>
       );
 
-      if (currentPage > 4) {
+      // Show pages 2, 3, 4 if currentPage is 1, 2, or 3
+      if (currentPage <= 3) {
+        for (let i = 2; i <= 4 && i < totalPages; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                className='cursor-pointer'
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        if (totalPages > 5) {
+          items.push(
+            <PaginationItem key="ellipsis1">
+              <PaginationEllipsis />
+            </PaginationItem>
+          );
+        }
+      } else if (currentPage >= totalPages - 2) {
+        // Show ellipsis before last 4 pages
         items.push(
           <PaginationItem key="ellipsis1">
             <PaginationEllipsis />
           </PaginationItem>
         );
-      } else {
-        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink
-                className='cursor-pointer'
-                onClick={() => handlePageChange(i)}
-                isActive={currentPage === i}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      if (currentPage > 3 && currentPage < totalPages - 2) {
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink
-                className='cursor-pointer'
-                onClick={() => handlePageChange(i)}
-                isActive={currentPage === i}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      if (currentPage < totalPages - 3) {
-        items.push(
-          <PaginationItem key="ellipsis2">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      } else {
-        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-          if (!items.find(item => item.key === i.toString())) {
+        for (let i = totalPages - 3; i < totalPages; i++) {
+          if (i > 1) {
             items.push(
               <PaginationItem key={i}>
                 <PaginationLink
@@ -804,8 +819,34 @@ export const AMCDashboard = () => {
             );
           }
         }
+      } else {
+        // Show ellipsis, currentPage-1, currentPage, currentPage+1, ellipsis
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                className='cursor-pointer'
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
       }
 
+      // Always show last page if more than 1 page
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
@@ -907,7 +948,6 @@ export const AMCDashboard = () => {
     setIsFilterModalOpen(false);
     setCurrentPage(1);
     setIsExpiringFilterActive(false);
-    // fetchFilteredAMCs(filter, 1, undefined, debouncedSearchQuery);
     toast.success('Filters applied');
   };
 
@@ -956,27 +996,14 @@ export const AMCDashboard = () => {
   };
 
   const handleFlaggedAMCClick = () => {
-    setFilter('flagged');
+    setFilter('UnderObservation');
     setAmcTypeFilter(null);
     setStartDateFilter(null);
     setEndDateFilter(null);
     setCurrentPage(1);
     setIsExpiringFilterActive(false);
-    fetchFilteredAMCs('flagged', 1, undefined, debouncedSearchQuery);
+    fetchFilteredAMCs('UnderObservation', 1, undefined, debouncedSearchQuery);
   };
-
-  // const handleExpiringIn90DaysClick = () => {
-  //   setFilter(null);
-  //   setAmcTypeFilter(null);
-  //   setStartDateFilter(null);
-  //   setEndDateFilter(null);
-  //   setCurrentPage(1);
-  //   setIsExpiringFilterActive(true);
-  //   const ninetyDaysFromNow = new Date();
-  //   ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
-  //   const formattedDate = formatDateForAPI(ninetyDaysFromNow);
-  //   fetchFilteredAMCs(null, 1, formattedDate, debouncedSearchQuery);
-  // };
 
   const uniqueAmcTypes = Array.from(new Set(amcData.map(amc => amc.amc_type).filter(type => type))).sort();
 
@@ -1041,7 +1068,6 @@ export const AMCDashboard = () => {
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Row 1: Status Overview + Type Distribution */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-120">
                   {selectedAnalyticsOptions?.includes('status_overview') && (
                     <div className="h-full">
@@ -1069,7 +1095,6 @@ export const AMCDashboard = () => {
                   )}
                 </div>
 
-                {/* Row 2: Unit Resource Distribution + Service Statistics */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
                   {selectedAnalyticsOptions?.includes('unit_resource_wise') && (
                     <div className="h-full">
@@ -1097,7 +1122,6 @@ export const AMCDashboard = () => {
                   )}
                 </div>
 
-                {/* Row 3: Service Tracking - Full Width with Fixed Height */}
                 {selectedAnalyticsOptions?.includes('service_tracking') && (
                   <div className="h-96">
                     <AMCServiceTrackingCard
@@ -1111,7 +1135,6 @@ export const AMCDashboard = () => {
                   </div>
                 )}
 
-                {/* Row 4: Coverage by Location - Full Width with Fixed Height */}
                 {selectedAnalyticsOptions?.includes('coverage_by_location') && (
                   <div className="h-full">
                     <AMCCoverageByLocationCard
@@ -1125,7 +1148,6 @@ export const AMCDashboard = () => {
                   </div>
                 )}
 
-                {/* Row 5: Expiry Analysis - 60% Width */}
                 {selectedAnalyticsOptions?.includes('expiry_analysis') && (
                   <div className="w-full lg:w-3/5 h-full">
                     <AMCExpiryAnalysisCard
@@ -1212,9 +1234,9 @@ export const AMCDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0 justify-start">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {(apiData as any)?.flagged_amcs_count || 0}
+                    {(apiData as any)?.under_observation || 0}
                   </div>
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Flagged AMC</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Under Observation</div>
                 </div>
               </div>
 

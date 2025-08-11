@@ -1,19 +1,39 @@
 
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Plus } from 'lucide-react';
+import { useAppDispatch } from '@/store/hooks';
+import { fetchUserGroupId } from '@/store/slices/userGroupSlice';
 
 const CRMGroupDetailsPage = () => {
   const { id } = useParams();
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [groupDetails, setGroupDetails] = useState({})
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await dispatch(fetchUserGroupId({ baseUrl, token, id: Number(id) })).unwrap();
+        setGroupDetails(response)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   // Mock data - in real app, this would come from API based on id
   const groupData = {
     id: id,
-    name: 'Ghanshyam123',
+    name: 'Ghanshyam1234',
     totalMembers: 3,
     image: '/placeholder-avatar.png'
   };
@@ -28,7 +48,7 @@ const CRMGroupDetailsPage = () => {
     if (selectAll) {
       setSelectedMembers([]);
     } else {
-      setSelectedMembers(members.map(m => m.id));
+      setSelectedMembers(groupDetails.group_members.map(m => m.user_id));
     }
     setSelectAll(!selectAll);
   };
@@ -67,8 +87,8 @@ const CRMGroupDetailsPage = () => {
             </div>
           </div>
         </div>
-        <h2 className="text-2xl font-semibold text-gray-800 mb-2">{groupData.name}</h2>
-        <p className="text-red-600 font-medium">Total Members - {groupData.totalMembers}</p>
+        <h2 className="text-2xl font-semibold text-gray-800 mb-2">{groupDetails.name}</h2>
+        <p className="text-red-600 font-medium">Total Members - {groupDetails?.group_members && groupDetails.group_members.length}</p>
       </div>
 
       {/* Members List */}
@@ -95,15 +115,15 @@ const CRMGroupDetailsPage = () => {
         </div>
 
         <div className="space-y-4">
-          {members.map((member) => (
+          {groupDetails?.group_members && groupDetails.group_members.map((member) => (
             <div key={member.id} className="flex items-center space-x-3 p-3 border-b border-gray-100">
               <Checkbox
-                checked={selectedMembers.includes(member.id)}
-                onCheckedChange={() => handleMemberToggle(member.id)}
+                checked={selectedMembers.includes(member.user_id)}
+                onCheckedChange={() => handleMemberToggle(member.user_id)}
                 className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
               />
               <span className="flex-1 text-gray-700">
-                {member.name}: {member.code}
+                {member.user_name}
               </span>
             </div>
           ))}

@@ -24,6 +24,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { facilityBookingSetupDetails } from "@/store/slices/facilityBookingsSlice";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { QRCodeModal } from "@/components/QRCodeModal";
+import axios from "axios";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -166,13 +167,33 @@ export const BookingSetupDetailPage = () => {
     },
   ]);
 
-  const handleDownloadQr = () => {
-    const link = document.createElement("a");
-    link.target = "_blank";
-    link.href = qrUrl;
-    link.download = "qr-code.png";
-    link.click();
+  const handleDownloadQr = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/admin/facility_setups/facility_qr_codes.pdf?access_token=${token}&facility_ids[]=${id}`,
+        {
+          responseType: 'blob',
+        }
+      );
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+
+      a.download = 'facility_qr_codes.pdf';
+
+      document.body.appendChild(a);
+      a.click();
+
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+    }
   };
+
 
   const handleAdditionalOpen = () => {
     setAdditionalOpen(!additionalOpen);
@@ -249,7 +270,7 @@ export const BookingSetupDetailPage = () => {
         },
         allowMultipleSlots: response.multi_slot,
         maximumSlots: response.max_slots,
-        facilityBookedTimes: "",
+        facilityBookedTimes: response.booking_limit,
         description: response.description,
         termsConditions: response.terms,
         cancellationText: response.cancellation_policy,
@@ -275,6 +296,7 @@ export const BookingSetupDetailPage = () => {
         })),
       });
       const transformedRules = response.cancellation_rules.map((rule: any) => ({
+        description: rule.description,
         time: {
           type: rule.hour, // You can dynamically determine this if needed
           value: rule.min,
@@ -285,7 +307,7 @@ export const BookingSetupDetailPage = () => {
 
       setCancellationRules([...transformedRules]);
 
-      setCancellationRules(response.cancellation_rules)
+      // setCancellationRules(response.cancellation_rules)
       setSelectedFile(response?.cover_image?.document);
       setSelectedBookingFiles(
         response?.documents.map((doc) => doc.document.document)
@@ -992,12 +1014,12 @@ export const BookingSetupDetailPage = () => {
                         size="small"
                         style={{ width: "80px" }}
                         variant="outlined"
-                        value={rule.day}
+                        value={rule.time.day}
                         InputProps={{ readOnly: true }}
                       />
                       <FormControl size="small" style={{ width: "80px" }}>
                         <Select
-                          value={rule.hour ?? ''}
+                          value={rule.time.type}
                           disabled
                         >
                           {Array.from({ length: 24 }, (_, i) => (
@@ -1010,7 +1032,7 @@ export const BookingSetupDetailPage = () => {
 
                       <FormControl size="small" style={{ width: "80px" }}>
                         <Select
-                          value={rule.min}
+                          value={rule.time.value}
                           disabled
                         >
                           {Array.from({ length: 24 }, (_, i) => (

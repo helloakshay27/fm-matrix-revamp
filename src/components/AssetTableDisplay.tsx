@@ -14,7 +14,7 @@ export const AssetTableDisplay: React.FC<AssetTableDisplayProps> = ({ selectedAs
       'breakdown': { bg: 'bg-red-100', text: 'text-red-800', label: 'Breakdown' },
       'disposed': { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Disposed' },
     };
-    
+
     const config = statusConfig[status] || { bg: 'bg-gray-100', text: 'text-gray-800', label: status };
     return (
       <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${config.bg} ${config.text}`}>
@@ -64,7 +64,7 @@ export const AssetTableDisplay: React.FC<AssetTableDisplayProps> = ({ selectedAs
                   <td className="px-4 py-3 text-sm text-gray-600">{asset.wing?.name || 'N/A'}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">{asset.floor?.name || 'N/A'}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">{asset.area?.name || 'N/A'}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{asset.pmsRoom || 'N/A'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{asset.pmsRoom?.name || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>

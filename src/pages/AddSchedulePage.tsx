@@ -3741,7 +3741,7 @@ export const AddSchedulePage = () => {
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                       {...params}
-                      label="Supplier *"
+                      label="Supplier"
                       placeholder="Select Supplier"
                       fullWidth
                     />
@@ -4727,7 +4727,9 @@ export const AddSchedulePage = () => {
                               { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
                               { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
                               { id: 'radio', label: 'Radio', value: 'radio' },
-                              // { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
+                              { id: 'date', label: 'Date', value: 'date' },
+                              { id: 'multiline', label: 'Multiline', value: 'multiline' },
+                              { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
                             ]}
                             getOptionLabel={(option) => option.label}
                             value={[
@@ -4737,7 +4739,9 @@ export const AddSchedulePage = () => {
                               { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
                               { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
                               { id: 'radio', label: 'Radio', value: 'radio' },
-                              // { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
+                              { id: 'date', label: 'Date', value: 'date' },
+                              { id: 'multiline', label: 'Multiline', value: 'multiline' },
+                              { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
                             ].find(option => option.value === task.inputType) || null}
                             onChange={(event, newValue) => {
                               if (!newValue) return;

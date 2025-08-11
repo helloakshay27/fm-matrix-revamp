@@ -147,7 +147,7 @@ export const AttachmentsSection: React.FC = ({ attachments, onAttachmentsChange 
       </Box>
 
       {/* Preview Section */}
-      {attachments.length > 0 && (
+      {attachments && attachments?.length > 0 && (
         <Box sx={{ mt: 2 }}>
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
             Selected Files ({attachments.length})

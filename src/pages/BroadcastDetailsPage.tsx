@@ -1,38 +1,51 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Download, Edit } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChangeStatusDialog } from '@/components/ChangeStatusDialog';
+import { toast } from 'sonner';
+import { useAppDispatch } from '@/store/hooks';
+import { fetchBroadcastById } from '@/store/slices/broadcastSlice';
+import { format } from 'date-fns';
+
+interface BroadcastDetails {
+  id?: string;
+  created_by?: string;
+  notice_type?: string;
+  notice_heading?: string;
+  created_at?: string | Date;
+  status?: string;
+  expire_time?: string | Date;
+  isImportant?: boolean;
+  notice_text?: string;
+  attachments?: any[]; // Uncomment if the attachments section is used
+}
 
 export const BroadcastDetailsPage = () => {
-  const navigate = useNavigate();
   const { id } = useParams();
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem("token");
+
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [broadcastStatus, setBroadcastStatus] = useState('Published');
+  const [broadcastDetails, setBroadcastDetails] = useState<BroadcastDetails>({})
 
-  // Mock data - in a real app, this would be fetched based on the ID
-  const broadcastDetails = {
-    id: id || '1',
-    title: 'Technical issue',
-    description: 'Due to some technical issue the system not work properly',
-    createdBy: 'Godrej Living',
-    status: broadcastStatus,
-    type: 'Personal',
-    shareWith: 'Personal',
-    createdOn: '24-04-2023',
-    createdTime: '12:55 AM',
-    endDate: '25-04-2023',
-    endTime: '1:45 AM',
-    isImportant: true,
-    attachments: 0,
-    sharedMembers: ['Godrej Living'],
-    readBy: []
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await dispatch(fetchBroadcastById({ id, baseUrl, token })).unwrap();
+        setBroadcastDetails(response)
+      } catch (error) {
+        console.log(error)
+        toast.error("Failed to fetch broadcast details")
+      }
+    }
 
-  const handlePrint = () => {
-    window.print();
-  };
+    fetchData();
+  }, [])
 
   const handleStatusChange = (newStatus: string) => {
     setBroadcastStatus(newStatus);
@@ -41,172 +54,112 @@ export const BroadcastDetailsPage = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/crm/broadcast')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 hover:bg-[#C72030]/10"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Broadcasts
-          </Button>
-        </div>
-        <Button 
-          onClick={handlePrint}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 text-sm"
+      {/* Header with back button */}
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/crm/broadcast')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-0"
         >
-          PRINT
+          <ArrowLeft className="w-4 h-4" />
+          Back to Broadcasts
         </Button>
       </div>
 
-      {/* Godrej Living Logo */}
-      <div className="flex justify-center mb-6">
-        <div className="text-center">
-          <div className="text-pink-500 font-bold text-lg">Godrej | LIVING</div>
+      {/* Broadcast Details Section */}
+      <div className="bg-white rounded-lg border border-gray-200 mb-6">
+        <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
+          <div className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+            B
+          </div>
+          <h2 className="text-lg font-bold text-gray-900">BROADCAST DETAILS</h2>
+        </div>
+
+        <div className="px-[80px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+          <div className="grid grid-cols-3 gap-x-8 gap-y-4">
+            <div>
+              <span className="text-gray-500 text-sm">Broadcast ID</span>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.id}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 text-sm">Created by</span>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.created_by}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 text-sm">Type</span>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.notice_type || "-"}</span>
+            </div>
+
+            <div>
+              <span className="text-gray-500 text-sm">Title</span>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.notice_heading}</span>
+            </div>
+            {/* <div>
+              <span className="text-gray-500 text-sm">Share With</span>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.shareWith}</span>
+            </div> */}
+            <div>
+              <span className="text-gray-500 text-sm">Created Date</span>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.created_at && format(broadcastDetails.created_at, "dd-MM-yyyy")}</span>
+            </div>
+
+            <div>
+              <span className="text-gray-500 text-sm">Status</span>
+              <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full ml-4">
+                {broadcastDetails.status}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500 text-sm">Created Time</span>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.created_at && format(broadcastDetails.created_at, "hh:mm a")}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 text-sm">End Date</span>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.expire_time && format(broadcastDetails.expire_time, "dd-MM-yyyy")}</span>
+            </div>
+
+            <div>
+              <span className="text-gray-500 text-sm">End Time</span>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.expire_time && format(broadcastDetails.expire_time, "hh:mm a")}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 text-sm">Important</span>
+              <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full ml-4">
+                {broadcastDetails.isImportant ? 'Yes' : 'No'}
+              </span>
+            </div>
+            <div className='flex items-center'>
+              <span className="text-gray-500 text-sm">Description</span>
+              <span
+                className="text-gray-900 font-medium ml-4 truncate max-w-[170px] overflow-hidden whitespace-nowrap"
+                title={broadcastDetails.notice_text}
+              >
+                {broadcastDetails.notice_text}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="bg-white rounded-lg shadow">
-        {/* Title Header */}
-        <div className="bg-cyan-400 text-white px-6 py-4 rounded-t-lg">
-          <h1 className="text-xl font-bold text-center">{broadcastDetails.title}</h1>
+      {/* Attachments Section */}
+      <div className="bg-white rounded-lg border border-gray-200 mb-6">
+        <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
+          <div className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+            A
+          </div>
+          <h2 className="text-lg font-bold text-gray-900">ATTACHMENTS</h2>
         </div>
 
-        <div className="p-6">
-          {/* Description */}
-          <div className="mb-6">
-            <p className="text-gray-700 mb-4">{broadcastDetails.description}</p>
-            <div className="text-sm text-gray-600">
-              <strong>Created by</strong>
-              <br />
-              {broadcastDetails.createdBy}
-            </div>
-          </div>
-
-          {/* Status Information Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                  {broadcastDetails.status}
-                </Badge>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsStatusDialogOpen(true)}
-                  className="h-6 w-6 p-0 hover:bg-[#C72030]/10 hover:text-[#C72030]"
-                >
-                  <Edit className="h-3 w-3 text-gray-500 hover:text-[#C72030]" />
-                </Button>
+        <div className="px-[40px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+          {
+            broadcastDetails?.attachments ? (
+              <img src={broadcastDetails?.attachments[0]?.document_url} alt="" height={100} width={150} />
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No attachments available for this event.
               </div>
-              <div className="text-xs text-gray-500 uppercase">STATUS TYPE</div>
-            </div>
-
-            <div className="space-y-2">
-              <Badge variant="secondary" className="bg-blue-500 text-white">
-                {broadcastDetails.type}
-              </Badge>
-              <div className="text-xs text-gray-500 uppercase">SHARE WITH</div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-sm font-medium">
-                {broadcastDetails.createdOn} / {broadcastDetails.createdTime}
-              </div>
-              <div className="text-xs text-gray-500 uppercase">CREATED ON</div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="space-y-2">
-              <div className="text-sm font-medium">
-                {broadcastDetails.endDate} / {broadcastDetails.endTime}
-              </div>
-              <div className="text-xs text-gray-500 uppercase">END DATE & TIME</div>
-            </div>
-
-            <div className="space-y-2">
-              <Badge variant="secondary" className="bg-green-500 text-white">
-                Yes
-              </Badge>
-              <div className="text-xs text-gray-500 uppercase">IMPORTANT</div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Attachments</span>
-                <Badge variant="secondary" className="bg-blue-500 text-white text-xs">
-                  {broadcastDetails.attachments}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          <hr className="my-6" />
-
-          {/* Shared Members List */}
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Shared Members List</h3>
-            <div className="text-sm text-gray-600">
-              {broadcastDetails.sharedMembers.join(', ')}
-            </div>
-          </div>
-
-          {/* Read By Section */}
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Read By</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-4 text-sm font-medium text-gray-700">Name</th>
-                    <th className="text-left py-2 px-4 text-sm font-medium text-gray-700">Site</th>
-                    <th className="text-left py-2 px-4 text-sm font-medium text-gray-700">Department</th>
-                    <th className="text-left py-2 px-4 text-sm font-medium text-gray-700">Designation</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {broadcastDetails.readBy.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="text-center py-4 text-gray-500 text-sm">
-                        No data available
-                      </td>
-                    </tr>
-                  ) : (
-                    broadcastDetails.readBy.map((reader, index) => (
-                      <tr key={index} className="border-b">
-                        <td className="py-2 px-4 text-sm">{reader}</td>
-                        <td className="py-2 px-4 text-sm">-</td>
-                        <td className="py-2 px-4 text-sm">-</td>
-                        <td className="py-2 px-4 text-sm">-</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <hr className="my-6" />
-
-          {/* Property Managed By */}
-          <div className="text-center text-sm text-gray-600 mb-4">
-            <strong>Property Managed By</strong>
-          </div>
-
-          {/* Footer branding */}
-          <div className="text-center text-xs text-gray-500">
-            <p>Powered by</p>
-            <div className="flex items-center justify-center mt-1">
-              <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs mr-2">
-                📍
-              </div>
-              <span className="font-semibold">LOCATED</span>
-            </div>
-          </div>
+            )
+          }
         </div>
       </div>
 

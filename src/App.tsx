@@ -90,7 +90,13 @@ import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
 import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
 import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
 import UtilityEVConsumptionDashboard from './pages/UtilityEVConsumptionDashboard';
+import UtilityDailyReadingsDashboard from './pages/UtilityDailyReadingsDashboard';
 import UtilitySolarGeneratorDashboard from './pages/UtilitySolarGeneratorDashboard';
+import { UtilityRequestDashboard } from './pages/UtilityRequestDashboard';
+import { UtilityRequestDetailsPage } from './pages/UtilityRequestDetailsPage';
+import { AddUtilityRequestPage } from './pages/AddUtilityRequestPage';
+import UtilityConsumptionDashboard from './pages/UtilityConsumptionDashboard';
+import { GenerateUtilityBillPage } from './pages/GenerateUtilityBillPage';
 
 // Import Waste Generation pages
 import UtilityWasteGenerationDashboard from './pages/UtilityWasteGenerationDashboard';
@@ -120,6 +126,7 @@ import { VisitorsDashboard } from './pages/VisitorsDashboard';
 import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
 import { PatrollingDashboard } from './pages/PatrollingDashboard';
 import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
+import { VisitorFormPage } from './pages/VisitorFormPage';
 
 // Import new dashboard pages
 import { IncidentDashboard } from "./pages/IncidentDashboard";
@@ -217,9 +224,13 @@ import { GVehiclesDashboard } from "./pages/GVehiclesDashboard";
 import { GVehicleOutDashboard } from "./pages/GVehicleOutDashboard";
 
 // Import Gate Pass pages
-import { GatePassDashboard } from "./pages/GatePassDashboard";
-import { GatePassInwardsDashboard } from "./pages/GatePassInwardsDashboard";
-import { GatePassOutwardsDashboard } from "./pages/GatePassOutwardsDashboard";
+import { GatePassDashboard } from './pages/GatePassDashboard';
+import { GatePassInwardsDashboard } from './pages/GatePassInwardsDashboard';
+import { GatePassInwardsDetailPage } from './pages/GatePassInwardsDetailPage';
+import { AddGatePassInwardPage } from './pages/AddGatePassInwardPage';
+import { GatePassOutwardsDashboard } from './pages/GatePassOutwardsDashboard';
+import { GatePassOutwardsAddPage } from './pages/GatePassOutwardsAddPage';
+import { GatePassOutwardsDetailPage } from './pages/GatePassOutwardsDetailPage';
 
 // Import Space Management pages
 import { SpaceManagementBookingsDashboard } from "./pages/SpaceManagementBookingsDashboard";
@@ -324,33 +335,34 @@ import { RVehiclesInDashboard } from "./pages/RVehiclesInDashboard";
 import { RVehiclesOutDashboard } from "./pages/RVehiclesOutDashboard";
 
 // Import Finance pages
-import { MaterialPRDashboard } from "./pages/MaterialPRDashboard";
-import { MaterialPRDetailsPage } from "./pages/MaterialPRDetailsPage";
-import { CloneMaterialPRPage } from "./pages/CloneMaterialPRPage";
-import { MaterialPRFeedsPage } from "./pages/MaterialPRFeedsPage";
-import { ServicePRDashboard } from "./pages/ServicePRDashboard";
-import { AddMaterialPRDashboard } from "./pages/AddMaterialPRDashboard";
-import { AddServicePRDashboard } from "./pages/AddServicePRDashboard";
-import { EditServicePRPage } from "./pages/EditServicePRPage";
-import { ServicePRDetailsPage } from "./pages/ServicePRDetailsPage";
-import { CloneServicePRPage } from "./pages/CloneServicePRPage";
-import { ServicePRFeedsPage } from "./pages/ServicePRFeedsPage";
-import { PODashboard } from "./pages/PODashboard";
-import { AddPODashboard } from "./pages/AddPODashboard";
-import { PODetailsPage } from "./pages/PODetailsPage";
-import { POFeedsPage } from "./pages/POFeedsPage";
-import { WODashboard } from "./pages/WODashboard";
-import { AutoSavedPRDashboard } from "./pages/AutoSavedPRDashboard";
-import { GRNSRNDashboard } from "./pages/GRNSRNDashboard";
-import { AddGRNDashboard } from "./pages/AddGRNDashboard";
-import { GRNDetailsPage } from "./pages/GRNDetailsPage";
-import { GRNFeedsPage } from "./pages/GRNFeedsPage";
-import { InvoicesDashboard } from "./pages/InvoicesDashboard";
-import { InvoicesSESDashboard } from "./pages/InvoicesSESDashboard";
-import { BillBookingDashboard } from "./pages/BillBookingDashboard";
-import { AddBillPage } from "./pages/AddBillPage";
-import { PendingApprovalsDashboard } from "./pages/PendingApprovalsDashboard";
-import InvoiceDashboard from "./pages/InvoiceDashboard";
+import { MaterialPRDashboard } from './pages/MaterialPRDashboard';
+import { MaterialPRDetailsPage } from './pages/MaterialPRDetailsPage';
+import { CloneMaterialPRPage } from './pages/CloneMaterialPRPage';
+import { MaterialPRFeedsPage } from './pages/MaterialPRFeedsPage';
+import { ServicePRDashboard } from './pages/ServicePRDashboard';
+import { AddMaterialPRDashboard } from './pages/AddMaterialPRDashboard';
+import { AddServicePRDashboard } from './pages/AddServicePRDashboard';
+import { EditServicePRPage } from './pages/EditServicePRPage';
+import { ServicePRDetailsPage } from './pages/ServicePRDetailsPage';
+import { CloneServicePRPage } from './pages/CloneServicePRPage';
+import { ServicePRFeedsPage } from './pages/ServicePRFeedsPage';
+import { PODashboard } from './pages/PODashboard';
+import { AddPODashboard } from './pages/AddPODashboard';
+import { PODetailsPage } from './pages/PODetailsPage';
+import { POFeedsPage } from './pages/POFeedsPage';
+import { WODashboard } from './pages/WODashboard';
+import { WODetailsPage } from './pages/WODetailsPage';
+import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
+import { GRNSRNDashboard } from './pages/GRNSRNDashboard';
+import { AddGRNDashboard } from './pages/AddGRNDashboard';
+import { GRNDetailsPage } from './pages/GRNDetailsPage';
+import { GRNFeedsPage } from './pages/GRNFeedsPage';
+import { InvoicesDashboard } from './pages/InvoicesDashboard';
+import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
+import { BillBookingDashboard } from './pages/BillBookingDashboard';
+import { AddBillPage } from './pages/AddBillPage';
+import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
+import InvoiceDashboard from './pages/InvoiceDashboard';
 
 // Import WBS page
 import { WBSElementDashboard } from "./pages/WBSElementDashboard";
@@ -395,9 +407,15 @@ import { AddInventoryPage } from "./pages/AddInventoryPage";
 import { EditAssetDetailsPage } from "./pages/EditAssetDetailsPage";
 
 // Import M Safe pages
-import { MSafeDashboard } from "./pages/MSafeDashboard";
-import { NonFTEUsersDashboard } from "./pages/NonFTEUsersDashboard";
-import { KRCCFormListDashboard } from "./pages/KRCCFormListDashboard";
+
+import { MSafeDashboard } from './pages/MSafeDashboard';
+import { MSafeUserDetail } from './pages/MSafeUserDetail';
+import { ExternalUserDetail } from './pages/ExternalUserDetail';
+import { EditExternalUserPage } from './pages/EditExternalUserPage';
+import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
+import { ExternalUsersDashboard } from './pages/ExternalUsersDashboard';
+import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
+import { KRCCFormDetail } from './pages/KRCCFormDetail';
 
 // Import Edit Roster Template page
 import { EditRosterTemplatePage } from "./pages/setup/EditRosterTemplatePage";
@@ -454,6 +472,10 @@ import { HotelBookingPage } from "./pages/HotelBookingPage";
 // Import CRM Polls page
 import CRMPollsPage from "./pages/CRMPollsPage";
 import AddPollPage from "./pages/AddPollPage";
+
+// Import CRM Occupant User Detail page
+import { CRMOccupantUserDetailPage } from './pages/CRMOccupantUserDetailPage';
+import { CRMOccupantUserEditPage } from './pages/CRMOccupantUserEditPage';
 
 // Import Market Place All page
 import MarketPlaceAllPage from "./pages/MarketPlaceAllPage";
@@ -564,6 +586,10 @@ import { useEffect } from 'react';
 import { getCurrency } from './store/slices/currencySlice';
 import { EditBookingSetupPage } from "./pages/setup/EditBookingSetupPage";
 import { MobileAdminOrdersPage } from "./pages/MobileAdminOrdersPage";
+import DesignInsightsSetupDashboard from "./pages/DesignInsightsSetupDashboard";
+import CRMOccupantUsersDashboard from "./pages/CRMOccupantUsersDashboard";
+import CRMFMUserDashboard from "./pages/CRMFMUserDashboard";
+import CRMCustomersDashboard from "./pages/CRMCustomersDashboard";
 
 
 const queryClient = new QueryClient();
@@ -767,6 +793,9 @@ function App() {
                   path="/crm/campaign/details/:id"
                   element={<LeadDetailsPage />}
                 />
+                <Route path="/crm/customers" element={<CRMCustomersDashboard />} />
+                <Route path="/crm/fm-users" element={<CRMFMUserDashboard />} />
+                <Route path="/crm/occupant-users" element={<CRMOccupantUsersDashboard />} />
                 <Route path="/crm/events" element={<CRMEventsPage />} />
                 <Route path="/crm/events/add" element={<AddEventPage />} />
                 <Route
@@ -785,10 +814,9 @@ function App() {
                 <Route path="/crm/polls" element={<CRMPollsPage />} />
                 <Route path="/crm/polls/add" element={<AddPollPage />} />
                 <Route path="/crm/groups" element={<CRMGroupsPage />} />
-                <Route
-                  path="/crm/groups/details/:id"
-                  element={<CRMGroupDetailsPage />}
-                />
+                <Route path="/crm/groups/details/:id" element={<CRMGroupDetailsPage />} />
+                <Route path="/crm/occupant-users/:id" element={<CRMOccupantUserDetailPage />} />
+                <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
 
                 {/* Snagging Routes */}
                 <Route
@@ -1140,10 +1168,8 @@ function App() {
                 />
                 <Route path="/finance/po/feeds/:id" element={<POFeedsPage />} />
                 <Route path="/finance/wo" element={<WODashboard />} />
-                <Route
-                  path="/finance/auto-saved-pr"
-                  element={<AutoSavedPRDashboard />}
-                />
+                <Route path="/finance/wo/details/:id" element={<WODetailsPage />} />
+                <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
                 <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
                 <Route
                   path="/finance/grn-srn/add"
@@ -1365,21 +1391,18 @@ function App() {
                   element={<AddWaterAssetDashboard />}
                 />
                 <Route path="/utility/stp" element={<UtilitySTPDashboard />} />
-                <Route
-                  path="/utility/stp/add-asset"
-                  element={<AddSTPAssetDashboard />}
-                />
-                <Route
-                  path="/utility/ev-consumption"
-                  element={<UtilityEVConsumptionDashboard />}
-                />
+                <Route path="/utility/stp/add-asset" element={<AddSTPAssetDashboard />} />
+                <Route path="/utility/ev-consumption" element={<UtilityEVConsumptionDashboard />} />
+                <Route path="/utility/daily-readings" element={<UtilityDailyReadingsDashboard />} />
+                <Route path="/utility/utility-request" element={<UtilityRequestDashboard />} />
+                <Route path="/utility/utility-request/details/:id" element={<UtilityRequestDetailsPage />} />
+                <Route path="/utility/utility-request/add" element={<AddUtilityRequestPage />} />
+                <Route path="/utility/utility-consumption" element={<UtilityConsumptionDashboard />} />
+                <Route path="/utility/utility-consumption/generate-bill" element={<GenerateUtilityBillPage />} />
+                <Route path="/utility/add-asset" element={<AddAssetDashboard />} />
                 <Route
                   path="/utility/solar-generator"
                   element={<UtilitySolarGeneratorDashboard />}
-                />
-                <Route
-                  path="/utility/add-asset"
-                  element={<AddAssetDashboard />}
                 />
 
                 {/* Energy Asset Routes */}
@@ -1419,6 +1442,16 @@ function App() {
                   path="/security/visitor/history"
                   element={<VisitorsHistoryDashboard />}
                 />
+                <Route path="/security/gate-pass" element={<GatePassDashboard />} />
+                <Route path="/security/gate-pass/inwards" element={<GatePassInwardsDashboard />} />
+                <Route path="/security/gate-pass/inwards/detail/:id" element={<GatePassInwardsDetailPage />} />
+                <Route path="/security/gate-pass/inwards/add" element={<AddGatePassInwardPage />} />
+                <Route path="/security/gate-pass/outwards" element={<GatePassOutwardsDashboard />} />
+                <Route path="/security/gate-pass/outwards/add" element={<GatePassOutwardsAddPage />} />
+                <Route path="/security/gate-pass/outwards/:id" element={<GatePassOutwardsDetailPage />} />
+                <Route path="/security/visitor" element={<VisitorsDashboard />} />
+                <Route path="/visitor-form" element={<VisitorFormPage />} />
+                <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
                 <Route path="/security/staff" element={<StaffsDashboard />} />
                 <Route
                   path="/security/staff/details/:id"
@@ -1668,6 +1701,16 @@ function App() {
                   path="/maintenance/m-safe/krcc-form-list"
                   element={<KRCCFormListDashboard />}
                 />
+                <Route path="/maintenance/m-safe" element={<MSafeDashboard />} />
+                <Route path="/maintenance/m-safe" element={<Navigate to="/maintenance/m-safe/internal" replace />} />
+                <Route path="/maintenance/m-safe/internal" element={<MSafeDashboard />} />
+                <Route path="/maintenance/m-safe/external" element={<ExternalUsersDashboard />} />
+                <Route path="/maintenance/m-safe/user/:userId" element={<MSafeUserDetail />} />
+                <Route path="/maintenance/m-safe/external/user/:userId" element={<ExternalUserDetail />} />
+                <Route path="/maintenance/m-safe/external/user/:userId/edit" element={<EditExternalUserPage />} />
+                <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
+                <Route path="/maintenance/krcc-list" element={<KRCCFormListDashboard />} />
+                <Route path="/maintenance/krcc-list/:id" element={<KRCCFormDetail />} />
 
                 {/* Market Place Routes */}
                 <Route
@@ -1797,7 +1840,10 @@ function App() {
                   path="/settings/invoice-approvals/add"
                   element={<AddInvoiceApprovalsPage />}
                 />
-
+                <Route
+                  path="/settings/design-insights/setup"
+                  element={<DesignInsightsSetupDashboard />}
+                />
                 <Route path="/settings/checklist-setup/group" element={<ChecklistGroupsPage />} />
                 <Route path="/settings/checklist-setup/email-rule" element={<EmailRuleSetupPage />} />
                 <Route path="/settings/checklist-setup/task-escalation" element={<TaskEscalationPage />} />

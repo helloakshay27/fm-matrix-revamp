@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { SetApprovalModal } from '@/components/SetApprovalModal';
-import { TextField, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete } from '@mui/material';
 import { assetService } from '@/services/assetService';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCustomFormDetails } from '@/services/customFormsAPI';
@@ -314,13 +314,13 @@ export const ViewSchedulePage = () => {
           >
             Set Approval
           </Button> */}
-          {/* <Button 
+          <Button 
             onClick={handleViewPerformance}
             variant="outline" 
             className="border-[#C72030] text-[#C72030]"
           >
             View Performance
-          </Button> */}
+          </Button>
         </div>
       </div>
 
@@ -416,40 +416,38 @@ export const ViewSchedulePage = () => {
               return (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <FormControl fullWidth variant="outlined" disabled>
-                      <InputLabel shrink>Group</InputLabel>
-                      <Select
-                        value={selectedGroupId || ''}
-                        label="Group"
-                        disabled
-                        sx={muiFieldStyles}
-                      >
-                        {groupOptions.map(group => (
-                          <MenuItem key={group.id} value={group.id}>
-                            {console.log("group", group)}
-                            {group.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-
+                 <Autocomplete
+      options={groupOptions}
+      getOptionLabel={(option) => option.name || ''}
+      value={groupOptions.find(group => group.id === selectedGroupId) || null}
+      isOptionEqualToValue={(option, value) => option.id === value.id}
+      disabled
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label="Group"
+          InputLabelProps={{ shrink: true }}
+          sx={muiFieldStyles}
+        />
+      )}
+    />
                   </div>
                   <div className="space-y-2">
-                    <FormControl fullWidth variant="outlined" disabled>
-                      <InputLabel shrink>Sub Group</InputLabel>
-                      <Select
-                        value={selectedSubGroupId || ''}
-                        label="Sub Group"
-                        disabled
-                        sx={muiFieldStyles}
-                      >
-                        {subGroupOptions.map(subGroup => (
-                          <MenuItem key={subGroup.id} value={subGroup.id}>
-                            {subGroup.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                    <Autocomplete
+      options={subGroupOptions}
+      getOptionLabel={(option) => option.name || ''}
+      value={subGroupOptions.find(subGroup => subGroup.id === selectedSubGroupId) || null}
+      isOptionEqualToValue={(option, value) => option.id === value.id}
+      disabled
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label="Sub Group"
+          InputLabelProps={{ shrink: true }}
+          sx={muiFieldStyles}
+        />
+      )}
+    />
                   </div>
                 </div>
               );
@@ -1049,14 +1047,14 @@ export const ViewSchedulePage = () => {
               </div> */}
               {customForm?.supplier_id && (<div className="space-y-2">
                 <FormControl fullWidth variant="outlined" disabled>
-                  <InputLabel shrink>Select Supplier</InputLabel>
+                  <InputLabel shrink>Supplier</InputLabel>
                   <Select
                     value={
                       customForm?.supplier_id
                         ? (suppliers.find(s => String(s.id) === String(customForm.supplier_id))?.name || `Supplier ID: ${customForm.supplier_id}`)
-                        : 'Select Supplier'
+                        : 'Supplier'
                     }
-                    label="Select Supplier"
+                    label="Supplier"
                     disabled
                     sx={muiFieldStyles}
                   >
