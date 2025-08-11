@@ -508,17 +508,6 @@ export const IncidentSetupDashboard = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                       <div className="flex-1">
-                         <TextField 
-                           type="text" 
-                           value={categoryName} 
-                           onChange={e => setCategoryName(e.target.value)} 
-                           placeholder="Enter Name"
-                           variant="outlined"
-                           size="small"
-                           fullWidth
-                         />
-                       </div>
                      </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
                        <div className="flex-1">
                          <label className="block text-sm font-medium text-gray-700 mb-1">
