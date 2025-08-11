@@ -556,6 +556,7 @@ export const IncidentSetupDashboard = () => {
                            </SelectContent>
                          </Select>
                        </div>
+                     </> : selectedCategory === 'Who got injured' ? <>
                        <div className="flex-1">
                          <label className="block text-sm font-medium text-gray-700 mb-1">
                            Name
@@ -641,10 +642,13 @@ export const IncidentSetupDashboard = () => {
                             <TableHead>Secondary Sub Category</TableHead>
                             <TableHead>Secondary Sub Sub Category</TableHead>
                             <TableHead>Secondary Sub Sub Sub Category</TableHead>
-                            <TableHead>Action</TableHead>
-                          </> : selectedCategory === 'Approval Setup' ? <>
-                            <TableHead>Users</TableHead>
-                            <TableHead>Action</TableHead>
+                             <TableHead>Action</TableHead>
+                           </> : selectedCategory === 'Who got injured' ? <>
+                             <TableHead>Name</TableHead>
+                             <TableHead>Action</TableHead>
+                           </> : selectedCategory === 'Approval Setup' ? <>
+                             <TableHead>Users</TableHead>
+                             <TableHead>Action</TableHead>
                         </> : selectedCategory === 'Escalations' ? <>
                           <TableHead>Level</TableHead>
                           <TableHead>Escalate In Days</TableHead>
@@ -720,7 +724,23 @@ export const IncidentSetupDashboard = () => {
                                 </Button>
                               </div>
                             </TableCell>
-                          </TableRow>) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => <TableRow key={approval.id}>
+                           </TableRow>) : selectedCategory === 'Who got injured' ? [
+                             { id: 1, name: 'Employee' },
+                             { id: 2, name: 'Contractor' },
+                             { id: 3, name: 'Visitor' }
+                           ].map(item => <TableRow key={item.id}>
+                             <TableCell>{item.name}</TableCell>
+                             <TableCell>
+                               <div className="flex gap-2">
+                                 <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                   <Edit className="w-4 h-4" />
+                                 </Button>
+                                 <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                   <Trash2 className="w-4 h-4" />
+                                 </Button>
+                               </div>
+                             </TableCell>
+                           </TableRow>) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => <TableRow key={approval.id}>
                           <TableCell>{approval.users}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
