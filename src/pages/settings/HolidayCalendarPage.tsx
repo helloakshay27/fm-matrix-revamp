@@ -161,7 +161,6 @@ export const HolidayCalendarPage = () => {
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
   const [customersDropdownOpen, setCustomersDropdownOpen] = useState(false);
   const [recurringOpen, setRecurringOpen] = useState(false);
-  const [holidayNameOpen, setHolidayNameOpen] = useState(false);
 
   // Site options
   const siteOptions = [
@@ -332,30 +331,35 @@ export const HolidayCalendarPage = () => {
                 <div className="grid grid-cols-3 gap-4 space-y-0">
                   <div className="space-y-2">
                     <Label htmlFor="holidayName">Holiday Name</Label>
-                    <Popover open={holidayNameOpen} onOpenChange={setHolidayNameOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-left font-normal !border-gray-300 !hover:border-gray-300 !focus:border-gray-300"
-                          onClick={() => setHolidayNameOpen(!holidayNameOpen)}
-                        >
-                          {holidayName || "Holiday Name"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-2" align="start">
-                        <Input
-                          placeholder="Enter holiday name"
-                          value={holidayName}
-                          onChange={(e) => setHolidayName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              setHolidayNameOpen(false);
-                            }
-                          }}
-                          autoFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <TextField
+                      id="holidayName"
+                      placeholder="Holiday Name"
+                      value={holidayName}
+                      onChange={(e) => setHolidayName(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: '#e5e7eb',
+                            borderWidth: '1px',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: '#e5e7eb',
+                            borderWidth: '1px',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#e5e7eb',
+                            borderWidth: '1px',
+                          },
+                          '&.Mui-error fieldset': {
+                            borderColor: '#e5e7eb',
+                            borderWidth: '1px',
+                          },
+                        },
+                      }}
+                    />
                   </div>
 
                   {/* Date Picker */}
