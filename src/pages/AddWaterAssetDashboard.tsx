@@ -57,7 +57,9 @@ export const AddWaterAssetDashboard = () => {
     warrantyStartDate: '',
     warrantyExpiresOn: '',
     commissioningDate: '',
-    selectedMeterCategories: []
+    selectedMeterCategories: [],
+    selectedMeterCategory: '',
+    boardSubCategory: ''
   });
 
   const [consumptionMeasures, setConsumptionMeasures] = useState([
@@ -574,21 +576,9 @@ export const AddWaterAssetDashboard = () => {
                     <div key={category} className="flex items-center space-x-2 bg-purple-100 p-3 rounded">
                       <FormControlLabel
                         control={
-                          <MuiCheckbox 
-                            checked={formData.selectedMeterCategories.includes(category)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFormData({
-                                  ...formData, 
-                                  selectedMeterCategories: [...formData.selectedMeterCategories, category]
-                                });
-                              } else {
-                                setFormData({
-                                  ...formData,
-                                  selectedMeterCategories: formData.selectedMeterCategories.filter(c => c !== category)
-                                });
-                              }
-                            }}
+                          <Radio 
+                            checked={formData.selectedMeterCategory === category}
+                            onChange={() => setFormData({...formData, selectedMeterCategory: category, boardSubCategory: ''})}
                           />
                         }
                         label={category}
@@ -597,6 +587,29 @@ export const AddWaterAssetDashboard = () => {
                     </div>
                   ))}
                 </div>
+                
+                {/* Board Sub-categories */}
+                {formData.selectedMeterCategory === 'Board' && (
+                  <div className="mt-6">
+                    <h4 className="text-sm font-medium mb-3">Board Sub-categories:</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {['HT', 'VCB', 'Transformer', 'LT'].map((subCategory) => (
+                        <div key={subCategory} className="flex items-center space-x-2 bg-purple-50 p-3 rounded">
+                          <FormControlLabel
+                            control={
+                              <Radio 
+                                checked={formData.boardSubCategory === subCategory}
+                                onChange={() => setFormData({...formData, boardSubCategory: subCategory})}
+                              />
+                            }
+                            label={subCategory}
+                            sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </CollapsibleContent>
           </Collapsible>
