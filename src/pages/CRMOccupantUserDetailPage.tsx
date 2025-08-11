@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { TextField, MenuItem } from '@mui/material';
+import { TextField, MenuItem, FormControl, InputLabel, Select, Chip, Box } from '@mui/material';
 
 export const CRMOccupantUserDetailPage = () => {
   const { id } = useParams();
@@ -22,12 +22,20 @@ export const CRMOccupantUserDetailPage = () => {
     userType: "Member",
     employeeId: "",
     accessLevel: "Company",
-    company: "Lockated HO",
+    companies: ["Lockated HO", "Branch Office", "Remote Location"],
     birthDate: "dd/mm/yyyy",
     address: "",
     alternateMobile: "",
     profileImage: null
   };
+
+  const availableCompanies = [
+    "Lockated HO",
+    "Branch Office", 
+    "Remote Location",
+    "Regional Office",
+    "Corporate Office"
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -196,23 +204,31 @@ export const CRMOccupantUserDetailPage = () => {
 
             {/* Fourth Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="relative">
-                <TextField
-                  id="company"
-                  label="Company"
-                  value={userData.company}
-                  InputProps={{
-                    readOnly: true,
-                  }}
-                  fullWidth
-                  variant="outlined"
-                  size="small"
-                />
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <span className="bg-[#BF213E] text-white px-2 py-1 rounded text-xs font-medium">
-                    {userData.company.split(' ')[1]}
-                  </span>
-                </div>
+              <div>
+                <FormControl fullWidth size="small" variant="outlined">
+                  <InputLabel id="companies-label">Companies</InputLabel>
+                  <Select
+                    labelId="companies-label"
+                    id="companies"
+                    multiple
+                    value={userData.companies}
+                    label="Companies"
+                    readOnly
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {(selected as string[]).map((value) => (
+                          <Chip key={value} label={value} size="small" />
+                        ))}
+                      </Box>
+                    )}
+                  >
+                    {availableCompanies.map((company) => (
+                      <MenuItem key={company} value={company}>
+                        {company}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </div>
             </div>
 
