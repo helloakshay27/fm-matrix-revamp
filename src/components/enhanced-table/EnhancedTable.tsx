@@ -407,7 +407,7 @@ export function EnhancedTable<T extends Record<string, any>>({
   return (
     <div className="space-y-4">
 
-      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+      <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden shadow-none">
         <div className="overflow-x-auto">
           <DndContext
             sensors={sensors}
