@@ -12,10 +12,7 @@ import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { 
   TextField, 
-  MenuItem, 
-  FormControl as MuiFormControl,
-  Select as MuiSelect,
-  InputLabel,
+  Autocomplete,
   FormHelperText
 } from '@mui/material';
 import { EmailRule, TRIGGER_TYPES, TRIGGER_TO_OPTIONS, PERIOD_TYPES } from '@/types/emailRule';
@@ -174,23 +171,24 @@ export const EditEmailRuleDialog: React.FC<EditEmailRuleDialogProps> = ({
             name="triggerType"
             control={control}
             render={({ field }) => (
-              <MuiFormControl fullWidth variant="outlined" error={!!errors.triggerType}>
-                <InputLabel shrink>Trigger Type</InputLabel>
-                <MuiSelect
-                  {...field}
-                  label="Trigger Type"
-                  notched
-                >
-                  {TRIGGER_TYPES.map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-                {errors.triggerType && (
-                  <FormHelperText>{errors.triggerType.message}</FormHelperText>
+              <Autocomplete
+                {...field}
+                options={TRIGGER_TYPES}
+                value={field.value}
+                onChange={(_, value) => field.onChange(value)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Trigger Type"
+                    variant="outlined"
+                    fullWidth
+                    error={!!errors.triggerType}
+                    helperText={errors.triggerType?.message}
+                    InputLabelProps={{ shrink: true }}
+                  />
                 )}
-              </MuiFormControl>
+                disablePortal
+              />
             )}
           />
 
@@ -198,23 +196,24 @@ export const EditEmailRuleDialog: React.FC<EditEmailRuleDialogProps> = ({
             name="triggerTo"
             control={control}
             render={({ field }) => (
-              <MuiFormControl fullWidth variant="outlined" error={!!errors.triggerTo}>
-                <InputLabel shrink>Trigger To</InputLabel>
-                <MuiSelect
-                  {...field}
-                  label="Trigger To"
-                  notched
-                >
-                  {TRIGGER_TO_OPTIONS.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-                {errors.triggerTo && (
-                  <FormHelperText>{errors.triggerTo.message}</FormHelperText>
+              <Autocomplete
+                {...field}
+                options={TRIGGER_TO_OPTIONS}
+                value={field.value}
+                onChange={(_, value) => field.onChange(value)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Trigger To"
+                    variant="outlined"
+                    fullWidth
+                    error={!!errors.triggerTo}
+                    helperText={errors.triggerTo?.message}
+                    InputLabelProps={{ shrink: true }}
+                  />
                 )}
-              </MuiFormControl>
+                disablePortal
+              />
             )}
           />
 
@@ -222,42 +221,27 @@ export const EditEmailRuleDialog: React.FC<EditEmailRuleDialogProps> = ({
             name="role"
             control={control}
             render={({ field }) => (
-              <MuiFormControl fullWidth variant="outlined" error={!!errors.role}>
-                <InputLabel shrink>Role</InputLabel>
-                <MuiSelect
-                  {...field}
-                  multiple
-                  label="Role"
-                  notched
-                  disabled={loadingRoles}
-                  value={field.value || []}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    field.onChange(typeof value === 'string' ? value.split(',') : value);
-                  }}
-                  renderValue={(selected) => {
-                    if (Array.isArray(selected)) {
-                      return selected.map(id => {
-                        const role = roles.find(r => r.id.toString() === id);
-                        return role ? role.name : '';
-                      }).filter(Boolean).join(', ');
-                    }
-                    return selected;
-                  }}
-                >
-                  {roles.map((role) => (
-                    <MenuItem key={role.id} value={role.id.toString()}>
-                      {role.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-                {errors.role && (
-                  <FormHelperText>{errors.role.message}</FormHelperText>
+              <Autocomplete
+                {...field}
+                multiple
+                options={roles}
+                getOptionLabel={(option) => option.name}
+                value={roles.filter(role => field.value?.includes(role.id.toString())) || []}
+                onChange={(_, value) => field.onChange(value.map(role => role.id.toString()))}
+                disabled={loadingRoles}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Role"
+                    variant="outlined"
+                    fullWidth
+                    error={!!errors.role}
+                    helperText={errors.role?.message || (loadingRoles && 'Loading roles...')}
+                    InputLabelProps={{ shrink: true }}
+                  />
                 )}
-                {loadingRoles && (
-                  <FormHelperText>Loading roles...</FormHelperText>
-                )}
-              </MuiFormControl>
+                disablePortal
+              />
             )}
           />
 
@@ -283,23 +267,24 @@ export const EditEmailRuleDialog: React.FC<EditEmailRuleDialogProps> = ({
               name="periodType"
               control={control}
               render={({ field }) => (
-                <MuiFormControl fullWidth variant="outlined" error={!!errors.periodType}>
-                  <InputLabel shrink>Period Type</InputLabel>
-                  <MuiSelect
-                    {...field}
-                    label="Period Type"
-                    notched
-                  >
-                    {PERIOD_TYPES.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                  {errors.periodType && (
-                    <FormHelperText>{errors.periodType.message}</FormHelperText>
+                <Autocomplete
+                  {...field}
+                  options={PERIOD_TYPES}
+                  value={field.value}
+                  onChange={(_, value) => field.onChange(value)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Period Type"
+                      variant="outlined"
+                      fullWidth
+                      error={!!errors.periodType}
+                      helperText={errors.periodType?.message}
+                      InputLabelProps={{ shrink: true }}
+                    />
                   )}
-                </MuiFormControl>
+                  disablePortal
+                />
               )}
             />
           </div>
