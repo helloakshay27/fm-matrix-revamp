@@ -125,23 +125,47 @@ export const IncidentSetupDashboard = () => {
             /* Edit Form Modal */
             <div className="bg-white p-8 rounded-lg border shadow-sm max-w-md">
               <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category
-                  </label>
-                  <Select value={editFormData.category} onValueChange={(value) => setEditFormData({...editFormData, category: value})}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white z-50">
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.name}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {(editingItem?.type === 'Sub Category' || editingItem?.type === 'Sub Sub Category') && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Category
+                    </label>
+                    <Select value={editFormData.category} onValueChange={(value) => setEditFormData({...editFormData, category: value})}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select Category" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white z-50">
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.name}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {editingItem?.type === 'Sub Sub Category' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Sub-Category
+                    </label>
+                    <Select value={editFormData.subCategory} onValueChange={(value) => setEditFormData({...editFormData, subCategory: value})}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select Sub Category" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white z-50">
+                        {subCategories
+                          .filter(sub => sub.category === editFormData.category)
+                          .map((subCategory) => (
+                            <SelectItem key={subCategory.id} value={subCategory.subCategory}>
+                              {subCategory.subCategory}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
