@@ -265,11 +265,19 @@ export const IncidentSetupDashboard = () => {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <Button onClick={handleEditSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button 
+                  onClick={handleEditSubmit} 
+                  disabled={!editFormData.level || !editFormData.escalateInDays}
+                  className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 transition-all duration-200 transform hover:scale-105 active:scale-95"
+                >
                   Submit
                 </Button>
-                <Button onClick={handleEditBack} variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2">
+                <Button 
+                  onClick={handleEditBack} 
+                  variant="outline" 
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-6 py-2 transition-all duration-200"
+                >
                   Back
                 </Button>
               </div>
@@ -289,11 +297,19 @@ export const IncidentSetupDashboard = () => {
                 />
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <Button onClick={handleEditSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button 
+                  onClick={handleEditSubmit} 
+                  disabled={!editFormData.name.trim()}
+                  className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 transition-all duration-200 transform hover:scale-105 active:scale-95"
+                >
                   Submit
                 </Button>
-                <Button onClick={handleEditBack} variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2">
+                <Button 
+                  onClick={handleEditBack} 
+                  variant="outline" 
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-6 py-2 transition-all duration-200"
+                >
                   Back
                 </Button>
               </div>
@@ -308,22 +324,24 @@ export const IncidentSetupDashboard = () => {
     <div className="flex-1 p-6 bg-white min-h-screen">
       <h1 className="text-2xl font-semibold text-gray-900 mb-8">Incidents Setup</h1>
 
-      <div className="flex gap-8">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         {/* Left Side - Category Menu */}
-        <div className="w-80">
+        <div className="w-full lg:w-80 mb-6 lg:mb-0">
           <div className="space-y-1 bg-gray-100 p-2 rounded-lg">
             {menuItems.map(item => 
-              <div 
+              <button
                 key={item} 
                 onClick={() => setSelectedCategory(item)} 
-                className={`px-4 py-3 rounded-lg font-medium cursor-pointer transition-colors ${
+                className={`w-full px-4 py-3 rounded-lg font-medium cursor-pointer transition-all duration-200 text-left ${
                   selectedCategory === item 
-                    ? 'bg-white text-gray-900 shadow-sm' 
-                    : 'text-gray-700 hover:bg-white/50'
-                }`}
+                    ? 'bg-white text-gray-900 shadow-sm transform scale-105' 
+                    : 'text-gray-700 hover:bg-white/50 hover:transform hover:scale-102'
+                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50`}
+                role="tab"
+                aria-selected={selectedCategory === item}
               >
                 {item}
-              </div>
+              </button>
             )}
           </div>
         </div>
@@ -332,8 +350,8 @@ export const IncidentSetupDashboard = () => {
         <div className="flex-1">
           {/* Form Section */}
           <div className="mb-6">
-            <div className="flex gap-4 items-end">
-              <div className="flex-1">
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              <div className="flex-1 w-full">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                 <TextField 
                   type="text" 
@@ -345,7 +363,11 @@ export const IncidentSetupDashboard = () => {
                   fullWidth
                 />
               </div>
-              <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-8">
+              <Button 
+                onClick={handleSubmit} 
+                disabled={!categoryName.trim()}
+                className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 sm:px-8 py-2 w-full sm:w-auto transition-all duration-200 transform hover:scale-105 active:scale-95"
+              >
                 Submit
               </Button>
             </div>
@@ -411,32 +433,56 @@ export const IncidentSetupDashboard = () => {
                         <TableCell className="font-medium">{escalation.level}</TableCell>
                         <TableCell>{escalation.escalateInDays}</TableCell>
                         <TableCell>{escalation.users}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(escalation, 'Escalations')}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(escalation, 'Escalations')}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                         <TableCell>
+                           <div className="flex gap-1 sm:gap-2">
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleEdit(escalation, 'Escalations')}
+                               aria-label="Edit escalation"
+                             >
+                               <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-red-600 hover:text-red-800 hover:bg-red-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleDelete(escalation, 'Escalations')}
+                               aria-label="Delete escalation"
+                             >
+                               <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                           </div>
+                         </TableCell>
                       </TableRow>
                     ) : selectedCategory === 'Sub Category' ?
                     subCategories.map(item => 
                       <TableRow key={item.id}>
                         <TableCell className="font-medium">{item.category}</TableCell>
                         <TableCell>{item.subCategory}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Category')}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Category')}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                         <TableCell>
+                           <div className="flex gap-1 sm:gap-2">
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleEdit(item, 'Sub Category')}
+                               aria-label="Edit sub category"
+                             >
+                               <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-red-600 hover:text-red-800 hover:bg-red-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleDelete(item, 'Sub Category')}
+                               aria-label="Delete sub category"
+                             >
+                               <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                           </div>
+                         </TableCell>
                       </TableRow>
                     ) : selectedCategory === 'Sub Sub Category' ?
                     subSubCategories.map(item => 
@@ -444,16 +490,28 @@ export const IncidentSetupDashboard = () => {
                         <TableCell className="font-medium">{item.category}</TableCell>
                         <TableCell>{item.subCategory}</TableCell>
                         <TableCell>{item.subSubCategory}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Category')}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Category')}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                         <TableCell>
+                           <div className="flex gap-1 sm:gap-2">
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleEdit(item, 'Sub Sub Category')}
+                               aria-label="Edit sub sub category"
+                             >
+                               <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-red-600 hover:text-red-800 hover:bg-red-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleDelete(item, 'Sub Sub Category')}
+                               aria-label="Delete sub sub category"
+                             >
+                               <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                           </div>
+                         </TableCell>
                       </TableRow>
                     ) : selectedCategory === 'Sub Sub Sub Category' ?
                     subSubSubCategories.map(item => 
@@ -462,107 +520,191 @@ export const IncidentSetupDashboard = () => {
                         <TableCell>{item.subCategory}</TableCell>
                         <TableCell>{item.subSubCategory}</TableCell>
                         <TableCell>{item.subSubSubCategory}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Sub Category')}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Sub Category')}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                         <TableCell>
+                           <div className="flex gap-1 sm:gap-2">
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleEdit(item, 'Sub Sub Sub Category')}
+                               aria-label="Edit sub sub sub category"
+                             >
+                               <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-red-600 hover:text-red-800 hover:bg-red-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleDelete(item, 'Sub Sub Sub Category')}
+                               aria-label="Delete sub sub sub category"
+                             >
+                               <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                           </div>
+                         </TableCell>
                       </TableRow>
                     ) : selectedCategory === 'Approval Setup' ?
                     approvalSetups.map(approval => 
                       <TableRow key={approval.id}>
                         <TableCell className="font-medium">{approval.users}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(approval, 'Approval Setup')}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(approval, 'Approval Setup')}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                         <TableCell>
+                           <div className="flex gap-1 sm:gap-2">
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleEdit(approval, 'Approval Setup')}
+                               aria-label="Edit approval setup"
+                             >
+                               <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-red-600 hover:text-red-800 hover:bg-red-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleDelete(approval, 'Approval Setup')}
+                               aria-label="Delete approval setup"
+                             >
+                               <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                           </div>
+                         </TableCell>
                       </TableRow>
                     ) : selectedCategory === 'Secondary Sub Category' ?
                     secondarySubCategories.map(secondarySub => 
                       <TableRow key={secondarySub.id}>
                         <TableCell className="font-medium">{secondarySub.secondaryCategory}</TableCell>
                         <TableCell>{secondarySub.secondarySubCategory}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondarySub, 'Secondary Sub Category')}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondarySub, 'Secondary Sub Category')}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                         <TableCell>
+                           <div className="flex gap-1 sm:gap-2">
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleEdit(secondarySub, 'Secondary Sub Category')}
+                               aria-label="Edit secondary sub category"
+                             >
+                               <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-red-600 hover:text-red-800 hover:bg-red-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleDelete(secondarySub, 'Secondary Sub Category')}
+                               aria-label="Delete secondary sub category"
+                             >
+                               <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                           </div>
+                         </TableCell>
                       </TableRow>
                     ) : selectedCategory === 'Incidence status' ?
                     incidenceStatuses.map(status => 
                       <TableRow key={status.id}>
                         <TableCell className="font-medium">{status.name}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(status, 'Incidence status')}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(status, 'Incidence status')}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                         <TableCell>
+                           <div className="flex gap-1 sm:gap-2">
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleEdit(status, 'Incidence status')}
+                               aria-label="Edit incidence status"
+                             >
+                               <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-red-600 hover:text-red-800 hover:bg-red-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleDelete(status, 'Incidence status')}
+                               aria-label="Delete incidence status"
+                             >
+                               <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                           </div>
+                         </TableCell>
                       </TableRow>
                     ) : selectedCategory === 'Incidence level' ?
                     incidenceLevels.map(level => 
                       <TableRow key={level.id}>
                         <TableCell className="font-medium">{level.name}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(level, 'Incidence level')}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(level, 'Incidence level')}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                         <TableCell>
+                           <div className="flex gap-1 sm:gap-2">
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleEdit(level, 'Incidence level')}
+                               aria-label="Edit incidence level"
+                             >
+                               <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-red-600 hover:text-red-800 hover:bg-red-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleDelete(level, 'Incidence level')}
+                               aria-label="Delete incidence level"
+                             >
+                               <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                           </div>
+                         </TableCell>
                       </TableRow>
                     ) : selectedCategory === 'Secondary Category' ?
                     secondaryCategories.map(secondary => 
                       <TableRow key={secondary.id}>
                         <TableCell className="font-medium">{secondary.name}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondary, 'Secondary Category')}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondary, 'Secondary Category')}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                         <TableCell>
+                           <div className="flex gap-1 sm:gap-2">
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleEdit(secondary, 'Secondary Category')}
+                               aria-label="Edit secondary category"
+                             >
+                               <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-red-600 hover:text-red-800 hover:bg-red-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleDelete(secondary, 'Secondary Category')}
+                               aria-label="Delete secondary category"
+                             >
+                               <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                           </div>
+                         </TableCell>
                       </TableRow>
                     ) :
                     categories.map(category => 
                       <TableRow key={category.id}>
                         <TableCell className="font-medium">{category.name}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(category, 'Category')}>
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(category, 'Category')}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                         <TableCell>
+                           <div className="flex gap-1 sm:gap-2">
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleEdit(category, 'Category')}
+                               aria-label="Edit category"
+                             >
+                               <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                             <Button 
+                               variant="ghost" 
+                               size="sm" 
+                               className="text-red-600 hover:text-red-800 hover:bg-red-50 transition-all duration-200 p-1 sm:p-2" 
+                               onClick={() => handleDelete(category, 'Category')}
+                               aria-label="Delete category"
+                             >
+                               <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                             </Button>
+                           </div>
+                         </TableCell>
                       </TableRow>
                     )
                   }
