@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Plus, Edit, Eye, Filter, Download, Upload } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, Plus, Edit, Eye, Filter, Download, Upload, X } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Badge } from '@/components/ui/badge';
@@ -90,6 +92,12 @@ const UtilityConsumptionDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    clientName: '',
+    meterNo: '',
+    readingType: ''
+  });
 
   const filteredData = utilityCalculationsData.filter(item =>
     item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -124,6 +132,20 @@ const UtilityConsumptionDashboard = () => {
 
   const handleGenerateNew = () => {
     navigate('/utility/utility-consumption/generate-bill');
+  };
+
+  const handleApplyFilters = () => {
+    // Apply the filters logic here
+    console.log('Applying filters:', filters);
+    setIsFilterModalOpen(false);
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      clientName: '',
+      meterNo: '',
+      readingType: ''
+    });
   };
 
   const renderCell = (item: any, columnKey: string) => {
@@ -192,6 +214,7 @@ const UtilityConsumptionDashboard = () => {
           Generate New
         </Button>
         <Button 
+          onClick={() => setIsFilterModalOpen(true)}
           className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           <Filter className="w-4 h-4" />
@@ -241,6 +264,79 @@ const UtilityConsumptionDashboard = () => {
           storageKey="utility-consumption-table"
         />
       </div>
+
+      {/* Filter Modal */}
+      <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
+        <DialogContent className="sm:max-w-[600px] p-0 bg-white">
+          <DialogHeader className="px-6 py-4 border-b">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-lg font-medium text-gray-900">Filter</DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsFilterModalOpen(false)}
+                className="h-6 w-6 p-0 hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+          
+          <div className="px-6 py-6">
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Client Name</label>
+                <Input
+                  placeholder="Client Name"
+                  value={filters.clientName}
+                  onChange={(e) => setFilters(prev => ({ ...prev, clientName: e.target.value }))}
+                  className="h-10 rounded-md border-gray-300"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Meter No.</label>
+                <Input
+                  placeholder="Meter No."
+                  value={filters.meterNo}
+                  onChange={(e) => setFilters(prev => ({ ...prev, meterNo: e.target.value }))}
+                  className="h-10 rounded-md border-gray-300"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Reading Type</label>
+                <Select value={filters.readingType} onValueChange={(value) => setFilters(prev => ({ ...prev, readingType: value }))}>
+                  <SelectTrigger className="h-10 rounded-md border-gray-300 bg-white">
+                    <SelectValue placeholder="Select Reading type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border shadow-lg z-50">
+                    <SelectItem value="DGKVAH">DGKVAH</SelectItem>
+                    <SelectItem value="EBKVAH">EBKVAH</SelectItem>
+                    <SelectItem value="Water">Water</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <Button
+                onClick={handleResetFilters}
+                variant="outline"
+                className="px-8 py-2 h-10 rounded-md border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Reset
+              </Button>
+              <Button
+                onClick={handleApplyFilters}
+                className="px-8 py-2 h-10 rounded-md bg-purple-600 text-white hover:bg-purple-700"
+              >
+                Apply
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
