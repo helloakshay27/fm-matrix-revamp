@@ -60,7 +60,8 @@ export const AddWaterAssetDashboard = () => {
     selectedMeterCategories: [],
     selectedMeterCategory: '',
     boardSubCategory: '',
-    renewableSubCategory: ''
+    renewableSubCategory: '',
+    freshWaterSubCategory: ''
   });
 
   const [consumptionMeasures, setConsumptionMeasures] = useState([
@@ -579,7 +580,7 @@ export const AddWaterAssetDashboard = () => {
                         control={
                           <Radio 
                             checked={formData.selectedMeterCategory === category}
-                            onChange={() => setFormData({...formData, selectedMeterCategory: category, boardSubCategory: '', renewableSubCategory: ''})}
+                            onChange={() => setFormData({...formData, selectedMeterCategory: category, boardSubCategory: '', renewableSubCategory: '', freshWaterSubCategory: ''})}
                           />
                         }
                         label={category}
@@ -624,6 +625,29 @@ export const AddWaterAssetDashboard = () => {
                               <Radio 
                                 checked={formData.renewableSubCategory === subCategory}
                                 onChange={() => setFormData({...formData, renewableSubCategory: subCategory})}
+                              />
+                            }
+                            label={subCategory}
+                            sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Fresh Water Sub-categories */}
+                {formData.selectedMeterCategory === 'Fresh Water' && (
+                  <div className="mt-6">
+                    <h4 className="text-sm font-medium mb-3">Fresh Water Sub-categories:</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      {['Source (Input)', 'Destination (Output)'].map((subCategory) => (
+                        <div key={subCategory} className="flex items-center space-x-2 bg-purple-50 p-3 rounded">
+                          <FormControlLabel
+                            control={
+                              <Radio 
+                                checked={formData.freshWaterSubCategory === subCategory}
+                                onChange={() => setFormData({...formData, freshWaterSubCategory: subCategory})}
                               />
                             }
                             label={subCategory}
