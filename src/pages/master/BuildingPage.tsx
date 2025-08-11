@@ -9,7 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Plus, Search, Edit, X } from 'lucide-react';
+import { Loader2, Plus, Search, Edit, X, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { fetchSites, fetchBuildings, createBuilding, updateBuilding } from '@/store/slices/locationSlice';
 import { useForm } from 'react-hook-form';
@@ -22,11 +22,14 @@ export function BuildingPage() {
   const { sites, buildings } = useAppSelector((state) => state.location);
 
   const [search, setSearch] = useState('');
-  const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingBuilding, setEditingBuilding] = useState<any>(null);
   const [selectedSiteFilter, setSelectedSiteFilter] = useState<string>('all');
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
   console.log(sites)
 
@@ -65,6 +68,11 @@ export function BuildingPage() {
     dispatch(fetchBuildings());
   }, [dispatch]);
 
+  // Reset pagination when buildings data changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [buildings.data?.length]);
+
   const filteredBuildings = useMemo(() => {
     if (!buildings.data || !Array.isArray(buildings.data)) return [];
     return buildings.data.filter((building) => {
@@ -75,7 +83,28 @@ export function BuildingPage() {
     });
   }, [buildings.data, search, selectedSiteFilter]);
 
-  const displayedBuildings = filteredBuildings.slice(0, parseInt(entriesPerPage));
+  // Pagination calculations
+  const totalItems = filteredBuildings.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentBuildings = filteredBuildings.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToPrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   const handleCreateBuilding = async (data: BuildingFormData) => {
     try {
@@ -165,487 +194,565 @@ export function BuildingPage() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Buildings</h1>
-          <p className="text-muted-foreground">Manage building information</p>
-        </div>
+    <div className="w-full min-h-screen bg-gray-50">
+      <div className="w-full">
+        <div className="p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">BUILDINGS</h1>
 
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Building
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Building</DialogTitle>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute right-4 top-4"
-                onClick={() => setShowCreateDialog(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogHeader>
-            <Form {...createForm}>
-              <form onSubmit={createForm.handleSubmit(handleCreateBuilding)} className="space-y-4">
-                <FormField
-                  control={createForm.control}
-                  name="site_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Select Site</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select site" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {sites?.data.sites && Array.isArray(sites.data.sites) && sites.data.sites.map((site) => (
-                            <SelectItem key={site.id} value={site.id.toString()}>
-                              {site.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={createForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Building Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter building name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={createForm.control}
-                  name="other_detail"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Other Details</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter additional details" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Checkboxes in a row */}
-                <div className="grid grid-cols-4 gap-4">
-                  <FormField
-                    control={createForm.control}
-                    name="has_wing"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Wing</FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={createForm.control}
-                    name="has_area"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Area</FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={createForm.control}
-                    name="has_floor"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Floor</FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={createForm.control}
-                    name="has_room"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>Room</FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={resetCreateForm}>
-                    Cancel
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Building
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Create New Building</DialogTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-4 top-4"
+                    onClick={() => setShowCreateDialog(false)}
+                  >
+                    <X className="h-4 w-4" />
                   </Button>
-                  <Button type="submit" disabled={createForm.formState.isSubmitting}>
-                    {createForm.formState.isSubmitting && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    Create Building
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      </div>
+                </DialogHeader>
+                <Form {...createForm}>
+                  <form onSubmit={createForm.handleSubmit(handleCreateBuilding)} className="space-y-4">
+                    <FormField
+                      control={createForm.control}
+                      name="site_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Select Site</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select site" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {sites?.data.sites && Array.isArray(sites.data.sites) && sites.data.sites.map((site) => (
+                                <SelectItem key={site.id} value={site.id.toString()}>
+                                  {site.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search buildings..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select value={selectedSiteFilter} onValueChange={setSelectedSiteFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by site" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Sites</SelectItem>
-                {sites.data && Array.isArray(sites.data) && sites.data.map((site) => (
-                  <SelectItem key={site.id} value={site.id.toString()}>
-                    {site.site_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={entriesPerPage} onValueChange={setEntriesPerPage}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10 entries</SelectItem>
-                <SelectItem value="25">25 entries</SelectItem>
-                <SelectItem value="50">50 entries</SelectItem>
-                <SelectItem value="100">100 entries</SelectItem>
-              </SelectContent>
-            </Select>
+                    <FormField
+                      control={createForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Building Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter building name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={createForm.control}
+                      name="other_detail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Other Details</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter additional details" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Checkboxes in a row */}
+                    <div className="grid grid-cols-4 gap-4">
+                      <FormField
+                        control={createForm.control}
+                        name="has_wing"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Wing</FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={createForm.control}
+                        name="has_area"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Area</FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={createForm.control}
+                        name="has_floor"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Floor</FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={createForm.control}
+                        name="has_room"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel>Room</FormLabel>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="flex justify-end space-x-2">
+                      <Button type="button" variant="outline" onClick={resetCreateForm}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={createForm.formState.isSubmitting}>
+                        {createForm.formState.isSubmitting && (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                        Create Building
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Buildings Table */}
-      <Card>
-        <CardContent className="p-0">
-          {buildings.loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="ml-2">Loading buildings...</span>
+          {/* Controls */}
+          <div className="flex items-center justify-end mb-4">
+         
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Search:</span>
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-64"
+                placeholder="Search buildings..."
+              />
             </div>
-          ) : (
+          </div>
+
+          {/* Table */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Sr No</TableHead>
+                  <TableHead>Actions</TableHead>
+                  <TableHead>Site</TableHead>
                   <TableHead>Building Name</TableHead>
-                  <TableHead>Site Name</TableHead>
-                  <TableHead className="text-center">Wing</TableHead>
-                  <TableHead className="text-center">Area</TableHead>
-                  <TableHead className="text-center">Floor</TableHead>
-                  <TableHead className="text-center">Room</TableHead>
+                  <TableHead>Other Details</TableHead>
+                  <TableHead>Has Wing</TableHead>
+                  <TableHead>Has Area</TableHead>
+                  <TableHead>Has Floor</TableHead>
+                  <TableHead>Has Room</TableHead>
                   <TableHead>Status</TableHead>
-
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {displayedBuildings.length === 0 ? (
+                {buildings.loading ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8">
-                      {search || selectedSiteFilter !== 'all' ? (
-                        <div className="text-muted-foreground">
-                          No buildings found matching your filters.
-                        </div>
-                      ) : (
-                        <div className="text-muted-foreground">
-                          No buildings found. Create your first building to get started.
-                        </div>
-                      )}
+                    <TableCell colSpan={9} className="text-center py-4">
+                      Loading buildings...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredBuildings.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-4">
+                      {buildings.data.length === 0 ? 'No buildings available' : 'No buildings match your search'}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  displayedBuildings.map((building, index) => (
+                  currentBuildings.map((building, index) => (
                     <TableRow key={building.id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell className="font-medium">{building.name}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(building)}>
+                          <Edit className="w-4 h-4 text-[#C72030]" />
+                        </Button>
+                      </TableCell>
                       <TableCell>{getSiteName(building.site_id)}</TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={building.has_wing}
-                          onCheckedChange={() => handleToggleStatus(building.id, 'has_wing')}
-                        />
+                      <TableCell>{building.name}</TableCell>
+                      <TableCell>{building.other_detail || '-'}</TableCell>
+                      <TableCell>
+                        <button onClick={() => handleToggleStatus(building.id, 'has_wing')} className="cursor-pointer">
+                          {building.has_wing ? (
+                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
+                              <span className="text-white text-xs">✗</span>
+                            </div>
+                          )}
+                        </button>
                       </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={building.has_area}
-                          onCheckedChange={() => handleToggleStatus(building.id, 'has_area')}
-                        />
+                      <TableCell>
+                        <button onClick={() => handleToggleStatus(building.id, 'has_area')} className="cursor-pointer">
+                          {building.has_area ? (
+                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
+                              <span className="text-white text-xs">✗</span>
+                            </div>
+                          )}
+                        </button>
                       </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={building.has_floor}
-                          onCheckedChange={() => handleToggleStatus(building.id, 'has_floor')}
-                        />
+                      <TableCell>
+                        <button onClick={() => handleToggleStatus(building.id, 'has_floor')} className="cursor-pointer">
+                          {building.has_floor ? (
+                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
+                              <span className="text-white text-xs">✗</span>
+                            </div>
+                          )}
+                        </button>
                       </TableCell>
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={building.has_room}
-                          onCheckedChange={() => handleToggleStatus(building.id, 'has_room')}
-                        />
+                      <TableCell>
+                        <button onClick={() => handleToggleStatus(building.id, 'has_room')} className="cursor-pointer">
+                          {building.has_room ? (
+                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
+                              <span className="text-white text-xs">✗</span>
+                            </div>
+                          )}
+                        </button>
                       </TableCell>
-                      <TableCell className="text-center">
-                        <Switch
-                          checked={building.active}
-                          onCheckedChange={() => handleToggleStatus(building.id, 'active')}
-                          className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300"
-                        />
+                      <TableCell>
+                        <button onClick={() => handleToggleStatus(building.id, 'active')} className="cursor-pointer">
+                          {building.active ? (
+                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
+                              <span className="text-white text-xs">✗</span>
+                            </div>
+                          )}
+                        </button>
                       </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Pagination Controls */}
+          {buildings.data.length > 0 && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} buildings
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPrevious}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+
+                <div className="flex items-center space-x-1">
+                  {/* Show first page */}
+                  {currentPage > 3 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => goToPage(1)}
+                        className="w-8 h-8 p-0"
+                      >
+                        1
+                      </Button>
+                      {currentPage > 4 && <span className="px-2">...</span>}
+                    </>
+                  )}
+
+                  {/* Show pages around current page */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
+                    .map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => goToPage(page)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {page}
+                      </Button>
+                    ))}
+
+                  {/* Show last page */}
+                  {currentPage < totalPages - 2 && (
+                    <>
+                      {currentPage < totalPages - 3 && <span className="px-2">...</span>}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => goToPage(totalPages)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {totalPages}
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNext}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           )}
-        </CardContent>
-      </Card>
 
-      {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Building</DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-4 top-4"
-              onClick={() => setShowEditDialog(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogHeader>
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(handleEditBuilding)} className="space-y-4">
-              <FormField
-                control={editForm.control}
-                name="site_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Select Site</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select site" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {sites.data && Array.isArray(sites.data) && sites.data.map((site) => (
-                          <SelectItem key={site.id} value={site.id.toString()}>
-                            {site.site_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={editForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Building Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter building name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={editForm.control}
-                name="other_detail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Other Details</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter additional details" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Checkboxes in a row */}
-              <div className="grid grid-cols-4 gap-4">
-                <FormField
-                  control={editForm.control}
-                  name="has_wing"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Wing</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editForm.control}
-                  name="has_area"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Area</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editForm.control}
-                  name="has_floor"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Floor</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={editForm.control}
-                  name="has_room"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Room</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={editForm.control}
-                name="active"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Active Status</FormLabel>
-                      <div className="text-sm text-muted-foreground">
-                        Enable or disable this building
-                      </div>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={resetEditForm}>
-                  Cancel
+          {/* Edit Dialog */}
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Edit Building</DialogTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-4 top-4"
+                  onClick={() => setShowEditDialog(false)}
+                >
+                  <X className="h-4 w-4" />
                 </Button>
-                <Button type="submit" disabled={editForm.formState.isSubmitting}>
-                  {editForm.formState.isSubmitting && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  Update Building
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+              </DialogHeader>
+              <Form {...editForm}>
+                <form onSubmit={editForm.handleSubmit(handleEditBuilding)} className="space-y-4">
+                  <FormField
+                    control={editForm.control}
+                    name="site_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Select Site</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select site" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {sites.data && Array.isArray(sites.data) && sites.data.map((site) => (
+                              <SelectItem key={site.id} value={site.id.toString()}>
+                                {site.site_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Building Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter building name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="other_detail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Other Details</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter additional details" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Checkboxes in a row */}
+                  <div className="grid grid-cols-4 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="has_wing"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Wing</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="has_area"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Area</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="has_floor"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Floor</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="has_room"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>Room</FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={editForm.control}
+                    name="active"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Active Status</FormLabel>
+                          <div className="text-sm text-muted-foreground">
+                            Enable or disable this building
+                          </div>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex justify-end space-x-2">
+                    <Button type="button" variant="outline" onClick={resetEditForm}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={editForm.formState.isSubmitting}>
+                      {editForm.formState.isSubmitting && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      Update Building
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
     </div>
   );
 }
