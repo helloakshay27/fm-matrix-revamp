@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 
 interface UtilizationFormData {
   entity: string;
@@ -61,6 +59,11 @@ export const AddUtilityRequestPage = () => {
     }));
   };
 
+  const handleSelectChange = (event: SelectChangeEvent) => {
+    const { name, value } = event.target;
+    handleInputChange(name as keyof UtilizationFormData, value);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form submitted:', formData);
@@ -105,121 +108,178 @@ export const AddUtilityRequestPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Select Entity */}
               <div className="space-y-2">
-                <Label htmlFor="entity" className="text-sm font-medium text-gray-700">
-                  Select Entity
-                </Label>
-                <Select onValueChange={(value) => handleInputChange('entity', value)}>
-                  <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                    <SelectValue placeholder="Select Entity" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                <FormControl fullWidth>
+                  <InputLabel id="entity-label" className="text-sm font-medium text-gray-700">
+                    Select Entity
+                  </InputLabel>
+                  <Select
+                    labelId="entity-label"
+                    name="entity"
+                    value={formData.entity}
+                    onChange={handleSelectChange}
+                    label="Select Entity"
+                    sx={{
+                      height: '45px',
+                      backgroundColor: '#f6f4ee',
+                      '& .MuiOutlinedInput-root': {
+                        height: '45px',
+                        backgroundColor: '#f6f4ee',
+                      }
+                    }}
+                  >
                     {entities.map((entity) => (
-                      <SelectItem key={entity} value={entity} className="hover:bg-gray-100">
+                      <MenuItem key={entity} value={entity}>
                         {entity}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </Select>
+                </FormControl>
               </div>
 
               {/* Plant Detail */}
               <div className="space-y-2">
-                <Label htmlFor="plantDetail" className="text-sm font-medium text-gray-700">
-                  Plant Detail<span className="text-red-500">*</span>
-                </Label>
-                <Select onValueChange={(value) => handleInputChange('plantDetail', value)}>
-                  <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                    <SelectValue placeholder="Select Plant Detail" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                <FormControl fullWidth>
+                  <InputLabel id="plant-detail-label" className="text-sm font-medium text-gray-700">
+                    Plant Detail*
+                  </InputLabel>
+                  <Select
+                    labelId="plant-detail-label"
+                    name="plantDetail"
+                    value={formData.plantDetail}
+                    onChange={handleSelectChange}
+                    label="Plant Detail*"
+                    sx={{
+                      height: '45px',
+                      backgroundColor: '#f6f4ee',
+                      '& .MuiOutlinedInput-root': {
+                        height: '45px',
+                        backgroundColor: '#f6f4ee',
+                      }
+                    }}
+                  >
                     {plantDetails.map((plant) => (
-                      <SelectItem key={plant} value={plant} className="hover:bg-gray-100">
+                      <MenuItem key={plant} value={plant}>
                         {plant}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </Select>
+                </FormControl>
               </div>
 
               {/* From Date */}
               <div className="space-y-2">
-                <Label htmlFor="fromDate" className="text-sm font-medium text-gray-700">
-                  From Date<span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="fromDate"
+                <TextField
+                  label="From Date*"
                   type="date"
+                  name="fromDate"
                   value={formData.fromDate}
                   onChange={(e) => handleInputChange('fromDate', e.target.value)}
-                  className="h-12 bg-white border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                  placeholder="Select Date"
+                  fullWidth
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: '45px',
+                      backgroundColor: '#f6f4ee',
+                    }
+                  }}
                 />
               </div>
 
               {/* To Date */}
               <div className="space-y-2">
-                <Label htmlFor="toDate" className="text-sm font-medium text-gray-700">
-                  To Date<span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="toDate"
+                <TextField
+                  label="To Date*"
                   type="date"
+                  name="toDate"
                   value={formData.toDate}
                   onChange={(e) => handleInputChange('toDate', e.target.value)}
-                  className="h-12 bg-white border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                  placeholder="Select Date"
+                  fullWidth
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: '45px',
+                      backgroundColor: '#f6f4ee',
+                    }
+                  }}
                 />
               </div>
 
               {/* Total Consumption */}
               <div className="space-y-2">
-                <Label htmlFor="totalConsumption" className="text-sm font-medium text-gray-700">
-                  Total Consumption<span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="totalConsumption"
+                <TextField
+                  label="Total Consumption*"
                   type="number"
-                  step="0.01"
+                  name="totalConsumption"
                   value={formData.totalConsumption}
                   onChange={(e) => handleInputChange('totalConsumption', e.target.value)}
-                  className="h-12 bg-white border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
                   placeholder="Total consumption"
+                  fullWidth
+                  inputProps={{
+                    step: "0.01"
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: '45px',
+                      backgroundColor: '#f6f4ee',
+                    }
+                  }}
                 />
               </div>
 
               {/* Rate */}
               <div className="space-y-2">
-                <Label htmlFor="rate" className="text-sm font-medium text-gray-700">
-                  Rate<span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="rate"
+                <TextField
+                  label="Rate*"
                   type="number"
-                  step="0.01"
+                  name="rate"
                   value={formData.rate}
                   onChange={(e) => handleInputChange('rate', e.target.value)}
-                  className="h-12 bg-white border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
                   placeholder="Enter Rate"
+                  fullWidth
+                  inputProps={{
+                    step: "0.01"
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      height: '45px',
+                      backgroundColor: '#f6f4ee',
+                    }
+                  }}
                 />
               </div>
 
               {/* Reading Type */}
               <div className="space-y-2">
-                <Label htmlFor="readingType" className="text-sm font-medium text-gray-700">
-                  Reading Type<span className="text-red-500">*</span>
-                </Label>
-                <Select onValueChange={(value) => handleInputChange('readingType', value)}>
-                  <SelectTrigger className="h-12 bg-white border border-gray-300 rounded-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]">
-                    <SelectValue placeholder="Select Reading Type" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                <FormControl fullWidth>
+                  <InputLabel id="reading-type-label" className="text-sm font-medium text-gray-700">
+                    Reading Type*
+                  </InputLabel>
+                  <Select
+                    labelId="reading-type-label"
+                    name="readingType"
+                    value={formData.readingType}
+                    onChange={handleSelectChange}
+                    label="Reading Type*"
+                    sx={{
+                      height: '45px',
+                      backgroundColor: '#f6f4ee',
+                      '& .MuiOutlinedInput-root': {
+                        height: '45px',
+                        backgroundColor: '#f6f4ee',
+                      }
+                    }}
+                  >
                     {readingTypes.map((type) => (
-                      <SelectItem key={type} value={type} className="hover:bg-gray-100">
+                      <MenuItem key={type} value={type}>
                         {type}
-                      </SelectItem>
+                      </MenuItem>
                     ))}
-                  </SelectContent>
-                </Select>
+                  </Select>
+                </FormControl>
               </div>
             </div>
 
