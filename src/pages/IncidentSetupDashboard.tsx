@@ -2,15 +2,41 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit, Trash2 } from 'lucide-react';
 
 export const IncidentSetupDashboard = () => {
   const [categoryName, setCategoryName] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Category');
+  const [selectedParentCategory, setSelectedParentCategory] = useState('');
   
   const categories = [
     { id: 1, name: 'risks' },
     { id: 2, name: 'Risk Assessment' }
+  ];
+
+  const subCategories = [
+    { id: 1, category: 'risks', subCategory: 'data' },
+    { id: 2, category: 'Risk Assessment', subCategory: 'Physical Security' },
+    { id: 3, category: 'Risk Assessment', subCategory: 'Integration Failure' },
+    { id: 4, category: 'Risk Assessment', subCategory: 'DDoS Attack' },
+    { id: 5, category: 'Risk Assessment', subCategory: 'Phishing Attacks' },
+    { id: 6, category: 'Risk Assessment', subCategory: 'Access Control' },
+    { id: 7, category: 'Risk Assessment', subCategory: 'Data Breached' }
+  ];
+
+  const menuItems = [
+    'Category',
+    'Sub Category', 
+    'Sub Sub Category',
+    'Sub Sub Sub Category',
+    'Incidence status',
+    'Incidence level',
+    'Escalations',
+    'Approval Setup',
+    'Secondary Category',
+    'Secondary Sub Category'
   ];
 
   const handleSubmit = () => {
@@ -28,36 +54,19 @@ export const IncidentSetupDashboard = () => {
         {/* Left Side - Category Menu */}
         <div className="w-80">
           <div className="space-y-1">
-            <div className="bg-purple-100 text-purple-800 px-4 py-3 rounded-lg font-medium">
-              Category
-            </div>
-            <div className="bg-gray-50 text-gray-700 px-4 py-3 rounded-lg">
-              Sub Category
-            </div>
-            <div className="bg-gray-50 text-gray-700 px-4 py-3 rounded-lg">
-              Sub Sub Category
-            </div>
-            <div className="bg-gray-50 text-gray-700 px-4 py-3 rounded-lg">
-              Sub Sub Sub Category
-            </div>
-            <div className="bg-gray-50 text-gray-700 px-4 py-3 rounded-lg">
-              Incidence status
-            </div>
-            <div className="bg-gray-50 text-gray-700 px-4 py-3 rounded-lg">
-              Incidence level
-            </div>
-            <div className="bg-gray-50 text-gray-700 px-4 py-3 rounded-lg">
-              Escalations
-            </div>
-            <div className="bg-gray-50 text-gray-700 px-4 py-3 rounded-lg">
-              Approval Setup
-            </div>
-            <div className="bg-gray-50 text-gray-700 px-4 py-3 rounded-lg">
-              Secondary Category
-            </div>
-            <div className="bg-gray-50 text-gray-700 px-4 py-3 rounded-lg">
-              Secondary Sub Category
-            </div>
+            {menuItems.map((item) => (
+              <div 
+                key={item}
+                onClick={() => setSelectedCategory(item)}
+                className={`px-4 py-3 rounded-lg font-medium cursor-pointer transition-colors ${
+                  selectedCategory === item 
+                    ? 'bg-purple-100 text-purple-800' 
+                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                {item}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -66,6 +75,25 @@ export const IncidentSetupDashboard = () => {
           {/* Form Section */}
           <div className="mb-6">
             <div className="flex gap-4 items-end">
+              {selectedCategory === 'Sub Category' && (
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <Select value={selectedParentCategory} onValueChange={setSelectedParentCategory}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Name
@@ -75,7 +103,7 @@ export const IncidentSetupDashboard = () => {
                   value={categoryName}
                   onChange={(e) => setCategoryName(e.target.value)}
                   className="w-full"
-                  placeholder="Enter category name"
+                  placeholder="Enter name"
                 />
               </div>
               <Button 
@@ -92,26 +120,55 @@ export const IncidentSetupDashboard = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  <TableHead>Name</TableHead>
-                  <TableHead>Action</TableHead>
+                  {selectedCategory === 'Sub Category' ? (
+                    <>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Sub Category</TableHead>
+                      <TableHead>Action</TableHead>
+                    </>
+                  ) : (
+                    <>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Action</TableHead>
+                    </>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {categories.map((category) => (
-                  <TableRow key={category.id}>
-                    <TableCell>{category.name}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="sm" className="text-blue-600">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {selectedCategory === 'Sub Category' ? (
+                  subCategories.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.category}</TableCell>
+                      <TableCell>{item.subCategory}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" className="text-blue-600">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-600">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  categories.map((category) => (
+                    <TableRow key={category.id}>
+                      <TableCell>{category.name}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" className="text-blue-600">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-600">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
