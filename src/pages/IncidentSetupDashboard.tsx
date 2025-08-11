@@ -150,6 +150,21 @@ export const IncidentSetupDashboard = () => {
     secondarySubSubSubCategory: 'test'
   }]);
   const [selectedSecondarySubSubCategory, setSelectedSecondarySubSubCategory] = useState('');
+  const [whoGotInjured, setWhoGotInjured] = useState([
+    { id: 1, name: 'Employee' },
+    { id: 2, name: 'Contractor' },
+    { id: 3, name: 'Visitor' }
+  ]);
+  const [propertyDamageCategories, setPropertyDamageCategories] = useState([
+    { id: 1, name: 'Building Damage' },
+    { id: 2, name: 'Equipment Damage' },
+    { id: 3, name: 'Vehicle Damage' }
+  ]);
+  const [rcaCategories, setRcaCategories] = useState([
+    { id: 1, name: 'Human Error' },
+    { id: 2, name: 'Equipment Failure' },
+    { id: 3, name: 'Process Failure' }
+  ]);
   const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category', 'Incident Disclaimer'];
   const handleSubmit = () => {
     if (!categoryName.trim()) return;
@@ -281,6 +296,16 @@ export const IncidentSetupDashboard = () => {
         escalateInDays: '',
         users: ''
       });
+    } else if (type === 'Who got injured' || type === 'Property Damage Category' || type === 'RCA Category') {
+      setEditFormData({
+        category: '',
+        subCategory: '',
+        subSubCategory: '',
+        name: item.name || '',
+        level: '',
+        escalateInDays: '',
+        users: ''
+      });
     } else {
       setEditFormData({
         category: item.category || item.secondaryCategory || item.name || '',
@@ -296,6 +321,28 @@ export const IncidentSetupDashboard = () => {
   };
   const handleEditSubmit = () => {
     console.log('Updating item:', editFormData);
+    
+    // Update the specific item based on type
+    if (editingItem?.type === 'Who got injured') {
+      setWhoGotInjured(whoGotInjured.map(item => 
+        item.id === editingItem.id 
+          ? { ...item, name: editFormData.name }
+          : item
+      ));
+    } else if (editingItem?.type === 'Property Damage Category') {
+      setPropertyDamageCategories(propertyDamageCategories.map(item => 
+        item.id === editingItem.id 
+          ? { ...item, name: editFormData.name }
+          : item
+      ));
+    } else if (editingItem?.type === 'RCA Category') {
+      setRcaCategories(rcaCategories.map(item => 
+        item.id === editingItem.id 
+          ? { ...item, name: editFormData.name }
+          : item
+      ));
+    }
+    
     setIsEditing(false);
     setEditingItem(null);
     setEditFormData({
@@ -347,6 +394,12 @@ export const IncidentSetupDashboard = () => {
         setSecondarySubSubCategories(secondarySubSubCategories.filter(secondarySubSub => secondarySubSub.id !== item.id));
       } else if (type === 'Secondary Sub Sub Sub Category') {
         setSecondarySubSubSubCategories(secondarySubSubSubCategories.filter(secondarySubSubSub => secondarySubSubSub.id !== item.id));
+      } else if (type === 'Who got injured') {
+        setWhoGotInjured(whoGotInjured.filter(injury => injury.id !== item.id));
+      } else if (type === 'Property Damage Category') {
+        setPropertyDamageCategories(propertyDamageCategories.filter(damage => damage.id !== item.id));
+      } else if (type === 'RCA Category') {
+        setRcaCategories(rcaCategories.filter(rca => rca.id !== item.id));
       }
     }
   };
@@ -466,6 +519,38 @@ export const IncidentSetupDashboard = () => {
                       Back
                     </Button>
                   </div>
+                 </div> : (editingItem?.type === 'Who got injured' || editingItem?.type === 'Property Damage Category' || editingItem?.type === 'RCA Category') ? 
+                 <div className="space-y-6">
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Name
+                     </label>
+                     <Input
+                       placeholder="Enter Name"
+                       value={editFormData.name}
+                       onChange={(e) => setEditFormData({
+                         ...editFormData,
+                         name: e.target.value
+                       })}
+                       className="focus:ring-[#C72030] focus:border-[#C72030]"
+                     />
+                   </div>
+
+                   <div className="flex gap-3">
+                     <Button
+                       onClick={handleEditSubmit}
+                       className="bg-[#C72030] hover:bg-[#A01020] text-white px-6"
+                     >
+                       Submit
+                     </Button>
+                     <Button
+                       variant="outline"
+                       onClick={handleEditBack}
+                       className="px-6"
+                     >
+                       Back
+                     </Button>
+                   </div>
                  </div> : <div className="space-y-6">
                   {(editingItem?.type === 'Secondary Sub Category' || editingItem?.type === 'Secondary Sub Sub Category' || editingItem?.type === 'Secondary Sub Sub Sub Category') && <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -968,55 +1053,43 @@ export const IncidentSetupDashboard = () => {
                                  </Button>
                                </div>
                              </TableCell>
-                           </TableRow>) : selectedCategory === 'Who got injured' ? [
-                             { id: 1, name: 'Employee' },
-                             { id: 2, name: 'Contractor' },
-                             { id: 3, name: 'Visitor' }
-                           ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                             <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
-                             <TableCell className="px-4 py-3">
-                               <div className="flex gap-2">
-                                 <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-                                   <Edit className="w-4 h-4" />
-                                 </Button>
-                                 <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
-                                   <Trash2 className="w-4 h-4" />
-                                 </Button>
-                               </div>
-                             </TableCell>
-                            </TableRow>) : selectedCategory === 'Property Damage Category' ? [
-                              { id: 1, name: 'Building Damage' },
-                              { id: 2, name: 'Equipment Damage' },
-                              { id: 3, name: 'Vehicle Damage' }
-                            ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            </TableRow>) : selectedCategory === 'Who got injured' ? whoGotInjured.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
                               <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
                               <TableCell className="px-4 py-3">
                                 <div className="flex gap-2">
-                                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Who got injured')}>
                                     <Edit className="w-4 h-4" />
                                   </Button>
-                                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Who got injured')}>
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
                                 </div>
                               </TableCell>
-                             </TableRow>) : selectedCategory === 'RCA Category' ? [
-                               { id: 1, name: 'Human Error' },
-                               { id: 2, name: 'Equipment Failure' },
-                               { id: 3, name: 'Process Failure' }
-                             ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                             </TableRow>) : selectedCategory === 'Property Damage Category' ? propertyDamageCategories.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
                                <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
                                <TableCell className="px-4 py-3">
                                  <div className="flex gap-2">
-                                   <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                   <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Property Damage Category')}>
                                      <Edit className="w-4 h-4" />
                                    </Button>
-                                   <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                   <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Property Damage Category')}>
                                      <Trash2 className="w-4 h-4" />
                                    </Button>
                                  </div>
                                </TableCell>
-                              </TableRow>) : selectedCategory === 'Incident Disclaimer' ? [
+                              </TableRow>) : selectedCategory === 'RCA Category' ? rcaCategories.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                                <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                                <TableCell className="px-4 py-3">
+                                  <div className="flex gap-2">
+                                    <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'RCA Category')}>
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'RCA Category')}>
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                               </TableRow>) : selectedCategory === 'Incident Disclaimer' ? [
                                 { id: 1, name: 'General Disclaimer' },
                                 { id: 2, name: 'Safety Disclaimer' },
                                 { id: 3, name: 'Legal Disclaimer' }
