@@ -466,6 +466,10 @@ import { HotelBookingPage } from "./pages/HotelBookingPage";
 import CRMPollsPage from "./pages/CRMPollsPage";
 import AddPollPage from "./pages/AddPollPage";
 
+// Import CRM Occupant User Detail page
+import { CRMOccupantUserDetailPage } from './pages/CRMOccupantUserDetailPage';
+import { CRMOccupantUserEditPage } from './pages/CRMOccupantUserEditPage';
+
 // Import Market Place All page
 import MarketPlaceAllPage from "./pages/MarketPlaceAllPage";
 
@@ -797,10 +801,9 @@ function App() {
                 <Route path="/crm/polls" element={<CRMPollsPage />} />
                 <Route path="/crm/polls/add" element={<AddPollPage />} />
                 <Route path="/crm/groups" element={<CRMGroupsPage />} />
-                <Route
-                  path="/crm/groups/details/:id"
-                  element={<CRMGroupDetailsPage />}
-                />
+                <Route path="/crm/groups/details/:id" element={<CRMGroupDetailsPage />} />
+                <Route path="/crm/occupant-users/:id" element={<CRMOccupantUserDetailPage />} />
+                <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
 
                 {/* Snagging Routes */}
                 <Route
@@ -1698,8 +1701,8 @@ function App() {
                 <Route path="/maintenance/m-safe/external/user/:userId" element={<ExternalUserDetail />} />
                 <Route path="/maintenance/m-safe/external/user/:userId/edit" element={<EditExternalUserPage />} />
                 <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
-            <Route path="/maintenance/krcc-list" element={<KRCCFormListDashboard />} />
-            <Route path="/maintenance/krcc-list/:id" element={<KRCCFormDetail />} />
+                <Route path="/maintenance/krcc-list" element={<KRCCFormListDashboard />} />
+                <Route path="/maintenance/krcc-list/:id" element={<KRCCFormDetail />} />
 
                 {/* Market Place Routes */}
                 <Route
