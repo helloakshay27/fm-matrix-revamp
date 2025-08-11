@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { TextField, MenuItem } from '@mui/material';
 
 export const CRMOccupantUserDetailPage = () => {
   const { id } = useParams();
@@ -68,140 +66,152 @@ export const CRMOccupantUserDetailPage = () => {
           <div className="space-y-8">
             {/* First Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="firstName" className="text-sm font-medium text-muted-foreground">
-                  First Name
-                </Label>
-                <Input
+              <div>
+                <TextField
                   id="firstName"
+                  label="First Name"
                   value={userData.firstName}
-                  readOnly
-                  className="bg-muted border-border"
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName" className="text-sm font-medium text-muted-foreground">
-                  Last Name
-                </Label>
-                <Input
+              <div>
+                <TextField
                   id="lastName"
+                  label="Last Name"
                   value={userData.lastName}
-                  readOnly
-                  className="bg-muted border-border"
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="mobile" className="text-sm font-medium text-muted-foreground">
-                  Mobile Number
-                </Label>
-                <Input
+              <div>
+                <TextField
                   id="mobile"
+                  label="Mobile Number"
                   value={userData.mobile}
-                  readOnly
-                  className="bg-muted border-border"
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
                 />
               </div>
             </div>
 
             {/* Second Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">
-                  E-mail ID
-                </Label>
-                <Input
+              <div>
+                <TextField
                   id="email"
+                  label="E-mail ID"
                   value={userData.email}
-                  readOnly
-                  className="bg-muted border-border"
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="gender" className="text-sm font-medium text-muted-foreground">
-                  Gender
-                </Label>
-                <Select disabled>
-                  <SelectTrigger className="bg-muted border-border">
-                    <SelectValue placeholder={userData.gender} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div>
+                <TextField
+                  id="gender"
+                  label="Gender"
+                  value={userData.gender}
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="entity" className="text-sm font-medium text-muted-foreground">
-                  Select Entity
-                </Label>
-                <Select disabled>
-                  <SelectTrigger className="bg-muted border-border">
-                    <SelectValue placeholder={userData.entity} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="vinayak-test">Vinayak Test</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div>
+                <TextField
+                  id="entity"
+                  label="Select Entity"
+                  value={userData.entity}
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                />
               </div>
             </div>
 
             {/* Third Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="userType" className="text-sm font-medium text-muted-foreground">
-                  User Type
-                </Label>
-                <Input
+              <div>
+                <TextField
                   id="userType"
+                  label="User Type"
                   value={userData.userType}
-                  readOnly
-                  className="bg-muted border-border"
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="employeeId" className="text-sm font-medium text-muted-foreground">
-                  Employee ID
-                </Label>
-                <Input
+              <div>
+                <TextField
                   id="employeeId"
+                  label="Employee ID"
                   value={userData.employeeId}
-                  readOnly
-                  className="bg-muted border-border"
                   placeholder="Not provided"
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="accessLevel" className="text-sm font-medium text-muted-foreground">
-                  Access Level
-                </Label>
-                <Input
+              <div>
+                <TextField
                   id="accessLevel"
+                  label="Access Level"
                   value={userData.accessLevel}
-                  readOnly
-                  className="bg-muted border-border"
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
                 />
               </div>
             </div>
 
             {/* Fourth Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="company" className="text-sm font-medium text-muted-foreground">
-                  Company
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="company"
-                    value={userData.company}
-                    readOnly
-                    className="bg-muted border-border pr-12"
-                  />
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    <span className="bg-[#BF213E] text-white px-2 py-1 rounded text-xs font-medium">
-                      {userData.company.split(' ')[1]}
-                    </span>
-                  </div>
+              <div className="relative">
+                <TextField
+                  id="company"
+                  label="Company"
+                  value={userData.company}
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                />
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <span className="bg-[#BF213E] text-white px-2 py-1 rounded text-xs font-medium">
+                    {userData.company.split(' ')[1]}
+                  </span>
                 </div>
               </div>
             </div>
@@ -224,40 +234,46 @@ export const CRMOccupantUserDetailPage = () => {
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="birthDate" className="text-sm font-medium text-muted-foreground">
-                      Birth Date
-                    </Label>
-                    <Input
+                  <div>
+                    <TextField
                       id="birthDate"
+                      label="Birth Date"
                       value={userData.birthDate}
-                      readOnly
-                      className="bg-muted border-border"
                       placeholder="dd/mm/yyyy"
+                      InputProps={{
+                        readOnly: true,
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      size="small"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="address" className="text-sm font-medium text-muted-foreground">
-                      Address
-                    </Label>
-                    <Input
+                  <div>
+                    <TextField
                       id="address"
+                      label="Address"
                       value={userData.address}
-                      readOnly
-                      className="bg-muted border-border"
                       placeholder="Not provided"
+                      InputProps={{
+                        readOnly: true,
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      size="small"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="alternateMobile" className="text-sm font-medium text-muted-foreground">
-                      Alternate Mobile Number
-                    </Label>
-                    <Input
+                  <div>
+                    <TextField
                       id="alternateMobile"
+                      label="Alternate Mobile Number"
                       value={userData.alternateMobile}
-                      readOnly
-                      className="bg-muted border-border"
                       placeholder="Not provided"
+                      InputProps={{
+                        readOnly: true,
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      size="small"
                     />
                   </div>
                 </div>
