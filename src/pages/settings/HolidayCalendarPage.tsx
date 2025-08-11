@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { TextField } from '@mui/material';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Badge } from '@/components/ui/badge';
@@ -149,6 +150,7 @@ const columns: ColumnConfig[] = [
 export const HolidayCalendarPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [holidays, setHolidays] = useState<Holiday[]>(mockHolidays);
   const [date, setDate] = useState<Date>();
   const [holidayName, setHolidayName] = useState('');
   const [recurring, setRecurring] = useState<string>('');
@@ -204,15 +206,41 @@ export const HolidayCalendarPage = () => {
   };
 
   const handleSubmit = () => {
-    // Handle form submission
-    console.log({
+    if (!holidayName || !date || !recurring || selectedSites.length === 0 || !selectedType || selectedCustomers.length === 0) {
+      alert('Please fill all fields');
+      return;
+    }
+
+    const newHoliday: Holiday = {
+      id: String(holidays.length + 1),
       holidayName,
-      date,
-      recurring,
-      selectedSites,
-      selectedType,
-      selectedCustomers
-    });
+      date: format(date, "dd MMMM yyyy"),
+      recurring: recurring === "yes",
+      applicableLocation: selectedSites.join(', '),
+      holidayType: selectedType.charAt(0).toUpperCase() + selectedType.slice(1),
+      applicableFor: selectedCustomers.join(', ')
+    };
+
+    setHolidays([...holidays, newHoliday]);
+    
+    // Reset form
+    setHolidayName('');
+    setDate(undefined);
+    setRecurring('');
+    setSelectedSites([]);
+    setSelectedType('');
+    setSelectedCustomers([]);
+    setIsAddDialogOpen(false);
+  };
+
+  const handleCancel = () => {
+    // Reset form
+    setHolidayName('');
+    setDate(undefined);
+    setRecurring('');
+    setSelectedSites([]);
+    setSelectedType('');
+    setSelectedCustomers([]);
     setIsAddDialogOpen(false);
   };
 
@@ -302,14 +330,29 @@ export const HolidayCalendarPage = () => {
               <div className="py-4">
                 <div className="grid grid-cols-3 gap-4 space-y-0">
                   {/* Holiday Name */}
-                  {/* Holiday Name */}
                   <div className="space-y-2">
                     <Label htmlFor="holidayName">Holiday Name</Label>
-                    <Input
+                    <TextField
                       id="holidayName"
                       placeholder="Holiday Name"
                       value={holidayName}
                       onChange={(e) => setHolidayName(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: '#d1d5db',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: '#9ca3af',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#C72030',
+                          },
+                        },
+                      }}
                     />
                   </div>
 
@@ -486,7 +529,7 @@ export const HolidayCalendarPage = () => {
 
                 {/* Action Buttons */}
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                <Button variant="outline" onClick={handleCancel}>
                   Cancel
                 </Button>
                 <Button 
@@ -527,7 +570,7 @@ export const HolidayCalendarPage = () => {
       {/* Table Card */}
       <div className="bg-white rounded-lg border border-[#D5DbDB] shadow-sm">
         <EnhancedTable
-          data={mockHolidays}
+          data={holidays}
           columns={columns}
           renderCell={renderCell}
           searchTerm={searchTerm}
