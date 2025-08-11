@@ -126,20 +126,22 @@ export const HolidayCalendarPage = () => {
       <div className="flex-1 overflow-hidden">
         <div className="h-full flex">
           {/* Left side - Table */}
-          <div className="flex-1 p-6 overflow-auto">
-            <EnhancedTable
-              data={holidayData}
-              columns={columns}
-              renderRow={renderRow}
-              enableSearch={true}
-              enableSelection={true}
-              enableExport={true}
-              selectedItems={selectedItems}
-              onSelectAll={handleSelectAll}
-              onSelectItem={handleSelectItem}
-              searchPlaceholder="Search holidays..."
-              exportFileName="holidays"
-            />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 p-6 overflow-auto">
+              <EnhancedTable
+                data={holidayData}
+                columns={columns}
+                renderRow={renderRow}
+                enableSearch={true}
+                enableSelection={true}
+                enableExport={true}
+                selectedItems={selectedItems}
+                onSelectAll={handleSelectAll}
+                onSelectItem={handleSelectItem}
+                searchPlaceholder="Search holidays..."
+                exportFileName="holidays"
+              />
+            </div>
           </div>
           
           {/* Right side - Empty space as shown in image */}
