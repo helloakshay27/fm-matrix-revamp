@@ -271,6 +271,16 @@ export const IncidentSetupDashboard = () => {
         escalateInDays: '',
         users: ''
       });
+    } else if (type === 'Secondary Sub Sub Sub Category') {
+      setEditFormData({
+        category: item.secondaryCategory || '',
+        subCategory: item.secondarySubCategory || '',
+        subSubCategory: item.secondarySubSubCategory || '',
+        name: item.secondarySubSubSubCategory || '',
+        level: '',
+        escalateInDays: '',
+        users: ''
+      });
     } else {
       setEditFormData({
         category: item.category || item.secondaryCategory || item.name || '',
@@ -457,7 +467,7 @@ export const IncidentSetupDashboard = () => {
                     </Button>
                   </div>
                  </div> : <div className="space-y-6">
-                  {(editingItem?.type === 'Secondary Sub Category' || editingItem?.type === 'Secondary Sub Sub Category') && <div>
+                  {(editingItem?.type === 'Secondary Sub Category' || editingItem?.type === 'Secondary Sub Sub Category' || editingItem?.type === 'Secondary Sub Sub Sub Category') && <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Secondary Category
                       </label>
@@ -476,7 +486,7 @@ export const IncidentSetupDashboard = () => {
                       </Select>
                     </div>}
 
-                  {editingItem?.type === 'Secondary Sub Sub Category' && <div>
+                  {(editingItem?.type === 'Secondary Sub Sub Category' || editingItem?.type === 'Secondary Sub Sub Sub Category') && <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Secondary Sub Category
                       </label>
@@ -485,11 +495,30 @@ export const IncidentSetupDashboard = () => {
                 subCategory: value
               })}>
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Secondary Sub Category" />
+                          <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent className="bg-white z-50">
                           {secondarySubCategories.filter(sub => sub.secondaryCategory === editFormData.category).map(subCategory => <SelectItem key={subCategory.id} value={subCategory.secondarySubCategory}>
                                 {subCategory.secondarySubCategory}
+                              </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>}
+
+                  {editingItem?.type === 'Secondary Sub Sub Sub Category' && <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Secondary Sub Sub Category
+                      </label>
+                      <Select value={editFormData.subSubCategory} onValueChange={value => setEditFormData({
+                ...editFormData,
+                subSubCategory: value
+              })}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          {secondarySubSubCategories.filter(subsub => subsub.secondaryCategory === editFormData.category && subsub.secondarySubCategory === editFormData.subCategory).map(subSubCategory => <SelectItem key={subSubCategory.id} value={subSubCategory.secondarySubSubCategory}>
+                                {subSubCategory.secondarySubSubCategory}
                               </SelectItem>)}
                         </SelectContent>
                       </Select>
