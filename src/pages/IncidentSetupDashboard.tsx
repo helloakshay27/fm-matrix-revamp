@@ -645,71 +645,72 @@ export const IncidentSetupDashboard = () => {
               </div>
 
               {/* Table Section */}
-              <div className="bg-white rounded-lg border">
-                <Table>
+              <div className="bg-white rounded-xl shadow-sm border border-[#D5DbDB] overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50">
+                    <TableRow className="bg-[#f6f4ee] border-b border-[#D5DbDB]">
                       {selectedCategory === 'Secondary Sub Category' ? <>
-                          <TableHead>Secondary Category</TableHead>
-                          <TableHead>Secondry Sub Category</TableHead>
-                          <TableHead>Action</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                          </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
-                           <TableHead>Secondary Category</TableHead>
-                           <TableHead>Secondary Sub Category</TableHead>
-                           <TableHead>Secondary Sub Sub Category</TableHead>
-                           <TableHead>Action</TableHead>
+                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
+                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
+                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
+                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                           </> : selectedCategory === 'Secondary Sub Sub Sub Category' ? <>
-                            <TableHead>Secondary Category</TableHead>
-                            <TableHead>Secondary Sub Category</TableHead>
-                            <TableHead>Secondary Sub Sub Category</TableHead>
-                            <TableHead>Secondary Sub Sub Sub Category</TableHead>
-                             <TableHead>Action</TableHead>
+                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
+                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
+                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
+                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Sub Category</TableHead>
+                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                            </> : selectedCategory === 'Who got injured' ? <>
-                             <TableHead>Name</TableHead>
-                             <TableHead>Action</TableHead>
+                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                             </> : selectedCategory === 'Property Damage Category' ? <>
-                              <TableHead>Name</TableHead>
-                              <TableHead>Action</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                              </> : selectedCategory === 'RCA Category' ? <>
-                               <TableHead>Name</TableHead>
-                               <TableHead>Action</TableHead>
+                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                               </> : selectedCategory === 'Incident Disclaimer' ? <>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Action</TableHead>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                               </> : selectedCategory === 'Approval Setup' ? <>
-                                <TableHead>Users</TableHead>
-                                <TableHead>Action</TableHead>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Users</TableHead>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                         </> : selectedCategory === 'Escalations' ? <>
-                          <TableHead>Level</TableHead>
-                          <TableHead>Escalate In Days</TableHead>
-                          <TableHead>Users</TableHead>
-                          <TableHead>Action</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Level</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Escalate In Days</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Users</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                         </> : selectedCategory === 'Sub Sub Sub Category' ? <>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Sub Category</TableHead>
-                          <TableHead>Sub Sub Category</TableHead>
-                          <TableHead>Sub Sub Sub Category</TableHead>
-                          <TableHead>Action</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                         </> : selectedCategory === 'Sub Sub Category' ? <>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Sub Category</TableHead>
-                          <TableHead>Sub Sub Category</TableHead>
-                          <TableHead>Action</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                         </> : selectedCategory === 'Sub Category' ? <>
-                          <TableHead>Category</TableHead>
-                          <TableHead>Sub Category</TableHead>
-                          <TableHead>Action</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                         </> : <>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Action</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                         </>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedCategory === 'Secondary Sub Category' ? secondarySubCategories.map(secondarySub => <TableRow key={secondarySub.id}>
-                          <TableCell>{secondarySub.secondaryCategory}</TableCell>
-                          <TableCell>{secondarySub.secondarySubCategory}</TableCell>
-                          <TableCell>
+                    {selectedCategory === 'Secondary Sub Category' ? secondarySubCategories.map(secondarySub => <TableRow key={secondarySub.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{secondarySub.secondaryCategory}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{secondarySub.secondarySubCategory}</TableCell>
+                          <TableCell className="px-4 py-3">
                             <div className="flex gap-2">
                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondarySub, 'Secondary Sub Category')}>
                                 <Edit className="w-4 h-4" />
@@ -722,11 +723,11 @@ export const IncidentSetupDashboard = () => {
                           </TableRow>) : selectedCategory === 'Secondary Sub Sub Category' ? [
                             { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention' },
                             { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction' }
-                          ].map(item => <TableRow key={item.id}>
-                            <TableCell>{item.secondaryCategory}</TableCell>
-                            <TableCell>{item.secondarySubCategory}</TableCell>
-                            <TableCell>{item.secondarySubSubCategory}</TableCell>
-                           <TableCell>
+                          ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
+                           <TableCell className="px-4 py-3">
                              <div className="flex gap-2">
                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
                                  <Edit className="w-4 h-4" />
@@ -739,12 +740,12 @@ export const IncidentSetupDashboard = () => {
                           </TableRow>) : selectedCategory === 'Secondary Sub Sub Sub Category' ? [
                             { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention', secondarySubSubSubCategory: 'Alarm Systems' },
                             { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction', secondarySubSubSubCategory: 'Hardware Issues' }
-                          ].map(item => <TableRow key={item.id}>
-                            <TableCell>{item.secondaryCategory}</TableCell>
-                            <TableCell>{item.secondarySubCategory}</TableCell>
-                            <TableCell>{item.secondarySubSubCategory}</TableCell>
-                            <TableCell>{item.secondarySubSubSubCategory}</TableCell>
-                            <TableCell>
+                          ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubSubCategory}</TableCell>
+                           <TableCell className="px-4 py-3">
                               <div className="flex gap-2">
                                 <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
                                   <Edit className="w-4 h-4" />
@@ -758,9 +759,9 @@ export const IncidentSetupDashboard = () => {
                              { id: 1, name: 'Employee' },
                              { id: 2, name: 'Contractor' },
                              { id: 3, name: 'Visitor' }
-                           ].map(item => <TableRow key={item.id}>
-                             <TableCell>{item.name}</TableCell>
-                             <TableCell>
+                           ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                             <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                             <TableCell className="px-4 py-3">
                                <div className="flex gap-2">
                                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
                                    <Edit className="w-4 h-4" />
@@ -774,9 +775,9 @@ export const IncidentSetupDashboard = () => {
                               { id: 1, name: 'Building Damage' },
                               { id: 2, name: 'Equipment Damage' },
                               { id: 3, name: 'Vehicle Damage' }
-                            ].map(item => <TableRow key={item.id}>
-                              <TableCell>{item.name}</TableCell>
-                              <TableCell>
+                            ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                              <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                              <TableCell className="px-4 py-3">
                                 <div className="flex gap-2">
                                   <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
                                     <Edit className="w-4 h-4" />
@@ -790,9 +791,9 @@ export const IncidentSetupDashboard = () => {
                                { id: 1, name: 'Human Error' },
                                { id: 2, name: 'Equipment Failure' },
                                { id: 3, name: 'Process Failure' }
-                             ].map(item => <TableRow key={item.id}>
-                               <TableCell>{item.name}</TableCell>
-                               <TableCell>
+                             ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                               <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                               <TableCell className="px-4 py-3">
                                  <div className="flex gap-2">
                                    <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
                                      <Edit className="w-4 h-4" />
@@ -806,9 +807,9 @@ export const IncidentSetupDashboard = () => {
                                 { id: 1, name: 'General Disclaimer' },
                                 { id: 2, name: 'Safety Disclaimer' },
                                 { id: 3, name: 'Legal Disclaimer' }
-                              ].map(item => <TableRow key={item.id}>
-                                <TableCell>{item.name}</TableCell>
-                                <TableCell>
+                              ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                                <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                                <TableCell className="px-4 py-3">
                                   <div className="flex gap-2">
                                     <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
                                       <Edit className="w-4 h-4" />
@@ -818,9 +819,9 @@ export const IncidentSetupDashboard = () => {
                                     </Button>
                                   </div>
                                 </TableCell>
-                              </TableRow>) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => <TableRow key={approval.id}>
-                          <TableCell>{approval.users}</TableCell>
-                          <TableCell>
+                              </TableRow>) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => <TableRow key={approval.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{approval.users}</TableCell>
+                          <TableCell className="px-4 py-3">
                             <div className="flex gap-2">
                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(approval, 'Approval Setup')}>
                                 <Edit className="w-4 h-4" />
@@ -830,11 +831,11 @@ export const IncidentSetupDashboard = () => {
                               </Button>
                             </div>
                           </TableCell>
-                        </TableRow>) : selectedCategory === 'Escalations' ? escalations.map(escalation => <TableRow key={escalation.id}>
-                          <TableCell>{escalation.level}</TableCell>
-                          <TableCell>{escalation.escalateInDays}</TableCell>
-                          <TableCell>{escalation.users}</TableCell>
-                          <TableCell>
+                        </TableRow>) : selectedCategory === 'Escalations' ? escalations.map(escalation => <TableRow key={escalation.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{escalation.level}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{escalation.escalateInDays}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{escalation.users}</TableCell>
+                          <TableCell className="px-4 py-3">
                             <div className="flex gap-2">
                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(escalation, 'Escalations')}>
                                 <Edit className="w-4 h-4" />
@@ -844,9 +845,9 @@ export const IncidentSetupDashboard = () => {
                               </Button>
                             </div>
                           </TableCell>
-                        </TableRow>) : selectedCategory === 'Secondary Category' ? secondaryCategories.map(secondary => <TableRow key={secondary.id}>
-                          <TableCell>{secondary.name}</TableCell>
-                          <TableCell>
+                        </TableRow>) : selectedCategory === 'Secondary Category' ? secondaryCategories.map(secondary => <TableRow key={secondary.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{secondary.name}</TableCell>
+                          <TableCell className="px-4 py-3">
                             <div className="flex gap-2">
                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondary, 'Secondary Category')}>
                                 <Edit className="w-4 h-4" />
@@ -856,9 +857,9 @@ export const IncidentSetupDashboard = () => {
                               </Button>
                             </div>
                           </TableCell>
-                        </TableRow>) : selectedCategory === 'Incidence level' ? incidenceLevels.map(level => <TableRow key={level.id}>
-                          <TableCell>{level.name}</TableCell>
-                          <TableCell>
+                        </TableRow>) : selectedCategory === 'Incidence level' ? incidenceLevels.map(level => <TableRow key={level.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{level.name}</TableCell>
+                          <TableCell className="px-4 py-3">
                             <div className="flex gap-2">
                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(level, 'Incidence level')}>
                                 <Edit className="w-4 h-4" />
@@ -868,9 +869,9 @@ export const IncidentSetupDashboard = () => {
                               </Button>
                             </div>
                           </TableCell>
-                        </TableRow>) : selectedCategory === 'Incidence status' ? incidenceStatuses.map(status => <TableRow key={status.id}>
-                          <TableCell>{status.name}</TableCell>
-                          <TableCell>
+                        </TableRow>) : selectedCategory === 'Incidence status' ? incidenceStatuses.map(status => <TableRow key={status.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{status.name}</TableCell>
+                          <TableCell className="px-4 py-3">
                             <div className="flex gap-2">
                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(status, 'Incidence status')}>
                                 <Edit className="w-4 h-4" />
@@ -880,12 +881,12 @@ export const IncidentSetupDashboard = () => {
                               </Button>
                             </div>
                           </TableCell>
-                        </TableRow>) : selectedCategory === 'Sub Sub Sub Category' ? subSubSubCategories.map(item => <TableRow key={item.id}>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell>{item.subCategory}</TableCell>
-                          <TableCell>{item.subSubCategory}</TableCell>
-                          <TableCell>{item.subSubSubCategory}</TableCell>
-                          <TableCell>
+                        </TableRow>) : selectedCategory === 'Sub Sub Sub Category' ? subSubSubCategories.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubCategory}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubSubCategory}</TableCell>
+                          <TableCell className="px-4 py-3">
                             <div className="flex gap-2">
                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Sub Category')}>
                                 <Edit className="w-4 h-4" />
@@ -895,11 +896,11 @@ export const IncidentSetupDashboard = () => {
                               </Button>
                             </div>
                           </TableCell>
-                        </TableRow>) : selectedCategory === 'Sub Sub Category' ? subSubCategories.map(item => <TableRow key={item.id}>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell>{item.subCategory}</TableCell>
-                          <TableCell>{item.subSubCategory}</TableCell>
-                          <TableCell>
+                        </TableRow>) : selectedCategory === 'Sub Sub Category' ? subSubCategories.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubCategory}</TableCell>
+                          <TableCell className="px-4 py-3">
                             <div className="flex gap-2">
                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Category')}>
                                 <Edit className="w-4 h-4" />
@@ -909,10 +910,10 @@ export const IncidentSetupDashboard = () => {
                               </Button>
                             </div>
                           </TableCell>
-                        </TableRow>) : selectedCategory === 'Sub Category' ? subCategories.map(item => <TableRow key={item.id}>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell>{item.subCategory}</TableCell>
-                          <TableCell>
+                        </TableRow>) : selectedCategory === 'Sub Category' ? subCategories.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
+                          <TableCell className="px-4 py-3">
                             <div className="flex gap-2">
                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Category')}>
                                 <Edit className="w-4 h-4" />
@@ -922,9 +923,9 @@ export const IncidentSetupDashboard = () => {
                               </Button>
                             </div>
                           </TableCell>
-                        </TableRow>) : categories.map(category => <TableRow key={category.id}>
-                          <TableCell>{category.name}</TableCell>
-                          <TableCell>
+                        </TableRow>) : categories.map(category => <TableRow key={category.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{category.name}</TableCell>
+                          <TableCell className="px-4 py-3">
                             <div className="flex gap-2">
                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(category, 'Category')}>
                                 <Edit className="w-4 h-4" />
@@ -937,6 +938,7 @@ export const IncidentSetupDashboard = () => {
                         </TableRow>)}
                   </TableBody>
                 </Table>
+                </div>
               </div>
             </>}
         </div>
