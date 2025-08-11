@@ -83,6 +83,7 @@ import UtilityDailyReadingsDashboard from './pages/UtilityDailyReadingsDashboard
 import UtilitySolarGeneratorDashboard from './pages/UtilitySolarGeneratorDashboard';
 import { UtilityRequestDashboard } from './pages/UtilityRequestDashboard';
 import { AddUtilityRequestPage } from './pages/AddUtilityRequestPage';
+import UtilityConsumptionDashboard from './pages/UtilityConsumptionDashboard';
 
 // Import Waste Generation pages
 import UtilityWasteGenerationDashboard from './pages/UtilityWasteGenerationDashboard';
@@ -797,6 +798,7 @@ function App() {
                 <Route path="/utility/daily-readings" element={<UtilityDailyReadingsDashboard />} />
                 <Route path="/utility/utility-request" element={<UtilityRequestDashboard />} />
                 <Route path="/utility/utility-request/add" element={<AddUtilityRequestPage />} />
+                <Route path="/utility/utility-consumption" element={<UtilityConsumptionDashboard />} />
                 <Route path="/utility/add-asset" element={<AddAssetDashboard />} />
 
                 {/* Energy Asset Routes */}
