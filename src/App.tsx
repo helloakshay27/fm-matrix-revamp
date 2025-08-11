@@ -406,6 +406,9 @@ import { HotelBookingPage } from './pages/HotelBookingPage';
 import CRMPollsPage from './pages/CRMPollsPage';
 import AddPollPage from './pages/AddPollPage';
 
+// Import CRM Occupant User Detail page
+import { CRMOccupantUserDetailPage } from './pages/CRMOccupantUserDetailPage';
+
 // Import Market Place All page
 import MarketPlaceAllPage from './pages/MarketPlaceAllPage';
 
@@ -589,6 +592,7 @@ function App() {
                 <Route path="/crm/polls/add" element={<AddPollPage />} />
                 <Route path="/crm/groups" element={<CRMGroupsPage />} />
                 <Route path="/crm/groups/details/:id" element={<CRMGroupDetailsPage />} />
+                <Route path="/crm/occupant-users/:id" element={<CRMOccupantUserDetailPage />} />
 
                 {/* Snagging Routes */}
                 <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
