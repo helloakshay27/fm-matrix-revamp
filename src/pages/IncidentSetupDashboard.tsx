@@ -39,6 +39,10 @@ export const IncidentSetupDashboard = () => {
     { id: 1, category: 'risks', subCategory: 'data', subSubCategory: 'data I' }
   ]);
 
+  const [subSubSubCategories, setSubSubSubCategories] = useState([
+    { id: 1, category: 'risks', subCategory: 'data', subSubCategory: 'data I', subSubSubCategory: 'data I-A' }
+  ]);
+
   const menuItems = [
     'Category',
     'Sub Category', 
@@ -91,6 +95,8 @@ export const IncidentSetupDashboard = () => {
         setSubCategories(subCategories.filter(sub => sub.id !== item.id));
       } else if (type === 'Sub Sub Category') {
         setSubSubCategories(subSubCategories.filter(subsub => subsub.id !== item.id));
+      } else if (type === 'Sub Sub Sub Category') {
+        setSubSubSubCategories(subSubSubCategories.filter(subsubsub => subsubsub.id !== item.id));
       }
     }
   };
@@ -125,7 +131,7 @@ export const IncidentSetupDashboard = () => {
             /* Edit Form Modal */
             <div className="bg-white p-8 rounded-lg border shadow-sm max-w-md">
               <div className="space-y-6">
-                {(editingItem?.type === 'Sub Category' || editingItem?.type === 'Sub Sub Category') && (
+                {(editingItem?.type === 'Sub Category' || editingItem?.type === 'Sub Sub Category' || editingItem?.type === 'Sub Sub Sub Category') && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Category
@@ -145,7 +151,7 @@ export const IncidentSetupDashboard = () => {
                   </div>
                 )}
 
-                {editingItem?.type === 'Sub Sub Category' && (
+                {(editingItem?.type === 'Sub Sub Category' || editingItem?.type === 'Sub Sub Sub Category') && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Sub-Category
@@ -160,6 +166,28 @@ export const IncidentSetupDashboard = () => {
                           .map((subCategory) => (
                             <SelectItem key={subCategory.id} value={subCategory.subCategory}>
                               {subCategory.subCategory}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {editingItem?.type === 'Sub Sub Sub Category' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Sub Sub Category
+                    </label>
+                    <Select value={editFormData.subSubCategory} onValueChange={(value) => setEditFormData({...editFormData, subSubCategory: value})}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select Sub Sub Category" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white z-50">
+                        {subSubCategories
+                          .filter(subsub => subsub.category === editFormData.category && subsub.subCategory === editFormData.subCategory)
+                          .map((subSubCategory) => (
+                            <SelectItem key={subSubCategory.id} value={subSubCategory.subSubCategory}>
+                              {subSubCategory.subSubCategory}
                             </SelectItem>
                           ))}
                       </SelectContent>
@@ -202,7 +230,7 @@ export const IncidentSetupDashboard = () => {
               {/* Form Section */}
               <div className="mb-6">
                 <div className="flex gap-4 items-end">
-                  {(selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category') && (
+                  {(selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') && (
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Category
@@ -221,7 +249,7 @@ export const IncidentSetupDashboard = () => {
                       </Select>
                     </div>
                   )}
-                  {selectedCategory === 'Sub Sub Category' && (
+                  {(selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') && (
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Sub Category
@@ -236,6 +264,27 @@ export const IncidentSetupDashboard = () => {
                             .map((subCategory) => (
                               <SelectItem key={subCategory.id} value={subCategory.subCategory}>
                                 {subCategory.subCategory}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {selectedCategory === 'Sub Sub Sub Category' && (
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Sub Sub Category
+                      </label>
+                      <Select value={editFormData.subSubCategory} onValueChange={(value) => setEditFormData({...editFormData, subSubCategory: value})}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Sub Sub Category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          {subSubCategories
+                            .filter(subsub => subsub.category === selectedParentCategory && subsub.subCategory === selectedSubCategory)
+                            .map((subSubCategory) => (
+                              <SelectItem key={subSubCategory.id} value={subSubCategory.subSubCategory}>
+                                {subSubCategory.subSubCategory}
                               </SelectItem>
                             ))}
                         </SelectContent>
@@ -268,7 +317,15 @@ export const IncidentSetupDashboard = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
-                      {selectedCategory === 'Sub Sub Category' ? (
+                      {selectedCategory === 'Sub Sub Sub Category' ? (
+                        <>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Sub Category</TableHead>
+                          <TableHead>Sub Sub Category</TableHead>
+                          <TableHead>Sub Sub Sub Category</TableHead>
+                          <TableHead>Action</TableHead>
+                        </>
+                      ) : selectedCategory === 'Sub Sub Category' ? (
                         <>
                           <TableHead>Category</TableHead>
                           <TableHead>Sub Category</TableHead>
@@ -290,7 +347,36 @@ export const IncidentSetupDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedCategory === 'Sub Sub Category' ? (
+                    {selectedCategory === 'Sub Sub Sub Category' ? (
+                      subSubSubCategories.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.category}</TableCell>
+                          <TableCell>{item.subCategory}</TableCell>
+                          <TableCell>{item.subSubCategory}</TableCell>
+                          <TableCell>{item.subSubSubCategory}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => handleEdit(item, 'Sub Sub Sub Category')}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleDelete(item, 'Sub Sub Sub Category')}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : selectedCategory === 'Sub Sub Category' ? (
                       subSubCategories.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell>{item.category}</TableCell>
