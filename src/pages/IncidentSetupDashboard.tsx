@@ -56,6 +56,15 @@ export const IncidentSetupDashboard = () => {
     { id: 4, name: 'Level 1' }
   ]);
 
+  const [escalations, setEscalations] = useState([
+    { id: 1, level: 'Level 1', escalateInDays: '1', users: 'Mahendra Lungare, Vinayak Mane' },
+    { id: 2, level: 'Level 2', escalateInDays: '2', users: 'Abdul A' }
+  ]);
+
+  const [selectedEscalationLevel, setSelectedEscalationLevel] = useState('');
+  const [escalateInDays, setEscalateInDays] = useState('');
+  const [escalateToUsers, setEscalateToUsers] = useState('');
+
   const menuItems = [
     'Category',
     'Sub Category', 
@@ -114,6 +123,8 @@ export const IncidentSetupDashboard = () => {
         setIncidenceStatuses(incidenceStatuses.filter(status => status.id !== item.id));
       } else if (type === 'Incidence level') {
         setIncidenceLevels(incidenceLevels.filter(level => level.id !== item.id));
+      } else if (type === 'Escalations') {
+        setEscalations(escalations.filter(escalation => escalation.id !== item.id));
       }
     }
   };
@@ -247,7 +258,55 @@ export const IncidentSetupDashboard = () => {
               {/* Form Section */}
               <div className="mb-6">
                 <div className="flex gap-4 items-end">
-                  {(selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') && (
+                  {selectedCategory === 'Escalations' ? (
+                    <>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Level
+                        </label>
+                        <Select value={selectedEscalationLevel} onValueChange={setSelectedEscalationLevel}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select Level" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white z-50">
+                            {incidenceLevels.map((level) => (
+                              <SelectItem key={level.id} value={level.name}>
+                                {level.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Escalate In Days
+                        </label>
+                        <Input
+                          type="text"
+                          value={escalateInDays}
+                          onChange={(e) => setEscalateInDays(e.target.value)}
+                          className="w-full"
+                          placeholder="Enter days"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Escalate To Users
+                        </label>
+                        <Select value={escalateToUsers} onValueChange={setEscalateToUsers}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select up to 15 Options..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white z-50">
+                            <SelectItem value="Mahendra Lungare">Mahendra Lungare</SelectItem>
+                            <SelectItem value="Vinayak Mane">Vinayak Mane</SelectItem>
+                            <SelectItem value="Abdul A">Abdul A</SelectItem>
+                            <SelectItem value="John Doe">John Doe</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  ) : (selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') ? (
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Category
@@ -265,7 +324,7 @@ export const IncidentSetupDashboard = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                  )}
+                  ) : null}
                   {(selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') && (
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -308,18 +367,20 @@ export const IncidentSetupDashboard = () => {
                       </Select>
                     </div>
                   )}
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Name
-                    </label>
-                    <Input
-                      type="text"
-                      value={categoryName}
-                      onChange={(e) => setCategoryName(e.target.value)}
-                      className="w-full"
-                      placeholder="Enter name"
-                    />
-                  </div>
+                  {selectedCategory !== 'Escalations' && (
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Name
+                      </label>
+                      <Input
+                        type="text"
+                        value={categoryName}
+                        onChange={(e) => setCategoryName(e.target.value)}
+                        className="w-full"
+                        placeholder="Enter name"
+                      />
+                    </div>
+                  )}
                   <Button 
                     onClick={handleSubmit}
                     className="bg-purple-600 hover:bg-purple-700 text-white px-8"
@@ -334,7 +395,14 @@ export const IncidentSetupDashboard = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
-                      {selectedCategory === 'Sub Sub Sub Category' ? (
+                      {selectedCategory === 'Escalations' ? (
+                        <>
+                          <TableHead>Level</TableHead>
+                          <TableHead>Escalate In Days</TableHead>
+                          <TableHead>Users</TableHead>
+                          <TableHead>Action</TableHead>
+                        </>
+                      ) : selectedCategory === 'Sub Sub Sub Category' ? (
                         <>
                           <TableHead>Category</TableHead>
                           <TableHead>Sub Category</TableHead>
@@ -364,7 +432,35 @@ export const IncidentSetupDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedCategory === 'Incidence level' ? (
+                    {selectedCategory === 'Escalations' ? (
+                      escalations.map((escalation) => (
+                        <TableRow key={escalation.id}>
+                          <TableCell>{escalation.level}</TableCell>
+                          <TableCell>{escalation.escalateInDays}</TableCell>
+                          <TableCell>{escalation.users}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => handleEdit(escalation, 'Escalations')}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleDelete(escalation, 'Escalations')}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : selectedCategory === 'Incidence level' ? (
                       incidenceLevels.map((level) => (
                         <TableRow key={level.id}>
                           <TableCell>{level.name}</TableCell>
