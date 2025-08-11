@@ -110,58 +110,30 @@ export const IncidentSetupDashboard = () => {
         {/* Right Side - Form and Table */}
         <div className="flex-1">
           {isEditing ? (
-            /* Edit Form */
-            <div className="bg-white p-6 rounded-lg border">
-              <h2 className="text-lg font-semibold mb-4">Edit {editingItem?.type || 'Item'}</h2>
-              
-              <div className="space-y-4">
-                {(selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category') && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Category
-                    </label>
-                    <Select value={editFormData.category} onValueChange={(value) => setEditFormData({...editFormData, category: value})}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select Category" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white z-50">
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.name}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                
-                {selectedCategory === 'Sub Sub Category' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Sub Category
-                    </label>
-                    <Select value={editFormData.subCategory} onValueChange={(value) => setEditFormData({...editFormData, subCategory: value})}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select Sub Category" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white z-50">
-                        {subCategories
-                          .filter(sub => sub.category === editFormData.category)
-                          .map((subCategory) => (
-                            <SelectItem key={subCategory.id} value={subCategory.subCategory}>
-                              {subCategory.subCategory}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+            /* Edit Form Modal */
+            <div className="bg-white p-8 rounded-lg border shadow-sm max-w-md">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category
+                  </label>
+                  <Select value={editFormData.category} onValueChange={(value) => setEditFormData({...editFormData, category: value})}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Category" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.name}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {selectedCategory === 'Category' ? 'Category' : 
-                     selectedCategory === 'Sub Category' ? 'Sub Category' : 
-                     selectedCategory === 'Sub Sub Category' ? 'Sub Sub Category' : 'Name'}
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Name
                   </label>
                   <Input
                     type="text"
@@ -172,17 +144,17 @@ export const IncidentSetupDashboard = () => {
                   />
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-3 pt-2">
                   <Button 
                     onClick={handleEditSubmit}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-6"
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2"
                   >
                     Submit
                   </Button>
                   <Button 
                     onClick={handleEditBack}
                     variant="outline"
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2"
                   >
                     Back
                   </Button>
