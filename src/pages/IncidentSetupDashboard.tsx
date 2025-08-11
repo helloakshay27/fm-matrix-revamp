@@ -74,6 +74,12 @@ export const IncidentSetupDashboard = () => {
   ]);
   const [selectedApprovalUsers, setSelectedApprovalUsers] = useState('');
 
+  const [secondaryCategories, setSecondaryCategories] = useState([
+    { id: 1, name: 'Safety Risk' },
+    { id: 2, name: 'Operational Risk' },
+    { id: 3, name: 'Technical Risk' }
+  ]);
+
   const menuItems = [
     'Category',
     'Sub Category', 
@@ -151,6 +157,8 @@ export const IncidentSetupDashboard = () => {
         setEscalations(escalations.filter(escalation => escalation.id !== item.id));
       } else if (type === 'Approval Setup') {
         setApprovalSetups(approvalSetups.filter(approval => approval.id !== item.id));
+      } else if (type === 'Secondary Category') {
+        setSecondaryCategories(secondaryCategories.filter(secondary => secondary.id !== item.id));
       }
     }
   };
@@ -624,6 +632,32 @@ export const IncidentSetupDashboard = () => {
                                 size="sm" 
                                 className="text-red-600 hover:text-red-800"
                                 onClick={() => handleDelete(escalation, 'Escalations')}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                       ))
+                    ) : selectedCategory === 'Secondary Category' ? (
+                      secondaryCategories.map((secondary) => (
+                        <TableRow key={secondary.id}>
+                          <TableCell>{secondary.name}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => handleEdit(secondary, 'Secondary Category')}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleDelete(secondary, 'Secondary Category')}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
