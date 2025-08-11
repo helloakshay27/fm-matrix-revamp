@@ -370,7 +370,7 @@ export const HolidayCalendarPage = () => {
                         <Button
                           variant="outline"
                           className={cn(
-                            "w-full justify-start text-left font-normal",
+                            "w-full justify-start text-left font-normal border-gray-300 hover:border-gray-300 focus:border-gray-300",
                             !date && "text-muted-foreground"
                           )}
                         >
@@ -397,7 +397,7 @@ export const HolidayCalendarPage = () => {
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full justify-between font-normal text-left"
+                          className="w-full justify-between font-normal text-left border-gray-300 hover:border-gray-300 focus:border-gray-300"
                         >
                           {recurring ? (recurring === "yes" ? "Yes" : "No") : "Select"}
                           <ChevronDown className="h-4 w-4 opacity-50" />
@@ -435,7 +435,7 @@ export const HolidayCalendarPage = () => {
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full justify-start text-left font-normal"
+                          className="w-full justify-start text-left font-normal border-gray-300 hover:border-gray-300 focus:border-gray-300"
                           onClick={() => setSitesDropdownOpen(!sitesDropdownOpen)}
                         >
                           {selectedSites.length > 0 ? `${selectedSites.length} selected` : "Select sites"}
@@ -474,7 +474,7 @@ export const HolidayCalendarPage = () => {
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full justify-start text-left font-normal"
+                          className="w-full justify-start text-left font-normal border-gray-300 hover:border-gray-300 focus:border-gray-300"
                           onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
                         >
                           {selectedType ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1) : "Select type"}
@@ -506,7 +506,7 @@ export const HolidayCalendarPage = () => {
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full justify-start text-left font-normal"
+                          className="w-full justify-start text-left font-normal border-gray-300 hover:border-gray-300 focus:border-gray-300"
                           onClick={() => setCustomersDropdownOpen(!customersDropdownOpen)}
                         >
                           {selectedCustomers.length > 0 ? `${selectedCustomers.length} selected` : "Select customers"}
