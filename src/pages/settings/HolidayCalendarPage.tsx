@@ -219,8 +219,8 @@ export const HolidayCalendarPage = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-6">
+      {/* Search Bar - Right aligned */}
+      <div className="mb-6 flex justify-end">
         <Input
           placeholder="Search holidays..."
           value={searchTerm}
