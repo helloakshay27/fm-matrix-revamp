@@ -479,7 +479,7 @@ export const IncidentSetupDashboard = () => {
                      </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
                        <div className="flex-1">
                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Secondary Category
+                           Secondry Category
                          </label>
                          <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
                            <SelectTrigger className="w-full">
@@ -498,7 +498,7 @@ export const IncidentSetupDashboard = () => {
                          </label>
                          <Select value={selectedSubCategory} onValueChange={setSelectedSubCategory}>
                            <SelectTrigger className="w-full">
-                             <SelectValue placeholder="Select Secondary Sub" />
+                             <SelectValue placeholder="Select Secondry Sub Category" />
                            </SelectTrigger>
                            <SelectContent className="bg-white z-50">
                              {secondarySubCategories
@@ -506,20 +506,6 @@ export const IncidentSetupDashboard = () => {
                                .map(sub => <SelectItem key={sub.id} value={sub.secondarySubCategory}>
                                    {sub.secondarySubCategory}
                                  </SelectItem>)}
-                           </SelectContent>
-                         </Select>
-                       </div>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Secondary Sub Sub Category
-                         </label>
-                         <Select>
-                           <SelectTrigger className="w-full">
-                             <SelectValue placeholder="Select Secondary Sub" />
-                           </SelectTrigger>
-                           <SelectContent className="bg-white z-50">
-                             <SelectItem value="sample1">Sample 1</SelectItem>
-                             <SelectItem value="sample2">Sample 2</SelectItem>
                            </SelectContent>
                          </Select>
                        </div>
@@ -602,7 +588,6 @@ export const IncidentSetupDashboard = () => {
                            <TableHead>Secondary Category</TableHead>
                            <TableHead>Secondary Sub Category</TableHead>
                            <TableHead>Secondary Sub Sub Category</TableHead>
-                           <TableHead>Secondary Sub Sub Sub Category</TableHead>
                            <TableHead>Action</TableHead>
                          </> : selectedCategory === 'Approval Setup' ? <>
                            <TableHead>Users</TableHead>
@@ -647,14 +632,13 @@ export const IncidentSetupDashboard = () => {
                               </Button>
                             </div>
                           </TableCell>
-                         </TableRow>) : selectedCategory === 'Secondary Sub Sub Category' ? [
-                           { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention', secondarySubSubSubCategory: 'Alarm Systems' },
-                           { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction', secondarySubSubSubCategory: 'Hardware Issues' }
-                         ].map(item => <TableRow key={item.id}>
-                           <TableCell>{item.secondaryCategory}</TableCell>
-                           <TableCell>{item.secondarySubCategory}</TableCell>
-                           <TableCell>{item.secondarySubSubCategory}</TableCell>
-                           <TableCell>{item.secondarySubSubSubCategory}</TableCell>
+                          </TableRow>) : selectedCategory === 'Secondary Sub Sub Category' ? [
+                            { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention' },
+                            { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction' }
+                          ].map(item => <TableRow key={item.id}>
+                            <TableCell>{item.secondaryCategory}</TableCell>
+                            <TableCell>{item.secondarySubCategory}</TableCell>
+                            <TableCell>{item.secondarySubSubCategory}</TableCell>
                            <TableCell>
                              <div className="flex gap-2">
                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
