@@ -137,8 +137,76 @@ export const IncidentSetupDashboard = () => {
   const [selectedSecondaryCategory, setSelectedSecondaryCategory] = useState('');
   const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category', 'Incident Disclaimer'];
   const handleSubmit = () => {
-    if (categoryName.trim()) {
-      console.log('Adding category:', categoryName);
+    if (selectedCategory === 'Category' && categoryName.trim()) {
+      const newCategory = {
+        id: Date.now(),
+        name: categoryName.trim()
+      };
+      setCategories([...categories, newCategory]);
+      setCategoryName('');
+    } else if (selectedCategory === 'Sub Category' && categoryName.trim() && selectedParentCategory) {
+      const newSubCategory = {
+        id: Date.now(),
+        category: selectedParentCategory,
+        subCategory: categoryName.trim()
+      };
+      setSubCategories([...subCategories, newSubCategory]);
+      setCategoryName('');
+    } else if (selectedCategory === 'Sub Sub Category' && categoryName.trim() && selectedParentCategory && selectedSubCategory) {
+      const newSubSubCategory = {
+        id: Date.now(),
+        category: selectedParentCategory,
+        subCategory: selectedSubCategory,
+        subSubCategory: categoryName.trim()
+      };
+      setSubSubCategories([...subSubCategories, newSubSubCategory]);
+      setCategoryName('');
+    } else if (selectedCategory === 'Incidence status' && categoryName.trim()) {
+      const newStatus = {
+        id: Date.now(),
+        name: categoryName.trim()
+      };
+      setIncidenceStatuses([...incidenceStatuses, newStatus]);
+      setCategoryName('');
+    } else if (selectedCategory === 'Incidence level' && categoryName.trim()) {
+      const newLevel = {
+        id: Date.now(),
+        name: categoryName.trim()
+      };
+      setIncidenceLevels([...incidenceLevels, newLevel]);
+      setCategoryName('');
+    } else if (selectedCategory === 'Escalations' && selectedEscalationLevel.trim() && escalateInDays.trim() && escalateToUsers.trim()) {
+      const newEscalation = {
+        id: Date.now(),
+        level: selectedEscalationLevel.trim(),
+        escalateInDays: escalateInDays.trim(),
+        users: escalateToUsers.trim()
+      };
+      setEscalations([...escalations, newEscalation]);
+      setSelectedEscalationLevel('');
+      setEscalateInDays('');
+      setEscalateToUsers('');
+    } else if (selectedCategory === 'Approval Setup' && selectedApprovalUsers.trim()) {
+      const newApproval = {
+        id: Date.now(),
+        users: selectedApprovalUsers.trim()
+      };
+      setApprovalSetups([...approvalSetups, newApproval]);
+      setSelectedApprovalUsers('');
+    } else if (selectedCategory === 'Secondary Category' && categoryName.trim()) {
+      const newSecondaryCategory = {
+        id: Date.now(),
+        name: categoryName.trim()
+      };
+      setSecondaryCategories([...secondaryCategories, newSecondaryCategory]);
+      setCategoryName('');
+    } else if (selectedCategory === 'Secondary Sub Category' && categoryName.trim() && selectedSecondaryCategory) {
+      const newSecondarySubCategory = {
+        id: Date.now(),
+        secondaryCategory: selectedSecondaryCategory,
+        secondarySubCategory: categoryName.trim()
+      };
+      setSecondarySubCategories([...secondarySubCategories, newSecondarySubCategory]);
       setCategoryName('');
     }
   };
