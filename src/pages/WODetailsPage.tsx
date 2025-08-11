@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Copy, Printer, Rss, ArrowLeft } from 'lucide-react';
 
 export const WODetailsPage = () => {
@@ -42,6 +43,36 @@ export const WODetailsPage = () => {
     contractorPan: 'NA',
     workCategory: 'NA'
   };
+
+  // Mock BOQ data
+  const boqData = [
+    {
+      sNo: 1,
+      boqDetails: '- Housekeeping',
+      quantity: 10.0,
+      uom: 'NA',
+      expectedDate: 'NA',
+      productDescription: 'Housekeeping',
+      rate: 100.00,
+      wbsCode: '',
+      cgstRate: 0.00,
+      cgstAmount: 0.00,
+      sgstRate: 0.00,
+      sgstAmount: 0.00,
+      igstRate: 0.00,
+      igstAmount: 0.00,
+      tcsRate: 0.00,
+      tcsAmount: 0.00,
+      taxAmount: 0.00,
+      totalAmount: 1000.000
+    }
+  ];
+
+  // Mock invoice data
+  const invoiceData = [];
+
+  // Mock payment data  
+  const paymentData = [];
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -250,6 +281,186 @@ export const WODetailsPage = () => {
               <span className="text-sm">: {woDetails.workCategory}</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* BOQ Details Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">BOQ Details</h3>
+        <div className="overflow-x-auto">
+          <Table className="min-w-[1200px]">
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="font-semibold text-xs">S.No</TableHead>
+                <TableHead className="font-semibold text-xs">BOQ Details</TableHead>
+                <TableHead className="font-semibold text-xs">Quantity</TableHead>
+                <TableHead className="font-semibold text-xs">UOM</TableHead>
+                <TableHead className="font-semibold text-xs">Expected Date</TableHead>
+                <TableHead className="font-semibold text-xs">Product Description</TableHead>
+                <TableHead className="font-semibold text-xs">Rate</TableHead>
+                <TableHead className="font-semibold text-xs">Wbs Code</TableHead>
+                <TableHead className="font-semibold text-xs">CGST Rate(%)</TableHead>
+                <TableHead className="font-semibold text-xs">CGST Amount</TableHead>
+                <TableHead className="font-semibold text-xs">SGST Rate(%)</TableHead>
+                <TableHead className="font-semibold text-xs">SGST Amount</TableHead>
+                <TableHead className="font-semibold text-xs">IGST Rate(%)</TableHead>
+                <TableHead className="font-semibold text-xs">IGST Amount</TableHead>
+                <TableHead className="font-semibold text-xs">TCS Rate(%)</TableHead>
+                <TableHead className="font-semibold text-xs">TCS Amount</TableHead>
+                <TableHead className="font-semibold text-xs">Tax Amount</TableHead>
+                <TableHead className="font-semibold text-xs">Total Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {boqData.map((item) => (
+                <TableRow key={item.sNo} className="hover:bg-gray-50">
+                  <TableCell className="text-sm">{item.sNo}</TableCell>
+                  <TableCell className="text-sm">{item.boqDetails}</TableCell>
+                  <TableCell className="text-sm">{item.quantity}</TableCell>
+                  <TableCell className="text-sm">{item.uom}</TableCell>
+                  <TableCell className="text-sm">{item.expectedDate}</TableCell>
+                  <TableCell className="text-sm">{item.productDescription}</TableCell>
+                  <TableCell className="text-sm">{item.rate.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.wbsCode}</TableCell>
+                  <TableCell className="text-sm">{item.cgstRate.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.cgstAmount.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.sgstRate.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.sgstAmount.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.igstRate.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.igstAmount.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.tcsRate.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.tcsAmount.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.taxAmount.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm font-medium">{item.totalAmount.toFixed(3)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Summary Section */}
+        <div className="mt-6 border-t pt-4">
+          <div className="flex justify-between items-center py-2">
+            <span className="font-medium text-gray-700">Net Amount (INR):</span>
+            <span className="font-medium">1000.000</span>
+          </div>
+          <div className="flex justify-between items-center py-2">
+            <span className="font-medium text-gray-700">Total Taxable Value Of WO:</span>
+            <span className="font-medium">1000.000</span>
+          </div>
+          <div className="flex justify-between items-center py-2">
+            <span className="font-medium text-gray-700">Taxes (INR):</span>
+            <span className="font-medium">0.000</span>
+          </div>
+          <div className="flex justify-between items-center py-2 border-t">
+            <span className="font-semibold text-gray-900">Total WO Value (INR):</span>
+            <span className="font-semibold">1000.00</span>
+          </div>
+          <div className="mt-4">
+            <span className="font-medium text-gray-700">Amount In Words: </span>
+            <span className="text-gray-900">One Thousand Rupees Only</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Terms & Conditions Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Terms & Conditions :</h3>
+        <p className="text-gray-700">NA</p>
+        
+        <div className="mt-6">
+          <p className="text-gray-900 font-medium">For jyoti We Confirm & Accept,</p>
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <p className="font-medium text-gray-900">PREPARED BY: Robert Day2</p>
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">SIGNATURE:</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Attachments Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Attachments</h3>
+        <p className="text-gray-500">No attachments</p>
+      </div>
+
+      {/* Invoices/SES Details Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Invoices/SES Details</h3>
+        <div className="overflow-x-auto">
+          <Table className="min-w-[1000px]">
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="font-semibold text-xs">Actions</TableHead>
+                <TableHead className="font-semibold text-xs">ID</TableHead>
+                <TableHead className="font-semibold text-xs">Invoice Number</TableHead>
+                <TableHead className="font-semibold text-xs">Invoice Date</TableHead>
+                <TableHead className="font-semibold text-xs">Total Invoice Amount</TableHead>
+                <TableHead className="font-semibold text-xs">Payable Amount</TableHead>
+                <TableHead className="font-semibold text-xs">Retention Amount</TableHead>
+                <TableHead className="font-semibold text-xs">TDS Amount</TableHead>
+                <TableHead className="font-semibold text-xs">QC Amount</TableHead>
+                <TableHead className="font-semibold text-xs">W.O. Number</TableHead>
+                <TableHead className="font-semibold text-xs">Physical Invoice Sent to Accounts</TableHead>
+                <TableHead className="font-semibold text-xs">Physical Invoice Received</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invoiceData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={12} className="text-center text-gray-500 py-8">
+                    No invoice data available
+                  </TableCell>
+                </TableRow>
+              ) : (
+                invoiceData.map((item, index) => (
+                  <TableRow key={index} className="hover:bg-gray-50">
+                    {/* Table rows would go here if there was data */}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Payment Details Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Details</h3>
+        <div className="overflow-x-auto">
+          <Table className="min-w-[800px]">
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="font-semibold text-xs">Invoice ID</TableHead>
+                <TableHead className="font-semibold text-xs">Amount</TableHead>
+                <TableHead className="font-semibold text-xs">Payment Mode</TableHead>
+                <TableHead className="font-semibold text-xs">Transaction Number</TableHead>
+                <TableHead className="font-semibold text-xs">Status</TableHead>
+                <TableHead className="font-semibold text-xs">Payment Date</TableHead>
+                <TableHead className="font-semibold text-xs">Note</TableHead>
+                <TableHead className="font-semibold text-xs">Date of Entry</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paymentData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center text-gray-500 py-8">
+                    No payment data available
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paymentData.map((item, index) => (
+                  <TableRow key={index} className="hover:bg-gray-50">
+                    {/* Table rows would go here if there was data */}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
 
