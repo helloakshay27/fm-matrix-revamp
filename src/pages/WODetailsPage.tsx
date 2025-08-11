@@ -464,6 +464,36 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
+      {/* Debit/Credit Note Details Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Debit/Credit Note Details</h3>
+        <div className="overflow-x-auto">
+          <Table className="min-w-[1000px]">
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="font-semibold text-xs">ID</TableHead>
+                <TableHead className="font-semibold text-xs">Type</TableHead>
+                <TableHead className="font-semibold text-xs">Amount</TableHead>
+                <TableHead className="font-semibold text-xs">Description</TableHead>
+                <TableHead className="font-semibold text-xs">Approved</TableHead>
+                <TableHead className="font-semibold text-xs">Approved On</TableHead>
+                <TableHead className="font-semibold text-xs">Approved By</TableHead>
+                <TableHead className="font-semibold text-xs">Created On</TableHead>
+                <TableHead className="font-semibold text-xs">Created By</TableHead>
+                <TableHead className="font-semibold text-xs">Attachments</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                  No data available
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
       {/* Back Button */}
       <div className="mt-6">
         <Button 
