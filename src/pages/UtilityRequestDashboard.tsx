@@ -6,6 +6,7 @@ import { Search, Plus, Edit, Eye, Filter, Download, Upload } from 'lucide-react'
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
 
 // Mock data for customer consumption
 const customerConsumptionData = [
@@ -207,6 +208,7 @@ const columns: ColumnConfig[] = [
 ];
 
 export const UtilityRequestDashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -241,7 +243,7 @@ export const UtilityRequestDashboard = () => {
   };
 
   const handleAdd = () => {
-    console.log('Add new utility request');
+    navigate('/utility/utility-request/add');
   };
 
   const getStatusColor = (status: string) => {
