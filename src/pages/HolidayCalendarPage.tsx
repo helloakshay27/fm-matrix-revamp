@@ -126,7 +126,7 @@ export const HolidayCalendarPage = () => {
       <div className="flex-1 overflow-hidden">
         <div className="h-full flex">
           {/* Left side - Table */}
-          <div className="flex-1 p-6">
+          <div className="flex-1 p-6 overflow-auto">
             <EnhancedTable
               data={holidayData}
               columns={columns}
