@@ -299,9 +299,9 @@ export const HolidayCalendarPage = () => {
                 <DialogTitle>Add Holiday</DialogTitle>
               </DialogHeader>
               
-              <div className="grid grid-cols-12 gap-6 py-4">
-                {/* Left Column */}
-                <div className="col-span-8 space-y-6">
+              <div className="py-4">
+                <div className="grid grid-cols-3 gap-4 space-y-0">
+                  {/* Holiday Name */}
                   {/* Holiday Name */}
                   <div className="space-y-2">
                     <Label htmlFor="holidayName">Holiday Name</Label>
@@ -450,10 +450,7 @@ export const HolidayCalendarPage = () => {
                       </PopoverContent>
                     </Popover>
                   </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="col-span-4 space-y-6">
+                  {/* Select Customers */}
                   <div className="space-y-2">
                     <Label>Select Customers</Label>
                     <Popover open={customersDropdownOpen} onOpenChange={setCustomersDropdownOpen}>
@@ -484,9 +481,10 @@ export const HolidayCalendarPage = () => {
                     </Popover>
                   </div>
                 </div>
-              </div>
 
-              {/* Action Buttons */}
+                </div>
+
+                {/* Action Buttons */}
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   Cancel
