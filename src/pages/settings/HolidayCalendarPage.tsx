@@ -370,7 +370,7 @@ export const HolidayCalendarPage = () => {
                         <Button
                           variant="outline"
                           className={cn(
-                            "w-full justify-start text-left font-normal border-gray-300 hover:border-gray-300 focus:border-gray-300",
+                            "w-full justify-start text-left font-normal !border-gray-300 !hover:border-gray-300 !focus:border-gray-300",
                             !date && "text-muted-foreground"
                           )}
                         >
