@@ -236,294 +236,743 @@ export const IncidentSetupDashboard = () => {
         </div>
 
         {/* Right Side - Form and Table */}
-        {selectedCategory !== 'Incident Disclaimer' && (
-          <div className="flex-1">
-            {isEditing ? (
-              /* Edit Form Modal */
-              <div className="bg-white p-8 rounded-lg border shadow-sm max-w-2xl">
-                <h2 className="text-lg font-semibold mb-4">Edit {editingItem?.type}</h2>
-                <div className="grid grid-cols-1 gap-4">
-                  {editingItem?.type === 'Escalations' ? <>
-                      <TextField label="Level" fullWidth margin="normal" value={editFormData.level} onChange={e => setEditFormData({
-                        ...editFormData,
-                        level: e.target.value
-                      })} />
-                      <TextField label="Escalate In Days" fullWidth margin="normal" value={editFormData.escalateInDays} onChange={e => setEditFormData({
+        <div className="flex-1">
+          {isEditing ? (/* Edit Form Modal */
+        <div className="bg-white p-8 rounded-lg border shadow-sm max-w-2xl">
+              {editingItem?.type === 'Escalations' ? <div className="space-y-6">
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-sm">⚙</span>
+                    </div>
+                    <h2 className="text-lg font-semibold text-red-500">Edit Escalation</h2>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Level
+                    </label>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Select Level</InputLabel>
+                      <MuiSelect 
+                        value={editFormData.level} 
+                        onChange={e => setEditFormData({
+                          ...editFormData,
+                          level: e.target.value
+                        })}
+                        label="Select Level"
+                      >
+                        {incidenceLevels.map(level => 
+                          <MenuItem key={level.id} value={level.name}>
+                            {level.name}
+                          </MenuItem>
+                        )}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Escalate In Days
+                    </label>
+                    <TextField 
+                      type="text" 
+                      value={editFormData.escalateInDays} 
+                      onChange={e => setEditFormData({
                         ...editFormData,
                         escalateInDays: e.target.value
-                      })} />
-                      <TextField label="Users" fullWidth margin="normal" value={editFormData.users} onChange={e => setEditFormData({
+                      })} 
+                      placeholder="Enter days"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Escalate to users
+                    </label>
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        {editFormData.users.split(',').filter(user => user.trim()).map((user, index) => <div key={index} className="bg-gray-200 px-3 py-1 rounded-md flex items-center gap-2">
+                            <span className="text-sm">{user.trim()}</span>
+                            <button onClick={() => {
+                      const userList = editFormData.users.split(',').filter(u => u.trim() !== user.trim());
+                      setEditFormData({
                         ...editFormData,
-                        users: e.target.value
-                      })} />
-                    </> : <>
-                      <TextField label="Name" fullWidth margin="normal" value={editFormData.name} onChange={e => setEditFormData({
+                        users: userList.join(', ')
+                      });
+                    }} className="text-gray-500 hover:text-gray-700">
+                              ×
+                            </button>
+                          </div>)}
+                      </div>
+                      <Select onValueChange={value => {
+                  const currentUsers = editFormData.users ? editFormData.users.split(',').map(u => u.trim()) : [];
+                  if (!currentUsers.includes(value)) {
+                    const newUsers = [...currentUsers, value].filter(u => u);
+                    setEditFormData({
+                      ...editFormData,
+                      users: newUsers.join(', ')
+                    });
+                  }
+                }}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select users to add..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          <SelectItem value="Mahendra Lungare">Mahendra Lungare</SelectItem>
+                          <SelectItem value="Vinayak Mane">Vinayak Mane</SelectItem>
+                          <SelectItem value="Abdul A">Abdul A</SelectItem>
+                          <SelectItem value="John Doe">John Doe</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <Button onClick={handleEditSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2">
+                      Submit
+                    </Button>
+                    <Button onClick={handleEditBack} variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2">
+                      Back
+                    </Button>
+                  </div>
+                </div> : <div className="space-y-6">
+                  {(editingItem?.type === 'Sub Category' || editingItem?.type === 'Sub Sub Category' || editingItem?.type === 'Sub Sub Sub Category') && <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Category
+                      </label>
+                      <Select value={editFormData.category} onValueChange={value => setEditFormData({
+                ...editFormData,
+                category: value
+              })}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          {categories.map(category => <SelectItem key={category.id} value={category.name}>
+                              {category.name}
+                            </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>}
+
+                  {(editingItem?.type === 'Sub Sub Category' || editingItem?.type === 'Sub Sub Sub Category') && <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Sub-Category
+                      </label>
+                      <Select value={editFormData.subCategory} onValueChange={value => setEditFormData({
+                ...editFormData,
+                subCategory: value
+              })}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Sub Category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          {subCategories.filter(sub => sub.category === editFormData.category).map(subCategory => <SelectItem key={subCategory.id} value={subCategory.subCategory}>
+                                {subCategory.subCategory}
+                              </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>}
+
+                  {editingItem?.type === 'Sub Sub Sub Category' && <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Sub Sub Category
+                      </label>
+                      <Select value={editFormData.subSubCategory} onValueChange={value => setEditFormData({
+                ...editFormData,
+                subSubCategory: value
+              })}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Sub Sub Category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          {subSubCategories.filter(subsub => subsub.category === editFormData.category && subsub.subCategory === editFormData.subCategory).map(subSubCategory => <SelectItem key={subSubCategory.id} value={subSubCategory.subSubCategory}>
+                                {subSubCategory.subSubCategory}
+                              </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Name
+                    </label>
+                    <TextField 
+                      type="text" 
+                      value={editFormData.name} 
+                      onChange={e => setEditFormData({
                         ...editFormData,
                         name: e.target.value
-                      })} />
-                    </>}
-                </div>
-                <div className="flex justify-end gap-2 mt-6">
-                  <Button variant="ghost" onClick={handleEditBack}>
-                    Back
+                      })} 
+                      placeholder="Enter name"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <Button onClick={handleEditSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2">
+                      Submit
+                    </Button>
+                    <Button onClick={handleEditBack} variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2">
+                      Back
+                    </Button>
+                  </div>
+                </div>}
+            </div>) : <>
+              {/* Form Section */}
+              <div className="mb-6">
+                <div className="flex gap-4 items-end">
+                  {selectedCategory === 'Approval Setup' ? <div className="flex-1">
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Select up to 15 Options...</InputLabel>
+                        <MuiSelect 
+                          value={selectedApprovalUsers} 
+                          onChange={e => setSelectedApprovalUsers(e.target.value)}
+                          label="Select up to 15 Options..."
+                        >
+                          <MenuItem value="Mahendra Lungare">Mahendra Lungare</MenuItem>
+                          <MenuItem value="Vinayak Mane">Vinayak Mane</MenuItem>
+                          <MenuItem value="Abdul A">Abdul A</MenuItem>
+                          <MenuItem value="John Doe">John Doe</MenuItem>
+                          <MenuItem value="Jane Smith">Jane Smith</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+                    </div> : selectedCategory === 'Escalations' ? <>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Level
+                        </label>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Select Level</InputLabel>
+                          <MuiSelect 
+                            value={selectedEscalationLevel} 
+                            onChange={e => setSelectedEscalationLevel(e.target.value)}
+                            label="Select Level"
+                          >
+                            {incidenceLevels.map(level => 
+                              <MenuItem key={level.id} value={level.name}>
+                                {level.name}
+                              </MenuItem>
+                            )}
+                          </MuiSelect>
+                        </FormControl>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Escalate In Days
+                        </label>
+                        <TextField 
+                          type="text" 
+                          value={escalateInDays} 
+                          onChange={e => setEscalateInDays(e.target.value)} 
+                          placeholder="Enter days"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Escalate To Users
+                        </label>
+                        <Select value={escalateToUsers} onValueChange={setEscalateToUsers}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select up to 15 Options..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white z-50">
+                            <SelectItem value="Mahendra Lungare">Mahendra Lungare</SelectItem>
+                            <SelectItem value="Vinayak Mane">Vinayak Mane</SelectItem>
+                            <SelectItem value="Abdul A">Abdul A</SelectItem>
+                            <SelectItem value="John Doe">John Doe</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </> : selectedCategory === 'Secondary Sub Category' ? <>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Secondry Category
+                        </label>
+                        <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select Category" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white z-50">
+                            {secondaryCategories.map(category => <SelectItem key={category.id} value={category.name}>
+                                {category.name}
+                              </SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                     </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
+                       <div className="flex-1">
+                         <label className="block text-sm font-medium text-gray-700 mb-1">
+                           Secondry Category
+                         </label>
+                         <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
+                           <SelectTrigger className="w-full">
+                             <SelectValue placeholder="Select Category" />
+                           </SelectTrigger>
+                           <SelectContent className="bg-white z-50">
+                             {secondaryCategories.map(category => <SelectItem key={category.id} value={category.name}>
+                                 {category.name}
+                               </SelectItem>)}
+                           </SelectContent>
+                         </Select>
+                       </div>
+                       <div className="flex-1">
+                         <label className="block text-sm font-medium text-gray-700 mb-1">
+                           Secondary Sub Category
+                         </label>
+                         <Select value={selectedSubCategory} onValueChange={setSelectedSubCategory}>
+                           <SelectTrigger className="w-full">
+                             <SelectValue placeholder="Select Secondry Sub Category" />
+                           </SelectTrigger>
+                           <SelectContent className="bg-white z-50">
+                             {secondarySubCategories
+                               .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
+                               .map(sub => <SelectItem key={sub.id} value={sub.secondarySubCategory}>
+                                   {sub.secondarySubCategory}
+                                 </SelectItem>)}
+                           </SelectContent>
+                         </Select>
+                        </div>
+                     </> : selectedCategory === 'Secondary Sub Sub Sub Category' ? <>
+                       <div className="flex-1">
+                         <label className="block text-sm font-medium text-gray-700 mb-1">
+                           Secondary Category
+                         </label>
+                         <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
+                           <SelectTrigger className="w-full">
+                             <SelectValue placeholder="Select Category" />
+                           </SelectTrigger>
+                           <SelectContent className="bg-white z-50">
+                             {secondaryCategories.map(category => <SelectItem key={category.id} value={category.name}>
+                                 {category.name}
+                               </SelectItem>)}
+                           </SelectContent>
+                         </Select>
+                       </div>
+                       <div className="flex-1">
+                         <label className="block text-sm font-medium text-gray-700 mb-1">
+                           Secondary Sub Category
+                         </label>
+                         <Select value={selectedSubCategory} onValueChange={setSelectedSubCategory}>
+                           <SelectTrigger className="w-full">
+                             <SelectValue placeholder="Select Secondary Sub Category" />
+                           </SelectTrigger>
+                           <SelectContent className="bg-white z-50">
+                             {secondarySubCategories
+                               .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
+                               .map(sub => <SelectItem key={sub.id} value={sub.secondarySubCategory}>
+                                   {sub.secondarySubCategory}
+                                 </SelectItem>)}
+                           </SelectContent>
+                         </Select>
+                       </div>
+                       <div className="flex-1">
+                         <label className="block text-sm font-medium text-gray-700 mb-1">
+                           Secondary Sub Sub Category
+                         </label>
+                         <Select>
+                           <SelectTrigger className="w-full">
+                             <SelectValue placeholder="Select Secondary Sub Category" />
+                           </SelectTrigger>
+                           <SelectContent className="bg-white z-50">
+                             <SelectItem value="Fire Prevention">Fire Prevention</SelectItem>
+                             <SelectItem value="System Malfunction">System Malfunction</SelectItem>
+                           </SelectContent>
+                         </Select>
+                       </div>
+                      </> : selectedCategory === 'Incident Disclaimer' ? <>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Name
+                          </label>
+                          <TextField 
+                            type="text" 
+                            value={categoryName} 
+                            onChange={e => setCategoryName(e.target.value)} 
+                            placeholder="Enter Name"
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                          />
+                        </div>
+                    </> : selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category' ? <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Category
+                      </label>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Select Category</InputLabel>
+                        <MuiSelect 
+                          value={selectedParentCategory} 
+                          onChange={e => setSelectedParentCategory(e.target.value)}
+                          label="Select Category"
+                        >
+                          {categories.map(category => 
+                            <MenuItem key={category.id} value={category.name}>
+                              {category.name}
+                            </MenuItem>
+                          )}
+                        </MuiSelect>
+                      </FormControl>
+                    </div> : null}
+                  {(selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') && <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Sub Category
+                      </label>
+                      <Select value={selectedSubCategory} onValueChange={setSelectedSubCategory}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Sub Category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          {subCategories.filter(sub => sub.category === selectedParentCategory).map(subCategory => <SelectItem key={subCategory.id} value={subCategory.subCategory}>
+                                {subCategory.subCategory}
+                              </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>}
+                  {selectedCategory === 'Sub Sub Sub Category' && <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Sub Sub Category
+                      </label>
+                      <Select value={editFormData.subSubCategory} onValueChange={value => setEditFormData({
+                  ...editFormData,
+                  subSubCategory: value
+                })}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Sub Sub Category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          {subSubCategories.filter(subsub => subsub.category === selectedParentCategory && subsub.subCategory === selectedSubCategory).map(subSubCategory => <SelectItem key={subSubCategory.id} value={subSubCategory.subSubCategory}>
+                                {subSubCategory.subSubCategory}
+                              </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>}
+                  {selectedCategory !== 'Escalations' && <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Name
+                      </label>
+                      <TextField 
+                        type="text" 
+                        value={categoryName} 
+                        onChange={e => setCategoryName(e.target.value)} 
+                        placeholder="Enter name"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                      />
+                    </div>}
+                  <Button onClick={handleSubmit} className="bg-purple-600 hover:bg-purple-700 text-white px-8">
+                    Submit
                   </Button>
-                  <Button onClick={handleEditSubmit}>Update</Button>
                 </div>
               </div>
-            ) : (
-              /* Add/View Form and Table */
-              <div className="space-y-6">
-                {/* Form */}
-                <div>
-                  <h2 className="text-lg font-semibold mb-4">Add New {selectedCategory}</h2>
-                  {selectedCategory === 'Category' && (
-                    <div className="flex gap-4">
-                      <Input type="text" placeholder="Category name" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="flex-1" />
-                      <Button onClick={handleSubmit}>Add Category</Button>
-                    </div>
-                  )}
-                  {selectedCategory === 'Sub Category' && (
-                    <div className="flex gap-4">
-                      <FormControl fullWidth>
-                        <InputLabel id="category-label">Category</InputLabel>
-                        <MuiSelect labelId="category-label" id="category-select" value={selectedParentCategory} label="Category" onChange={e => setSelectedParentCategory(e.target.value)}>
-                          {categories.map(category => (
-                            <MenuItem key={category.id} value={category.name}>
-                              {category.name}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                      <Input type="text" placeholder="Sub Category name" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="flex-1" />
-                      <Button onClick={handleSubmit}>Add Sub Category</Button>
-                    </div>
-                  )}
-                  {selectedCategory === 'Sub Sub Category' && (
-                    <div className="flex gap-4">
-                      <FormControl fullWidth>
-                        <InputLabel id="category-label">Category</InputLabel>
-                        <MuiSelect labelId="category-label" id="category-select" value={selectedParentCategory} label="Category" onChange={e => setSelectedParentCategory(e.target.value)}>
-                          {categories.map(category => (
-                            <MenuItem key={category.id} value={category.name}>
-                              {category.name}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                      <FormControl fullWidth>
-                        <InputLabel id="subcategory-label">Sub Category</InputLabel>
-                        <MuiSelect labelId="subcategory-label" id="subcategory-select" value={selectedSubCategory} label="Sub Category" onChange={e => setSelectedSubCategory(e.target.value)}>
-                          {subCategories.filter(sub => sub.category === selectedParentCategory).map(sub => (
-                            <MenuItem key={sub.id} value={sub.subCategory}>
-                              {sub.subCategory}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                      <Input type="text" placeholder="Sub Sub Category name" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="flex-1" />
-                      <Button onClick={handleSubmit}>Add Sub Sub Category</Button>
-                    </div>
-                  )}
-                  {selectedCategory === 'Incidence status' && (
-                    <div className="flex gap-4">
-                      <Input type="text" placeholder="Incidence status" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="flex-1" />
-                      <Button onClick={handleSubmit}>Add Incidence status</Button>
-                    </div>
-                  )}
-                  {selectedCategory === 'Incidence level' && (
-                    <div className="flex gap-4">
-                      <Input type="text" placeholder="Incidence level" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="flex-1" />
-                      <Button onClick={handleSubmit}>Add Incidence level</Button>
-                    </div>
-                  )}
-                  {selectedCategory === 'Escalations' && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Input type="text" placeholder="Level" value={selectedEscalationLevel} onChange={e => setSelectedEscalationLevel(e.target.value)} />
-                      <Input type="text" placeholder="Escalate In Days" value={escalateInDays} onChange={e => setEscalateInDays(e.target.value)} />
-                      <Input type="text" placeholder="Escalate to users" value={escalateToUsers} onChange={e => setEscalateToUsers(e.target.value)} />
-                      <Button onClick={handleSubmit} className="md:col-span-3">Add Escalation</Button>
-                    </div>
-                  )}
-                  {selectedCategory === 'Approval Setup' && (
-                    <div className="flex gap-4">
-                      <Input type="text" placeholder="Approval Users" value={selectedApprovalUsers} onChange={e => setSelectedApprovalUsers(e.target.value)} className="flex-1" />
-                      <Button onClick={handleSubmit}>Add Approval Users</Button>
-                    </div>
-                  )}
-                  {selectedCategory === 'Secondary Category' && (
-                    <div className="flex gap-4">
-                      <Input type="text" placeholder="Secondary Category" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="flex-1" />
-                      <Button onClick={handleSubmit}>Add Secondary Category</Button>
-                    </div>
-                  )}
-                  {selectedCategory === 'Secondary Sub Category' && (
-                    <div className="flex gap-4">
-                      <FormControl fullWidth>
-                        <InputLabel id="secondary-category-label">Secondary Category</InputLabel>
-                        <MuiSelect labelId="secondary-category-label" id="secondary-category-select" value={selectedSecondaryCategory} label="Secondary Category" onChange={e => setSelectedSecondaryCategory(e.target.value)}>
-                          {secondaryCategories.map(secondaryCategory => (
-                            <MenuItem key={secondaryCategory.id} value={secondaryCategory.name}>
-                              {secondaryCategory.name}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                      <Input type="text" placeholder="Secondary Sub Category" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="flex-1" />
-                      <Button onClick={handleSubmit}>Add Secondary Sub Category</Button>
-                    </div>
-                  )}
-                </div>
 
-                {/* Table */}
-                <Table>
+              {/* Table Section */}
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">Name</TableHead>
-                      <TableHead>Actions</TableHead>
+                    <TableRow className="bg-[#f6f4ee] border-b border-[#D5DbDB]">
+                      {selectedCategory === 'Secondary Sub Category' ? <>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                         </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
+                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
+                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
+                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
+                           <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                          </> : selectedCategory === 'Secondary Sub Sub Sub Category' ? <>
+                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Category</TableHead>
+                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Category</TableHead>
+                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Category</TableHead>
+                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Secondary Sub Sub Sub Category</TableHead>
+                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                           </> : selectedCategory === 'Who got injured' ? <>
+                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                            </> : selectedCategory === 'Property Damage Category' ? <>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                             </> : selectedCategory === 'RCA Category' ? <>
+                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                              </> : selectedCategory === 'Incident Disclaimer' ? <>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                              </> : selectedCategory === 'Approval Setup' ? <>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Users</TableHead>
+                                <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                        </> : selectedCategory === 'Escalations' ? <>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Level</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Escalate In Days</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Users</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                        </> : selectedCategory === 'Sub Sub Sub Category' ? <>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                        </> : selectedCategory === 'Sub Sub Category' ? <>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                        </> : selectedCategory === 'Sub Category' ? <>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Sub Category</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                        </> : <>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                          <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
+                        </>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedCategory === 'Category' && categories.map(category => (
-                      <TableRow key={category.id}>
-                        <TableCell className="font-medium">{category.name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(category, 'Category')}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(category, 'Category')}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {selectedCategory === 'Sub Category' && subCategories.filter(sub => sub.category === selectedParentCategory).map(sub => (
-                      <TableRow key={sub.id}>
-                        <TableCell className="font-medium">{sub.subCategory}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(sub, 'Sub Category')}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(sub, 'Sub Category')}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {selectedCategory === 'Sub Sub Category' && subSubCategories.filter(subsub => subsub.subCategory === selectedSubCategory).map(subsub => (
-                      <TableRow key={subsub.id}>
-                        <TableCell className="font-medium">{subsub.subSubCategory}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(subsub, 'Sub Sub Category')}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(subsub, 'Sub Sub Category')}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {selectedCategory === 'Incidence status' && incidenceStatuses.map(status => (
-                      <TableRow key={status.id}>
-                        <TableCell className="font-medium">{status.name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(status, 'Incidence status')}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(status, 'Incidence status')}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {selectedCategory === 'Incidence level' && incidenceLevels.map(level => (
-                      <TableRow key={level.id}>
-                        <TableCell className="font-medium">{level.name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(level, 'Incidence level')}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(level, 'Incidence level')}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {selectedCategory === 'Escalations' && escalations.map(escalation => (
-                      <TableRow key={escalation.id}>
-                        <TableCell className="font-medium">{escalation.level}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(escalation, 'Escalations')}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(escalation, 'Escalations')}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {selectedCategory === 'Approval Setup' && approvalSetups.map(approval => (
-                      <TableRow key={approval.id}>
-                        <TableCell className="font-medium">{approval.users}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(approval, 'Approval Setup')}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(approval, 'Approval Setup')}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {selectedCategory === 'Secondary Category' && secondaryCategories.map(secondary => (
-                      <TableRow key={secondary.id}>
-                        <TableCell className="font-medium">{secondary.name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(secondary, 'Secondary Category')}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(secondary, 'Secondary Category')}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {selectedCategory === 'Secondary Sub Category' && secondarySubCategories.filter(secondarySub => secondarySub.secondaryCategory === selectedSecondaryCategory).map(secondarySub => (
-                      <TableRow key={secondarySub.id}>
-                        <TableCell className="font-medium">{secondarySub.secondarySubCategory}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(secondarySub, 'Secondary Sub Category')}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(secondarySub, 'Secondary Sub Category')}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {selectedCategory === 'Secondary Sub Category' ? secondarySubCategories.map(secondarySub => <TableRow key={secondarySub.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{secondarySub.secondaryCategory}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{secondarySub.secondarySubCategory}</TableCell>
+                          <TableCell className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondarySub, 'Secondary Sub Category')}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondarySub, 'Secondary Sub Category')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                          </TableRow>) : selectedCategory === 'Secondary Sub Sub Category' ? [
+                            { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention' },
+                            { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction' }
+                          ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
+                           <TableCell className="px-4 py-3">
+                             <div className="flex gap-2">
+                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                 <Edit className="w-4 h-4" />
+                               </Button>
+                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                 <Trash2 className="w-4 h-4" />
+                               </Button>
+                             </div>
+                           </TableCell>
+                          </TableRow>) : selectedCategory === 'Secondary Sub Sub Sub Category' ? [
+                            { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention', secondarySubSubSubCategory: 'Alarm Systems' },
+                            { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction', secondarySubSubSubCategory: 'Hardware Issues' }
+                          ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
+                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubSubCategory}</TableCell>
+                           <TableCell className="px-4 py-3">
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                           </TableRow>) : selectedCategory === 'Who got injured' ? [
+                             { id: 1, name: 'Employee' },
+                             { id: 2, name: 'Contractor' },
+                             { id: 3, name: 'Visitor' }
+                           ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                             <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                             <TableCell className="px-4 py-3">
+                               <div className="flex gap-2">
+                                 <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                   <Edit className="w-4 h-4" />
+                                 </Button>
+                                 <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                   <Trash2 className="w-4 h-4" />
+                                 </Button>
+                               </div>
+                             </TableCell>
+                            </TableRow>) : selectedCategory === 'Property Damage Category' ? [
+                              { id: 1, name: 'Building Damage' },
+                              { id: 2, name: 'Equipment Damage' },
+                              { id: 3, name: 'Vehicle Damage' }
+                            ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                              <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                              <TableCell className="px-4 py-3">
+                                <div className="flex gap-2">
+                                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                             </TableRow>) : selectedCategory === 'RCA Category' ? [
+                               { id: 1, name: 'Human Error' },
+                               { id: 2, name: 'Equipment Failure' },
+                               { id: 3, name: 'Process Failure' }
+                             ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                               <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                               <TableCell className="px-4 py-3">
+                                 <div className="flex gap-2">
+                                   <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                     <Edit className="w-4 h-4" />
+                                   </Button>
+                                   <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                     <Trash2 className="w-4 h-4" />
+                                   </Button>
+                                 </div>
+                               </TableCell>
+                              </TableRow>) : selectedCategory === 'Incident Disclaimer' ? [
+                                { id: 1, name: 'General Disclaimer' },
+                                { id: 2, name: 'Safety Disclaimer' },
+                                { id: 3, name: 'Legal Disclaimer' }
+                              ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                                <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</TableCell>
+                                <TableCell className="px-4 py-3">
+                                  <div className="flex gap-2">
+                                    <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => <TableRow key={approval.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{approval.users}</TableCell>
+                          <TableCell className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(approval, 'Approval Setup')}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(approval, 'Approval Setup')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>) : selectedCategory === 'Escalations' ? escalations.map(escalation => <TableRow key={escalation.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{escalation.level}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{escalation.escalateInDays}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{escalation.users}</TableCell>
+                          <TableCell className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(escalation, 'Escalations')}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(escalation, 'Escalations')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>) : selectedCategory === 'Secondary Category' ? secondaryCategories.map(secondary => <TableRow key={secondary.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{secondary.name}</TableCell>
+                          <TableCell className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(secondary, 'Secondary Category')}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(secondary, 'Secondary Category')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>) : selectedCategory === 'Incidence level' ? incidenceLevels.map(level => <TableRow key={level.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{level.name}</TableCell>
+                          <TableCell className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(level, 'Incidence level')}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(level, 'Incidence level')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>) : selectedCategory === 'Incidence status' ? incidenceStatuses.map(status => <TableRow key={status.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{status.name}</TableCell>
+                          <TableCell className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(status, 'Incidence status')}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(status, 'Incidence status')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>) : selectedCategory === 'Sub Sub Sub Category' ? subSubSubCategories.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubCategory}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubSubCategory}</TableCell>
+                          <TableCell className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Sub Category')}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Sub Category')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>) : selectedCategory === 'Sub Sub Category' ? subSubCategories.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subSubCategory}</TableCell>
+                          <TableCell className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Sub Category')}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Sub Category')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>) : selectedCategory === 'Sub Category' ? subCategories.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.category}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.subCategory}</TableCell>
+                          <TableCell className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Sub Category')}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Sub Category')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>) : categories.map(category => <TableRow key={category.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                          <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{category.name}</TableCell>
+                          <TableCell className="px-4 py-3">
+                            <div className="flex gap-2">
+                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(category, 'Category')}>
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(category, 'Category')}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>)}
                   </TableBody>
                 </Table>
+                </div>
               </div>
-            )}
-          </div>
-        )}
+            </>}
+        </div>
       </div>
     </div>;
 };
