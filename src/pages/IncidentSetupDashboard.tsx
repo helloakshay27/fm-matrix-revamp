@@ -68,6 +68,12 @@ export const IncidentSetupDashboard = () => {
   const [escalateInDays, setEscalateInDays] = useState('');
   const [escalateToUsers, setEscalateToUsers] = useState('');
 
+  const [approvalSetups, setApprovalSetups] = useState([
+    { id: 1, users: 'Mahendra Lungare, Vinayak Mane' },
+    { id: 2, users: 'Abdul A, John Doe' }
+  ]);
+  const [selectedApprovalUsers, setSelectedApprovalUsers] = useState('');
+
   const menuItems = [
     'Category',
     'Sub Category', 
@@ -143,6 +149,8 @@ export const IncidentSetupDashboard = () => {
         setIncidenceLevels(incidenceLevels.filter(level => level.id !== item.id));
       } else if (type === 'Escalations') {
         setEscalations(escalations.filter(escalation => escalation.id !== item.id));
+      } else if (type === 'Approval Setup') {
+        setApprovalSetups(approvalSetups.filter(approval => approval.id !== item.id));
       }
     }
   };
@@ -375,7 +383,22 @@ export const IncidentSetupDashboard = () => {
               {/* Form Section */}
               <div className="mb-6">
                 <div className="flex gap-4 items-end">
-                  {selectedCategory === 'Escalations' ? (
+                  {selectedCategory === 'Approval Setup' ? (
+                    <div className="flex-1">
+                      <Select value={selectedApprovalUsers} onValueChange={setSelectedApprovalUsers}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select up to 15 Options..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          <SelectItem value="Mahendra Lungare">Mahendra Lungare</SelectItem>
+                          <SelectItem value="Vinayak Mane">Vinayak Mane</SelectItem>
+                          <SelectItem value="Abdul A">Abdul A</SelectItem>
+                          <SelectItem value="John Doe">John Doe</SelectItem>
+                          <SelectItem value="Jane Smith">Jane Smith</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : selectedCategory === 'Escalations' ? (
                     <>
                       <div className="flex-1">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -512,7 +535,12 @@ export const IncidentSetupDashboard = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
-                      {selectedCategory === 'Escalations' ? (
+                      {selectedCategory === 'Approval Setup' ? (
+                        <>
+                          <TableHead>Users</TableHead>
+                          <TableHead>Action</TableHead>
+                        </>
+                      ) : selectedCategory === 'Escalations' ? (
                         <>
                           <TableHead>Level</TableHead>
                           <TableHead>Escalate In Days</TableHead>
@@ -549,7 +577,33 @@ export const IncidentSetupDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedCategory === 'Escalations' ? (
+                    {selectedCategory === 'Approval Setup' ? (
+                      approvalSetups.map((approval) => (
+                        <TableRow key={approval.id}>
+                          <TableCell>{approval.users}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => handleEdit(approval, 'Approval Setup')}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleDelete(approval, 'Approval Setup')}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : selectedCategory === 'Escalations' ? (
                       escalations.map((escalation) => (
                         <TableRow key={escalation.id}>
                           <TableCell>{escalation.level}</TableCell>
