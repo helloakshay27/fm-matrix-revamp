@@ -80,6 +80,12 @@ export const IncidentSetupDashboard = () => {
     { id: 3, name: 'Technical Risk' }
   ]);
 
+  const [secondarySubCategories, setSecondarySubCategories] = useState([
+    { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety' },
+    { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure' }
+  ]);
+  const [selectedSecondaryCategory, setSelectedSecondaryCategory] = useState('');
+
   const menuItems = [
     'Category',
     'Sub Category', 
@@ -159,6 +165,8 @@ export const IncidentSetupDashboard = () => {
         setApprovalSetups(approvalSetups.filter(approval => approval.id !== item.id));
       } else if (type === 'Secondary Category') {
         setSecondaryCategories(secondaryCategories.filter(secondary => secondary.id !== item.id));
+      } else if (type === 'Secondary Sub Category') {
+        setSecondarySubCategories(secondarySubCategories.filter(secondarySub => secondarySub.id !== item.id));
       }
     }
   };
@@ -454,6 +462,38 @@ export const IncidentSetupDashboard = () => {
                         </Select>
                       </div>
                     </>
+                  ) : selectedCategory === 'Secondary Sub Category' ? (
+                    <>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Secondry Category
+                        </label>
+                        <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select Category" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white z-50">
+                            {secondaryCategories.map((category) => (
+                              <SelectItem key={category.id} value={category.name}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Name
+                        </label>
+                        <Input
+                          type="text"
+                          value={categoryName}
+                          onChange={(e) => setCategoryName(e.target.value)}
+                          className="w-full"
+                          placeholder="Enter name"
+                        />
+                      </div>
+                    </>
                   ) : (selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') ? (
                     <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -543,7 +583,13 @@ export const IncidentSetupDashboard = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
-                      {selectedCategory === 'Approval Setup' ? (
+                      {selectedCategory === 'Secondary Sub Category' ? (
+                        <>
+                          <TableHead>Secondary Category</TableHead>
+                          <TableHead>Secondry Sub Category</TableHead>
+                          <TableHead>Action</TableHead>
+                        </>
+                      ) : selectedCategory === 'Approval Setup' ? (
                         <>
                           <TableHead>Users</TableHead>
                           <TableHead>Action</TableHead>
@@ -585,7 +631,34 @@ export const IncidentSetupDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedCategory === 'Approval Setup' ? (
+                    {selectedCategory === 'Secondary Sub Category' ? (
+                      secondarySubCategories.map((secondarySub) => (
+                        <TableRow key={secondarySub.id}>
+                          <TableCell>{secondarySub.secondaryCategory}</TableCell>
+                          <TableCell>{secondarySub.secondarySubCategory}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => handleEdit(secondarySub, 'Secondary Sub Category')}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleDelete(secondarySub, 'Secondary Sub Category')}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : selectedCategory === 'Approval Setup' ? (
                       approvalSetups.map((approval) => (
                         <TableRow key={approval.id}>
                           <TableCell>{approval.users}</TableCell>
