@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Upload, Plus, Filter, MoreVertical, Calendar as CalendarIcon } from 'lucide-react';
+import { CalendarDays, Upload, Plus, Filter, MoreVertical, Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -155,6 +155,9 @@ export const HolidayCalendarPage = () => {
   const [selectedSites, setSelectedSites] = useState<string[]>([]);
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [sitesDropdownOpen, setSitesDropdownOpen] = useState(false);
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
+  const [customersDropdownOpen, setCustomersDropdownOpen] = useState(false);
 
   // Site options
   const siteOptions = [
@@ -355,41 +358,73 @@ export const HolidayCalendarPage = () => {
                   {/* Select Sites */}
                   <div className="space-y-2">
                     <Label>Select Sites</Label>
-                    <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Checkbox 
-                          id="selectAllSites"
-                          checked={selectedSites.length === siteOptions.length}
-                          onCheckedChange={handleSelectAllSites}
-                        />
-                        <Label htmlFor="selectAllSites" className="font-medium">Select All</Label>
-                      </div>
-                      {siteOptions.map((site) => (
-                        <div key={site} className="flex items-center space-x-2 mb-1">
-                          <Checkbox
-                            id={site}
-                            checked={selectedSites.includes(site)}
-                            onCheckedChange={(checked) => handleSiteChange(site, checked as boolean)}
-                          />
-                          <Label htmlFor={site} className="text-sm">{site}</Label>
+                    <Popover open={sitesDropdownOpen} onOpenChange={setSitesDropdownOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                          onClick={() => setSitesDropdownOpen(!sitesDropdownOpen)}
+                        >
+                          {selectedSites.length > 0 ? `${selectedSites.length} selected` : "Select sites"}
+                          <ChevronDown className="ml-auto h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-0" align="start">
+                        <div className="p-3 max-h-64 overflow-y-auto">
+                          <div className="flex items-center space-x-2 mb-2 pb-2 border-b">
+                            <Checkbox 
+                              id="selectAllSites"
+                              checked={selectedSites.length === siteOptions.length}
+                              onCheckedChange={handleSelectAllSites}
+                            />
+                            <Label htmlFor="selectAllSites" className="font-medium">Select All</Label>
+                          </div>
+                          {siteOptions.map((site) => (
+                            <div key={site} className="flex items-center space-x-2 mb-1">
+                              <Checkbox
+                                id={site}
+                                checked={selectedSites.includes(site)}
+                                onCheckedChange={(checked) => handleSiteChange(site, checked as boolean)}
+                              />
+                              <Label htmlFor={site} className="text-sm">{site}</Label>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   {/* Select Type */}
                   <div className="space-y-2">
                     <Label htmlFor="type">Select Type</Label>
-                    <Select value={selectedType} onValueChange={setSelectedType}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="public">Public</SelectItem>
-                        <SelectItem value="festival">Festival</SelectItem>
-                        <SelectItem value="maintenance">Maintenance</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Popover open={typeDropdownOpen} onOpenChange={setTypeDropdownOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                          onClick={() => setTypeDropdownOpen(!typeDropdownOpen)}
+                        >
+                          {selectedType ? selectedType.charAt(0).toUpperCase() + selectedType.slice(1) : "Select type"}
+                          <ChevronDown className="ml-auto h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <div className="p-1">
+                          {['public', 'festival', 'maintenance'].map((type) => (
+                            <div
+                              key={type}
+                              className="px-3 py-2 cursor-pointer hover:bg-accent rounded-sm"
+                              onClick={() => {
+                                setSelectedType(type);
+                                setTypeDropdownOpen(false);
+                              }}
+                            >
+                              {type.charAt(0).toUpperCase() + type.slice(1)}
+                            </div>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
 
@@ -397,18 +432,32 @@ export const HolidayCalendarPage = () => {
                 <div className="col-span-4 space-y-6">
                   <div className="space-y-2">
                     <Label>Select Customers</Label>
-                    <div className="border rounded-md p-3 bg-gray-50">
-                      {customerOptions.map((customer) => (
-                        <div key={customer} className="flex items-center space-x-2 mb-2">
-                          <Checkbox
-                            id={customer}
-                            checked={selectedCustomers.includes(customer)}
-                            onCheckedChange={(checked) => handleCustomerChange(customer, checked as boolean)}
-                          />
-                          <Label htmlFor={customer} className="text-sm">{customer}</Label>
+                    <Popover open={customersDropdownOpen} onOpenChange={setCustomersDropdownOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                          onClick={() => setCustomersDropdownOpen(!customersDropdownOpen)}
+                        >
+                          {selectedCustomers.length > 0 ? `${selectedCustomers.length} selected` : "Select customers"}
+                          <ChevronDown className="ml-auto h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-0" align="start">
+                        <div className="p-3 max-h-64 overflow-y-auto bg-gray-50">
+                          {customerOptions.map((customer) => (
+                            <div key={customer} className="flex items-center space-x-2 mb-2">
+                              <Checkbox
+                                id={customer}
+                                checked={selectedCustomers.includes(customer)}
+                                onCheckedChange={(checked) => handleCustomerChange(customer, checked as boolean)}
+                              />
+                              <Label htmlFor={customer} className="text-sm">{customer}</Label>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
               </div>
