@@ -216,9 +216,9 @@ export const AddWaterAssetDashboard = () => {
           <Collapsible open={assetOpen} onOpenChange={setAssetOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
                     ASSET DETAILS
                   </span>
                   {assetOpen ? <ChevronUp /> : <ChevronDown />}
@@ -485,9 +485,9 @@ export const AddWaterAssetDashboard = () => {
           <Collapsible open={warrantyOpen} onOpenChange={setWarrantyOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
                     Warranty Details
                   </span>
                   {warrantyOpen ? <ChevronUp /> : <ChevronDown />}
@@ -562,9 +562,9 @@ export const AddWaterAssetDashboard = () => {
           <Collapsible open={meterCategoryOpen} onOpenChange={setMeterCategoryOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
                     Meter Category Type
                   </span>
                   {meterCategoryOpen ? <ChevronUp /> : <ChevronDown />}
@@ -668,9 +668,9 @@ export const AddWaterAssetDashboard = () => {
           <Collapsible open={consumptionOpen} onOpenChange={setConsumptionOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
                     CONSUMPTION ASSET MEASURE
                   </span>
                   {consumptionOpen ? <ChevronUp /> : <ChevronDown />}
@@ -794,9 +794,9 @@ export const AddWaterAssetDashboard = () => {
           <Collapsible open={nonConsumptionOpen} onOpenChange={setNonConsumptionOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
                     NON CONSUMPTION ASSET MEASURE
                   </span>
                   {nonConsumptionOpen ? <ChevronUp /> : <ChevronDown />}
@@ -920,9 +920,9 @@ export const AddWaterAssetDashboard = () => {
           <Collapsible open={attachmentsOpen} onOpenChange={setAttachmentsOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
                     ATTACHMENTS
                   </span>
                   {attachmentsOpen ? <ChevronUp /> : <ChevronDown />}
