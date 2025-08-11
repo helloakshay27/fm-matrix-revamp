@@ -214,13 +214,13 @@ export default function UtilityDailyReadingsDashboard() {
       {/* Action Buttons */}
       <div className="flex items-center gap-4 mb-6">
         <Button 
-          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+          className="bg-[#C72030] hover:bg-[#B01D2A] text-white border-none rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           <Upload className="w-4 h-4" />
           Import
         </Button>
         <Button 
-          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+          className="bg-[#C72030] hover:bg-[#B01D2A] text-white border-none rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
           <Download className="w-4 h-4" />
           Export
