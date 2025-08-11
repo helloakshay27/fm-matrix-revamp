@@ -137,10 +137,78 @@ export const IncidentSetupDashboard = () => {
   const [selectedSecondaryCategory, setSelectedSecondaryCategory] = useState('');
   const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category', 'Incident Disclaimer'];
   const handleSubmit = () => {
-    if (categoryName.trim()) {
-      console.log('Adding category:', categoryName);
-      setCategoryName('');
+    if (!categoryName.trim()) return;
+
+    const newId = Math.max(...(
+      selectedCategory === 'Category' ? categories.map(c => c.id) :
+      selectedCategory === 'Sub Category' ? subCategories.map(s => s.id) :
+      selectedCategory === 'Sub Sub Category' ? subSubCategories.map(s => s.id) :
+      selectedCategory === 'Sub Sub Sub Category' ? subSubSubCategories.map(s => s.id) :
+      selectedCategory === 'Incidence status' ? incidenceStatuses.map(s => s.id) :
+      selectedCategory === 'Incidence level' ? incidenceLevels.map(l => l.id) :
+      selectedCategory === 'Escalations' ? escalations.map(e => e.id) :
+      selectedCategory === 'Approval Setup' ? approvalSetups.map(a => a.id) :
+      selectedCategory === 'Secondary Category' ? secondaryCategories.map(s => s.id) :
+      selectedCategory === 'Secondary Sub Category' ? secondarySubCategories.map(s => s.id) :
+      [0]
+    )) + 1;
+
+    if (selectedCategory === 'Category') {
+      setCategories([...categories, { id: newId, name: categoryName }]);
+    } else if (selectedCategory === 'Sub Category') {
+      if (selectedParentCategory) {
+        setSubCategories([...subCategories, { 
+          id: newId, 
+          category: selectedParentCategory, 
+          subCategory: categoryName 
+        }]);
+      }
+    } else if (selectedCategory === 'Sub Sub Category') {
+      if (selectedParentCategory && selectedSubCategory) {
+        setSubSubCategories([...subSubCategories, {
+          id: newId,
+          category: selectedParentCategory,
+          subCategory: selectedSubCategory,
+          subSubCategory: categoryName
+        }]);
+      }
+    } else if (selectedCategory === 'Incidence status') {
+      setIncidenceStatuses([...incidenceStatuses, { id: newId, name: categoryName }]);
+    } else if (selectedCategory === 'Incidence level') {
+      setIncidenceLevels([...incidenceLevels, { id: newId, name: categoryName }]);
+    } else if (selectedCategory === 'Escalations') {
+      if (selectedEscalationLevel && escalateInDays && escalateToUsers) {
+        setEscalations([...escalations, {
+          id: newId,
+          level: selectedEscalationLevel,
+          escalateInDays: escalateInDays,
+          users: escalateToUsers
+        }]);
+        setSelectedEscalationLevel('');
+        setEscalateInDays('');
+        setEscalateToUsers('');
+      }
+    } else if (selectedCategory === 'Approval Setup') {
+      if (selectedApprovalUsers) {
+        setApprovalSetups([...approvalSetups, {
+          id: newId,
+          users: selectedApprovalUsers
+        }]);
+        setSelectedApprovalUsers('');
+      }
+    } else if (selectedCategory === 'Secondary Category') {
+      setSecondaryCategories([...secondaryCategories, { id: newId, name: categoryName }]);
+    } else if (selectedCategory === 'Secondary Sub Category') {
+      if (selectedSecondaryCategory) {
+        setSecondarySubCategories([...secondarySubCategories, {
+          id: newId,
+          secondaryCategory: selectedSecondaryCategory,
+          secondarySubCategory: categoryName
+        }]);
+      }
     }
+
+    setCategoryName('');
   };
   const handleEdit = (item: any, type: string) => {
     setEditingItem({
