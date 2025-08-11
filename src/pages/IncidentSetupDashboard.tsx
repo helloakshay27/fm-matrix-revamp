@@ -49,6 +49,13 @@ export const IncidentSetupDashboard = () => {
     { id: 3, name: 'Open' }
   ]);
 
+  const [incidenceLevels, setIncidenceLevels] = useState([
+    { id: 1, name: 'level 4' },
+    { id: 2, name: 'Level 3' },
+    { id: 3, name: 'Level 2' },
+    { id: 4, name: 'Level 1' }
+  ]);
+
   const menuItems = [
     'Category',
     'Sub Category', 
@@ -105,6 +112,8 @@ export const IncidentSetupDashboard = () => {
         setSubSubSubCategories(subSubSubCategories.filter(subsubsub => subsubsub.id !== item.id));
       } else if (type === 'Incidence status') {
         setIncidenceStatuses(incidenceStatuses.filter(status => status.id !== item.id));
+      } else if (type === 'Incidence level') {
+        setIncidenceLevels(incidenceLevels.filter(level => level.id !== item.id));
       }
     }
   };
@@ -355,7 +364,33 @@ export const IncidentSetupDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedCategory === 'Incidence status' ? (
+                    {selectedCategory === 'Incidence level' ? (
+                      incidenceLevels.map((level) => (
+                        <TableRow key={level.id}>
+                          <TableCell>{level.name}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => handleEdit(level, 'Incidence level')}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleDelete(level, 'Incidence level')}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : selectedCategory === 'Incidence status' ? (
                       incidenceStatuses.map((status) => (
                         <TableRow key={status.id}>
                           <TableCell>{status.name}</TableCell>
