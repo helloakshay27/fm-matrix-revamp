@@ -732,7 +732,7 @@ export const IncidentSetupDashboard = () => {
               </div>
 
               {/* Table Section */}
-              <div className="bg-gray-50 rounded-lg p-6">
+              <div className="rounded-lg p-6">
                 <div className="overflow-x-auto">
                   <Table>
                   <TableHeader>
