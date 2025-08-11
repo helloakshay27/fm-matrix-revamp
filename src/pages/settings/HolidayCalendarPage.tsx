@@ -4,13 +4,38 @@ import { Input } from '@/components/ui/input';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Upload, Plus, Filter, MoreVertical } from 'lucide-react';
+import { CalendarDays, Upload, Plus, Filter, MoreVertical, Calendar as CalendarIcon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface Holiday {
   id: string;
@@ -123,6 +148,69 @@ const columns: ColumnConfig[] = [
 
 export const HolidayCalendarPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [date, setDate] = useState<Date>();
+  const [holidayName, setHolidayName] = useState('');
+  const [recurring, setRecurring] = useState<string>('');
+  const [selectedSites, setSelectedSites] = useState<string[]>([]);
+  const [selectedType, setSelectedType] = useState<string>('');
+  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+
+  // Site options
+  const siteOptions = [
+    'Sai Radha, Bund Garden',
+    'Pentagon Mangarpeta',
+    'Westport,Baner',
+    'Peninsula Corporate Park, Lower Parel',
+    'Concord, Bund Garden',
+    'Namdev Prob2, Balewaadi',
+    'Astrocity Viman Nagar'
+  ];
+
+  // Customer type options
+  const customerOptions = [
+    'Tickets',
+    'Checklist', 
+    'Booking',
+    'Parking'
+  ];
+
+  const handleSiteChange = (site: string, checked: boolean) => {
+    if (checked) {
+      setSelectedSites([...selectedSites, site]);
+    } else {
+      setSelectedSites(selectedSites.filter(s => s !== site));
+    }
+  };
+
+  const handleCustomerChange = (customer: string, checked: boolean) => {
+    if (checked) {
+      setSelectedCustomers([...selectedCustomers, customer]);
+    } else {
+      setSelectedCustomers(selectedCustomers.filter(c => c !== customer));
+    }
+  };
+
+  const handleSelectAllSites = (checked: boolean) => {
+    if (checked) {
+      setSelectedSites(siteOptions);
+    } else {
+      setSelectedSites([]);
+    }
+  };
+
+  const handleSubmit = () => {
+    // Handle form submission
+    console.log({
+      holidayName,
+      date,
+      recurring,
+      selectedSites,
+      selectedType,
+      selectedCustomers
+    });
+    setIsAddDialogOpen(false);
+  };
 
   const renderCell = (holiday: Holiday, columnKey: string) => {
     switch (columnKey) {
@@ -193,12 +281,152 @@ export const HolidayCalendarPage = () => {
       {/* Action Buttons and Search Bar */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex gap-3">
-          <Button 
-            className="bg-[#C72030] hover:bg-[#A01020] text-white flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Add Holiday
-          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                className="bg-[#C72030] hover:bg-[#A01020] text-white flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add Holiday
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add Holiday</DialogTitle>
+              </DialogHeader>
+              
+              <div className="grid grid-cols-12 gap-6 py-4">
+                {/* Left Column */}
+                <div className="col-span-8 space-y-6">
+                  {/* Holiday Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="holidayName">Holiday Name</Label>
+                    <Input
+                      id="holidayName"
+                      placeholder="Holiday Name"
+                      value={holidayName}
+                      onChange={(e) => setHolidayName(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Date Picker */}
+                  <div className="space-y-2">
+                    <Label>Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {date ? format(date, "dd - MM - yyyy") : <span>DD - MM - YY</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={date}
+                          onSelect={setDate}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  {/* Recurring */}
+                  <div className="space-y-2">
+                    <Label>Recurring</Label>
+                    <RadioGroup value={recurring} onValueChange={setRecurring}>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="yes" />
+                        <Label htmlFor="yes">Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="no" />
+                        <Label htmlFor="no">No</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {/* Select Sites */}
+                  <div className="space-y-2">
+                    <Label>Select Sites</Label>
+                    <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Checkbox 
+                          id="selectAllSites"
+                          checked={selectedSites.length === siteOptions.length}
+                          onCheckedChange={handleSelectAllSites}
+                        />
+                        <Label htmlFor="selectAllSites" className="font-medium">Select All</Label>
+                      </div>
+                      {siteOptions.map((site) => (
+                        <div key={site} className="flex items-center space-x-2 mb-1">
+                          <Checkbox
+                            id={site}
+                            checked={selectedSites.includes(site)}
+                            onCheckedChange={(checked) => handleSiteChange(site, checked as boolean)}
+                          />
+                          <Label htmlFor={site} className="text-sm">{site}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Select Type */}
+                  <div className="space-y-2">
+                    <Label htmlFor="type">Select Type</Label>
+                    <Select value={selectedType} onValueChange={setSelectedType}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="public">Public</SelectItem>
+                        <SelectItem value="festival">Festival</SelectItem>
+                        <SelectItem value="maintenance">Maintenance</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="col-span-4 space-y-6">
+                  <div className="space-y-2">
+                    <Label>Select Customers</Label>
+                    <div className="border rounded-md p-3 bg-gray-50">
+                      {customerOptions.map((customer) => (
+                        <div key={customer} className="flex items-center space-x-2 mb-2">
+                          <Checkbox
+                            id={customer}
+                            checked={selectedCustomers.includes(customer)}
+                            onCheckedChange={(checked) => handleCustomerChange(customer, checked as boolean)}
+                          />
+                          <Label htmlFor={customer} className="text-sm">{customer}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  className="bg-[#C72030] hover:bg-[#A01020] text-white"
+                  onClick={handleSubmit}
+                >
+                  Add Holiday
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Button 
             variant="outline" 
             className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white flex items-center gap-2"
