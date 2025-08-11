@@ -62,9 +62,7 @@ export function BuildingPage() {
   });
 
   useEffect(() => {
-    // Get user ID from localStorage or auth context
-    const userId = JSON.parse(localStorage.getItem('user')).id; // Default for demo
-    dispatch(fetchSites(userId));
+    dispatch(fetchSites());
     dispatch(fetchBuildings());
   }, [dispatch]);
 
@@ -190,7 +188,7 @@ export function BuildingPage() {
   const getSiteName = (siteId: string) => {
     if (!sites.data || !Array.isArray(sites.data)) return siteId;
     const site = sites.data.find(s => s.id.toString() === siteId);
-    return site ? site.site_name : siteId;
+    return site ? site.name : siteId;
   };
 
   return (
@@ -235,7 +233,7 @@ export function BuildingPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {sites?.data.sites && Array.isArray(sites.data.sites) && sites.data.sites.map((site) => (
+                              {sites?.data && Array.isArray(sites.data) && sites.data.map((site) => (
                                 <SelectItem key={site.id} value={site.id.toString()}>
                                   {site.name}
                                 </SelectItem>
@@ -602,7 +600,7 @@ export function BuildingPage() {
                           <SelectContent>
                             {sites.data && Array.isArray(sites.data) && sites.data.map((site) => (
                               <SelectItem key={site.id} value={site.id.toString()}>
-                                {site.site_name}
+                                {site.name}
                               </SelectItem>
                             ))}
                           </SelectContent>

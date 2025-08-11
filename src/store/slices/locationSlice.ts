@@ -4,11 +4,22 @@ import { apiClient } from '@/utils/apiClient';
 // Types
 export interface Site {
   id: number;
-  site_name: string;
+  name: string;
   site_code?: string;
   active?: boolean;
-  company_id?: string;
+  company_id?: number;
   address?: string;
+  city?: string;
+  state?: string;
+  region_id?: string;
+  pms_region?: {
+    id: number;
+    name: string;
+    active: boolean;
+  };
+  pms_zone?: {
+    name: string;
+  };
 }
 
 export interface Building {
@@ -145,8 +156,8 @@ const getSelectedSiteId = () => {
 // Async Thunks
 export const fetchSites = createAsyncThunk(
   'location/fetchSites',
-  async (userId: string) => {
-    const response = await apiClient.get(`/pms/sites/allowed_sites.json?user_id=${userId}`);
+  async () => {
+    const response = await apiClient.get('/pms/sites.json');
     return response.data;
   }
 );
@@ -486,7 +497,7 @@ const locationSlice = createSlice({
       })
       .addCase(fetchSites.fulfilled, (state, action) => {
         state.sites.loading = false;
-        state.sites.data = action.payload;
+        state.sites.data = action.payload.sites || [];
       })
       .addCase(fetchSites.rejected, (state, action) => {
         state.sites.loading = false;
