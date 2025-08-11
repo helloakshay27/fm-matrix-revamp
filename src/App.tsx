@@ -507,6 +507,9 @@ import { EscalationMatrixPage } from './pages/maintenance/EscalationMatrixPage';
 import { PermitSetupDashboard } from './pages/PermitSetupDashboard';
 import { IncidentSetupDashboard } from './pages/IncidentSetupDashboard';
 
+// Import Holiday Calendar page
+import { HolidayCalendarPage } from './pages/HolidayCalendarPage';
+
 import { SpaceManagementBookingDetailsPage } from '@/pages/SpaceManagementBookingDetailsPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { OTPVerificationPage } from '@/pages/OTPVerificationPage';
@@ -544,6 +547,9 @@ function App() {
               <Route path="/" element={<ProtectedRoute><Layout><div /></Layout></ProtectedRoute>}>
                 <Route index element={<Index />} />
                 <Route path="dashboard" element={<Dashboard />} />
+
+                {/* Holiday Calendar Route */}
+                <Route path="/holiday-calendar" element={<HolidayCalendarPage />} />
 
                 {/* Rule Engine Routes */}
                 <Route path="/rule-engine/rule-list" element={<RuleListPage />} />
