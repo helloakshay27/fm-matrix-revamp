@@ -56,19 +56,20 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
           className="h-8 flex items-center gap-2"
+          title='Columns'
         >
           <Grid3x3 className="w-4 h-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 h-[368px] overflow-y-auto">        
+      <DropdownMenuContent align="end" className="w-80 h-[368px] overflow-y-auto">
         {hideableColumns.map((column) => {
           const isVisible = columnVisibility[column.key];
           const isLastVisible = visibleCount === 1 && isVisible;
-          
+
           return (
             <DropdownMenuItem
               key={column.key}
@@ -100,7 +101,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
             </DropdownMenuItem>
           );
         })}
-       </DropdownMenuContent>
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };
