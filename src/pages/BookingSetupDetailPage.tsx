@@ -24,6 +24,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { facilityBookingSetupDetails } from "@/store/slices/facilityBookingsSlice";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { QRCodeModal } from "@/components/QRCodeModal";
+import axios from "axios";
 
 // Custom theme for MUI components
 const muiTheme = createTheme({
@@ -166,13 +167,33 @@ export const BookingSetupDetailPage = () => {
     },
   ]);
 
-  const handleDownloadQr = () => {
-    const link = document.createElement("a");
-    link.target = "_blank";
-    link.href = qrUrl;
-    link.download = "qr-code.png";
-    link.click();
+  const handleDownloadQr = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/admin/facility_setups/facility_qr_codes.pdf?access_token=${token}&facility_ids[]=${id}`,
+        {
+          responseType: 'blob',
+        }
+      );
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+
+      a.download = 'facility_qr_codes.pdf';
+
+      document.body.appendChild(a);
+      a.click();
+
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+    }
   };
+
 
   const handleAdditionalOpen = () => {
     setAdditionalOpen(!additionalOpen);

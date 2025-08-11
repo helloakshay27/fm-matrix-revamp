@@ -59,6 +59,7 @@ export const Header = () => {
     if (selectedCompany) {
       // setCompany(selectedCompany.name)
       localStorage.setItem("selectedCompany", selectedCompany.name)
+      localStorage.setItem("selectedCompanyId", selectedCompany.id)
     }
   }, [selectedCompany])
 

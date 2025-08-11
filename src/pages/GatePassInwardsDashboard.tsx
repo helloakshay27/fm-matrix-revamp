@@ -1,11 +1,14 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { SlidersHorizontal } from 'lucide-react';
+import { Filter, Eye, Plus } from 'lucide-react';
 import { GatePassInwardsFilterModal } from '@/components/GatePassInwardsFilterModal';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 export const GatePassInwardsDashboard = () => {
+  const navigate = useNavigate();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   // Data matching the screenshot
@@ -103,79 +106,112 @@ export const GatePassInwardsDashboard = () => {
     }
   ];
 
+  // Column configuration for the enhanced table
+  const columns: ColumnConfig[] = [
+    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
+    { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
+    { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
+    { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
+    { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true },
+    { key: 'personName', label: 'Person Name', sortable: true, hideable: true, draggable: true },
+    { key: 'profileImage', label: 'Profile Image', sortable: false, hideable: true, draggable: true },
+    { key: 'passNo', label: 'Pass No.', sortable: true, hideable: true, draggable: true },
+    { key: 'modeOfTransport', label: 'Mode of Transport', sortable: true, hideable: true, draggable: true },
+    { key: 'lrNo', label: 'LR No.', sortable: true, hideable: true, draggable: true },
+    { key: 'tripId', label: 'Trip ID', sortable: true, hideable: true, draggable: true },
+    { key: 'gateEntry', label: 'Gate Entry', sortable: true, hideable: true, draggable: true },
+    { key: 'itemDetails', label: 'Item Details', sortable: false, hideable: true, draggable: true, width: '300px' }
+  ];
+
   const handleViewDetails = (id: string) => {
-    console.log('View details for:', id);
+    navigate(`/security/gate-pass/inwards/detail/${id}`);
   };
+
+  // Prepare data with index for the enhanced table
+  const dataWithIndex = inwardData.map((item, index) => ({
+    ...item,
+    sNo: index + 1
+  }));
+
+  // Render row function for enhanced table
+  const renderRow = (entry: any) => ({
+    sNo: entry.sNo,
+    actions: (
+      <div className="flex gap-2 justify-center">
+        <div title="View details">
+          <Eye 
+            className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+            onClick={() => handleViewDetails(entry.id)}
+          />
+        </div>
+      </div>
+    ),
+    id: (
+      <button
+        onClick={() => handleViewDetails(entry.id)}
+        className="text-[#C72030] hover:underline hover:text-[#C72030]/80 transition-colors font-medium"
+      >
+        {entry.id}
+      </button>
+    ),
+    type: entry.type || '--',
+    category: entry.category,
+    personName: entry.personName,
+    profileImage: (
+      <img 
+        src={entry.profileImage} 
+        alt={`${entry.personName} profile`}
+        className="w-8 h-8 rounded-full object-cover border border-gray-200 mx-auto"
+      />
+    ),
+    passNo: entry.passNo || '--',
+    modeOfTransport: entry.modeOfTransport || '--',
+    lrNo: entry.lrNo || '--',
+    tripId: entry.tripId || '--',
+    gateEntry: entry.gateEntry,
+    itemDetails: (
+      <div className="max-w-xs">
+        <div className="truncate" title={entry.itemDetails}>
+          {entry.itemDetails}
+        </div>
+      </div>
+    )
+  });
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg border border-gray-200">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <h1 className="text-xl font-semibold text-gray-900 mb-4">Inward List</h1>
-          
-          {/* Filters Button */}
-          <Button 
-            variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-4 py-2 rounded-none flex items-center gap-2"
-            onClick={() => setIsFilterModalOpen(true)}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            Filters
-          </Button>
-        </div>
-
-        {/* Data Table */}
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="text-left font-semibold">ID</TableHead>
-                <TableHead className="text-left font-semibold">Type</TableHead>
-                <TableHead className="text-left font-semibold">Category</TableHead>
-                <TableHead className="text-left font-semibold">Person Name</TableHead>
-                <TableHead className="text-left font-semibold">Profile Image</TableHead>
-                <TableHead className="text-left font-semibold">Pass No.</TableHead>
-                <TableHead className="text-left font-semibold">Mode of Transport</TableHead>
-                <TableHead className="text-left font-semibold">LR No.</TableHead>
-                <TableHead className="text-left font-semibold">Trip ID</TableHead>
-                <TableHead className="text-left font-semibold">Gate Entry</TableHead>
-                <TableHead className="text-left font-semibold">Item Details</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {inwardData.map((entry) => (
-                <TableRow key={entry.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium text-blue-600">
-                    <button
-                      onClick={() => handleViewDetails(entry.id)}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {entry.id}
-                    </button>
-                  </TableCell>
-                  <TableCell>{entry.type}</TableCell>
-                  <TableCell>{entry.category}</TableCell>
-                  <TableCell className="font-medium">{entry.personName}</TableCell>
-                  <TableCell>
-                    <img 
-                      src={entry.profileImage} 
-                      alt={`${entry.personName} profile`}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  </TableCell>
-                  <TableCell>{entry.passNo}</TableCell>
-                  <TableCell>{entry.modeOfTransport}</TableCell>
-                  <TableCell>{entry.lrNo}</TableCell>
-                  <TableCell>{entry.tripId}</TableCell>
-                  <TableCell>{entry.gateEntry}</TableCell>
-                  <TableCell className="max-w-xs">{entry.itemDetails}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Inward List</h1>
+      
+      <div className="flex justify-between items-center mb-6">
+        <Button 
+          onClick={() => navigate('/security/gate-pass/inwards/add')}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
+        
+        <Button 
+          variant="outline"
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white p-2 rounded-md"
+          onClick={() => setIsFilterModalOpen(true)}
+        >
+          <Filter className="w-4 h-4" />
+        </Button>
       </div>
+
+      <EnhancedTable
+        data={dataWithIndex}
+        columns={columns}
+        renderRow={renderRow}
+        storageKey="inward-gate-pass-table"
+        emptyMessage="No inward entries available"
+        enableSearch={true}
+        enableExport={true}
+        searchPlaceholder="Search inward entries..."
+        exportFileName="inward-gate-pass-entries"
+      />
 
       <GatePassInwardsFilterModal 
         isOpen={isFilterModalOpen}

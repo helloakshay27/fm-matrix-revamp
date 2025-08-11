@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star, MessageSquare, Flag, ChevronRight, Building2, User, Globe, RotateCcw, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { apiClient } from '@/utils/apiClient';
 
 const recentAttendance = [{
   id: 'ATT-001',
@@ -65,24 +66,107 @@ const recentAttendance = [{
 }];
 
 export function RecentAttendanceSidebar() {
-  const [flaggedAttendance, setFlaggedAttendance] = useState<Set<string>>(new Set());
+  // Initialize state from localStorage
+  const [flaggedAttendance, setFlaggedAttendance] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('flaggedAttendance');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+  
+  const [goldenAttendance, setGoldenAttendance] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('goldenAttendance');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+  
   const navigate = useNavigate();
+
+  // Save to localStorage whenever state changes
+  useEffect(() => {
+    localStorage.setItem('flaggedAttendance', JSON.stringify(Array.from(flaggedAttendance)));
+  }, [flaggedAttendance]);
+
+  useEffect(() => {
+    localStorage.setItem('goldenAttendance', JSON.stringify(Array.from(goldenAttendance)));
+  }, [goldenAttendance]);
 
   const handleAddComment = (attendanceId: string) => {
     console.log('Add comment for attendance:', attendanceId);
     // Add comment functionality
   };
 
-  const handleFlag = (attendanceId: string) => {
-    setFlaggedAttendance(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(attendanceId)) {
-        newSet.delete(attendanceId);
-      } else {
-        newSet.add(attendanceId);
-      }
-      return newSet;
-    });
+  const handleFlag = async (attendanceId: string) => {
+    try {
+      // Update local state first for immediate UI feedback
+      setFlaggedAttendance(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(attendanceId)) {
+          newSet.delete(attendanceId);
+        } else {
+          newSet.add(attendanceId);
+        }
+        return newSet;
+      });
+
+      // Make API call - using the same endpoint as tickets
+      await apiClient.post(`/pms/admin/complaints/mark_as_flagged.json?ids=[${attendanceId}]`);
+      
+      console.log(`Attendance ${attendanceId} flagged/unflagged successfully`);
+      
+    } catch (error) {
+      console.error('Error flagging attendance:', error);
+      
+      // Revert state on error
+      setFlaggedAttendance(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(attendanceId)) {
+          newSet.delete(attendanceId);
+        } else {
+          newSet.add(attendanceId);
+        }
+        return newSet;
+      });
+    }
+  };
+
+  const handleGoldenTicket = async (attendanceId: string) => {
+    try {
+      // Update local state first for immediate UI feedback
+      setGoldenAttendance(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(attendanceId)) {
+          newSet.delete(attendanceId);
+        } else {
+          newSet.add(attendanceId);
+        }
+        return newSet;
+      });
+
+      // Make API call - using the same endpoint as tickets
+      await apiClient.post(`/pms/admin/complaints/mark_as_golden_ticket.json?ids=[${attendanceId}]`);
+      
+      console.log(`Attendance ${attendanceId} marked/unmarked as golden ticket successfully`);
+      
+    } catch (error) {
+      console.error('Error marking attendance as golden ticket:', error);
+      
+      // Revert state on error
+      setGoldenAttendance(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(attendanceId)) {
+          newSet.delete(attendanceId);
+        } else {
+          newSet.add(attendanceId);
+        }
+        return newSet;
+      });
+    }
   };
 
   const handleViewDetails = (attendanceId: string) => {
@@ -113,7 +197,22 @@ export function RecentAttendanceSidebar() {
             <div className="flex items-center justify-between mb-3">
               <span className="font-semibold text-gray-800 text-sm">{attendance.id}</span>
               <div className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                <button 
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleGoldenTicket(attendance.id);
+                  }}
+                >
+                  <Star className={`h-5 w-5 transition-colors duration-200 cursor-pointer hover:opacity-80 ${
+                    goldenAttendance.has(attendance.id) 
+                      ? 'text-yellow-600 fill-yellow-600' 
+                      : 'text-black fill-none stroke-black'
+                  }`} style={{
+                    strokeWidth: goldenAttendance.has(attendance.id) ? '0' : '1'
+                  }} />
+                </button>
                 <span className="bg-pink-300 text-pink-800 px-2 py-1 rounded text-xs font-medium">
                   {attendance.priority}
                 </span>
@@ -179,18 +278,28 @@ export function RecentAttendanceSidebar() {
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-6">
                 <button 
-                  className="flex items-center gap-2 text-black text-sm font-medium hover:opacity-80" 
-                  onClick={() => handleAddComment(attendance.id)}
+                  type="button"
+                  className="flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 transition-opacity duration-200" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAddComment(attendance.id);
+                  }}
                 >
                   <MessageSquare className="h-4 w-4 text-red-500" />
                   Add Comment
                 </button>
                 
                 <button 
-                  className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 ${flaggedAttendance.has(attendance.id) ? 'opacity-60' : ''}`} 
-                  onClick={() => handleFlag(attendance.id)}
+                  type="button"
+                  className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 transition-all duration-200 ${flaggedAttendance.has(attendance.id) ? 'opacity-60' : ''}`} 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleFlag(attendance.id);
+                  }}
                 >
-                  <Flag className="h-4 w-4 text-red-500" />
+                  <Flag className={`h-4 w-4 transition-colors duration-200 ${flaggedAttendance.has(attendance.id) ? 'text-red-600 fill-red-600' : 'text-red-500'}`} />
                   Flag Issue
                 </button>
               </div>

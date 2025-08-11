@@ -10,7 +10,7 @@ import roleReducer from './slices/roleSlice'
 import { functionReducer } from './slices/functionSlice'
 import fmUserReducer, { createFmUserReducer, editFMUserReducer, fetchRolesReducer, fetchSuppliersReducer, fetchUnitsReducer, getFMUsersReducer, getUserDetailsReducer } from './slices/fmUserSlice'
 import userCountsReducer from './slices/userCountsSlice'
-import occupantUsersReducer from './slices/occupantUsersSlice'
+import occupantUsersReducer, { exportOccupantUsersReducer } from './slices/occupantUsersSlice'
 import occupantUserCountsReducer from './slices/occupantUserCountsSlice'
 import projectReducer from './slices/projectSlice'
 import siteReducer from './slices/siteSlice'
@@ -43,6 +43,9 @@ import floorsReducer from './slices/floorsSlice'
 import zonesReducer from './slices/zonesSlice'
 import roomsReducer from './slices/roomsSlice'
 import { addCurrencyReducer, getCurrencyReducer } from './slices/currencySlice'
+import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from './slices/eventSlice'
+import { createUserGroupReducer, fetchUserGroupsReducer } from './slices/userGroupSlice'
+import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
 
 export const store = configureStore({
   reducer: {
@@ -141,6 +144,21 @@ export const store = configureStore({
     getUserDetails: getUserDetailsReducer,
     editFMUser: editFMUserReducer,
     updateMenu: updateMenuReducer,
+    exportOccupantUsers: exportOccupantUsersReducer,
+
+    // Events
+    fetchEvents: fetchEventsReducer,
+    createEvent: createEventReducer,
+    fetchEventById: fetchEventByIdReducer,
+
+    // Broadcast
+    fetchBroadcasts: fetchBroadcastsReducer,
+    createBroadcast: createBroadcastReducer,
+    fetchBroadcastById: fetchBroadcastByIdReducer,
+
+    // User Groups
+    fetchUserGroups: fetchUserGroupsReducer,
+    createUserGroup: createUserGroupReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

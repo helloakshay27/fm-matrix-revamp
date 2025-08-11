@@ -218,9 +218,13 @@ import { GVehiclesDashboard } from "./pages/GVehiclesDashboard";
 import { GVehicleOutDashboard } from "./pages/GVehicleOutDashboard";
 
 // Import Gate Pass pages
-import { GatePassDashboard } from "./pages/GatePassDashboard";
-import { GatePassInwardsDashboard } from "./pages/GatePassInwardsDashboard";
-import { GatePassOutwardsDashboard } from "./pages/GatePassOutwardsDashboard";
+import { GatePassDashboard } from './pages/GatePassDashboard';
+import { GatePassInwardsDashboard } from './pages/GatePassInwardsDashboard';
+import { GatePassInwardsDetailPage } from './pages/GatePassInwardsDetailPage';
+import { AddGatePassInwardPage } from './pages/AddGatePassInwardPage';
+import { GatePassOutwardsDashboard } from './pages/GatePassOutwardsDashboard';
+import { GatePassOutwardsAddPage } from './pages/GatePassOutwardsAddPage';
+import { GatePassOutwardsDetailPage } from './pages/GatePassOutwardsDetailPage';
 
 // Import Space Management pages
 import { SpaceManagementBookingsDashboard } from "./pages/SpaceManagementBookingsDashboard";
@@ -399,8 +403,12 @@ import { EditAssetDetailsPage } from "./pages/EditAssetDetailsPage";
 
 import { MSafeDashboard } from './pages/MSafeDashboard';
 import { MSafeUserDetail } from './pages/MSafeUserDetail';
+import { ExternalUserDetail } from './pages/ExternalUserDetail';
+import { EditExternalUserPage } from './pages/EditExternalUserPage';
 import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
+import { ExternalUsersDashboard } from './pages/ExternalUsersDashboard';
 import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
+import { KRCCFormDetail } from './pages/KRCCFormDetail';
 
 // Import Edit Roster Template page
 import { EditRosterTemplatePage } from "./pages/setup/EditRosterTemplatePage";
@@ -457,6 +465,10 @@ import { HotelBookingPage } from "./pages/HotelBookingPage";
 // Import CRM Polls page
 import CRMPollsPage from "./pages/CRMPollsPage";
 import AddPollPage from "./pages/AddPollPage";
+
+// Import CRM Occupant User Detail page
+import { CRMOccupantUserDetailPage } from './pages/CRMOccupantUserDetailPage';
+import { CRMOccupantUserEditPage } from './pages/CRMOccupantUserEditPage';
 
 // Import Market Place All page
 import MarketPlaceAllPage from "./pages/MarketPlaceAllPage";
@@ -567,6 +579,10 @@ import { useEffect } from 'react';
 import { getCurrency } from './store/slices/currencySlice';
 import { EditBookingSetupPage } from "./pages/setup/EditBookingSetupPage";
 import { MobileAdminOrdersPage } from "./pages/MobileAdminOrdersPage";
+import DesignInsightsSetupDashboard from "./pages/DesignInsightsSetupDashboard";
+import CRMOccupantUsersDashboard from "./pages/CRMOccupantUsersDashboard";
+import CRMFMUserDashboard from "./pages/CRMFMUserDashboard";
+import CRMCustomersDashboard from "./pages/CRMCustomersDashboard";
 
 
 const queryClient = new QueryClient();
@@ -770,6 +786,9 @@ function App() {
                   path="/crm/campaign/details/:id"
                   element={<LeadDetailsPage />}
                 />
+                <Route path="/crm/customers" element={<CRMCustomersDashboard />} />
+                <Route path="/crm/fm-users" element={<CRMFMUserDashboard />} />
+                <Route path="/crm/occupant-users" element={<CRMOccupantUsersDashboard />} />
                 <Route path="/crm/events" element={<CRMEventsPage />} />
                 <Route path="/crm/events/add" element={<AddEventPage />} />
                 <Route
@@ -788,10 +807,9 @@ function App() {
                 <Route path="/crm/polls" element={<CRMPollsPage />} />
                 <Route path="/crm/polls/add" element={<AddPollPage />} />
                 <Route path="/crm/groups" element={<CRMGroupsPage />} />
-                <Route
-                  path="/crm/groups/details/:id"
-                  element={<CRMGroupDetailsPage />}
-                />
+                <Route path="/crm/groups/details/:id" element={<CRMGroupDetailsPage />} />
+                <Route path="/crm/occupant-users/:id" element={<CRMOccupantUserDetailPage />} />
+                <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
 
                 {/* Snagging Routes */}
                 <Route
@@ -1424,7 +1442,11 @@ function App() {
                 />
                 <Route path="/security/gate-pass" element={<GatePassDashboard />} />
                 <Route path="/security/gate-pass/inwards" element={<GatePassInwardsDashboard />} />
+                <Route path="/security/gate-pass/inwards/detail/:id" element={<GatePassInwardsDetailPage />} />
+                <Route path="/security/gate-pass/inwards/add" element={<AddGatePassInwardPage />} />
                 <Route path="/security/gate-pass/outwards" element={<GatePassOutwardsDashboard />} />
+                <Route path="/security/gate-pass/outwards/add" element={<GatePassOutwardsAddPage />} />
+                <Route path="/security/gate-pass/outwards/:id" element={<GatePassOutwardsDetailPage />} />
                 <Route path="/security/visitor" element={<VisitorsDashboard />} />
                 <Route path="/visitor-form" element={<VisitorFormPage />} />
                 <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
@@ -1678,9 +1700,15 @@ function App() {
                   element={<KRCCFormListDashboard />}
                 />
                 <Route path="/maintenance/m-safe" element={<MSafeDashboard />} />
+                <Route path="/maintenance/m-safe" element={<Navigate to="/maintenance/m-safe/internal" replace />} />
+                <Route path="/maintenance/m-safe/internal" element={<MSafeDashboard />} />
+                <Route path="/maintenance/m-safe/external" element={<ExternalUsersDashboard />} />
                 <Route path="/maintenance/m-safe/user/:userId" element={<MSafeUserDetail />} />
+                <Route path="/maintenance/m-safe/external/user/:userId" element={<ExternalUserDetail />} />
+                <Route path="/maintenance/m-safe/external/user/:userId/edit" element={<EditExternalUserPage />} />
                 <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
-                <Route path="/maintenance/m-safe/krcc-form-list" element={<KRCCFormListDashboard />} />
+                <Route path="/maintenance/krcc-list" element={<KRCCFormListDashboard />} />
+                <Route path="/maintenance/krcc-list/:id" element={<KRCCFormDetail />} />
 
                 {/* Market Place Routes */}
                 <Route
@@ -1810,7 +1838,10 @@ function App() {
                   path="/settings/invoice-approvals/add"
                   element={<AddInvoiceApprovalsPage />}
                 />
-
+                <Route
+                  path="/settings/design-insights/setup"
+                  element={<DesignInsightsSetupDashboard />}
+                />
                 <Route path="/settings/checklist-setup/group" element={<ChecklistGroupsPage />} />
                 <Route path="/settings/checklist-setup/email-rule" element={<EmailRuleSetupPage />} />
                 <Route path="/settings/checklist-setup/task-escalation" element={<TaskEscalationPage />} />
