@@ -1,20 +1,31 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Upload, X, Edit } from 'lucide-react';
+import { Plus, Search, Upload, X, Edit, CalendarDays, Filter, MoreVertical } from 'lucide-react';
 import { AddCountryDialog } from '@/components/AddCountryDialog';
 import { AddRegionDialog } from '@/components/AddRegionDialog';
 import { AddZoneDialog } from '@/components/AddZoneDialog';
 import { EditZoneDialog } from '@/components/EditZoneDialog';
 import { AddEntityDialog } from '@/components/AddEntityDialog';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
 export const AccountDashboard = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState('organization');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddCountryOpen, setIsAddCountryOpen] = useState(false);
@@ -27,6 +38,108 @@ export const AccountDashboard = () => {
   const [dailyReport, setDailyReport] = useState(false);
   const [entriesPerPage, setEntriesPerPage] = useState('25');
   const [entityName, setEntityName] = useState('');
+  const [holidaySearchTerm, setHolidaySearchTerm] = useState('');
+
+  // Holiday Calendar data
+  const [holidays, setHolidays] = useState([
+    {
+      id: '1',
+      holidayName: 'Republic Day',
+      date: '26 January 2025',
+      recurring: true,
+      applicableLocation: 'Location 1-4',
+      holidayType: 'Public',
+      applicableFor: 'FM'
+    },
+    {
+      id: '2',
+      holidayName: 'Maha Shivratri',
+      date: '26 February 2025',
+      recurring: false,
+      applicableLocation: 'Location 1-4',
+      holidayType: 'Festival',
+      applicableFor: 'Customers'
+    },
+    {
+      id: '3',
+      holidayName: 'Holi',
+      date: '14 March 2025',
+      recurring: false,
+      applicableLocation: 'Location 1-4',
+      holidayType: 'Maintenance',
+      applicableFor: 'FM'
+    },
+    {
+      id: '4',
+      holidayName: 'Mahashivratri Day/Labour Day',
+      date: '1 May 2025',
+      recurring: true,
+      applicableLocation: 'Location 1-4',
+      holidayType: 'Public',
+      applicableFor: 'FM'
+    },
+    {
+      id: '5',
+      holidayName: 'Independence Day',
+      date: '15 August 2025',
+      recurring: true,
+      applicableLocation: 'Location 1-4',
+      holidayType: 'Festival',
+      applicableFor: 'Customers'
+    }
+  ]);
+
+  // Holiday Calendar columns
+  const holidayColumns: ColumnConfig[] = [
+    {
+      key: 'holidayName',
+      label: 'Holiday Name',
+      sortable: true,
+      hideable: false,
+      draggable: true,
+      defaultVisible: true
+    },
+    {
+      key: 'date',
+      label: 'Date',
+      sortable: true,
+      hideable: true,
+      draggable: true,
+      defaultVisible: true
+    },
+    {
+      key: 'recurring',
+      label: 'Recurring',
+      sortable: true,
+      hideable: true,
+      draggable: true,
+      defaultVisible: true
+    },
+    {
+      key: 'applicableLocation',
+      label: 'Applicable Location',
+      sortable: true,
+      hideable: true,
+      draggable: true,
+      defaultVisible: true
+    },
+    {
+      key: 'holidayType',
+      label: 'Holiday Type',
+      sortable: true,
+      hideable: true,
+      draggable: true,
+      defaultVisible: true
+    },
+    {
+      key: 'applicableFor',
+      label: 'Applicable for',
+      sortable: true,
+      hideable: true,
+      draggable: true,
+      defaultVisible: true
+    }
+  ];
 
   // Sample data with state management
   const [countries, setCountries] = useState([
@@ -139,6 +252,72 @@ export const AccountDashboard = () => {
     setEntities(updatedEntities);
   };
 
+  // Holiday Calendar functions
+  const renderHolidayCell = (holiday: any, columnKey: string) => {
+    switch (columnKey) {
+      case 'holidayName':
+        return <span className="text-gray-900 font-medium">{holiday.holidayName}</span>;
+      
+      case 'date':
+        return <span className="text-gray-900">{holiday.date}</span>;
+      
+      case 'recurring':
+        return (
+          <span className="text-gray-900">
+            {holiday.recurring ? 'Yes' : 'No'}
+          </span>
+        );
+      
+      case 'applicableLocation':
+        return <span className="text-gray-900">{holiday.applicableLocation}</span>;
+      
+      case 'holidayType':
+        return (
+          <Badge 
+            variant={
+              holiday.holidayType === 'Public' 
+                ? 'default' 
+                : holiday.holidayType === 'Festival' 
+                ? 'secondary' 
+                : 'outline'
+            }
+            className="bg-gray-100 text-gray-900 hover:bg-gray-200"
+          >
+            {holiday.holidayType}
+          </Badge>
+        );
+      
+      case 'applicableFor':
+        return <span className="text-gray-900">{holiday.applicableFor}</span>;
+      
+      default:
+        return holiday[columnKey];
+    }
+  };
+
+  const renderHolidayActions = (holiday: any) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0">
+          <span className="sr-only">Open menu</span>
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem>Edit Holiday</DropdownMenuItem>
+        <DropdownMenuItem>View Details</DropdownMenuItem>
+        <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  // Handle URL-based tab selection
+  useEffect(() => {
+    if (location.pathname.includes('/holiday-calendar')) {
+      setActiveTab('holiday-calendar');
+    }
+  }, [location.pathname]);
+
   return (
     <div className="p-6 bg-white min-h-screen">
       <div className="mb-6">
@@ -146,7 +325,7 @@ export const AccountDashboard = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-7 mb-6">
+        <TabsList className="grid w-full grid-cols-8 mb-6">
           <TabsTrigger value="organization">Organization</TabsTrigger>
           <TabsTrigger value="company">Company</TabsTrigger>
           <TabsTrigger value="country">Country</TabsTrigger>
@@ -154,6 +333,7 @@ export const AccountDashboard = () => {
           <TabsTrigger value="zone">Zone</TabsTrigger>
           <TabsTrigger value="site">Site</TabsTrigger>
           <TabsTrigger value="entity">Entity</TabsTrigger>
+          <TabsTrigger value="holiday-calendar">Holiday Calendar</TabsTrigger>
         </TabsList>
 
         <TabsContent value="organization" className="space-y-4">
@@ -571,6 +751,85 @@ export const AccountDashboard = () => {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="holiday-calendar" className="space-y-4">
+          <div className="flex min-h-screen bg-[#f6f4ee]">
+            {/* Main Content */}
+            <div className="flex-1">
+              <div className="p-6">
+                {/* Header Section */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <CalendarDays className="h-5 w-5 text-gray-600" />
+                    <h2 className="text-xl font-semibold text-gray-900">Holiday Calendar</h2>
+                  </div>
+                  <p className="text-gray-600">Manage Holidays</p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex gap-3">
+                    <Button 
+                      className="bg-[#8B5A3C] hover:bg-[#7A4A2A] text-white flex items-center gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Holiday
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-[#8B5A3C] text-[#8B5A3C] hover:bg-[#8B5A3C] hover:text-white flex items-center gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Bulk Upload
+                    </Button>
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Filter className="h-4 w-4" />
+                      Filter
+                    </Button>
+                    <Button variant="outline">
+                      Reset
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Search Bar */}
+                <div className="mb-6">
+                  <Input
+                    placeholder="Search holidays..."
+                    value={holidaySearchTerm}
+                    onChange={(e) => setHolidaySearchTerm(e.target.value)}
+                    className="max-w-sm"
+                  />
+                </div>
+
+                {/* Table */}
+                <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+                  <div className="max-h-[600px] overflow-auto">
+                    <EnhancedTable
+                      data={holidays}
+                      columns={holidayColumns}
+                      renderCell={renderHolidayCell}
+                      renderActions={renderHolidayActions}
+                      searchTerm={holidaySearchTerm}
+                      onSearchChange={setHolidaySearchTerm}
+                      storageKey="holiday-calendar-table"
+                      emptyMessage="No holidays found"
+                      className="min-w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Sidebar - Empty as shown in image */}
+            <div className="w-80 bg-gray-300 border-l border-gray-400">
+              {/* Empty sidebar as shown in the reference image */}
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 

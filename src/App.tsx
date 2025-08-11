@@ -560,6 +560,7 @@ function App() {
                 <Route path="/settings/users/edit-details/:id" element={<EditFMUserDetailsPage />} />
                 <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
                 <Route path="/settings/account" element={<AccountDashboard />} />
+                <Route path="/settings/account/holiday-calendar" element={<AccountDashboard />} />
                 <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
                 <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
                 <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
