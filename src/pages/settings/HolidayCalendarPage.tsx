@@ -208,7 +208,7 @@ export const HolidayCalendarPage = () => {
           </Button>
         </div>
         
-        {/* Search Bar with Go button */}
+        {/* Search Bar with Go and Reset buttons */}
         <div className="flex gap-2 items-center">
           <Input
             placeholder="Search holidays..."
@@ -216,8 +216,11 @@ export const HolidayCalendarPage = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
           />
-          <Button variant="outline">
+          <Button variant="outline" className="bg-[#C72030] text-white hover:bg-[#A01020]">
             Go
+          </Button>
+          <Button variant="outline">
+            Reset
           </Button>
         </div>
       </div>
