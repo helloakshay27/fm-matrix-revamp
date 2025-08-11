@@ -239,10 +239,16 @@ export const GenerateUtilityBillPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Consumption as per EB */}
+              {/* Consumption Field - Dynamic based on utility type */}
               <div className="space-y-2">
                 <TextField
-                  label="Consumption as per EB*"
+                  label={
+                    formData.utilityType === 'DG' 
+                      ? "Consumption as per DG*"
+                      : formData.utilityType === 'Water'
+                      ? "Consumption as per Water(KL)*"
+                      : "Consumption as per EB*"
+                  }
                   type="number"
                   name="consumptionEB"
                   value={formData.consumptionEB}
@@ -384,10 +390,14 @@ export const GenerateUtilityBillPage = () => {
                 />
               </div>
 
-              {/* Rate Per KWH */}
+              {/* Rate Field - Dynamic based on utility type */}
               <div className="space-y-2">
                 <TextField
-                  label="Rate Per KWH*"
+                  label={
+                    formData.utilityType === 'Water' 
+                      ? "Rate Per KL*"
+                      : "Rate Per KWH*"
+                  }
                   type="number"
                   name="ratePerKWH"
                   value={formData.ratePerKWH}
