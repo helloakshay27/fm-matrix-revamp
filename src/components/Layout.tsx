@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
@@ -13,15 +12,34 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { currentSection, isSidebarCollapsed } = useLayout();
+  const { isSidebarCollapsed } = useLayout();
+
+  // Get current domain
+  const hostname = window.location.hostname;
+
+  // Check if it's Oman site
+  const isOmanSite = hostname.includes('oig.gophygital.work');
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
       <Header />
-      <OmanSidebar />
-      <OmanDynamicHeader />
 
-      <main className={`${isSidebarCollapsed ? 'ml-16' : 'ml-64'} pt-28 transition-all duration-300`}>
+      {/* Conditionally render based on domain */}
+      {isOmanSite ? (
+        <>
+          <OmanSidebar />
+          <OmanDynamicHeader />
+        </>
+      ) : (
+        <>
+          <Sidebar />
+          <DynamicHeader />
+        </>
+      )}
+
+      <main
+        className={`${isSidebarCollapsed ? 'ml-16' : 'ml-64'} pt-28 transition-all duration-300`}
+      >
         <Outlet />
       </main>
     </div>

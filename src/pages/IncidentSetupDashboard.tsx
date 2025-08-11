@@ -135,12 +135,116 @@ export const IncidentSetupDashboard = () => {
     secondarySubCategory: 'Process Failure'
   }]);
   const [selectedSecondaryCategory, setSelectedSecondaryCategory] = useState('');
+  const [selectedSecondarySubCategory, setSelectedSecondarySubCategory] = useState('');
+  const [secondarySubSubCategories, setSecondarySubSubCategories] = useState([{
+    id: 1,
+    secondaryCategory: 'latest',
+    secondarySubCategory: 'test',
+    secondarySubSubCategory: 'test'
+  }]);
+  const [secondarySubSubSubCategories, setSecondarySubSubSubCategories] = useState([{
+    id: 1,
+    secondaryCategory: '',
+    secondarySubCategory: '',
+    secondarySubSubCategory: '',
+    secondarySubSubSubCategory: 'test'
+  }]);
+  const [selectedSecondarySubSubCategory, setSelectedSecondarySubSubCategory] = useState('');
   const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category', 'Incident Disclaimer'];
   const handleSubmit = () => {
-    if (categoryName.trim()) {
-      console.log('Adding category:', categoryName);
-      setCategoryName('');
+    if (!categoryName.trim()) return;
+
+    const newId = Math.max(...(
+      selectedCategory === 'Category' ? categories.map(c => c.id) :
+      selectedCategory === 'Sub Category' ? subCategories.map(s => s.id) :
+      selectedCategory === 'Sub Sub Category' ? subSubCategories.map(s => s.id) :
+      selectedCategory === 'Sub Sub Sub Category' ? subSubSubCategories.map(s => s.id) :
+      selectedCategory === 'Incidence status' ? incidenceStatuses.map(s => s.id) :
+      selectedCategory === 'Incidence level' ? incidenceLevels.map(l => l.id) :
+      selectedCategory === 'Escalations' ? escalations.map(e => e.id) :
+      selectedCategory === 'Approval Setup' ? approvalSetups.map(a => a.id) :
+      selectedCategory === 'Secondary Category' ? secondaryCategories.map(s => s.id) :
+      selectedCategory === 'Secondary Sub Category' ? secondarySubCategories.map(s => s.id) :
+      selectedCategory === 'Secondary Sub Sub Category' ? secondarySubSubCategories.map(s => s.id) :
+      selectedCategory === 'Secondary Sub Sub Sub Category' ? secondarySubSubSubCategories.map(s => s.id) :
+      [0]
+    )) + 1;
+
+    if (selectedCategory === 'Category') {
+      setCategories([...categories, { id: newId, name: categoryName }]);
+    } else if (selectedCategory === 'Sub Category') {
+      if (selectedParentCategory) {
+        setSubCategories([...subCategories, { 
+          id: newId, 
+          category: selectedParentCategory, 
+          subCategory: categoryName 
+        }]);
+      }
+    } else if (selectedCategory === 'Sub Sub Category') {
+      if (selectedParentCategory && selectedSubCategory) {
+        setSubSubCategories([...subSubCategories, {
+          id: newId,
+          category: selectedParentCategory,
+          subCategory: selectedSubCategory,
+          subSubCategory: categoryName
+        }]);
+      }
+    } else if (selectedCategory === 'Incidence status') {
+      setIncidenceStatuses([...incidenceStatuses, { id: newId, name: categoryName }]);
+    } else if (selectedCategory === 'Incidence level') {
+      setIncidenceLevels([...incidenceLevels, { id: newId, name: categoryName }]);
+    } else if (selectedCategory === 'Escalations') {
+      if (selectedEscalationLevel && escalateInDays && escalateToUsers) {
+        setEscalations([...escalations, {
+          id: newId,
+          level: selectedEscalationLevel,
+          escalateInDays: escalateInDays,
+          users: escalateToUsers
+        }]);
+        setSelectedEscalationLevel('');
+        setEscalateInDays('');
+        setEscalateToUsers('');
+      }
+    } else if (selectedCategory === 'Approval Setup') {
+      if (selectedApprovalUsers) {
+        setApprovalSetups([...approvalSetups, {
+          id: newId,
+          users: selectedApprovalUsers
+        }]);
+        setSelectedApprovalUsers('');
+      }
+    } else if (selectedCategory === 'Secondary Category') {
+      setSecondaryCategories([...secondaryCategories, { id: newId, name: categoryName }]);
+    } else if (selectedCategory === 'Secondary Sub Category') {
+      if (selectedSecondaryCategory) {
+        setSecondarySubCategories([...secondarySubCategories, {
+          id: newId,
+          secondaryCategory: selectedSecondaryCategory,
+          secondarySubCategory: categoryName
+        }]);
+      }
+    } else if (selectedCategory === 'Secondary Sub Sub Category') {
+      if (selectedSecondaryCategory && selectedSecondarySubCategory) {
+        setSecondarySubSubCategories([...secondarySubSubCategories, {
+          id: newId,
+          secondaryCategory: selectedSecondaryCategory,
+          secondarySubCategory: selectedSecondarySubCategory,
+          secondarySubSubCategory: categoryName
+        }]);
+      }
+    } else if (selectedCategory === 'Secondary Sub Sub Sub Category') {
+      if (selectedSecondaryCategory && selectedSecondarySubCategory && selectedSecondarySubSubCategory) {
+        setSecondarySubSubSubCategories([...secondarySubSubSubCategories, {
+          id: newId,
+          secondaryCategory: selectedSecondaryCategory,
+          secondarySubCategory: selectedSecondarySubCategory,
+          secondarySubSubCategory: selectedSecondarySubSubCategory,
+          secondarySubSubSubCategory: categoryName
+        }]);
+      }
     }
+
+    setCategoryName('');
   };
   const handleEdit = (item: any, type: string) => {
     setEditingItem({
@@ -157,12 +261,32 @@ export const IncidentSetupDashboard = () => {
         escalateInDays: item.escalateInDays || '',
         users: item.users || ''
       });
+    } else if (type === 'Secondary Sub Sub Category') {
+      setEditFormData({
+        category: item.secondaryCategory || '',
+        subCategory: item.secondarySubCategory || '',
+        subSubCategory: item.secondarySubSubCategory || '',
+        name: item.secondarySubSubCategory || '',
+        level: '',
+        escalateInDays: '',
+        users: ''
+      });
+    } else if (type === 'Secondary Sub Sub Sub Category') {
+      setEditFormData({
+        category: item.secondaryCategory || '',
+        subCategory: item.secondarySubCategory || '',
+        subSubCategory: item.secondarySubSubCategory || '',
+        name: item.secondarySubSubSubCategory || '',
+        level: '',
+        escalateInDays: '',
+        users: ''
+      });
     } else {
       setEditFormData({
-        category: item.category || item.name || '',
-        subCategory: item.subCategory || '',
-        subSubCategory: item.subSubCategory || '',
-        name: item.name || item.subCategory || item.subSubCategory || '',
+        category: item.category || item.secondaryCategory || item.name || '',
+        subCategory: item.subCategory || item.secondarySubCategory || '',
+        subSubCategory: item.subSubCategory || item.secondarySubSubCategory || '',
+        name: item.name || item.subCategory || item.subSubCategory || item.secondarySubCategory || item.secondarySubSubCategory || '',
         level: '',
         escalateInDays: '',
         users: ''
@@ -219,6 +343,10 @@ export const IncidentSetupDashboard = () => {
         setSecondaryCategories(secondaryCategories.filter(secondary => secondary.id !== item.id));
       } else if (type === 'Secondary Sub Category') {
         setSecondarySubCategories(secondarySubCategories.filter(secondarySub => secondarySub.id !== item.id));
+      } else if (type === 'Secondary Sub Sub Category') {
+        setSecondarySubSubCategories(secondarySubSubCategories.filter(secondarySubSub => secondarySubSub.id !== item.id));
+      } else if (type === 'Secondary Sub Sub Sub Category') {
+        setSecondarySubSubSubCategories(secondarySubSubSubCategories.filter(secondarySubSubSub => secondarySubSubSub.id !== item.id));
       }
     }
   };
@@ -338,7 +466,64 @@ export const IncidentSetupDashboard = () => {
                       Back
                     </Button>
                   </div>
-                </div> : <div className="space-y-6">
+                 </div> : <div className="space-y-6">
+                  {(editingItem?.type === 'Secondary Sub Category' || editingItem?.type === 'Secondary Sub Sub Category' || editingItem?.type === 'Secondary Sub Sub Sub Category') && <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Secondary Category
+                      </label>
+                      <Select value={editFormData.category} onValueChange={value => setEditFormData({
+                ...editFormData,
+                category: value
+              })}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          {secondaryCategories.map(category => <SelectItem key={category.id} value={category.name}>
+                              {category.name}
+                            </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>}
+
+                  {(editingItem?.type === 'Secondary Sub Sub Category' || editingItem?.type === 'Secondary Sub Sub Sub Category') && <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Secondary Sub Category
+                      </label>
+                      <Select value={editFormData.subCategory} onValueChange={value => setEditFormData({
+                ...editFormData,
+                subCategory: value
+              })}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          {secondarySubCategories.filter(sub => sub.secondaryCategory === editFormData.category).map(subCategory => <SelectItem key={subCategory.id} value={subCategory.secondarySubCategory}>
+                                {subCategory.secondarySubCategory}
+                              </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>}
+
+                  {editingItem?.type === 'Secondary Sub Sub Sub Category' && <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Secondary Sub Sub Category
+                      </label>
+                      <Select value={editFormData.subSubCategory} onValueChange={value => setEditFormData({
+                ...editFormData,
+                subSubCategory: value
+              })}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          {secondarySubSubCategories.filter(subsub => subsub.secondaryCategory === editFormData.category && subsub.secondarySubCategory === editFormData.subCategory).map(subSubCategory => <SelectItem key={subSubCategory.id} value={subSubCategory.secondarySubSubCategory}>
+                                {subSubCategory.secondarySubSubCategory}
+                              </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>}
+
                   {(editingItem?.type === 'Sub Category' || editingItem?.type === 'Sub Sub Category' || editingItem?.type === 'Sub Sub Sub Category') && <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Category
@@ -508,17 +693,6 @@ export const IncidentSetupDashboard = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                       <div className="flex-1">
-                         <TextField 
-                           type="text" 
-                           value={categoryName} 
-                           onChange={e => setCategoryName(e.target.value)} 
-                           placeholder="Enter Name"
-                           variant="outlined"
-                           size="small"
-                           fullWidth
-                         />
-                       </div>
                      </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
                        <div className="flex-1">
                          <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -535,23 +709,23 @@ export const IncidentSetupDashboard = () => {
                            </SelectContent>
                          </Select>
                        </div>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Secondary Sub Category
-                         </label>
-                         <Select value={selectedSubCategory} onValueChange={setSelectedSubCategory}>
-                           <SelectTrigger className="w-full">
-                             <SelectValue placeholder="Select Secondry Sub Category" />
-                           </SelectTrigger>
-                           <SelectContent className="bg-white z-50">
-                             {secondarySubCategories
-                               .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
-                               .map(sub => <SelectItem key={sub.id} value={sub.secondarySubCategory}>
-                                   {sub.secondarySubCategory}
-                                 </SelectItem>)}
-                           </SelectContent>
-                         </Select>
-                        </div>
+                        <div className="flex-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Secondary Sub Category
+                          </label>
+                          <Select value={selectedSecondarySubCategory} onValueChange={setSelectedSecondarySubCategory}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select Secondary Sub Category" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white z-50">
+                              {secondarySubCategories
+                                .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
+                                .map(sub => <SelectItem key={sub.id} value={sub.secondarySubCategory}>
+                                    {sub.secondarySubCategory}
+                                  </SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                         </div>
                      </> : selectedCategory === 'Secondary Sub Sub Sub Category' ? <>
                        <div className="flex-1">
                          <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -568,83 +742,41 @@ export const IncidentSetupDashboard = () => {
                            </SelectContent>
                          </Select>
                        </div>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Secondary Sub Category
-                         </label>
-                         <Select value={selectedSubCategory} onValueChange={setSelectedSubCategory}>
-                           <SelectTrigger className="w-full">
-                             <SelectValue placeholder="Select Secondary Sub Category" />
-                           </SelectTrigger>
-                           <SelectContent className="bg-white z-50">
-                             {secondarySubCategories
-                               .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
-                               .map(sub => <SelectItem key={sub.id} value={sub.secondarySubCategory}>
-                                   {sub.secondarySubCategory}
-                                 </SelectItem>)}
-                           </SelectContent>
-                         </Select>
-                       </div>
-                       <div className="flex-1">
-                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                           Secondary Sub Sub Category
-                         </label>
-                         <Select>
-                           <SelectTrigger className="w-full">
-                             <SelectValue placeholder="Select Secondary Sub Category" />
-                           </SelectTrigger>
-                           <SelectContent className="bg-white z-50">
-                             <SelectItem value="Fire Prevention">Fire Prevention</SelectItem>
-                             <SelectItem value="System Malfunction">System Malfunction</SelectItem>
-                           </SelectContent>
-                         </Select>
-                       </div>
-                     </> : selectedCategory === 'Who got injured' ? <>
                         <div className="flex-1">
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Name
+                            Secondary Sub Category
                           </label>
-                          <TextField 
-                            type="text" 
-                            value={categoryName} 
-                            onChange={e => setCategoryName(e.target.value)} 
-                            placeholder="Enter Name"
-                            variant="outlined"
-                            size="small"
-                            fullWidth
-                          />
+                          <Select value={selectedSecondarySubCategory} onValueChange={setSelectedSecondarySubCategory}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select Secondary Sub Category" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white z-50">
+                              {secondarySubCategories
+                                .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
+                                .map(sub => <SelectItem key={sub.id} value={sub.secondarySubCategory}>
+                                    {sub.secondarySubCategory}
+                                  </SelectItem>)}
+                            </SelectContent>
+                          </Select>
                         </div>
-                     </> : selectedCategory === 'Property Damage Category' ? <>
                         <div className="flex-1">
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Name
+                            Secondary Sub Sub Category
                           </label>
-                          <TextField 
-                            type="text" 
-                            value={categoryName} 
-                            onChange={e => setCategoryName(e.target.value)} 
-                            placeholder="Enter Name"
-                            variant="outlined"
-                            size="small"
-                            fullWidth
-                          />
+                          <Select value={selectedSecondarySubSubCategory} onValueChange={setSelectedSecondarySubSubCategory}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select Secondary Sub Sub Category" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white z-50">
+                              {secondarySubSubCategories
+                                .filter(subsub => subsub.secondaryCategory === selectedSecondaryCategory && subsub.secondarySubCategory === selectedSecondarySubCategory)
+                                .map(subsub => <SelectItem key={subsub.id} value={subsub.secondarySubSubCategory}>
+                                    {subsub.secondarySubSubCategory}
+                                  </SelectItem>)}
+                            </SelectContent>
+                          </Select>
                         </div>
-                     </> : selectedCategory === 'RCA Category' ? <>
-                        <div className="flex-1">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Name
-                          </label>
-                          <TextField 
-                            type="text" 
-                            value={categoryName} 
-                            onChange={e => setCategoryName(e.target.value)} 
-                            placeholder="Enter Name"
-                            variant="outlined"
-                            size="small"
-                            fullWidth
-                          />
-                        </div>
-                     </> : selectedCategory === 'Incident Disclaimer' ? <>
+                      </> : selectedCategory === 'Incident Disclaimer' ? <>
                         <div className="flex-1">
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Name
@@ -732,7 +864,7 @@ export const IncidentSetupDashboard = () => {
               </div>
 
               {/* Table Section */}
-              <div className="bg-white rounded-xl shadow-sm border border-[#D5DbDB] overflow-hidden">
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                   <Table>
                   <TableHeader>
@@ -807,41 +939,35 @@ export const IncidentSetupDashboard = () => {
                               </Button>
                             </div>
                           </TableCell>
-                          </TableRow>) : selectedCategory === 'Secondary Sub Sub Category' ? [
-                            { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention' },
-                            { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction' }
-                          ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
-                           <TableCell className="px-4 py-3">
-                             <div className="flex gap-2">
-                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-                                 <Edit className="w-4 h-4" />
-                               </Button>
-                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
-                                 <Trash2 className="w-4 h-4" />
-                               </Button>
-                             </div>
-                           </TableCell>
-                          </TableRow>) : selectedCategory === 'Secondary Sub Sub Sub Category' ? [
-                            { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention', secondarySubSubSubCategory: 'Alarm Systems' },
-                            { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction', secondarySubSubSubCategory: 'Hardware Issues' }
-                          ].map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
-                            <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
-                            <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubSubCategory}</TableCell>
-                           <TableCell className="px-4 py-3">
+                           </TableRow>) : selectedCategory === 'Secondary Sub Sub Category' ? secondarySubSubCategories.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                             <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
+                             <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
+                             <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
+                            <TableCell className="px-4 py-3">
                               <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Secondary Sub Sub Category')}>
                                   <Edit className="w-4 h-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Secondary Sub Sub Category')}>
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
                             </TableCell>
+                           </TableRow>) : selectedCategory === 'Secondary Sub Sub Sub Category' ? secondarySubSubSubCategories.map(item => <TableRow key={item.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
+                             <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{item.secondaryCategory}</TableCell>
+                             <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubCategory}</TableCell>
+                             <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubCategory}</TableCell>
+                             <TableCell className="px-4 py-3 text-sm text-gray-600">{item.secondarySubSubSubCategory}</TableCell>
+                            <TableCell className="px-4 py-3">
+                               <div className="flex gap-2">
+                                 <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(item, 'Secondary Sub Sub Sub Category')}>
+                                   <Edit className="w-4 h-4" />
+                                 </Button>
+                                 <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800" onClick={() => handleDelete(item, 'Secondary Sub Sub Sub Category')}>
+                                   <Trash2 className="w-4 h-4" />
+                                 </Button>
+                               </div>
+                             </TableCell>
                            </TableRow>) : selectedCategory === 'Who got injured' ? [
                              { id: 1, name: 'Employee' },
                              { id: 2, name: 'Contractor' },
