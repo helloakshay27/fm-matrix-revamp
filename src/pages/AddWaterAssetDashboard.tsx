@@ -596,7 +596,7 @@ export const AddWaterAssetDashboard = () => {
                     <h4 className="text-sm font-medium mb-3">Board Sub-categories:</h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       {['HT', 'VCB', 'Transformer', 'LT'].map((subCategory) => (
-                        <div key={subCategory} className="flex items-center space-x-2 bg-purple-50 p-3 rounded">
+                        <div key={subCategory} className="flex items-center space-x-2 p-3 rounded" style={{ backgroundColor: '#f6f4ee' }}>
                           <FormControlLabel
                             control={
                               <Radio 
@@ -619,7 +619,7 @@ export const AddWaterAssetDashboard = () => {
                     <h4 className="text-sm font-medium mb-3">Renewable Sub-categories:</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {['Solar', 'Bio Methanol', 'Wind'].map((subCategory) => (
-                        <div key={subCategory} className="flex items-center space-x-2 bg-purple-50 p-3 rounded">
+                        <div key={subCategory} className="flex items-center space-x-2 p-3 rounded" style={{ backgroundColor: '#f6f4ee' }}>
                           <FormControlLabel
                             control={
                               <Radio 
@@ -642,7 +642,7 @@ export const AddWaterAssetDashboard = () => {
                     <h4 className="text-sm font-medium mb-3">Fresh Water Sub-categories:</h4>
                     <div className="grid grid-cols-2 gap-4">
                       {['Source (Input)', 'Destination (Output)'].map((subCategory) => (
-                        <div key={subCategory} className="flex items-center space-x-2 bg-purple-50 p-3 rounded">
+                        <div key={subCategory} className="flex items-center space-x-2 p-3 rounded" style={{ backgroundColor: '#f6f4ee' }}>
                           <FormControlLabel
                             control={
                               <Radio 
