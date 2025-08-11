@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User } from 'lucide-react';
+import { ArrowLeft, User, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TextField, MenuItem, FormControl, InputLabel, Select, Chip, Box } from '@mui/material';
@@ -32,7 +32,27 @@ export const CRMOccupantUserDetailPage = () => {
   const availableCompanies = ["Lockated HO", "Branch Office", "Remote Location", "Regional Office", "Corporate Office"];
   return <div className="min-h-screen bg-background">
       {/* Header */}
-      
+      <div className="flex justify-between items-center p-6 border-b">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-semibold">User Details</h1>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate(`/crm/occupant-users/${id}/edit`)}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Edit className="h-5 w-5" />
+        </Button>
+      </div>
 
       {/* Content */}
       <div className="p-8">
