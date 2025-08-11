@@ -149,6 +149,7 @@ const columns: ColumnConfig[] = [
 
 export const HolidayCalendarPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [filteredHolidays, setFilteredHolidays] = useState<Holiday[]>(mockHolidays);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [holidays, setHolidays] = useState<Holiday[]>(mockHolidays);
   const [date, setDate] = useState<Date>();
@@ -205,6 +206,27 @@ export const HolidayCalendarPage = () => {
     }
   };
 
+  // Search functionality
+  const handleSearch = () => {
+    if (searchTerm.trim() === '') {
+      setFilteredHolidays(holidays);
+    } else {
+      const filtered = holidays.filter((holiday) =>
+        holiday.holidayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        holiday.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        holiday.applicableLocation.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        holiday.holidayType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        holiday.applicableFor.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredHolidays(filtered);
+    }
+  };
+
+  const handleReset = () => {
+    setSearchTerm('');
+    setFilteredHolidays(holidays);
+  };
+
   const handleSubmit = () => {
     if (!holidayName || !date || !recurring || selectedSites.length === 0 || !selectedType || selectedCustomers.length === 0) {
       alert('Please fill all fields');
@@ -221,7 +243,9 @@ export const HolidayCalendarPage = () => {
       applicableFor: selectedCustomers.join(', ')
     };
 
-    setHolidays([...holidays, newHoliday]);
+    const updatedHolidays = [...holidays, newHoliday];
+    setHolidays(updatedHolidays);
+    setFilteredHolidays(updatedHolidays);
     
     // Reset form
     setHolidayName('');
@@ -564,10 +588,10 @@ export const HolidayCalendarPage = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
           />
-          <Button variant="outline" className="bg-[#C72030] text-white hover:bg-[#A01020]">
+          <Button variant="outline" className="bg-[#C72030] text-white hover:bg-[#A01020]" onClick={handleSearch}>
             Go
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleReset}>
             Reset
           </Button>
         </div>
@@ -576,11 +600,11 @@ export const HolidayCalendarPage = () => {
       {/* Table Card */}
       <div className="bg-white rounded-lg border border-[#D5DbDB] shadow-sm">
         <EnhancedTable
-          data={holidays}
+          data={filteredHolidays}
           columns={columns}
           renderCell={renderCell}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
+          searchTerm=""
+          onSearchChange={() => {}}
           storageKey="holiday-calendar-table"
           emptyMessage="No holidays found"
           className="min-w-full"
