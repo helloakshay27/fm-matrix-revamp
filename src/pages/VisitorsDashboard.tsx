@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,6 +11,64 @@ import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+
+// API Service using apiConfig
+const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20) => {
+  try {
+    const url = getFullUrl(API_CONFIG.ENDPOINTS.UNEXPECTED_VISITORS);
+    const options = getAuthenticatedFetchOptions();
+    
+    // Add query parameters
+    const urlWithParams = new URL(url);
+    urlWithParams.searchParams.append('site_id', siteId.toString());
+    urlWithParams.searchParams.append('page', page.toString());
+    urlWithParams.searchParams.append('per_page', perPage.toString());
+    
+    console.log('🚀 Fetching unexpected visitors from:', urlWithParams.toString());
+    
+    const response = await fetch(urlWithParams.toString(), options);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch unexpected visitors: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Response received:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Error fetching unexpected visitors:', error);
+    throw error;
+  }
+};
+
+const getVisitorHistory = async (siteId: number, page: number = 1, perPage: number = 20) => {
+  try {
+    const url = getFullUrl(API_CONFIG.ENDPOINTS.VISITOR_HISTORY);
+    const options = getAuthenticatedFetchOptions();
+    
+    // Add query parameters
+    const urlWithParams = new URL(url);
+    urlWithParams.searchParams.append('site_id', siteId.toString());
+    urlWithParams.searchParams.append('page', page.toString());
+    urlWithParams.searchParams.append('per_page', perPage.toString());
+    
+    console.log('🚀 Fetching visitor history from:', urlWithParams.toString());
+    
+    const response = await fetch(urlWithParams.toString(), options);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch visitor history: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Visitor history response received:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Error fetching visitor history:', error);
+    throw error;
+  }
+};
 
 export const VisitorsDashboard = () => {
   const [selectedPerson, setSelectedPerson] = useState('');
@@ -25,17 +83,23 @@ export const VisitorsDashboard = () => {
   const [selectAll, setSelectAll] = useState(false);
   const navigate = useNavigate();
 
-  // Mock visitor data for unexpected visitors
-  const unexpectedVisitorData = [
-    {
-      id: "1",
-      visitorName: "Test",
-      details: "Test 42.0",
-      purpose: "Personal",
-      status: "Pending",
-      avatar: "/placeholder.svg"
-    }
-  ];
+  // API State
+  const [unexpectedVisitors, setUnexpectedVisitors] = useState<any[]>([]);
+  const [visitorHistoryData, setVisitorHistoryData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalEntries: 0,
+    perPage: 20
+  });
+  const [historyPagination, setHistoryPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalEntries: 0,
+    perPage: 20
+  });
 
   // Mock visitor data for expected visitors
   const expectedVisitorData = [
@@ -49,7 +113,7 @@ export const VisitorsDashboard = () => {
     }
   ];
 
-  // Mock visitor out data based on the image
+  // Mock visitor out data
   const visitorOutData = [
     {
       id: 1,
@@ -70,59 +134,67 @@ export const VisitorsDashboard = () => {
       checkedInAt: '18/02/25, 2:29 PM',
       status: 'Approved',
       avatar: '/placeholder.svg'
-    },
-    {
-      id: 3,
-      name: 'Abdul',
-      visitorName: 'Abdul',
-      host: 'abdul abdul',
-      purpose: 'Meeting',
-      location: 'Maumbal',
-      checkedInAt: '20/02/25, 9:30 AM',
-      status: 'Approved',
-      avatar: '/placeholder.svg'
     }
   ];
 
-  // Mock visitor data for history
-  const visitorHistoryData = [
-    {
-      id: 1,
-      name: 'nadia',
-      host: 'Mahendra Lungare',
-      location: 'mumbai',
-      purpose: 'Meeting',
-      status: 'Approved',
-      passNumber: 'P001'
-    },
-    {
-      id: 2,
-      name: 'Test',
-      host: 'Test 42.0',
-      location: '',
-      purpose: 'Personal',
-      status: 'Approved',
-      passNumber: 'P002'
-    },
-    {
-      id: 3,
-      name: 'Sohail',
-      host: 'Mahendra Lungare',
-      location: 'Gophygital',
-      purpose: 'Meeting',
-      status: 'Approved',
-      passNumber: 'P003'
+  // Fetch unexpected visitors
+  const fetchUnexpectedVisitors = async (page: number = 1) => {
+    setLoading(true);
+    try {
+      const data = await getUnexpectedVisitors(2189, page); // Replace 2189 with your actual site ID
+      setUnexpectedVisitors(data.unexpected_visitors);
+      setPagination({
+        currentPage: data.pagination.current_page,
+        totalPages: data.pagination.total_pages,
+        totalEntries: data.pagination.total_entries,
+        perPage: data.pagination.per_page
+      });
+    } catch (error) {
+      console.error('Error fetching unexpected visitors:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  // Fetch visitor history
+  const fetchVisitorHistory = async (page: number = 1) => {
+    setHistoryLoading(true);
+    try {
+      const data = await getVisitorHistory(2189, page); // Replace 2189 with your actual site ID
+      setVisitorHistoryData(data.visitors);
+      setHistoryPagination({
+        currentPage: data.pagination?.current_page || 1,
+        totalPages: data.pagination?.total_pages || 1,
+        totalEntries: data.pagination?.total_entries || data.visitors?.length || 0,
+        perPage: data.pagination?.per_page || 20
+      });
+    } catch (error) {
+      console.error('Error fetching visitor history:', error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
+      fetchUnexpectedVisitors();
+    } else if (visitorSubTab === 'history') {
+      fetchVisitorHistory();
+    }
+  }, [visitorSubTab, activeVisitorType]);
 
   // Column configuration for unexpected visitors table
   const unexpectedVisitorColumns: ColumnConfig[] = [
-    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
-    { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
-    { key: 'visitorName', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
-    { key: 'details', label: 'Details', sortable: true, hideable: true, draggable: true },
-    { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+    // { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
+    // { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
+    // { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
+    { key: 'visitor_image', label: 'Visitor Image', sortable: false, hideable: true, draggable: true },
+    { key: 'guest_name', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
+    { key: 'guest_from', label: 'From', sortable: true, hideable: true, draggable: true },
+    { key: 'primary_host', label: 'Host', sortable: true, hideable: true, draggable: true },
+    { key: 'visit_purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
+    { key: 'created_at_formatted', label: 'Check-in Time', sortable: true, hideable: true, draggable: true },
     { key: 'tableActions', label: 'Actions', sortable: false, hideable: false, draggable: false }
   ];
 
@@ -150,29 +222,239 @@ export const VisitorsDashboard = () => {
 
   // Column configuration for visitor history table
   const visitorHistoryColumns: ColumnConfig[] = [
-    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
-    { key: 'name', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
-    { key: 'host', label: 'Host', sortable: true, hideable: true, draggable: true },
-    { key: 'location', label: 'Location', sortable: true, hideable: true, draggable: true },
-    { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+    // { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
+    { key: 'visitor_image', label: 'Visitor Image', sortable: false, hideable: true, draggable: true },
+    { key: 'guest_name', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
+    { key: 'primary_host', label: 'Host', sortable: true, hideable: true, draggable: true },
+    { key: 'guest_from', label: 'Location', sortable: true, hideable: true, draggable: true },
+    { key: 'visit_purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
-    { key: 'passNumber', label: 'Pass Number', sortable: true, hideable: true, draggable: true }
+    { key: 'check_in_time', label: 'Check-in Time', sortable: true, hideable: true, draggable: true },
+    { key: 'pass_number', label: 'Pass Number', sortable: true, hideable: true, draggable: true }
   ];
 
   // Filter visitors based on search term
   const filteredVisitors = visitorHistoryData.filter(visitor => 
-    visitor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    visitor.passNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    visitor.host.toLowerCase().includes(searchTerm.toLowerCase())
+    visitor.guest_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    visitor.pass_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    visitor.primary_host?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Render functions for enhanced tables
+ const renderUnexpectedVisitorCell = (visitor: any, columnKey: string) => {
+  switch (columnKey) {
+    case 'sNo':
+      return visitor.sNo;
+    case 'actions':
+      return (
+        <button 
+          className="w-4 h-4 text-black hover:text-gray-700"
+          onClick={() => handleEditClick(visitor.guest_number)}
+        >
+          <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+          </svg>
+        </button>
+      );
+    case 'id':
+      return visitor.id;
+    case 'visitor_image':
+      return (
+        <div className="flex justify-center">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+            {visitor.visitor_image && visitor.visitor_image !== 'person.png' ? (
+              <img 
+                src={visitor.visitor_image.startsWith('http') ? visitor.visitor_image : '/placeholder.svg'} 
+                alt={visitor.guest_name || 'Visitor'}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/placeholder.svg';
+                }}
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    case 'guest_name':
+      return visitor.guest_name || '--';
+    case 'guest_from':
+      return visitor.guest_from || '--';
+    case 'primary_host':
+      return visitor.primary_host || '--';
+    case 'visit_purpose':
+      return visitor.visit_purpose || '--';
+    case 'created_at_formatted':
+      return visitor.created_at_formatted || '--';
+    case 'status':
+      return (
+        <Badge className={`${
+          visitor.status === 'Approved' ? 'bg-green-100 text-green-800' : 
+          visitor.status === 'Pending' ? 'bg-orange-100 text-orange-800' : 
+          'bg-red-100 text-red-800'
+        }`}>
+          {visitor.status}
+        </Badge>
+      );
+    case 'tableActions':
+  return (
+    <div className="flex gap-2">
+      <Button 
+        className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 text-xs rounded"
+        onClick={() => handleResendOTP(visitor.id)}
+      >
+        Resend OTP
+      </Button>
+      <Button 
+        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-xs rounded"
+        onClick={() => handleSkipApproval(visitor.id)}
+      >
+        Skip Host Approval
+      </Button>
+    </div>
+  );
+default:
+  const value = visitor[columnKey as keyof typeof visitor];
+  return value ? String(value) : '--';
+  }
+};
+
+ const renderVisitorHistoryCell = (visitor: any, columnKey: string) => {
+  switch (columnKey) {
+    case 'id':
+      return visitor.id;
+    case 'visitor_image':
+      return (
+        <div className="flex justify-center">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+            {visitor.visitor_image && visitor.visitor_image !== 'person.png' ? (
+              <img 
+                src={visitor.visitor_image.startsWith('http') ? visitor.visitor_image : '/placeholder.svg'} 
+                alt={visitor.guest_name || 'Visitor'}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/placeholder.svg';
+                }}
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    case 'guest_name':
+      return visitor.guest_name || '--';
+    case 'primary_host':
+      return visitor.primary_host || '--';
+    case 'guest_from':
+      return visitor.guest_from || '--';
+    case 'visit_purpose':
+      return visitor.visit_purpose || '--';
+    case 'check_in_time':
+      return visitor.check_in_time || '--';
+    case 'pass_number':
+      return visitor.pass_number || '--';
+    case 'status':
+      return (
+        <Badge className={`${
+          visitor.status === 'Approved' ? 'bg-green-100 text-green-800' : 
+          visitor.status === 'Pending' ? 'bg-orange-100 text-orange-800' : 
+          'bg-red-100 text-red-800'
+        }`}>
+          {visitor.status}
+        </Badge>
+      );
+    default:
+      const value = visitor[columnKey as keyof typeof visitor];
+      return value ? String(value) : '--';
+  }
+};
+
+  const renderExpectedVisitorRow = (visitor: any) => ({
+    sNo: visitor.sNo,
+    actions: (
+      <button 
+        className="w-4 h-4 text-black hover:text-gray-700"
+        onClick={() => handleEditClick('9555625186')}
+      >
+        <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
+        </svg>
+      </button>
+    ),
+    visitorName: visitor.visitorName,
+    details: visitor.details,
+    purpose: visitor.purpose,
+    status: (
+      <div className="bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+        {visitor.status}
+      </div>
+    )
+  });
+
+  const renderVisitorOutRow = (visitor: any) => ({
+    sNo: visitor.sNo,
+    visitorName: visitor.visitorName,
+    host: visitor.host,
+    purpose: visitor.purpose,
+    location: visitor.location || '--',
+    checkedInAt: visitor.checkedInAt,
+    status: (
+      <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+        {visitor.status}
+      </Badge>
+    ),
+    checkOut: (
+      <Button 
+        onClick={() => handleCheckOut(visitor.id)}
+        className="bg-[#F97316] hover:bg-[#F97316]/90 text-white px-3 py-1 text-sm rounded"
+      >
+        Check Out
+      </Button>
+    )
+  });
+
+  // Add index to data for S No.
+  const unexpectedVisitorDataWithIndex = unexpectedVisitors; // Use API data directly since we have ID
+
+  const expectedVisitorDataWithIndex = expectedVisitorData.map((visitor, index) => ({
+    ...visitor,
+    sNo: index + 1
+  }));
+
+  const visitorOutDataWithIndex = visitorOutData.map((visitor, index) => ({
+    ...visitor,
+    sNo: index + 1
+  }));
+
+  const visitorHistoryDataWithIndex = visitorHistoryData.map((visitor, index) => ({
+    ...visitor,
+    sNo: index + 1
+  }));
+
+  // Event handlers
   const handleHistoryClick = () => {
     setVisitorSubTab('history');
   };
 
   const handleRefresh = () => {
-    console.log('Refreshing person list...');
-    // Handle refresh logic here
+    if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
+      fetchUnexpectedVisitors(pagination.currentPage);
+    } else if (visitorSubTab === 'history') {
+      fetchVisitorHistory(historyPagination.currentPage);
+    }
+    console.log('Refreshing data...');
   };
 
   const handleEditClick = (currentNumber: string) => {
@@ -233,121 +515,15 @@ export const VisitorsDashboard = () => {
     // Handle delete visitor logic here
   };
 
-  // Render functions for enhanced tables
-  const renderUnexpectedVisitorRow = (visitor: any) => ({
-    sNo: visitor.sNo,
-    actions: (
-      <button 
-        className="w-4 h-4 text-black hover:text-gray-700"
-        onClick={() => handleEditClick('9555625186')}
-      >
-        <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
-        </svg>
-      </button>
-    ),
-    visitorName: visitor.visitorName,
-    details: visitor.details,
-    purpose: visitor.purpose,
-    status: (
-      <div className="bg-orange-200 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
-        {visitor.status}
-      </div>
-    ),
-    tableActions: (
-      <div className="flex gap-2">
-        <Button 
-          className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 text-xs rounded"
-        >
-          Resend OTP
-        </Button>
-        <Button 
-          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-xs rounded"
-        >
-          Skip Host Approval
-        </Button>
-      </div>
-    )
-  });
+  const handleResendOTP = (visitorId: number) => {
+    console.log('Resending OTP for visitor:', visitorId);
+    // Handle resend OTP logic here
+  };
 
-  const renderExpectedVisitorRow = (visitor: any) => ({
-    sNo: visitor.sNo,
-    actions: (
-      <button 
-        className="w-4 h-4 text-black hover:text-gray-700"
-        onClick={() => handleEditClick('9555625186')}
-      >
-        <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
-        </svg>
-      </button>
-    ),
-    visitorName: visitor.visitorName,
-    details: visitor.details,
-    purpose: visitor.purpose,
-    status: (
-      <div className="bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-        {visitor.status}
-      </div>
-    )
-  });
-
-  const renderVisitorOutRow = (visitor: any) => ({
-    sNo: visitor.sNo,
-    visitorName: visitor.visitorName,
-    host: visitor.host,
-    purpose: visitor.purpose,
-    location: visitor.location || '--',
-    checkedInAt: visitor.checkedInAt,
-    status: (
-      <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-        {visitor.status}
-      </Badge>
-    ),
-    checkOut: (
-      <Button 
-        onClick={() => handleCheckOut(visitor.id)}
-        className="bg-[#F97316] hover:bg-[#F97316]/90 text-white px-3 py-1 text-sm rounded"
-      >
-        Check Out
-      </Button>
-    )
-  });
-
-  const renderVisitorHistoryRow = (visitor: any) => ({
-    sNo: visitor.sNo,
-    name: visitor.name,
-    host: visitor.host,
-    location: visitor.location || '--',
-    purpose: visitor.purpose,
-    status: (
-      <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-        {visitor.status}
-      </Badge>
-    ),
-    passNumber: visitor.passNumber
-  });
-
-  // Add index to data for S No.
-  const unexpectedVisitorDataWithIndex = unexpectedVisitorData.map((visitor, index) => ({
-    ...visitor,
-    sNo: index + 1
-  }));
-
-  const expectedVisitorDataWithIndex = expectedVisitorData.map((visitor, index) => ({
-    ...visitor,
-    sNo: index + 1
-  }));
-
-  const visitorOutDataWithIndex = visitorOutData.map((visitor, index) => ({
-    ...visitor,
-    sNo: index + 1
-  }));
-
-  const visitorHistoryDataWithIndex = visitorHistoryData.map((visitor, index) => ({
-    ...visitor,
-    sNo: index + 1
-  }));
+  const handleSkipApproval = (visitorId: number) => {
+    console.log('Skipping approval for visitor:', visitorId);
+    // Handle skip approval logic here
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -435,7 +611,7 @@ export const VisitorsDashboard = () => {
                 </Button>
               </div>
 
-              {/* Show content only for Visitor In tab */}
+              {/* Visitor In tab content */}
               {visitorSubTab === 'visitor-in' && (
                 <div className="p-4">
                   {/* Top Row with Add Button and Person Selection */}
@@ -503,16 +679,20 @@ export const VisitorsDashboard = () => {
                   <div className="min-h-[400px]">
                     {activeVisitorType === 'unexpected' && (
                       <EnhancedTable
-                        data={unexpectedVisitorDataWithIndex}
-                        columns={unexpectedVisitorColumns}
-                        renderRow={renderUnexpectedVisitorRow}
+                     data={unexpectedVisitors}
+                     columns={unexpectedVisitorColumns}
+                     renderCell={renderUnexpectedVisitorCell}
                         enableSearch={true}
                         enableSelection={false}
                         enableExport={true}
+                        enablePagination={true}
+                        pagination={pagination}
+                        onPageChange={fetchUnexpectedVisitors}
+                        loading={loading}
                         storageKey="unexpected-visitors-table"
                         emptyMessage="No unexpected visitors available"
                         exportFileName="unexpected-visitors"
-                        searchPlaceholder="Search by visitor name, details, or purpose"
+                        searchPlaceholder="Search by visitor name, host, or purpose"
                         hideTableExport={false}
                         hideColumnsButton={false}
                       />
@@ -601,12 +781,16 @@ export const VisitorsDashboard = () => {
 
                   {/* Visitor History Table */}
                   <EnhancedTable
-                    data={visitorHistoryDataWithIndex}
+                    data={visitorHistoryData}
                     columns={visitorHistoryColumns}
-                    renderRow={renderVisitorHistoryRow}
+                    renderCell={renderVisitorHistoryCell}
                     enableSearch={true}
                     enableSelection={false}
                     enableExport={true}
+                    enablePagination={true}
+                    pagination={historyPagination}
+                    onPageChange={fetchVisitorHistory}
+                    loading={historyLoading}
                     storageKey="visitor-history-table"
                     emptyMessage="No visitor history available"
                     exportFileName="visitor-history"
@@ -625,7 +809,6 @@ export const VisitorsDashboard = () => {
             </div>
           </TabsContent>
         </Tabs>
-
       </div>
 
       <NewVisitorDialog 

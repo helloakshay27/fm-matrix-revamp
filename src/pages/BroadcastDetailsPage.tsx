@@ -1,34 +1,51 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Download, Edit } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChangeStatusDialog } from '@/components/ChangeStatusDialog';
+import { toast } from 'sonner';
+import { useAppDispatch } from '@/store/hooks';
+import { fetchBroadcastById } from '@/store/slices/broadcastSlice';
+import { format } from 'date-fns';
+
+interface BroadcastDetails {
+  id?: string;
+  created_by?: string;
+  notice_type?: string;
+  notice_heading?: string;
+  created_at?: string | Date;
+  status?: string;
+  expire_time?: string | Date;
+  isImportant?: boolean;
+  notice_text?: string;
+  attachments?: any[]; // Uncomment if the attachments section is used
+}
 
 export const BroadcastDetailsPage = () => {
-  const navigate = useNavigate();
   const { id } = useParams();
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem("token");
+
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [broadcastStatus, setBroadcastStatus] = useState('Published');
+  const [broadcastDetails, setBroadcastDetails] = useState<BroadcastDetails>({})
 
-  // Mock data - in a real app, this would be fetched based on the ID
-  const broadcastDetails = {
-    id: id || '1',
-    title: 'Technical issue',
-    description: 'Due to some technical issue the system not work properly',
-    createdBy: 'Godrej Living',
-    status: broadcastStatus,
-    type: 'Personal',
-    shareWith: 'Personal',
-    createdOn: '24-04-2023',
-    createdTime: '12:55 AM',
-    endDate: '25-04-2023',
-    endTime: '1:45 AM',
-    isImportant: true,
-    attachments: ['document1.pdf', 'image1.jpg'],
-    sharedMembers: ['Godrej Living'],
-    readBy: []
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await dispatch(fetchBroadcastById({ id, baseUrl, token })).unwrap();
+        setBroadcastDetails(response)
+      } catch (error) {
+        console.log(error)
+        toast.error("Failed to fetch broadcast details")
+      }
+    }
+
+    fetchData();
+  }, [])
 
   const handleStatusChange = (newStatus: string) => {
     setBroadcastStatus(newStatus);
@@ -42,7 +59,7 @@ export const BroadcastDetailsPage = () => {
         <Button
           variant="ghost"
           onClick={() => navigate('/crm/broadcast')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-0"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Broadcasts
@@ -51,79 +68,74 @@ export const BroadcastDetailsPage = () => {
 
       {/* Broadcast Details Section */}
       <div className="bg-white rounded-lg border border-gray-200 mb-6">
-        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">
+        <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
+          <div className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
             B
           </div>
           <h2 className="text-lg font-bold text-gray-900">BROADCAST DETAILS</h2>
         </div>
-        
-        <div className="p-6">
+
+        <div className="px-[80px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
           <div className="grid grid-cols-3 gap-x-8 gap-y-4">
             <div>
               <span className="text-gray-500 text-sm">Broadcast ID</span>
-              <p className="text-gray-900 font-medium">{broadcastDetails.id}</p>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.id}</span>
             </div>
             <div>
               <span className="text-gray-500 text-sm">Created by</span>
-              <p className="text-gray-900 font-medium">{broadcastDetails.createdBy}</p>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.created_by}</span>
             </div>
             <div>
               <span className="text-gray-500 text-sm">Type</span>
-              <p className="text-gray-900 font-medium">{broadcastDetails.type}</p>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.notice_type || "-"}</span>
             </div>
-            
+
             <div>
               <span className="text-gray-500 text-sm">Title</span>
-              <p className="text-gray-900 font-medium">{broadcastDetails.title}</p>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.notice_heading}</span>
             </div>
-            <div>
+            {/* <div>
               <span className="text-gray-500 text-sm">Share With</span>
-              <p className="text-gray-900 font-medium">{broadcastDetails.shareWith}</p>
-            </div>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.shareWith}</span>
+            </div> */}
             <div>
               <span className="text-gray-500 text-sm">Created Date</span>
-              <p className="text-gray-900 font-medium">{broadcastDetails.createdOn}</p>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.created_at && format(broadcastDetails.created_at, "dd-MM-yyyy")}</span>
             </div>
-            
+
             <div>
               <span className="text-gray-500 text-sm">Status</span>
-              <div className="flex items-center gap-2">
-                <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                  {broadcastDetails.status}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsStatusDialogOpen(true)}
-                  className="h-6 w-6 p-0"
-                >
-                  <Edit className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-            <div>
-              <span className="text-gray-500 text-sm">Created Time</span>
-              <p className="text-gray-900 font-medium">{broadcastDetails.createdTime}</p>
-            </div>
-            <div>
-              <span className="text-gray-500 text-sm">End Date</span>
-              <p className="text-gray-900 font-medium">{broadcastDetails.endDate}</p>
-            </div>
-            
-            <div>
-              <span className="text-gray-500 text-sm">End Time</span>
-              <p className="text-gray-900 font-medium">{broadcastDetails.endTime}</p>
-            </div>
-            <div>
-              <span className="text-gray-500 text-sm">Important</span>
-              <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                {broadcastDetails.isImportant ? 'Yes' : 'No'}
+              <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full ml-4">
+                {broadcastDetails.status}
               </span>
             </div>
             <div>
+              <span className="text-gray-500 text-sm">Created Time</span>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.created_at && format(broadcastDetails.created_at, "hh:mm a")}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 text-sm">End Date</span>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.expire_time && format(broadcastDetails.expire_time, "dd-MM-yyyy")}</span>
+            </div>
+
+            <div>
+              <span className="text-gray-500 text-sm">End Time</span>
+              <span className="text-gray-900 font-medium ml-4">{broadcastDetails.expire_time && format(broadcastDetails.expire_time, "hh:mm a")}</span>
+            </div>
+            <div>
+              <span className="text-gray-500 text-sm">Important</span>
+              <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full ml-4">
+                {broadcastDetails.isImportant ? 'Yes' : 'No'}
+              </span>
+            </div>
+            <div className='flex items-center'>
               <span className="text-gray-500 text-sm">Description</span>
-              <p className="text-gray-900 font-medium">{broadcastDetails.description}</p>
+              <span
+                className="text-gray-900 font-medium ml-4 truncate max-w-[170px] overflow-hidden whitespace-nowrap"
+                title={broadcastDetails.notice_text}
+              >
+                {broadcastDetails.notice_text}
+              </span>
             </div>
           </div>
         </div>
@@ -131,44 +143,23 @@ export const BroadcastDetailsPage = () => {
 
       {/* Attachments Section */}
       <div className="bg-white rounded-lg border border-gray-200 mb-6">
-        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">
+        <div className="flex items-center gap-4 text-[20px] fw-semibold text-[#000] bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
+          <div className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
             A
           </div>
           <h2 className="text-lg font-bold text-gray-900">ATTACHMENTS</h2>
         </div>
-        
-        <div className="p-6">
-          {broadcastDetails.attachments.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No attachments available for this broadcast.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {broadcastDetails.attachments.map((attachment, index) => (
-                <div key={index} className="flex items-center gap-2 p-3 border rounded-lg">
-                  <Download className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-900">{attachment}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Logs Section */}
-      <div className="bg-white rounded-lg border border-gray-200 mb-6">
-        <div className="flex items-center gap-3 p-4 border-b border-gray-200">
-          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white font-bold">
-            L
-          </div>
-          <h2 className="text-lg font-bold text-gray-900">LOGS</h2>
-        </div>
-        
-        <div className="p-6">
-          <div className="text-center py-8 text-gray-500">
-            No logs available for this broadcast.
-          </div>
+        <div className="px-[40px] py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+          {
+            broadcastDetails?.attachments ? (
+              <img src={broadcastDetails?.attachments[0]?.document_url} alt="" height={100} width={150} />
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No attachments available for this event.
+              </div>
+            )
+          }
         </div>
       </div>
 

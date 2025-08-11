@@ -157,7 +157,7 @@ export const MobileContactForm: React.FC = () => {
     if (!formData.customer_mobile.trim()) {
       errors.push("Mobile number is required");
     } else if (!validateMobile(formData.customer_mobile)) {
-      errors.push("Please enter a valid Oman mobile number (8 or 9) digit");
+      errors.push("Enter valid Oman number starting with 23/24, followed by 8–9 digits");
     }
     
     if (!formData.customer_email.trim()) {

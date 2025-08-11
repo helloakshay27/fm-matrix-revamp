@@ -1,668 +1,954 @@
-
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronDown, Plus, X } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  TextField, 
+  MenuItem, 
+  FormControl, 
+  InputLabel, 
+  Select as MuiSelect, 
+  FormControlLabel, 
+  Radio, 
+  RadioGroup as MuiRadioGroup,
+  Checkbox as MuiCheckbox,
+  FormLabel
+} from '@mui/material';
 
-const AddSTPAssetDashboard = () => {
+export const AddSTPAssetDashboard = () => {
   const navigate = useNavigate();
-  const [isLocationOpen, setIsLocationOpen] = useState(true);
-  const [isAssetDetailsOpen, setIsAssetDetailsOpen] = useState(true);
-  const [isWarrantyOpen, setIsWarrantyOpen] = useState(false);
-  const [isMeterCategoryOpen, setIsMeterCategoryOpen] = useState(false);
-  const [isConsumptionOpen, setIsConsumptionOpen] = useState(false);
-  const [isNonConsumptionOpen, setIsNonConsumptionOpen] = useState(false);
-  const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false);
+  const [locationOpen, setLocationOpen] = useState(true);
+  const [assetOpen, setAssetOpen] = useState(true);
+  const [warrantyOpen, setWarrantyOpen] = useState(true);
+  const [meterCategoryOpen, setMeterCategoryOpen] = useState(true);
+  const [consumptionOpen, setConsumptionOpen] = useState(true);
+  const [nonConsumptionOpen, setNonConsumptionOpen] = useState(true);
+  const [attachmentsOpen, setAttachmentsOpen] = useState(true);
 
-  const handleSaveAndShowDetails = () => {
-    console.log('Saving STP asset and showing details...');
+  const [formData, setFormData] = useState({
+    site: '',
+    building: '',
+    wing: '',
+    area: '',
+    floor: '',
+    room: '',
+    assetName: '',
+    assetNo: '',
+    equipmentId: '',
+    modelNo: '',
+    serialNo: '',
+    consumerNo: '',
+    purchaseCost: '',
+    capacity: '',
+    unit: '',
+    group: '',
+    subgroup: '',
+    purchasedOnDate: '',
+    expiryDate: '',
+    manufacturer: '',
+    locationType: 'common',
+    assetType: 'parent',
+    status: 'inUse',
+    critical: 'no',
+    meterApplicable: false,
+    underWarranty: 'no',
+    warrantyStartDate: '',
+    warrantyExpiresOn: '',
+    commissioningDate: '',
+    selectedMeterCategory: '',
+    boardSubCategory: '',
+    renewableSubCategory: '',
+    freshWaterSubCategory: ''
+  });
+
+  const [consumptionMeasures, setConsumptionMeasures] = useState([
+    { name: '', unitType: '', min: '', max: '', alertBelowVal: '', alertAboveVal: '', multiplierFactor: '', checkPreviousReading: false }
+  ]);
+
+  const [nonConsumptionMeasures, setNonConsumptionMeasures] = useState([
+    { name: '', unitType: '', min: '', max: '', alertBelowVal: '', alertAboveVal: '', multiplierFactor: '', checkPreviousReading: false }
+  ]);
+
+  const addConsumptionMeasure = () => {
+    setConsumptionMeasures([...consumptionMeasures, { name: '', unitType: '', min: '', max: '', alertBelowVal: '', alertAboveVal: '', multiplierFactor: '', checkPreviousReading: false }]);
+  };
+
+  const removeConsumptionMeasure = (index: number) => {
+    setConsumptionMeasures(consumptionMeasures.filter((_, i) => i !== index));
+  };
+
+  const addNonConsumptionMeasure = () => {
+    setNonConsumptionMeasures([...nonConsumptionMeasures, { name: '', unitType: '', min: '', max: '', alertBelowVal: '', alertAboveVal: '', multiplierFactor: '', checkPreviousReading: false }]);
+  };
+
+  const removeNonConsumptionMeasure = (index: number) => {
+    setNonConsumptionMeasures(nonConsumptionMeasures.filter((_, i) => i !== index));
+  };
+
+  const handleSave = () => {
+    console.log('Saving STP asset:', formData);
     navigate('/utility/stp');
   };
 
   const handleSaveAndCreateNew = () => {
-    console.log('Saving STP asset and creating new one...');
-    window.location.reload();
-  };
-
-  const handleBack = () => {
-    navigate('/utility/stp');
+    console.log('Saving and creating new STP asset:', formData);
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={handleBack}
-          className="hover:bg-gray-200"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">NEW ASSET</h1>
-        </div>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">NEW STP ASSET</h1>
       </div>
 
-      <div className="bg-white rounded-lg space-y-4">
+      <div className="space-y-4">
         {/* Location Details */}
-        <Collapsible open={isLocationOpen} onOpenChange={setIsLocationOpen}>
-          <CollapsibleTrigger asChild>
-            <Button 
-              variant="ghost" 
-              className="flex items-center justify-between w-full p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border-l-4 border-orange-500"
-            >
-              <div className="flex items-center gap-2">
-                <span className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</span>
-                <span className="text-orange-600 font-semibold">LOCATION DETAILS</span>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-orange-600 transition-transform ${isLocationOpen ? 'rotate-180' : ''}`} />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-4 p-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="site">Site*</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Site" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="main-site">Main Site</SelectItem>
-                    <SelectItem value="branch-site">Branch Site</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="building">Building</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="building-a">Building A</SelectItem>
-                    <SelectItem value="building-b">Building B</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="wing">Wing</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Wing" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="east">East Wing</SelectItem>
-                    <SelectItem value="west">West Wing</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="area">Area</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Area" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="treatment">Treatment Area</SelectItem>
-                    <SelectItem value="storage">Storage Area</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="floor">Floor</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Floor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ground">Ground Floor</SelectItem>
-                    <SelectItem value="first">First Floor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="room">Room</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Room" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="room-101">Room 101</SelectItem>
-                    <SelectItem value="room-102">Room 102</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+        <Card>
+          <Collapsible open={locationOpen} onOpenChange={setLocationOpen}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50">
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">1</span>
+                    LOCATION DETAILS
+                  </span>
+                  {locationOpen ? <ChevronUp /> : <ChevronDown />}
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Site*</InputLabel>
+                      <MuiSelect
+                        value={formData.site}
+                        label="Site*"
+                        onChange={(e) => setFormData({...formData, site: e.target.value})}
+                        sx={{ height: '45px' }}
+                      >
+                        <MenuItem value="site1">Site 1</MenuItem>
+                        <MenuItem value="site2">Site 2</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                  <div>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Building</InputLabel>
+                      <MuiSelect
+                        value={formData.building}
+                        label="Building"
+                        onChange={(e) => setFormData({...formData, building: e.target.value})}
+                        sx={{ height: '45px' }}
+                      >
+                        <MenuItem value="building1">Building 1</MenuItem>
+                        <MenuItem value="building2">Building 2</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                  <div>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Wing</InputLabel>
+                      <MuiSelect
+                        value={formData.wing}
+                        label="Wing"
+                        onChange={(e) => setFormData({...formData, wing: e.target.value})}
+                        sx={{ height: '45px' }}
+                      >
+                        <MenuItem value="wing1">Wing 1</MenuItem>
+                        <MenuItem value="wing2">Wing 2</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                  <div>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Area</InputLabel>
+                      <MuiSelect
+                        value={formData.area}
+                        label="Area"
+                        onChange={(e) => setFormData({...formData, area: e.target.value})}
+                        sx={{ height: '45px' }}
+                      >
+                        <MenuItem value="treatment">Treatment Area</MenuItem>
+                        <MenuItem value="storage">Storage Area</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                  <div>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Floor</InputLabel>
+                      <MuiSelect
+                        value={formData.floor}
+                        label="Floor"
+                        onChange={(e) => setFormData({...formData, floor: e.target.value})}
+                        sx={{ height: '45px' }}
+                      >
+                        <MenuItem value="floor1">Floor 1</MenuItem>
+                        <MenuItem value="floor2">Floor 2</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <FormControl size="small" sx={{ width: { xs: '100%', md: '20%' } }}>
+                    <InputLabel>Room</InputLabel>
+                    <MuiSelect
+                      value={formData.room}
+                      label="Room"
+                      onChange={(e) => setFormData({...formData, room: e.target.value})}
+                      sx={{ height: '45px' }}
+                    >
+                      <MenuItem value="room1">Room 1</MenuItem>
+                      <MenuItem value="room2">Room 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
 
         {/* Asset Details */}
-        <Collapsible open={isAssetDetailsOpen} onOpenChange={setIsAssetDetailsOpen}>
-          <CollapsibleTrigger asChild>
-            <Button 
-              variant="ghost" 
-              className="flex items-center justify-between w-full p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border-l-4 border-orange-500"
-            >
-              <div className="flex items-center gap-2">
-                <span className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</span>
-                <span className="text-orange-600 font-semibold">ASSET DETAILS</span>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-orange-600 transition-transform ${isAssetDetailsOpen ? 'rotate-180' : ''}`} />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-4 p-6">
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="assetName">Asset Name*</Label>
-                <Input id="assetName" placeholder="Enter Text" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="assetNo">Asset No.*</Label>
-                <Input id="assetNo" placeholder="Enter Number" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="equipmentId">Equipment ID.*</Label>
-                <Input id="equipmentId" placeholder="Enter Number" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="modelNo">Model No.</Label>
-                <Input id="modelNo" placeholder="Enter Number" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="serialNo">Serial No.</Label>
-                <Input id="serialNo" placeholder="Enter Number" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="group">Group*</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="stp">STP Equipment</SelectItem>
-                    <SelectItem value="water">Water Treatment</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="consumerNo">Consumer No.</Label>
-                <Input id="consumerNo" placeholder="Enter Number" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="purchaseCost">Purchase Cost*</Label>
-                <Input id="purchaseCost" placeholder="Enter Numeric value" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="capacity">Capacity</Label>
-                <Input id="capacity" placeholder="Enter Text" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="unit">Unit</Label>
-                <Input id="unit" placeholder="Enter Text" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="subgroup">Subgroup*</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select SubGroup" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="primary">Primary Treatment</SelectItem>
-                    <SelectItem value="secondary">Secondary Treatment</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="purchaseDate">Purchased ON Date</Label>
-                <Input id="purchaseDate" type="date" />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="expiryDate">Expiry date</Label>
-                <Input id="expiryDate" type="date" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="manufacturer">Manufacturer</Label>
-                <Input id="manufacturer" type="date" />
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Location Type</Label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="locationType" value="common" />
-                    <span>Common Area</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="locationType" value="customer" />
-                    <span>Customer</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="locationType" value="na" defaultChecked />
-                    <span>NA</span>
-                  </label>
+        <Card>
+          <Collapsible open={assetOpen} onOpenChange={setAssetOpen}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50">
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">2</span>
+                    STP ASSET DETAILS
+                  </span>
+                  {assetOpen ? <ChevronUp /> : <ChevronDown />}
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <TextField
+                      label="Asset Name*"
+                      placeholder="Enter STP Asset Name"
+                      value={formData.assetName}
+                      onChange={(e) => setFormData({...formData, assetName: e.target.value})}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                    />
+                  </div>
+                  <div>
+                    <TextField
+                      label="Asset No.*"
+                      placeholder="Enter Number"
+                      value={formData.assetNo}
+                      onChange={(e) => setFormData({...formData, assetNo: e.target.value})}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                    />
+                  </div>
+                  <div>
+                    <TextField
+                      label="Equipment ID*"
+                      placeholder="Enter Number"
+                      value={formData.equipmentId}
+                      onChange={(e) => setFormData({...formData, equipmentId: e.target.value})}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                    />
+                  </div>
+                  <div>
+                    <TextField
+                      label="Model No."
+                      placeholder="Enter Number"
+                      value={formData.modelNo}
+                      onChange={(e) => setFormData({...formData, modelNo: e.target.value})}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                    />
+                  </div>
+                  <div>
+                    <TextField
+                      label="Serial No."
+                      placeholder="Enter Number"
+                      value={formData.serialNo}
+                      onChange={(e) => setFormData({...formData, serialNo: e.target.value})}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                    />
+                  </div>
+                  <div>
+                    <TextField
+                      label="Consumer No."
+                      placeholder="Enter Number"
+                      value={formData.consumerNo}
+                      onChange={(e) => setFormData({...formData, consumerNo: e.target.value})}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                    />
+                  </div>
+                  <div>
+                    <TextField
+                      label="Purchase Cost*"
+                      placeholder="Enter Numeric value"
+                      value={formData.purchaseCost}
+                      onChange={(e) => setFormData({...formData, purchaseCost: e.target.value})}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                    />
+                  </div>
+                  <div>
+                    <TextField
+                      label="Treatment Capacity"
+                      placeholder="Enter Treatment Capacity"
+                      value={formData.capacity}
+                      onChange={(e) => setFormData({...formData, capacity: e.target.value})}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                    />
+                  </div>
+                  <div>
+                    <TextField
+                      label="Unit"
+                      placeholder="MLD/KLD"
+                      value={formData.unit}
+                      onChange={(e) => setFormData({...formData, unit: e.target.value})}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Asset Type</Label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="assetType" value="parent" />
-                    <span>Parent</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="assetType" value="sub" />
-                    <span>Sub</span>
-                  </label>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Group*</InputLabel>
+                      <MuiSelect
+                        value={formData.group}
+                        label="Group*"
+                        onChange={(e) => setFormData({...formData, group: e.target.value})}
+                        sx={{ height: '45px' }}
+                      >
+                        <MenuItem value="stp">STP Equipment</MenuItem>
+                        <MenuItem value="wastewater">Wastewater Treatment</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                  <div>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Subgroup*</InputLabel>
+                      <MuiSelect
+                        value={formData.subgroup}
+                        label="Subgroup*"
+                        onChange={(e) => setFormData({...formData, subgroup: e.target.value})}
+                        sx={{ height: '45px' }}
+                      >
+                        <MenuItem value="primary">Primary Treatment</MenuItem>
+                        <MenuItem value="secondary">Secondary Treatment</MenuItem>
+                        <MenuItem value="tertiary">Tertiary Treatment</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                  <div>
+                    <TextField
+                      label="Purchased ON Date"
+                      type="date"
+                      value={formData.purchasedOnDate}
+                      onChange={(e) => setFormData({...formData, purchasedOnDate: e.target.value})}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="status" value="inuse" />
-                    <span>In Use</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="status" value="breakdown" />
-                    <span>Breakdown</span>
-                  </label>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                  <div>
+                    <TextField
+                      label="Expiry date"
+                      type="date"
+                      value={formData.expiryDate}
+                      onChange={(e) => setFormData({...formData, expiryDate: e.target.value})}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </div>
+                  <div>
+                    <TextField
+                      label="Manufacturer"
+                      value={formData.manufacturer}
+                      onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Critical:</Label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="critical" value="yes" />
-                    <span>Yes</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="critical" value="no" defaultChecked />
-                    <span>No</span>
-                  </label>
+
+                <div className="mt-4 space-y-4">
+                  <div>
+                    <FormLabel>Location Type</FormLabel>
+                    <MuiRadioGroup 
+                      value={formData.locationType} 
+                      onChange={(e) => setFormData({...formData, locationType: e.target.value})}
+                      row
+                      sx={{ mt: 1 }}
+                    >
+                      <FormControlLabel value="common" control={<Radio />} label="Common Area" />
+                      <FormControlLabel value="customer" control={<Radio />} label="Customer" />
+                      <FormControlLabel value="na" control={<Radio />} label="NA" />
+                    </MuiRadioGroup>
+                  </div>
+
+                  <div>
+                    <FormLabel>Asset Type</FormLabel>
+                    <MuiRadioGroup 
+                      value={formData.assetType} 
+                      onChange={(e) => setFormData({...formData, assetType: e.target.value})}
+                      row
+                      sx={{ mt: 1 }}
+                    >
+                      <FormControlLabel value="parent" control={<Radio />} label="Parent" />
+                      <FormControlLabel value="sub" control={<Radio />} label="Sub" />
+                    </MuiRadioGroup>
+                  </div>
+
+                  <div>
+                    <FormLabel>Status</FormLabel>
+                    <MuiRadioGroup 
+                      value={formData.status} 
+                      onChange={(e) => setFormData({...formData, status: e.target.value})}
+                      row
+                      sx={{ mt: 1 }}
+                    >
+                      <FormControlLabel value="inUse" control={<Radio />} label="In Use" />
+                      <FormControlLabel value="breakdown" control={<Radio />} label="Breakdown" />
+                      <FormControlLabel value="maintenance" control={<Radio />} label="Under Maintenance" />
+                    </MuiRadioGroup>
+                  </div>
+
+                  <div>
+                    <FormLabel>Critical</FormLabel>
+                    <MuiRadioGroup 
+                      value={formData.critical} 
+                      onChange={(e) => setFormData({...formData, critical: e.target.value})}
+                      row
+                      sx={{ mt: 1 }}
+                    >
+                      <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                      <FormControlLabel value="no" control={<Radio />} label="No" />
+                    </MuiRadioGroup>
+                  </div>
+
+                  <div>
+                    <FormControlLabel
+                      control={
+                        <MuiCheckbox 
+                          checked={formData.meterApplicable}
+                          onChange={(e) => setFormData({...formData, meterApplicable: e.target.checked})}
+                        />
+                      }
+                      label="Meter Applicable"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox id="meterApplicable" />
-                <Label htmlFor="meterApplicable">Meter Applicable</Label>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
 
         {/* Warranty Details */}
-        <Collapsible open={isWarrantyOpen} onOpenChange={setIsWarrantyOpen}>
-          <CollapsibleTrigger asChild>
-            <Button 
-              variant="ghost" 
-              className="flex items-center justify-between w-full p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border-l-4 border-orange-500"
-            >
-              <div className="flex items-center gap-2">
-                <span className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</span>
-                <span className="text-orange-600 font-semibold">Warranty Details</span>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-orange-600 transition-transform ${isWarrantyOpen ? 'rotate-180' : ''}`} />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-4 p-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Under Warranty:</Label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="warranty" value="yes" />
-                    <span>Yes</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="warranty" value="no" defaultChecked />
-                    <span>No</span>
-                  </label>
+        <Card>
+          <Collapsible open={warrantyOpen} onOpenChange={setWarrantyOpen}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50">
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">3</span>
+                    WARRANTY DETAILS
+                  </span>
+                  {warrantyOpen ? <ChevronUp /> : <ChevronDown />}
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <FormLabel>Under Warranty</FormLabel>
+                    <MuiRadioGroup 
+                      value={formData.underWarranty} 
+                      onChange={(e) => setFormData({...formData, underWarranty: e.target.value})}
+                      row
+                      sx={{ mt: 1 }}
+                    >
+                      <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                      <FormControlLabel value="no" control={<Radio />} label="No" />
+                    </MuiRadioGroup>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <TextField
+                        label="Warranty Start Date"
+                        type="date"
+                        value={formData.warrantyStartDate}
+                        onChange={(e) => setFormData({...formData, warrantyStartDate: e.target.value})}
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                    <div>
+                      <TextField
+                        label="Warranty expires on"
+                        type="date"
+                        value={formData.warrantyExpiresOn}
+                        onChange={(e) => setFormData({...formData, warrantyExpiresOn: e.target.value})}
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                    <div>
+                      <TextField
+                        label="Commissioning Date"
+                        type="date"
+                        value={formData.commissioningDate}
+                        onChange={(e) => setFormData({...formData, commissioningDate: e.target.value})}
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="warrantyStart">Warranty Start Date</Label>
-                  <Input id="warrantyStart" type="date" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="warrantyExpiry">Warranty expires on</Label>
-                  <Input id="warrantyExpiry" type="date" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="commissioningDate">Commissioning Date</Label>
-                  <Input id="commissioningDate" type="date" />
-                </div>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
 
         {/* Meter Category Type */}
-        <Collapsible open={isMeterCategoryOpen} onOpenChange={setIsMeterCategoryOpen}>
-          <CollapsibleTrigger asChild>
-            <Button 
-              variant="ghost" 
-              className="flex items-center justify-between w-full p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border-l-4 border-orange-500"
-            >
-              <div className="flex items-center gap-2">
-                <span className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">4</span>
-                <span className="text-orange-600 font-semibold">Meter Category Type</span>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-orange-600 transition-transform ${isMeterCategoryOpen ? 'rotate-180' : ''}`} />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-4 p-6">
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-              <div className="bg-purple-100 p-4 rounded-lg text-center">
-                <input type="radio" name="meterType" value="board" id="board" className="mb-2" />
-                <label htmlFor="board" className="flex flex-col items-center cursor-pointer">
-                  <span className="text-2xl mb-2">📋</span>
-                  <span className="text-sm font-medium">Board</span>
-                </label>
-              </div>
-              <div className="bg-purple-100 p-4 rounded-lg text-center">
-                <input type="radio" name="meterType" value="dg" id="dg" className="mb-2" />
-                <label htmlFor="dg" className="flex flex-col items-center cursor-pointer">
-                  <span className="text-2xl mb-2">⚡</span>
-                  <span className="text-sm font-medium">DG</span>
-                </label>
-              </div>
-              <div className="bg-purple-100 p-4 rounded-lg text-center">
-                <input type="radio" name="meterType" value="renewable" id="renewable" className="mb-2" />
-                <label htmlFor="renewable" className="flex flex-col items-center cursor-pointer">
-                  <span className="text-2xl mb-2">🔋</span>
-                  <span className="text-sm font-medium">Renewable</span>
-                </label>
-              </div>
-              <div className="bg-purple-100 p-4 rounded-lg text-center">
-                <input type="radio" name="meterType" value="freshwater" id="freshwater" className="mb-2" />
-                <label htmlFor="freshwater" className="flex flex-col items-center cursor-pointer">
-                  <span className="text-2xl mb-2">💧</span>
-                  <span className="text-sm font-medium">Fresh Water</span>
-                </label>
-              </div>
-              <div className="bg-purple-100 p-4 rounded-lg text-center">
-                <input type="radio" name="meterType" value="recycled" id="recycled" className="mb-2" />
-                <label htmlFor="recycled" className="flex flex-col items-center cursor-pointer">
-                  <span className="text-2xl mb-2">♻️</span>
-                  <span className="text-sm font-medium">Recycled</span>
-                </label>
-              </div>
-              <div className="bg-purple-100 p-4 rounded-lg text-center">
-                <input type="radio" name="meterType" value="iex" id="iex" className="mb-2" />
-                <label htmlFor="iex" className="flex flex-col items-center cursor-pointer">
-                  <span className="text-2xl mb-2">⚡</span>
-                  <span className="text-sm font-medium">IEX-GDAM</span>
-                </label>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+        <Card>
+          <Collapsible open={meterCategoryOpen} onOpenChange={setMeterCategoryOpen}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50">
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">4</span>
+                    STP METER CATEGORY TYPE
+                  </span>
+                  {meterCategoryOpen ? <ChevronUp /> : <ChevronDown />}
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                  {['Flow Meter', 'Level Sensor', 'pH Meter', 'DO Meter', 'TSS Meter', 'Energy Meter'].map((category) => (
+                    <div key={category} className="flex items-center space-x-2 p-3 rounded" style={{ backgroundColor: '#f6f4ee' }}>
+                      <FormControlLabel
+                        control={
+                          <Radio 
+                            checked={formData.selectedMeterCategory === category}
+                            onChange={() => setFormData({...formData, selectedMeterCategory: category})}
+                          />
+                        }
+                        label={category}
+                        sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
 
-        {/* Consumption Asset Measure */}
-        <Collapsible open={isConsumptionOpen} onOpenChange={setIsConsumptionOpen}>
-          <CollapsibleTrigger asChild>
-            <Button 
-              variant="ghost" 
-              className="flex items-center justify-between w-full p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border-l-4 border-orange-500"
-            >
-              <div className="flex items-center gap-2">
-                <span className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">5</span>
-                <span className="text-orange-600 font-semibold">CONSUMPTION ASSET MEASURE</span>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-orange-600 transition-transform ${isConsumptionOpen ? 'rotate-180' : ''}`} />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-4 p-6">
-            <div className="border rounded-lg p-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input id="name" placeholder="Enter Text" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="unitType">Unit Type</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Unit Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="liters">Liters</SelectItem>
-                      <SelectItem value="gallons">Gallons</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="min">Min</Label>
-                  <Input id="min" placeholder="Enter Number" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="max">Max</Label>
-                  <Input id="max" placeholder="Enter Number" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="alertBelow">Alert Below Val.</Label>
-                  <Input id="alertBelow" placeholder="Enter Value" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="alertAbove">Alert Above Val.</Label>
-                  <Input id="alertAbove" placeholder="Enter Value" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="multiplier">Multiplier Factor</Label>
-                  <Input id="multiplier" placeholder="Enter Text" />
-                </div>
-                <div className="flex items-center space-x-2 pt-6">
-                  <Checkbox id="checkPrevious" />
-                  <Label htmlFor="checkPrevious">Check Previous Reading</Label>
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Button variant="ghost" className="text-red-500 hover:bg-red-50">
-                  <X className="w-4 h-4" />
+        {/* STP Monitoring Parameters */}
+        <Card>
+          <Collapsible open={consumptionOpen} onOpenChange={setConsumptionOpen}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50">
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">5</span>
+                    STP MONITORING PARAMETERS
+                  </span>
+                  {consumptionOpen ? <ChevronUp /> : <ChevronDown />}
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                {consumptionMeasures.map((measure, index) => (
+                  <div key={index} className="space-y-4 p-4 border rounded mb-4">
+                    <div className="flex justify-end">
+                      {index > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => removeConsumptionMeasure(index)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                      <div>
+                        <TextField
+                          label="Parameter Name"
+                          placeholder="e.g., pH, BOD, COD"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        />
+                      </div>
+                      <div>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Unit Type</InputLabel>
+                          <MuiSelect
+                            label="Unit Type"
+                            sx={{ height: '45px' }}
+                          >
+                            <MenuItem value="mg/l">mg/L</MenuItem>
+                            <MenuItem value="ph">pH</MenuItem>
+                            <MenuItem value="ntu">NTU</MenuItem>
+                            <MenuItem value="mld">MLD</MenuItem>
+                            <MenuItem value="percentage">%</MenuItem>
+                          </MuiSelect>
+                        </FormControl>
+                      </div>
+                      <div>
+                        <TextField
+                          label="Min Value"
+                          placeholder="Enter Minimum"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        />
+                      </div>
+                      <div>
+                        <TextField
+                          label="Max Value"
+                          placeholder="Enter Maximum"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        />
+                      </div>
+                      <div>
+                        <TextField
+                          label="Alert Below"
+                          placeholder="Alert Threshold"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <TextField
+                          label="Alert Above"
+                          placeholder="High Alert Threshold"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        />
+                      </div>
+                      <div>
+                        <TextField
+                          label="Multiplier Factor"
+                          placeholder="Enter Factor"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <FormControlLabel
+                        control={<MuiCheckbox />}
+                        label="Check Previous Reading"
+                      />
+                    </div>
+                  </div>
+                ))}
+                <Button 
+                  variant="outline" 
+                  onClick={addConsumptionMeasure}
+                  className="w-full"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New Monitoring Parameter
                 </Button>
-              </div>
-            </div>
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-              <Plus className="w-4 h-4 mr-2" />
-            </Button>
-          </CollapsibleContent>
-        </Collapsible>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
 
-        {/* Non Consumption Asset Measure */}
-        <Collapsible open={isNonConsumptionOpen} onOpenChange={setIsNonConsumptionOpen}>
-          <CollapsibleTrigger asChild>
-            <Button 
-              variant="ghost" 
-              className="flex items-center justify-between w-full p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border-l-4 border-orange-500"
-            >
-              <div className="flex items-center gap-2">
-                <span className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">6</span>
-                <span className="text-orange-600 font-semibold">NON CONSUMPTION ASSET MEASURE</span>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-orange-600 transition-transform ${isNonConsumptionOpen ? 'rotate-180' : ''}`} />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-4 p-6">
-            <div className="border rounded-lg p-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nonConsumptionName">Name</Label>
-                  <Input id="nonConsumptionName" placeholder="Name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nonConsumptionUnitType">Unit Type</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Unit Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hours">Hours</SelectItem>
-                      <SelectItem value="cycles">Cycles</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nonConsumptionMin">Min</Label>
-                  <Input id="nonConsumptionMin" placeholder="Min" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nonConsumptionMax">Max</Label>
-                  <Input id="nonConsumptionMax" placeholder="Max" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nonConsumptionAlertBelow">Alert Below Val.</Label>
-                  <Input id="nonConsumptionAlertBelow" placeholder="Alert Below Value" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nonConsumptionAlertAbove">Alert Above Val.</Label>
-                  <Input id="nonConsumptionAlertAbove" placeholder="Alert Above Value" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nonConsumptionMultiplier">Multiplier Factor</Label>
-                  <Input id="nonConsumptionMultiplier" placeholder="Multiplier Factor" />
-                </div>
-                <div className="flex items-center space-x-2 pt-6">
-                  <Checkbox id="nonConsumptionCheckPrevious" />
-                  <Label htmlFor="nonConsumptionCheckPrevious">Check Previous Reading</Label>
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Button variant="ghost" className="text-red-500 hover:bg-red-50">
-                  <X className="w-4 h-4" />
+        {/* STP Quality Parameters */}
+        <Card>
+          <Collapsible open={nonConsumptionOpen} onOpenChange={setNonConsumptionOpen}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50">
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
+                    STP QUALITY PARAMETERS
+                  </span>
+                  {nonConsumptionOpen ? <ChevronUp /> : <ChevronDown />}
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                {nonConsumptionMeasures.map((measure, index) => (
+                  <div key={index} className="space-y-4 p-4 border rounded mb-4">
+                    <div className="flex justify-end">
+                      {index > 0 && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => removeNonConsumptionMeasure(index)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                      <div>
+                        <TextField
+                          label="Quality Parameter"
+                          placeholder="e.g., Turbidity, TSS, BOD"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        />
+                      </div>
+                      <div>
+                        <FormControl fullWidth size="small">
+                          <InputLabel>Unit Type</InputLabel>
+                          <MuiSelect
+                            label="Unit Type"
+                            sx={{ height: '45px' }}
+                          >
+                            <MenuItem value="mg/l">mg/L</MenuItem>
+                            <MenuItem value="ntu">NTU</MenuItem>
+                            <MenuItem value="cfu">CFU/ml</MenuItem>
+                            <MenuItem value="ppm">PPM</MenuItem>
+                          </MuiSelect>
+                        </FormControl>
+                      </div>
+                      <div>
+                        <TextField
+                          label="Standard Min"
+                          placeholder="Regulatory Min"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        />
+                      </div>
+                      <div>
+                        <TextField
+                          label="Standard Max"
+                          placeholder="Regulatory Max"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        />
+                      </div>
+                      <div>
+                        <TextField
+                          label="Alert Below"
+                          placeholder="Quality Alert"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <TextField
+                          label="Alert Above"
+                          placeholder="High Quality Alert"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        />
+                      </div>
+                      <div>
+                        <TextField
+                          label="Multiplier Factor"
+                          placeholder="Enter Factor"
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <FormControlLabel
+                        control={<MuiCheckbox />}
+                        label="Check Previous Reading"
+                      />
+                    </div>
+                  </div>
+                ))}
+                <Button 
+                  variant="outline" 
+                  onClick={addNonConsumptionMeasure}
+                  className="w-full"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add New Quality Parameter
                 </Button>
-              </div>
-            </div>
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-              <Plus className="w-4 h-4 mr-2" />
-            </Button>
-          </CollapsibleContent>
-        </Collapsible>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
 
         {/* Attachments */}
-        <Collapsible open={isAttachmentsOpen} onOpenChange={setIsAttachmentsOpen}>
-          <CollapsibleTrigger asChild>
-            <Button 
-              variant="ghost" 
-              className="flex items-center justify-between w-full p-4 bg-orange-50 hover:bg-orange-100 rounded-lg border-l-4 border-orange-500"
-            >
-              <div className="flex items-center gap-2">
-                <span className="bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">7</span>
-                <span className="text-orange-600 font-semibold">ATTACHMENTS</span>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-orange-600 transition-transform ${isAttachmentsOpen ? 'rotate-180' : ''}`} />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-4 p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Manuals Upload</Label>
-                  <div className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center">
-                    <Button variant="ghost" className="text-orange-500">
-                      Choose File
-                    </Button>
-                    <span className="ml-2 text-gray-500">No file chosen</span>
+        <Card>
+          <Collapsible open={attachmentsOpen} onOpenChange={setAttachmentsOpen}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50">
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">7</span>
+                    ATTACHMENTS
+                  </span>
+                  {attachmentsOpen ? <ChevronUp /> : <ChevronDown />}
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <FormLabel className="mb-2 block">Technical Manuals</FormLabel>
+                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center" style={{ backgroundColor: '#f6f4ee' }}>
+                      <div className="text-orange-500 mb-2">Choose File</div>
+                      <div className="text-gray-500 text-sm">No file chosen</div>
+                      <Button variant="ghost" className="mt-2 text-orange-500">
+                        <X className="w-4 h-4" />
+                      </Button>
+                      <div className="mt-2">
+                        <Button variant="ghost" className="text-orange-500">
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" className="text-red-500 hover:bg-red-50">
-                      <X className="w-4 h-4" />
-                    </Button>
-                    <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                      <Plus className="w-4 h-4" />
-                    </Button>
+                  <div>
+                    <FormLabel className="mb-2 block">Compliance Certificates</FormLabel>
+                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center" style={{ backgroundColor: '#f6f4ee' }}>
+                      <div className="text-orange-500 mb-2">Choose File</div>
+                      <div className="text-gray-500 text-sm">No file chosen</div>
+                      <Button variant="ghost" className="mt-2 text-orange-500">
+                        <X className="w-4 h-4" />
+                      </Button>
+                      <div className="mt-2">
+                        <Button variant="ghost" className="text-orange-500">
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Purchase Invoice</Label>
-                  <div className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center">
-                    <Button variant="ghost" className="text-orange-500">
-                      Choose File
-                    </Button>
-                    <span className="ml-2 text-gray-500">No file chosen</span>
+                  <div>
+                    <FormLabel className="mb-2 block">Purchase Invoice</FormLabel>
+                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center" style={{ backgroundColor: '#f6f4ee' }}>
+                      <div className="text-orange-500 mb-2">Choose File</div>
+                      <div className="text-gray-500 text-sm">No file chosen</div>
+                      <Button variant="ghost" className="mt-2 text-orange-500">
+                        <X className="w-4 h-4" />
+                      </Button>
+                      <div className="mt-2">
+                        <Button variant="ghost" className="text-orange-500">
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" className="text-red-500 hover:bg-red-50">
-                      <X className="w-4 h-4" />
-                    </Button>
-                    <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Insurance Details</Label>
-                  <div className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center">
-                    <Button variant="ghost" className="text-orange-500">
-                      Choose File
-                    </Button>
-                    <span className="ml-2 text-gray-500">No file chosen</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" className="text-red-500 hover:bg-red-50">
-                      <X className="w-4 h-4" />
-                    </Button>
-                    <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>AMC</Label>
-                  <div className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center">
-                    <Button variant="ghost" className="text-orange-500">
-                      Choose File
-                    </Button>
-                    <span className="ml-2 text-gray-500">No file chosen</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="ghost" className="text-red-500 hover:bg-red-50">
-                      <X className="w-4 h-4" />
-                    </Button>
-                    <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                      <Plus className="w-4 h-4" />
-                    </Button>
+                  <div>
+                    <FormLabel className="mb-2 block">Installation Photos</FormLabel>
+                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center" style={{ backgroundColor: '#f6f4ee' }}>
+                      <div className="text-orange-500 mb-2">Choose File</div>
+                      <div className="text-gray-500 text-sm">No file chosen</div>
+                      <Button variant="ghost" className="mt-2 text-orange-500">
+                        <X className="w-4 h-4" />
+                      </Button>
+                      <div className="mt-2">
+                        <Button variant="ghost" className="text-orange-500">
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 p-6 justify-center">
+        <div className="flex gap-4 pt-6">
           <Button 
-            onClick={handleSaveAndShowDetails}
-            variant="outline"
-            className="px-8 py-2 border-purple-600 text-purple-600 hover:bg-purple-50"
+            onClick={handleSave}
+            className="bg-orange-600 hover:bg-orange-700 text-white px-8"
           >
-            Save & Show Details
+            Save and Show Details
           </Button>
           <Button 
             onClick={handleSaveAndCreateNew}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2"
+            variant="outline"
+            className="border-orange-600 text-orange-600 hover:bg-orange-50 px-8"
           >
-            Save & Create New Asset
+            Save and Create New
           </Button>
         </div>
       </div>

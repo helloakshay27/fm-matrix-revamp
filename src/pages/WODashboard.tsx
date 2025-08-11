@@ -141,9 +141,25 @@ export const WODashboard = () => {
             {filteredData.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <Button size="sm" variant="ghost" className="p-1">
-                    <Edit className="w-4 h-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="p-1 text-blue-600 hover:text-blue-800"
+                      onClick={() => navigate(`/finance/wo/details/${item.id}`)}
+                      title="View Details"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="p-1 text-gray-600 hover:text-gray-800"
+                      title="Edit"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </TableCell>
                 <TableCell className="font-medium">{item.id}</TableCell>
                 <TableCell>{item.woNo}</TableCell>

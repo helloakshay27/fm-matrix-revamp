@@ -380,7 +380,13 @@ const modulesByPackage = {
   'CRM': [
     { name: 'Lead', icon: Target, href: '/crm/lead' },
     { name: 'Opportunity', icon: Star, href: '/crm/opportunity' },
-    { name: 'CRM', icon: Users, href: '/crm/crm' },
+    {
+      name: 'CRM', icon: Users, subItems: [
+        { name: 'Customers', href: '/crm/customers' },
+        { name: 'FM Users', href: '/crm/fm-users' },
+        { name: 'Occupant Users', href: '/crm/occupant-users' }
+      ]
+    },
     { name: 'Events', icon: Calendar, href: '/crm/events' },
     { name: 'Broadcast', icon: Bell, href: '/crm/broadcast' },
     { name: 'Groups', icon: Users, href: '/crm/groups' },
@@ -391,6 +397,9 @@ const modulesByPackage = {
     { name: 'Energy', icon: Zap, href: '/utility/energy' },
     { name: 'Water', icon: Droplets, href: '/utility/water' },
     { name: 'STP', icon: Database, href: '/utility/stp' },
+    { name: 'Daily Readings', icon: ClipboardList, href: '/utility/daily-readings' },
+    { name: 'Utility Request', icon: FileText, href: '/utility/utility-request' },
+    { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
     { name: 'EV Consumption', icon: Car, href: '/utility/ev-consumption' },
     { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' }
   ],
