@@ -580,6 +580,9 @@ import { getCurrency } from './store/slices/currencySlice';
 import { EditBookingSetupPage } from "./pages/setup/EditBookingSetupPage";
 import { MobileAdminOrdersPage } from "./pages/MobileAdminOrdersPage";
 import DesignInsightsSetupDashboard from "./pages/DesignInsightsSetupDashboard";
+import CRMOccupantUsersDashboard from "./pages/CRMOccupantUsersDashboard";
+import CRMFMUserDashboard from "./pages/CRMFMUserDashboard";
+import CRMCustomersDashboard from "./pages/CRMCustomersDashboard";
 
 
 const queryClient = new QueryClient();
@@ -783,6 +786,9 @@ function App() {
                   path="/crm/campaign/details/:id"
                   element={<LeadDetailsPage />}
                 />
+                <Route path="/crm/customers" element={<CRMCustomersDashboard />} />
+                <Route path="/crm/fm-users" element={<CRMFMUserDashboard />} />
+                <Route path="/crm/occupant-users" element={<CRMOccupantUsersDashboard />} />
                 <Route path="/crm/events" element={<CRMEventsPage />} />
                 <Route path="/crm/events/add" element={<AddEventPage />} />
                 <Route

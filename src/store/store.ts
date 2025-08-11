@@ -10,7 +10,7 @@ import roleReducer from './slices/roleSlice'
 import { functionReducer } from './slices/functionSlice'
 import fmUserReducer, { createFmUserReducer, editFMUserReducer, fetchRolesReducer, fetchSuppliersReducer, fetchUnitsReducer, getFMUsersReducer, getUserDetailsReducer } from './slices/fmUserSlice'
 import userCountsReducer from './slices/userCountsSlice'
-import occupantUsersReducer from './slices/occupantUsersSlice'
+import occupantUsersReducer, { exportOccupantUsersReducer } from './slices/occupantUsersSlice'
 import occupantUserCountsReducer from './slices/occupantUserCountsSlice'
 import projectReducer from './slices/projectSlice'
 import siteReducer from './slices/siteSlice'
@@ -144,6 +144,7 @@ export const store = configureStore({
     getUserDetails: getUserDetailsReducer,
     editFMUser: editFMUserReducer,
     updateMenu: updateMenuReducer,
+    exportOccupantUsers: exportOccupantUsersReducer,
 
     // Events
     fetchEvents: fetchEventsReducer,

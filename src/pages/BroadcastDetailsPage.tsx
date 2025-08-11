@@ -59,7 +59,7 @@ export const BroadcastDetailsPage = () => {
         <Button
           variant="ghost"
           onClick={() => navigate('/crm/broadcast')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 px-0"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Broadcasts

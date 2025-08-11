@@ -379,7 +379,13 @@ const modulesByPackage = {
   'CRM': [
     { name: 'Lead', icon: Target, href: '/crm/lead' },
     { name: 'Opportunity', icon: Star, href: '/crm/opportunity' },
-    { name: 'CRM', icon: Users, href: '/crm/crm' },
+    {
+      name: 'CRM', icon: Users, subItems: [
+        { name: 'Customers', href: '/crm/customers' },
+        { name: 'FM Users', href: '/crm/fm-users' },
+        { name: 'Occupant Users', href: '/crm/occupant-users' }
+      ]
+    },
     { name: 'Events', icon: Calendar, href: '/crm/events' },
     { name: 'Broadcast', icon: Bell, href: '/crm/broadcast' },
     { name: 'Groups', icon: Users, href: '/crm/groups' },
