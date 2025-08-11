@@ -109,9 +109,9 @@ export const AddWaterAssetDashboard = () => {
           <Collapsible open={locationOpen} onOpenChange={setLocationOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
                     LOCATION DETAILS
                   </span>
                   {locationOpen ? <ChevronUp /> : <ChevronDown />}
