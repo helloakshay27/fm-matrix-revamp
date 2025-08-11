@@ -473,10 +473,62 @@ export const IncidentSetupDashboard = () => {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="flex-1">
-                        
-                        
-                      </div>
+                       <div className="flex-1">
+                         <Input type="text" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="w-full" placeholder="Enter Name" />
+                       </div>
+                     </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
+                       <div className="flex-1">
+                         <label className="block text-sm font-medium text-gray-700 mb-1">
+                           Secondary Category
+                         </label>
+                         <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
+                           <SelectTrigger className="w-full">
+                             <SelectValue placeholder="Select Category" />
+                           </SelectTrigger>
+                           <SelectContent className="bg-white z-50">
+                             {secondaryCategories.map(category => <SelectItem key={category.id} value={category.name}>
+                                 {category.name}
+                               </SelectItem>)}
+                           </SelectContent>
+                         </Select>
+                       </div>
+                       <div className="flex-1">
+                         <label className="block text-sm font-medium text-gray-700 mb-1">
+                           Secondary Sub Category
+                         </label>
+                         <Select value={selectedSubCategory} onValueChange={setSelectedSubCategory}>
+                           <SelectTrigger className="w-full">
+                             <SelectValue placeholder="Select Secondary Sub" />
+                           </SelectTrigger>
+                           <SelectContent className="bg-white z-50">
+                             {secondarySubCategories
+                               .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
+                               .map(sub => <SelectItem key={sub.id} value={sub.secondarySubCategory}>
+                                   {sub.secondarySubCategory}
+                                 </SelectItem>)}
+                           </SelectContent>
+                         </Select>
+                       </div>
+                       <div className="flex-1">
+                         <label className="block text-sm font-medium text-gray-700 mb-1">
+                           Secondary Sub Sub Category
+                         </label>
+                         <Select>
+                           <SelectTrigger className="w-full">
+                             <SelectValue placeholder="Select Secondary Sub" />
+                           </SelectTrigger>
+                           <SelectContent className="bg-white z-50">
+                             <SelectItem value="sample1">Sample 1</SelectItem>
+                             <SelectItem value="sample2">Sample 2</SelectItem>
+                           </SelectContent>
+                         </Select>
+                       </div>
+                       <div className="flex-1">
+                         <label className="block text-sm font-medium text-gray-700 mb-1">
+                           Name
+                         </label>
+                         <Input type="text" value={categoryName} onChange={e => setCategoryName(e.target.value)} className="w-full" placeholder="Enter Name" />
+                       </div>
                     </> : selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category' ? <div className="flex-1">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Category
@@ -546,9 +598,15 @@ export const IncidentSetupDashboard = () => {
                           <TableHead>Secondary Category</TableHead>
                           <TableHead>Secondry Sub Category</TableHead>
                           <TableHead>Action</TableHead>
-                        </> : selectedCategory === 'Approval Setup' ? <>
-                          <TableHead>Users</TableHead>
-                          <TableHead>Action</TableHead>
+                         </> : selectedCategory === 'Secondary Sub Sub Category' ? <>
+                           <TableHead>Secondary Category</TableHead>
+                           <TableHead>Secondary Sub Category</TableHead>
+                           <TableHead>Secondary Sub Sub Category</TableHead>
+                           <TableHead>Secondary Sub Sub Sub Category</TableHead>
+                           <TableHead>Action</TableHead>
+                         </> : selectedCategory === 'Approval Setup' ? <>
+                           <TableHead>Users</TableHead>
+                           <TableHead>Action</TableHead>
                         </> : selectedCategory === 'Escalations' ? <>
                           <TableHead>Level</TableHead>
                           <TableHead>Escalate In Days</TableHead>
@@ -589,7 +647,25 @@ export const IncidentSetupDashboard = () => {
                               </Button>
                             </div>
                           </TableCell>
-                        </TableRow>) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => <TableRow key={approval.id}>
+                         </TableRow>) : selectedCategory === 'Secondary Sub Sub Category' ? [
+                           { id: 1, secondaryCategory: 'Safety Risk', secondarySubCategory: 'Fire Safety', secondarySubSubCategory: 'Fire Prevention', secondarySubSubSubCategory: 'Alarm Systems' },
+                           { id: 2, secondaryCategory: 'Operational Risk', secondarySubCategory: 'Process Failure', secondarySubSubCategory: 'System Malfunction', secondarySubSubSubCategory: 'Hardware Issues' }
+                         ].map(item => <TableRow key={item.id}>
+                           <TableCell>{item.secondaryCategory}</TableCell>
+                           <TableCell>{item.secondarySubCategory}</TableCell>
+                           <TableCell>{item.secondarySubSubCategory}</TableCell>
+                           <TableCell>{item.secondarySubSubSubCategory}</TableCell>
+                           <TableCell>
+                             <div className="flex gap-2">
+                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
+                                 <Edit className="w-4 h-4" />
+                               </Button>
+                               <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                                 <Trash2 className="w-4 h-4" />
+                               </Button>
+                             </div>
+                           </TableCell>
+                         </TableRow>) : selectedCategory === 'Approval Setup' ? approvalSetups.map(approval => <TableRow key={approval.id}>
                           <TableCell>{approval.users}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
