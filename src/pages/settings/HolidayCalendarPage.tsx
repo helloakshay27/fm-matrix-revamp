@@ -329,7 +329,6 @@ export const HolidayCalendarPage = () => {
               
               <div className="py-4">
                 <div className="grid grid-cols-3 gap-4 space-y-0">
-                  {/* Holiday Name */}
                   <div className="space-y-2">
                     <Label htmlFor="holidayName">Holiday Name</Label>
                     <TextField
@@ -343,13 +342,20 @@ export const HolidayCalendarPage = () => {
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           '& fieldset': {
-                            borderColor: '#d1d5db',
+                            borderColor: '#e5e7eb',
+                            borderWidth: '1px',
                           },
                           '&:hover fieldset': {
-                            borderColor: '#9ca3af',
+                            borderColor: '#e5e7eb',
+                            borderWidth: '1px',
                           },
                           '&.Mui-focused fieldset': {
-                            borderColor: '#3b82f6',
+                            borderColor: '#e5e7eb',
+                            borderWidth: '1px',
+                          },
+                          '&.Mui-error fieldset': {
+                            borderColor: '#e5e7eb',
+                            borderWidth: '1px',
                           },
                         },
                       }}
