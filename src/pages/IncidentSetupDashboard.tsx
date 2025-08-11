@@ -435,7 +435,45 @@ export const IncidentSetupDashboard = () => {
                       Back
                     </Button>
                   </div>
-                </div> : <div className="space-y-6">
+                 </div> : <div className="space-y-6">
+                  {(editingItem?.type === 'Secondary Sub Category' || editingItem?.type === 'Secondary Sub Sub Category') && <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Secondary Category
+                      </label>
+                      <Select value={editFormData.category} onValueChange={value => setEditFormData({
+                ...editFormData,
+                category: value
+              })}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          {secondaryCategories.map(category => <SelectItem key={category.id} value={category.name}>
+                              {category.name}
+                            </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>}
+
+                  {editingItem?.type === 'Secondary Sub Sub Category' && <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Secondary Sub Category
+                      </label>
+                      <Select value={editFormData.subCategory} onValueChange={value => setEditFormData({
+                ...editFormData,
+                subCategory: value
+              })}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Secondary Sub Category" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white z-50">
+                          {secondarySubCategories.filter(sub => sub.secondaryCategory === editFormData.category).map(subCategory => <SelectItem key={subCategory.id} value={subCategory.secondarySubCategory}>
+                                {subCategory.secondarySubCategory}
+                              </SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>}
+
                   {(editingItem?.type === 'Sub Category' || editingItem?.type === 'Sub Sub Category' || editingItem?.type === 'Sub Sub Sub Category') && <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Category
