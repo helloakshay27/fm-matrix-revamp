@@ -43,6 +43,12 @@ export const IncidentSetupDashboard = () => {
     { id: 1, category: 'risks', subCategory: 'data', subSubCategory: 'data I', subSubSubCategory: 'data I-A' }
   ]);
 
+  const [incidenceStatuses, setIncidenceStatuses] = useState([
+    { id: 1, name: 'under observation' },
+    { id: 2, name: 'Closed' },
+    { id: 3, name: 'Open' }
+  ]);
+
   const menuItems = [
     'Category',
     'Sub Category', 
@@ -97,6 +103,8 @@ export const IncidentSetupDashboard = () => {
         setSubSubCategories(subSubCategories.filter(subsub => subsub.id !== item.id));
       } else if (type === 'Sub Sub Sub Category') {
         setSubSubSubCategories(subSubSubCategories.filter(subsubsub => subsubsub.id !== item.id));
+      } else if (type === 'Incidence status') {
+        setIncidenceStatuses(incidenceStatuses.filter(status => status.id !== item.id));
       }
     }
   };
@@ -347,7 +355,33 @@ export const IncidentSetupDashboard = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedCategory === 'Sub Sub Sub Category' ? (
+                    {selectedCategory === 'Incidence status' ? (
+                      incidenceStatuses.map((status) => (
+                        <TableRow key={status.id}>
+                          <TableCell>{status.name}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-blue-600 hover:text-blue-800"
+                                onClick={() => handleEdit(status, 'Incidence status')}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleDelete(status, 'Incidence status')}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : selectedCategory === 'Sub Sub Sub Category' ? (
                       subSubSubCategories.map((item) => (
                         <TableRow key={item.id}>
                           <TableCell>{item.category}</TableCell>
