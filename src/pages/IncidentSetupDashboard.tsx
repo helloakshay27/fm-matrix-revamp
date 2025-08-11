@@ -10,6 +10,7 @@ export const IncidentSetupDashboard = () => {
   const [categoryName, setCategoryName] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Category');
   const [selectedParentCategory, setSelectedParentCategory] = useState('');
+  const [selectedSubCategory, setSelectedSubCategory] = useState('');
   
   const categories = [
     { id: 1, name: 'risks' },
@@ -24,6 +25,10 @@ export const IncidentSetupDashboard = () => {
     { id: 5, category: 'Risk Assessment', subCategory: 'Phishing Attacks' },
     { id: 6, category: 'Risk Assessment', subCategory: 'Access Control' },
     { id: 7, category: 'Risk Assessment', subCategory: 'Data Breached' }
+  ];
+
+  const subSubCategories = [
+    { id: 1, category: 'risks', subCategory: 'data', subSubCategory: 'data I' }
   ];
 
   const menuItems = [
@@ -75,7 +80,7 @@ export const IncidentSetupDashboard = () => {
           {/* Form Section */}
           <div className="mb-6">
             <div className="flex gap-4 items-end">
-              {selectedCategory === 'Sub Category' && (
+              {(selectedCategory === 'Sub Category' || selectedCategory === 'Sub Sub Category') && (
                 <div className="flex-1">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Category
@@ -90,6 +95,27 @@ export const IncidentSetupDashboard = () => {
                           {category.name}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {selectedCategory === 'Sub Sub Category' && (
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Sub Category
+                  </label>
+                  <Select value={selectedSubCategory} onValueChange={setSelectedSubCategory}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Sub Category" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      {subCategories
+                        .filter(sub => sub.category === selectedParentCategory)
+                        .map((subCategory) => (
+                          <SelectItem key={subCategory.id} value={subCategory.subCategory}>
+                            {subCategory.subCategory}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -120,7 +146,14 @@ export const IncidentSetupDashboard = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50">
-                  {selectedCategory === 'Sub Category' ? (
+                  {selectedCategory === 'Sub Sub Category' ? (
+                    <>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Sub Category</TableHead>
+                      <TableHead>Sub Sub Category</TableHead>
+                      <TableHead>Action</TableHead>
+                    </>
+                  ) : selectedCategory === 'Sub Category' ? (
                     <>
                       <TableHead>Category</TableHead>
                       <TableHead>Sub Category</TableHead>
@@ -135,7 +168,25 @@ export const IncidentSetupDashboard = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {selectedCategory === 'Sub Category' ? (
+                {selectedCategory === 'Sub Sub Category' ? (
+                  subSubCategories.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.category}</TableCell>
+                      <TableCell>{item.subCategory}</TableCell>
+                      <TableCell>{item.subSubCategory}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm" className="text-blue-600">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-600">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : selectedCategory === 'Sub Category' ? (
                   subCategories.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>{item.category}</TableCell>
