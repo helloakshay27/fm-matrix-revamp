@@ -81,6 +81,7 @@ import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
 import UtilityEVConsumptionDashboard from './pages/UtilityEVConsumptionDashboard';
 import UtilityDailyReadingsDashboard from './pages/UtilityDailyReadingsDashboard';
 import UtilitySolarGeneratorDashboard from './pages/UtilitySolarGeneratorDashboard';
+import { UtilityRequestDashboard } from './pages/UtilityRequestDashboard';
 
 // Import Waste Generation pages
 import UtilityWasteGenerationDashboard from './pages/UtilityWasteGenerationDashboard';
@@ -793,6 +794,7 @@ function App() {
                 <Route path="/utility/stp/add-asset" element={<AddSTPAssetDashboard />} />
                 <Route path="/utility/ev-consumption" element={<UtilityEVConsumptionDashboard />} />
                 <Route path="/utility/daily-readings" element={<UtilityDailyReadingsDashboard />} />
+                <Route path="/utility/utility-request" element={<UtilityRequestDashboard />} />
                 <Route path="/utility/add-asset" element={<AddAssetDashboard />} />
 
                 {/* Energy Asset Routes */}
