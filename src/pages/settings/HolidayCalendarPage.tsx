@@ -158,6 +158,7 @@ export const HolidayCalendarPage = () => {
   const [sitesDropdownOpen, setSitesDropdownOpen] = useState(false);
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
   const [customersDropdownOpen, setCustomersDropdownOpen] = useState(false);
+  const [recurringOpen, setRecurringOpen] = useState(false);
 
   // Site options
   const siteOptions = [
@@ -343,16 +344,39 @@ export const HolidayCalendarPage = () => {
                   {/* Recurring */}
                   <div className="space-y-2">
                     <Label>Recurring</Label>
-                    <RadioGroup value={recurring} onValueChange={setRecurring}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="yes" id="yes" />
-                        <Label htmlFor="yes">Yes</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="no" />
-                        <Label htmlFor="no">No</Label>
-                      </div>
-                    </RadioGroup>
+                    <Popover open={recurringOpen} onOpenChange={setRecurringOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between font-normal text-left"
+                        >
+                          {recurring ? (recurring === "yes" ? "Yes" : "No") : "Select"}
+                          <ChevronDown className="h-4 w-4 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <div className="p-2 space-y-1">
+                          <div 
+                            className="px-3 py-2 hover:bg-accent cursor-pointer rounded-sm"
+                            onClick={() => {
+                              setRecurring("yes");
+                              setRecurringOpen(false);
+                            }}
+                          >
+                            Yes
+                          </div>
+                          <div 
+                            className="px-3 py-2 hover:bg-accent cursor-pointer rounded-sm"
+                            onClick={() => {
+                              setRecurring("no");
+                              setRecurringOpen(false);
+                            }}
+                          >
+                            No
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   {/* Select Sites */}
