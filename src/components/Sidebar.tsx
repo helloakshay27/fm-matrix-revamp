@@ -390,6 +390,7 @@ const modulesByPackage = {
     { name: 'STP', icon: Database, href: '/utility/stp' },
     { name: 'Daily Readings', icon: ClipboardList, href: '/utility/daily-readings' },
     { name: 'Utility Request', icon: FileText, href: '/utility/utility-request' },
+    { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
     { name: 'EV Consumption', icon: Car, href: '/utility/ev-consumption' },
     { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' }
   ],
