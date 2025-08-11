@@ -575,7 +575,7 @@ export const AddWaterAssetDashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
                   {['Board', 'DG', 'Renewable', 'Fresh Water', 'Recycled', 'IEX-GDAM'].map((category) => (
-                    <div key={category} className="flex items-center space-x-2 bg-purple-100 p-3 rounded">
+                    <div key={category} className="flex items-center space-x-2 p-3 rounded" style={{ backgroundColor: '#f6f4ee' }}>
                       <FormControlLabel
                         control={
                           <Radio 
