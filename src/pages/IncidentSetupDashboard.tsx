@@ -603,22 +603,7 @@ export const IncidentSetupDashboard = () => {
                             fullWidth
                           />
                         </div>
-                      </> : selectedCategory === 'RCA Category' ? <>
-                        <div className="flex-1">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Name
-                          </label>
-                          <TextField 
-                            type="text" 
-                            value={categoryName} 
-                            onChange={e => setCategoryName(e.target.value)} 
-                            placeholder="Enter Name"
-                            variant="outlined"
-                            size="small"
-                            fullWidth
-                          />
-                        </div>
-                     </> : selectedCategory === 'Incident Disclaimer' ? <>
+                      </> : selectedCategory === 'Incident Disclaimer' ? <>
                         <div className="flex-1">
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Name
