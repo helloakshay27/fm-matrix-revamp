@@ -20,12 +20,12 @@ export const IncidentSetupDashboard = () => {
     name: ''
   });
   
-  const categories = [
+  const [categories, setCategories] = useState([
     { id: 1, name: 'risks' },
     { id: 2, name: 'Risk Assessment' }
-  ];
+  ]);
 
-  const subCategories = [
+  const [subCategories, setSubCategories] = useState([
     { id: 1, category: 'risks', subCategory: 'data' },
     { id: 2, category: 'Risk Assessment', subCategory: 'Physical Security' },
     { id: 3, category: 'Risk Assessment', subCategory: 'Integration Failure' },
@@ -33,11 +33,11 @@ export const IncidentSetupDashboard = () => {
     { id: 5, category: 'Risk Assessment', subCategory: 'Phishing Attacks' },
     { id: 6, category: 'Risk Assessment', subCategory: 'Access Control' },
     { id: 7, category: 'Risk Assessment', subCategory: 'Data Breached' }
-  ];
+  ]);
 
-  const subSubCategories = [
+  const [subSubCategories, setSubSubCategories] = useState([
     { id: 1, category: 'risks', subCategory: 'data', subSubCategory: 'data I' }
-  ];
+  ]);
 
   const menuItems = [
     'Category',
@@ -81,6 +81,18 @@ export const IncidentSetupDashboard = () => {
     setIsEditing(false);
     setEditingItem(null);
     setEditFormData({ category: '', subCategory: '', subSubCategory: '', name: '' });
+  };
+
+  const handleDelete = (item: any, type: string) => {
+    if (window.confirm(`Are you sure you want to delete this ${type.toLowerCase()}?`)) {
+      if (type === 'Category') {
+        setCategories(categories.filter(cat => cat.id !== item.id));
+      } else if (type === 'Sub Category') {
+        setSubCategories(subCategories.filter(sub => sub.id !== item.id));
+      } else if (type === 'Sub Sub Category') {
+        setSubSubCategories(subSubCategories.filter(subsub => subsub.id !== item.id));
+      }
+    }
   };
 
   return (
@@ -270,7 +282,12 @@ export const IncidentSetupDashboard = () => {
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleDelete(item, 'Sub Sub Category')}
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
@@ -292,7 +309,12 @@ export const IncidentSetupDashboard = () => {
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleDelete(item, 'Sub Category')}
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
@@ -313,7 +335,12 @@ export const IncidentSetupDashboard = () => {
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
-                              <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-600 hover:text-red-800"
+                                onClick={() => handleDelete(category, 'Category')}
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
