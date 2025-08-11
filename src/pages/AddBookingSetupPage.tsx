@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, ChevronDown, ChevronUp, Upload } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Upload, X } from "lucide-react";
 import {
   TextField,
   Select,
@@ -169,6 +169,16 @@ export const AddBookingSetupPage = () => {
   const handleBookingImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setSelectedBookingFiles(files);
+  };
+
+  const removeCoverImage = (indexToRemove) => {
+    setSelectedFile(selectedFile.filter((_, index) => index !== indexToRemove));
+  };
+
+  const removeBookingImage = (indexToRemove) => {
+    setSelectedBookingFiles(
+      selectedBookingFiles.filter((_, index) => index !== indexToRemove)
+    );
   };
 
   const triggerFileSelect = () => {
@@ -1212,7 +1222,7 @@ export const AddBookingSetupPage = () => {
             </div>
 
             {/* Cover Image */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-start justify-between gap-4">
               {/* Cover Image */}
               <div className="border rounded-lg w-full"
               >
@@ -1251,15 +1261,23 @@ export const AddBookingSetupPage = () => {
                     ref={coverImageRef}
                     hidden
                   />
+
                   {selectedFile.length > 0 && (
                     <div className="mt-4 flex gap-2 flex-wrap">
                       {selectedFile.map((file, index) => (
-                        <img
-                          key={index}
-                          src={URL.createObjectURL(file)}
-                          alt={`cover-preview-${index}`}
-                          className="h-[80px] w-20 rounded border border-gray-200"
-                        />
+                        <div key={index} className="relative">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`cover-preview-${index}`}
+                            className="h-[80px] w-20 rounded border border-gray-200"
+                          />
+                          <button
+                            onClick={() => removeCoverImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -1303,15 +1321,23 @@ export const AddBookingSetupPage = () => {
                     ref={bookingImageRef}
                     hidden
                   />
+
                   {selectedBookingFiles.length > 0 && (
                     <div className="mt-4 flex gap-2 flex-wrap">
                       {selectedBookingFiles.map((file, index) => (
-                        <img
-                          key={index}
-                          src={URL.createObjectURL(file)}
-                          alt={`cover-preview-${index}`}
-                          className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
-                        />
+                        <div key={index} className="relative">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={`booking-preview-${index}`}
+                            className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
+                          />
+                          <button
+                            onClick={() => removeBookingImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
