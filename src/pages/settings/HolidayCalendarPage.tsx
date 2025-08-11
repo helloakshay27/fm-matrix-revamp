@@ -231,7 +231,6 @@ export const HolidayCalendarPage = () => {
           data={mockHolidays}
           columns={columns}
           renderCell={renderCell}
-          renderActions={renderActions}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           storageKey="holiday-calendar-table"
