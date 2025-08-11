@@ -239,7 +239,7 @@ export const UtilityRequestDashboard = () => {
   };
 
   const handleView = (item: any) => {
-    console.log('View item:', item);
+    navigate(`/utility/utility-request/details/${item.id}`);
   };
 
   const handleAdd = () => {
