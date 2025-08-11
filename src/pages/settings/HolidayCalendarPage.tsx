@@ -349,7 +349,7 @@ export const HolidayCalendarPage = () => {
                             borderColor: '#9ca3af',
                           },
                           '&.Mui-focused fieldset': {
-                            borderColor: '#C72030',
+                            borderColor: '#3b82f6',
                           },
                         },
                       }}
