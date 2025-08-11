@@ -137,14 +137,9 @@ export const IncidentSetupDashboard = () => {
   const [selectedSecondaryCategory, setSelectedSecondaryCategory] = useState('');
   const [secondarySubSubCategories, setSecondarySubSubCategories] = useState([{
     id: 1,
-    secondaryCategory: 'Safety Risk',
-    secondarySubCategory: 'Fire Safety',
-    secondarySubSubCategory: 'Fire Prevention'
-  }, {
-    id: 2,
-    secondaryCategory: 'Operational Risk',
-    secondarySubCategory: 'Process Failure',
-    secondarySubSubCategory: 'System Malfunction'
+    secondaryCategory: 'latest',
+    secondarySubCategory: 'test',
+    secondarySubSubCategory: 'test'
   }]);
   const [selectedSecondarySubCategory, setSelectedSecondarySubCategory] = useState('');
   const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category', 'Incident Disclaimer'];
