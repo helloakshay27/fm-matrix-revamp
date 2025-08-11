@@ -934,7 +934,7 @@ export const AddWaterAssetDashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <FormLabel className="mb-2 block">Manuals Upload</FormLabel>
-                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-purple-50">
+                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center" style={{ backgroundColor: '#f6f4ee' }}>
                       <div className="text-orange-500 mb-2">Choose File</div>
                       <div className="text-gray-500 text-sm">No file chosen</div>
                       <Button variant="ghost" className="mt-2 text-orange-500">
@@ -949,7 +949,7 @@ export const AddWaterAssetDashboard = () => {
                   </div>
                   <div>
                     <FormLabel className="mb-2 block">Insurance Details</FormLabel>
-                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-purple-50">
+                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center" style={{ backgroundColor: '#f6f4ee' }}>
                       <div className="text-orange-500 mb-2">Choose File</div>
                       <div className="text-gray-500 text-sm">No file chosen</div>
                       <Button variant="ghost" className="mt-2 text-orange-500">
@@ -964,7 +964,7 @@ export const AddWaterAssetDashboard = () => {
                   </div>
                   <div>
                     <FormLabel className="mb-2 block">Purchase Invoice</FormLabel>
-                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-purple-50">
+                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center" style={{ backgroundColor: '#f6f4ee' }}>
                       <div className="text-orange-500 mb-2">Choose File</div>
                       <div className="text-gray-500 text-sm">No file chosen</div>
                       <Button variant="ghost" className="mt-2 text-orange-500">
@@ -979,7 +979,7 @@ export const AddWaterAssetDashboard = () => {
                   </div>
                   <div>
                     <FormLabel className="mb-2 block">AMC</FormLabel>
-                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-purple-50">
+                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center" style={{ backgroundColor: '#f6f4ee' }}>
                       <div className="text-orange-500 mb-2">Choose File</div>
                       <div className="text-gray-500 text-sm">No file chosen</div>
                       <Button variant="ghost" className="mt-2 text-orange-500">
