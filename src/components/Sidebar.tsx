@@ -389,6 +389,7 @@ const modulesByPackage = {
     { name: 'Water', icon: Droplets, href: '/utility/water' },
     { name: 'STP', icon: Database, href: '/utility/stp' },
     { name: 'Daily Readings', icon: ClipboardList, href: '/utility/daily-readings' },
+    { name: 'Utility Request', icon: FileText, href: '/utility/utility-request' },
     { name: 'EV Consumption', icon: Car, href: '/utility/ev-consumption' },
     { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' }
   ],
