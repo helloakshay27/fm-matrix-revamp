@@ -598,7 +598,7 @@ export const HolidayCalendarPage = () => {
       </div>
 
       {/* Table Card */}
-      <div className="bg-white rounded-lg border border-[#D5DbDB] shadow-sm">
+      <div className="bg-white rounded-lg border border-[#D5DbDB]">
         <EnhancedTable
           data={filteredHolidays}
           columns={columns}
