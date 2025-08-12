@@ -140,7 +140,7 @@ export const VisitorManagementSetup = () => {
   };
 
   const handleEdit = (id: number) => {
-    console.log(`Editing ID: ${id}`);
+    navigate(`/security/visitor-management/edit/${id}`);
   };
 
   const handleDelete = (id: number) => {
