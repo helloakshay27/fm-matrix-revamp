@@ -312,7 +312,31 @@ export const PODetailsPage = () => {
           </table>
         </div>
         
-        {/* Enhanced Amount Summary */}
+        {/* Financial Summary */}
+        <div className="mt-6 border-t border-gray-200 pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl ml-auto">
+            <div className="flex justify-between">
+              <span className="font-medium text-gray-700">Net Amount(INR):</span>
+              <span className="font-semibold">2360.00</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium text-gray-700">Gross Amount:</span>
+              <span className="font-semibold">2360.00</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium text-gray-700">Taxes:</span>
+              <span className="font-semibold">0.00</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium text-gray-700">Net Invoice Amount:</span>
+              <span className="font-semibold">2360.00</span>
+            </div>
+            <div className="md:col-span-2 flex justify-between border-t border-gray-200 pt-2">
+              <span className="font-medium text-gray-700">Amount In Words:</span>
+              <span className="font-semibold">Two Thousand, Three Hundred Sixty Rupees Only</span>
+            </div>
+          </div>
+        </div>
         
       </div>
         
