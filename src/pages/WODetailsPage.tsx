@@ -1,8 +1,7 @@
-import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Edit, Copy, Printer, Rss, ArrowLeft } from 'lucide-react';
+import { Edit, Copy, Printer, Rss } from 'lucide-react';
 
 export const WODetailsPage = () => {
   const { id } = useParams();
@@ -89,18 +88,6 @@ export const WODetailsPage = () => {
 
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
-      {/* Breadcrumb */}
-      <div className="mb-2 text-sm text-gray-600">
-        <span 
-          className="cursor-pointer hover:text-[#C72030]" 
-          onClick={() => navigate('/finance/wo')}
-        >
-          Work Order
-        </span>
-        {' > '}
-        <span>Work Order Details</span>
-      </div>
-
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
         <div className="flex flex-col">
@@ -114,7 +101,7 @@ export const WODetailsPage = () => {
             </span>
           </div>
         </div>
-        
+
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
           <span className={`px-4 py-2 rounded text-sm font-medium ${getStatusColor(woDetails.status)}`}>
             Status:- {woDetails.status}
@@ -135,10 +122,6 @@ export const WODetailsPage = () => {
             <Button size="sm" variant="outline" className="border-gray-300">
               <Rss className="w-4 h-4 mr-1" />
               Feeds
-            </Button>
-            <Button size="sm" variant="outline" className="border-gray-300">
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
             </Button>
           </div>
         </div>
@@ -192,7 +175,7 @@ export const WODetailsPage = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
           Work Order ({woDetails.status})
         </h3>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
           {/* Left Column */}
           <div className="space-y-4">
@@ -367,7 +350,7 @@ export const WODetailsPage = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Terms & Conditions :</h3>
         <p className="text-gray-700">NA</p>
-        
+
         <div className="mt-6">
           <p className="text-gray-900 font-medium">For jyoti We Confirm & Accept,</p>
         </div>
@@ -492,18 +475,6 @@ export const WODetailsPage = () => {
             </TableBody>
           </Table>
         </div>
-      </div>
-
-      {/* Back Button */}
-      <div className="mt-6">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/finance/wo')}
-          className="border-gray-300"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Work Orders
-        </Button>
       </div>
     </div>
   );

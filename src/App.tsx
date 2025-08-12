@@ -571,6 +571,11 @@ import { EscalationMatrixPage } from "./pages/maintenance/EscalationMatrixPage";
 import { PermitSetupDashboard } from "./pages/PermitSetupDashboard";
 import { IncidentSetupDashboard } from "./pages/IncidentSetupDashboard";
 
+// Import Holiday Calendar page
+import { HolidayCalendarPage as SettingsHolidayCalendarPage } from './pages/settings/HolidayCalendarPage';
+import { HolidayCalendarPage } from './pages/HolidayCalendarPage';
+
+import { SpaceManagementBookingDetailsPage } from '@/pages/SpaceManagementBookingDetailsPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { OTPVerificationPage } from '@/pages/OTPVerificationPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
@@ -664,6 +669,9 @@ function App() {
                 <Route index element={<Index />} />
 
 
+                {/* Holiday Calendar Route */}
+                <Route path="/holiday-calendar" element={<HolidayCalendarPage />} />
+
                 {/* Rule Engine Routes */}
                 <Route
                   path="/rule-engine/rule-list"
@@ -712,6 +720,16 @@ function App() {
                   path="/settings/roles/role/add"
                   element={<AddRolePage />}
                 />
+                <Route path="/settings/users/edit-details/:id" element={<EditFMUserDetailsPage />} />
+                <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
+                <Route path="/settings/account" element={<AccountDashboard />} />
+                <Route path="/settings/account/holiday-calendar" element={<SettingsHolidayCalendarPage />} />
+                <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
+                <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
+                <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
+                <Route path="/settings/roles/department" element={<DepartmentDashboard />} />
+                <Route path="/settings/roles/role" element={<RoleDashboard />} />
+                <Route path="/settings/roles/role/add" element={<AddRolePage />} />
 
                 {/* Settings Asset Setup Routes */}
                 <Route

@@ -1,7 +1,9 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate, useParams } from 'react-router-dom';
+import { Edit, Copy, Printer, Rss } from 'lucide-react';
 
 export const MaterialPRDetailsPage = () => {
   const navigate = useNavigate();
@@ -250,250 +252,271 @@ export const MaterialPRDetailsPage = () => {
   };
 
   return (
-    <div className="p-6 mx-auto">
-      {/* Breadcrumb */}
-      <div className="mb-4 text-sm text-gray-600">
-        Material PR {'>'} Material PR Details
-      </div>
-
+    <div className="p-6 mx-auto max-w-7xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold">MATERIAL PR DETAILS</h1>
-          <span className="px-3 py-1 bg-green-500 text-white text-sm rounded">
-            admin Approval: {prData.adminApproval}
-          </span>
+          <h1 className="text-3xl font-bold">WORK ORDER DETAILS</h1>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Level 1 Approval:</span>
+            <span className="px-3 py-1 bg-yellow-500 text-white text-sm rounded font-medium">
+              Pending
+            </span>
+          </div>
         </div>
         
-        {/* Action Buttons */}
+        {/* Status and Action Buttons */}
         <div className="flex items-center gap-3">
+          <div className="px-4 py-2 bg-yellow-500 text-white rounded font-medium">
+            Status- Pending
+          </div>
           <Button 
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            variant="outline"
+            className="border-red-500 text-red-500 hover:bg-red-50"
+            onClick={() => {}}
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Edit
+          </Button>
+          <Button 
+            variant="outline"
+            className="border-red-500 text-red-500 hover:bg-red-50"
             onClick={handleClone}
           >
+            <Copy className="w-4 h-4 mr-2" />
             Clone
           </Button>
           <Button 
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-            onClick={handleFeeds}
-          >
-            Feeds
-          </Button>
-          <Button 
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
+            variant="outline"
+            className="border-red-500 text-red-500 hover:bg-red-50"
             onClick={handlePrint}
           >
+            <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
-          <div className="text-sm text-gray-600 bg-yellow-100 px-3 py-1 rounded flex items-center gap-2">
-            🔒 LOCKATED
-          </div>
+          <Button 
+            variant="outline"
+            className="border-red-500 text-red-500 hover:bg-red-50"
+            onClick={handleFeeds}
+          >
+            <Rss className="w-4 h-4 mr-2" />
+            Feeds
+          </Button>
         </div>
       </div>
 
-      <div className="text-sm text-gray-600 mb-6">
-        Page 1 - 27/03/2025
-      </div>
+      <div className="space-y-6">
+        {/* Contact Information Card */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <div className="flex">
+                  <span className="text-gray-600 w-24">Phone</span>
+                  <span className="font-medium">: 7239013238</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-24">Email</span>
+                  <span className="font-medium">: xtylizzsamerxyز146@gmail.com</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-24">PAN</span>
+                  <span className="font-medium">: 868687779796</span>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex">
+                  <span className="text-gray-600 w-24">Fax</span>
+                  <span className="font-medium">: t78788ugjyfr65r65</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-24">GST</span>
+                  <span className="font-medium">: r7gfyv87176657</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-24">Address</span>
+                  <span className="font-medium">: demo world</span>
+                </div>
+              </div>
+              
+              {/* Image placeholder */}
+              <div className="col-span-2 flex justify-end">
+                <div className="w-32 h-24 bg-gray-200 rounded flex items-center justify-center">
+                  <span className="text-gray-500 text-sm">jyoti</span>
+                  <br />
+                  <span className="text-gray-400 text-xs">image</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Main Content */}
-      <div className="bg-white rounded-lg border">
-        {/* Contact Information Section */}
-        <div className="grid grid-cols-2 gap-8 p-6 border-b">
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <span className="text-gray-600">Phone</span>
-              <span>: NA</span>
+        {/* Work Order Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-center text-xl">Work Order (Pending)</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <div className="flex">
+                  <span className="text-gray-600 w-40">WO Number</span>
+                  <span className="font-medium">: -</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-40">WO Date</span>
+                  <span className="font-medium">: 02-04-24</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-40">Kind Attention</span>
+                  <span className="font-medium">: -</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-40">Subject</span>
+                  <span className="font-medium">: -</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-40">Related To</span>
+                  <span className="font-medium">: -</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-40">Payment Tenure(In Days)</span>
+                  <span className="font-medium">: -</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-40">Retention(%)</span>
+                  <span className="font-medium">: -</span>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex">
+                  <span className="text-gray-600 w-40">Reference No.</span>
+                  <span className="font-medium">: 10009</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-40">ID</span>
+                  <span className="font-medium">: 9175</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-40">Contractor</span>
+                  <span className="font-medium">: MODWIN NETWORKS PVT.LTD</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-40">Address</span>
+                  <span className="font-medium">: Mumbai Maharashtra - India</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-40">Phone</span>
+                  <span className="font-medium">: 9382875928</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-40">Email</span>
+                  <span className="font-medium">: vinod@modwin.com</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-40">GST</span>
+                  <span className="font-medium">: NA</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-600 w-40">PAN</span>
+                  <span className="font-medium">: NA</span>
+                </div>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <span className="text-gray-600">Email</span>
-              <span>: Neptune@gmail.com</span>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <span className="text-gray-600">PAN</span>
-              <span>: NA</span>
-            </div>
-          </div>
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <span className="text-gray-600">Fax</span>
-              <span>: NA</span>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <span className="text-gray-600">GST</span>
-              <span>: NA</span>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <span className="text-gray-600">Address</span>
-              <span>: NA</span>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Material PR Section */}
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold mb-4">Material PR</h3>
-          <div className="grid grid-cols-2 gap-8">
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">MPR No.</span>
-                <span>: {prData.prNumber}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">MPR Date</span>
-                <span>: {prData.date}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">Plant Detail</span>
-                <span>: {prData.plantDetail}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">Address</span>
-                <span>: {prData.address}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">Email</span>
-                <span>: xyz@gmail.com</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">PAN</span>
-                <span>: {prData.pan}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">Phone</span>
-                <span>: NA</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">Related To</span>
-                <span>: {prData.relatedTo}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">Retention(%)</span>
-                <span>: -</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">QC(%)</span>
-                <span>: -</span>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">Reference No.</span>
-                <span>: {prData.referenceNo}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">ID</span>
-                <span>: 10435</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">Supplier</span>
-                <span>: {prData.supplier}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">Phone</span>
-                <span>: {prData.phone}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">GST</span>
-                <span>: {prData.gst}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">Delivery Address</span>
-                <span>: {prData.deliveryAddress}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">Email</span>
-                <span>: {prData.email}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">Payment Tenure(in Days)</span>
-                <span>: -</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">TDS(%)</span>
-                <span>: -</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <span className="text-gray-600">Advance Amount</span>
-                <span>: -</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Items Table */}
-        <div className="p-6 border-b">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">S No.</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">Item</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">Availability</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">SAC/HSN Code</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">Expected Date</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">Product Description</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">Quantity</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">Unit</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">Moving Avg Rate</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">Rate</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">Amount</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">Approved Qty</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">Transfer Qty</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left">Wbs Code</th>
-                </tr>
-              </thead>
-              <tbody>
-                {prData.items.map((item, index) => (
-                  <tr key={index}>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.sNo}</td>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.item}</td>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.availability}</td>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.sacHsnCode}</td>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.expectedDate}</td>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.productDescription}</td>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.quantity}</td>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.unit}</td>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.movingAvgRate}</td>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.rate}</td>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.amount}</td>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.approvedQty}</td>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.transferQty}</td>
-                    <td className="border border-gray-300 px-2 py-2 text-xs">{item.wbsCode}</td>
+        {/* Items Table Card */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">S No.</th>
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Item</th>
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Availability</th>
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">SAC/HSN Code</th>
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Expected Date</th>
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Product Description</th>
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Quantity</th>
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Unit</th>
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Moving Avg Rate</th>
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Rate</th>
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Amount</th>
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Approved Qty</th>
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Transfer Qty</th>
+                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Wbs Code</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="mt-2 text-sm">
-              <div><strong>Net Amount(INR):</strong> {prData.netAmount}</div>
-              <div><strong>Amount In Words:</strong> {prData.amountInWords}</div>
+                </thead>
+                <tbody>
+                  {prData.items.map((item, index) => (
+                    <tr key={index}>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.sNo}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.item}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.availability}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.sacHsnCode}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.expectedDate}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.productDescription}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.quantity}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.unit}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.movingAvgRate}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.rate}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.amount}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.approvedQty}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.transferQty}</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.wbsCode}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="mt-4 text-right">
+                <div className="text-sm font-medium"><strong>Net Amount(INR):</strong> {prData.netAmount}</div>
+                <div className="text-sm"><strong>Amount In Words:</strong> {prData.amountInWords}</div>
+              </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
+
+        {/* Additional Information Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Attachments Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Attachments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">{prData.attachments}</p>
+            </CardContent>
+          </Card>
+
+          {/* Terms & Conditions Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Terms & Conditions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ol className="list-decimal list-inside space-y-1">
+                {prData.termsConditions.map((term, index) => (
+                  <li key={index} className="text-gray-700">{term}</li>
+                ))}
+              </ol>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Attachments Section */}
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold mb-2">Attachments</h3>
-          <p className="text-gray-600">{prData.attachments}</p>
-        </div>
-
-        {/* Terms & Conditions Section */}
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold mb-2">Terms & Conditions:</h3>
-          <ol className="list-decimal list-inside">
-            {prData.termsConditions.map((term, index) => (
-              <li key={index} className="text-gray-700">{term}</li>
-            ))}
-          </ol>
-        </div>
-
-        {/* SAP Response Section */}
-        <div className="p-6">
-          <h3 className="text-lg font-semibold mb-2">SAP Response</h3>
-          <div className="space-y-2">
-            <div><strong>Code:</strong> {prData.sapResponse.code}</div>
-            <div><strong>Message:</strong> {prData.sapResponse.message}</div>
-          </div>
-        </div>
+        {/* SAP Response Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">SAP Response</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div><strong>Code:</strong> {prData.sapResponse.code || 'N/A'}</div>
+              <div><strong>Message:</strong> <span className="text-red-600">{prData.sapResponse.message}</span></div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

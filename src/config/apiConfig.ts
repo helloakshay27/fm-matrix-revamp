@@ -147,6 +147,8 @@ export const API_CONFIG = {
     VISITOR_HISTORY: '/pms/admin/visitors/visitor_history.json',
     ITEM_MOVEMENT_TYPES: '/item_movement_types.json',
     ITEM_TYPES: '/item_movement_types/movement_types.json',
+    // Performance export endpoint
+    PERFORMANCE_EXPORT: '/pms/custom_forms', // Base path, will append /{customFormCode}/export_performance
     
   },
 } as const
