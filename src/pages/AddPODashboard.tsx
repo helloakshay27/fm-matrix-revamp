@@ -296,23 +296,7 @@ export const AddPODashboard = () => {
                 
               </div>
 
-              <div className="mt-4 grid grid-cols-4 gap-4 text-right">
-                <div></div>
-                <div></div>
-                <div className="text-sm font-medium">
-                  <div>Net Amount(INR):</div>
-                  <div>Gross Amount:</div>
-                  <div>Taxes:</div>
-                  <div>Net Invoice Amount:</div>
-                  <div className="mt-2">Amount In Words: Two Thousand, Three Hundred, Sixty Rupees Only</div>
-                </div>
-                <div className="text-sm">
-                  <div>2360.00</div>
-                  <div>2360.00</div>
-                  <div>0.00</div>
-                  <div className="font-medium">2360.00</div>
-                </div>
-              </div>
+              
             </div>
 
             {/* Attachment Section */}
