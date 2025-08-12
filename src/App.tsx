@@ -116,6 +116,7 @@ import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
 import { PatrollingDashboard } from './pages/PatrollingDashboard';
 import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
 import { VisitorFormPage } from './pages/VisitorFormPage';
+import { VisitorManagementSetup } from './pages/VisitorManagementSetup';
 
 // Import new dashboard pages
 import { IncidentDashboard } from './pages/IncidentDashboard';
@@ -833,6 +834,7 @@ function App() {
                 <Route path="/security/visitor" element={<VisitorsDashboard />} />
                 <Route path="/visitor-form" element={<VisitorFormPage />} />
                 <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
+                <Route path="/security/visitor-management/setup" element={<VisitorManagementSetup />} />
                 <Route path="/security/staff" element={<StaffsDashboard />} />
                 <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
                 <Route path="/security/staff/edit/:id" element={<EditStaffPage />} />
