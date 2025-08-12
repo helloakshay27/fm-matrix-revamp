@@ -164,11 +164,18 @@ export const PatrollingDashboard = () => {
   const [selectedPatrollingId, setSelectedPatrollingId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const totalRecords = patrollingData.length;
+  const [searchTerm, setSearchTerm] = useState('');
+  const filteredData = patrollingData.filter((p) =>
+    [p.patrolName, p.shiftType, String(p.numCheckpoints), p.validity, p.graceTime]
+      .join(' ')
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+  const totalRecords = filteredData.length;
   const totalPages = Math.max(1, Math.ceil(totalRecords / perPage));
   const startIndex = (currentPage - 1) * perPage;
   const endIndex = startIndex + perPage;
-  const displayedData = patrollingData.slice(startIndex, endIndex);
+  const displayedData = filteredData.slice(startIndex, endIndex);
 
   // Render row function for enhanced table
   const renderRow = (patrol: any) => ({
@@ -216,5 +223,69 @@ export const PatrollingDashboard = () => {
     console.log('Confirmed delete for patrolling:', selectedPatrollingId);
     // Here you would typically make an API call to delete the record
   };
-  return;
+  return (
+    <div className="p-6 space-y-6">
+      <header className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Patrolling List</h1>
+      </header>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button variant="outline" onClick={() => setIsAddModalOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" /> New
+        </Button>
+
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              placeholder="Search Tickets"
+              className="h-10 w-64 rounded-md border border-gray-300 bg-white px-3 text-sm"
+            />
+          </div>
+          <Button variant="outline" onClick={() => setIsFilterOpen(true)} aria-label="Filter">
+            <Filter className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      <EnhancedTable
+        data={displayedData}
+        columns={columns}
+        renderRow={renderRow}
+        storageKey="patrolling-list-table"
+        hideTableExport={true}
+        hideTableSearch={true}
+      />
+
+      <TicketPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalRecords={totalRecords}
+        perPage={perPage}
+        isLoading={false}
+        onPageChange={setCurrentPage}
+        onPerPageChange={(v) => { setPerPage(v); setCurrentPage(1); }}
+      />
+
+      <AddPatrollingModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      <PatrollingFilterModal isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
+      {selectedPatrollingId !== null && (
+        <EditPatrollingModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          patrollingId={selectedPatrollingId}
+        />
+      )}
+      {selectedPatrollingId !== null && (
+        <DeletePatrollingModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleDeleteConfirm}
+          patrollingId={selectedPatrollingId}
+        />
+      )}
+    </div>
+  );
 };
