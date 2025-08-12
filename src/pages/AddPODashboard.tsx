@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { FileText, ListChecks, Paperclip, X } from "lucide-react";
+import { FileText, ListChecks, Paperclip, X, Upload } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, IconButton } from '@mui/material';
 const fieldStyles = {
   height: {
@@ -526,22 +526,29 @@ export const AddPODashboard = () => {
             {/* Attachment Section */}
             <div className="bg-white p-6 rounded-lg shadow border">
               <div className="flex items-center gap-2 mb-6">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-                  <Paperclip className="text-white w-4 h-4" />
+                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">3</span>
                 </div>
-                <h2 className="text-lg font-semibold text-[#C72030]">ATTACHMENT</h2>
+                <h2 className="text-lg font-semibold text-gray-800">ATTACHMENTS</h2>
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Attachment:
-                </label>
-                <div className="flex items-center gap-4">
-                  <input type="file" onChange={handleFileChange} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-                  <span className="text-sm text-gray-500">
-                    {formData.attachment ? formData.attachment.name : "No file chosen"}
-                  </span>
-                </div>
+              <div 
+                className="border-2 border-dashed border-yellow-400 rounded-lg p-12 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                onClick={() => document.getElementById('file-upload')?.click()}
+              >
+                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 text-lg">
+                  Drag & Drop or Click to Upload{' '}
+                  <span className="text-gray-500">No images chosen</span>
+                </p>
+                <input
+                  id="file-upload"
+                  type="file"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx"
+                />
               </div>
             </div>
           </div>
