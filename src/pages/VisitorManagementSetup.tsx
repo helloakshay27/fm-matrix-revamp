@@ -3,9 +3,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Switch } from '../components/ui/switch';
-import { Badge } from '../components/ui/badge';
-import { Checkbox } from '../components/ui/checkbox';
-import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, Eye, Flag, Star } from 'lucide-react';
+import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2 } from 'lucide-react';
 
 interface VisitorGateData {
   id: number;
@@ -14,17 +12,14 @@ interface VisitorGateData {
   gateName: string;
   gateDevice: string;
   userName: string;
-  status: 'Active' | 'Inactive';
+  status: boolean;
   active: boolean;
   createdBy: string;
-  priority: 'High' | 'Medium' | 'Low';
-  selected?: boolean;
 }
 
 export const VisitorManagementSetup = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedItems, setSelectedItems] = useState<number[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
+  const [activeTab, setActiveTab] = useState<'smartsecure' | 'quikgate'>('smartsecure');
 
   // Sample data based on the image
   const visitorGateData: VisitorGateData[] = [
@@ -35,10 +30,9 @@ export const VisitorManagementSetup = () => {
       gateName: 'Main Gate',
       gateDevice: '65e4bb21a04c149',
       userName: 'Security Tab 1',
-      status: 'Active',
+      status: true,
       active: true,
-      createdBy: 'Mahendra Lungare',
-      priority: 'High'
+      createdBy: 'Mahendra Lungare'
     },
     {
       id: 1220,
@@ -47,10 +41,9 @@ export const VisitorManagementSetup = () => {
       gateName: 'Reception',
       gateDevice: '31fc5f03222bf7c5',
       userName: 'Security Tab',
-      status: 'Active',
+      status: true,
       active: true,
-      createdBy: 'Mahendra Lungare',
-      priority: 'Medium'
+      createdBy: 'Mahendra Lungare'
     },
     {
       id: 1205,
@@ -59,10 +52,9 @@ export const VisitorManagementSetup = () => {
       gateName: 'Main Gate',
       gateDevice: '1ceb64e5c443a00a',
       userName: 'Tech Secure',
-      status: 'Inactive',
-      active: false,
-      createdBy: 'Deepak Gupta',
-      priority: 'Low'
+      status: true,
+      active: true,
+      createdBy: 'Deepak Gupta'
     },
     {
       id: 1202,
@@ -71,10 +63,9 @@ export const VisitorManagementSetup = () => {
       gateName: 'Main Gate',
       gateDevice: '4a0e3ebdcf2c3e6c',
       userName: 'Demo Site2',
-      status: 'Active',
+      status: true,
       active: true,
-      createdBy: 'Mahendra Lungare',
-      priority: 'High'
+      createdBy: 'Mahendra Lungare'
     },
     {
       id: 1200,
@@ -83,10 +74,53 @@ export const VisitorManagementSetup = () => {
       gateName: 'Main Gate',
       gateDevice: '2ebdc58958ff42f8',
       userName: 'Lockated New Security',
-      status: 'Active',
+      status: true,
       active: true,
-      createdBy: 'Mahendra Lungare',
-      priority: 'Medium'
+      createdBy: 'Mahendra Lungare'
+    },
+    {
+      id: 1194,
+      society: 'Sai Radhe, Bund Garden - Lockated HO',
+      tower: 'Jyoti Tower',
+      gateName: 'Main Gate',
+      gateDevice: '45f799580cd85cf8a',
+      userName: 'Demo Site2',
+      status: true,
+      active: true,
+      createdBy: 'Mahendra Lungare'
+    },
+    {
+      id: 1175,
+      society: 'Arvog - Arvog Finance',
+      tower: 'Trade World',
+      gateName: 'Reception',
+      gateDevice: '920d4c797c161915',
+      userName: 'Security Tab',
+      status: true,
+      active: true,
+      createdBy: 'Mahendra Lungare'
+    },
+    {
+      id: 1174,
+      society: 'Koncord, Bund Garden - UrbanWrk',
+      tower: 'Koncord',
+      gateName: 'Main Gate',
+      gateDevice: '021854263974268',
+      userName: 'Koncord Tab 4',
+      status: true,
+      active: true,
+      createdBy: 'Mahendra Lungare'
+    },
+    {
+      id: 1165,
+      society: 'MontClaire, Baner - UrbanWrk',
+      tower: 'UrbanWrk@Montclair',
+      gateName: 'Main Gate',
+      gateDevice: '64c1dd8ca8005bd2',
+      userName: 'Security 10th',
+      status: true,
+      active: true,
+      createdBy: 'Mahendra Lungare'
     }
   ];
 
@@ -97,38 +131,6 @@ export const VisitorManagementSetup = () => {
     item.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.id.toString().includes(searchTerm)
   );
-
-  const getStatusBadgeColor = (status: 'Active' | 'Inactive') => {
-    return status === 'Active' 
-      ? 'bg-green-100 text-green-800' 
-      : 'bg-red-100 text-red-800';
-  };
-
-  const getPriorityColor = (priority: 'High' | 'Medium' | 'Low') => {
-    switch (priority) {
-      case 'High': return 'text-red-600';
-      case 'Medium': return 'text-yellow-600';
-      case 'Low': return 'text-green-600';
-      default: return 'text-gray-600';
-    }
-  };
-
-  const handleSelectItem = (id: number) => {
-    setSelectedItems(prev => 
-      prev.includes(id) 
-        ? prev.filter(item => item !== id)
-        : [...prev, id]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectAll) {
-      setSelectedItems([]);
-    } else {
-      setSelectedItems(filteredData.map(item => item.id));
-    }
-    setSelectAll(!selectAll);
-  };
 
   const handleStatusToggle = (id: number, field: 'status' | 'active') => {
     // Handle toggle logic here
@@ -183,21 +185,15 @@ export const VisitorManagementSetup = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-[#f6f4ee]">
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={selectAll}
-                  onCheckedChange={handleSelectAll}
-                />
-              </TableHead>
-              <TableHead className="w-24">Actions</TableHead>
-              <TableHead className="w-20">ID</TableHead>
+              <TableHead className="w-20">Actions</TableHead>
+              <TableHead className="w-16">ID</TableHead>
               <TableHead className="min-w-[300px]">Society</TableHead>
               <TableHead className="w-32">Tower</TableHead>
               <TableHead className="w-32">Gate Name</TableHead>
               <TableHead className="w-40">Gate Device</TableHead>
               <TableHead className="w-40">User Name</TableHead>
               <TableHead className="w-24 text-center">Status</TableHead>
-              <TableHead className="w-24 text-center">Priority</TableHead>
+              <TableHead className="w-24 text-center">Active</TableHead>
               <TableHead className="w-40">Created By</TableHead>
             </TableRow>
           </TableHeader>
@@ -205,30 +201,20 @@ export const VisitorManagementSetup = () => {
             {filteredData.map((item) => (
               <TableRow key={item.id} className="hover:bg-gray-50">
                 <TableCell>
-                  <Checkbox
-                    checked={selectedItems.includes(item.id)}
-                    onCheckedChange={() => handleSelectItem(item.id)}
-                  />
-                </TableCell>
-                <TableCell>
                   <div className="flex gap-2">
                     <button
+                      onClick={() => handleEdit(item.id)}
                       className="p-1 hover:bg-gray-100 rounded"
-                      title="View"
+                      title="Edit"
                     >
-                      <Eye className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
                     </button>
                     <button
+                      onClick={() => handleDelete(item.id)}
                       className="p-1 hover:bg-gray-100 rounded"
-                      title="Flag"
+                      title="Delete"
                     >
-                      <Flag className="w-4 h-4 text-red-500" />
-                    </button>
-                    <button
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="Star"
-                    >
-                      <Star className="w-4 h-4 text-yellow-500" />
+                      <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
                     </button>
                   </div>
                 </TableCell>
@@ -243,13 +229,17 @@ export const VisitorManagementSetup = () => {
                 <TableCell className="font-mono text-sm">{item.gateDevice}</TableCell>
                 <TableCell>{item.userName}</TableCell>
                 <TableCell className="text-center">
-                  <Badge className={getStatusBadgeColor(item.status)}>
-                    {item.status}
-                  </Badge>
+                  <Switch
+                    checked={item.status}
+                    onCheckedChange={() => handleStatusToggle(item.id, 'status')}
+                    className="data-[state=checked]:bg-green-500"
+                  />
                 </TableCell>
                 <TableCell className="text-center">
-                  <span className={`font-medium ${getPriorityColor(item.priority)}`}>
-                    {item.priority}
+                  <span className={`px-2 py-1 text-xs font-medium ${
+                    item.active ? 'text-green-700' : 'text-gray-500'
+                  }`}>
+                    {item.active ? 'Yes' : 'No'}
                   </span>
                 </TableCell>
                 <TableCell>{item.createdBy}</TableCell>
