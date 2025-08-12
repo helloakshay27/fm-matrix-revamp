@@ -1,81 +1,52 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MaterialPRFilterDialog } from "@/components/MaterialPRFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"; // Adjust the import path as needed
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { toast } from "sonner";
+import { useAppDispatch } from "@/store/hooks";
+import { getMaterialPR } from "@/store/slices/materialPRSlice";
 
 export const MaterialPRDashboard = () => {
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
+
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [materialPR, setMaterialPR] = useState([])
 
-  const materialPRData = [
-    {
-      id: 11045,
-      prNumber: "121250",
-      referenceNo: "121250",
-      supplierName: "ABC",
-      createdBy: "Abhishek Sharma",
-      createdOn: "15/05/2025",
-      lastApprovedBy: "",
-      approvedStatus: "Pending",
-      prAmount: "₹ 3,560",
-      activeInactive: true,
-    },
-    {
-      id: 10716,
-      prNumber: "121249",
-      referenceNo: "121249",
-      supplierName: "Godrej",
-      createdBy: "Sony Bhosle",
-      createdOn: "22/04/2025",
-      lastApprovedBy: "Sony Bhosle",
-      approvedStatus: "Rejected",
-      prAmount: "₹ 13,000",
-      activeInactive: true,
-    },
-    {
-      id: 10711,
-      prNumber: "121248",
-      referenceNo: "121248",
-      supplierName: "ABC",
-      createdBy: "Sony Bhosle",
-      createdOn: "22/04/2025",
-      lastApprovedBy: "Sony Bhosle",
-      approvedStatus: "Approved",
-      prAmount: "₹ 2,000",
-      activeInactive: true,
-    },
-    {
-      id: 10500,
-      prNumber: "121247",
-      referenceNo: "121247",
-      supplierName: "ABC",
-      createdBy: "Sony B Bhosle",
-      createdOn: "01/04/2025",
-      lastApprovedBy: "Sony B Bhosle",
-      approvedStatus: "Approved",
-      prAmount: "₹ 7,000",
-      activeInactive: true,
-    },
-    {
-      id: 10408,
-      prNumber: "121246",
-      referenceNo: "121246",
-      supplierName: "L&T",
-      createdBy: "Sony B Bhosle",
-      createdOn: "26/03/2025",
-      lastApprovedBy: "Sony B Bhosle",
-      approvedStatus: "Rejected",
-      prAmount: "₹ 3,02,600",
-      activeInactive: true,
-    },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await dispatch(getMaterialPR({ baseUrl, token })).unwrap();
+        const formatedResponse = response.purchase_orders.map((item: any) => ({
+          id: item.id,
+          prNo: item.external_id,
+          referenceNo: item.reference_number,
+          supplierName: item.supplier.company_name,
+          createdBy: item.user.full_name,
+          createdOn: item.created_at,
+          lastApprovedBy: item.lastApprovedBy,
+          approvedStatus: item.approval_levels?.status_label,
+          prAmount: item.total_amount,
+          activeInactive: item.active
+        }))
+        setMaterialPR(formatedResponse)
+      } catch (error) {
+        console.log(error)
+        toast.error(error)
+      }
+    }
+
+    fetchData();
+  }, [])
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case "approved":
         return "bg-green-500 text-white";
       case "rejected":
@@ -178,7 +149,7 @@ export const MaterialPRDashboard = () => {
     <div className="p-4 sm:p-6">
       {/* Table */}
       <EnhancedTable
-        data={materialPRData}
+        data={materialPR || []}
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
@@ -192,7 +163,7 @@ export const MaterialPRDashboard = () => {
         enableExport={true}
         exportFileName="material-prs"
         pagination={true}
-        pageSize={5}
+        pageSize={10}
         enableSearch={true}
         enableSelection={true}
         leftActions={leftActions}

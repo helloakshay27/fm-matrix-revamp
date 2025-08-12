@@ -575,7 +575,6 @@ import { IncidentSetupDashboard } from "./pages/IncidentSetupDashboard";
 import { HolidayCalendarPage as SettingsHolidayCalendarPage } from './pages/settings/HolidayCalendarPage';
 import { HolidayCalendarPage } from './pages/HolidayCalendarPage';
 
-import { SpaceManagementBookingDetailsPage } from '@/pages/SpaceManagementBookingDetailsPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { OTPVerificationPage } from '@/pages/OTPVerificationPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';

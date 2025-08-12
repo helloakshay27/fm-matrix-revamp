@@ -26,13 +26,6 @@ const fieldStyles = {
   "& .MuiInputBase-input, & .MuiSelect-select": {
     padding: { xs: "8px", sm: "10px", md: "12px" },
   },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: {
-      xs: '8px',
-      sm: '10px',
-      md: '12px'
-    }
-  }
 };
 export const AddMaterialPRDashboard = () => {
   const dispatch = useAppDispatch();

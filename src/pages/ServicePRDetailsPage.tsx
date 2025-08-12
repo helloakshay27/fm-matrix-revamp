@@ -275,8 +275,8 @@ export const ServicePRDetailsPage = () => {
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
       {/* Breadcrumb */}
       <div className="mb-2 text-sm text-gray-600">
-        <span 
-          className="cursor-pointer hover:text-[#C72030]" 
+        <span
+          className="cursor-pointer hover:text-[#C72030]"
           onClick={() => navigate('/finance/service-pr')}
         >
           Service PR
@@ -298,7 +298,7 @@ export const ServicePRDetailsPage = () => {
             </span>
           </div>
         </div>
-        
+
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
           <span className={`px-4 py-2 rounded text-sm font-medium ${getStatusColor(servicePRData.adminApproval)}`}>
             Status:- {servicePRData.adminApproval}
@@ -372,7 +372,7 @@ export const ServicePRDetailsPage = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
           Service Purchase Request ({servicePRData.adminApproval})
         </h3>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
           {/* Left Column */}
           <div className="space-y-4">
@@ -549,7 +549,7 @@ export const ServicePRDetailsPage = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Terms & Conditions :</h3>
         <p className="text-gray-700">{servicePRData.termsConditions}</p>
-        
+
         <div className="mt-6">
           <p className="text-gray-900 font-medium">For {servicePRData.contractor} We Confirm & Accept,</p>
         </div>
@@ -568,33 +568,6 @@ export const ServicePRDetailsPage = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Attachments</h3>
         <p className="text-gray-500">{servicePRData.attachments}</p>
-      </div>
-
-      {/* SAP Response Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">SAP Response</h3>
-        <div className="space-y-2">
-          <div className="flex">
-            <span className="text-gray-700 font-medium w-20">Code:</span>
-            <span className="text-gray-900">{servicePRData.sapResponse.code || '-'}</span>
-          </div>
-          <div className="flex">
-            <span className="text-gray-700 font-medium w-20">Message:</span>
-            <span className="text-gray-900">{servicePRData.sapResponse.message}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Back Button */}
-      <div className="mt-6">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/finance/service-pr')}
-          className="border-gray-300"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Service PR
-        </Button>
       </div>
     </div>
   );
