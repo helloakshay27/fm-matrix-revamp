@@ -446,87 +446,88 @@ export const ServicePRDetailsPage = () => {
           </CardContent>
         </Card>
 
-        {/* Services Table Card */}
+        {/* Enhanced Services Table */}
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">Services Table</CardTitle>
+            <CardTitle className="text-lg font-medium">Services</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-border">
+              <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="bg-muted">
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">S No.</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">BOQ Details</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Quantity</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">UOM</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Expected Date</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Product Description</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Rate</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Wbs Code</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">CGST Rate(%)</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">CGST Amount</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">SGST Rate(%)</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">SGST Amount</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">IGST Rate(%)</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">IGST Amount</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">TCS Amount</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Tax Amount</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Total Amount</th>
+                  <tr className="bg-muted/50">
+                    <th className="text-left p-3 font-semibold text-foreground border-r border-border min-w-[60px]">S.No.</th>
+                    <th className="text-left p-3 font-semibold text-foreground border-r border-border min-w-[120px]">BOQ Details</th>
+                    <th className="text-left p-3 font-semibold text-foreground border-r border-border min-w-[80px]">Quantity</th>
+                    <th className="text-left p-3 font-semibold text-foreground border-r border-border min-w-[60px]">UOM</th>
+                    <th className="text-left p-3 font-semibold text-foreground border-r border-border min-w-[100px]">Expected<br/>Date</th>
+                    <th className="text-left p-3 font-semibold text-foreground border-r border-border min-w-[140px]">Product<br/>Description</th>
+                    <th className="text-left p-3 font-semibold text-foreground border-r border-border min-w-[80px]">Rate</th>
+                    <th className="text-left p-3 font-semibold text-foreground border-r border-border min-w-[80px]">Wbs<br/>Code</th>
+                    <th className="text-center p-3 font-semibold text-foreground border-r border-border min-w-[80px]">CGST<br/>Rate(%)</th>
+                    <th className="text-center p-3 font-semibold text-foreground border-r border-border min-w-[80px]">CGST<br/>Amount</th>
+                    <th className="text-center p-3 font-semibold text-foreground border-r border-border min-w-[80px]">SGST<br/>Rate(%)</th>
+                    <th className="text-center p-3 font-semibold text-foreground border-r border-border min-w-[80px]">SGST<br/>Amount</th>
+                    <th className="text-center p-3 font-semibold text-foreground border-r border-border min-w-[80px]">IGST<br/>Rate(%)</th>
+                    <th className="text-center p-3 font-semibold text-foreground border-r border-border min-w-[80px]">IGST<br/>Amount</th>
+                    <th className="text-center p-3 font-semibold text-foreground border-r border-border min-w-[80px]">TCS<br/>Rate(%)</th>
+                    <th className="text-center p-3 font-semibold text-foreground border-r border-border min-w-[80px]">Tax<br/>Amount</th>
+                    <th className="text-center p-3 font-semibold text-foreground min-w-[100px]">Total<br/>Amount</th>
                   </tr>
                 </thead>
                 <tbody>
                   {servicePRData.services.map((service, index) => (
-                    <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/50'}>
-                      <td className="border border-border px-3 py-2 text-sm">{service.sno}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.boqDetails}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.quantity}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.uom}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.expectedDate}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.productDescription}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.rate}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.wbsCode}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.cgstRate}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.cgstAmount}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.sgstRate}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.sgstAmount}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.igstRate}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.igstAmount}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.tcsAmount}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.taxAmount}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.totalAmount}</td>
+                    <tr key={index} className="border-b border-border hover:bg-muted/30 transition-colors">
+                      <td className="p-3 border-r border-border text-center font-medium">{service.sno}</td>
+                      <td className="p-3 border-r border-border font-medium">{service.boqDetails}</td>
+                      <td className="p-3 border-r border-border text-center">{service.quantity.toFixed(1)}</td>
+                      <td className="p-3 border-r border-border text-center">{service.uom}</td>
+                      <td className="p-3 border-r border-border text-center">{service.expectedDate}</td>
+                      <td className="p-3 border-r border-border">{service.productDescription}</td>
+                      <td className="p-3 border-r border-border text-right font-medium">{service.rate.toFixed(2)}</td>
+                      <td className="p-3 border-r border-border text-center">{service.wbsCode || '-'}</td>
+                      <td className="p-3 border-r border-border text-center">{service.cgstRate.toFixed(2)}</td>
+                      <td className="p-3 border-r border-border text-right">{service.cgstAmount.toFixed(2)}</td>
+                      <td className="p-3 border-r border-border text-center">{service.sgstRate.toFixed(2)}</td>
+                      <td className="p-3 border-r border-border text-right">{service.sgstAmount.toFixed(2)}</td>
+                      <td className="p-3 border-r border-border text-center">{service.igstRate.toFixed(2)}</td>
+                      <td className="p-3 border-r border-border text-right">{service.igstAmount.toFixed(2)}</td>
+                      <td className="p-3 border-r border-border text-center">{service.tcsAmount.toFixed(2)}</td>
+                      <td className="p-3 border-r border-border text-right">{service.taxAmount.toFixed(2)}</td>
+                      <td className="p-3 text-right font-bold text-primary">{service.totalAmount.toFixed(3)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            
-            {/* Net Amount Summary */}
-            <div className="mt-6 pt-4 border-t border-border">
-              <div className="flex justify-end">
-                <div className="text-right space-y-2">
-                  <div className="flex items-center gap-8">
-                    <span className="text-muted-foreground">Net Amount(INR):</span>
-                    <span className="font-semibold text-lg">₹{servicePRData.netAmount}</span>
+
+            {/* Enhanced Summary Section */}
+            <div className="border-t border-border bg-muted/20 p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Financial Summary */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center py-2 border-b border-border/50">
+                    <span className="font-medium text-muted-foreground">Net Amount (INR):</span>
+                    <span className="font-bold text-lg">{servicePRData.netAmount}</span>
                   </div>
-                  <div className="flex items-center gap-8">
-                    <span className="text-muted-foreground">Total Taxable Value:</span>
-                    <span className="font-medium">₹{servicePRData.totalTaxableValue}</span>
+                  <div className="flex justify-between items-center py-2 border-b border-border/50">
+                    <span className="font-medium text-muted-foreground">Total Taxable Value Of LOI:</span>
+                    <span className="font-semibold">{servicePRData.totalTaxableValue.toFixed(3)}</span>
                   </div>
-                  <div className="flex items-center gap-8">
-                    <span className="text-muted-foreground">Taxes (INR):</span>
-                    <span className="font-medium">₹{servicePRData.taxes}</span>
+                  <div className="flex justify-between items-center py-2 border-b border-border/50">
+                    <span className="font-medium text-muted-foreground">Taxes (INR):</span>
+                    <span className="font-semibold">{servicePRData.taxes.toFixed(3)}</span>
                   </div>
-                  <div className="flex items-center gap-8">
-                    <span className="text-muted-foreground">Total Value (INR):</span>
-                    <span className="font-semibold text-lg">₹{servicePRData.totalValue}</span>
+                  <div className="flex justify-between items-center py-3 border-t-2 border-primary/20 bg-primary/5 px-4 rounded-lg">
+                    <span className="font-bold text-foreground">Total LOI Value (INR):</span>
+                    <span className="font-bold text-xl text-primary">{servicePRData.totalValue.toFixed(2)}</span>
                   </div>
-                  <div className="pt-2 border-t border-border">
-                    <div className="flex items-start gap-4">
-                      <span className="text-muted-foreground whitespace-nowrap">Amount in Words:</span>
-                      <span className="font-medium italic">{servicePRData.amountInWords}</span>
-                    </div>
-                  </div>
+                </div>
+
+                {/* Amount in Words */}
+                <div className="bg-accent/10 border border-accent/20 rounded-lg p-4">
+                  <h4 className="font-semibold text-accent-foreground mb-2">Amount In Words:</h4>
+                  <p className="text-sm font-medium text-accent-foreground/80">{servicePRData.amountInWords}</p>
                 </div>
               </div>
             </div>
