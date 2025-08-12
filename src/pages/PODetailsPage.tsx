@@ -314,13 +314,52 @@ export const PODetailsPage = () => {
         
         {/* Amount Summary */}
         <div className="mt-6 border-t pt-4">
-          <div className="flex justify-between items-center py-2">
-            <span className="font-medium text-gray-700">Net Amount(INR):</span>
-            <span className="font-medium">3560.00</span>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-gray-700">Net Amount(INR):</span>
+              <span className="font-medium">3560.00</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-gray-700">Gross Amount:</span>
+              <span className="font-medium">3560.00</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-gray-700">Taxes:</span>
+              <span className="font-medium">0.00</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-gray-700">Net Invoice Amount:</span>
+              <span className="font-medium">3560.00</span>
+            </div>
+            <div className="pt-2 border-t">
+              <span className="font-medium text-gray-700">Amount In Words: </span>
+              <span className="text-gray-900">Three Thousand, Five Hundred, Sixty Rupees Only</span>
+            </div>
           </div>
-          <div className="mt-4">
-            <span className="font-medium text-gray-700">Amount In Words: </span>
-            <span className="text-gray-900">Three Thousand, Five Hundred, Sixty Rupees Only</span>
+
+          {/* Notes Section */}
+          <div className="mt-8 space-y-4">
+            <div>
+              <span className="font-medium text-gray-700">Notes:</span>
+              <div className="ml-4 mt-1 text-gray-600">NA</div>
+            </div>
+            
+            <div>
+              <span className="font-medium text-gray-700">Terms & Conditions:</span>
+              <div className="ml-4 mt-1 text-gray-600">NA</div>
+            </div>
+          </div>
+
+          {/* Signature Section */}
+          <div className="mt-8 pt-6 border-t">
+            <div className="mb-6">
+              <span className="font-medium text-gray-700">For NA we Confirm & Accept,</span>
+            </div>
+            
+            <div className="mt-12">
+              <div className="border-b border-gray-300 w-48 mb-2"></div>
+              <span className="font-medium text-gray-700">Authorised Signatory</span>
+            </div>
           </div>
         </div>
       </div>
