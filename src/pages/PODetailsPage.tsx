@@ -415,6 +415,115 @@ export const PODetailsPage = () => {
           <span className="cursor-pointer hover:underline">PSIPL_Feedback_QR_code.pptx.pdf</span>
         </div>
       </div>
+
+      {/* GRN Details Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold text-gray-900">GRN Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-300 min-w-[1600px]">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Action</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">ID</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Inventory</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Supplier</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Invoice Number</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Total GRN Amount</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Payable Amount</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Retention Amount</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">TDS Amount</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">QC Amount</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Invoice Date</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Payment Mode</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Other Expense</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Loading Expense</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Adjustment Amount</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">QC Approval Status</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">HSE Approval Status</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Admin Approval Status</th>
+                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Physical Invoice Sent to Accounts</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="text-center text-gray-500">
+                  <td colSpan={19} className="border border-gray-300 px-3 py-4 text-sm">
+                    No GRN data available
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Payment Details Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold text-gray-900">Payment Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-300 min-w-[800px]">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">GRN ID</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Amount</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Payment Mode</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Transaction Number</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Status</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Payment Date</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Note</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Date Of Entry</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="text-center text-gray-500">
+                  <td colSpan={8} className="border border-gray-300 px-3 py-4 text-sm">
+                    No payment data available
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Debit/Credit Note Details Section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg font-semibold text-gray-900">Debit/Credit Note Details</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-300 min-w-[1000px]">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">ID</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Type</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Amount</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Description</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Approved</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Approved On</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Approved By</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Created On</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Created By</th>
+                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Attachment</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="text-center text-gray-500">
+                  <td colSpan={10} className="border border-gray-300 px-3 py-4 text-sm">
+                    No debit/credit note data available
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
         
       {/* Terms & Conditions Section */}
       
