@@ -230,7 +230,7 @@ export const PatrollingDashboard = () => {
       </header>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button variant="outline" onClick={() => setIsAddModalOpen(true)}>
+        <Button variant="outline" onClick={() => navigate('/security/patrolling/create')}>
           <Plus className="w-4 h-4 mr-2" /> New
         </Button>
 

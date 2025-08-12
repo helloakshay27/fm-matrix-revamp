@@ -115,6 +115,7 @@ import { VisitorsDashboard } from './pages/VisitorsDashboard';
 import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
 import { PatrollingDashboard } from './pages/PatrollingDashboard';
 import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
+import { PatrollingCreatePage } from './pages/PatrollingCreatePage';
 import { VisitorFormPage } from './pages/VisitorFormPage';
 import { VisitorManagementSetup } from './pages/VisitorManagementSetup';
 import { AddVisitorGatePage } from './pages/AddVisitorGatePage';
@@ -851,6 +852,7 @@ function App() {
                 <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
                 <Route path="/security/staff/edit/:id" element={<EditStaffPage />} />
                 <Route path="/security/patrolling" element={<PatrollingDashboard />} />
+                <Route path="/security/patrolling/create" element={<PatrollingCreatePage />} />
                 <Route path="/security/patrolling/details/:id" element={<PatrollingDetailsPage />} />
 
                 {/* Security Vehicle Routes */}
