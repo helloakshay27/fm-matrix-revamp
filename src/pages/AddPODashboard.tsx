@@ -1,21 +1,25 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { FileText, ListChecks, Paperclip } from "lucide-react";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-
+import { FileText, ListChecks, Paperclip, X, Upload } from "lucide-react";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, IconButton } from '@mui/material';
 const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
+  height: {
+    xs: 28,
+    sm: 36,
+    md: 45
   },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: {
+      xs: '8px',
+      sm: '10px',
+      md: '12px'
+    }
+  }
 };
-
 export const AddPODashboard = () => {
   const navigate = useNavigate();
-  
   const [formData, setFormData] = useState({
     materialPR: '',
     supplier: '',
@@ -32,72 +36,72 @@ export const AddPODashboard = () => {
     termsConditions: '',
     attachment: null as File | null
   });
-
-  const [items, setItems] = useState([
-    {
-      id: 1,
-      description: 'Carpet Brush',
-      sacHsnCode: 'NA',
-      expectedDate: '23/04/25',
-      quantity: '10.0',
-      unit: '',
-      rate: '70.00',
-      wbsCode: '',
-      gstRate: '9.00',
-      amount: '63.00',
-      sgstRate: '9.00',
-      sgstAmount: '63.00',
-      igstRate: '0.00',
-      igstAmount: '0.00',
-      ugstRate: '0.00',
-      ugstAmount: '0.00',
-      tdsRate: '0.00',
-      tdsAmount: '0.00',
-      taxAmount: '',
-      totalAmount: '826.00'
-    }
-  ]);
-
+  const [items, setItems] = useState([{
+    id: 1,
+    itemDetails: 'Carpet Brush',
+    sacHsnCode: 'NA',
+    quantity: '10.0',
+    unit: '',
+    expectedDate: '2025-04-23',
+    rate: '70.00',
+    cgstRate: '9.00',
+    cgstAmount: '63.00',
+    sgstRate: '9.00',
+    sgstAmount: '63.00',
+    igstRate: '0.00',
+    igstAmount: '0.00',
+    tcsRate: '0.00',
+    tcsAmount: '0.00',
+    taxAmount: '',
+    amount: '63.00',
+    totalAmount: '826.00'
+  }]);
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Form submitted:', formData);
     toast.success('Purchase Order created successfully');
     navigate('/finance/po');
   };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData({ ...formData, attachment: file });
+    setFormData({
+      ...formData,
+      attachment: file
+    });
   };
-
   const addItem = () => {
     const newItem = {
       id: items.length + 1,
-      description: '',
+      itemDetails: '',
       sacHsnCode: '',
-      expectedDate: '',
       quantity: '',
       unit: '',
+      expectedDate: '',
       rate: '',
-      wbsCode: '',
-      gstRate: '',
-      amount: '',
+      cgstRate: '',
+      cgstAmount: '',
       sgstRate: '',
       sgstAmount: '',
       igstRate: '',
       igstAmount: '',
-      ugstRate: '',
-      ugstAmount: '',
-      tdsRate: '',
-      tdsAmount: '',
+      tcsRate: '',
+      tcsAmount: '',
       taxAmount: '',
+      amount: '',
       totalAmount: ''
     };
     setItems([...items, newItem]);
   };
-
-  return (
-    <div className="p-6 mx-auto">
+  const updateItem = (itemId: number, field: string, value: string) => {
+    setItems(items.map(item => item.id === itemId ? {
+      ...item,
+      [field]: value
+    } : item));
+  };
+  const removeItem = (itemId: number) => {
+    setItems(items.filter(item => item.id !== itemId));
+  };
+  return <div className="p-6 mx-auto max-w-7xl">
       {/* Breadcrumb */}
       <div className="mb-4 text-sm text-gray-600">
         Finance
@@ -106,310 +110,389 @@ export const AddPODashboard = () => {
       {/* Page Title */}
       <h1 className="text-2xl font-bold mb-6">NEW PURCHASE ORDER</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Supplier Details Section */}
-        <div className="bg-white p-6 rounded-lg shadow border">
-          <div className="flex items-center gap-2 mb-6">
-           <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-    <FileText className="text-white w-4 h-4" />
-  </div>
-  <h2 className="text-lg font-semibold text-[#C72030]">SUPPLIER DETAILS</h2>
-          </div>
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Form Cards */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Supplier Details Section */}
+            <div className="bg-white p-6 rounded-lg shadow border">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
+                  <FileText className="text-white w-4 h-4" />
+                </div>
+                <h2 className="text-lg font-semibold text-[#C72030]">SUPPLIER DETAILS</h2>
+              </div>
 
-          <div className="grid grid-cols-3 gap-6">
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Select Material PR*</InputLabel>
-              <MuiSelect
-                label="Select Material PR*"
-                value={formData.materialPR}
-                onChange={(e) => setFormData({ ...formData, materialPR: e.target.value })}
-                displayEmpty
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select...</em></MenuItem>
-                <MenuItem value="pr1">PR-001</MenuItem>
-                <MenuItem value="pr2">PR-002</MenuItem>
-              </MuiSelect>
-            </FormControl>
+              <div className="grid grid-cols-3 gap-4">
+                <FormControl fullWidth variant="outlined" sx={{
+                mt: 1
+              }}>
+                  <InputLabel shrink>Select Material PR*</InputLabel>
+                  <MuiSelect label="Select Material PR*" value={formData.materialPR} onChange={e => setFormData({
+                  ...formData,
+                  materialPR: e.target.value
+                })} displayEmpty sx={fieldStyles}>
+                    <MenuItem value=""><em>Select...</em></MenuItem>
+                    <MenuItem value="pr1">PR-001</MenuItem>
+                    <MenuItem value="pr2">PR-002</MenuItem>
+                  </MuiSelect>
+                </FormControl>
 
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Supplier*</InputLabel>
-              <MuiSelect
-                label="Supplier*"
-                value={formData.supplier}
-                onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                displayEmpty
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select...</em></MenuItem>
-                <MenuItem value="supplier1">ABC Corp</MenuItem>
-                <MenuItem value="supplier2">XYZ Ltd</MenuItem>
-              </MuiSelect>
-            </FormControl>
+                <FormControl fullWidth variant="outlined" sx={{
+                mt: 1
+              }}>
+                  <InputLabel shrink>Supplier*</InputLabel>
+                  <MuiSelect label="Supplier*" value={formData.supplier} onChange={e => setFormData({
+                  ...formData,
+                  supplier: e.target.value
+                })} displayEmpty sx={fieldStyles}>
+                    <MenuItem value=""><em>Select...</em></MenuItem>
+                    <MenuItem value="supplier1">ABC Corp</MenuItem>
+                    <MenuItem value="supplier2">XYZ Ltd</MenuItem>
+                  </MuiSelect>
+                </FormControl>
 
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Plant Detail*</InputLabel>
-              <MuiSelect
-                label="Plant Detail*"
-                value={formData.plantDetail}
-                onChange={(e) => setFormData({ ...formData, plantDetail: e.target.value })}
-                displayEmpty
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select...</em></MenuItem>
-                <MenuItem value="plant1">Plant 1</MenuItem>
-                <MenuItem value="plant2">Plant 2</MenuItem>
-              </MuiSelect>
-            </FormControl>
+                <FormControl fullWidth variant="outlined" sx={{
+                mt: 1
+              }}>
+                  <InputLabel shrink>Plant Detail*</InputLabel>
+                  <MuiSelect label="Plant Detail*" value={formData.plantDetail} onChange={e => setFormData({
+                  ...formData,
+                  plantDetail: e.target.value
+                })} displayEmpty sx={fieldStyles}>
+                    <MenuItem value=""><em>Select...</em></MenuItem>
+                    <MenuItem value="plant1">Plant 1</MenuItem>
+                    <MenuItem value="plant2">Plant 2</MenuItem>
+                  </MuiSelect>
+                </FormControl>
 
-            <TextField
-              label="PO Date*"
-              type="date"
-              value={formData.poDate}
-              onChange={(e) => setFormData({ ...formData, poDate: e.target.value })}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
+                <TextField label="PO Date*" type="date" value={formData.poDate} onChange={e => setFormData({
+                ...formData,
+                poDate: e.target.value
+              })} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} sx={{
+                mt: 1
+              }} />
 
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Billing Address*</InputLabel>
-              <MuiSelect
-                label="Billing Address*"
-                value={formData.billingAddress}
-                onChange={(e) => setFormData({ ...formData, billingAddress: e.target.value })}
-                displayEmpty
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select...</em></MenuItem>
-                <MenuItem value="address1">Address 1</MenuItem>
-                <MenuItem value="address2">Address 2</MenuItem>
-              </MuiSelect>
-            </FormControl>
+                <FormControl fullWidth variant="outlined" sx={{
+                mt: 1
+              }}>
+                  <InputLabel shrink>Billing Address*</InputLabel>
+                  <MuiSelect label="Billing Address*" value={formData.billingAddress} onChange={e => setFormData({
+                  ...formData,
+                  billingAddress: e.target.value
+                })} displayEmpty sx={fieldStyles}>
+                    <MenuItem value=""><em>Select...</em></MenuItem>
+                    <MenuItem value="address1">Address 1</MenuItem>
+                    <MenuItem value="address2">Address 2</MenuItem>
+                  </MuiSelect>
+                </FormControl>
 
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Delivery Address*</InputLabel>
-              <MuiSelect
-                label="Delivery Address*"
-                value={formData.deliveryAddress}
-                onChange={(e) => setFormData({ ...formData, deliveryAddress: e.target.value })}
-                displayEmpty
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Select...</em></MenuItem>
-                <MenuItem value="delivery1">Delivery 1</MenuItem>
-                <MenuItem value="delivery2">Delivery 2</MenuItem>
-              </MuiSelect>
-            </FormControl>
+                <FormControl fullWidth variant="outlined" sx={{
+                mt: 1
+              }}>
+                  <InputLabel shrink>Delivery Address*</InputLabel>
+                  <MuiSelect label="Delivery Address*" value={formData.deliveryAddress} onChange={e => setFormData({
+                  ...formData,
+                  deliveryAddress: e.target.value
+                })} displayEmpty sx={fieldStyles}>
+                    <MenuItem value=""><em>Select...</em></MenuItem>
+                    <MenuItem value="delivery1">Delivery 1</MenuItem>
+                    <MenuItem value="delivery2">Delivery 2</MenuItem>
+                  </MuiSelect>
+                </FormControl>
 
-            <TextField
-              label="Related To"
-              value={formData.relatedTo}
-              onChange={(e) => setFormData({ ...formData, relatedTo: e.target.value })}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
+                <TextField label="Related To" value={formData.relatedTo} onChange={e => setFormData({
+                ...formData,
+                relatedTo: e.target.value
+              })} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} sx={{
+                mt: 1
+              }} />
 
-            <TextField
-              label="Retention(%)"
-              value={formData.retention}
-              onChange={(e) => setFormData({ ...formData, retention: e.target.value })}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
+                <TextField label="Retention(%)" value={formData.retention} onChange={e => setFormData({
+                ...formData,
+                retention: e.target.value
+              })} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} sx={{
+                mt: 1
+              }} />
 
-            <TextField
-              label="TDS(%)"
-              value={formData.tds}
-              onChange={(e) => setFormData({ ...formData, tds: e.target.value })}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
+                <TextField label="TDS(%)" value={formData.tds} onChange={e => setFormData({
+                ...formData,
+                tds: e.target.value
+              })} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} sx={{
+                mt: 1
+              }} />
 
-            <TextField
-              label="QC(%)"
-              value={formData.qc}
-              onChange={(e) => setFormData({ ...formData, qc: e.target.value })}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
+                <TextField label="QC(%)" value={formData.qc} onChange={e => setFormData({
+                ...formData,
+                qc: e.target.value
+              })} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} sx={{
+                mt: 1
+              }} />
 
-            <TextField
-              label="Payment Tenure(In Days)"
-              value={formData.paymentTenure}
-              onChange={(e) => setFormData({ ...formData, paymentTenure: e.target.value })}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
+                <TextField label="Payment Tenure(In Days)" value={formData.paymentTenure} onChange={e => setFormData({
+                ...formData,
+                paymentTenure: e.target.value
+              })} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} sx={{
+                mt: 1
+              }} />
 
-            <TextField
-              label="Advance Amount"
-              value={formData.advanceAmount}
-              onChange={(e) => setFormData({ ...formData, advanceAmount: e.target.value })}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-          </div>
+                <TextField label="Advance Amount" value={formData.advanceAmount} onChange={e => setFormData({
+                ...formData,
+                advanceAmount: e.target.value
+              })} fullWidth variant="outlined" InputLabelProps={{
+                shrink: true
+              }} InputProps={{
+                sx: fieldStyles
+              }} sx={{
+                mt: 1
+              }} />
+              </div>
 
-          <div className="mt-6">
-            <TextField
-              label="Terms & Conditions"
-              value={formData.termsConditions}
-              onChange={(e) => setFormData({ ...formData, termsConditions: e.target.value })}
-              fullWidth
-              variant="outlined"
-              multiline
-              minRows={4}
-              placeholder="Enter..."
-              InputLabelProps={{ shrink: true }}
-              sx={{ mt: 1 }}
-            />
-          </div>
-        </div>
-
-        {/* Item Details Section */}
-        <div className="bg-white p-6 rounded-lg shadow border">
-          <div className="flex items-center gap-2 mb-6">
-             <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-    <ListChecks className="text-white w-4 h-4" />
-  </div>
-  <h2 className="text-lg font-semibold text-[#C72030]">ITEM DETAILS</h2>
-          </div>
-
-          <Button 
-            type="button"
-            onClick={addItem}
-            className="bg-[#C72030] hover:bg-[#A01020] text-white mb-4"
-          >
-            Add Item
-          </Button>
-
-          <div className="overflow-x-auto">
-            <table className="w-full border border-gray-300">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="border border-gray-300 px-2 py-2 text-xs">S.No.</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">Item Details</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">SAC/HSN Code</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">Expected Date</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">Quantity</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">Unit</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">Rate</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">WBS Code</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">CGST Rate(%)</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">CGST Amount</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">SGST Rate(%)</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">SGST Amount</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">IGST Rate(%)</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">IGST Amount</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">TDS Rate(%)</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">TDS Amount</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">Tax Amount</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs">Total Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, index) => (
-                  <tr key={item.id}>
-                    <td className="border border-gray-300 px-2 py-2 text-center">{index + 1}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.description}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.sacHsnCode}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.expectedDate}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.quantity}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.unit}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.rate}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.wbsCode}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.gstRate}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.amount}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.sgstRate}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.sgstAmount}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.igstRate}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.igstAmount}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.tdsRate}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.tdsAmount}</td>
-                    <td className="border border-gray-300 px-2 py-2">{item.taxAmount}</td>
-                    <td className="border border-gray-300 px-2 py-2 font-medium">{item.totalAmount}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="mt-4 grid grid-cols-4 gap-4 text-right">
-            <div></div>
-            <div></div>
-            <div className="text-sm font-medium">
-              <div>Net Amount(INR):</div>
-              <div>Gross Amount:</div>
-              <div>Taxes:</div>
-              <div>Net Invoice Amount:</div>
-              <div className="mt-2">Amount In Words: Two Thousand, Three Hundred, Sixty Rupees Only</div>
+              <div className="mt-6">
+                <TextField label="Terms & Conditions" value={formData.termsConditions} onChange={e => setFormData({
+                ...formData,
+                termsConditions: e.target.value
+              })} fullWidth variant="outlined" multiline minRows={4} placeholder="Enter..." InputLabelProps={{
+                shrink: true
+              }} sx={{
+                mt: 1
+              }} />
+              </div>
             </div>
-            <div className="text-sm">
-              <div>2360.00</div>
-              <div>2360.00</div>
-              <div>0.00</div>
-              <div className="font-medium">2360.00</div>
+
+            {/* Item Details Section */}
+            <div className="bg-white p-6 rounded-lg shadow border">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
+                  <ListChecks className="text-white w-4 h-4" />
+                </div>
+                <h2 className="text-lg font-semibold text-[#C72030]">ITEM DETAILS</h2>
+              </div>
+
+              <Button type="button" onClick={addItem} className="bg-[#C72030] hover:bg-[#A01020] text-white mb-4">
+                Add Item
+              </Button>
+
+              <div className="space-y-4">
+                {items.map((item, index) => <div key={item.id} className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-sm font-medium text-gray-700">Item {index + 1}</h3>
+                      {items.length > 1 && <IconButton onClick={() => removeItem(item.id)} size="small" className="text-red-600 hover:bg-red-100">
+                          <X className="w-4 h-4" />
+                        </IconButton>}
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4">
+                      {/* Row 1 */}
+                      <FormControl fullWidth variant="outlined" sx={{
+                    mt: 1
+                  }}>
+                        <InputLabel shrink>Item Details</InputLabel>
+                        <MuiSelect label="Item Details" value={item.itemDetails} onChange={e => updateItem(item.id, 'itemDetails', e.target.value)} displayEmpty sx={fieldStyles}>
+                          <MenuItem value=""><em>Select...</em></MenuItem>
+                          <MenuItem value="Carpet Brush">Carpet Brush</MenuItem>
+                          <MenuItem value="Floor Cleaner">Floor Cleaner</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+
+                      <TextField label="SAC/HSN Code" value={item.sacHsnCode} onChange={e => updateItem(item.id, 'sacHsnCode', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      <TextField label="Quantity" value={item.quantity} onChange={e => updateItem(item.id, 'quantity', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      {/* Row 2 */}
+                      <FormControl fullWidth variant="outlined" sx={{
+                    mt: 1
+                  }}>
+                        <InputLabel shrink>Select Unit</InputLabel>
+                        <MuiSelect label="Select Unit" value={item.unit} onChange={e => updateItem(item.id, 'unit', e.target.value)} displayEmpty sx={fieldStyles}>
+                          <MenuItem value=""><em>Select...</em></MenuItem>
+                          <MenuItem value="Piece">Piece</MenuItem>
+                          <MenuItem value="Kg">Kg</MenuItem>
+                          <MenuItem value="Liter">Liter</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+
+                      <TextField label="Expected Date" type="date" value={item.expectedDate} onChange={e => updateItem(item.id, 'expectedDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      <TextField label="Rate" value={item.rate} onChange={e => updateItem(item.id, 'rate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      {/* Row 3 */}
+                      <TextField label="CGST Rate" value={item.cgstRate} onChange={e => updateItem(item.id, 'cgstRate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      <TextField label="CGST Amt" value={item.cgstAmount} onChange={e => updateItem(item.id, 'cgstAmount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      <TextField label="SGST Rate" value={item.sgstRate} onChange={e => updateItem(item.id, 'sgstRate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      {/* Row 4 */}
+                      <TextField label="SGST Amount" value={item.sgstAmount} onChange={e => updateItem(item.id, 'sgstAmount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      <TextField label="IGST Rate" value={item.igstRate} onChange={e => updateItem(item.id, 'igstRate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      <TextField label="IGST Amount" value={item.igstAmount} onChange={e => updateItem(item.id, 'igstAmount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      {/* Row 5 */}
+                      <TextField label="TCS Rate" value={item.tcsRate} onChange={e => updateItem(item.id, 'tcsRate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      <TextField label="TCS Amount" value={item.tcsAmount} onChange={e => updateItem(item.id, 'tcsAmount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      <TextField label="Tax Amount" value={item.taxAmount} onChange={e => updateItem(item.id, 'taxAmount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      {/* Row 6 */}
+                      <TextField label="Amount" value={item.amount} onChange={e => updateItem(item.id, 'amount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+
+                      <TextField label="Total Amount" value={item.totalAmount} onChange={e => updateItem(item.id, 'totalAmount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
+                    </div>
+                  </div>)}
+              </div>
+            </div>
+
+            {/* Attachment Section */}
+            <div className="bg-white p-6 rounded-lg shadow border">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">3</span>
+                </div>
+                <h2 className="text-lg font-semibold text-gray-800">ATTACHMENTS</h2>
+              </div>
+
+              <div className="border-2 border-dashed border-yellow-400 rounded-lg p-12 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => document.getElementById('file-upload')?.click()}>
+                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 text-lg">
+                  Drag & Drop or Click to Upload{' '}
+                  <span className="text-gray-500">No images chosen</span>
+                </p>
+                <input id="file-upload" type="file" onChange={handleFileChange} className="hidden" multiple accept="image/*,.pdf,.doc,.docx" />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Attachment Section */}
-        <div className="bg-white p-6 rounded-lg shadow border">
-          <div className="flex items-center gap-2 mb-6">
-             <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-    <Paperclip className="text-white w-4 h-4" />
-  </div>
-  <h2 className="text-lg font-semibold text-[#C72030]">Attachment</h2>
-          </div>
+          {/* Right Column - Summary */}
+          <div className="space-y-6">
+            {/* Total Amount */}
+            
 
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
-              Attachment:
-            </label>
-            <div className="flex items-center gap-4">
-              <input
-                type="file"
-                onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              />
-              <span className="text-sm text-gray-500">
-                {formData.attachment ? formData.attachment.name : "No file chosen"}
-              </span>
+            {/* Submit Button */}
+            <div className="bg-white p-6 rounded-lg shadow border">
+              <Button type="submit" className="w-full bg-[#C72030] hover:bg-[#A01020] text-white py-3">
+                Submit
+              </Button>
             </div>
           </div>
-        </div>
-
-        {/* Submit Button */}
-        <div className="flex justify-center">
-          <Button 
-            type="submit"
-            className="bg-[#C72030] hover:bg-[#A01020] text-white px-8 py-2"
-          >
-            Submit
-          </Button>
         </div>
       </form>
-    </div>
-  );
+    </div>;
 };
