@@ -127,7 +127,7 @@ export const RecentSurveysSidebar: React.FC = () => {
     };
 
     return (
-        <div className="bg-white rounded-lg border border-gray-200 p-6 h-fit">
+        <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Recent Surveys</h3>
                 <Button
@@ -158,7 +158,7 @@ export const RecentSurveysSidebar: React.FC = () => {
                         return (
                             <div
                                 key={survey.id}
-                                className="p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow cursor-pointer group"
+                                className="bg-[#C4B89D]/20 rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60 hover:shadow-md transition-shadow cursor-pointer group"
                             >
                                 <div className="flex items-start justify-between mb-2">
                                     <h4 className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-[#C72030] transition-colors">
@@ -205,6 +205,14 @@ export const RecentSurveysSidebar: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
+                                <div className="mt-4 pt-3 border-t border-gray-200 border-opacity-60 flex justify-end">
+                            <button 
+                                className="text-blue-600 text-sm font-medium underline hover:text-blue-800" 
+                                onClick={() => {/* Handle view survey details */}}
+                            >
+                                View Details&gt;&gt;
+                            </button>
+                        </div>
                             </div>
                         );
                     })}

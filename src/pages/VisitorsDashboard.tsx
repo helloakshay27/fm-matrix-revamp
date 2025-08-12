@@ -5,10 +5,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2 } from 'lucide-react';
+import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
+import { VisitorFilterDialog, VisitorFilters } from '@/components/VisitorFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
@@ -70,10 +71,40 @@ const getVisitorHistory = async (siteId: number, page: number = 1, perPage: numb
   }
 };
 
+const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20) => {
+  try {
+    const url = getFullUrl(API_CONFIG.ENDPOINTS.EXPECTED_VISITORS);
+    const options = getAuthenticatedFetchOptions();
+    
+    // Add query parameters
+    const urlWithParams = new URL(url);
+    urlWithParams.searchParams.append('site_id', siteId.toString());
+    urlWithParams.searchParams.append('page', page.toString());
+    urlWithParams.searchParams.append('per_page', perPage.toString());
+    
+    console.log('🚀 Fetching expected visitors from:', urlWithParams.toString());
+    
+    const response = await fetch(urlWithParams.toString(), options);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch expected visitors: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Expected visitors response received:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Error fetching expected visitors:', error);
+    throw error;
+  }
+};
+
 export const VisitorsDashboard = () => {
   const [selectedPerson, setSelectedPerson] = useState('');
   const [isNewVisitorDialogOpen, setIsNewVisitorDialogOpen] = useState(false);
   const [isUpdateNumberDialogOpen, setIsUpdateNumberDialogOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [visitorFilters, setVisitorFilters] = useState<VisitorFilters>({});
   const [currentVisitorNumber, setCurrentVisitorNumber] = useState('');
   const [activeVisitorType, setActiveVisitorType] = useState('unexpected');
   const [mainTab, setMainTab] = useState('visitor');
@@ -85,10 +116,18 @@ export const VisitorsDashboard = () => {
 
   // API State
   const [unexpectedVisitors, setUnexpectedVisitors] = useState<any[]>([]);
+  const [expectedVisitors, setExpectedVisitors] = useState<any[]>([]);
   const [visitorHistoryData, setVisitorHistoryData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [expectedLoading, setExpectedLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalEntries: 0,
+    perPage: 20
+  });
+  const [expectedPagination, setExpectedPagination] = useState({
     currentPage: 1,
     totalPages: 1,
     totalEntries: 0,
@@ -156,6 +195,25 @@ export const VisitorsDashboard = () => {
     }
   };
 
+  // Fetch expected visitors
+  const fetchExpectedVisitors = async (page: number = 1) => {
+    setExpectedLoading(true);
+    try {
+      const data = await getExpectedVisitors(2189, page); // Replace 2189 with your actual site ID
+      setExpectedVisitors(data.expected_visitors);
+      setExpectedPagination({
+        currentPage: data.pagination.current_page,
+        totalPages: data.pagination.total_pages,
+        totalEntries: data.pagination.total_entries,
+        perPage: data.pagination.per_page
+      });
+    } catch (error) {
+      console.error('Error fetching expected visitors:', error);
+    } finally {
+      setExpectedLoading(false);
+    }
+  };
+
   // Fetch visitor history
   const fetchVisitorHistory = async (page: number = 1) => {
     setHistoryLoading(true);
@@ -178,10 +236,43 @@ export const VisitorsDashboard = () => {
   useEffect(() => {
     if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
       fetchUnexpectedVisitors();
+    } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
+      fetchExpectedVisitors();
     } else if (visitorSubTab === 'history') {
       fetchVisitorHistory();
     }
   }, [visitorSubTab, activeVisitorType]);
+
+  // Filter handlers
+  const handleFilterOpen = () => {
+    setIsFilterOpen(true);
+  };
+
+  const handleFilterApply = (filters: VisitorFilters) => {
+    setVisitorFilters(filters);
+    setIsFilterOpen(false);
+    // TODO: Apply filters to the visitor data based on current tab
+    if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
+      fetchUnexpectedVisitors();
+    } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
+      fetchExpectedVisitors();
+    } else if (visitorSubTab === 'history') {
+      fetchVisitorHistory();
+    }
+  };
+
+  const handleFilterReset = () => {
+    setVisitorFilters({});
+    setIsFilterOpen(false);
+    // Refresh data without filters
+    if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
+      fetchUnexpectedVisitors();
+    } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
+      fetchExpectedVisitors();
+    } else if (visitorSubTab === 'history') {
+      fetchVisitorHistory();
+    }
+  };
 
   // Column configuration for unexpected visitors table
   const unexpectedVisitorColumns: ColumnConfig[] = [
@@ -200,12 +291,15 @@ export const VisitorsDashboard = () => {
 
   // Column configuration for expected visitors table
   const expectedVisitorColumns: ColumnConfig[] = [
-    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
-    { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
-    { key: 'visitorName', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
-    { key: 'details', label: 'Details', sortable: true, hideable: true, draggable: true },
-    { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
-    { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true }
+    { key: 'visitor_image', label: 'Visitor Image', sortable: false, hideable: true, draggable: true },
+    { key: 'guest_name', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
+    { key: 'guest_from', label: 'Location', sortable: true, hideable: true, draggable: true },
+    { key: 'primary_host', label: 'Host', sortable: true, hideable: true, draggable: true },
+    { key: 'visit_purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+    { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
+    { key: 'created_at_formatted', label: 'Check-in Time', sortable: true, hideable: true, draggable: true },
+    { key: 'expected_at_formatted', label: 'Expected At', sortable: true, hideable: true, draggable: true },
+    { key: 'tableActions', label: 'Actions', sortable: false, hideable: false, draggable: false }
   ];
 
   // Column configuration for visitor out table
@@ -325,6 +419,79 @@ default:
   }
 };
 
+ const renderExpectedVisitorCell = (visitor: any, columnKey: string) => {
+  switch (columnKey) {
+    case 'id':
+      return visitor.id;
+    case 'visitor_image':
+      return (
+        <div className="flex justify-center">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+            {visitor.visitor_image ? (
+              <img
+                src={visitor.visitor_image}
+                alt="Visitor"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-gray-400 text-xs">No Photo</span>
+            )}
+          </div>
+        </div>
+      );
+    case 'guest_name':
+      return <span className="font-medium">{visitor.guest_name || '--'}</span>;
+    case 'guest_from':
+      return visitor.guest_from || '--';
+    case 'primary_host':
+      return visitor.primary_host || '--';
+    case 'visit_purpose':
+      return visitor.visit_purpose || '--';
+    case 'status':
+      return (
+        <span
+          className={`px-2 py-1 text-xs rounded-full font-medium ${
+            visitor.status === 'Expected'
+              ? 'bg-yellow-100 text-yellow-800'
+              : visitor.status === 'Checked In'
+              ? 'bg-green-100 text-green-800'
+              : visitor.status === 'Checked Out'
+              ? 'bg-gray-100 text-gray-800'
+              : 'bg-blue-100 text-blue-800'
+          }`}
+        >
+          {visitor.status || 'Unknown'}
+        </span>
+      );
+    case 'expected_at_formatted':
+      return visitor.expected_at_formatted || '--';
+    case 'tableActions':
+      return (
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleViewVisitor(visitor.id)}
+          >
+            View
+          </Button>
+          {visitor.check_in_available && (
+            <Button
+              size="sm"
+              className="bg-green-500 hover:bg-green-600 text-white"
+              onClick={() => handleCheckIn(visitor.id)}
+            >
+              Check In
+            </Button>
+          )}
+        </div>
+      );
+    default:
+      const value = visitor[columnKey as keyof typeof visitor];
+      return value ? String(value) : '--';
+  }
+ };
+
  const renderVisitorHistoryCell = (visitor: any, columnKey: string) => {
   switch (columnKey) {
     case 'id':
@@ -381,27 +548,13 @@ default:
   }
 };
 
-  const renderExpectedVisitorRow = (visitor: any) => ({
-    sNo: visitor.sNo,
-    actions: (
-      <button 
-        className="w-4 h-4 text-black hover:text-gray-700"
-        onClick={() => handleEditClick('9555625186')}
-      >
-        <svg className="w-full h-full" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"></path>
-        </svg>
-      </button>
-    ),
-    visitorName: visitor.visitorName,
-    details: visitor.details,
-    purpose: visitor.purpose,
-    status: (
-      <div className="bg-green-200 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-        {visitor.status}
-      </div>
-    )
-  });
+  const renderExpectedVisitorRow = (visitor: any) => {
+    const row: { [key: string]: any } = {};
+    expectedVisitorColumns.forEach((column) => {
+      row[column.key] = renderExpectedVisitorCell(visitor, column.key);
+    });
+    return row;
+  };
 
   const renderVisitorOutRow = (visitor: any) => ({
     sNo: visitor.sNo,
@@ -444,10 +597,6 @@ default:
   }));
 
   // Event handlers
-  const handleHistoryClick = () => {
-    setVisitorSubTab('history');
-  };
-
   const handleRefresh = () => {
     if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
       fetchUnexpectedVisitors(pagination.currentPage);
@@ -525,16 +674,22 @@ default:
     // Handle skip approval logic here
   };
 
+  const handleCheckIn = (visitorId: number) => {
+    console.log('Checking in visitor:', visitorId);
+    // Handle check in logic here
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Visitors Dashboard</h1>
       <div className="mb-6">
         <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-            <TabsTrigger
-              value="visitor"
-              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
-            >
+          <div className="mb-4">
+            <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+              <TabsTrigger
+                value="visitor"
+                className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+              >
               <svg
                 width="18"
                 height="19"
@@ -572,234 +727,187 @@ default:
               Analytics
             </TabsTrigger>
           </TabsList>
+          </div>
 
-          <TabsContent value="visitor" className="bg-white rounded-lg border border-gray-200 mt-4">
+          <TabsContent value="visitor" className="bg-white rounded-lg border border-gray-200">
             <Tabs value={visitorSubTab} onValueChange={setVisitorSubTab} className="w-full">
-              <div className="flex bg-white p-1 rounded-lg">
-                <Button 
-                  onClick={() => setVisitorSubTab('visitor-in')}
-                  className={`px-6 py-2 text-sm font-medium transition-colors rounded-md border-none ${
-                    visitorSubTab === 'visitor-in' 
-                      ? 'bg-[#EDEAE3] text-[#C72030] shadow-sm' 
-                      : 'bg-transparent text-gray-600 hover:bg-white/50'
-                  }`}
-                  variant="ghost"
-                >
-                  Visitor In
-                </Button>
-                <Button 
-                  onClick={() => setVisitorSubTab('visitor-out')}
-                  className={`px-6 py-2 text-sm font-medium transition-colors rounded-md border-none ${
-                    visitorSubTab === 'visitor-out' 
-                      ? 'bg-[#EDEAE3] text-[#C72030] shadow-sm' 
-                      : 'bg-transparent text-gray-600 hover:bg-white/50'
-                  }`}
-                  variant="ghost"
-                >
-                  Visitor Out
-                </Button>
-                <Button 
-                  onClick={handleHistoryClick}
-                  className={`px-6 py-2 text-sm font-medium transition-colors rounded-md border-none ${
-                    visitorSubTab === 'history' 
-                      ? 'bg-[#EDEAE3] text-[#C72030] shadow-sm' 
-                      : 'bg-transparent text-gray-600 hover:bg-white/50'
-                  }`}
-                  variant="ghost"
-                >
-                  History
-                </Button>
+              <div className="p-4 pb-0">
+                <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200">
+                  <TabsTrigger
+                    value="visitor-in"
+                    className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+                  >
+                    Visitor In
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="visitor-out"
+                    className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+                  >
+                    Visitor Out
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="history"
+                    className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+                  >
+                    History
+                  </TabsTrigger>
+                </TabsList>
               </div>
 
               {/* Visitor In tab content */}
-              {visitorSubTab === 'visitor-in' && (
-                <div className="p-4">
-                  {/* Top Row with Add Button and Person Selection */}
-                  <div className="mb-6 flex justify-between items-center">
-                    <Button 
-                      onClick={() => setIsNewVisitorDialogOpen(true)}
-                      style={{ backgroundColor: '#C72030' }}
-                      className="text-white hover:bg-[#C72030]/90"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add
-                    </Button>
-                    
-                    <div className="flex items-center">
-                      <Select value={selectedPerson} onValueChange={setSelectedPerson}>
-                        <SelectTrigger className="w-64 bg-white border border-gray-300">
-                          <SelectValue placeholder="Select Person To Meet" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                          <SelectItem value="person1">Abdul Ghaffar</SelectItem>
-                          <SelectItem value="person2">Arun</SelectItem>
-                          <SelectItem value="person3">Aryan</SelectItem>
-                          <SelectItem value="person4">Vinayak Mane</SelectItem>
-                          <SelectItem value="person5">Sohail Ansari</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="ml-2 hover:bg-gray-100"
-                        onClick={handleRefresh}
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Visitor Type Tabs */}
-                  <div className="flex gap-8 mb-6 border-b border-border">
-                    <Button 
-                      onClick={() => setActiveVisitorType('unexpected')}
-                      className={`px-0 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
-                        activeVisitorType === 'unexpected' 
-                          ? 'text-primary border-primary' 
-                          : 'text-muted-foreground border-transparent hover:text-foreground'
-                      }`}
-                      variant="ghost"
-                    >
-                      Unexpected Visitor
-                    </Button>
-                    <Button 
-                      onClick={() => setActiveVisitorType('expected')}
-                      className={`px-0 py-3 text-sm font-medium transition-colors border-b-2 rounded-none bg-transparent hover:bg-transparent ${
-                        activeVisitorType === 'expected' 
-                          ? 'text-primary border-primary' 
-                          : 'text-muted-foreground border-transparent hover:text-foreground'
-                      }`}
-                      variant="ghost"
-                    >
-                      Expected Visitor
-                    </Button>
-                  </div>
-
-                  {/* Content Area */}
-                  <div className="min-h-[400px]">
-                    {activeVisitorType === 'unexpected' && (
-                      <EnhancedTable
-                     data={unexpectedVisitors}
-                     columns={unexpectedVisitorColumns}
-                     renderCell={renderUnexpectedVisitorCell}
-                        enableSearch={true}
-                        enableSelection={false}
-                        enableExport={true}
-                        enablePagination={true}
-                        pagination={pagination}
-                        onPageChange={fetchUnexpectedVisitors}
-                        loading={loading}
-                        storageKey="unexpected-visitors-table"
-                        emptyMessage="No unexpected visitors available"
-                        exportFileName="unexpected-visitors"
-                        searchPlaceholder="Search by visitor name, host, or purpose"
-                        hideTableExport={false}
-                        hideColumnsButton={false}
-                      />
-                    )}
-                    
-                    {activeVisitorType === 'expected' && (
-                      <EnhancedTable
-                        data={expectedVisitorDataWithIndex}
-                        columns={expectedVisitorColumns}
-                        renderRow={renderExpectedVisitorRow}
-                        enableSearch={true}
-                        enableSelection={false}
-                        enableExport={true}
-                        storageKey="expected-visitors-table"
-                        emptyMessage="No expected visitors available"
-                        exportFileName="expected-visitors"
-                        searchPlaceholder="Search by visitor name, details, or purpose"
-                        hideTableExport={false}
-                        hideColumnsButton={false}
-                      />
-                    )}
-                  </div>
+              <TabsContent value="visitor-in" className="p-4">
+                {/* Visitor Type Tabs */}
+                <div className="flex bg-white p-1 rounded-lg mb-6">
+                  <Button 
+                    onClick={() => setActiveVisitorType('unexpected')}
+                    className={`px-6 py-2 text-sm font-medium transition-colors rounded-md border-none ${
+                      activeVisitorType === 'unexpected' 
+                        ? 'bg-[#EDEAE3] text-[#C72030] shadow-sm' 
+                        : 'bg-transparent text-gray-600 hover:bg-white/50'
+                    }`}
+                    variant="ghost"
+                  >
+                    Unexpected Visitor
+                  </Button>
+                  <Button 
+                    onClick={() => setActiveVisitorType('expected')}
+                    className={`px-6 py-2 text-sm font-medium transition-colors rounded-md border-none ${
+                      activeVisitorType === 'expected' 
+                        ? 'bg-[#EDEAE3] text-[#C72030] shadow-sm' 
+                        : 'bg-transparent text-gray-600 hover:bg-white/50'
+                    }`}
+                    variant="ghost"
+                  >
+                    Expected Visitor
+                  </Button>
                 </div>
-              )}
+
+                {/* Content Area */}
+                <div className="min-h-[400px]">
+                  {activeVisitorType === 'unexpected' && (
+                    <EnhancedTable
+                   data={unexpectedVisitors}
+                   columns={unexpectedVisitorColumns}
+                   renderCell={renderUnexpectedVisitorCell}
+                      enableSearch={true}
+                      enableSelection={false}
+                      enableExport={true}
+                      enablePagination={true}
+                      pagination={pagination}
+                      onPageChange={fetchUnexpectedVisitors}
+                      loading={loading}
+                      storageKey="unexpected-visitors-table"
+                      emptyMessage="No unexpected visitors available"
+                      exportFileName="unexpected-visitors"
+                      searchPlaceholder="Search by visitor name, host, or purpose"
+                      hideTableExport={false}
+                      hideColumnsButton={false}
+                      onFilterClick={handleFilterOpen}
+                      leftActions={
+                        <div className="flex gap-3">
+                          <Button
+                            onClick={() => setIsNewVisitorDialogOpen(true)}
+                            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+                          >
+                            <Plus className="w-4 h-4 mr-2" /> Add
+                          </Button>
+                        </div>
+                      }
+                    />
+                  )}
+                  
+                  {activeVisitorType === 'expected' && (
+                    <EnhancedTable
+                      data={expectedVisitorDataWithIndex}
+                      columns={expectedVisitorColumns}
+                      renderRow={renderExpectedVisitorRow}
+                      enableSearch={true}
+                      enableSelection={false}
+                      enableExport={true}
+                      storageKey="expected-visitors-table"
+                      emptyMessage="No expected visitors available"
+                      exportFileName="expected-visitors"
+                      searchPlaceholder="Search by visitor name, details, or purpose"
+                      hideTableExport={false}
+                      hideColumnsButton={false}
+                      onFilterClick={handleFilterOpen}
+                      leftActions={
+                        <div className="flex gap-3">
+                          <Button
+                            onClick={() => setIsNewVisitorDialogOpen(true)}
+                            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+                          >
+                            <Plus className="w-4 h-4 mr-2" /> Add
+                          </Button>
+                        </div>
+                      }
+                    />
+                  )}
+                </div>
+              </TabsContent>
 
               {/* Visitor Out tab content */}
-              {visitorSubTab === 'visitor-out' && (
-                <div className="p-4 min-h-[400px]">
-                  <EnhancedTable
-                    data={visitorOutDataWithIndex}
-                    columns={visitorOutColumns}
-                    renderRow={renderVisitorOutRow}
-                    enableSearch={true}
-                    enableSelection={false}
-                    enableExport={true}
-                    storageKey="visitor-out-table"
-                    emptyMessage="No visitors to check out"
-                    exportFileName="visitor-out"
-                    searchPlaceholder="Search by visitor name, host, or purpose"
-                    hideTableExport={false}
-                    hideColumnsButton={false}
-                  />
-                </div>
-              )}
-
-              {/* History tab content */}
-              {visitorSubTab === 'history' && (
-                <div className="p-4 min-h-[400px] space-y-4">
-                  {/* Add Button and Search Bar */}
-                  <div className="flex justify-between items-center mb-4">
-                    <Button 
-                      onClick={() => setIsNewVisitorDialogOpen(true)}
-                      style={{ backgroundColor: '#C72030' }}
-                      className="text-white hover:bg-[#C72030]/90"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add
-                    </Button>
-                    
-                    <div className="flex items-center gap-2 flex-1 max-w-md ml-4">
-                      <div className="relative flex-1">
-                        <input
-                          type="text"
-                          placeholder="Search using Guest's Name or Pass Number."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg bg-gray-50 text-sm"
-                        />
-                        <button
-                          onClick={handleSearch}
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700"
-                        >
-                          <Search className="w-4 h-4" />
-                        </button>
-                      </div>
+              <TabsContent value="visitor-out" className="p-4 min-h-[400px]">
+                <EnhancedTable
+                  data={visitorOutDataWithIndex}
+                  columns={visitorOutColumns}
+                  renderRow={renderVisitorOutRow}
+                  enableSearch={true}
+                  enableSelection={false}
+                  enableExport={true}
+                  storageKey="visitor-out-table"
+                  emptyMessage="No visitors to check out"
+                  exportFileName="visitor-out"
+                  searchPlaceholder="Search by visitor name, host, or purpose"
+                  hideTableExport={false}
+                  hideColumnsButton={false}
+                  onFilterClick={handleFilterOpen}
+                  leftActions={
+                    <div className="flex gap-3">
                       <Button
-                        onClick={handleReset}
-                        variant="ghost"
-                        size="sm"
-                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsNewVisitorDialogOpen(true)}
+                        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
                       >
-                        <RotateCcw className="w-4 h-4" />
+                        <Plus className="w-4 h-4 mr-2" /> Add
                       </Button>
                     </div>
-                  </div>
+                  }
+                />
+              </TabsContent>
 
-                  {/* Visitor History Table */}
-                  <EnhancedTable
-                    data={visitorHistoryData}
-                    columns={visitorHistoryColumns}
-                    renderCell={renderVisitorHistoryCell}
-                    enableSearch={true}
-                    enableSelection={false}
-                    enableExport={true}
-                    enablePagination={true}
-                    pagination={historyPagination}
-                    onPageChange={fetchVisitorHistory}
-                    loading={historyLoading}
-                    storageKey="visitor-history-table"
-                    emptyMessage="No visitor history available"
-                    exportFileName="visitor-history"
-                    searchPlaceholder="Search by visitor name, host, or pass number"
-                    hideTableExport={false}
-                    hideColumnsButton={false}
-                  />
-                </div>
-              )}
+              {/* History tab content */}
+              <TabsContent value="history" className="p-4 min-h-[400px] space-y-4">
+                {/* Visitor History Table */}
+                <EnhancedTable
+                  data={visitorHistoryData}
+                  columns={visitorHistoryColumns}
+                  renderCell={renderVisitorHistoryCell}
+                  enableSearch={true}
+                  enableSelection={false}
+                  enableExport={true}
+                  enablePagination={true}
+                  pagination={historyPagination}
+                  onPageChange={fetchVisitorHistory}
+                  loading={historyLoading}
+                  storageKey="visitor-history-table"
+                  emptyMessage="No visitor history available"
+                  exportFileName="visitor-history"
+                  searchPlaceholder="Search by visitor name, host, or pass number"
+                  hideTableExport={false}
+                  hideColumnsButton={false}
+                  onFilterClick={handleFilterOpen}
+                  leftActions={
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={() => setIsNewVisitorDialogOpen(true)}
+                        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+                      >
+                        <Plus className="w-4 h-4 mr-2" /> Add
+                      </Button>
+                    </div>
+                  }
+                />
+              </TabsContent>
             </Tabs>
           </TabsContent>
 
@@ -821,6 +929,13 @@ default:
         onClose={() => setIsUpdateNumberDialogOpen(false)}
         currentNumber={currentVisitorNumber}
         onUpdate={handleNumberUpdate}
+      />
+
+      <VisitorFilterDialog
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApplyFilters={handleFilterApply}
+        onResetFilters={handleFilterReset}
       />
     </div>
   );

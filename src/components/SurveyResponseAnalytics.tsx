@@ -1,3 +1,4 @@
+// ...existing code...
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
@@ -69,7 +70,13 @@ interface CategoryWiseSurveys {
     };
 }
 
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import TrendingSurveyAnalysisCard from './TrendingSurveyAnalysisCard';
+import CriticalSurveyAnalysisCard from './CriticalSurveyAnalysisCard';
+
 interface SurveyAnalyticsProps {
+    surveyId: number;
+    siteId?: number;
     defaultDateRange?: {
         fromDate: Date;
         toDate: Date;
@@ -138,14 +145,68 @@ const SortableChartItem = ({
 };
 
 export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
+    surveyId,
+    siteId,
     defaultDateRange,
-    selectedAnalyticsTypes = ['typeWise', 'categoryWise', 'statusDistribution', 'surveyDistributions'],
+    selectedAnalyticsTypes = ['amcStatus', 'statusDistribution', 'typeWise', 'categoryWise', 'surveyDistributions'],
     onAnalyticsChange,
     showFilter = true,
     showSelector = true,
     layout = 'grid',
     className = '',
 }) => {
+    // Critical Questions state - changed to handle multiple questions
+    const [criticalQuestions, setCriticalQuestions] = useState<any[]>([]);
+    const [criticalQuestionsLoading, setCriticalQuestionsLoading] = useState(false);
+    const [criticalQuestionsError, setCriticalQuestionsError] = useState<string | null>(null);
+
+    // Fetch critical questions for all surveys
+    const fetchCriticalQuestions = async () => {
+        setCriticalQuestionsLoading(true);
+        setCriticalQuestionsError(null);
+        try {
+            const url = getFullUrl('/pms/admin/snag_checklists/survey_details.json');
+            const urlWithParams = new URL(url);
+            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+            urlWithParams.searchParams.append('survey_id', ''); // Empty to get all surveys
+            urlWithParams.searchParams.append('analytics', 'true');
+            urlWithParams.searchParams.append('survey_critical_questions', 'true');
+            // Don't pass any date parameters - show blank
+            urlWithParams.searchParams.append('from_date', '');
+            urlWithParams.searchParams.append('to_date', '');
+            
+            const response = await fetch(urlWithParams.toString());
+            if (!response.ok) throw new Error('Failed to fetch critical questions');
+            const data = await response.json();
+            console.log('Critical Questions API response:', data);
+            
+            // Handle the API response structure
+            // If survey_critical_questions is empty but we have survey data, use the surveys as critical surveys
+            if (data.survey_critical_questions && Array.isArray(data.survey_critical_questions) && data.survey_critical_questions.length > 0) {
+                setCriticalQuestions(data.survey_critical_questions);
+            } else if (data.survey_details && data.survey_details.surveys && Array.isArray(data.survey_details.surveys)) {
+                // Transform survey data into critical question format
+                const surveyBasedCriticalQuestions = data.survey_details.surveys
+                    .filter((survey: any) => survey.response_count > 0) // Only show surveys with responses
+                    .map((survey: any) => ({
+                        survey_id: survey.survey_id,
+                        survey_name: survey.survey_name,
+                        response_count: survey.response_count,
+                        option_selection_count: survey.option_selection_count,
+                        question: `Critical analysis needed for survey: ${survey.survey_name}`,
+                        critical_score: survey.response_count // Use response count as critical score
+                    }));
+                setCriticalQuestions(surveyBasedCriticalQuestions);
+            } else {
+                setCriticalQuestions([]);
+            }
+        } catch (error) {
+            setCriticalQuestionsError(error instanceof Error ? error.message : 'Failed to fetch critical questions');
+            setCriticalQuestions([]);
+        } finally {
+            setCriticalQuestionsLoading(false);
+        }
+    };
     // Default date range (today to last year)
     const getDefaultDateRange = () => {
         const today = new Date();
@@ -163,10 +224,167 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
 
     // Analytics data state
     const [surveyStatistics, setSurveyStatistics] = useState<SurveyStatistics>({});
+    const [companyLevelValue, setCompanyLevelValue] = useState<number | null>(null);
+    const [companyLevelLoading, setCompanyLevelLoading] = useState(false);
+    const [companyLevelError, setCompanyLevelError] = useState<string | null>(null);
+    // Site Level state
+    // Trending Survey state
+    const [trendingSurvey, setTrendingSurvey] = useState<any>(null);
+    const [trendingSurveyDetails, setTrendingSurveyDetails] = useState<any[]>([]);
+    const [trendingSurveyLoading, setTrendingSurveyLoading] = useState(false);
+    const [trendingSurveyError, setTrendingSurveyError] = useState<string | null>(null);
+
+    // Fetch trending survey
+    const fetchTrendingSurvey = async () => {
+        setTrendingSurveyLoading(true);
+        setTrendingSurveyError(null);
+        try {
+            const url = getFullUrl('/pms/admin/snag_checklists/survey_details.json');
+            const urlWithParams = new URL(url);
+            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+            urlWithParams.searchParams.append('survey_id', surveyId ? String(surveyId) : '');
+            urlWithParams.searchParams.append('analytics', 'true');
+            urlWithParams.searchParams.append('trend_survey', 'true');
+            
+            // Always pass empty values for from_date and to_date to get all records
+            urlWithParams.searchParams.append('from_date', '');
+            urlWithParams.searchParams.append('to_date', '');
+            
+            const response = await fetch(urlWithParams.toString());
+            if (!response.ok) throw new Error('Failed to fetch trending survey');
+            const data = await response.json();
+            console.log('Trending Survey API response:', data);
+            setTrendingSurvey(data.trend_survey || null);
+            setTrendingSurveyDetails(data.survey_details?.surveys || []);
+        } catch (error) {
+            setTrendingSurveyError(error instanceof Error ? error.message : 'Failed to fetch trending survey');
+            setTrendingSurvey(null);
+            setTrendingSurveyDetails([]);
+        } finally {
+            setTrendingSurveyLoading(false);
+        }
+    };
+    const [siteLevelValue, setSiteLevelValue] = useState<number | null>(null);
+    const [siteLevelLoading, setSiteLevelLoading] = useState(false);
+    const [siteLevelError, setSiteLevelError] = useState<string | null>(null);
+    // Fetch site level data
+    const fetchSiteLevel = async () => {
+        setSiteLevelLoading(true);
+        setSiteLevelError(null);
+        try {
+            const url = getFullUrl('/pms/admin/snag_checklists/survey_details.json');
+            const urlWithParams = new URL(url);
+            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+            if (siteId) urlWithParams.searchParams.append('site_id', String(siteId));
+            urlWithParams.searchParams.append('analytics', 'true');
+            urlWithParams.searchParams.append('site_level', 'true');
+            // Always pass empty values for from_date and to_date to get all records
+            urlWithParams.searchParams.append('from_date', '');
+            urlWithParams.searchParams.append('to_date', '');
+            
+            const response = await fetch(urlWithParams.toString());
+            if (!response.ok) throw new Error('Failed to fetch site level data');
+            const data = await response.json();
+            console.log('Site Level API response:', data);
+            setSiteLevelValue(data.site_level_survey?.total_survey ?? 0);
+        } catch (error) {
+            setSiteLevelError(error instanceof Error ? error.message : 'Failed to fetch site level data');
+            setSiteLevelValue(0);
+        } finally {
+            setSiteLevelLoading(false);
+        }
+    };
+
+    // Association Count state
+    const [associationCount, setAssociationCount] = useState<number | null>(null);
+    const [associationCountLoading, setAssociationCountLoading] = useState(false);
+    const [associationCountError, setAssociationCountError] = useState<string | null>(null);
+    // Fetch association count
+    const fetchAssociationCount = async () => {
+        setAssociationCountLoading(true);
+        setAssociationCountError(null);
+        try {
+            const url = getFullUrl('/pms/admin/snag_checklists/survey_details.json');
+            const urlWithParams = new URL(url);
+            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+            urlWithParams.searchParams.append('analytics', 'true');
+            urlWithParams.searchParams.append('association_count', 'true');
+            // Always pass empty values for from_date and to_date to get all records
+            urlWithParams.searchParams.append('from_date', '');
+            urlWithParams.searchParams.append('to_date', '');
+            
+            const response = await fetch(urlWithParams.toString());
+            if (!response.ok) throw new Error('Failed to fetch association count');
+            const data = await response.json();
+            console.log('Association Count API response:', data);
+            const total = Array.isArray(data.association_count)
+                ? data.association_count.reduce((sum, item) => sum + (item.association_count || 0), 0)
+                : 0;
+            setAssociationCount(total);
+        } catch (error) {
+            setAssociationCountError(error instanceof Error ? error.message : 'Failed to fetch association count');
+            setAssociationCount(0);
+        } finally {
+            setAssociationCountLoading(false);
+        }
+    };
     const [surveyStatus, setSurveyStatus] = useState<SurveyStatusData | null>(null);
     const [surveyDistributions, setSurveyDistributions] = useState<SurveyDistributions | null>(null);
     const [typeWiseSurveys, setTypeWiseSurveys] = useState<TypeWiseSurveys | null>(null);
     const [categoryWiseSurveys, setCategoryWiseSurveys] = useState<CategoryWiseSurveys | null>(null);
+    // Fetch company level data
+    const fetchCompanyLevel = async () => {
+        setCompanyLevelLoading(true);
+        setCompanyLevelError(null);
+        try {
+            const url = getFullUrl(API_CONFIG.ENDPOINTS.SURVEY_DETAILS);
+            const options = getAuthenticatedFetchOptions();
+            const urlWithParams = new URL(url);
+            if (siteId) urlWithParams.searchParams.append('site_id', String(siteId));
+            urlWithParams.searchParams.append('analytics', 'true');
+            urlWithParams.searchParams.append('company_level', 'true');
+            const response = await fetch(urlWithParams.toString(), options);
+            if (!response.ok) throw new Error('Failed to fetch company level data');
+            const data = await response.json();
+            setCompanyLevelValue(data.company_level?.total_survey ?? 0);
+        } catch (error) {
+            setCompanyLevelError(error instanceof Error ? error.message : 'Failed to fetch company level data');
+            setCompanyLevelValue(0);
+        } finally {
+            setCompanyLevelLoading(false);
+        }
+    };
+
+    // Top Surveys state
+    const [topSurveys, setTopSurveys] = useState<{ id: number; name: string }[]>([]);
+    const [topSurveysLoading, setTopSurveysLoading] = useState(false);
+    const [topSurveysError, setTopSurveysError] = useState<string | null>(null);
+    // Fetch top surveys
+    const fetchTopSurveys = async () => {
+        setTopSurveysLoading(true);
+        setTopSurveysError(null);
+        try {
+            const url = getFullUrl('/pms/admin/snag_checklists/survey_details.json');
+            const urlWithParams = new URL(url);
+            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+            urlWithParams.searchParams.append('analytics', 'true');
+            urlWithParams.searchParams.append('top_surveys', 'true');
+            // Always pass empty values for from_date and to_date to get all records
+            urlWithParams.searchParams.append('from_date', '');
+            urlWithParams.searchParams.append('to_date', '');
+            
+            const response = await fetch(urlWithParams.toString());
+            if (!response.ok) throw new Error('Failed to fetch top surveys');
+            const data = await response.json();
+            console.log('Top Surveys API response:', data);
+            setTopSurveys(Array.isArray(data.top_surveys) ? data.top_surveys : []);
+        } catch (error) {
+            setTopSurveysError(error instanceof Error ? error.message : 'Failed to fetch top surveys');
+            setTopSurveys([]);
+        } finally {
+            setTopSurveysLoading(false);
+        }
+    };
 
     // Loading and error states
     const [statisticsLoading, setStatisticsLoading] = useState(false);
@@ -183,6 +401,7 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
 
     // Chart ordering for drag and drop
     const [chartOrder, setChartOrder] = useState<string[]>([
+        'amcStatus',
         'statusDistribution',
         'surveyDistributions',
         'categoryWise',
@@ -197,26 +416,33 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
         })
     );
 
-    // Mock API fetch functions (replace with actual API calls)
+    // Fetch survey statistics (active/inactive) for a specific surveyId
     const fetchSurveyStatistics = async () => {
         setStatisticsLoading(true);
         setStatisticsError(null);
         try {
-            // Mock data - replace with actual API call
-            const mockData = {
-                total_surveys: 45,
-                total_responses: 320,
-                completed_surveys: 38,
-                pending_surveys: 7,
-                active_surveys: 25,
-                expired_surveys: 13,
-                average_rating: 4.2,
-                response_rate: 78.5,
-            };
-            setSurveyStatistics(mockData);
+            const url = getFullUrl('/pms/admin/snag_checklists/survey_details.json');
+            const urlWithParams = new URL(url);
+            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+            if (siteId) urlWithParams.searchParams.append('site_id', String(siteId));
+            urlWithParams.searchParams.append('analytics', 'true');
+            urlWithParams.searchParams.append('survey_status', 'true');
+            // Always pass empty values for from_date and to_date to get all records
+            urlWithParams.searchParams.append('from_date', '');
+            urlWithParams.searchParams.append('to_date', '');
+            
+            const response = await fetch(urlWithParams.toString());
+            if (!response.ok) throw new Error('Failed to fetch survey statistics');
+            const data = await response.json();
+            console.log('Survey Statistics API response:', data);
+            setSurveyStatistics({
+                total_surveys: data.analytics?.total_surveys || 0,
+                active_surveys: data.survey_status?.active_survey ?? 0,
+                expired_surveys: data.survey_status?.inactive_survey ?? 0,
+            });
         } catch (error) {
-            console.error('Error fetching survey statistics:', error);
             setStatisticsError(error instanceof Error ? error.message : 'Failed to fetch survey statistics');
+            setSurveyStatistics({ total_surveys: 0, active_surveys: 0, expired_surveys: 0 });
         } finally {
             setStatisticsLoading(false);
         }
@@ -444,13 +670,21 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
     const { chartStatusData, chartTypeData, categoryData, typeData } = processChartData();
 
     // Effect hooks
+
     useEffect(() => {
-        fetchSurveyStatistics();
-        fetchSurveyStatus();
-        fetchSurveyDistributions();
-        fetchTypeWiseSurveys();
-        fetchCategoryWiseSurveys();
-    }, []);
+    fetchSurveyStatistics();
+    fetchSurveyStatus();
+    fetchSurveyDistributions();
+    fetchTypeWiseSurveys();
+    fetchCategoryWiseSurveys();
+    fetchCompanyLevel();
+    fetchSiteLevel();
+    fetchAssociationCount();
+    fetchTopSurveys();
+    fetchTrendingSurvey();
+    fetchCriticalQuestions();
+    }, [surveyId]);
+
 
     // Watch for prop changes to defaultDateRange
     useEffect(() => {
@@ -468,6 +702,10 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
             fetchSurveyDistributions();
             fetchTypeWiseSurveys();
             fetchCategoryWiseSurveys();
+            // Note: fetchTopSurveys, fetchAssociationCount, fetchSiteLevel are not included here
+            // because they should not be filtered by date (always use empty from_date and to_date)
+            // Note: fetchCriticalQuestions and fetchTrendingSurvey are also not included here 
+            // because they should not be filtered by date
         }
     }, [analyticsDateRange]);
 
@@ -547,63 +785,140 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
 
     // Render layout based on layout prop
     const renderLayout = () => {
+        // Trending Survey Card
+        const trendingSurveyCard = (
+            <SortableChartItem key="trendingSurvey" id="trendingSurvey">
+                {trendingSurveyLoading ? (
+                    <div className="bg-white rounded-lg border border-blue-200 shadow-sm h-full flex flex-col mb-6 justify-center items-center min-h-[300px]">
+                        <div className="text-center text-gray-500">Loading trending survey data...</div>
+                    </div>
+                ) : trendingSurveyError ? (
+                    <div className="bg-white rounded-lg border border-blue-200 shadow-sm h-full flex flex-col mb-6 justify-center items-center min-h-[300px]">
+                        <div className="text-center text-red-500">{trendingSurveyError}</div>
+                    </div>
+                ) : (
+                    <TrendingSurveyAnalysisCard 
+                        trendingSurvey={trendingSurvey}
+                        onDownload={() => handleAnalyticsDownload('trendingSurvey')}
+                    />
+                )}
+            </SortableChartItem>
+        );
         const charts = [
-            // Survey Statistics Card - Commented Out
-            // currentSelectedTypes.includes('surveyStatistics') && (
-            //     <SortableChartItem key="surveyStatistics" id="surveyStatistics">
-            //         <div className="mb-6">
-            //             <SurveyStatisticsSelector
-            //                 dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-            //                 onDownload={handleAnalyticsDownload}
-            //                 layout="grid"
-            //             />
-            //         </div>
+            // AMC Status Overview Card
+            currentSelectedTypes.includes('amcStatus') && (
+                <SortableChartItem key="amcStatus" id="amcStatus">
+                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200 h-full flex flex-col mb-6">
+                        <div className="flex items-center justify-between mb-4 sm:mb-6 p-3 sm:p-6 pb-0">
+                            <h3 className="text-base sm:text-lg font-bold text-black-500">Survey Response Status Overview</h3>
+                        </div>
+                        
+                        <div className="flex-1 overflow-auto p-3 sm:p-6 pt-0">
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                {/* ...existing code... */}
+                                <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                                    <div className="text-2xl font-bold text-green-600">{statisticsLoading ? '...' : surveyStatistics.active_surveys}</div>
+                                    <div className="text-sm text-green-700 font-medium">Active</div>
+                                </div>
+                                <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div className="text-2xl font-bold text-gray-600">{statisticsLoading ? '...' : surveyStatistics.expired_surveys}</div>
+                                    <div className="text-sm text-gray-700 font-medium">Inactive</div>
+                                </div>
+                                {/* ...existing code... */}
+                                {/* <div className="text-center p-4 bg-red-50 rounded-lg border border-red-200">
+                                    <div className="text-2xl font-bold text-red-600">{companyLevelLoading ? '...' : companyLevelValue}</div>
+                                    <div className="text-sm text-red-700 font-medium">Company Level</div>
+                                </div> */}
+                                <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+                                    <div className="text-2xl font-bold text-purple-600">{siteLevelLoading ? '...' : siteLevelValue}</div>
+                                    <div className="text-sm text-purple-700 font-medium">Total Survey</div>
+                                </div>
+                                <div className="text-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                                    <div className="text-2xl font-bold text-yellow-600">{associationCountLoading ? '...' : associationCount}</div>
+                                    <div className="text-sm text-yellow-700 font-medium">Association Count</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </SortableChartItem>
+            ),
+            // Only show statusDistribution card if there is chart data and we have critical questions
+            // currentSelectedTypes.includes('statusDistribution') && chartStatusData && chartStatusData.length > 0 && criticalQuestions.length > 0 && (
+            //     <SortableChartItem key="statusDistribution" id="statusDistribution">
+            //         <SurveyAnalyticsCard
+            //             title={criticalQuestions.length > 0 ? `Survey Status (${criticalQuestions.length} Critical Surveys Found)` : 'Survey Status'}
+            //             type="statusDistribution"
+            //             data={chartStatusData}
+            //             dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+            //             onDownload={() => handleAnalyticsDownload('surveyResponses')}
+            //         />
             //     </SortableChartItem>
             // ),
-            currentSelectedTypes.includes('statusDistribution') && (
-                <SortableChartItem key="statusDistribution" id="statusDistribution">
-                    <SurveyAnalyticsCard
-                        title="Survey Status"
-                        type="statusDistribution"
-                        data={chartStatusData}
-                        dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                        onDownload={() => handleAnalyticsDownload('surveyResponses')}
-                    />
-                </SortableChartItem>
-            ),
-            currentSelectedTypes.includes('surveyDistributions') && (
-                <SortableChartItem key="surveyDistributions" id="surveyDistributions">
-                    <SurveyAnalyticsCard
-                        title="Survey Type Distribution"
-                        type="surveyDistributions"
-                        data={chartTypeData}
-                        dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                        onDownload={() => handleAnalyticsDownload('surveyDistribution')}
-                    />
-                </SortableChartItem>
-            ),
-            currentSelectedTypes.includes('categoryWise') && (
-                <SortableChartItem key="categoryWise" id="categoryWise">
-                    <SurveyAnalyticsCard
-                        title="Category-wise Surveys"
-                        type="categoryWise"
-                        data={categoryData}
-                        dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                        onDownload={() => handleAnalyticsDownload('categoryWise')}
-                    />
-                </SortableChartItem>
-            ),
-            currentSelectedTypes.includes('typeWise') && (
-                <SortableChartItem key="typeWise" id="typeWise">
-                    <SurveyAnalyticsCard
-                        title="Type-wise Surveys"
-                        type="typeWise"
-                        data={typeData}
-                        dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                        onDownload={() => handleAnalyticsDownload('typeWise')}
-                    />
-                </SortableChartItem>
-            ),
+            // currentSelectedTypes.includes('surveyDistributions') && (
+            //     <SortableChartItem key="surveyDistributions" id="surveyDistributions">
+            //         <SurveyAnalyticsCard
+            //             title="Survey Type Distribution"
+            //             type="surveyDistributions"
+            //             data={chartTypeData}
+            //             dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+            //             onDownload={() => handleAnalyticsDownload('surveyDistribution')}
+            //         />
+            //     </SortableChartItem>
+            // ),
+            // currentSelectedTypes.includes('categoryWise') && (
+            //     <SortableChartItem key="categoryWise" id="categoryWise">
+            //         <SurveyAnalyticsCard
+            //             title="Category-wise Surveys"
+            //             type="categoryWise"
+            //             data={categoryData}
+            //             dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+            //             onDownload={() => handleAnalyticsDownload('categoryWise')}
+            //         />
+            //     </SortableChartItem>
+            // ),
+            // currentSelectedTypes.includes('typeWise') && (
+            //     <SortableChartItem key="typeWise" id="typeWise">
+            //         <SurveyAnalyticsCard
+            //             title="Type-wise Surveys"
+            //             type="typeWise"
+            //             data={typeData}
+            //             dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+            //             onDownload={() => handleAnalyticsDownload('typeWise')}
+            //         />
+            //     </SortableChartItem>
+            // ),
+            // Top Survey Bar Chart
+            <SortableChartItem key="topSurvey" id="topSurvey">
+                <SurveyAnalyticsCard
+                    title="Top 3 Survey"
+                    type="typeWise"
+                    data={
+                        topSurveysLoading
+                            ? [{ name: 'Loading...', value: 1, color: '#e5e7eb' }]
+                            : topSurveysError
+                                ? [{ name: topSurveysError, value: 1, color: '#e5e7eb' }]
+                                : topSurveys.length === 0
+                                    ? [{ name: 'No data available', value: 1, color: '#e5e7eb' }]
+                                    : topSurveys.map((survey, idx) => ({
+                                        name: survey.name,
+                                        value: topSurveys.length - idx, // Higher rank = bigger bar
+                                        color: '#3b82f6',
+                                    }))
+                    }
+                    dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
+                    onDownload={() => {}}
+                />
+            </SortableChartItem>,
+            trendingSurveyCard,
+            // Critical Survey Analysis Card
+            <SortableChartItem key="criticalSurvey" id="criticalSurvey">
+                <CriticalSurveyAnalysisCard
+                    criticalQuestions={criticalQuestions}
+                    loading={criticalQuestionsLoading}
+                    error={criticalQuestionsError}
+                    onDownload={() => handleAnalyticsDownload('criticalSurvey')}
+                />
+            </SortableChartItem>,
         ].filter(Boolean);
 
         if (layout === 'vertical') {
