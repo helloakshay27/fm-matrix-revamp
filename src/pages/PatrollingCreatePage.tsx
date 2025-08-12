@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { X, Plus, Type, CalendarRange, ListChecks, Clock, MapPin } from 'lucide-react';
+import { TextField } from '@mui/material';
 
 export const PatrollingCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -27,11 +28,19 @@ export const PatrollingCreatePage: React.FC = () => {
     { building: '', wing: '', floor: '', area: '', room: '', shift: '' },
   ]);
 
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  } as const;
+
   const addQuestion = () => setQuestions(prev => [...prev, { task: '', inputType: '', mandatory: false }]);
   const addShift = () => setShifts(prev => [...prev, { name: '', start: '', end: '', assignee: '', supervisor: '' }]);
   const addCheckpoint = () => setCheckpoints(prev => [...prev, { building: '', wing: '', floor: '', area: '', room: '', shift: '' }]);
 
   const removeCheckpoint = (idx: number) => setCheckpoints(prev => prev.filter((_, i) => i !== idx));
+  const removeQuestion = (idx: number) => setQuestions(prev => prev.filter((_, i) => i !== idx));
 
   const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
     <section className="bg-card rounded-lg border border-border shadow-sm">
@@ -59,7 +68,16 @@ export const PatrollingCreatePage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label className="mb-1 block">Name</Label>
-            <Input placeholder="Enter Name" value={patrolName} onChange={(e) => setPatrolName(e.target.value)} />
+            <TextField
+              label="Name"
+              placeholder="Enter Name"
+              value={patrolName}
+              onChange={(e) => setPatrolName(e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
           </div>
         </div>
       </Section>
@@ -68,15 +86,44 @@ export const PatrollingCreatePage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <Label className="mb-1 block">Start Date</Label>
-            <Input type="date" placeholder="Select Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            <TextField
+              type="date"
+              label="Start Date"
+              placeholder="Select Start Date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
           </div>
           <div>
             <Label className="mb-1 block">End Date</Label>
-            <Input type="date" placeholder="Select End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <TextField
+              type="date"
+              label="End Date"
+              placeholder="Select End Date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
           </div>
           <div>
             <Label className="mb-1 block">Grace Period</Label>
-            <Input placeholder="Enter Grace Period" value={grace} onChange={(e) => setGrace(e.target.value)} />
+            <TextField
+              label="Grace Period"
+              placeholder="Enter Grace Period"
+              value={grace}
+              onChange={(e) => setGrace(e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
           </div>
         </div>
       </Section>
@@ -84,7 +131,17 @@ export const PatrollingCreatePage: React.FC = () => {
       <Section title="Question" icon={<ListChecks className="w-3.5 h-3.5" />}>
         <div className="space-y-4">
           {questions.map((q, idx) => (
-            <div key={idx} className="rounded-md border border-dashed bg-muted/30 p-4">
+            <div key={idx} className="relative rounded-md border border-dashed bg-muted/30 p-4">
+              {idx > 0 && (
+                <button
+                  type="button"
+                  onClick={() => removeQuestion(idx)}
+                  className="absolute -right-2 -top-2 rounded-full p-1 hover:bg-gray-100"
+                  aria-label="Remove question"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div>
                   <Label className="mb-1 block">Mandatory</Label>
@@ -94,7 +151,16 @@ export const PatrollingCreatePage: React.FC = () => {
                 </div>
                 <div>
                   <Label className="mb-1 block">Task</Label>
-                  <Input placeholder="Enter Task" value={q.task} onChange={(e) => setQuestions(prev => prev.map((it, i) => i === idx ? { ...it, task: e.target.value } : it))} />
+                  <TextField
+                    label="Task"
+                    placeholder="Enter Task"
+                    value={q.task}
+                    onChange={(e) => setQuestions(prev => prev.map((it, i) => i === idx ? { ...it, task: e.target.value } : it))}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
                 </div>
                 <div>
                   <Label className="mb-1 block">Input Type</Label>
@@ -102,7 +168,7 @@ export const PatrollingCreatePage: React.FC = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select Input Type" />
                     </SelectTrigger>
-                    <SelectContent>
+                     <SelectContent className="z-50 bg-card">
                       <SelectItem value="text">Text</SelectItem>
                       <SelectItem value="number">Number</SelectItem>
                       <SelectItem value="checkbox">Checkbox</SelectItem>
@@ -126,15 +192,42 @@ export const PatrollingCreatePage: React.FC = () => {
             <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <Label className="mb-1 block">Shift Name</Label>
-                <Input placeholder="Enter Shift Name" value={s.name} onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, name: e.target.value } : it))} />
+                <TextField
+                  label="Shift Name"
+                  placeholder="Enter Shift Name"
+                  value={s.name}
+                  onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, name: e.target.value } : it))}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
               </div>
               <div>
                 <Label className="mb-1 block">Start Time</Label>
-                <Input type="time" value={s.start} onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, start: e.target.value } : it))} />
+                <TextField
+                  type="time"
+                  label="Start Time"
+                  value={s.start}
+                  onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, start: e.target.value } : it))}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
               </div>
               <div>
                 <Label className="mb-1 block">End Time</Label>
-                <Input type="time" value={s.end} onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, end: e.target.value } : it))} />
+                <TextField
+                  type="time"
+                  label="End Time"
+                  value={s.end}
+                  onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, end: e.target.value } : it))}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                />
               </div>
               <div>
                 <Label className="mb-1 block">Assignee</Label>
@@ -142,7 +235,7 @@ export const PatrollingCreatePage: React.FC = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select Assignee" />
                   </SelectTrigger>
-                  <SelectContent>
+                   <SelectContent className="z-50 bg-card">
                     <SelectItem value="user1">User 1</SelectItem>
                     <SelectItem value="user2">User 2</SelectItem>
                   </SelectContent>
@@ -154,7 +247,7 @@ export const PatrollingCreatePage: React.FC = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select Supervisor" />
                   </SelectTrigger>
-                  <SelectContent>
+                     <SelectContent className="z-50 bg-card">
                     <SelectItem value="sup1">Supervisor 1</SelectItem>
                     <SelectItem value="sup2">Supervisor 2</SelectItem>
                   </SelectContent>
@@ -192,7 +285,7 @@ export const PatrollingCreatePage: React.FC = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select Building" />
                     </SelectTrigger>
-                    <SelectContent>
+                     <SelectContent className="z-50 bg-card">
                       <SelectItem value="b1">Building 1</SelectItem>
                       <SelectItem value="b2">Building 2</SelectItem>
                     </SelectContent>
@@ -204,7 +297,7 @@ export const PatrollingCreatePage: React.FC = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select Wing" />
                     </SelectTrigger>
-                    <SelectContent>
+                     <SelectContent className="z-50 bg-card">
                       <SelectItem value="w1">Wing 1</SelectItem>
                       <SelectItem value="w2">Wing 2</SelectItem>
                     </SelectContent>
@@ -216,7 +309,7 @@ export const PatrollingCreatePage: React.FC = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select Floor" />
                     </SelectTrigger>
-                    <SelectContent>
+                     <SelectContent className="z-50 bg-card">
                       <SelectItem value="f1">Floor 1</SelectItem>
                       <SelectItem value="f2">Floor 2</SelectItem>
                     </SelectContent>
@@ -228,7 +321,7 @@ export const PatrollingCreatePage: React.FC = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select Area" />
                     </SelectTrigger>
-                    <SelectContent>
+                     <SelectContent className="z-50 bg-card">
                       <SelectItem value="a1">Area 1</SelectItem>
                       <SelectItem value="a2">Area 2</SelectItem>
                     </SelectContent>
@@ -240,7 +333,7 @@ export const PatrollingCreatePage: React.FC = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select Room" />
                     </SelectTrigger>
-                    <SelectContent>
+                     <SelectContent className="z-50 bg-card">
                       <SelectItem value="r1">Room 1</SelectItem>
                       <SelectItem value="r2">Room 2</SelectItem>
                     </SelectContent>
@@ -252,7 +345,7 @@ export const PatrollingCreatePage: React.FC = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select Shift" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-50 bg-card">
                       {shifts.map((s, i) => (
                         <SelectItem key={i} value={`shift-${i + 1}`}>Shift {i + 1}</SelectItem>
                       ))}
