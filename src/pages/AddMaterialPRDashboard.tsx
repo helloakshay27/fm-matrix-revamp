@@ -54,7 +54,7 @@ export const AddMaterialPRDashboard = () => {
             </CardTitle>
 
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormControl fullWidth variant="outlined" sx={{
               mt: 1
             }}>
@@ -70,12 +70,20 @@ export const AddMaterialPRDashboard = () => {
               <FormControl fullWidth variant="outlined" sx={{
               mt: 1
             }}>
-                <InputLabel shrink>Plant Detail</InputLabel>
-                <MuiSelect label="Plant Detail" displayEmpty sx={fieldStyles}>
+                <InputLabel shrink>Plant Detail*</InputLabel>
+                <MuiSelect label="Plant Detail*" displayEmpty sx={fieldStyles}>
                   <MenuItem value=""><em>Select Plant Detail</em></MenuItem>
                   <MenuItem value="plant1">Plant 1</MenuItem>
                 </MuiSelect>
               </FormControl>
+              
+              <TextField label="PR Date*" type="date" defaultValue="2025-08-12" fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} sx={{
+              mt: 1
+            }} />
               
               <FormControl fullWidth variant="outlined" sx={{
               mt: 1
@@ -97,7 +105,7 @@ export const AddMaterialPRDashboard = () => {
                 </MuiSelect>
               </FormControl>
               
-              <TextField label="Reference#" placeholder="Enter Number" fullWidth variant="outlined" InputLabelProps={{
+              <TextField label="Transportation" placeholder="Enter Number" fullWidth variant="outlined" InputLabelProps={{
               shrink: true
             }} InputProps={{
               sx: fieldStyles
@@ -105,7 +113,7 @@ export const AddMaterialPRDashboard = () => {
               mt: 1
             }} />
               
-              <TextField label="TDS%" placeholder="Enter Number" fullWidth variant="outlined" InputLabelProps={{
+              <TextField label="Retention(%)" placeholder="Enter Number" fullWidth variant="outlined" InputLabelProps={{
               shrink: true
             }} InputProps={{
               sx: fieldStyles
@@ -113,7 +121,23 @@ export const AddMaterialPRDashboard = () => {
               mt: 1
             }} />
               
-              <TextField label="Payment Terms(In Days)" placeholder="Enter Number" fullWidth variant="outlined" InputLabelProps={{
+              <TextField label="TDS(%)" placeholder="Enter Number" fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} sx={{
+              mt: 1
+            }} />
+              
+              <TextField label="QC(%)" placeholder="Enter number" fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} sx={{
+              mt: 1
+            }} />
+              
+              <TextField label="Payment Tenure(In Days)" placeholder="Enter Number" fullWidth variant="outlined" InputLabelProps={{
               shrink: true
             }} InputProps={{
               sx: fieldStyles
@@ -129,7 +153,15 @@ export const AddMaterialPRDashboard = () => {
               mt: 1
             }} />
               
-              <div className="md:col-span-2">
+              <TextField label="Related To*" placeholder="Related To" fullWidth variant="outlined" InputLabelProps={{
+              shrink: true
+            }} InputProps={{
+              sx: fieldStyles
+            }} sx={{
+              mt: 1
+            }} />
+              
+              <div className="md:col-span-3">
                 <TextField label="Terms & Conditions*" placeholder="" fullWidth variant="outlined" multiline minRows={4} InputLabelProps={{
                 shrink: true
               }} sx={{
