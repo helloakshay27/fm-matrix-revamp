@@ -84,8 +84,7 @@ export const PODetailsPage = () => {
   const handleFeeds = () => {
     navigate(`/finance/po/feeds/${id}`);
   };
-  return (
-    <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
+  return <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
       {/* Breadcrumb */}
       <div className="mb-2 text-sm text-gray-600">
         <span className="cursor-pointer hover:text-[#C72030]" onClick={() => navigate('/finance/po')}>
@@ -313,78 +312,95 @@ export const PODetailsPage = () => {
           </table>
         </div>
         
-        {/* Summary Section */}
-        <div className="mt-6 border-t pt-4">
-          <div className="flex justify-between items-center py-2">
-            <span className="font-medium text-gray-700">Net Amount (INR):</span>
-            <span className="font-medium">3,560.00</span>
-          </div>
-          <div className="flex justify-between items-center py-2">
-            <span className="font-medium text-gray-700">Total Taxable Value Of PO:</span>
-            <span className="font-medium">3,560.00</span>
-          </div>
-          <div className="flex justify-between items-center py-2">
-            <span className="font-medium text-gray-700">Taxes (INR):</span>
-            <span className="font-medium">0.00</span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-t">
-            <span className="font-semibold text-gray-900">Total PO Value (INR):</span>
-            <span className="font-semibold">3,560.00</span>
-          </div>
-          <div className="mt-4">
-            <span className="font-medium text-gray-700">Amount In Words: </span>
-            <span className="text-gray-900">Three Thousand, Five Hundred, Sixty Rupees Only</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Notes and Terms Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div className="bg-yellow-50 rounded-lg p-5 border border-yellow-200">
-          <div className="flex items-center mb-3">
-            <svg className="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-            <span className="font-semibold text-gray-800">Notes</span>
-          </div>
-          <div className="text-gray-600 bg-white rounded p-3 border">
-            NA
-          </div>
-        </div>
-        
-        <div className="bg-green-50 rounded-lg p-5 border border-green-200">
-          <div className="flex items-center mb-3">
-            <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span className="font-semibold text-gray-800">Terms & Conditions</span>
-          </div>
-          <div className="text-gray-600 bg-white rounded p-3 border">
-            NA
-          </div>
-        </div>
-      </div>
-
-      {/* Enhanced Signature Section */}
-      <div className="bg-gray-50 rounded-lg p-6 border-2 border-dashed border-gray-300 mb-6">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-4">
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Document Approval
-          </div>
-          <p className="text-gray-700 font-medium text-lg">For NA we Confirm & Accept</p>
-        </div>
-        
-        <div className="flex justify-center">
-          <div className="text-center">
-            <div className="w-64 h-20 border-2 border-dashed border-gray-400 rounded bg-white flex items-center justify-center mb-3">
-              <span className="text-gray-400 text-sm">Signature Area</span>
+        {/* Enhanced Amount Summary */}
+        <div className="mt-8 border-t-2 border-gray-200 pt-6">
+          {/* Financial Summary Card */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-8 border border-blue-100">
+            <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+              <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+              Financial Summary
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 px-3 bg-white rounded border">
+                  <span className="font-medium text-gray-700">Net Amount (INR):</span>
+                  <span className="font-semibold text-blue-600">₹3,560.00</span>
+                </div>
+                <div className="flex justify-between items-center py-2 px-3 bg-white rounded border">
+                  <span className="font-medium text-gray-700">Gross Amount:</span>
+                  <span className="font-semibold text-gray-800">₹3,560.00</span>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 px-3 bg-white rounded border">
+                  <span className="font-medium text-gray-700">Taxes:</span>
+                  <span className="font-semibold text-gray-800">₹0.00</span>
+                </div>
+                <div className="flex justify-between items-center py-2 px-3 bg-green-50 rounded border border-green-200">
+                  <span className="font-medium text-gray-700">Net Invoice Amount:</span>
+                  
+                </div>
+              </div>
             </div>
-            <div className="border-t-2 border-gray-800 w-48 mx-auto mb-2"></div>
-            <span className="font-semibold text-gray-800">Authorised Signatory</span>
-            <div className="text-xs text-gray-500 mt-1">Date: _______________</div>
+            <div className="mt-4 pt-4 border-t border-blue-200 bg-white rounded p-3">
+              <div className="flex items-start">
+                <span className="font-medium text-gray-700 whitespace-nowrap mr-3">Amount In Words:</span>
+                <span className="text-gray-900 font-medium italic">Three Thousand, Five Hundred, Sixty Rupees Only</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes and Terms Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="bg-yellow-50 rounded-lg p-5 border border-yellow-200">
+              <div className="flex items-center mb-3">
+                <svg className="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span className="font-semibold text-gray-800">Notes</span>
+              </div>
+              <div className="text-gray-600 bg-white rounded p-3 border">
+                NA
+              </div>
+            </div>
+            
+            <div className="bg-green-50 rounded-lg p-5 border border-green-200">
+              <div className="flex items-center mb-3">
+                <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="font-semibold text-gray-800">Terms & Conditions</span>
+              </div>
+              <div className="text-gray-600 bg-white rounded p-3 border">
+                NA
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Signature Section */}
+          <div className="bg-gray-50 rounded-lg p-6 border-2 border-dashed border-gray-300">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-4">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Document Approval
+              </div>
+              <p className="text-gray-700 font-medium text-lg">For NA we Confirm & Accept</p>
+            </div>
+            
+            <div className="flex justify-center">
+              <div className="text-center">
+                <div className="w-64 h-20 border-2 border-dashed border-gray-400 rounded bg-white flex items-center justify-center mb-3">
+                  <span className="text-gray-400 text-sm">Signature Area</span>
+                </div>
+                <div className="border-t-2 border-gray-800 w-48 mx-auto mb-2"></div>
+                <span className="font-semibold text-gray-800">Authorised Signatory</span>
+                <div className="text-xs text-gray-500 mt-1">Date: _______________</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -399,115 +415,8 @@ export const PODetailsPage = () => {
           <span className="cursor-pointer hover:underline">PSIPL_Feedback_QR_code.pptx.pdf</span>
         </div>
       </div>
-
-      {/* GRN Details Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">GRN Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300 min-w-[1600px]">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Action</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">ID</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Inventory</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Supplier</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Invoice Number</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Total GRN Amount</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Payable Amount</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Retention Amount</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">TDS Amount</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">QC Amount</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Invoice Date</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Payment Mode</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Other Expense</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Loading Expense</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Adjustment Amount</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">QC Approval Status</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">HSE Approval Status</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Admin Approval Status</th>
-                  <th className="border border-gray-300 px-2 py-2 text-xs text-left font-semibold">Physical Invoice Sent to Accounts</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="text-center text-gray-500">
-                  <td colSpan={19} className="border border-gray-300 px-3 py-4 text-sm">
-                    No GRN data available
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Payment Details Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Payment Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300 min-w-[800px]">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">GRN ID</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Amount</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Payment Mode</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Transaction Number</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Status</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Payment Date</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Note</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Date Of Entry</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="text-center text-gray-500">
-                  <td colSpan={8} className="border border-gray-300 px-3 py-4 text-sm">
-                    No payment data available
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Debit/Credit Note Details Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-gray-900">Debit/Credit Note Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300 min-w-[1000px]">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">ID</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Type</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Amount</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Description</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Approved</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Approved On</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Approved By</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Created On</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Created By</th>
-                  <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Attachment</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="text-center text-gray-500">
-                  <td colSpan={10} className="border border-gray-300 px-3 py-4 text-sm">
-                    No debit/credit note data available
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+        
+      {/* Terms & Conditions Section */}
+      
+    </div>;
 };
