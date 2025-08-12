@@ -317,6 +317,36 @@ export const PODetailsPage = () => {
             </tbody>
           </table>
         </div>
+        
+        {/* Amount Summary */}
+        <div className="mt-8 border-t pt-6">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-lg font-medium">Net Amount(INR):</span>
+            <span className="text-lg font-bold">3560.00</span>
+          </div>
+          <div className="mb-6">
+            <span className="font-medium">Amount In Words:</span> Three Thousand, Five Hundred, Sixty Rupees Only
+          </div>
+        </div>
+        
+        {/* Attachments Section */}
+        <div className="mt-8 border-t pt-6">
+          <h3 className="text-lg font-semibold mb-4">Attachments</h3>
+          <div className="flex items-center gap-2 text-blue-600">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="cursor-pointer hover:underline">PSIPL_Feedback_QR_code.pptx.pdf</span>
+          </div>
+        </div>
+        
+        {/* Terms & Conditions Section */}
+        <div className="mt-8 border-t pt-6">
+          <h3 className="text-lg font-semibold mb-4">Terms & Conditions:</h3>
+          <ol className="list-decimal list-inside">
+            <li>Tested</li>
+          </ol>
+        </div>
       </div>
     </div>
   );
