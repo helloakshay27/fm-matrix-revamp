@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Type, CalendarRange, ListChecks, Clock, MapPin } from 'lucide-react';
 
 export const PatrollingCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -33,10 +33,12 @@ export const PatrollingCreatePage: React.FC = () => {
 
   const removeCheckpoint = (idx: number) => setCheckpoints(prev => prev.filter((_, i) => i !== idx));
 
-  const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <section className="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
-      <div className="px-6 py-4 border-b flex items-center gap-3">
-        <div className="w-5 h-5 rounded-full bg-[#efe9dc] border border-[#eadfcb]" />
+  const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
+    <section className="bg-card rounded-lg border border-border shadow-sm">
+      <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+        <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+          {icon}
+        </div>
         <h2 className="text-sm font-semibold tracking-wide uppercase">{title}</h2>
       </div>
       <div className="p-6">{children}</div>
@@ -53,7 +55,7 @@ export const PatrollingCreatePage: React.FC = () => {
         </div>
       </header>
 
-      <Section title="Patrol Name">
+      <Section title="Patrol Name" icon={<Type className="w-3.5 h-3.5" />}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label className="mb-1 block">Name</Label>
@@ -62,7 +64,7 @@ export const PatrollingCreatePage: React.FC = () => {
         </div>
       </Section>
 
-      <Section title="Validity">
+      <Section title="Validity" icon={<CalendarRange className="w-3.5 h-3.5" />}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <Label className="mb-1 block">Start Date</Label>
@@ -79,14 +81,14 @@ export const PatrollingCreatePage: React.FC = () => {
         </div>
       </Section>
 
-      <Section title="Question">
+      <Section title="Question" icon={<ListChecks className="w-3.5 h-3.5" />}>
         <div className="space-y-4">
           {questions.map((q, idx) => (
-            <div key={idx} className="rounded-md border border-dashed bg-[#eef2f3]/60 p-4">
+            <div key={idx} className="rounded-md border border-dashed bg-muted/30 p-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div>
                   <Label className="mb-1 block">Mandatory</Label>
-                  <div className="flex items-center gap-2 bg-[#eef2f3] rounded-md p-2 border border-[#E5E7EB]">
+                  <div className="flex items-center gap-2 bg-muted rounded-md p-2 border border-border">
                     <Switch checked={q.mandatory} onCheckedChange={(v) => setQuestions(prev => prev.map((it, i) => i === idx ? { ...it, mandatory: Boolean(v) } : it))} />
                   </div>
                 </div>
@@ -118,7 +120,7 @@ export const PatrollingCreatePage: React.FC = () => {
         </div>
       </Section>
 
-      <Section title="Shift Setup">
+      <Section title="Shift Setup" icon={<Clock className="w-3.5 h-3.5" />}>
         <div className="space-y-4">
           {shifts.map((s, idx) => (
             <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -168,7 +170,7 @@ export const PatrollingCreatePage: React.FC = () => {
         </div>
       </Section>
 
-      <Section title="Checkpoint Setup">
+      <Section title="Checkpoint Setup" icon={<MapPin className="w-3.5 h-3.5" />}>
         <div className="space-y-6">
           {checkpoints.map((c, idx) => (
             <div key={idx} className="relative">
@@ -182,6 +184,7 @@ export const PatrollingCreatePage: React.FC = () => {
                   <X className="w-4 h-4" />
                 </button>
               )}
+              <p className="mb-3 text-sm font-medium text-muted-foreground">Checkpoint {idx + 1}</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <Label className="mb-1 block">Building</Label>
@@ -268,7 +271,7 @@ export const PatrollingCreatePage: React.FC = () => {
       </Section>
 
       <div className="flex items-center gap-3 justify-center pt-2">
-        <Button className="px-8 bg-[#C72030] hover:bg-[#C72030]/90 text-white border-0">Submit</Button>
+        <Button variant="destructive" className="px-8">Submit</Button>
         <Button variant="outline" className="px-8" onClick={() => navigate('/security/patrolling')}>Cancel</Button>
       </div>
     </div>
