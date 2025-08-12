@@ -468,16 +468,14 @@ export const MaterialPRDetailsPage = () => {
                 </tbody>
               </table>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Net Amount Summary Card */}
-        <Card className="shadow-sm border border-border">
-          <CardContent className="p-6">
-            <div className="flex justify-end space-y-2">
-              <div className="text-right">
-                <div className="text-lg font-semibold">Net Amount(INR): ₹{prData.netAmount}</div>
-                <div className="text-sm text-muted-foreground">Amount In Words: {prData.amountInWords}</div>
+            
+            {/* Net Amount Summary */}
+            <div className="mt-6 pt-4 border-t border-border">
+              <div className="flex justify-end">
+                <div className="text-right">
+                  <div className="text-lg font-semibold">Net Amount(INR): ₹{prData.netAmount}</div>
+                  <div className="text-sm text-muted-foreground">Amount In Words: {prData.amountInWords}</div>
+                </div>
               </div>
             </div>
           </CardContent>
