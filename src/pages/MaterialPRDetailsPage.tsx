@@ -1,21 +1,14 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate, useParams } from 'react-router-dom';
 import { Edit, Copy, Printer, Rss, Home, ChevronRight, Download } from 'lucide-react';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 export const MaterialPRDetailsPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const {
+    id
+  } = useParams();
 
   // Mock data - in real app this would come from API based on id
   const prData = {
@@ -40,24 +33,22 @@ export const MaterialPRDetailsPage = () => {
     qc: '',
     netAmount: '1000.00',
     amountInWords: 'One Thousand Rupees Only',
-    items: [
-      {
-        sNo: 1,
-        item: 'A4 Size Papers 3',
-        availability: 'NA',
-        sacHsnCode: '',
-        expectedDate: '27/03/25',
-        productDescription: 'Test',
-        quantity: '10.0',
-        unit: 'Piece',
-        movingAvgRate: '',
-        rate: '100.00',
-        amount: '1000.00',
-        approvedQty: '10',
-        transferQty: '',
-        wbsCode: ''
-      }
-    ],
+    items: [{
+      sNo: 1,
+      item: 'A4 Size Papers 3',
+      availability: 'NA',
+      sacHsnCode: '',
+      expectedDate: '27/03/25',
+      productDescription: 'Test',
+      quantity: '10.0',
+      unit: 'Piece',
+      movingAvgRate: '',
+      rate: '100.00',
+      amount: '1000.00',
+      approvedQty: '10',
+      transferQty: '',
+      wbsCode: ''
+    }],
     attachments: 'No attachments',
     termsConditions: ['Test'],
     sapResponse: {
@@ -65,15 +56,12 @@ export const MaterialPRDetailsPage = () => {
       message: 'An internal server error occurred. The MPL ID for the failed message is : AGmImAmKt@pKgrTmKOa_VgGr_'
     }
   };
-
   const handleClone = () => {
     navigate(`/finance/material-pr/clone/${id}`);
   };
-
   const handleFeeds = () => {
     navigate(`/finance/material-pr/feeds/${id}`);
   };
-
   const handlePrint = () => {
     // Create a print-friendly version of the page
     const printContent = `
@@ -247,7 +235,6 @@ export const MaterialPRDetailsPage = () => {
         </body>
       </html>
     `;
-
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(printContent);
@@ -258,9 +245,7 @@ export const MaterialPRDetailsPage = () => {
       }, 250);
     }
   };
-
-  return (
-    <div className="p-6 mx-auto max-w-7xl">
+  return <div className="p-6 mx-auto max-w-7xl">
       {/* Breadcrumb */}
       <div className="mb-6">
         <Breadcrumb>
@@ -298,27 +283,15 @@ export const MaterialPRDetailsPage = () => {
         
         {/* Action Buttons */}
         <div className="flex items-center gap-3">
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={handleClone}
-          >
+          <Button variant="outline" size="sm" onClick={handleClone}>
             <Copy className="w-4 h-4 mr-2" />
             Clone
           </Button>
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={handleFeeds}
-          >
+          <Button variant="outline" size="sm" onClick={handleFeeds}>
             <Rss className="w-4 h-4 mr-2" />
             Feeds
           </Button>
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={handlePrint}
-          >
+          <Button variant="outline" size="sm" onClick={handlePrint}>
             <Printer className="w-4 h-4 mr-2" />
             Print
           </Button>
@@ -447,8 +420,7 @@ export const MaterialPRDetailsPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {prData.items.map((item, index) => (
-                    <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/50'}>
+                  {prData.items.map((item, index) => <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/50'}>
                       <td className="border border-border px-3 py-2 text-sm">{item.sNo}</td>
                       <td className="border border-border px-3 py-2 text-sm">{item.item}</td>
                       <td className="border border-border px-3 py-2 text-sm">{item.availability}</td>
@@ -463,8 +435,7 @@ export const MaterialPRDetailsPage = () => {
                       <td className="border border-border px-3 py-2 text-sm">{item.approvedQty}</td>
                       <td className="border border-border px-3 py-2 text-sm">{item.transferQty}</td>
                       <td className="border border-border px-3 py-2 text-sm">{item.wbsCode}</td>
-                    </tr>
-                  ))}
+                    </tr>)}
                 </tbody>
               </table>
             </div>
@@ -487,16 +458,12 @@ export const MaterialPRDetailsPage = () => {
             <CardTitle className="text-lg font-medium">Attachments</CardTitle>
           </CardHeader>
           <CardContent>
-            {prData.attachments === 'No attachments' ? (
-              <p className="text-muted-foreground">{prData.attachments}</p>
-            ) : (
-              <div className="flex items-center gap-2">
+            {prData.attachments === 'No attachments' ? <p className="text-muted-foreground">{prData.attachments}</p> : <div className="flex items-center gap-2">
                 <Download className="w-4 h-4" />
                 <Button variant="outline" size="sm">
                   Download PDF
                 </Button>
-              </div>
-            )}
+              </div>}
           </CardContent>
         </Card>
 
@@ -507,26 +474,13 @@ export const MaterialPRDetailsPage = () => {
           </CardHeader>
           <CardContent>
             <ol className="list-decimal list-inside space-y-2">
-              {prData.termsConditions.map((term, index) => (
-                <li key={index} className="text-sm">{term}</li>
-              ))}
+              {prData.termsConditions.map((term, index) => <li key={index} className="text-sm">{term}</li>)}
             </ol>
           </CardContent>
         </Card>
 
         {/* SAP Response Card */}
-        <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">SAP Response</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="text-sm"><strong>Code:</strong> {prData.sapResponse.code || 'N/A'}</div>
-              <div className="text-sm"><strong>Message:</strong> <span className="text-destructive">{prData.sapResponse.message}</span></div>
-            </div>
-          </CardContent>
-        </Card>
+        
       </div>
-    </div>
-  );
+    </div>;
 };
