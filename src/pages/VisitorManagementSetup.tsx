@@ -179,16 +179,25 @@ export const VisitorManagementSetup = () => {
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
-              placeholder="Search"
+              placeholder="Search by society, tower, gate name, user name, or ID"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-80"
+              className="pl-10 w-96"
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                title="Clear search"
+              >
+                ×
+              </button>
+            )}
           </div>
-          <Button variant="outline" size="icon" className="border-gray-300">
+          <Button variant="outline" size="icon" className="border-gray-300" title="Refresh">
             <RefreshCw className="w-4 h-4" />
           </Button>
-          <Button variant="outline" size="icon" className="border-gray-300">
+          <Button variant="outline" size="icon" className="border-gray-300" title="Grid view">
             <Grid3X3 className="w-4 h-4" />
           </Button>
         </div>
