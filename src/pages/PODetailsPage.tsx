@@ -3,11 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate, useParams } from 'react-router-dom';
 import { Printer, MessageSquare, Edit, Copy, Rss } from 'lucide-react';
-
 export const PODetailsPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
-
+  const {
+    id
+  } = useParams();
   const poDetails = {
     poNumber: "121240",
     createdBy: "Sony Bhosle",
@@ -27,7 +27,6 @@ export const PODetailsPage = () => {
     retention: "-",
     qc: "-"
   };
-
   const orderDetails = {
     referenceNo: "121249",
     id: "10712",
@@ -36,70 +35,59 @@ export const PODetailsPage = () => {
     pan: "NA",
     phone: "7234013238"
   };
-
-  const items = [
-    {
-      sNo: 1,
-      itemDetails: "Carpet Brush",
-      sacHsnCode: "NA",
-      expectedDate: "23/04/25",
-      quantity: "10.0",
-      unit: "",
-      rate: "70.00",
-      wbsCode: "",
-      cgstRate: "9.00",
-      cgstAmount: "63.00",
-      sgstRate: "9.00",
-      sgstAmount: "63.00",
-      igstRate: "0.00",
-      igstAmount: "0.00",
-      ugstRate: "0.00",
-      ugstAmount: "0.00",
-      tdsRate: "0.00",
-      tdsAmount: "0.00",
-      taxAmount: "",
-      totalAmount: "826.00"
-    },
-    {
-      sNo: 2,
-      itemDetails: "Chair Set",
-      sacHsnCode: "NA",
-      expectedDate: "23/04/25",
-      quantity: "10.0",
-      unit: "",
-      rate: "190.00",
-      wbsCode: "",
-      cgstRate: "9.00",
-      cgstAmount: "117.00",
-      sgstRate: "9.00",
-      sgstAmount: "117.00",
-      igstRate: "0.00",
-      igstAmount: "0.00",
-      ugstRate: "0.00",
-      ugstAmount: "0.00",
-      tdsRate: "0.00",
-      tdsAmount: "0.00",
-      taxAmount: "",
-      totalAmount: "1534.00"
-    }
-  ];
-
+  const items = [{
+    sNo: 1,
+    itemDetails: "Carpet Brush",
+    sacHsnCode: "NA",
+    expectedDate: "23/04/25",
+    quantity: "10.0",
+    unit: "",
+    rate: "70.00",
+    wbsCode: "",
+    cgstRate: "9.00",
+    cgstAmount: "63.00",
+    sgstRate: "9.00",
+    sgstAmount: "63.00",
+    igstRate: "0.00",
+    igstAmount: "0.00",
+    ugstRate: "0.00",
+    ugstAmount: "0.00",
+    tdsRate: "0.00",
+    tdsAmount: "0.00",
+    taxAmount: "",
+    totalAmount: "826.00"
+  }, {
+    sNo: 2,
+    itemDetails: "Chair Set",
+    sacHsnCode: "NA",
+    expectedDate: "23/04/25",
+    quantity: "10.0",
+    unit: "",
+    rate: "190.00",
+    wbsCode: "",
+    cgstRate: "9.00",
+    cgstAmount: "117.00",
+    sgstRate: "9.00",
+    sgstAmount: "117.00",
+    igstRate: "0.00",
+    igstAmount: "0.00",
+    ugstRate: "0.00",
+    ugstAmount: "0.00",
+    tdsRate: "0.00",
+    tdsAmount: "0.00",
+    taxAmount: "",
+    totalAmount: "1534.00"
+  }];
   const handlePrint = () => {
     window.print();
   };
-
   const handleFeeds = () => {
     navigate(`/finance/po/feeds/${id}`);
   };
-
-  return (
-    <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
+  return <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
       {/* Breadcrumb */}
       <div className="mb-2 text-sm text-gray-600">
-        <span 
-          className="cursor-pointer hover:text-[#C72030]" 
-          onClick={() => navigate('/finance/po')}
-        >
+        <span className="cursor-pointer hover:text-[#C72030]" onClick={() => navigate('/finance/po')}>
           Purchase Order
         </span>
         {' > '}
@@ -137,9 +125,7 @@ export const PODetailsPage = () => {
           </div>
           
           {/* Logo placeholder */}
-          <div className="w-16 h-12 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-            <span className="text-xs text-gray-500">logo</span>
-          </div>
+          
         </div>
       </div>
 
@@ -306,8 +292,7 @@ export const PODetailsPage = () => {
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
-                <tr key={item.sNo} className="hover:bg-gray-50">
+              {items.map(item => <tr key={item.sNo} className="hover:bg-gray-50">
                   <td className="border border-gray-300 px-3 py-2 text-sm text-center">{item.sNo}</td>
                   <td className="border border-gray-300 px-3 py-2 text-sm">{item.itemDetails}</td>
                   <td className="border border-gray-300 px-3 py-2 text-sm"></td>
@@ -322,8 +307,7 @@ export const PODetailsPage = () => {
                   <td className="border border-gray-300 px-3 py-2 text-sm">20.0</td>
                   <td className="border border-gray-300 px-3 py-2 text-sm"></td>
                   <td className="border border-gray-300 px-3 py-2 text-sm">{item.wbsCode}</td>
-                </tr>
-              ))}
+                </tr>)}
             </tbody>
           </table>
         </div>
@@ -359,6 +343,5 @@ export const PODetailsPage = () => {
           <li>Tested</li>
         </ol>
       </div>
-    </div>
-  );
+    </div>;
 };
