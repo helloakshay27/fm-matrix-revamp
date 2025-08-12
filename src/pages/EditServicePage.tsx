@@ -334,7 +334,7 @@ export const EditServicePage = () => {
             <TextField
               label={
                 <>
-                  Service Name<span className="text-red-600">*</span>
+                  Service Name<span >*</span>
                 </>
               } value={formData.serviceName}
               onChange={(e) => handleInputChange('serviceName', e.target.value)}
@@ -348,7 +348,7 @@ export const EditServicePage = () => {
             />
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={errors.executionType}>
               <InputLabel shrink>
-                Execution Type<span className="text-red-600">*</span>
+                Execution Type<span >*</span>
               </InputLabel>              <MuiSelect
                 value={formData.executionType}
                 onChange={(e) => handleInputChange('executionType', e.target.value)}
@@ -381,7 +381,7 @@ export const EditServicePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <FormControl fullWidth variant="outlined" error={errors.siteId}>
               <InputLabel id="site-select-label" shrink>
-                Site<span className="text-red-600">*</span>
+                Site<span >*</span>
               </InputLabel>              <MuiSelect
                 labelId="site-select-label"
                 label="Site"
@@ -410,7 +410,7 @@ export const EditServicePage = () => {
 
             <FormControl fullWidth variant="outlined" error={errors.buildingId}>
               <InputLabel id="building-select-label" shrink>
-                Building<span className="text-red-600">*</span>
+                Building<span >*</span>
               </InputLabel>              <MuiSelect
                 labelId="building-select-label"
                 label="Building"
@@ -439,7 +439,7 @@ export const EditServicePage = () => {
 
             <FormControl fullWidth variant="outlined" error={errors.wingId}>
               <InputLabel id="wing-select-label" shrink>
-                Wing<span className="text-red-600">*</span>
+                Wing<span >*</span>
               </InputLabel>              <MuiSelect
                 labelId="wing-select-label"
                 label="Wing"
@@ -468,7 +468,7 @@ export const EditServicePage = () => {
 
             <FormControl fullWidth variant="outlined" error={errors.areaId}>
               <InputLabel id="area-select-label" shrink>
-                Area<span className="text-red-600">*</span>
+                Area<span >*</span>
               </InputLabel>              <MuiSelect
                 labelId="area-select-label"
                 label="Area"
@@ -499,7 +499,7 @@ export const EditServicePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <FormControl fullWidth variant="outlined" error={errors.floorId}>
               <InputLabel id="floor-select-label" shrink>
-                Floor<span className="text-red-600">*</span>
+                Floor<span >*</span>
               </InputLabel>              <MuiSelect
                 labelId="floor-select-label"
                 label="Floor"

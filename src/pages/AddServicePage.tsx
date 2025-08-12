@@ -284,7 +284,7 @@ export const AddServicePage = () => {
             <TextField
               label={
                 <>
-                  Service Name<span className="text-red-600">*</span>
+                  Service Name<span>*</span>
                 </>
               }
               placeholder="Enter Service Name"
@@ -313,7 +313,7 @@ export const AddServicePage = () => {
               sx={{ '& .MuiInputBase-root': fieldStyles }}
             >
               <InputLabel shrink>
-                Execution Type<span className="text-red-600">*</span>
+                Execution Type<span>*</span>
               </InputLabel>
               <MuiSelect
                 value={formData.executionType}
