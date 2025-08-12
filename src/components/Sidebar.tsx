@@ -97,7 +97,7 @@ const navigationStructure = {
         name: 'Checklist Setup',
         icon: CheckSquare,
         subItems: [
-          { name: 'Checklist Group and Sub Group', href: '/settings/checklist-setup/groups' },
+          { name: 'Checklist Group & Sub Group', href: '/settings/checklist-setup/groups' },
           { name: 'Email Rule', href: '/settings/checklist-setup/email-rule' },
           { name: 'Task Escalation', href: '/settings/checklist-setup/task-escalation' }
         ]
@@ -519,7 +519,7 @@ const modulesByPackage = {
           name: 'Checklist Setup',
           href: '/settings/checklist-setup',
           subItems: [
-            { name: 'Checklist Group and Sub Group', href: '/settings/checklist-setup/groups' },
+            { name: 'Checklist Group & Sub Group', href: '/settings/checklist-setup/groups' },
             { name: 'Email Rule', href: '/settings/checklist-setup/email-rule' },
             { name: 'Task Escalation', href: '/settings/checklist-setup/task-escalation' }
           ]
