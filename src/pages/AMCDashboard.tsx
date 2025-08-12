@@ -1329,7 +1329,7 @@ export const AMCDashboard = () => {
         </Tabs>
 
         <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>Filter AMCs</DialogTitle>
               <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">
