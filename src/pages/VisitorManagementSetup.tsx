@@ -148,7 +148,7 @@ export const VisitorManagementSetup = () => {
   };
 
   const handleAdd = () => {
-    navigate('/tickets');
+    navigate('/security/visitor-management/add-gate');
   };
 
   return (
