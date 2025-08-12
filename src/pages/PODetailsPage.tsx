@@ -84,7 +84,8 @@ export const PODetailsPage = () => {
   const handleFeeds = () => {
     navigate(`/finance/po/feeds/${id}`);
   };
-  return <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
+  return (
+    <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
       {/* Breadcrumb */}
       <div className="mb-2 text-sm text-gray-600">
         <span className="cursor-pointer hover:text-[#C72030]" onClick={() => navigate('/finance/po')}>
