@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { FileText, ListChecks, Paperclip } from "lucide-react";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { FileText, ListChecks, Paperclip, X } from "lucide-react";
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, IconButton } from '@mui/material';
 const fieldStyles = {
   height: {
     xs: 28,
@@ -38,24 +38,22 @@ export const AddPODashboard = () => {
   });
   const [items, setItems] = useState([{
     id: 1,
-    description: 'Carpet Brush',
+    itemDetails: 'Carpet Brush',
     sacHsnCode: 'NA',
-    expectedDate: '23/04/25',
     quantity: '10.0',
     unit: '',
+    expectedDate: '2025-04-23',
     rate: '70.00',
-    wbsCode: '',
-    gstRate: '9.00',
-    amount: '63.00',
+    cgstRate: '9.00',
+    cgstAmount: '63.00',
     sgstRate: '9.00',
     sgstAmount: '63.00',
     igstRate: '0.00',
     igstAmount: '0.00',
-    ugstRate: '0.00',
-    ugstAmount: '0.00',
-    tdsRate: '0.00',
-    tdsAmount: '0.00',
+    tcsRate: '0.00',
+    tcsAmount: '0.00',
     taxAmount: '',
+    amount: '63.00',
     totalAmount: '826.00'
   }]);
   const handleSubmit = (e: React.FormEvent) => {
@@ -74,27 +72,35 @@ export const AddPODashboard = () => {
   const addItem = () => {
     const newItem = {
       id: items.length + 1,
-      description: '',
+      itemDetails: '',
       sacHsnCode: '',
-      expectedDate: '',
       quantity: '',
       unit: '',
+      expectedDate: '',
       rate: '',
-      wbsCode: '',
-      gstRate: '',
-      amount: '',
+      cgstRate: '',
+      cgstAmount: '',
       sgstRate: '',
       sgstAmount: '',
       igstRate: '',
       igstAmount: '',
-      ugstRate: '',
-      ugstAmount: '',
-      tdsRate: '',
-      tdsAmount: '',
+      tcsRate: '',
+      tcsAmount: '',
       taxAmount: '',
+      amount: '',
       totalAmount: ''
     };
     setItems([...items, newItem]);
+  };
+
+  const updateItem = (itemId: number, field: string, value: string) => {
+    setItems(items.map(item => 
+      item.id === itemId ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const removeItem = (itemId: number) => {
+    setItems(items.filter(item => item.id !== itemId));
   };
   return <div className="p-6 mx-auto max-w-7xl">
       {/* Breadcrumb */}
@@ -292,11 +298,229 @@ export const AddPODashboard = () => {
                 Add Item
               </Button>
 
-              <div className="overflow-x-auto">
-                
-              </div>
+              <div className="space-y-4">
+                {items.map((item, index) => (
+                  <div key={item.id} className="border rounded-lg p-4 bg-gray-50">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-sm font-medium text-gray-700">Item {index + 1}</h3>
+                      {items.length > 1 && (
+                        <IconButton
+                          onClick={() => removeItem(item.id)}
+                          size="small"
+                          className="text-red-600 hover:bg-red-100"
+                        >
+                          <X className="w-4 h-4" />
+                        </IconButton>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4">
+                      {/* Row 1 */}
+                      <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                        <InputLabel shrink>Item Details</InputLabel>
+                        <MuiSelect
+                          label="Item Details"
+                          value={item.itemDetails}
+                          onChange={e => updateItem(item.id, 'itemDetails', e.target.value)}
+                          displayEmpty
+                          sx={fieldStyles}
+                        >
+                          <MenuItem value=""><em>Select...</em></MenuItem>
+                          <MenuItem value="Carpet Brush">Carpet Brush</MenuItem>
+                          <MenuItem value="Floor Cleaner">Floor Cleaner</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
 
-              
+                      <TextField
+                        label="SAC/HSN Code"
+                        value={item.sacHsnCode}
+                        onChange={e => updateItem(item.id, 'sacHsnCode', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      <TextField
+                        label="Quantity"
+                        value={item.quantity}
+                        onChange={e => updateItem(item.id, 'quantity', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      {/* Row 2 */}
+                      <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                        <InputLabel shrink>Select Unit</InputLabel>
+                        <MuiSelect
+                          label="Select Unit"
+                          value={item.unit}
+                          onChange={e => updateItem(item.id, 'unit', e.target.value)}
+                          displayEmpty
+                          sx={fieldStyles}
+                        >
+                          <MenuItem value=""><em>Select...</em></MenuItem>
+                          <MenuItem value="Piece">Piece</MenuItem>
+                          <MenuItem value="Kg">Kg</MenuItem>
+                          <MenuItem value="Liter">Liter</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
+
+                      <TextField
+                        label="Expected Date"
+                        type="date"
+                        value={item.expectedDate}
+                        onChange={e => updateItem(item.id, 'expectedDate', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      <TextField
+                        label="Rate"
+                        value={item.rate}
+                        onChange={e => updateItem(item.id, 'rate', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      {/* Row 3 */}
+                      <TextField
+                        label="CGST Rate"
+                        value={item.cgstRate}
+                        onChange={e => updateItem(item.id, 'cgstRate', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      <TextField
+                        label="CGST Amt"
+                        value={item.cgstAmount}
+                        onChange={e => updateItem(item.id, 'cgstAmount', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      <TextField
+                        label="SGST Rate"
+                        value={item.sgstRate}
+                        onChange={e => updateItem(item.id, 'sgstRate', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      {/* Row 4 */}
+                      <TextField
+                        label="SGST Amount"
+                        value={item.sgstAmount}
+                        onChange={e => updateItem(item.id, 'sgstAmount', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      <TextField
+                        label="IGST Rate"
+                        value={item.igstRate}
+                        onChange={e => updateItem(item.id, 'igstRate', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      <TextField
+                        label="IGST Amount"
+                        value={item.igstAmount}
+                        onChange={e => updateItem(item.id, 'igstAmount', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      {/* Row 5 */}
+                      <TextField
+                        label="TCS Rate"
+                        value={item.tcsRate}
+                        onChange={e => updateItem(item.id, 'tcsRate', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      <TextField
+                        label="TCS Amount"
+                        value={item.tcsAmount}
+                        onChange={e => updateItem(item.id, 'tcsAmount', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      <TextField
+                        label="Tax Amount"
+                        value={item.taxAmount}
+                        onChange={e => updateItem(item.id, 'taxAmount', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      {/* Row 6 */}
+                      <TextField
+                        label="Amount"
+                        value={item.amount}
+                        onChange={e => updateItem(item.id, 'amount', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+
+                      <TextField
+                        label="Total Amount"
+                        value={item.totalAmount}
+                        onChange={e => updateItem(item.id, 'totalAmount', e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Attachment Section */}
