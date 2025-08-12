@@ -141,34 +141,30 @@ export const SupportStaffPage = () => {
   };
 
   return (
-    <div className="p-6 min-h-screen bg-white">
-      {/* Header */}
+    <div className="p-6 min-h-screen">
+      {/* Action Bar */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Support Staff</h1>
-        
+        <Button 
+          onClick={handleAdd}
+          className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
+
         <div className="flex items-center gap-3">
-          <Button 
-            onClick={handleAdd}
-            className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
-          
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
-              placeholder="Search support staff..."
+              placeholder="Search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 w-80"
             />
           </div>
-          
           <Button variant="outline" size="icon" className="border-gray-300">
             <RefreshCw className="w-4 h-4" />
           </Button>
-          
           <Button variant="outline" size="icon" className="border-gray-300">
             <Grid3X3 className="w-4 h-4" />
           </Button>
@@ -180,14 +176,8 @@ export const SupportStaffPage = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-[#f6f4ee]">
-              <TableHead className="w-12">
-                <Checkbox 
-                  checked={selectedStaff.length === filteredStaff.length && filteredStaff.length > 0}
-                  onCheckedChange={handleSelectAll}
-                />
-              </TableHead>
+              <TableHead className="w-20">Actions</TableHead>
               <TableHead className="w-20">S.No.</TableHead>
-              <TableHead className="w-32">Action</TableHead>
               <TableHead className="min-w-[200px]">Name</TableHead>
               <TableHead className="w-40">Estimated time</TableHead>
               <TableHead className="w-48">Created On</TableHead>
@@ -198,29 +188,13 @@ export const SupportStaffPage = () => {
             {filteredStaff.map((staff) => (
               <TableRow key={staff.id} className="hover:bg-gray-50">
                 <TableCell>
-                  <Checkbox 
-                    checked={selectedStaff.includes(staff.id)}
-                    onCheckedChange={(checked) => handleSelectStaff(staff.id, checked as boolean)}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">
-                  {staff.sNo}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleView(staff.id)}
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="View"
-                    >
-                      <Eye className="w-4 h-4 text-gray-600" />
-                    </button>
+                  <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(staff.id)}
                       className="p-1 hover:bg-gray-100 rounded"
                       title="Edit"
                     >
-                      <Edit className="w-4 h-4 text-gray-600 hover:text-blue-600" />
+                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
                     </button>
                     <button
                       onClick={() => handleDelete(staff.id)}
@@ -230,6 +204,9 @@ export const SupportStaffPage = () => {
                       <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
                     </button>
                   </div>
+                </TableCell>
+                <TableCell className="font-medium">
+                  {staff.sNo}
                 </TableCell>
                 <TableCell className="font-medium">
                   {staff.name}
@@ -244,13 +221,6 @@ export const SupportStaffPage = () => {
           </TableBody>
         </Table>
       </div>
-
-      {/* Selection Info */}
-      {selectedStaff.length > 0 && (
-        <div className="mt-4 text-sm text-gray-600">
-          {selectedStaff.length} support staff selected
-        </div>
-      )}
 
       {/* Showing results count */}
       <div className="mt-4 text-sm text-gray-600">
