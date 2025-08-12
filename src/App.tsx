@@ -127,6 +127,12 @@ import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
 import { PatrollingDashboard } from './pages/PatrollingDashboard';
 import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
 import { VisitorFormPage } from './pages/VisitorFormPage';
+import { VisitorManagementSetup } from './pages/VisitorManagementSetup';
+import { AddVisitorGatePage } from './pages/AddVisitorGatePage';
+import { EditVisitorGatePage } from './pages/EditVisitorGatePage';
+import { SupportStaffPage } from './pages/SupportStaffPage';
+import { EditSupportStaffPage } from './pages/EditSupportStaffPage';
+import { VisitingPurposePage } from './pages/VisitingPurposePage';
 
 // Import new dashboard pages
 import { IncidentDashboard } from "./pages/IncidentDashboard";
@@ -552,18 +558,21 @@ import { AssetGroupsDashboard } from "./pages/setup/AssetGroupsDashboard";
 import ApprovalMatrixSetupPage from "./pages/settings/ApprovalMatrixSetupPage";
 import AddApprovalMatrixPage from "./pages/settings/AddApprovalMatrixPage";
 
-import { EmailRuleSetupPage } from "./pages/maintenance/EmailRuleSetupPage";
-import { TaskEscalationPage } from "./pages/maintenance/TaskEscalationPage";
-import { TicketManagementSetupPage } from "./pages/maintenance/TicketManagementSetupPage";
-import { MobileTicketsPage } from "./pages/mobile/MobileTicketsPage";
-import { MobileRestaurantPage } from "./pages/mobile/MobileRestaurantPage";
+
 import MobileAdminOrderDetailsPage from "./pages/MobileAdminOrderDetailsPage";
 import { MobileSurveyPage } from "./pages/mobile/MobileSurveyPage";
-import { MobileAssetPage } from "./pages/mobile/MobileAssetPage";
-import { MobileOrdersPage } from "./components/mobile/MobileOrdersPage";
+
 import { MobileOrderPlaced } from "./components/mobile/MobileOrderPlaced";
 import { ExternalFlowTester } from "./components/mobile/ExternalFlowTester";
-import { QRTestPage } from "./pages/QRTestPage";
+import { EmailRuleSetupPage } from './pages/maintenance/EmailRuleSetupPage';
+import { TaskEscalationPage } from './pages/maintenance/TaskEscalationPage';
+import { TicketManagementSetupPage } from './pages/maintenance/TicketManagementSetupPage';
+import { MobileTicketsPage } from './pages/mobile/MobileTicketsPage';
+import { TicketListPage } from './pages/TicketListPage';
+import { MobileRestaurantPage } from './pages/mobile/MobileRestaurantPage';
+import { MobileAssetPage } from './pages/mobile/MobileAssetPage';
+import { MobileOrdersPage } from './components/mobile/MobileOrdersPage';
+import { QRTestPage } from './pages/QRTestPage';
 
 import { EscalationMatrixPage } from "./pages/maintenance/EscalationMatrixPage";
 
@@ -918,6 +927,14 @@ function App() {
                   path="/maintenance/ticket/:id/tag-vendor"
                   element={<TicketTagVendorPage />}
                 />
+                <Route path="/maintenance/ticket" element={<TicketDashboard />} />
+                <Route path="/tickets" element={<TicketListPage />} />
+                <Route path="/maintenance/ticket/add" element={<AddTicketDashboard />} />
+                <Route path="/maintenance/ticket/assign" element={<AssignTicketsPage />} />
+                <Route path="/maintenance/ticket/update/:id" element={<UpdateTicketsPage />} />
+                <Route path="/maintenance/ticket/details/:id" element={<TicketDetailsPage />} />
+                <Route path="/maintenance/ticket/:id/feeds" element={<TicketFeedsPage />} />
+                <Route path="/maintenance/ticket/:id/tag-vendor" element={<TicketTagVendorPage />} />
 
                 {/* Task Routes */}
                 <Route
@@ -1469,6 +1486,12 @@ function App() {
                 <Route path="/security/visitor" element={<VisitorsDashboard />} />
                 <Route path="/visitor-form" element={<VisitorFormPage />} />
                 <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
+                <Route path="/security/visitor-management/setup" element={<VisitorManagementSetup />} />
+                <Route path="/security/visitor-management/add-gate" element={<AddVisitorGatePage />} />
+                <Route path="/security/visitor-management/edit/:id" element={<EditVisitorGatePage />} />
+                <Route path="/security/visitor-management/support-staff" element={<SupportStaffPage />} />
+                <Route path="/security/visitor-management/support-staff/edit/:id" element={<EditSupportStaffPage />} />
+                <Route path="/security/visitor-management/visiting-purpose" element={<VisitingPurposePage />} />
                 <Route path="/security/staff" element={<StaffsDashboard />} />
                 <Route
                   path="/security/staff/details/:id"

@@ -10,55 +10,149 @@ import { EditPatrollingModal } from '@/components/EditPatrollingModal';
 import { DeletePatrollingModal } from '@/components/DeletePatrollingModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-
-const patrollingData = [
-  {
-    id: 1,
-    site: 'Site - Localized Site 1',
-    building: 'Building - HDFC Ergo Bharti',
-    wing: 'Wing - Wing 1',
-    floor: 'Floor - Floor 1',
-    room: 'Room - Room 1',
-    location: 'Site - Localized Site 1 / Building - HDFC Ergo Bharti / Wing - Wing 1 / Floor - Floor 1 / Room - Room 1',
-    scheduledTime: '8:00 AM, 11:00 AM, 2:00 PM, 5:00 PM, 8:00 PM, 11:00 PM',
-    createdOn: '15/04/2024',
-    startDate: '15/04/2024',
-    endDate: '30/04/2024',
-    graceTime: '',
-    activeInactive: true,
-    qrCode: '1234567890'
-  },
-  {
-    id: 2,
-    site: 'Site - Localized Site 1',
-    building: 'Building - HDFC Ergo Bharti',
-    wing: 'Wing - Wing 1',
-    floor: 'Floor - Floor 1',
-    room: 'Room - NA',
-    location: 'Site - Localized Site 1 / Building - HDFC Ergo Bharti / Wing - Wing 1 / Floor - Floor 1 / Room - NA',
-    scheduledTime: '8:00 AM, 11:00 AM, 2:00 PM, 5:00 PM, 8:00 PM, 11:00 PM',
-    createdOn: '22/02/2024',
-    startDate: '22/02/2024',
-    endDate: '',
-    graceTime: '',
-    activeInactive: true,
-    qrCode: '0987654321'
-  }
-];
+import { TicketPagination } from '@/components/TicketPagination';
+const patrollingData = [{
+  id: 1,
+  patrolName: 'Lobby Patrol',
+  shiftType: 'Day',
+  numCheckpoints: 8,
+  validity: '15/04/2024 - 30/04/2024',
+  graceTime: '15 min',
+  status: true
+}, {
+  id: 2,
+  patrolName: 'Night Perimeter',
+  shiftType: 'Night',
+  numCheckpoints: 12,
+  validity: '22/02/2024 -',
+  graceTime: '10 min',
+  status: true
+}, {
+  id: 3,
+  patrolName: 'Parking Deck',
+  shiftType: 'Day',
+  numCheckpoints: 6,
+  validity: '01/05/2024 - 31/05/2024',
+  graceTime: '5 min',
+  status: false
+}, {
+  id: 4,
+  patrolName: 'Server Room',
+  shiftType: 'General',
+  numCheckpoints: 4,
+  validity: 'Ongoing',
+  graceTime: '10 min',
+  status: true
+}, {
+  id: 5,
+  patrolName: 'Warehouse Loop',
+  shiftType: 'Night',
+  numCheckpoints: 10,
+  validity: '01/06/2024 - 30/06/2024',
+  graceTime: '20 min',
+  status: true
+}, {
+  id: 6,
+  patrolName: 'Reception Rounds',
+  shiftType: 'General',
+  numCheckpoints: 5,
+  validity: 'Ongoing',
+  graceTime: '10 min',
+  status: true
+}, {
+  id: 7,
+  patrolName: 'Roof Access',
+  shiftType: 'Day',
+  numCheckpoints: 3,
+  validity: '15/03/2024 - 15/09/2024',
+  graceTime: '5 min',
+  status: false
+}, {
+  id: 8,
+  patrolName: 'Utilities Check',
+  shiftType: 'Night',
+  numCheckpoints: 7,
+  validity: 'Ongoing',
+  graceTime: '15 min',
+  status: true
+}, {
+  id: 9,
+  patrolName: 'Perimeter East',
+  shiftType: 'Day',
+  numCheckpoints: 9,
+  validity: 'Ongoing',
+  graceTime: '10 min',
+  status: true
+}, {
+  id: 10,
+  patrolName: 'Perimeter West',
+  shiftType: 'Night',
+  numCheckpoints: 9,
+  validity: 'Ongoing',
+  graceTime: '10 min',
+  status: true
+}, {
+  id: 11,
+  patrolName: 'CCTV Hub',
+  shiftType: 'General',
+  numCheckpoints: 2,
+  validity: '01/04/2024 - 01/10/2024',
+  graceTime: '5 min',
+  status: false
+}, {
+  id: 12,
+  patrolName: 'Loading Bay',
+  shiftType: 'Day',
+  numCheckpoints: 6,
+  validity: 'Ongoing',
+  graceTime: '15 min',
+  status: true
+}];
 
 // Column configuration for the enhanced table
-const columns: ColumnConfig[] = [
-  { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
-  { key: 'location', label: 'Location', sortable: true, hideable: true, draggable: true },
-  { key: 'scheduledTime', label: 'Scheduled Time', sortable: true, hideable: true, draggable: true },
-  { key: 'createdOn', label: 'Created On', sortable: true, hideable: true, draggable: true },
-  { key: 'startDate', label: 'Start Date', sortable: true, hideable: true, draggable: true },
-  { key: 'endDate', label: 'End Date', sortable: true, hideable: true, draggable: true },
-  { key: 'graceTime', label: 'Grace Time(Hours)', sortable: true, hideable: true, draggable: true },
-  { key: 'activeInactive', label: 'Active/Inactive', sortable: true, hideable: true, draggable: true },
-  { key: 'qrCode', label: 'QR Code', sortable: false, hideable: true, draggable: true }
-];
-
+const columns: ColumnConfig[] = [{
+  key: 'actions',
+  label: 'Action',
+  sortable: false,
+  hideable: false,
+  draggable: false
+}, {
+  key: 'patrolName',
+  label: 'Patrol Name',
+  sortable: true,
+  hideable: true,
+  draggable: true
+}, {
+  key: 'shiftType',
+  label: 'Shift Type',
+  sortable: true,
+  hideable: true,
+  draggable: true
+}, {
+  key: 'numCheckpoints',
+  label: 'No. of Checkpoints',
+  sortable: true,
+  hideable: true,
+  draggable: true
+}, {
+  key: 'validity',
+  label: 'Validity',
+  sortable: true,
+  hideable: true,
+  draggable: true
+}, {
+  key: 'graceTime',
+  label: 'Grace Time',
+  sortable: true,
+  hideable: true,
+  draggable: true
+}, {
+  key: 'status',
+  label: 'Status',
+  sortable: true,
+  hideable: true,
+  draggable: true
+}];
 export const PatrollingDashboard = () => {
   const navigate = useNavigate();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -68,191 +162,126 @@ export const PatrollingDashboard = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedPatrollingId, setSelectedPatrollingId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const filteredData = patrollingData.filter((p) =>
+    [p.patrolName, p.shiftType, String(p.numCheckpoints), p.validity, p.graceTime]
+      .join(' ')
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+  const totalRecords = filteredData.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / perPage));
+  const startIndex = (currentPage - 1) * perPage;
+  const endIndex = startIndex + perPage;
+  const displayedData = filteredData.slice(startIndex, endIndex);
 
   // Render row function for enhanced table
   const renderRow = (patrol: any) => ({
-    actions: (
-      <div className="flex items-center gap-2">
-        <button 
-          onClick={() => handleView(patrol.id)}
-          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-          title="View"
-        >
+    actions: <div className="flex items-center gap-2">
+        <button onClick={() => handleView(patrol.id)} className="p-1 text-blue-600 hover:bg-blue-50 rounded" title="View">
           <Eye className="w-4 h-4" />
         </button>
-        <button 
-          onClick={() => handleEdit(patrol.id)}
-          className="p-1 text-green-600 hover:bg-green-50 rounded"
-          title="Edit"
-        >
+        <button onClick={() => handleEdit(patrol.id)} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Edit">
           <Edit className="w-4 h-4" />
         </button>
-        <button 
-          onClick={() => handleDelete(patrol.id)}
-          className="p-1 text-red-600 hover:bg-red-50 rounded"
-          title="Delete"
-        >
+        <button onClick={() => handleDelete(patrol.id)} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Delete">
           <Trash2 className="w-4 h-4" />
         </button>
-      </div>
-    ),
-    location: (
-      <div className="max-w-xs">
-        <div className="truncate" title={patrol.location}>
-          {patrol.location}
-        </div>
-      </div>
-    ),
-    scheduledTime: patrol.scheduledTime,
-    createdOn: patrol.createdOn,
-    startDate: patrol.startDate,
-    endDate: patrol.endDate || '--',
+      </div>,
+    patrolName: patrol.patrolName,
+    shiftType: patrol.shiftType,
+    numCheckpoints: patrol.numCheckpoints,
+    validity: patrol.validity || '--',
     graceTime: patrol.graceTime || '--',
-    activeInactive: (
-      <input 
-        type="checkbox" 
-        checked={patrol.activeInactive}
-        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-        readOnly
-      />
-    ),
-    qrCode: (
-      <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-xs hover:bg-gray-200">
-        {patrol.qrCode}
-      </button>
-    )
+    status: <input type="checkbox" checked={patrol.status} className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" readOnly />
   });
-
   const handlePrintQR = () => {
     console.log('Print QR clicked');
     window.print();
   };
-
   const handlePrintAllQR = () => {
     console.log('Print All QR clicked');
     window.print();
   };
-
   const handleView = (id: number) => {
     console.log('View patrolling:', id);
     navigate(`/security/patrolling/details/${id}`);
   };
-
   const handleEdit = (id: number) => {
     console.log('Edit patrolling:', id);
     setSelectedPatrollingId(id);
     setIsEditModalOpen(true);
   };
-
   const handleDelete = (id: number) => {
     console.log('Delete patrolling:', id);
     setSelectedPatrollingId(id);
     setIsDeleteModalOpen(true);
   };
-
   const handleDeleteConfirm = () => {
     console.log('Confirmed delete for patrolling:', selectedPatrollingId);
     // Here you would typically make an API call to delete the record
   };
-
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a] mb-6 uppercase">PATROLLING LIST</h1>
-      
-      {/* Enhanced Table */}
+    <div className="p-6 space-y-6">
+      <header className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Patrolling List</h1>
+      </header>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Button variant="outline" onClick={() => setIsAddModalOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" /> New
+        </Button>
+
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              placeholder="Search Tickets"
+              className="h-10 w-64 rounded-md border border-gray-300 bg-white px-3 text-sm"
+            />
+          </div>
+          <Button variant="outline" onClick={() => setIsFilterOpen(true)} aria-label="Filter">
+            <Filter className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
       <EnhancedTable
-        data={patrollingData}
+        data={displayedData}
         columns={columns}
         renderRow={renderRow}
-        enableSearch={true}
-        enableSelection={false}
-        enableExport={true}
-        storageKey="patrolling-table"
-        emptyMessage="No patrolling data available"
-        exportFileName="patrolling"
-        searchPlaceholder="Search by location, scheduled time, or QR code"
-        hideTableExport={false}
-        hideColumnsButton={false}
-        leftActions={
-          <div className="flex gap-3">
-            <Button 
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add
-            </Button>
-            <Button 
-              onClick={() => setIsBulkUploadOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Import
-            </Button>
-            <Button 
-              onClick={() => setIsExportOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
-            <Button 
-              onClick={handlePrintQR}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2"
-            >
-              <QrCode className="w-4 h-4 mr-2" />
-              Print QR
-            </Button>
-            <Button 
-              onClick={handlePrintAllQR}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2"
-            >
-              <Printer className="w-4 h-4 mr-2" />
-              Print All QR
-            </Button>
-          </div>
-        }
-        onFilterClick={() => setIsFilterOpen(true)}
+        storageKey="patrolling-list-table"
+        hideTableExport={true}
+        hideTableSearch={true}
       />
 
-      <AddPatrollingModal 
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+      <TicketPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalRecords={totalRecords}
+        perPage={perPage}
+        isLoading={false}
+        onPageChange={setCurrentPage}
+        onPerPageChange={(v) => { setPerPage(v); setCurrentPage(1); }}
       />
 
-      <BulkUploadModal 
-        isOpen={isBulkUploadOpen} 
-        onClose={() => setIsBulkUploadOpen(false)} 
-      />
-      
-      <ExportModal 
-        isOpen={isExportOpen}
-        onClose={() => setIsExportOpen(false)}
-      />
-
-      <PatrollingFilterModal
-        isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
-      />
-
-      {selectedPatrollingId && (
+      <AddPatrollingModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      <PatrollingFilterModal isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
+      {selectedPatrollingId !== null && (
         <EditPatrollingModal
           isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setSelectedPatrollingId(null);
-          }}
+          onClose={() => setIsEditModalOpen(false)}
           patrollingId={selectedPatrollingId}
         />
       )}
-
-      {selectedPatrollingId && (
+      {selectedPatrollingId !== null && (
         <DeletePatrollingModal
           isOpen={isDeleteModalOpen}
-          onClose={() => {
-            setIsDeleteModalOpen(false);
-            setSelectedPatrollingId(null);
-          }}
+          onClose={() => setIsDeleteModalOpen(false)}
           onConfirm={handleDeleteConfirm}
           patrollingId={selectedPatrollingId}
         />
