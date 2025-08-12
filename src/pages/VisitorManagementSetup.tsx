@@ -150,7 +150,7 @@ export const VisitorManagementSetup = () => {
   };
 
   return (
-    <div className="p-6 bg-[#f6f4ee] min-h-screen">
+    <div className="p-6 min-h-screen">
       {/* Action Bar */}
       <div className="flex items-center justify-between mb-6">
         <Button 
