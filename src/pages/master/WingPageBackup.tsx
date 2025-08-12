@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Plus, X, Edit, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { Loader2, Plus, Search, Edit, X, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
-import { 
-  fetchBuildings, 
-  fetchWings, 
-  createWing, 
-  updateWing
-} from '@/store/slices/locationSlice';
+import { fetchBuildings, fetchWings, createWing, updateWing } from '@/store/slices/locationSlice';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { wingSchema, type WingFormData } from '@/schemas/wingSchema';
@@ -251,8 +249,104 @@ export function WingPage() {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-end mb-4">
-        
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <Select value={selectedBuildingFilter} onValueChange={setSelectedBuildingFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by building" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Buildings</SelectItem>
+                  {buildings.data.map((building) => (
+                    <SelectItem key={building.id} value={building.id.toString()}>
+                      {building.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Search:</span>
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-64"
+                placeholder="Search wings or buildings..."
+              />
+            </div>
+          </div>
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Building</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select building" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {buildings.data.map((building) => (
+                            <SelectItem key={building.id} value={building.id.toString()}>
+                              {building.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={createForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Wing Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter wing name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={resetCreateForm}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={createForm.formState.isSubmitting}>
+                    {createForm.formState.isSubmitting && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Create Wing
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+          {/* Controls */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <Select value={selectedBuildingFilter} onValueChange={setSelectedBuildingFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by building" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Buildings</SelectItem>
+                  {buildings.data.map((building) => (
+                    <SelectItem key={building.id} value={building.id.toString()}>
+                      {building.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Search:</span>
               <Input
@@ -395,92 +489,122 @@ export function WingPage() {
             </div>
           )}
 
-          {/* Edit Dialog */}
-          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Edit Wing</DialogTitle>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-4 top-4"
-                  onClick={() => setShowEditDialog(false)}
-                >
-                  <X className="h-4 w-4" />
+      {/* Pagination */}
+      <div className="mt-4 flex justify-between items-center">
+        <div className="text-sm text-muted-foreground">
+          Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredWings.length)} to {Math.min(currentPage * itemsPerPage, filteredWings.length)} of {filteredWings.length} wings
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToPrevious}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToNext}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Wing</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-4"
+              onClick={() => setShowEditDialog(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(handleEditWing)} className="space-y-4">
+              <FormField
+                control={editForm.control}
+                name="building_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Building</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select building" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {buildings.data.map((building) => (
+                          <SelectItem key={building.id} value={building.id.toString()}>
+                            {building.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Wing Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter wing name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editForm.control}
+                name="active"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Active Status</FormLabel>
+                      <div className="text-sm text-muted-foreground">
+                        Enable or disable this wing
+                      </div>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={resetEditForm}>
+                  Cancel
                 </Button>
-              </DialogHeader>
-              <Form {...editForm}>
-                <form onSubmit={editForm.handleSubmit(handleEditWing)} className="space-y-4">
-                  <FormField
-                    control={editForm.control}
-                    name="building_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Building</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a building" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {buildings.data.map((building) => (
-                              <SelectItem key={building.id} value={building.id.toString()}>
-                                {building.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={editForm.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Wing Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter wing name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={editForm.control}
-                    name="active"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">Active Status</FormLabel>
-                        </div>
-                        <FormControl>
-                          <input
-                            type="checkbox"
-                            checked={field.value}
-                            onChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="flex justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={resetEditForm}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={editForm.formState.isSubmitting}>
-                      Update Wing
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+                <Button type="submit" disabled={editForm.formState.isSubmitting}>
+                  {editForm.formState.isSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  Update Wing
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
         </div>
       </div>
     </div>

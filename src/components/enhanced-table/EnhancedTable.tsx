@@ -153,6 +153,8 @@ interface EnhancedTableProps<T> {
   rightActions?: React.ReactNode;
   onFilterClick?: () => void;
   handleExport?: () => void;
+  enableGlobalSearch?: boolean; // Add this prop
+  onGlobalSearch?: (searchTerm: string) => void; // Add this prop
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -191,24 +193,78 @@ export function EnhancedTable<T extends Record<string, any>>({
   leftActions,
   rightActions,
   onFilterClick,
+  enableGlobalSearch = false, // Add this
+  onGlobalSearch, // Add this
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [apiSearchResults, setApiSearchResults] = useState<T[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchAbortController, setSearchAbortController] = useState<AbortController | null>(null);
+  const [lastProcessedSearch, setLastProcessedSearch] = useState(''); // Add this
 
   // Debounce the search input to avoid excessive API calls
-  const debouncedSearchInput = useDebounce(searchInput, 100);
+  const debouncedSearchInput = useDebounce(searchInput, 800);
 
   // Update internal search term when debounced input changes
   useEffect(() => {
     if (externalSearchTerm === undefined) {
-      setInternalSearchTerm(debouncedSearchInput);
-    }
-  }, [debouncedSearchInput, externalSearchTerm]);
+      if (enableGlobalSearch && onGlobalSearch) {
+        // Prevent duplicate processing of the same search term
+        if (debouncedSearchInput === lastProcessedSearch) {
+          return;
+        }
 
-  const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
+        // Cancel previous search if it exists
+        if (searchAbortController) {
+          searchAbortController.abort();
+        }
+
+        // For global search, call the API search function
+        if (debouncedSearchInput.trim()) {
+          setIsSearching(true);
+          setLastProcessedSearch(debouncedSearchInput);
+          const newAbortController = new AbortController();
+          setSearchAbortController(newAbortController);
+          onGlobalSearch(debouncedSearchInput.trim());
+        } else {
+          // Clear search results when search is empty
+          setIsSearching(false);
+          setLastProcessedSearch('');
+          setSearchAbortController(null);
+          onGlobalSearch('');
+        }
+      } else {
+        // For local search, set internal search term
+        setInternalSearchTerm(debouncedSearchInput);
+      }
+    }
+  }, [debouncedSearchInput, externalSearchTerm, enableGlobalSearch, onGlobalSearch, lastProcessedSearch]);
+
+  // Add effect to reset loading state when search completes
+  useEffect(() => {
+    if (enableGlobalSearch && !loading) {
+      setIsSearching(false);
+      setSearchAbortController(null);
+    }
+  }, [loading, enableGlobalSearch]);
+
+  // Reset search state when data changes (search completes)
+  useEffect(() => {
+    if (enableGlobalSearch && data.length > 0 && isSearching) {
+      setIsSearching(false);
+    }
+  }, [data, enableGlobalSearch, isSearching]);
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (searchAbortController) {
+        searchAbortController.abort();
+      }
+    };
+  }, []);
 
   // Get initial column visibility state from localStorage
   const getSavedColumnVisibility = () => {
@@ -273,6 +329,8 @@ export function EnhancedTable<T extends Record<string, any>>({
       localStorage.setItem(`${storageKey}-columns`, JSON.stringify(updatedVisibility));
     }
   };
+
+  const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
   // Use API search results or filter data based on search term
   const filteredData = useMemo(() => {
@@ -354,9 +412,13 @@ export function EnhancedTable<T extends Record<string, any>>({
     onRowClick?.(item);
   };
 
+  // Handle search input changes
   const handleSearchInputChange = (value: string) => {
     setSearchInput(value);
-    onSearchChange?.(value);
+    setCurrentPage(1); // Reset to first page when searching
+    if (onSearchChange) {
+      onSearchChange(value);
+    }
   };
 
   const handleClearSearch = () => {
@@ -364,8 +426,12 @@ export function EnhancedTable<T extends Record<string, any>>({
     setInternalSearchTerm('');
     setApiSearchResults(null);
     setCurrentPage(1);
+    setLastProcessedSearch(''); // Reset this too
     if (onSearchChange) {
       onSearchChange('');
+    }
+    if (enableGlobalSearch && onGlobalSearch) {
+      onGlobalSearch('');
     }
   };
 
@@ -417,19 +483,26 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
 
         <div className="flex items-center gap-2">
-          {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
+          {!hideTableSearch && (onSearchChange || !externalSearchTerm || enableGlobalSearch) && (
             <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              {isSearching && (
+                <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
+              )}
+              {!isSearching && (
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              )}
               <Input
-                placeholder={searchPlaceholder}
+                placeholder={enableGlobalSearch ? `${searchPlaceholder}` : searchPlaceholder}
                 value={searchInput}
                 onChange={(e) => handleSearchInputChange(e.target.value)}
                 className="pl-10 pr-10"
+                disabled={isSearching}
               />
               {searchInput && (
                 <button
                   onClick={handleClearSearch}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={isSearching}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -443,6 +516,7 @@ export function EnhancedTable<T extends Record<string, any>>({
               size="sm"
               className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
               onClick={onFilterClick}
+              title='Filter'
             >
               <Filter className="w-4 h-4" />
             </Button>
@@ -463,6 +537,7 @@ export function EnhancedTable<T extends Record<string, any>>({
               size="sm"
               onClick={handleExport || (() => exportTicketRecords())}
               className="flex items-center gap-2"
+              title='Export'
             >
               <Download className="w-4 h-4" />
             </Button>

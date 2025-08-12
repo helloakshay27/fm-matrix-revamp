@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
 import { Heading } from '@/components/ui/heading';
 
 const fieldStyles = {
@@ -25,15 +25,22 @@ const fieldStyles = {
 export const AddIncidentPage = () => {
   const navigate = useNavigate();
   const [incidentData, setIncidentData] = useState({
-    title: '',
+    year: '2025',
+    month: 'August',
+    day: '12',
+    hour: '12',
+    minute: '25',
+    building: '',
+    primaryCategory: '',
+    categoryForIncident: '',
+    secondaryCategory: '',
+    secondaryCategoryForIncident: '',
+    severity: '',
+    probability: '',
+    incidentLevel: '',
     description: '',
-    priority: '',
-    category: '',
-    location: '',
-    reportedBy: '',
-    assignedTo: '',
-    status: 'Open',
-    incidentDate: '',
+    supportRequired: false,
+    factsCorrect: false,
     attachments: null as File | null
   });
 
@@ -55,9 +62,16 @@ export const AddIncidentPage = () => {
     }
   };
 
+  const handleCheckboxChange = (field: string, checked: boolean) => {
+    setIncidentData(prev => ({
+      ...prev,
+      [field]: checked
+    }));
+  };
+
   const handleSubmit = () => {
-    if (!incidentData.title || !incidentData.description) {
-      toast.error('Please fill all required fields');
+    if (!incidentData.description || !incidentData.factsCorrect) {
+      toast.error('Please fill all required fields and confirm facts');
       return;
     }
     console.log('Incident Data:', incidentData);
@@ -94,36 +108,202 @@ export const AddIncidentPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="text-base">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <TextField 
-              label="Incident Title*" 
-              value={incidentData.title} 
-              onChange={e => handleInputChange('title', e.target.value)} 
-              fullWidth 
-              variant="outlined" 
-              InputLabelProps={{
-                shrink: true
-              }} 
-              InputProps={{
-                sx: fieldStyles
-              }} 
-              sx={{
-                mt: 1
-              }} 
-            />
-            
-            <FormControl fullWidth variant="outlined" sx={{
-              mt: 1
-            }}>
-              <InputLabel shrink>Priority*</InputLabel>
+          {/* Time & Date Section */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium mb-3">Time & Date *</h3>
+            <div className="grid grid-cols-5 gap-2">
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Year</InputLabel>
+                <MuiSelect 
+                  label="Year"
+                  value={incidentData.year}
+                  onChange={e => handleInputChange('year', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="2023">2023</MenuItem>
+                  <MenuItem value="2024">2024</MenuItem>
+                  <MenuItem value="2025">2025</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Month</InputLabel>
+                <MuiSelect 
+                  label="Month"
+                  value={incidentData.month}
+                  onChange={e => handleInputChange('month', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="January">January</MenuItem>
+                  <MenuItem value="February">February</MenuItem>
+                  <MenuItem value="March">March</MenuItem>
+                  <MenuItem value="April">April</MenuItem>
+                  <MenuItem value="May">May</MenuItem>
+                  <MenuItem value="June">June</MenuItem>
+                  <MenuItem value="July">July</MenuItem>
+                  <MenuItem value="August">August</MenuItem>
+                  <MenuItem value="September">September</MenuItem>
+                  <MenuItem value="October">October</MenuItem>
+                  <MenuItem value="November">November</MenuItem>
+                  <MenuItem value="December">December</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Day</InputLabel>
+                <MuiSelect 
+                  label="Day"
+                  value={incidentData.day}
+                  onChange={e => handleInputChange('day', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  {Array.from({length: 31}, (_, i) => (
+                    <MenuItem key={i + 1} value={String(i + 1)}>{i + 1}</MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Hour</InputLabel>
+                <MuiSelect 
+                  label="Hour"
+                  value={incidentData.hour}
+                  onChange={e => handleInputChange('hour', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  {Array.from({length: 24}, (_, i) => (
+                    <MenuItem key={i} value={String(i)}>{i}</MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Minute</InputLabel>
+                <MuiSelect 
+                  label="Minute"
+                  value={incidentData.minute}
+                  onChange={e => handleInputChange('minute', e.target.value)}
+                  sx={fieldStyles}
+                >
+                  {Array.from({length: 60}, (_, i) => (
+                    <MenuItem key={i} value={String(i)}>{i}</MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            </div>
+          </div>
+
+          {/* Building and Categories Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Building *</InputLabel>
               <MuiSelect 
-                label="Priority*" 
-                value={incidentData.priority} 
-                onChange={e => handleInputChange('priority', e.target.value)} 
-                displayEmpty 
+                label="Building *"
+                value={incidentData.building}
+                onChange={e => handleInputChange('building', e.target.value)}
+                displayEmpty
                 sx={fieldStyles}
               >
-                <MenuItem value=""><em>Select Priority</em></MenuItem>
+                <MenuItem value=""><em>Select Building</em></MenuItem>
+                <MenuItem value="building1">Building 1</MenuItem>
+                <MenuItem value="building2">Building 2</MenuItem>
+                <MenuItem value="building3">Building 3</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Select The Category For The Incident</InputLabel>
+              <MuiSelect 
+                label="Select The Category For The Incident"
+                value={incidentData.categoryForIncident}
+                onChange={e => handleInputChange('categoryForIncident', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select</em></MenuItem>
+                <MenuItem value="safety">Safety</MenuItem>
+                <MenuItem value="security">Security</MenuItem>
+                <MenuItem value="maintenance">Maintenance</MenuItem>
+                <MenuItem value="environmental">Environmental</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Select The Incident Primary Category *</InputLabel>
+              <MuiSelect 
+                label="Select The Incident Primary Category *"
+                value={incidentData.primaryCategory}
+                onChange={e => handleInputChange('primaryCategory', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select</em></MenuItem>
+                <MenuItem value="fire">Fire</MenuItem>
+                <MenuItem value="injury">Injury</MenuItem>
+                <MenuItem value="equipment">Equipment</MenuItem>
+                <MenuItem value="chemical">Chemical</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Select The Category For The Incident</InputLabel>
+              <MuiSelect 
+                label="Select The Category For The Incident"
+                value={incidentData.categoryForIncident}
+                onChange={e => handleInputChange('categoryForIncident', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select</em></MenuItem>
+                <MenuItem value="minor">Minor</MenuItem>
+                <MenuItem value="major">Major</MenuItem>
+                <MenuItem value="critical">Critical</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Select The Incident Secondary Category</InputLabel>
+              <MuiSelect 
+                label="Select The Incident Secondary Category"
+                value={incidentData.secondaryCategory}
+                onChange={e => handleInputChange('secondaryCategory', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select</em></MenuItem>
+                <MenuItem value="slip">Slip</MenuItem>
+                <MenuItem value="fall">Fall</MenuItem>
+                <MenuItem value="cut">Cut</MenuItem>
+                <MenuItem value="burn">Burn</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Select The Secondary Category For The Incident</InputLabel>
+              <MuiSelect 
+                label="Select The Secondary Category For The Incident"
+                value={incidentData.secondaryCategoryForIncident}
+                onChange={e => handleInputChange('secondaryCategoryForIncident', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select</em></MenuItem>
+                <MenuItem value="immediate">Immediate</MenuItem>
+                <MenuItem value="delayed">Delayed</MenuItem>
+                <MenuItem value="ongoing">Ongoing</MenuItem>
+              </MuiSelect>
+            </FormControl>
+
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Severity *</InputLabel>
+              <MuiSelect 
+                label="Severity *"
+                value={incidentData.severity}
+                onChange={e => handleInputChange('severity', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Severity</em></MenuItem>
                 <MenuItem value="low">Low</MenuItem>
                 <MenuItem value="medium">Medium</MenuItem>
                 <MenuItem value="high">High</MenuItem>
@@ -131,78 +311,44 @@ export const AddIncidentPage = () => {
               </MuiSelect>
             </FormControl>
 
-            <FormControl fullWidth variant="outlined" sx={{
-              mt: 1
-            }}>
-              <InputLabel shrink>Category</InputLabel>
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Probability *</InputLabel>
               <MuiSelect 
-                label="Category" 
-                value={incidentData.category} 
-                onChange={e => handleInputChange('category', e.target.value)} 
-                displayEmpty 
+                label="Probability *"
+                value={incidentData.probability}
+                onChange={e => handleInputChange('probability', e.target.value)}
+                displayEmpty
                 sx={fieldStyles}
               >
-                <MenuItem value=""><em>Select Category</em></MenuItem>
-                <MenuItem value="safety">Safety</MenuItem>
-                <MenuItem value="security">Security</MenuItem>
-                <MenuItem value="maintenance">Maintenance</MenuItem>
-                <MenuItem value="it">IT</MenuItem>
+                <MenuItem value=""><em>Select Probability</em></MenuItem>
+                <MenuItem value="rare">Rare</MenuItem>
+                <MenuItem value="unlikely">Unlikely</MenuItem>
+                <MenuItem value="possible">Possible</MenuItem>
+                <MenuItem value="likely">Likely</MenuItem>
+                <MenuItem value="certain">Certain</MenuItem>
               </MuiSelect>
             </FormControl>
 
-            <TextField 
-              label="Location" 
-              value={incidentData.location} 
-              onChange={e => handleInputChange('location', e.target.value)} 
-              fullWidth 
-              variant="outlined" 
-              InputLabelProps={{
-                shrink: true
-              }} 
-              InputProps={{
-                sx: fieldStyles
-              }} 
-              sx={{
-                mt: 1
-              }} 
-            />
-
-            <TextField 
-              label="Reported By" 
-              value={incidentData.reportedBy} 
-              onChange={e => handleInputChange('reportedBy', e.target.value)} 
-              fullWidth 
-              variant="outlined" 
-              InputLabelProps={{
-                shrink: true
-              }} 
-              InputProps={{
-                sx: fieldStyles
-              }} 
-              sx={{
-                mt: 1
-              }} 
-            />
-
-            <TextField 
-              label="Incident Date" 
-              type="date" 
-              value={incidentData.incidentDate} 
-              onChange={e => handleInputChange('incidentDate', e.target.value)} 
-              fullWidth 
-              variant="outlined" 
-              InputLabelProps={{
-                shrink: true
-              }} 
-              InputProps={{
-                sx: fieldStyles
-              }} 
-              sx={{
-                mt: 1
-              }} 
-            />
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Incident level *</InputLabel>
+              <MuiSelect 
+                label="Incident level *"
+                value={incidentData.incidentLevel}
+                onChange={e => handleInputChange('incidentLevel', e.target.value)}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value=""><em>Select Level</em></MenuItem>
+                <MenuItem value="1">Level 1</MenuItem>
+                <MenuItem value="2">Level 2</MenuItem>
+                <MenuItem value="3">Level 3</MenuItem>
+                <MenuItem value="4">Level 4</MenuItem>
+                <MenuItem value="5">Level 5</MenuItem>
+              </MuiSelect>
+            </FormControl>
           </div>
 
+          {/* Description */}
           <div className="mt-6">
             <TextField
               label="Description*"
@@ -219,6 +365,51 @@ export const AddIncidentPage = () => {
                 mt: 1
               }}
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Support and Disclaimer */}
+      <Card className="mb-6">
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-medium mb-3">Support</h3>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={incidentData.supportRequired}
+                    onChange={(e) => handleCheckboxChange('supportRequired', e.target.checked)}
+                    sx={{
+                      color: '#C72030',
+                      '&.Mui-checked': {
+                        color: '#C72030',
+                      },
+                    }}
+                  />
+                }
+                label="Support required"
+              />
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium mb-3">Disclaimer</h3>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={incidentData.factsCorrect}
+                    onChange={(e) => handleCheckboxChange('factsCorrect', e.target.checked)}
+                    sx={{
+                      color: '#C72030',
+                      '&.Mui-checked': {
+                        color: '#C72030',
+                      },
+                    }}
+                  />
+                }
+                label="I have correctly stated all the facts related to the incident."
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -255,23 +446,31 @@ export const AddIncidentPage = () => {
                 {incidentData.attachments ? incidentData.attachments.name : 'No file chosen'}
               </span>
             </div>
+            
+            <div>
+              <Button 
+                style={{
+                  backgroundColor: '#C72030'
+                }} 
+                className="text-white hover:opacity-90"
+              >
+                Choose a file...
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Submit Buttons */}
-      <div className="flex justify-center gap-4 pt-6">
-        <Button variant="outline" onClick={() => navigate('/incidents')}>
-          Cancel
-        </Button>
+      {/* Submit Button */}
+      <div className="flex justify-center pt-6">
         <Button 
           onClick={handleSubmit} 
           style={{
-            backgroundColor: '#C72030'
+            backgroundColor: '#8B4A8C'
           }} 
           className="text-white hover:opacity-90 px-8 py-3 text-lg"
         >
-          Report Incident
+          Create Incident
         </Button>
       </div>
     </div>

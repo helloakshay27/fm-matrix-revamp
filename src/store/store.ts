@@ -46,6 +46,10 @@ import { addCurrencyReducer, getCurrencyReducer } from './slices/currencySlice'
 import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from './slices/eventSlice'
 import { createUserGroupReducer, fetchUserGroupsReducer } from './slices/userGroupSlice'
 import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
+import { fetchWorkOrdersReducer } from './slices/workOrderSlice'
+import { createMaterialPRReducer, getAddressesReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer } from './slices/materialPRSlice'
+import { getPurchaseOrdersReducer } from './slices/purchaseOrderSlice'
+import { getServicePrReducer } from './slices/servicePRSlice'
 
 export const store = configureStore({
   reducer: {
@@ -159,6 +163,24 @@ export const store = configureStore({
     // User Groups
     fetchUserGroups: fetchUserGroupsReducer,
     createUserGroup: createUserGroupReducer,
+
+    // Work Order
+    fetchWorkOrders: fetchWorkOrdersReducer,
+
+    // Material PR
+    getSuppliers: getSuppliersReducer,
+    getPlantDetails: getPlantDetailsReducer,
+    getAddresses: getAddressesReducer,
+    getInventories: getInventoriesReducer,
+    createMaterialPR: createMaterialPRReducer,
+    getMaterialPR: getMaterialPRReducer,
+    getMaterialPRById: getMaterialPRByIdReducer,
+
+    // Purchase Order
+    getPurchaseOrders: getPurchaseOrdersReducer,
+
+    // Service PR
+    getServicePr: getServicePrReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

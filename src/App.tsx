@@ -90,7 +90,13 @@ import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
 import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
 import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
 import UtilityEVConsumptionDashboard from './pages/UtilityEVConsumptionDashboard';
+import UtilityDailyReadingsDashboard from './pages/UtilityDailyReadingsDashboard';
 import UtilitySolarGeneratorDashboard from './pages/UtilitySolarGeneratorDashboard';
+import { UtilityRequestDashboard } from './pages/UtilityRequestDashboard';
+import { UtilityRequestDetailsPage } from './pages/UtilityRequestDetailsPage';
+import { AddUtilityRequestPage } from './pages/AddUtilityRequestPage';
+import UtilityConsumptionDashboard from './pages/UtilityConsumptionDashboard';
+import { GenerateUtilityBillPage } from './pages/GenerateUtilityBillPage';
 
 // Import Waste Generation pages
 import UtilityWasteGenerationDashboard from './pages/UtilityWasteGenerationDashboard';
@@ -329,33 +335,34 @@ import { RVehiclesInDashboard } from "./pages/RVehiclesInDashboard";
 import { RVehiclesOutDashboard } from "./pages/RVehiclesOutDashboard";
 
 // Import Finance pages
-import { MaterialPRDashboard } from "./pages/MaterialPRDashboard";
-import { MaterialPRDetailsPage } from "./pages/MaterialPRDetailsPage";
-import { CloneMaterialPRPage } from "./pages/CloneMaterialPRPage";
-import { MaterialPRFeedsPage } from "./pages/MaterialPRFeedsPage";
-import { ServicePRDashboard } from "./pages/ServicePRDashboard";
-import { AddMaterialPRDashboard } from "./pages/AddMaterialPRDashboard";
-import { AddServicePRDashboard } from "./pages/AddServicePRDashboard";
-import { EditServicePRPage } from "./pages/EditServicePRPage";
-import { ServicePRDetailsPage } from "./pages/ServicePRDetailsPage";
-import { CloneServicePRPage } from "./pages/CloneServicePRPage";
-import { ServicePRFeedsPage } from "./pages/ServicePRFeedsPage";
-import { PODashboard } from "./pages/PODashboard";
-import { AddPODashboard } from "./pages/AddPODashboard";
-import { PODetailsPage } from "./pages/PODetailsPage";
-import { POFeedsPage } from "./pages/POFeedsPage";
-import { WODashboard } from "./pages/WODashboard";
-import { AutoSavedPRDashboard } from "./pages/AutoSavedPRDashboard";
-import { GRNSRNDashboard } from "./pages/GRNSRNDashboard";
-import { AddGRNDashboard } from "./pages/AddGRNDashboard";
-import { GRNDetailsPage } from "./pages/GRNDetailsPage";
-import { GRNFeedsPage } from "./pages/GRNFeedsPage";
-import { InvoicesDashboard } from "./pages/InvoicesDashboard";
-import { InvoicesSESDashboard } from "./pages/InvoicesSESDashboard";
-import { BillBookingDashboard } from "./pages/BillBookingDashboard";
-import { AddBillPage } from "./pages/AddBillPage";
-import { PendingApprovalsDashboard } from "./pages/PendingApprovalsDashboard";
-import InvoiceDashboard from "./pages/InvoiceDashboard";
+import { MaterialPRDashboard } from './pages/MaterialPRDashboard';
+import { MaterialPRDetailsPage } from './pages/MaterialPRDetailsPage';
+import { CloneMaterialPRPage } from './pages/CloneMaterialPRPage';
+import { MaterialPRFeedsPage } from './pages/MaterialPRFeedsPage';
+import { ServicePRDashboard } from './pages/ServicePRDashboard';
+import { AddMaterialPRDashboard } from './pages/AddMaterialPRDashboard';
+import { AddServicePRDashboard } from './pages/AddServicePRDashboard';
+import { EditServicePRPage } from './pages/EditServicePRPage';
+import { ServicePRDetailsPage } from './pages/ServicePRDetailsPage';
+import { CloneServicePRPage } from './pages/CloneServicePRPage';
+import { ServicePRFeedsPage } from './pages/ServicePRFeedsPage';
+import { PODashboard } from './pages/PODashboard';
+import { AddPODashboard } from './pages/AddPODashboard';
+import { PODetailsPage } from './pages/PODetailsPage';
+import { POFeedsPage } from './pages/POFeedsPage';
+import { WODashboard } from './pages/WODashboard';
+import { WODetailsPage } from './pages/WODetailsPage';
+import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
+import { GRNSRNDashboard } from './pages/GRNSRNDashboard';
+import { AddGRNDashboard } from './pages/AddGRNDashboard';
+import { GRNDetailsPage } from './pages/GRNDetailsPage';
+import { GRNFeedsPage } from './pages/GRNFeedsPage';
+import { InvoicesDashboard } from './pages/InvoicesDashboard';
+import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
+import { BillBookingDashboard } from './pages/BillBookingDashboard';
+import { AddBillPage } from './pages/AddBillPage';
+import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
+import InvoiceDashboard from './pages/InvoiceDashboard';
 
 // Import WBS page
 import { WBSElementDashboard } from "./pages/WBSElementDashboard";
@@ -564,6 +571,10 @@ import { EscalationMatrixPage } from "./pages/maintenance/EscalationMatrixPage";
 import { PermitSetupDashboard } from "./pages/PermitSetupDashboard";
 import { IncidentSetupDashboard } from "./pages/IncidentSetupDashboard";
 
+// Import Holiday Calendar page
+import { HolidayCalendarPage as SettingsHolidayCalendarPage } from './pages/settings/HolidayCalendarPage';
+import { HolidayCalendarPage } from './pages/HolidayCalendarPage';
+
 import { LoginPage } from '@/pages/LoginPage';
 import { OTPVerificationPage } from '@/pages/OTPVerificationPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
@@ -657,6 +668,9 @@ function App() {
                 <Route index element={<Index />} />
 
 
+                {/* Holiday Calendar Route */}
+                <Route path="/holiday-calendar" element={<HolidayCalendarPage />} />
+
                 {/* Rule Engine Routes */}
                 <Route
                   path="/rule-engine/rule-list"
@@ -705,6 +719,16 @@ function App() {
                   path="/settings/roles/role/add"
                   element={<AddRolePage />}
                 />
+                <Route path="/settings/users/edit-details/:id" element={<EditFMUserDetailsPage />} />
+                <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
+                <Route path="/settings/account" element={<AccountDashboard />} />
+                <Route path="/settings/account/holiday-calendar" element={<SettingsHolidayCalendarPage />} />
+                <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
+                <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
+                <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
+                <Route path="/settings/roles/department" element={<DepartmentDashboard />} />
+                <Route path="/settings/roles/role" element={<RoleDashboard />} />
+                <Route path="/settings/roles/role/add" element={<AddRolePage />} />
 
                 {/* Settings Asset Setup Routes */}
                 <Route
@@ -1161,10 +1185,8 @@ function App() {
                 />
                 <Route path="/finance/po/feeds/:id" element={<POFeedsPage />} />
                 <Route path="/finance/wo" element={<WODashboard />} />
-                <Route
-                  path="/finance/auto-saved-pr"
-                  element={<AutoSavedPRDashboard />}
-                />
+                <Route path="/finance/wo/details/:id" element={<WODetailsPage />} />
+                <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
                 <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
                 <Route
                   path="/finance/grn-srn/add"
@@ -1386,21 +1408,18 @@ function App() {
                   element={<AddWaterAssetDashboard />}
                 />
                 <Route path="/utility/stp" element={<UtilitySTPDashboard />} />
-                <Route
-                  path="/utility/stp/add-asset"
-                  element={<AddSTPAssetDashboard />}
-                />
-                <Route
-                  path="/utility/ev-consumption"
-                  element={<UtilityEVConsumptionDashboard />}
-                />
+                <Route path="/utility/stp/add-asset" element={<AddSTPAssetDashboard />} />
+                <Route path="/utility/ev-consumption" element={<UtilityEVConsumptionDashboard />} />
+                <Route path="/utility/daily-readings" element={<UtilityDailyReadingsDashboard />} />
+                <Route path="/utility/utility-request" element={<UtilityRequestDashboard />} />
+                <Route path="/utility/utility-request/details/:id" element={<UtilityRequestDetailsPage />} />
+                <Route path="/utility/utility-request/add" element={<AddUtilityRequestPage />} />
+                <Route path="/utility/utility-consumption" element={<UtilityConsumptionDashboard />} />
+                <Route path="/utility/utility-consumption/generate-bill" element={<GenerateUtilityBillPage />} />
+                <Route path="/utility/add-asset" element={<AddAssetDashboard />} />
                 <Route
                   path="/utility/solar-generator"
                   element={<UtilitySolarGeneratorDashboard />}
-                />
-                <Route
-                  path="/utility/add-asset"
-                  element={<AddAssetDashboard />}
                 />
 
                 {/* Energy Asset Routes */}

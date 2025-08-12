@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Square, Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Square, Plus, X, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { 
   fetchBuildings, 
@@ -424,10 +424,17 @@ export const UnitPage = () => {
                          </Button>
                        </TableCell>
                       <TableCell>
-                        <Checkbox
-                          checked={unit.active}
-                          onCheckedChange={() => toggleActiveStatus(unit.id)}
-                        />
+                        <button onClick={() => toggleActiveStatus(unit.id)} className="cursor-pointer">
+                          {unit.active ? (
+                            <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
+                              <Check className="w-3 h-3 text-white" />
+                            </div>
+                          ) : (
+                            <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
+                              <span className="text-white text-xs">✗</span>
+                            </div>
+                          )}
+                        </button>
                       </TableCell>
                       <TableCell>{unit.building?.name || 'N/A'}</TableCell>
                       <TableCell>{unit.wing?.name || 'N/A'}</TableCell>

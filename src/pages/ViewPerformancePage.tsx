@@ -1,10 +1,15 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
+import { toast } from 'sonner';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { format } from 'date-fns';
+import { Autocomplete, TextField } from '@mui/material';
 
 // Helper to get last month's start and end dates in yyyy-mm-dd and dd/mm/yyyy
 function getLastMonthRange() {
@@ -58,6 +63,44 @@ export const ViewPerformancePage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Date validation function - only for apply action
+  const validateDatesOnApply = (start: string, end: string) => {
+    if (start && end) {
+      const startDateObj = new Date(start);
+      const endDateObj = new Date(end);
+      
+      if (endDateObj < startDateObj) {
+        toast.error('End date cannot be before start date. Please select a valid date range.', {
+          position: 'top-right',
+          duration: 4000,
+        });
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Handle start date change - automatically adjust end date if needed
+  const handleStartDateChange = (date: Date | null) => {
+    const newStartDate = date ? format(date, 'yyyy-MM-dd') : '';
+    setStartDate(newStartDate);
+    
+    // If end date is before new start date, automatically set end date to start date
+    if (endDate && newStartDate && new Date(endDate) < new Date(newStartDate)) {
+      setEndDate(newStartDate);
+      toast.info('End date has been automatically updated to match the start date.', {
+        position: 'top-right',
+        duration: 3000,
+      });
+    }
+  };
+
+  // Handle end date change - no validation, just set value
+  const handleEndDateChange = (date: Date | null) => {
+    const newEndDate = date ? format(date, 'yyyy-MM-dd') : '';
+    setEndDate(newEndDate);
+  };
+
   // Fetch performance data
   const fetchPerformance = async (params?: { start?: string, end?: string, asset_id?: string | number }) => {
     if (!customFormCode) return;
@@ -107,8 +150,23 @@ export const ViewPerformancePage = () => {
 
   // Handlers
   const handleApply = () => {
+    // Validate dates only when apply is clicked
+    if (!validateDatesOnApply(startDate, endDate)) {
+      return; // Stop execution if validation fails
+    }
+    
+    // Additional validation for empty dates
+    if (!startDate || !endDate) {
+      toast.error('Please select both start and end dates.', {
+        position: 'top-right',
+        duration: 4000,
+      });
+      return;
+    }
+    
     fetchPerformance({ start: startDate, end: endDate, asset_id: selectedTaskId });
   };
+
   const handleReset = () => {
     setStartDate(lastMonth.start);
     setEndDate(lastMonth.end);
@@ -128,54 +186,201 @@ export const ViewPerformancePage = () => {
   return (
     <div className="p-6 mx-auto">
       <div className="flex gap-4 mb-4 items-center">
-        <Input type="date" className="w-48 border border-gray-300 rounded" value={startDate} onChange={e => setStartDate(e.target.value)} />
-        <Input type="date" className="w-48 border border-gray-300 rounded" value={endDate} onChange={e => setEndDate(e.target.value)} />
-        {/* Dropdown for task/asset */}
-        <select
-          className="w-64 border border-gray-300 rounded px-2 py-2"
-          value={selectedTaskId}
-          onChange={e => setSelectedTaskId(e.target.value)}
+        <div className="flex flex-col w-48">
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label={
+                <span>
+                  Start Date *
+                </span>
+              }
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  variant: 'outlined',
+                  sx: {
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', md: '45px' }
+                    }
+                  }
+                }
+              }}
+              value={startDate ? new Date(startDate) : null}
+              onChange={handleStartDateChange}
+              maxDate={endDate ? new Date(endDate) : undefined}
+            />
+          </LocalizationProvider>
+        </div>
+        
+        <div className="flex flex-col w-48">
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label="End Date *"
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  variant: 'outlined',
+                  sx: {
+                    '& .MuiOutlinedInput-root': {
+                      height: { xs: '36px', md: '45px' }
+                    }
+                  },
+                  error: startDate && endDate && endDate < startDate,
+                  helperText: startDate && endDate && endDate < startDate
+                    ? "End date cannot be before start date"
+                    : ""
+                }
+              }}
+              value={endDate ? new Date(endDate) : null}
+              onChange={handleEndDateChange}
+              minDate={startDate ? new Date(startDate) : undefined}
+            />
+          </LocalizationProvider>
+        </div>
+
+        {/* Autocomplete for task/asset */}
+        <div className="flex flex-col w-64">
+          <Autocomplete
+            options={dropdownOptions}
+            getOptionLabel={(option) => option.name}
+            value={dropdownOptions.find(opt => opt.task_of_id.toString() === selectedTaskId.toString()) || null}
+            onChange={(_, value) => setSelectedTaskId(value ? value.task_of_id : '')}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Select Asset/Task *"
+                variant="outlined"
+                fullWidth
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    height: { xs: '36px', md: '45px' }
+                  }
+                }}
+                InputLabelProps={{ shrink: true }}
+              />
+            )}
+            disablePortal
+            disabled={dropdownOptions.length === 0}
+          />
+        </div>
+        
+        <Button 
+          className="bg-green-600 text-white px-6" 
+          onClick={handleApply}
         >
-          {dropdownOptions.map(opt => (
-            <option key={opt.task_of_id} value={opt.task_of_id}>{opt.name}</option>
-          ))}
-        </select>
-        <Button className="bg-green-600 text-white px-6" onClick={handleApply}>Apply</Button>
+          Apply
+        </Button>
+        
         <Button className="bg-yellow-500 text-white px-6" onClick={handleReset}>Reset</Button>
-        {/* Export, Verify, Download can be implemented as needed */}
+
         <Button className="bg-[#3B82F6] text-white px-6" onClick={async () => {
-          if (!customFormCode || !selectedTaskId) return;
-          // Use current date range in dd/mm/yyyy
-          const startDMY = formatDMY(startDate);
-          const endDMY = formatDMY(endDate);
-          const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/${customFormCode}/export_performance?asset_id=${selectedTaskId}&q[start_date_gteq]=${encodeURIComponent(startDMY)}&q[start_date_lteq]=${encodeURIComponent(endDMY)}&access_token=${API_CONFIG.TOKEN}`;
+          if (!customFormCode || !selectedTaskId) {
+            toast.error('Missing form code or asset selection. Please ensure all fields are selected.', {
+              position: 'top-right',
+              duration: 4000,
+            });
+            return;
+          }
+
+          // Validate date range before export
+          if (!validateDatesOnApply(startDate, endDate)) {
+            return;
+          }
+
           try {
-            const res = await fetch(url, {
+            // Use current date range in dd/mm/yyyy
+            const startDMY = formatDMY(startDate);
+            const endDMY = formatDMY(endDate);
+            
+            // Build the export URL with proper encoding
+            const exportUrl = `${API_CONFIG.BASE_URL}/pms/custom_forms/${customFormCode}/export_performance`;
+            const params = new URLSearchParams({
+              asset_id: selectedTaskId.toString(),
+              'q[start_date_gteq]': startDMY,
+              'q[start_date_lteq]': endDMY,
+              access_token: API_CONFIG.TOKEN || ''
+            });
+            
+            const fullUrl = `${exportUrl}?${params.toString()}`;
+            
+            console.log('Export URL:', fullUrl); // Debug log
+            
+            const res = await fetch(fullUrl, {
+              method: 'GET',
               headers: {
-                Authorization: getAuthHeader(),
+                'Authorization': getAuthHeader(),
+                'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel, */*',
               },
             });
-            if (!res.ok) throw new Error('Failed to export performance data');
+            
+            console.log('Export response status:', res.status); // Debug log
+            console.log('Export response headers:', Object.fromEntries(res.headers.entries())); // Debug log
+            
+            if (!res.ok) {
+              const errorText = await res.text();
+              console.error('Export error response:', errorText);
+              throw new Error(`Failed to export performance data: ${res.status} ${res.statusText}`);
+            }
+
+            // Check if response is actually a file
+            const contentType = res.headers.get('content-type');
+            console.log('Content-Type:', contentType); // Debug log
+            
+            if (!contentType || (!contentType.includes('spreadsheet') && !contentType.includes('excel') && !contentType.includes('octet-stream'))) {
+              const responseText = await res.text();
+              console.error('Unexpected response format:', responseText);
+              throw new Error('Server returned unexpected response format. Expected Excel file.');
+            }
+
             const blob = await res.blob();
-            // Try to get filename from content-disposition
+            console.log('Blob size:', blob.size); // Debug log
+            
+            if (blob.size === 0) {
+              throw new Error('Export file is empty. No data available for the selected criteria.');
+            }
+
+            // Try to get filename from content-disposition header
             let filename = 'performance_export.xlsx';
             const disposition = res.headers.get('content-disposition');
             if (disposition && disposition.indexOf('filename=') !== -1) {
-              filename = disposition.split('filename=')[1].replace(/"/g, '').trim();
+              const filenameMatch = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+              if (filenameMatch && filenameMatch[1]) {
+                filename = filenameMatch[1].replace(/['"]/g, '').trim();
+              }
             }
+            
+            // Create and trigger download
             const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
+            const url = window.URL.createObjectURL(blob);
+            link.href = url;
             link.download = filename;
+            link.style.display = 'none';
             document.body.appendChild(link);
             link.click();
-            link.remove();
+            
+            // Cleanup
+            setTimeout(() => {
+              document.body.removeChild(link);
+              window.URL.revokeObjectURL(url);
+            }, 100);
+            
+            toast.success('Performance data exported successfully!', {
+              position: 'top-right',
+              duration: 4000,
+            });
+            
           } catch (e: any) {
-            alert(e.message || 'Export failed');
+            console.error('Export error:', e);
+            toast.error(e.message || 'Export failed. Please try again.', {
+              position: 'top-right',
+              duration: 5000,
+            });
           }
         }}>Export</Button>
-        {/* <Button className="bg-[#2563EB] text-white px-6">Verify</Button>
-        <Button className="bg-[#2563EB] text-white px-6">Download</Button> */}
       </div>
+      
+      {/* Remove the date error message display since we're using toast */}
+
       <h2 className="text-xl font-bold mb-2 text-black">{formName || 'Performance Checklist'}</h2>
       {loading && <div className="text-gray-500">Loading...</div>}
       {error && <div className="text-red-500">{error}</div>}

@@ -5,6 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Search, Download, Upload, Filter, Edit } from 'lucide-react';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 const dailyReadingsData = [
   {
@@ -196,8 +198,23 @@ const dailyReadingsData = [
   }
 ];
 
+// Column configuration for enhanced table
+const columns: ColumnConfig[] = [
+  { key: 'actions', label: 'Actions', sortable: false, defaultVisible: true },
+  { key: 'id', label: 'ID', sortable: true, defaultVisible: true },
+  { key: 'assetName', label: 'Asset Name', sortable: true, defaultVisible: true },
+  { key: 'parameterName', label: 'Parameter Name', sortable: true, defaultVisible: true },
+  { key: 'opening', label: 'Opening', sortable: true, defaultVisible: true },
+  { key: 'reading', label: 'Reading', sortable: true, defaultVisible: true },
+  { key: 'consumption', label: 'Consumption', sortable: true, defaultVisible: true },
+  { key: 'totalConsumption', label: 'Total Consumption', sortable: true, defaultVisible: true },
+  { key: 'customerName', label: 'Customer Name', sortable: true, defaultVisible: true },
+  { key: 'date', label: 'Date', sortable: true, defaultVisible: true },
+];
+
 export default function UtilityDailyReadingsDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const filteredData = dailyReadingsData.filter(item =>
     item.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -205,28 +222,90 @@ export default function UtilityDailyReadingsDashboard() {
     item.id.includes(searchTerm)
   );
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(filteredData.map(item => item.id));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
+  const handleEdit = (item: any) => {
+    console.log('Edit item:', item);
+  };
+
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case 'actions':
+        return (
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleEdit(item)}
+              className="h-8 w-8 p-0"
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          </div>
+        );
+      case 'id':
+        return <span className="font-mono text-sm">{item.id}</span>;
+      case 'assetName':
+        return <span className="font-medium">{item.assetName}</span>;
+      case 'parameterName':
+        return item.parameterName || '-';
+      case 'opening':
+        return item.opening || '-';
+      case 'reading':
+        return <span className="font-medium">{item.reading || '-'}</span>;
+      case 'consumption':
+        return <span className="font-medium">{item.consumption || '-'}</span>;
+      case 'totalConsumption':
+        return item.totalConsumption || '-';
+      case 'customerName':
+        return item.customerName || '-';
+      case 'date':
+        return item.date || '-';
+      default:
+        return item[columnKey] || '-';
+    }
+  };
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">DAILY READINGS</h1>
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      {/* Breadcrumb */}
+      <div className="text-sm text-gray-600">
+        Utility &gt; Daily Readings
       </div>
 
+      {/* Page Title */}
+      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">DAILY READINGS</h1>
+
       {/* Action Buttons */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-wrap gap-3">
         <Button 
-          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+          className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
         >
           <Upload className="w-4 h-4" />
           Import
         </Button>
         <Button 
-          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+          className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
         >
           <Download className="w-4 h-4" />
           Export
         </Button>
         <Button 
-          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+          className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
         >
           <Filter className="w-4 h-4" />
           Filters
@@ -234,69 +313,49 @@ export default function UtilityDailyReadingsDashboard() {
       </div>
 
       {/* Search */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Search readings..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 rounded-none border-gray-300 focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-          />
+      <div className="flex justify-between items-center">
+        <div></div>
+        <div className="flex items-center space-x-2">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Search readings..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-64 h-10 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+            />
+          </div>
+          <Button 
+            className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-6 py-2 h-10 text-sm font-medium border-0"
+          >
+            Go!
+          </Button>
         </div>
       </div>
 
-      {/* Data Table */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Action</TableHead>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Asset name</TableHead>
-                  <TableHead>Parameter Name</TableHead>
-                  <TableHead>Opening</TableHead>
-                  <TableHead>Reading</TableHead>
-                  <TableHead>Consumption</TableHead>
-                  <TableHead>Total Consumption</TableHead>
-                  <TableHead>Customer Name</TableHead>
-                  <TableHead>Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredData.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <Button 
-                        size="sm"
-                        className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-2 py-1 h-8 text-xs font-medium"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">{item.id}</TableCell>
-                    <TableCell>{item.assetName}</TableCell>
-                    <TableCell>{item.parameterName}</TableCell>
-                    <TableCell>{item.opening}</TableCell>
-                    <TableCell>{item.reading}</TableCell>
-                    <TableCell>{item.consumption}</TableCell>
-                    <TableCell>{item.totalConsumption}</TableCell>
-                    <TableCell>{item.customerName}</TableCell>
-                    <TableCell>{item.date}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Results Count */}
-      <div className="text-sm text-gray-600">
-        Showing {filteredData.length} of {dailyReadingsData.length} entries
+      {/* Enhanced Data Table */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <EnhancedTable
+          data={filteredData}
+          columns={columns}
+          renderCell={renderCell}
+          onSelectAll={handleSelectAll}
+          onSelectItem={handleSelectItem}
+          selectedItems={selectedItems}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          enableSearch={false}
+          enableExport={false}
+          hideColumnsButton={false}
+          pagination={true}
+          pageSize={20}
+          emptyMessage="No daily readings found"
+          selectable={true}
+          storageKey="daily-readings-table"
+        />
       </div>
+
+      {/* Results Count removed as EnhancedTable handles this */}
     </div>
   );
 }

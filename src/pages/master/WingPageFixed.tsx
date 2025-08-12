@@ -251,8 +251,23 @@ export function WingPage() {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-end mb-4">
-        
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <Select value={selectedBuildingFilter} onValueChange={setSelectedBuildingFilter}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by building" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Buildings</SelectItem>
+                  {buildings.data.map((building) => (
+                    <SelectItem key={building.id} value={building.id.toString()}>
+                      {building.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Search:</span>
               <Input

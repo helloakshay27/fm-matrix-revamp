@@ -274,12 +274,6 @@ export const PODashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      {/* Breadcrumb */}
-      <div className="mb-2 text-sm text-gray-600">PO</div>
-
-      {/* Page Title */}
-      <h1 className="text-xl sm:text-2xl font-bold mb-4">PURCHASE ORDER LIST</h1>
-
       {/* Enhanced Table */}
       <EnhancedTable
         data={poData}
@@ -293,7 +287,7 @@ export const PODashboard = () => {
         searchTerm={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search POs..."
-        enableExport={true}
+        // enableExport={true}
         exportFileName="purchase-orders"
         pagination={true}
         pageSize={2}

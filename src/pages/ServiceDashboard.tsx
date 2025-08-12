@@ -474,7 +474,7 @@ export const ServiceDashboard = () => {
     { key: 'serviceName', label: 'Service Name', sortable: true },
     { key: 'id', label: 'ID', sortable: true },
     { key: 'referenceNumber', label: 'Reference Number', sortable: true },
-    { key: 'executionType', label: 'Type', sortable: true },
+    { key: 'executionType', label: 'Execution Type', sortable: true },
     { key: 'group', label: 'Group', sortable: true },
     { key: 'subGroup', label: 'Sub Group', sortable: true },
     { key: 'uom', label: 'UOM', sortable: true },
@@ -561,7 +561,8 @@ export const ServiceDashboard = () => {
       case 'referenceNumber':
         return item.service_code || '-';
       case 'executionType':
-        return item.execution_type || '-';
+        if (!item.execution_type) return '-';
+        return item.execution_type.charAt(0).toUpperCase() + item.execution_type.slice(1);
       case 'group':
         return item.group_name || '-';
       case 'uom':

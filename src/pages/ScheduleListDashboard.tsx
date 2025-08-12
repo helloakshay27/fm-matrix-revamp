@@ -764,6 +764,139 @@ export const ScheduleListDashboard = () => {
       return () => { isMounted = false; };
     }, [tablePage]);
 
+    // Add new state for global search
+    const [globalSearchTerm, setGlobalSearchTerm] = useState('');
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [isGlobalSearching, setIsGlobalSearching] = useState(false);
+    const [lastSearchTerm, setLastSearchTerm] = useState(''); // Add this to track last search
+
+    // Global search function
+    const handleGlobalSearch = async (searchTerm: string) => {
+      if (!searchTerm.trim()) {
+        setGlobalSearchTerm('');
+        setSearchResults([]);
+        setIsGlobalSearching(false);
+        setLastSearchTerm('');
+        return;
+      }
+
+      // Prevent duplicate searches
+      if (searchTerm === lastSearchTerm && !isGlobalSearching) {
+        return;
+      }
+
+      setGlobalSearchTerm(searchTerm);
+      setLastSearchTerm(searchTerm);
+      setIsGlobalSearching(true);
+
+      try {
+        const token = API_CONFIG.TOKEN;
+        const baseUrl = API_CONFIG.BASE_URL;
+        
+        if (!token) {
+          setTableError('Authentication token is missing.');
+          setIsGlobalSearching(false);
+          return;
+        }
+
+        if (!baseUrl) {
+          setTableError('Base URL is not configured.');
+          setIsGlobalSearching(false);
+          return;
+        }
+
+        // Search across all pages by calling API with search parameter
+        const response = await axios.get(
+          `${baseUrl}/pms/custom_forms.json?q[form_name_cont]=${encodeURIComponent(searchTerm)}&access_token=${token}`,
+          { 
+            timeout: 30000,
+            signal: AbortSignal.timeout(30000)
+          }
+        );
+
+        let forms: any[] = [];
+        if (Array.isArray(response.data.custom_forms)) {
+          forms = response.data.custom_forms;
+        } else if (response.data.custom_forms && typeof response.data.custom_forms === 'object') {
+          forms = [response.data.custom_forms];
+        }
+
+        // Map API fields to table fields (same mapping as before)
+        const mappedForms = forms.map((item: any) => {
+          let scheduleType = '';
+          if (item.checklist_for && typeof item.checklist_for === 'string' && item.checklist_for.includes('::')) {
+            scheduleType = item.checklist_for.split('::')[1] || '';
+          } else {
+            scheduleType = item.schedule_type || '';
+          }
+          return {
+            id: item.id,
+            activityName: item.form_name || '',
+            type: item.schedule_type || '',
+            scheduleType,
+            noOfAssociation: item.no_of_associations?.toString() || '',
+            validFrom: item.start_date ? new Date(item.start_date).toLocaleDateString() : '',
+            validTill: item.end_date ? new Date(item.end_date).toLocaleDateString() : '',
+            category: item.category_name
+              ? (item.category_name.charAt(0).toUpperCase() + item.category_name.slice(1).toLowerCase())
+              : '',
+            active: item.active,
+            createdOn: item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
+            custom_form_code: item.custom_form_code,
+          };
+        });
+
+        setSearchResults(mappedForms);
+        setTableError(null);
+        
+        // Show toast only once per unique search
+        if (searchTerm !== lastSearchTerm) {
+          if (mappedForms.length === 0) {
+            toast.info(`No schedules found for "${searchTerm}"`, {
+              position: 'top-right',
+              duration: 3000,
+            });
+          } else {
+            toast.success(`Found ${mappedForms.length} schedule(s) for "${searchTerm}"`, {
+              position: 'top-right',
+              duration: 3000,
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Global search error:', error);
+        let errorMessage = 'Failed to search schedules. Please try again.';
+        
+        if (axios.isAxiosError(error)) {
+          if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+            errorMessage = 'Search request timed out. The server may be slow. Please try again.';
+          } else if (error.response?.status === 404) {
+            errorMessage = 'Search endpoint not found. Please contact support.';
+          } else if (error.response?.status === 401) {
+            errorMessage = 'Authentication failed. Please log in again.';
+          } else if (error.response?.status >= 500) {
+            errorMessage = 'Server error occurred. Please try again later.';
+          }
+        }
+        
+        setTableError(errorMessage);
+        setSearchResults([]);
+        
+        // Show error toast only once per unique search attempt
+        if (searchTerm !== lastSearchTerm) {
+          toast.error(errorMessage, {
+            position: 'top-right',
+            duration: 5000,
+          });
+        }
+      } finally {
+        setIsGlobalSearching(false);
+      }
+    };
+
+    // Determine which data to display in table
+    const displayTableSchedules = globalSearchTerm ? searchResults : tableSchedules;
+
   const renderListTab = () => (
     <div className="space-y-4">
       {showActionPanel && (
@@ -798,7 +931,7 @@ export const ScheduleListDashboard = () => {
       ) : (
         <>
           <EnhancedTable
-            data={tableSchedules}
+            data={displayTableSchedules}
             columns={columns}
             renderCell={renderCell}
             pagination={false}
@@ -806,13 +939,16 @@ export const ScheduleListDashboard = () => {
             exportFileName="schedules"
             storageKey="schedules-table"
             enableSearch={true}
+            enableGlobalSearch={true}
+            onGlobalSearch={handleGlobalSearch}
             searchPlaceholder="Search schedules..."
             leftActions={renderCustomActions()}
             onFilterClick={() => setShowFilterDialog(true)}
+            loading={isGlobalSearching || tableLoading}
           />
 
-          {/* Pagination */}
-          {tableTotalPages > 1 && (
+          {/* Pagination - only show when not searching globally */}
+          {!globalSearchTerm && tableTotalPages > 1 && (
             <div className="mt-6">
               <Pagination>
                 <PaginationContent>

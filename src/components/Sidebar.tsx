@@ -97,7 +97,7 @@ const navigationStructure = {
         name: 'Checklist Setup',
         icon: CheckSquare,
         subItems: [
-          { name: 'Checklist Group and Sub Group', href: '/settings/checklist-setup/groups' },
+          { name: 'Checklist Group & Sub Group', href: '/settings/checklist-setup/groups' },
           { name: 'Email Rule', href: '/settings/checklist-setup/email-rule' },
           { name: 'Task Escalation', href: '/settings/checklist-setup/task-escalation' }
         ]
@@ -396,6 +396,9 @@ const modulesByPackage = {
     { name: 'Energy', icon: Zap, href: '/utility/energy' },
     { name: 'Water', icon: Droplets, href: '/utility/water' },
     { name: 'STP', icon: Database, href: '/utility/stp' },
+    { name: 'Daily Readings', icon: ClipboardList, href: '/utility/daily-readings' },
+    { name: 'Utility Request', icon: FileText, href: '/utility/utility-request' },
+    { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
     { name: 'EV Consumption', icon: Car, href: '/utility/ev-consumption' },
     { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' }
   ],
@@ -516,7 +519,7 @@ const modulesByPackage = {
           name: 'Checklist Setup',
           href: '/settings/checklist-setup',
           subItems: [
-            { name: 'Checklist Group and Sub Group', href: '/settings/checklist-setup/groups' },
+            { name: 'Checklist Group & Sub Group', href: '/settings/checklist-setup/groups' },
             { name: 'Email Rule', href: '/settings/checklist-setup/email-rule' },
             { name: 'Task Escalation', href: '/settings/checklist-setup/task-escalation' }
           ]

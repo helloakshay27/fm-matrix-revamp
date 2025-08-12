@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Edit, Trash2, Plus } from "lucide-react";
+import { Edit, Trash2, Plus, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useToast } from "@/components/ui/use-toast"
 import {
@@ -46,6 +46,7 @@ import { AddAreaDialog } from '@/components/AddAreaDialog';
 
 export const AreaPage = () => {
   const [areas, setAreas] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -58,6 +59,10 @@ export const AreaPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [buildings, setBuildings] = useState<any[]>([]);
   const [wings, setWings] = useState<any[]>([]);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
   const fetchAreas = async () => {
     try {
@@ -94,6 +99,44 @@ export const AreaPage = () => {
     fetchBuildings();
     fetchWings();
   }, []);
+
+  // Reset pagination when areas data changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [areas.length]);
+
+  // Filter areas based on search term
+  const filteredAreas = areas.filter(area => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      area.name?.toLowerCase().includes(searchLower) ||
+      area.building?.name?.toLowerCase().includes(searchLower) ||
+      area.wing?.name?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Pagination calculations
+  const totalItems = filteredAreas.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentAreas = filteredAreas.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToPrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   const handleEdit = (area: any) => {
     setSelectedArea(area);
@@ -152,7 +195,7 @@ export const AreaPage = () => {
 
   const handleDownloadSampleFormat = () => {
     console.log('Downloading sample format for areas...');
-    
+
     // Create sample CSV data for areas
     const sampleData = [
       ['Area Name', 'Building ID', 'Wing ID', 'Status'],
@@ -163,7 +206,7 @@ export const AreaPage = () => {
     ];
 
     // Convert to CSV format
-    const csvContent = sampleData.map(row => 
+    const csvContent = sampleData.map(row =>
       row.map(cell => `"${cell}"`).join(',')
     ).join('\n');
 
@@ -171,15 +214,15 @@ export const AreaPage = () => {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    
+
     link.setAttribute('href', url);
     link.setAttribute('download', 'areas_sample_format.csv');
     link.style.visibility = 'hidden';
-    
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     URL.revokeObjectURL(url);
     toast.success('Sample format downloaded successfully');
   };
@@ -226,75 +269,203 @@ export const AreaPage = () => {
     }
   };
 
+  const handleToggleStatus = async (area: any) => {
+    try {
+      const response = await apiClient.put(`/pms/areas/${area.id}.json`, {
+        pms_area: {
+          ...area,
+          active: !area.active,
+        },
+      });
+
+      if (response.status === 200) {
+        toast.success(`Area ${!area.active ? 'activated' : 'deactivated'} successfully`);
+        fetchAreas();
+      } else {
+        toast.error('Failed to update area status');
+      }
+    } catch (error) {
+      console.error('Error updating area status:', error);
+      toast.error('Failed to update area status');
+    }
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-6">
+
+
+      <div className="mb-6 flex items-center justify-between">
         <div>
-          <p className="text-[#1a1a1a] opacity-70 mb-2">Master &gt; Area</p>
           <h1 className="text-2xl font-bold text-[#1a1a1a]">AREA</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={() => setIsAddModalOpen(true)}
+            style={{ backgroundColor: '#C72030' }}
+            className="text-white hover:opacity-90 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add
+          </Button>
+
+          <Button onClick={() => setIsImportModalOpen(true)} style={{ backgroundColor: '#C72030' }} className="text-white hover:opacity-90 flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Import
+          </Button>
         </div>
       </div>
 
-      <div className="mb-6 flex items-center justify-between">
-        <Button 
-          onClick={() => setIsAddModalOpen(true)}
-          style={{ backgroundColor: '#C72030' }} 
-          className="text-white hover:opacity-90 flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add
-        </Button>
-
-        <Button onClick={() => setIsImportModalOpen(true)} style={{ backgroundColor: '#C72030' }} className="text-white hover:opacity-90 flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Import
-        </Button>
+      {/* Controls */}
+      <div className="flex items-center justify-end mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">Search:</span>
+          <Input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-64"
+            placeholder="Search areas..."
+          />
+        </div>
       </div>
 
       <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold text-gray-700">Name</TableHead>
-              <TableHead className="font-semibold text-gray-700">Building</TableHead>
-              <TableHead className="font-semibold text-gray-700">Wing</TableHead>
-              <TableHead className="font-semibold text-gray-700">Status</TableHead>
-              <TableHead className="text-right"></TableHead>
+            <TableRow>
+              <TableHead>Actions</TableHead>
+
+              <TableHead>Name</TableHead>
+              <TableHead>Building</TableHead>
+              <TableHead>Wing</TableHead>
+              <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {areas.map((area) => (
-              <TableRow key={area.id}>
-                <TableCell className="font-medium">{area.name}</TableCell>
-                <TableCell>{area.building_id}</TableCell>
-                <TableCell>{area.wing_id}</TableCell>
-                <TableCell>{area.active ? 'Active' : 'Inactive'}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0 data-[state=open]:bg-muted/50">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[160px]">
-                      <DropdownMenuItem onClick={() => handleEdit(area)} >
-                        <Edit className="mr-2 h-4 w-4" /> Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDeleteArea(area.id)}>
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {areas.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                  No areas found
                 </TableCell>
               </TableRow>
-            ))}
+            ) : filteredAreas.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                  No areas match your search
+                </TableCell>
+              </TableRow>
+            ) : (
+              currentAreas.map((area) => (
+                <TableRow key={area.id}>
+                  <TableCell>
+
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(area)}>
+                      <Edit className="w-4 h-4 text-[#C72030]" />
+                    </Button>
+
+                  </TableCell>
+                  <TableCell className="font-medium">{area.name}</TableCell>
+                  <TableCell>{area.building?.name || 'N/A'}</TableCell>
+                  <TableCell>{area.wing?.name || 'N/A'}</TableCell>
+                  <TableCell>
+                    <button onClick={() => handleToggleStatus(area)} className="cursor-pointer">
+                      {area.active ? (
+                        <div className="w-5 h-5 bg-green-500 rounded flex items-center justify-center hover:bg-green-600 transition-colors">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors">
+                          <span className="text-white text-xs">✗</span>
+                        </div>
+                      )}
+                    </button>
+                  </TableCell>
+
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
+      {/* Pagination Controls */}
+      {areas.length > 0 && (
+        <div className="flex items-center justify-between mt-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} areas
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPrevious}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+
+            <div className="flex items-center space-x-1">
+              {/* Show first page */}
+              {currentPage > 3 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => goToPage(1)}
+                    className="w-8 h-8 p-0"
+                  >
+                    1
+                  </Button>
+                  {currentPage > 4 && <span className="px-2">...</span>}
+                </>
+              )}
+
+              {/* Show pages around current page */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
+                .map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => goToPage(page)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {page}
+                  </Button>
+                ))}
+
+              {/* Show last page */}
+              {currentPage < totalPages - 2 && (
+                <>
+                  {currentPage < totalPages - 3 && <span className="px-2">...</span>}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => goToPage(totalPages)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {totalPages}
+                  </Button>
+                </>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNext}
+              disabled={currentPage === totalPages}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Add Area Dialog */}
-      <AddAreaDialog 
+      <AddAreaDialog
         open={isAddModalOpen}
         onOpenChange={setIsAddModalOpen}
         onAreaAdded={fetchAreas}
@@ -366,7 +537,7 @@ export const AreaPage = () => {
           <DialogHeader>
             <DialogTitle>Import Areas</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             {/* File Upload Area */}
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
