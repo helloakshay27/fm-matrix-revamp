@@ -497,6 +497,7 @@ import { EmailRuleSetupPage } from './pages/maintenance/EmailRuleSetupPage';
 import { TaskEscalationPage } from './pages/maintenance/TaskEscalationPage';
 import { TicketManagementSetupPage } from './pages/maintenance/TicketManagementSetupPage';
 import { MobileTicketsPage } from './pages/mobile/MobileTicketsPage';
+import { TicketListPage } from './pages/TicketListPage';
 import { MobileRestaurantPage } from './pages/mobile/MobileRestaurantPage';
 import { MobileAssetPage } from './pages/mobile/MobileAssetPage';
 import { MobileOrdersPage } from './components/mobile/MobileOrdersPage';
@@ -632,6 +633,7 @@ function App() {
 
                 {/* Ticket Routes */}
                 <Route path="/maintenance/ticket" element={<TicketDashboard />} />
+                <Route path="/tickets" element={<TicketListPage />} />
                 <Route path="/maintenance/ticket/add" element={<AddTicketDashboard />} />
                 <Route path="/maintenance/ticket/assign" element={<AssignTicketsPage />} />
                 <Route path="/maintenance/ticket/update/:id" element={<UpdateTicketsPage />} />

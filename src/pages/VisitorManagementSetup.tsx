@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
@@ -18,6 +19,7 @@ interface VisitorGateData {
 }
 
 export const VisitorManagementSetup = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'smartsecure' | 'quikgate'>('smartsecure');
 
@@ -146,7 +148,7 @@ export const VisitorManagementSetup = () => {
   };
 
   const handleAdd = () => {
-    console.log('Adding new visitor gate setup');
+    navigate('/tickets');
   };
 
   return (
