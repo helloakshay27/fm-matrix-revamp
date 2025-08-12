@@ -3,8 +3,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Switch } from '../components/ui/switch';
-import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, Eye } from 'lucide-react';
-import { Checkbox } from '../components/ui/checkbox';
+import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2 } from 'lucide-react';
 
 interface VisitorGateData {
   id: number;
@@ -20,8 +19,7 @@ interface VisitorGateData {
 
 export const VisitorManagementSetup = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedItems, setSelectedItems] = useState<number[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
+  const [activeTab, setActiveTab] = useState<'smartsecure' | 'quikgate'>('smartsecure');
 
   // Sample data based on the image
   const visitorGateData: VisitorGateData[] = [
@@ -151,30 +149,6 @@ export const VisitorManagementSetup = () => {
     console.log('Adding new visitor gate setup');
   };
 
-  const handleView = (id: number) => {
-    console.log(`Viewing ID: ${id}`);
-  };
-
-  const handleSelectItem = (id: number, checked: boolean) => {
-    setSelectedItems(prev => {
-      const newSelection = checked 
-        ? [...prev, id]
-        : prev.filter(itemId => itemId !== id);
-      
-      setSelectAll(newSelection.length === filteredData.length && filteredData.length > 0);
-      return newSelection;
-    });
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    setSelectAll(checked);
-    if (checked) {
-      setSelectedItems(filteredData.map(item => item.id));
-    } else {
-      setSelectedItems([]);
-    }
-  };
-
   return (
     <div className="p-6 min-h-screen">
       {/* Action Bar */}
@@ -210,14 +184,8 @@ export const VisitorManagementSetup = () => {
       <div className="bg-white rounded-lg border overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={selectAll}
-                  onCheckedChange={handleSelectAll}
-                />
-              </TableHead>
-              <TableHead>Action</TableHead>
+            <TableRow className="bg-[#f6f4ee]">
+              <TableHead className="w-20">Actions</TableHead>
               <TableHead className="w-16">ID</TableHead>
               <TableHead className="min-w-[300px]">Society</TableHead>
               <TableHead className="w-32">Tower</TableHead>
@@ -233,31 +201,21 @@ export const VisitorManagementSetup = () => {
             {filteredData.map((item) => (
               <TableRow key={item.id} className="hover:bg-gray-50">
                 <TableCell>
-                  <Checkbox
-                    checked={selectedItems.includes(item.id)}
-                    onCheckedChange={(checked) => handleSelectItem(item.id, checked as boolean)}
-                  />
-                </TableCell>
-                <TableCell>
                   <div className="flex gap-2">
-                    <div title="View">
-                      <Eye 
-                        className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
-                        onClick={() => handleView(item.id)}
-                      />
-                    </div>
-                    <div title="Edit">
-                      <Edit 
-                        className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
-                        onClick={() => handleEdit(item.id)}
-                      />
-                    </div>
-                    <div title="Delete">
-                      <Trash2 
-                        className="w-4 h-4 text-gray-600 cursor-pointer hover:text-red-600" 
-                        onClick={() => handleDelete(item.id)}
-                      />
-                    </div>
+                    <button
+                      onClick={() => handleEdit(item.id)}
+                      className="p-1 hover:bg-gray-100 rounded"
+                      title="Edit"
+                    >
+                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="p-1 hover:bg-gray-100 rounded"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
+                    </button>
                   </div>
                 </TableCell>
                 <TableCell className="font-medium">{item.id}</TableCell>
