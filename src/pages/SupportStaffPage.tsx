@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Search, RefreshCw, Grid3X3, Eye, Edit, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SupportStaffData {
@@ -20,7 +21,14 @@ export const SupportStaffPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStaff, setSelectedStaff] = useState<string[]>([]);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    categoryName: '',
+    days: '',
+    hours: '',
+    minutes: '',
+    selectedIcon: ''
+  });
 
   // Sample data matching the uploaded image structure
   const sampleStaff: SupportStaffData[] = [
@@ -92,28 +100,59 @@ export const SupportStaffPage = () => {
     setFilteredStaff(filtered);
   }, [searchTerm]);
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedStaff(filteredStaff.map(staff => staff.id));
-    } else {
-      setSelectedStaff([]);
-    }
+  const iconOptions = [
+    { id: '1', icon: '📦', name: 'Delivery' },
+    { id: '2', icon: '🚛', name: 'Logistics' },
+    { id: '3', icon: '🏥', name: 'Medical' },
+    { id: '4', icon: '🏪', name: 'Shop' },
+    { id: '5', icon: '👨‍⚕️', name: 'Doctor' },
+    { id: '6', icon: '🧑‍🔧', name: 'Technician' },
+    { id: '7', icon: '🧳', name: 'Travel' },
+    { id: '8', icon: '💺', name: 'Haircut' },
+    { id: '9', icon: '🧊', name: 'Appliance' },
+    { id: '10', icon: '🏦', name: 'Banking' },
+    { id: '11', icon: '🔧', name: 'Maintenance' },
+    { id: '12', icon: '👨‍💼', name: 'Business' },
+    { id: '13', icon: '👩‍⚕️', name: 'Nurse' },
+    { id: '14', icon: '📋', name: 'Admin' },
+    { id: '15', icon: '🛠️', name: 'Tools' },
+    { id: '16', icon: '👨‍🍳', name: 'Chef' },
+    { id: '17', icon: '👩‍💻', name: 'IT Support' },
+    { id: '18', icon: '📦', name: 'Package' },
+    { id: '19', icon: '👮‍♂️', name: 'Security' },
+    { id: '20', icon: '🧹', name: 'Cleaning' }
+  ];
+
+  const handleAdd = () => {
+    setIsAddModalOpen(true);
   };
 
-  const handleSelectStaff = (staffId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedStaff(prev => [...prev, staffId]);
-    } else {
-      setSelectedStaff(prev => prev.filter(id => id !== staffId));
-    }
-  };
-
-  const handleView = (staffId: string) => {
-    console.log(`Viewing support staff: ${staffId}`);
-    toast({
-      title: "View Support Staff",
-      description: `Viewing details for staff ID: ${staffId}`,
+  const handleModalClose = () => {
+    setIsAddModalOpen(false);
+    setFormData({
+      categoryName: '',
+      days: '',
+      hours: '',
+      minutes: '',
+      selectedIcon: ''
     });
+  };
+
+  const handleSubmit = () => {
+    if (!formData.categoryName) {
+      toast({
+        title: "Error",
+        description: "Please enter a category name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Support staff category created successfully",
+    });
+    handleModalClose();
   };
 
   const handleEdit = (staffId: string) => {
@@ -132,16 +171,9 @@ export const SupportStaffPage = () => {
     });
   };
 
-  const handleAdd = () => {
-    console.log('Adding new support staff');
-    toast({
-      title: "Add Support Staff",
-      description: "Opening add new support staff form",
-    });
-  };
-
   return (
-    <div className="p-6 min-h-screen">
+    <>
+      <div className="p-6 min-h-screen">
       {/* Action Bar */}
       <div className="flex items-center justify-between mb-6">
         <Button 
@@ -236,7 +268,90 @@ export const SupportStaffPage = () => {
           </div>
           <span className="font-semibold text-gray-800">LOCKATED</span>
         </div>
+        </div>
       </div>
-    </div>
+
+      {/* Add Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="text-lg font-semibold">Create</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleModalClose}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Category Name Input */}
+            <div>
+              <Input
+                placeholder="Enter Category Name"
+                value={formData.categoryName}
+                onChange={(e) => setFormData({...formData, categoryName: e.target.value})}
+                className="w-full"
+              />
+            </div>
+
+            {/* Time Inputs */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Input
+                  placeholder="Days"
+                  value={formData.days}
+                  onChange={(e) => setFormData({...formData, days: e.target.value})}
+                />
+              </div>
+              <div>
+                <Input
+                  placeholder="Hrs"
+                  value={formData.hours}
+                  onChange={(e) => setFormData({...formData, hours: e.target.value})}
+                />
+              </div>
+              <div>
+                <Input
+                  placeholder="Min"
+                  value={formData.minutes}
+                  onChange={(e) => setFormData({...formData, minutes: e.target.value})}
+                />
+              </div>
+            </div>
+
+            {/* Icon Selection Grid */}
+            <div className="grid grid-cols-6 gap-4">
+              {iconOptions.map((option) => (
+                <div
+                  key={option.id}
+                  className={`flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 ${
+                    formData.selectedIcon === option.id 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200'
+                  }`}
+                  onClick={() => setFormData({...formData, selectedIcon: option.id})}
+                >
+                  <div className="text-2xl mb-1">{option.icon}</div>
+                  <div className="text-xs text-center">{option.name}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleSubmit}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
