@@ -1,16 +1,13 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Edit, Copy, Printer, Rss, Home, ChevronRight, Download } from 'lucide-react';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { EditStatusDialog } from '@/components/EditStatusDialog';
+import { Edit, Copy, Printer, Rss, ArrowLeft } from 'lucide-react';
 
 export const ServicePRDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [showEditDialog, setShowEditDialog] = useState(false);
 
   // Mock data - in real app this would come from API based on ID
   const servicePRData = {
@@ -73,16 +70,17 @@ export const ServicePRDetailsPage = () => {
     }
   };
 
-  const handleEditClick = () => {
-    setShowEditDialog(true);
-  };
-
-  const handleClone = () => {
-    navigate(`/finance/service-pr/clone/${id}`);
-  };
-
-  const handleFeeds = () => {
-    navigate(`/finance/service-pr/feeds/${id}`);
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'bg-green-500 text-white';
+      case 'rejected':
+        return 'bg-red-500 text-white';
+      case 'pending':
+        return 'bg-yellow-500 text-black';
+      default:
+        return 'bg-gray-500 text-white';
+    }
   };
 
   const handlePrint = () => {
@@ -274,328 +272,330 @@ export const ServicePRDetailsPage = () => {
   };
 
   return (
-    <div className="p-6 mx-auto max-w-7xl">
+    <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
       {/* Breadcrumb */}
-      <div className="mb-6">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/" className="flex items-center gap-1">
-                <Home className="h-4 w-4" />
-                Home
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/finance">Finance</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/finance/service-pr">Service PR</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Service PR Details</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+      <div className="mb-2 text-sm text-gray-600">
+        <span 
+          className="cursor-pointer hover:text-[#C72030]" 
+          onClick={() => navigate('/finance/service-pr')}
+        >
+          Service PR
+        </span>
+        {' > '}
+        <span>Service PR Details</span>
       </div>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-semibold">Service PR Details</h1>
-          <div className={`px-3 py-1 text-sm rounded-md font-medium ${
-            servicePRData.adminApproval === 'Approved' 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-orange-100 text-orange-800'
-          }`}>
-            {servicePRData.adminApproval}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+        <div className="flex flex-col">
+          <h1 className="font-work-sans font-bold text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">
+            SERVICE PR DETAILS
+          </h1>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-gray-700">Admin Approval:</span>
+            <span className={`px-3 py-1 rounded text-xs font-medium ${getStatusColor(servicePRData.adminApproval)}`}>
+              {servicePRData.adminApproval}
+            </span>
           </div>
         </div>
         
-        {/* Action Buttons */}
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={handleClone}>
-            <Copy className="w-4 h-4 mr-2" />
-            Clone
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleFeeds}>
-            <Rss className="w-4 h-4 mr-2" />
-            Feeds
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-2" />
-            Print
-          </Button>
+        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
+          <span className={`px-4 py-2 rounded text-sm font-medium ${getStatusColor(servicePRData.adminApproval)}`}>
+            Status:- {servicePRData.adminApproval}
+          </span>
+          <div className="flex gap-2 flex-wrap">
+            <Button size="sm" variant="outline" className="border-gray-300">
+              <Edit className="w-4 h-4 mr-1" />
+              Edit
+            </Button>
+            <Button size="sm" variant="outline" className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700">
+              <Copy className="w-4 h-4 mr-1" />
+              Clone
+            </Button>
+            <Button size="sm" variant="outline" className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700" onClick={handlePrint}>
+              <Printer className="w-4 h-4 mr-1" />
+              Print
+            </Button>
+            <Button size="sm" variant="outline" className="border-gray-300">
+              <Rss className="w-4 h-4 mr-1" />
+              Feeds
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-6">
-        {/* Contact Information Card */}
-        <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">Contact Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Phone</span>
-                  <span className="font-medium">: {servicePRData.phone}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Email</span>
-                  <span className="font-medium">: {servicePRData.email}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">PAN</span>
-                  <span className="font-medium">: {servicePRData.pan}</span>
-                </div>
+      {/* Vendor/Contact Details Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Left side - Contact details */}
+          <div className="flex-1 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <span className="text-sm font-medium text-gray-700">Phone</span>
+                <span className="ml-8">: {servicePRData.phone}</span>
               </div>
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Fax</span>
-                  <span className="font-medium">: {servicePRData.fax}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">GST</span>
-                  <span className="font-medium">: {servicePRData.gst}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Address</span>
-                  <span className="font-medium">: {servicePRData.address}</span>
-                </div>
+              <div>
+                <span className="text-sm font-medium text-gray-700">Fax</span>
+                <span className="ml-12">: {servicePRData.fax}</span>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-700">Email</span>
+                <span className="ml-8">: {servicePRData.email}</span>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-700">GST</span>
+                <span className="ml-11">: {servicePRData.gst}</span>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-700">PAN</span>
+                <span className="ml-9">: {servicePRData.pan}</span>
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-700">Address</span>
+                <span className="ml-5">: {servicePRData.address}</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Service PR Card */}
-        <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">Service Purchase Request</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">SPR No.</span>
-                  <span className="font-medium">: {servicePRData.prNumber}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">SPR Date</span>
-                  <span className="font-medium">: {servicePRData.prDate}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Plant Detail</span>
-                  <span className="font-medium">: {servicePRData.plantDetail}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Address</span>
-                  <span className="font-medium">: {servicePRData.address}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Payment Tenure(Days)</span>
-                  <span className="font-medium">: {servicePRData.paymentTenure}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Retention(%)</span>
-                  <span className="font-medium">: {servicePRData.retention}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">TDS(%)</span>
-                  <span className="font-medium">: {servicePRData.tds}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">QC(%)</span>
-                  <span className="font-medium">: {servicePRData.qc}</span>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Reference No.</span>
-                  <span className="font-medium">: {servicePRData.referenceNo}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">ID</span>
-                  <span className="font-medium">: {servicePRData.id}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Contractor</span>
-                  <span className="font-medium">: {servicePRData.contractor}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Email</span>
-                  <span className="font-medium">: {servicePRData.email}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Work Category</span>
-                  <span className="font-medium">: {servicePRData.workCategory}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Advance Amount</span>
-                  <span className="font-medium">: {servicePRData.advanceAmount || 'NA'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Admin Approval</span>
-                  <span className="font-medium">: {servicePRData.adminApproval}</span>
-                </div>
-              </div>
+          {/* Center - Contractor name */}
+          <div className="flex flex-col items-center justify-center lg:min-w-[200px]">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">{servicePRData.contractor}</h2>
+            <div className="w-16 h-16 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
+              <span className="text-xs text-gray-500">image</span>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Services Table Card */}
-        <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">Services Table</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-border">
-                <thead>
-                  <tr className="bg-muted">
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">S No.</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">BOQ Details</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Quantity</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">UOM</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Expected Date</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Product Description</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Rate</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Wbs Code</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">CGST Rate(%)</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">CGST Amount</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">SGST Rate(%)</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">SGST Amount</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">IGST Rate(%)</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">IGST Amount</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">TCS Amount</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Tax Amount</th>
-                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Total Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {servicePRData.services.map((service, index) => (
-                    <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/50'}>
-                      <td className="border border-border px-3 py-2 text-sm">{service.sno}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.boqDetails}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.quantity}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.uom}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.expectedDate}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.productDescription}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.rate}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.wbsCode}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.cgstRate}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.cgstAmount}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.sgstRate}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.sgstAmount}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.igstRate}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.igstAmount}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.tcsAmount}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.taxAmount}</td>
-                      <td className="border border-border px-3 py-2 text-sm">{service.totalAmount}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            
-            {/* Net Amount Summary */}
-            <div className="mt-6 pt-4 border-t border-border">
-              <div className="flex justify-end">
-                <div className="text-right space-y-2">
-                  <div className="flex items-center gap-8">
-                    <span className="text-muted-foreground">Net Amount(INR):</span>
-                    <span className="font-semibold text-lg">₹{servicePRData.netAmount}</span>
-                  </div>
-                  <div className="flex items-center gap-8">
-                    <span className="text-muted-foreground">Total Taxable Value:</span>
-                    <span className="font-medium">₹{servicePRData.totalTaxableValue}</span>
-                  </div>
-                  <div className="flex items-center gap-8">
-                    <span className="text-muted-foreground">Taxes (INR):</span>
-                    <span className="font-medium">₹{servicePRData.taxes}</span>
-                  </div>
-                  <div className="flex items-center gap-8">
-                    <span className="text-muted-foreground">Total Value (INR):</span>
-                    <span className="font-semibold text-lg">₹{servicePRData.totalValue}</span>
-                  </div>
-                  <div className="pt-2 border-t border-border">
-                    <div className="flex items-start gap-4">
-                      <span className="text-muted-foreground whitespace-nowrap">Amount in Words:</span>
-                      <span className="font-medium italic">{servicePRData.amountInWords}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Attachments Card */}
-        <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">Attachments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-muted-foreground">{servicePRData.attachments}</div>
-          </CardContent>
-        </Card>
-
-        {/* Terms & Conditions Card */}
-        <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">Terms & Conditions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm">{servicePRData.termsConditions}</p>
-              <p className="text-sm font-medium">For Jyoti Tower We Confirm & Accept</p>
-              <div className="pt-4 border-t border-border">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm"><span className="font-medium">PREPARED BY:</span> {servicePRData.preparedBy}</p>
-                    <p className="text-sm mt-2"><span className="font-medium">SIGNATURE:</span></p>
-                  </div>
-                  <div className="text-center">
-                    <div className="w-32 h-16 border-2 border-dashed border-muted-foreground rounded bg-muted/20 flex items-center justify-center mb-2">
-                      <span className="text-muted-foreground text-xs">Signature Area</span>
-                    </div>
-                    <div className="border-t-2 border-foreground w-24 mx-auto mb-1"></div>
-                    <span className="text-xs font-medium">Authorised Signatory</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* SAP Response Card */}
-        <Card className="shadow-sm border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">SAP Response</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex">
-                <span className="text-muted-foreground w-20">Code:</span>
-                <span className="font-medium">{servicePRData.sapResponse.code || 'N/A'}</span>
-              </div>
-              <div className="flex">
-                <span className="text-muted-foreground w-20">Message:</span>
-                <span className="font-medium">{servicePRData.sapResponse.message}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      {/* Edit Status Dialog */}
-      <EditStatusDialog 
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-      />
+      {/* Service PR Details Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
+          Service Purchase Request ({servicePRData.adminApproval})
+        </h3>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
+          {/* Left Column */}
+          <div className="space-y-4">
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-40">SPR Number</span>
+              <span className="text-sm">: {servicePRData.prNumber || '-'}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-40">SPR Date</span>
+              <span className="text-sm">: {servicePRData.prDate}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-40">Kind Attention</span>
+              <span className="text-sm">: {servicePRData.kindAttention || '-'}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-40">Subject</span>
+              <span className="text-sm">: {servicePRData.subject || '-'}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-40">Related To</span>
+              <span className="text-sm">: {servicePRData.relatedTo || '-'}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-40">Payment Tenure(In Days)</span>
+              <span className="text-sm">: {servicePRData.paymentTenure || '-'}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-40">Retention(%)</span>
+              <span className="text-sm">: {servicePRData.retention || '-'}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-40">TDS(%)</span>
+              <span className="text-sm">: {servicePRData.tds || '-'}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-40">QC(%)</span>
+              <span className="text-sm">: {servicePRData.qc || '-'}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-40">Advance Amount</span>
+              <span className="text-sm">: {servicePRData.advanceAmount || '-'}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-40">Description</span>
+              <span className="text-sm">: {servicePRData.description || '-'}</span>
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-4">
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-32">Reference No.</span>
+              <span className="text-sm">: {servicePRData.referenceNo}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-32">ID</span>
+              <span className="text-sm">: {servicePRData.id}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-32">Contractor</span>
+              <span className="text-sm">: {servicePRData.contractor}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-32">Address</span>
+              <span className="text-sm">: {servicePRData.address}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-32">Phone</span>
+              <span className="text-sm">: {servicePRData.phone}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-32">Email</span>
+              <span className="text-sm">: {servicePRData.email}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-32">GST</span>
+              <span className="text-sm">: {servicePRData.gst}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-32">PAN</span>
+              <span className="text-sm">: {servicePRData.pan}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-32">Work Category</span>
+              <span className="text-sm">: {servicePRData.workCategory}</span>
+            </div>
+            <div className="flex">
+              <span className="text-sm font-medium text-gray-700 w-32">Plant Detail</span>
+              <span className="text-sm">: {servicePRData.plantDetail}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Service Items Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Items Details</h3>
+        <div className="overflow-x-auto">
+          <Table className="min-w-[1200px]">
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="font-semibold text-xs">S.No</TableHead>
+                <TableHead className="font-semibold text-xs">BOQ Details</TableHead>
+                <TableHead className="font-semibold text-xs">Quantity</TableHead>
+                <TableHead className="font-semibold text-xs">UOM</TableHead>
+                <TableHead className="font-semibold text-xs">Expected Date</TableHead>
+                <TableHead className="font-semibold text-xs">Product Description</TableHead>
+                <TableHead className="font-semibold text-xs">Rate</TableHead>
+                <TableHead className="font-semibold text-xs">Wbs Code</TableHead>
+                <TableHead className="font-semibold text-xs">CGST Rate(%)</TableHead>
+                <TableHead className="font-semibold text-xs">CGST Amount</TableHead>
+                <TableHead className="font-semibold text-xs">SGST Rate(%)</TableHead>
+                <TableHead className="font-semibold text-xs">SGST Amount</TableHead>
+                <TableHead className="font-semibold text-xs">IGST Rate(%)</TableHead>
+                <TableHead className="font-semibold text-xs">IGST Amount</TableHead>
+                <TableHead className="font-semibold text-xs">TCS Amount</TableHead>
+                <TableHead className="font-semibold text-xs">Tax Amount</TableHead>
+                <TableHead className="font-semibold text-xs">Total Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {servicePRData.services.map((item) => (
+                <TableRow key={item.sno} className="hover:bg-gray-50">
+                  <TableCell className="text-sm">{item.sno}</TableCell>
+                  <TableCell className="text-sm">{item.boqDetails}</TableCell>
+                  <TableCell className="text-sm">{item.quantity}</TableCell>
+                  <TableCell className="text-sm">{item.uom}</TableCell>
+                  <TableCell className="text-sm">{item.expectedDate}</TableCell>
+                  <TableCell className="text-sm">{item.productDescription}</TableCell>
+                  <TableCell className="text-sm">{item.rate.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.wbsCode}</TableCell>
+                  <TableCell className="text-sm">{item.cgstRate.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.cgstAmount.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.sgstRate.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.sgstAmount.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.igstRate.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.igstAmount.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.tcsAmount.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.taxAmount.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm font-medium">{item.totalAmount.toFixed(2)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Summary Section */}
+        <div className="mt-6 border-t pt-4">
+          <div className="flex justify-between items-center py-2">
+            <span className="font-medium text-gray-700">Net Amount (INR):</span>
+            <span className="font-medium">{servicePRData.netAmount}</span>
+          </div>
+          <div className="flex justify-between items-center py-2">
+            <span className="font-medium text-gray-700">Total Taxable Value Of Service PR:</span>
+            <span className="font-medium">{servicePRData.totalTaxableValue.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center py-2">
+            <span className="font-medium text-gray-700">Taxes (INR):</span>
+            <span className="font-medium">{servicePRData.taxes.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center py-2 border-t">
+            <span className="font-semibold text-gray-900">Total Service PR Value (INR):</span>
+            <span className="font-semibold">{servicePRData.totalValue.toFixed(2)}</span>
+          </div>
+          <div className="mt-4">
+            <span className="font-medium text-gray-700">Amount In Words: </span>
+            <span className="text-gray-900">{servicePRData.amountInWords}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Terms & Conditions Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Terms & Conditions :</h3>
+        <p className="text-gray-700">{servicePRData.termsConditions}</p>
+        
+        <div className="mt-6">
+          <p className="text-gray-900 font-medium">For {servicePRData.contractor} We Confirm & Accept,</p>
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <p className="font-medium text-gray-900">PREPARED BY: {servicePRData.preparedBy}</p>
+          </div>
+          <div>
+            <p className="font-medium text-gray-900">SIGNATURE: {servicePRData.signature || '-'}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Attachments Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Attachments</h3>
+        <p className="text-gray-500">{servicePRData.attachments}</p>
+      </div>
+
+      {/* SAP Response Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">SAP Response</h3>
+        <div className="space-y-2">
+          <div className="flex">
+            <span className="text-gray-700 font-medium w-20">Code:</span>
+            <span className="text-gray-900">{servicePRData.sapResponse.code || '-'}</span>
+          </div>
+          <div className="flex">
+            <span className="text-gray-700 font-medium w-20">Message:</span>
+            <span className="text-gray-900">{servicePRData.sapResponse.message}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Back Button */}
+      <div className="mt-6">
+        <Button 
+          variant="outline" 
+          onClick={() => navigate('/finance/service-pr')}
+          className="border-gray-300"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Service PR
+        </Button>
+      </div>
     </div>
   );
 };
