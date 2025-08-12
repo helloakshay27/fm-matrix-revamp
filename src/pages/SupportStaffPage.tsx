@@ -156,11 +156,7 @@ export const SupportStaffPage = () => {
   };
 
   const handleEdit = (staffId: string) => {
-    console.log(`Editing support staff: ${staffId}`);
-    toast({
-      title: "Edit Support Staff",
-      description: `Editing staff ID: ${staffId}`,
-    });
+    navigate(`/security/visitor-management/support-staff/edit/${staffId}`);
   };
 
   const handleDelete = (staffId: string) => {
