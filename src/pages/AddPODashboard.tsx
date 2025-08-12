@@ -92,13 +92,12 @@ export const AddPODashboard = () => {
     };
     setItems([...items, newItem]);
   };
-
   const updateItem = (itemId: number, field: string, value: string) => {
-    setItems(items.map(item => 
-      item.id === itemId ? { ...item, [field]: value } : item
-    ));
+    setItems(items.map(item => item.id === itemId ? {
+      ...item,
+      [field]: value
+    } : item));
   };
-
   const removeItem = (itemId: number) => {
     setItems(items.filter(item => item.id !== itemId));
   };
@@ -299,70 +298,49 @@ export const AddPODashboard = () => {
               </Button>
 
               <div className="space-y-4">
-                {items.map((item, index) => (
-                  <div key={item.id} className="border rounded-lg p-4 bg-gray-50">
+                {items.map((item, index) => <div key={item.id} className="border rounded-lg p-4 bg-gray-50">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-sm font-medium text-gray-700">Item {index + 1}</h3>
-                      {items.length > 1 && (
-                        <IconButton
-                          onClick={() => removeItem(item.id)}
-                          size="small"
-                          className="text-red-600 hover:bg-red-100"
-                        >
+                      {items.length > 1 && <IconButton onClick={() => removeItem(item.id)} size="small" className="text-red-600 hover:bg-red-100">
                           <X className="w-4 h-4" />
-                        </IconButton>
-                      )}
+                        </IconButton>}
                     </div>
                     
                     <div className="grid grid-cols-3 gap-4">
                       {/* Row 1 */}
-                      <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <FormControl fullWidth variant="outlined" sx={{
+                    mt: 1
+                  }}>
                         <InputLabel shrink>Item Details</InputLabel>
-                        <MuiSelect
-                          label="Item Details"
-                          value={item.itemDetails}
-                          onChange={e => updateItem(item.id, 'itemDetails', e.target.value)}
-                          displayEmpty
-                          sx={fieldStyles}
-                        >
+                        <MuiSelect label="Item Details" value={item.itemDetails} onChange={e => updateItem(item.id, 'itemDetails', e.target.value)} displayEmpty sx={fieldStyles}>
                           <MenuItem value=""><em>Select...</em></MenuItem>
                           <MenuItem value="Carpet Brush">Carpet Brush</MenuItem>
                           <MenuItem value="Floor Cleaner">Floor Cleaner</MenuItem>
                         </MuiSelect>
                       </FormControl>
 
-                      <TextField
-                        label="SAC/HSN Code"
-                        value={item.sacHsnCode}
-                        onChange={e => updateItem(item.id, 'sacHsnCode', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="SAC/HSN Code" value={item.sacHsnCode} onChange={e => updateItem(item.id, 'sacHsnCode', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
-                      <TextField
-                        label="Quantity"
-                        value={item.quantity}
-                        onChange={e => updateItem(item.id, 'quantity', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="Quantity" value={item.quantity} onChange={e => updateItem(item.id, 'quantity', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
                       {/* Row 2 */}
-                      <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <FormControl fullWidth variant="outlined" sx={{
+                    mt: 1
+                  }}>
                         <InputLabel shrink>Select Unit</InputLabel>
-                        <MuiSelect
-                          label="Select Unit"
-                          value={item.unit}
-                          onChange={e => updateItem(item.id, 'unit', e.target.value)}
-                          displayEmpty
-                          sx={fieldStyles}
-                        >
+                        <MuiSelect label="Select Unit" value={item.unit} onChange={e => updateItem(item.id, 'unit', e.target.value)} displayEmpty sx={fieldStyles}>
                           <MenuItem value=""><em>Select...</em></MenuItem>
                           <MenuItem value="Piece">Piece</MenuItem>
                           <MenuItem value="Kg">Kg</MenuItem>
@@ -370,156 +348,115 @@ export const AddPODashboard = () => {
                         </MuiSelect>
                       </FormControl>
 
-                      <TextField
-                        label="Expected Date"
-                        type="date"
-                        value={item.expectedDate}
-                        onChange={e => updateItem(item.id, 'expectedDate', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="Expected Date" type="date" value={item.expectedDate} onChange={e => updateItem(item.id, 'expectedDate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
-                      <TextField
-                        label="Rate"
-                        value={item.rate}
-                        onChange={e => updateItem(item.id, 'rate', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="Rate" value={item.rate} onChange={e => updateItem(item.id, 'rate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
                       {/* Row 3 */}
-                      <TextField
-                        label="CGST Rate"
-                        value={item.cgstRate}
-                        onChange={e => updateItem(item.id, 'cgstRate', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="CGST Rate" value={item.cgstRate} onChange={e => updateItem(item.id, 'cgstRate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
-                      <TextField
-                        label="CGST Amt"
-                        value={item.cgstAmount}
-                        onChange={e => updateItem(item.id, 'cgstAmount', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="CGST Amt" value={item.cgstAmount} onChange={e => updateItem(item.id, 'cgstAmount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
-                      <TextField
-                        label="SGST Rate"
-                        value={item.sgstRate}
-                        onChange={e => updateItem(item.id, 'sgstRate', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="SGST Rate" value={item.sgstRate} onChange={e => updateItem(item.id, 'sgstRate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
                       {/* Row 4 */}
-                      <TextField
-                        label="SGST Amount"
-                        value={item.sgstAmount}
-                        onChange={e => updateItem(item.id, 'sgstAmount', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="SGST Amount" value={item.sgstAmount} onChange={e => updateItem(item.id, 'sgstAmount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
-                      <TextField
-                        label="IGST Rate"
-                        value={item.igstRate}
-                        onChange={e => updateItem(item.id, 'igstRate', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="IGST Rate" value={item.igstRate} onChange={e => updateItem(item.id, 'igstRate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
-                      <TextField
-                        label="IGST Amount"
-                        value={item.igstAmount}
-                        onChange={e => updateItem(item.id, 'igstAmount', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="IGST Amount" value={item.igstAmount} onChange={e => updateItem(item.id, 'igstAmount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
                       {/* Row 5 */}
-                      <TextField
-                        label="TCS Rate"
-                        value={item.tcsRate}
-                        onChange={e => updateItem(item.id, 'tcsRate', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="TCS Rate" value={item.tcsRate} onChange={e => updateItem(item.id, 'tcsRate', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
-                      <TextField
-                        label="TCS Amount"
-                        value={item.tcsAmount}
-                        onChange={e => updateItem(item.id, 'tcsAmount', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="TCS Amount" value={item.tcsAmount} onChange={e => updateItem(item.id, 'tcsAmount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
-                      <TextField
-                        label="Tax Amount"
-                        value={item.taxAmount}
-                        onChange={e => updateItem(item.id, 'taxAmount', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="Tax Amount" value={item.taxAmount} onChange={e => updateItem(item.id, 'taxAmount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
                       {/* Row 6 */}
-                      <TextField
-                        label="Amount"
-                        value={item.amount}
-                        onChange={e => updateItem(item.id, 'amount', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="Amount" value={item.amount} onChange={e => updateItem(item.id, 'amount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
 
-                      <TextField
-                        label="Total Amount"
-                        value={item.totalAmount}
-                        onChange={e => updateItem(item.id, 'totalAmount', e.target.value)}
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                      <TextField label="Total Amount" value={item.totalAmount} onChange={e => updateItem(item.id, 'totalAmount', e.target.value)} fullWidth variant="outlined" InputLabelProps={{
+                    shrink: true
+                  }} InputProps={{
+                    sx: fieldStyles
+                  }} sx={{
+                    mt: 1
+                  }} />
                     </div>
-                  </div>
-                ))}
+                  </div>)}
               </div>
             </div>
 
@@ -532,23 +469,13 @@ export const AddPODashboard = () => {
                 <h2 className="text-lg font-semibold text-gray-800">ATTACHMENTS</h2>
               </div>
 
-              <div 
-                className="border-2 border-dashed border-yellow-400 rounded-lg p-12 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                onClick={() => document.getElementById('file-upload')?.click()}
-              >
+              <div className="border-2 border-dashed border-yellow-400 rounded-lg p-12 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer" onClick={() => document.getElementById('file-upload')?.click()}>
                 <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600 text-lg">
                   Drag & Drop or Click to Upload{' '}
                   <span className="text-gray-500">No images chosen</span>
                 </p>
-                <input
-                  id="file-upload"
-                  type="file"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  multiple
-                  accept="image/*,.pdf,.doc,.docx"
-                />
+                <input id="file-upload" type="file" onChange={handleFileChange} className="hidden" multiple accept="image/*,.pdf,.doc,.docx" />
               </div>
             </div>
           </div>
@@ -556,10 +483,7 @@ export const AddPODashboard = () => {
           {/* Right Column - Summary */}
           <div className="space-y-6">
             {/* Total Amount */}
-            <div className="bg-white p-6 rounded-lg shadow border">
-              <h3 className="text-lg font-semibold text-[#C72030] mb-4">Total Amount</h3>
-              <div className="text-3xl font-bold text-[#C72030]">₹2,360.00</div>
-            </div>
+            
 
             {/* Submit Button */}
             <div className="bg-white p-6 rounded-lg shadow border">
