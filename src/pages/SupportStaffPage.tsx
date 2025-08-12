@@ -176,8 +176,8 @@ export const SupportStaffPage = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-[#f6f4ee]">
-              <TableHead className="w-20">Actions</TableHead>
               <TableHead className="w-20">S.No.</TableHead>
+              <TableHead className="w-20">Actions</TableHead>
               <TableHead className="min-w-[200px]">Name</TableHead>
               <TableHead className="w-40">Estimated time</TableHead>
               <TableHead className="w-48">Created On</TableHead>
@@ -187,6 +187,9 @@ export const SupportStaffPage = () => {
           <TableBody>
             {filteredStaff.map((staff) => (
               <TableRow key={staff.id} className="hover:bg-gray-50">
+                <TableCell className="font-medium">
+                  {staff.sNo}
+                </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <button
@@ -204,9 +207,6 @@ export const SupportStaffPage = () => {
                       <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
                     </button>
                   </div>
-                </TableCell>
-                <TableCell className="font-medium">
-                  {staff.sNo}
                 </TableCell>
                 <TableCell className="font-medium">
                   {staff.name}
