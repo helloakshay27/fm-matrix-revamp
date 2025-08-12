@@ -119,6 +119,7 @@ import { VisitorFormPage } from './pages/VisitorFormPage';
 import { VisitorManagementSetup } from './pages/VisitorManagementSetup';
 import { AddVisitorGatePage } from './pages/AddVisitorGatePage';
 import { EditVisitorGatePage } from './pages/EditVisitorGatePage';
+import { SupportStaffPage } from './pages/SupportStaffPage';
 
 // Import new dashboard pages
 import { IncidentDashboard } from './pages/IncidentDashboard';
@@ -841,6 +842,7 @@ function App() {
                 <Route path="/security/visitor-management/setup" element={<VisitorManagementSetup />} />
                 <Route path="/security/visitor-management/add-gate" element={<AddVisitorGatePage />} />
                 <Route path="/security/visitor-management/edit/:id" element={<EditVisitorGatePage />} />
+                <Route path="/security/visitor-management/support-staff" element={<SupportStaffPage />} />
                 <Route path="/security/staff" element={<StaffsDashboard />} />
                 <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
                 <Route path="/security/staff/edit/:id" element={<EditStaffPage />} />
