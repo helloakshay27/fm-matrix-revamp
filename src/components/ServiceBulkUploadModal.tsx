@@ -79,7 +79,6 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
       } else {
         toast.success('Upload successful');
         onClose();
-        window.location.reload();
       }
     } catch (error) {
       console.error('Upload failed:', error);
