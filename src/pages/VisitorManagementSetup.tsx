@@ -4,7 +4,9 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Switch } from '../components/ui/switch';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface VisitorGateData {
   id: number;
@@ -22,9 +24,9 @@ export const VisitorManagementSetup = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'smartsecure' | 'quikgate'>('smartsecure');
-
-  // Sample data based on the image
-  const visitorGateData: VisitorGateData[] = [
+  
+  // Sample data with state management
+  const [visitorGateData, setVisitorGateData] = useState<VisitorGateData[]>([
     {
       id: 1256,
       society: 'Zycus Infotech - Zycus Infotech Pvt Ltd',
@@ -124,7 +126,7 @@ export const VisitorManagementSetup = () => {
       active: true,
       createdBy: 'Mahendra Lungare'
     }
-  ];
+  ]);
 
   const filteredData = visitorGateData.filter(item =>
     item.society.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -135,8 +137,17 @@ export const VisitorManagementSetup = () => {
   );
 
   const handleStatusToggle = (id: number, field: 'status' | 'active') => {
-    // Handle toggle logic here
-    console.log(`Toggling ${field} for ID: ${id}`);
+    setVisitorGateData(prevData => 
+      prevData.map(item => 
+        item.id === id 
+          ? { ...item, [field]: !item[field] }
+          : item
+      )
+    );
+    
+    const updatedItem = visitorGateData.find(item => item.id === id);
+    const newValue = updatedItem ? !updatedItem[field] : false;
+    toast.success(`${field === 'status' ? 'Status' : 'Active state'} updated to ${newValue ? 'enabled' : 'disabled'}`);
   };
 
   const handleEdit = (id: number) => {
@@ -144,7 +155,8 @@ export const VisitorManagementSetup = () => {
   };
 
   const handleDelete = (id: number) => {
-    console.log(`Deleting ID: ${id}`);
+    setVisitorGateData(prevData => prevData.filter(item => item.id !== id));
+    toast.success('Visitor gate deleted successfully');
   };
 
   const handleAdd = () => {
@@ -211,13 +223,30 @@ export const VisitorManagementSetup = () => {
                     >
                       <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
                     </button>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
-                    </button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <button
+                          className="p-1 hover:bg-gray-100 rounded"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
+                        </button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the visitor gate entry.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(item.id)}>
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </TableCell>
                 <TableCell className="font-medium">{item.id}</TableCell>
