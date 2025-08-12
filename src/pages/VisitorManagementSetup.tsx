@@ -151,32 +151,6 @@ export const VisitorManagementSetup = () => {
 
   return (
     <div className="p-6 bg-[#f6f4ee] min-h-screen">
-      {/* Header Tabs */}
-      <div className="mb-6">
-        <div className="flex border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab('smartsecure')}
-            className={`px-6 py-3 font-medium text-sm ${
-              activeTab === 'smartsecure'
-                ? 'text-[#1a1a1a] border-b-2 border-[#C72030]'
-                : 'text-gray-500 hover:text-[#1a1a1a]'
-            }`}
-          >
-            SmartSecure
-          </button>
-          <button
-            onClick={() => setActiveTab('quikgate')}
-            className={`px-6 py-3 font-medium text-sm ${
-              activeTab === 'quikgate'
-                ? 'text-[#1a1a1a] border-b-2 border-[#C72030]'
-                : 'text-gray-500 hover:text-[#1a1a1a]'
-            }`}
-          >
-            Quikgate
-          </button>
-        </div>
-      </div>
-
       {/* Action Bar */}
       <div className="flex items-center justify-between mb-6">
         <Button 
