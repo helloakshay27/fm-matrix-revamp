@@ -159,6 +159,7 @@ import { DesignInsightsDashboard } from './pages/DesignInsightsDashboard';
 import { AddDesignInsightDashboard } from './pages/AddDesignInsightDashboard';
 import { DesignInsightDetailsDashboard } from './pages/DesignInsightDetailsDashboard';
 import { EditDesignInsightDashboard } from './pages/EditDesignInsightDashboard';
+import { HOTODashboard } from './pages/HOTODashboard';
 
 // Import Security pages  
 import { VehicleParkingDashboard } from './pages/VehicleParkingDashboard';
@@ -622,6 +623,7 @@ function App() {
                 {/* Snagging Routes */}
                 <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
                 <Route path="/transitioning/snagging/details/:id" element={<SnaggingDetailsPage />} />
+                <Route path="/transitioning/hoto" element={<HOTODashboard />} />
 
                 {/* Design Insights Routes */}
                 <Route path="/transitioning/design-insight" element={<DesignInsightsDashboard />} />
