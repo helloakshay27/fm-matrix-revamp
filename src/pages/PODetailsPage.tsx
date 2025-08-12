@@ -417,11 +417,6 @@ export const PODetailsPage = () => {
       </div>
         
       {/* Terms & Conditions Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Terms & Conditions:</h3>
-        <ol className="list-decimal list-inside">
-          <li>Tested</li>
-        </ol>
-      </div>
+      
     </div>;
 };
