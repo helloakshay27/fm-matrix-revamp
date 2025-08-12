@@ -344,21 +344,21 @@ export const PODetailsPage = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <div className="space-y-6">
           <div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Terms & Conditions :</h3>
-            <p className="text-lg text-gray-700 mb-8">NA</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Notes:</h3>
+            <p className="text-gray-700 ml-4">NA</p>
           </div>
           
-          <div className="mb-8">
-            <p className="text-lg text-gray-900 font-medium">For jyoti We Confirm & Accept,</p>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Terms & Conditions:</h3>
+            <p className="text-gray-700 ml-4">NA</p>
           </div>
           
-          <div className="flex justify-between items-center pt-6 border-t border-gray-200">
-            <div>
-              <p className="text-lg font-semibold text-gray-900">PREPARED BY: Robert Day2</p>
-            </div>
-            <div>
-              <p className="text-lg font-semibold text-gray-900">SIGNATURE:</p>
-            </div>
+          <div className="border-t border-gray-200 pt-6">
+            <p className="text-gray-900 font-medium mb-8">For NA we Confirm & Accept,</p>
+          </div>
+          
+          <div>
+            <p className="text-gray-900 font-medium">Authorised Signatory</p>
           </div>
         </div>
       </div>
