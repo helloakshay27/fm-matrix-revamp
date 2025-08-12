@@ -10,53 +10,32 @@ import { EditPatrollingModal } from '@/components/EditPatrollingModal';
 import { DeletePatrollingModal } from '@/components/DeletePatrollingModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { TicketPagination } from '@/components/TicketPagination';
 
 const patrollingData = [
-  {
-    id: 1,
-    site: 'Site - Localized Site 1',
-    building: 'Building - HDFC Ergo Bharti',
-    wing: 'Wing - Wing 1',
-    floor: 'Floor - Floor 1',
-    room: 'Room - Room 1',
-    location: 'Site - Localized Site 1 / Building - HDFC Ergo Bharti / Wing - Wing 1 / Floor - Floor 1 / Room - Room 1',
-    scheduledTime: '8:00 AM, 11:00 AM, 2:00 PM, 5:00 PM, 8:00 PM, 11:00 PM',
-    createdOn: '15/04/2024',
-    startDate: '15/04/2024',
-    endDate: '30/04/2024',
-    graceTime: '',
-    activeInactive: true,
-    qrCode: '1234567890'
-  },
-  {
-    id: 2,
-    site: 'Site - Localized Site 1',
-    building: 'Building - HDFC Ergo Bharti',
-    wing: 'Wing - Wing 1',
-    floor: 'Floor - Floor 1',
-    room: 'Room - NA',
-    location: 'Site - Localized Site 1 / Building - HDFC Ergo Bharti / Wing - Wing 1 / Floor - Floor 1 / Room - NA',
-    scheduledTime: '8:00 AM, 11:00 AM, 2:00 PM, 5:00 PM, 8:00 PM, 11:00 PM',
-    createdOn: '22/02/2024',
-    startDate: '22/02/2024',
-    endDate: '',
-    graceTime: '',
-    activeInactive: true,
-    qrCode: '0987654321'
-  }
+  { id: 1, patrolName: 'Lobby Patrol', shiftType: 'Day', numCheckpoints: 8, validity: '15/04/2024 - 30/04/2024', graceTime: '15 min', status: true },
+  { id: 2, patrolName: 'Night Perimeter', shiftType: 'Night', numCheckpoints: 12, validity: '22/02/2024 -', graceTime: '10 min', status: true },
+  { id: 3, patrolName: 'Parking Deck', shiftType: 'Day', numCheckpoints: 6, validity: '01/05/2024 - 31/05/2024', graceTime: '5 min', status: false },
+  { id: 4, patrolName: 'Server Room', shiftType: 'General', numCheckpoints: 4, validity: 'Ongoing', graceTime: '10 min', status: true },
+  { id: 5, patrolName: 'Warehouse Loop', shiftType: 'Night', numCheckpoints: 10, validity: '01/06/2024 - 30/06/2024', graceTime: '20 min', status: true },
+  { id: 6, patrolName: 'Reception Rounds', shiftType: 'General', numCheckpoints: 5, validity: 'Ongoing', graceTime: '10 min', status: true },
+  { id: 7, patrolName: 'Roof Access', shiftType: 'Day', numCheckpoints: 3, validity: '15/03/2024 - 15/09/2024', graceTime: '5 min', status: false },
+  { id: 8, patrolName: 'Utilities Check', shiftType: 'Night', numCheckpoints: 7, validity: 'Ongoing', graceTime: '15 min', status: true },
+  { id: 9, patrolName: 'Perimeter East', shiftType: 'Day', numCheckpoints: 9, validity: 'Ongoing', graceTime: '10 min', status: true },
+  { id: 10, patrolName: 'Perimeter West', shiftType: 'Night', numCheckpoints: 9, validity: 'Ongoing', graceTime: '10 min', status: true },
+  { id: 11, patrolName: 'CCTV Hub', shiftType: 'General', numCheckpoints: 2, validity: '01/04/2024 - 01/10/2024', graceTime: '5 min', status: false },
+  { id: 12, patrolName: 'Loading Bay', shiftType: 'Day', numCheckpoints: 6, validity: 'Ongoing', graceTime: '15 min', status: true },
 ];
 
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-  { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
-  { key: 'location', label: 'Location', sortable: true, hideable: true, draggable: true },
-  { key: 'scheduledTime', label: 'Scheduled Time', sortable: true, hideable: true, draggable: true },
-  { key: 'createdOn', label: 'Created On', sortable: true, hideable: true, draggable: true },
-  { key: 'startDate', label: 'Start Date', sortable: true, hideable: true, draggable: true },
-  { key: 'endDate', label: 'End Date', sortable: true, hideable: true, draggable: true },
-  { key: 'graceTime', label: 'Grace Time(Hours)', sortable: true, hideable: true, draggable: true },
-  { key: 'activeInactive', label: 'Active/Inactive', sortable: true, hideable: true, draggable: true },
-  { key: 'qrCode', label: 'QR Code', sortable: false, hideable: true, draggable: true }
+  { key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false },
+  { key: 'patrolName', label: 'Patrol Name', sortable: true, hideable: true, draggable: true },
+  { key: 'shiftType', label: 'Shift Type', sortable: true, hideable: true, draggable: true },
+  { key: 'numCheckpoints', label: 'No. of Checkpoints', sortable: true, hideable: true, draggable: true },
+  { key: 'validity', label: 'Validity', sortable: true, hideable: true, draggable: true },
+  { key: 'graceTime', label: 'Grace Time', sortable: true, hideable: true, draggable: true },
+  { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true }
 ];
 
 export const PatrollingDashboard = () => {
@@ -68,6 +47,14 @@ export const PatrollingDashboard = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedPatrollingId, setSelectedPatrollingId] = useState<number | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const totalRecords = patrollingData.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / perPage));
+  const startIndex = (currentPage - 1) * perPage;
+  const endIndex = startIndex + perPage;
+  const displayedData = patrollingData.slice(startIndex, endIndex);
 
   // Render row function for enhanced table
   const renderRow = (patrol: any) => ({
@@ -96,31 +83,19 @@ export const PatrollingDashboard = () => {
         </button>
       </div>
     ),
-    location: (
-      <div className="max-w-xs">
-        <div className="truncate" title={patrol.location}>
-          {patrol.location}
-        </div>
-      </div>
-    ),
-    scheduledTime: patrol.scheduledTime,
-    createdOn: patrol.createdOn,
-    startDate: patrol.startDate,
-    endDate: patrol.endDate || '--',
+    patrolName: patrol.patrolName,
+    shiftType: patrol.shiftType,
+    numCheckpoints: patrol.numCheckpoints,
+    validity: patrol.validity || '--',
     graceTime: patrol.graceTime || '--',
-    activeInactive: (
+    status: (
       <input 
         type="checkbox" 
-        checked={patrol.activeInactive}
+        checked={patrol.status}
         className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
         readOnly
       />
     ),
-    qrCode: (
-      <button className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-xs hover:bg-gray-200">
-        {patrol.qrCode}
-      </button>
-    )
   });
 
   const handlePrintQR = () => {
@@ -157,11 +132,11 @@ export const PatrollingDashboard = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a] mb-6 uppercase">PATROLLING LIST</h1>
+      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-[#1a1a1a] mb-6">Patrolling List</h1>
       
       {/* Enhanced Table */}
       <EnhancedTable
-        data={patrollingData}
+        data={displayedData}
         columns={columns}
         renderRow={renderRow}
         enableSearch={true}
@@ -170,7 +145,7 @@ export const PatrollingDashboard = () => {
         storageKey="patrolling-table"
         emptyMessage="No patrolling data available"
         exportFileName="patrolling"
-        searchPlaceholder="Search by location, scheduled time, or QR code"
+        searchPlaceholder="Search Tickets"
         hideTableExport={false}
         hideColumnsButton={false}
         leftActions={
@@ -180,40 +155,24 @@ export const PatrollingDashboard = () => {
               className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Add
-            </Button>
-            <Button 
-              onClick={() => setIsBulkUploadOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Import
-            </Button>
-            <Button 
-              onClick={() => setIsExportOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
-            <Button 
-              onClick={handlePrintQR}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2"
-            >
-              <QrCode className="w-4 h-4 mr-2" />
-              Print QR
-            </Button>
-            <Button 
-              onClick={handlePrintAllQR}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2"
-            >
-              <Printer className="w-4 h-4 mr-2" />
-              Print All QR
+              New
             </Button>
           </div>
         }
         onFilterClick={() => setIsFilterOpen(true)}
       />
+
+      <div className="mt-4">
+        <TicketPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalRecords={totalRecords}
+          perPage={perPage}
+          isLoading={false}
+          onPageChange={setCurrentPage}
+          onPerPageChange={(val) => { setPerPage(val); setCurrentPage(1); }}
+        />
+      </div>
 
       <AddPatrollingModal 
         isOpen={isAddModalOpen}
