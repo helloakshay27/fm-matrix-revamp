@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { X, Plus, Type, CalendarRange, ListChecks, Clock, MapPin } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField, InputAdornment } from '@mui/material';
 
 export const PatrollingCreatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -27,11 +26,20 @@ export const PatrollingCreatePage: React.FC = () => {
     { building: '', wing: '', floor: '', area: '', room: '', shift: '' },
   ]);
 
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  } as const;
+
   const addQuestion = () => setQuestions(prev => [...prev, { task: '', inputType: '', mandatory: false }]);
   const addShift = () => setShifts(prev => [...prev, { name: '', start: '', end: '', assignee: '', supervisor: '' }]);
   const addCheckpoint = () => setCheckpoints(prev => [...prev, { building: '', wing: '', floor: '', area: '', room: '', shift: '' }]);
 
   const removeCheckpoint = (idx: number) => setCheckpoints(prev => prev.filter((_, i) => i !== idx));
+  const removeQuestion = (idx: number) => setQuestions(prev => prev.filter((_, i) => i !== idx));
+  const removeShift = (idx: number) => setShifts(prev => prev.filter((_, i) => i !== idx));
 
   const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
     <section className="bg-card rounded-lg border border-border shadow-sm">
@@ -59,7 +67,16 @@ export const PatrollingCreatePage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label className="mb-1 block">Name</Label>
-            <Input placeholder="Enter Name" value={patrolName} onChange={(e) => setPatrolName(e.target.value)} />
+            <TextField
+              label="Name"
+              placeholder="Enter Name"
+              value={patrolName}
+              onChange={(e) => setPatrolName(e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
           </div>
         </div>
       </Section>
@@ -68,15 +85,44 @@ export const PatrollingCreatePage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <Label className="mb-1 block">Start Date</Label>
-            <Input type="date" placeholder="Select Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            <TextField
+              type="date"
+              label="Start Date"
+              placeholder="Select Start Date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
           </div>
           <div>
             <Label className="mb-1 block">End Date</Label>
-            <Input type="date" placeholder="Select End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <TextField
+              type="date"
+              label="End Date"
+              placeholder="Select End Date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
           </div>
           <div>
             <Label className="mb-1 block">Grace Period</Label>
-            <Input placeholder="Enter Grace Period" value={grace} onChange={(e) => setGrace(e.target.value)} />
+            <TextField
+              label="Grace Period"
+              placeholder="Enter Grace Period"
+              value={grace}
+              onChange={(e) => setGrace(e.target.value)}
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
           </div>
         </div>
       </Section>
@@ -84,7 +130,17 @@ export const PatrollingCreatePage: React.FC = () => {
       <Section title="Question" icon={<ListChecks className="w-3.5 h-3.5" />}>
         <div className="space-y-4">
           {questions.map((q, idx) => (
-            <div key={idx} className="rounded-md border border-dashed bg-muted/30 p-4">
+            <div key={idx} className="relative rounded-md border border-dashed bg-muted/30 p-4">
+              {idx > 0 && (
+                <button
+                  type="button"
+                  onClick={() => removeQuestion(idx)}
+                  className="absolute -right-2 -top-2 rounded-full p-1 hover:bg-gray-100"
+                  aria-label="Remove question"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                 <div>
                   <Label className="mb-1 block">Mandatory</Label>
@@ -94,20 +150,33 @@ export const PatrollingCreatePage: React.FC = () => {
                 </div>
                 <div>
                   <Label className="mb-1 block">Task</Label>
-                  <Input placeholder="Enter Task" value={q.task} onChange={(e) => setQuestions(prev => prev.map((it, i) => i === idx ? { ...it, task: e.target.value } : it))} />
+                  <TextField
+                    label="Task"
+                    placeholder="Enter Task"
+                    value={q.task}
+                    onChange={(e) => setQuestions(prev => prev.map((it, i) => i === idx ? { ...it, task: e.target.value } : it))}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
                 </div>
                 <div>
-                  <Label className="mb-1 block">Input Type</Label>
-                  <Select value={q.inputType} onValueChange={(v) => setQuestions(prev => prev.map((it, i) => i === idx ? { ...it, inputType: v } : it))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Input Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="text">Text</SelectItem>
-                      <SelectItem value="number">Number</SelectItem>
-                      <SelectItem value="checkbox">Checkbox</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Input Type</InputLabel>
+                    <MuiSelect
+                      value={q.inputType}
+                      onChange={(e) => setQuestions(prev => prev.map((it, i) => i === idx ? { ...it, inputType: String(e.target.value) } : it))}
+                      label="Input Type"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Input Type</MenuItem>
+                      <MenuItem value="text">Text</MenuItem>
+                      <MenuItem value="number">Number</MenuItem>
+                      <MenuItem value="checkbox">Checkbox</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
               </div>
             </div>
@@ -123,42 +192,90 @@ export const PatrollingCreatePage: React.FC = () => {
       <Section title="Shift Setup" icon={<Clock className="w-3.5 h-3.5" />}>
         <div className="space-y-4">
           {shifts.map((s, idx) => (
-            <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <Label className="mb-1 block">Shift Name</Label>
-                <Input placeholder="Enter Shift Name" value={s.name} onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, name: e.target.value } : it))} />
-              </div>
-              <div>
-                <Label className="mb-1 block">Start Time</Label>
-                <Input type="time" value={s.start} onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, start: e.target.value } : it))} />
-              </div>
-              <div>
-                <Label className="mb-1 block">End Time</Label>
-                <Input type="time" value={s.end} onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, end: e.target.value } : it))} />
-              </div>
-              <div>
-                <Label className="mb-1 block">Assignee</Label>
-                <Select value={s.assignee} onValueChange={(v) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, assignee: v } : it))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Assignee" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="user1">User 1</SelectItem>
-                    <SelectItem value="user2">User 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="mb-1 block">Supervisor</Label>
-                <Select value={s.supervisor} onValueChange={(v) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, supervisor: v } : it))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Supervisor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sup1">Supervisor 1</SelectItem>
-                    <SelectItem value="sup2">Supervisor 2</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div key={idx} className="relative">
+              {idx > 0 && (
+                <button
+                  type="button"
+                  onClick={() => removeShift(idx)}
+                  className="absolute -right-2 -top-2 rounded-full p-1 hover:bg-gray-100"
+                  aria-label="Remove shift"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+              <p className="mb-3 text-sm font-medium text-muted-foreground">Shift {idx + 1}</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <Label className="mb-1 block">Shift Name</Label>
+                  <TextField
+                    label="Shift Name"
+                    placeholder="Enter Shift Name"
+                    value={s.name}
+                    onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, name: e.target.value } : it))}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+                </div>
+                <div>
+                  <Label className="mb-1 block">Start Time</Label>
+                  <TextField
+                    type="time"
+                    label="Start Time"
+                    value={s.start}
+                    onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, start: e.target.value } : it))}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+                </div>
+                <div>
+                  <Label className="mb-1 block">End Time</Label>
+                  <TextField
+                    type="time"
+                    label="End Time"
+                    value={s.end}
+                    onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, end: e.target.value } : it))}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                  />
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Assignee</InputLabel>
+                    <MuiSelect
+                      value={s.assignee}
+                      onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, assignee: String(e.target.value) } : it))}
+                      label="Assignee"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Assignee</MenuItem>
+                      <MenuItem value="user1">User 1</MenuItem>
+                      <MenuItem value="user2">User 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Supervisor</InputLabel>
+                    <MuiSelect
+                      value={s.supervisor}
+                      onChange={(e) => setShifts(prev => prev.map((it, i) => i === idx ? { ...it, supervisor: String(e.target.value) } : it))}
+                      label="Supervisor"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Supervisor</MenuItem>
+                      <MenuItem value="sup1">Supervisor 1</MenuItem>
+                      <MenuItem value="sup2">Supervisor 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
+                </div>
               </div>
             </div>
           ))}
@@ -187,77 +304,101 @@ export const PatrollingCreatePage: React.FC = () => {
               <p className="mb-3 text-sm font-medium text-muted-foreground">Checkpoint {idx + 1}</p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <Label className="mb-1 block">Building</Label>
-                  <Select value={c.building} onValueChange={(v) => setCheckpoints(prev => prev.map((it, i) => i === idx ? { ...it, building: v } : it))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Building" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="b1">Building 1</SelectItem>
-                      <SelectItem value="b2">Building 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Building</InputLabel>
+                    <MuiSelect
+                      value={c.building}
+                      onChange={(e) => setCheckpoints(prev => prev.map((it, i) => i === idx ? { ...it, building: String(e.target.value) } : it))}
+                      label="Building"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Building</MenuItem>
+                      <MenuItem value="b1">Building 1</MenuItem>
+                      <MenuItem value="b2">Building 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
-                  <Label className="mb-1 block">Wing</Label>
-                  <Select value={c.wing} onValueChange={(v) => setCheckpoints(prev => prev.map((it, i) => i === idx ? { ...it, wing: v } : it))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Wing" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="w1">Wing 1</SelectItem>
-                      <SelectItem value="w2">Wing 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Wing</InputLabel>
+                    <MuiSelect
+                      value={c.wing}
+                      onChange={(e) => setCheckpoints(prev => prev.map((it, i) => i === idx ? { ...it, wing: String(e.target.value) } : it))}
+                      label="Wing"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Wing</MenuItem>
+                      <MenuItem value="w1">Wing 1</MenuItem>
+                      <MenuItem value="w2">Wing 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
-                  <Label className="mb-1 block">Floor</Label>
-                  <Select value={c.floor} onValueChange={(v) => setCheckpoints(prev => prev.map((it, i) => i === idx ? { ...it, floor: v } : it))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Floor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="f1">Floor 1</SelectItem>
-                      <SelectItem value="f2">Floor 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Floor</InputLabel>
+                    <MuiSelect
+                      value={c.floor}
+                      onChange={(e) => setCheckpoints(prev => prev.map((it, i) => i === idx ? { ...it, floor: String(e.target.value) } : it))}
+                      label="Floor"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Floor</MenuItem>
+                      <MenuItem value="f1">Floor 1</MenuItem>
+                      <MenuItem value="f2">Floor 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
-                  <Label className="mb-1 block">Area</Label>
-                  <Select value={c.area} onValueChange={(v) => setCheckpoints(prev => prev.map((it, i) => i === idx ? { ...it, area: v } : it))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Area" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="a1">Area 1</SelectItem>
-                      <SelectItem value="a2">Area 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Area</InputLabel>
+                    <MuiSelect
+                      value={c.area}
+                      onChange={(e) => setCheckpoints(prev => prev.map((it, i) => i === idx ? { ...it, area: String(e.target.value) } : it))}
+                      label="Area"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Area</MenuItem>
+                      <MenuItem value="a1">Area 1</MenuItem>
+                      <MenuItem value="a2">Area 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
-                  <Label className="mb-1 block">Room</Label>
-                  <Select value={c.room} onValueChange={(v) => setCheckpoints(prev => prev.map((it, i) => i === idx ? { ...it, room: v } : it))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Room" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="r1">Room 1</SelectItem>
-                      <SelectItem value="r2">Room 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Room</InputLabel>
+                    <MuiSelect
+                      value={c.room}
+                      onChange={(e) => setCheckpoints(prev => prev.map((it, i) => i === idx ? { ...it, room: String(e.target.value) } : it))}
+                      label="Room"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Room</MenuItem>
+                      <MenuItem value="r1">Room 1</MenuItem>
+                      <MenuItem value="r2">Room 2</MenuItem>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
                 <div>
-                  <Label className="mb-1 block">Shift</Label>
-                  <Select value={c.shift} onValueChange={(v) => setCheckpoints(prev => prev.map((it, i) => i === idx ? { ...it, shift: v } : it))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Shift" />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <InputLabel shrink>Shift</InputLabel>
+                    <MuiSelect
+                      value={c.shift}
+                      onChange={(e) => setCheckpoints(prev => prev.map((it, i) => i === idx ? { ...it, shift: String(e.target.value) } : it))}
+                      label="Shift"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Shift</MenuItem>
                       {shifts.map((s, i) => (
-                        <SelectItem key={i} value={`shift-${i + 1}`}>Shift {i + 1}</SelectItem>
+                        <MenuItem key={i} value={`shift-${i + 1}`}>Shift {i + 1}</MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </MuiSelect>
+                  </FormControl>
                 </div>
               </div>
             </div>
