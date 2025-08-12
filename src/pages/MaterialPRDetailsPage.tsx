@@ -1,13 +1,14 @@
-
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate, useParams } from 'react-router-dom';
-import { Edit, Copy, Printer, Rss } from 'lucide-react';
-
+import { Edit, Copy, Printer, Rss, Home, ChevronRight, Download } from 'lucide-react';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 export const MaterialPRDetailsPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const {
+    id
+  } = useParams();
 
   // Mock data - in real app this would come from API based on id
   const prData = {
@@ -32,24 +33,22 @@ export const MaterialPRDetailsPage = () => {
     qc: '',
     netAmount: '1000.00',
     amountInWords: 'One Thousand Rupees Only',
-    items: [
-      {
-        sNo: 1,
-        item: 'A4 Size Papers 3',
-        availability: 'NA',
-        sacHsnCode: '',
-        expectedDate: '27/03/25',
-        productDescription: 'Test',
-        quantity: '10.0',
-        unit: 'Piece',
-        movingAvgRate: '',
-        rate: '100.00',
-        amount: '1000.00',
-        approvedQty: '10',
-        transferQty: '',
-        wbsCode: ''
-      }
-    ],
+    items: [{
+      sNo: 1,
+      item: 'A4 Size Papers 3',
+      availability: 'NA',
+      sacHsnCode: '',
+      expectedDate: '27/03/25',
+      productDescription: 'Test',
+      quantity: '10.0',
+      unit: 'Piece',
+      movingAvgRate: '',
+      rate: '100.00',
+      amount: '1000.00',
+      approvedQty: '10',
+      transferQty: '',
+      wbsCode: ''
+    }],
     attachments: 'No attachments',
     termsConditions: ['Test'],
     sapResponse: {
@@ -57,15 +56,12 @@ export const MaterialPRDetailsPage = () => {
       message: 'An internal server error occurred. The MPL ID for the failed message is : AGmImAmKt@pKgrTmKOa_VgGr_'
     }
   };
-
   const handleClone = () => {
     navigate(`/finance/material-pr/clone/${id}`);
   };
-
   const handleFeeds = () => {
     navigate(`/finance/material-pr/feeds/${id}`);
   };
-
   const handlePrint = () => {
     // Create a print-friendly version of the page
     const printContent = `
@@ -239,7 +235,6 @@ export const MaterialPRDetailsPage = () => {
         </body>
       </html>
     `;
-
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(printContent);
@@ -250,176 +245,148 @@ export const MaterialPRDetailsPage = () => {
       }, 250);
     }
   };
+  return <div className="p-6 mx-auto max-w-7xl">
+      {/* Breadcrumb */}
+      <div className="mb-6">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/" className="flex items-center gap-1">
+                <Home className="h-4 w-4" />
+                Home
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/finance">Finance</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/finance/material-pr">Material PR</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Material PR Details</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </div>
 
-  return (
-    <div className="p-6 mx-auto max-w-7xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold">WORK ORDER DETAILS</h1>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Level 1 Approval:</span>
-            <span className="px-3 py-1 bg-yellow-500 text-white text-sm rounded font-medium">
-              Pending
-            </span>
+          <h1 className="text-2xl font-semibold">Material PR Details</h1>
+          <div className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md font-medium">
+            {prData.adminApproval}
           </div>
         </div>
         
-        {/* Status and Action Buttons */}
+        {/* Action Buttons */}
         <div className="flex items-center gap-3">
-          <div className="px-4 py-2 bg-yellow-500 text-white rounded font-medium">
-            Status- Pending
-          </div>
-          <Button 
-            variant="outline"
-            className="border-red-500 text-red-500 hover:bg-red-50"
-            onClick={() => {}}
-          >
-            <Edit className="w-4 h-4 mr-2" />
-            Edit
-          </Button>
-          <Button 
-            variant="outline"
-            className="border-red-500 text-red-500 hover:bg-red-50"
-            onClick={handleClone}
-          >
+          <Button variant="outline" size="sm" onClick={handleClone}>
             <Copy className="w-4 h-4 mr-2" />
             Clone
           </Button>
-          <Button 
-            variant="outline"
-            className="border-red-500 text-red-500 hover:bg-red-50"
-            onClick={handlePrint}
-          >
-            <Printer className="w-4 h-4 mr-2" />
-            Print
-          </Button>
-          <Button 
-            variant="outline"
-            className="border-red-500 text-red-500 hover:bg-red-50"
-            onClick={handleFeeds}
-          >
+          <Button variant="outline" size="sm" onClick={handleFeeds}>
             <Rss className="w-4 h-4 mr-2" />
             Feeds
+          </Button>
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="w-4 h-4 mr-2" />
+            Print
           </Button>
         </div>
       </div>
 
       <div className="space-y-6">
         {/* Contact Information Card */}
-        <Card>
-          <CardContent className="p-6">
+        <Card className="shadow-sm border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-medium">Contact Information</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="grid grid-cols-2 gap-8">
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex">
-                  <span className="text-gray-600 w-24">Phone</span>
-                  <span className="font-medium">: 7239013238</span>
+                  <span className="text-muted-foreground w-24">Phone</span>
+                  <span className="font-medium">: {prData.phone || 'NA'}</span>
                 </div>
                 <div className="flex">
-                  <span className="text-gray-600 w-24">Email</span>
-                  <span className="font-medium">: xtylizzsamerxyز146@gmail.com</span>
+                  <span className="text-muted-foreground w-24">Email</span>
+                  <span className="font-medium">: {prData.email}</span>
                 </div>
                 <div className="flex">
-                  <span className="text-gray-600 w-24">PAN</span>
-                  <span className="font-medium">: 868687779796</span>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="flex">
-                  <span className="text-gray-600 w-24">Fax</span>
-                  <span className="font-medium">: t78788ugjyfr65r65</span>
-                </div>
-                <div className="flex">
-                  <span className="text-gray-600 w-24">GST</span>
-                  <span className="font-medium">: r7gfyv87176657</span>
-                </div>
-                <div className="flex">
-                  <span className="text-gray-600 w-24">Address</span>
-                  <span className="font-medium">: demo world</span>
+                  <span className="text-muted-foreground w-24">PAN</span>
+                  <span className="font-medium">: {prData.pan}</span>
                 </div>
               </div>
-              
-              {/* Image placeholder */}
-              <div className="col-span-2 flex justify-end">
-                <div className="w-32 h-24 bg-gray-200 rounded flex items-center justify-center">
-                  <span className="text-gray-500 text-sm">jyoti</span>
-                  <br />
-                  <span className="text-gray-400 text-xs">image</span>
+              <div className="space-y-3">
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">Fax</span>
+                  <span className="font-medium">: NA</span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">GST</span>
+                  <span className="font-medium">: {prData.gst}</span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">Address</span>
+                  <span className="font-medium">: {prData.address}</span>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Work Order Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-center text-xl">Work Order (Pending)</CardTitle>
+        {/* Material PR Card */}
+        <Card className="shadow-sm border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-medium">Material Purchase Request</CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent>
             <div className="grid grid-cols-2 gap-8">
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex">
-                  <span className="text-gray-600 w-40">WO Number</span>
-                  <span className="font-medium">: -</span>
+                  <span className="text-muted-foreground w-40">MPR No.</span>
+                  <span className="font-medium">: {prData.prNumber}</span>
                 </div>
                 <div className="flex">
-                  <span className="text-gray-600 w-40">WO Date</span>
-                  <span className="font-medium">: 02-04-24</span>
+                  <span className="text-muted-foreground w-40">MPR Date</span>
+                  <span className="font-medium">: {prData.date}</span>
                 </div>
                 <div className="flex">
-                  <span className="text-gray-600 w-40">Kind Attention</span>
-                  <span className="font-medium">: -</span>
+                  <span className="text-muted-foreground w-40">Plant Detail</span>
+                  <span className="font-medium">: {prData.plantDetail}</span>
                 </div>
                 <div className="flex">
-                  <span className="text-gray-600 w-40">Subject</span>
-                  <span className="font-medium">: -</span>
+                  <span className="text-muted-foreground w-40">Address</span>
+                  <span className="font-medium">: {prData.address}</span>
                 </div>
                 <div className="flex">
-                  <span className="text-gray-600 w-40">Related To</span>
-                  <span className="font-medium">: -</span>
-                </div>
-                <div className="flex">
-                  <span className="text-gray-600 w-40">Payment Tenure(In Days)</span>
-                  <span className="font-medium">: -</span>
-                </div>
-                <div className="flex">
-                  <span className="text-gray-600 w-40">Retention(%)</span>
-                  <span className="font-medium">: -</span>
+                  <span className="text-muted-foreground w-40">Related To</span>
+                  <span className="font-medium">: {prData.relatedTo}</span>
                 </div>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex">
-                  <span className="text-gray-600 w-40">Reference No.</span>
-                  <span className="font-medium">: 10009</span>
+                  <span className="text-muted-foreground w-40">Reference No.</span>
+                  <span className="font-medium">: {prData.referenceNo}</span>
                 </div>
                 <div className="flex">
-                  <span className="text-gray-600 w-40">ID</span>
-                  <span className="font-medium">: 9175</span>
+                  <span className="text-muted-foreground w-40">ID</span>
+                  <span className="font-medium">: {prData.id}</span>
                 </div>
                 <div className="flex">
-                  <span className="text-gray-600 w-40">Contractor</span>
-                  <span className="font-medium">: MODWIN NETWORKS PVT.LTD</span>
+                  <span className="text-muted-foreground w-40">Supplier</span>
+                  <span className="font-medium">: {prData.supplier}</span>
                 </div>
                 <div className="flex">
-                  <span className="text-gray-600 w-40">Address</span>
-                  <span className="font-medium">: Mumbai Maharashtra - India</span>
+                  <span className="text-muted-foreground w-40">Email</span>
+                  <span className="font-medium">: {prData.email}</span>
                 </div>
                 <div className="flex">
-                  <span className="text-gray-600 w-40">Phone</span>
-                  <span className="font-medium">: 9382875928</span>
-                </div>
-                <div className="flex">
-                  <span className="text-gray-600 w-40">Email</span>
-                  <span className="font-medium">: vinod@modwin.com</span>
-                </div>
-                <div className="flex">
-                  <span className="text-gray-600 w-40">GST</span>
-                  <span className="font-medium">: NA</span>
-                </div>
-                <div className="flex">
-                  <span className="text-gray-600 w-40">PAN</span>
-                  <span className="font-medium">: NA</span>
+                  <span className="text-muted-foreground w-40">Admin Approval</span>
+                  <span className="font-medium">: {prData.adminApproval}</span>
                 </div>
               </div>
             </div>
@@ -427,97 +394,93 @@ export const MaterialPRDetailsPage = () => {
         </Card>
 
         {/* Items Table Card */}
-        <Card>
-          <CardContent className="p-6">
+        <Card className="shadow-sm border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-medium">Items Table</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300">
+              <table className="w-full border-collapse border border-border">
                 <thead>
-                  <tr className="bg-gray-50">
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">S No.</th>
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Item</th>
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Availability</th>
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">SAC/HSN Code</th>
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Expected Date</th>
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Product Description</th>
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Quantity</th>
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Unit</th>
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Moving Avg Rate</th>
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Rate</th>
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Amount</th>
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Approved Qty</th>
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Transfer Qty</th>
-                    <th className="border border-gray-300 px-3 py-2 text-sm text-left font-medium">Wbs Code</th>
+                  <tr className="bg-muted">
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">S No.</th>
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Item</th>
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Availability</th>
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">SAC/HSN Code</th>
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Expected Date</th>
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Product Description</th>
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Quantity</th>
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Unit</th>
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Moving Avg Rate</th>
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Rate</th>
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Amount</th>
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Approved Qty</th>
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Transfer Qty</th>
+                    <th className="border border-border px-3 py-2 text-sm text-left font-medium">Wbs Code</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {prData.items.map((item, index) => (
-                    <tr key={index}>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.sNo}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.item}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.availability}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.sacHsnCode}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.expectedDate}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.productDescription}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.quantity}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.unit}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.movingAvgRate}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.rate}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.amount}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.approvedQty}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.transferQty}</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm">{item.wbsCode}</td>
-                    </tr>
-                  ))}
+                  {prData.items.map((item, index) => <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/50'}>
+                      <td className="border border-border px-3 py-2 text-sm">{item.sNo}</td>
+                      <td className="border border-border px-3 py-2 text-sm">{item.item}</td>
+                      <td className="border border-border px-3 py-2 text-sm">{item.availability}</td>
+                      <td className="border border-border px-3 py-2 text-sm">{item.sacHsnCode}</td>
+                      <td className="border border-border px-3 py-2 text-sm">{item.expectedDate}</td>
+                      <td className="border border-border px-3 py-2 text-sm">{item.productDescription}</td>
+                      <td className="border border-border px-3 py-2 text-sm">{item.quantity}</td>
+                      <td className="border border-border px-3 py-2 text-sm">{item.unit}</td>
+                      <td className="border border-border px-3 py-2 text-sm">{item.movingAvgRate}</td>
+                      <td className="border border-border px-3 py-2 text-sm">{item.rate}</td>
+                      <td className="border border-border px-3 py-2 text-sm">{item.amount}</td>
+                      <td className="border border-border px-3 py-2 text-sm">{item.approvedQty}</td>
+                      <td className="border border-border px-3 py-2 text-sm">{item.transferQty}</td>
+                      <td className="border border-border px-3 py-2 text-sm">{item.wbsCode}</td>
+                    </tr>)}
                 </tbody>
               </table>
-              <div className="mt-4 text-right">
-                <div className="text-sm font-medium"><strong>Net Amount(INR):</strong> {prData.netAmount}</div>
-                <div className="text-sm"><strong>Amount In Words:</strong> {prData.amountInWords}</div>
+            </div>
+            
+            {/* Net Amount Summary */}
+            <div className="mt-6 pt-4 border-t border-border">
+              <div className="flex justify-end">
+                <div className="text-right">
+                  <div className="text-lg font-semibold">Net Amount(INR): ₹{prData.netAmount}</div>
+                  <div className="text-sm text-muted-foreground">Amount In Words: {prData.amountInWords}</div>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Additional Information Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Attachments Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Attachments</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">{prData.attachments}</p>
-            </CardContent>
-          </Card>
-
-          {/* Terms & Conditions Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Terms & Conditions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ol className="list-decimal list-inside space-y-1">
-                {prData.termsConditions.map((term, index) => (
-                  <li key={index} className="text-gray-700">{term}</li>
-                ))}
-              </ol>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* SAP Response Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">SAP Response</CardTitle>
+        {/* Attachments Card */}
+        <Card className="shadow-sm border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-medium">Attachments</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div><strong>Code:</strong> {prData.sapResponse.code || 'N/A'}</div>
-              <div><strong>Message:</strong> <span className="text-red-600">{prData.sapResponse.message}</span></div>
-            </div>
+            {prData.attachments === 'No attachments' ? <p className="text-muted-foreground">{prData.attachments}</p> : <div className="flex items-center gap-2">
+                <Download className="w-4 h-4" />
+                <Button variant="outline" size="sm">
+                  Download PDF
+                </Button>
+              </div>}
           </CardContent>
         </Card>
+
+        {/* Terms & Conditions Card */}
+        <Card className="shadow-sm border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-medium">Terms & Conditions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ol className="list-decimal list-inside space-y-2">
+              {prData.termsConditions.map((term, index) => <li key={index} className="text-sm">{term}</li>)}
+            </ol>
+          </CardContent>
+        </Card>
+
+        {/* SAP Response Card */}
+        
       </div>
-    </div>
-  );
+    </div>;
 };
