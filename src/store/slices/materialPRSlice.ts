@@ -106,12 +106,31 @@ export const getMaterialPR = createAsyncThunk(
     }
 )
 
+export const getMaterialPRById = createAsyncThunk(
+    "getMaterialPRById",
+    async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
+        try {
+            const respones = await axios.get(`https://${baseUrl}/pms/purchase_orders/${id}.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+
+            return respones.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to create material PR'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const getSuppliersSlice = createApiSlice("getSuppliers", getSuppliers);
 const getPlantDetailsSlice = createApiSlice("getPlantDetails", getPlantDetails);
 const getAddressesSlice = createApiSlice("getAddresses", getAddresses);
 const getInventoriesSlice = createApiSlice("getInventories", getInventories);
 const createMaterialPRSlice = createApiSlice("createMaterialPR", createMaterialPR);
 const getMaterialPRSlice = createApiSlice("getMaterialPR", getMaterialPR);
+const getMaterialPRByIdSlice = createApiSlice("getMaterialPRById", getMaterialPRById);
 
 export const getSuppliersReducer = getSuppliersSlice.reducer
 export const getPlantDetailsReducer = getPlantDetailsSlice.reducer
@@ -119,3 +138,4 @@ export const getAddressesReducer = getAddressesSlice.reducer
 export const getInventoriesReducer = getInventoriesSlice.reducer
 export const createMaterialPRReducer = createMaterialPRSlice.reducer
 export const getMaterialPRReducer = getMaterialPRSlice.reducer
+export const getMaterialPRByIdReducer = getMaterialPRByIdSlice.reducer

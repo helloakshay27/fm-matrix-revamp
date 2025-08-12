@@ -30,8 +30,10 @@ export const MaterialPRDashboard = () => {
           supplierName: item.supplier.company_name,
           createdBy: item.user.full_name,
           createdOn: item.created_at,
-          lastApprovedBy: item.lastApprovedBy,
-          approvedStatus: item.approval_levels?.status_label,
+          lastApprovedBy: Array.isArray(item.approval_levels) && item.approval_levels.length > 0
+            ? item.approval_levels[item.approval_levels.length - 1].approved_by
+            : null,
+          approvedStatus: item.all_level_approved ? "Approved" : item.all_level_approved === false ? "Rejected" : "Pending",
           prAmount: item.total_amount,
           activeInactive: item.active
         }))

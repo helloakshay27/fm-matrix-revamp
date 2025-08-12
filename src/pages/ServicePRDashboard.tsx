@@ -1,15 +1,36 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ServicePRFilterDialog } from "@/components/ServicePRFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable"; // Adjust the import path as needed
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { toast } from "sonner";
+import { useAppDispatch } from "@/store/hooks";
+import { getServicePr } from "@/store/slices/servicePRSlice";
 
 export const ServicePRDashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [servicePR, setServicePR] = useState([])
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await dispatch(getServicePr({ baseUrl, token })).unwrap();
+        setServicePR(response)
+      } catch (error) {
+        toast.error(error)
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const servicePRData = [
     {
