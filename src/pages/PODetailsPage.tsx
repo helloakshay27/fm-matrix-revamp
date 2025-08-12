@@ -339,6 +339,26 @@ export const PODetailsPage = () => {
         </div>
         
       </div>
+
+      {/* Notes and Terms Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 mb-2">Notes:</h3>
+            <p className="text-gray-700 ml-4">NA</p>
+          </div>
+          
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 mb-2">Terms & Conditions:</h3>
+            <p className="text-gray-700 ml-4">NA</p>
+          </div>
+          
+          <div className="border-t border-gray-200 pt-6">
+            <p className="text-gray-900 font-medium mb-8">For NA we Confirm & Accept,</p>
+            <p className="text-gray-900 font-medium">Authorised Signatory</p>
+          </div>
+        </div>
+      </div>
         
       {/* Attachments Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
@@ -350,8 +370,5 @@ export const PODetailsPage = () => {
           <span className="cursor-pointer hover:underline">PSIPL_Feedback_QR_code.pptx.pdf</span>
         </div>
       </div>
-        
-      {/* Terms & Conditions Section */}
-      
     </div>;
 };
