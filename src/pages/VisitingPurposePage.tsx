@@ -351,6 +351,16 @@ export const VisitingPurposePage = () => {
                   Work Type
                 </Button>
               )}
+              
+              {activeTab === 'Visitor Comment' && (
+                <Button 
+                  onClick={handleVisitorCategory}
+                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Visitor Comment
+                </Button>
+              )}
 
               <div className="flex-1"></div>
 
