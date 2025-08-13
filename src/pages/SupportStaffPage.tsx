@@ -330,31 +330,6 @@ export const SupportStaffPage = () => {
               />
             </div>
 
-            {/* Service Types Multi-Select */}
-            <div>
-              <FormControl fullWidth sx={fieldStyles}>
-                <InputLabel>Select Service Types</InputLabel>
-                <MuiSelect
-                  multiple
-                  value={formData.serviceTypes}
-                  onChange={(e) => setFormData({...formData, serviceTypes: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value})}
-                  input={<OutlinedInput label="Select Service Types" />}
-                  renderValue={(selected) => (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {selected.map((value) => (
-                        <Chip key={value} label={value} size="small" />
-                      ))}
-                    </div>
-                  )}
-                >
-                  {serviceTypeOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-            </div>
 
             {/* Time Inputs */}
             <div className="grid grid-cols-3 gap-4">
