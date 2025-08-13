@@ -670,6 +670,113 @@ const WorkOrderAddPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Details Section Card */}
+        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                <Settings className="w-4 h-4 text-white" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">DETAILS</h2>
+            </div>
+          </div>
+          
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <TextField
+                  label="Kind Attention"
+                  placeholder="Kind Attention"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={{
+                    mt: 1,
+                    '& .MuiInputBase-input': {
+                      padding: { xs: '8px', sm: '10px', md: '12px' },
+                    },
+                    height: { xs: 28, sm: 36, md: 45 },
+                  }}
+                />
+              </div>
+              
+              <div>
+                <TextField
+                  label="Subject"
+                  placeholder="Subject"
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  sx={{
+                    mt: 1,
+                    '& .MuiInputBase-input': {
+                      padding: { xs: '8px', sm: '10px', md: '12px' },
+                    },
+                    height: { xs: 28, sm: 36, md: 45 },
+                  }}
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              <div>
+                <TextField
+                  label="Description"
+                  placeholder="Enter description here..."
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  rows={6}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ mt: 1 }}
+                />
+              </div>
+              
+              <div>
+                <TextField
+                  label="Terms & Conditions"
+                  placeholder="Enter terms and conditions here..."
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  rows={6}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ mt: 1 }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Attachments Section Card */}
+        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                <Settings className="w-4 h-4 text-white" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">ATTACHMENTS</h2>
+            </div>
+          </div>
+          
+          <div className="p-6">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-orange-50">
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                id="file-upload"
+              />
+              <label 
+                htmlFor="file-upload" 
+                className="cursor-pointer text-gray-600"
+              >
+                Drag & Drop or <span className="text-red-500 underline">Choose files</span> No file chosen
+              </label>
+            </div>
+          </div>
+        </div>
+
         {/* Action Buttons */}
         <div className="flex gap-4 mt-8">
           <Button
