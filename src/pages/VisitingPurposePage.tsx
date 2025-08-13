@@ -363,16 +363,6 @@ export const VisitingPurposePage = () => {
           </Table>
         </div>
 
-        {/* Footer */}
-        <div className="mt-6 text-center">
-          <div className="inline-flex items-center gap-2 text-sm text-gray-600">
-            <span>Powered by</span>
-            <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">L</span>
-            </div>
-            <span className="font-semibold text-gray-800">LOCKATED</span>
-          </div>
-        </div>
       </div>
 
       {/* Add Purpose Modal */}
