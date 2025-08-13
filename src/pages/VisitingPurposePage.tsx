@@ -22,6 +22,31 @@ interface VisitingPurposeData {
   createdBy: string;
 }
 
+interface MoveInOutData {
+  id: string;
+  purpose: string;
+  status: boolean;
+  createdOn: string;
+  createdBy: string;
+}
+
+interface WorkTypeData {
+  id: string;
+  staffType: string;
+  workType: string;
+  status: boolean;
+  createdOn: string;
+  createdBy: string;
+}
+
+interface VisitorCommentData {
+  id: string;
+  comment: string;
+  status: boolean;
+  createdOn: string;
+  createdBy: string;
+}
+
 export const VisitingPurposePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -55,7 +80,7 @@ export const VisitingPurposePage = () => {
     active: true
   });
 
-  // Sample data matching the image structure
+  // Sample data for Visit Purpose
   const samplePurposes: VisitingPurposeData[] = [
     {
       id: '1',
@@ -87,20 +112,121 @@ export const VisitingPurposePage = () => {
     }
   ];
 
-  const [filteredPurposes, setFilteredPurposes] = useState<VisitingPurposeData[]>(samplePurposes);
+  // Sample data for Move In/Out
+  const sampleMoveInOut: MoveInOutData[] = [
+    {
+      id: '1',
+      purpose: 'Equipment Installation',
+      status: true,
+      createdOn: '15/01/2025 10:30 AM',
+      createdBy: 'John D'
+    },
+    {
+      id: '2',
+      purpose: 'Furniture Movement',
+      status: true,
+      createdOn: '15/01/2025 10:25 AM',
+      createdBy: 'Sarah M'
+    },
+    {
+      id: '3',
+      purpose: 'Office Relocation',
+      status: false,
+      createdOn: '15/01/2025 10:20 AM',
+      createdBy: 'Mike R'
+    }
+  ];
+
+  // Sample data for Work Type
+  const sampleWorkTypes: WorkTypeData[] = [
+    {
+      id: '1',
+      staffType: 'Permanent Staff',
+      workType: 'Development',
+      status: true,
+      createdOn: '15/01/2025 09:45 AM',
+      createdBy: 'Admin'
+    },
+    {
+      id: '2',
+      staffType: 'Contract Staff',
+      workType: 'Testing',
+      status: true,
+      createdOn: '15/01/2025 09:40 AM',
+      createdBy: 'Admin'
+    },
+    {
+      id: '3',
+      staffType: 'Vendor Staff',
+      workType: 'Maintenance',
+      status: true,
+      createdOn: '15/01/2025 09:35 AM',
+      createdBy: 'Admin'
+    }
+  ];
+
+  // Sample data for Visitor Comments
+  const sampleComments: VisitorCommentData[] = [
+    {
+      id: '1',
+      comment: 'Please ensure proper ID verification',
+      status: true,
+      createdOn: '15/01/2025 08:30 AM',
+      createdBy: 'Security Team'
+    },
+    {
+      id: '2',
+      comment: 'VIP guest - special attention required',
+      status: true,
+      createdOn: '15/01/2025 08:25 AM',
+      createdBy: 'Reception'
+    },
+    {
+      id: '3',
+      comment: 'Regular visitor - standard process',
+      status: false,
+      createdOn: '15/01/2025 08:20 AM',
+      createdBy: 'Front Desk'
+    }
+  ];
+
   const [purposes, setPurposes] = useState<VisitingPurposeData[]>(samplePurposes);
+  const [moveInOutData, setMoveInOutData] = useState<MoveInOutData[]>(sampleMoveInOut);
+  const [workTypeData, setWorkTypeData] = useState<WorkTypeData[]>(sampleWorkTypes);
+  const [commentsData, setCommentsData] = useState<VisitorCommentData[]>(sampleComments);
 
   useEffect(() => {
     setCurrentSection('Settings');
   }, [setCurrentSection]);
 
-  useEffect(() => {
-    const filtered = purposes.filter(purpose =>
-      purpose.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      purpose.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredPurposes(filtered);
-  }, [searchTerm, purposes]);
+  // Filter functions for each tab data
+  const getFilteredData = () => {
+    switch (activeTab) {
+      case 'Visit Purpose':
+        return purposes.filter(item =>
+          item.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      case 'Move In/Out':
+        return moveInOutData.filter(item =>
+          item.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      case 'Work Type':
+        return workTypeData.filter(item =>
+          item.workType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.staffType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      case 'Visitor Comment':
+        return commentsData.filter(item =>
+          item.comment.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      default:
+        return [];
+    }
+  };
 
   const handleAddPurpose = () => {
     setIsAddModalOpen(true);
@@ -366,97 +492,162 @@ export const VisitingPurposePage = () => {
 
             </div>
 
-            {/* Table */}
+            {/* Tables for each tab */}
             <div className="overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#f6f4ee]">
-                <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                <TableHead className="px-4 py-3 min-w-[200px]">Purpose</TableHead>
-                <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                <TableHead className="px-4 py-3 min-w-[200px]">Purpose</TableHead>
-                <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                <TableHead className="px-4 py-3 min-w-[200px]">Purpose</TableHead>
-                <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                <TableHead className="px-4 py-3 min-w-[200px]">Purpose</TableHead>
-                <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow className="hover:bg-gray-50">
-                {/* Vendor */}
-                <TableCell className="px-4 py-3">
-                  <button
-                    onClick={() => handleEdit('1')}
-                    className="p-1 hover:bg-gray-100 rounded"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                  </button>
-                </TableCell>
-                <TableCell className="px-4 py-3 font-medium">Vendor</TableCell>
-                <TableCell className="px-4 py-3 text-center">
-                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                    Active
-                  </span>
-                </TableCell>
+              {activeTab === 'Visit Purpose' && (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-[#f6f4ee]">
+                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[200px]">Purpose</TableHead>
+                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getFilteredData().map((item) => (
+                      <TableRow key={item.id} className="hover:bg-gray-50">
+                        <TableCell className="px-4 py-3">
+                          <button
+                            onClick={() => handleEdit(item.id)}
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                          </button>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
+                        <TableCell className="px-4 py-3 text-center">
+                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                            item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {item.status ? 'Active' : 'Inactive'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
 
-                {/* Meeting */}
-                <TableCell className="px-4 py-3">
-                  <button
-                    onClick={() => handleEdit('2')}
-                    className="p-1 hover:bg-gray-100 rounded"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                  </button>
-                </TableCell>
-                <TableCell className="px-4 py-3 font-medium">Meeting</TableCell>
-                <TableCell className="px-4 py-3 text-center">
-                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                    Active
-                  </span>
-                </TableCell>
+              {activeTab === 'Move In/Out' && (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-[#f6f4ee]">
+                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[200px]">Move In/Out Purpose</TableHead>
+                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getFilteredData().map((item) => (
+                      <TableRow key={item.id} className="hover:bg-gray-50">
+                        <TableCell className="px-4 py-3">
+                          <button
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                          </button>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
+                        <TableCell className="px-4 py-3 text-center">
+                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                            item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {item.status ? 'Active' : 'Inactive'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
 
-                {/* Personal */}
-                <TableCell className="px-4 py-3">
-                  <button
-                    onClick={() => handleEdit('3')}
-                    className="p-1 hover:bg-gray-100 rounded"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                  </button>
-                </TableCell>
-                <TableCell className="px-4 py-3 font-medium">Personal</TableCell>
-                <TableCell className="px-4 py-3 text-center">
-                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                    Active
-                  </span>
-                </TableCell>
+              {activeTab === 'Work Type' && (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-[#f6f4ee]">
+                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[150px]">Staff Type</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[150px]">Work Type</TableHead>
+                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getFilteredData().map((item) => (
+                      <TableRow key={item.id} className="hover:bg-gray-50">
+                        <TableCell className="px-4 py-3">
+                          <button
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                          </button>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 font-medium">{item.staffType}</TableCell>
+                        <TableCell className="px-4 py-3 font-medium">{item.workType}</TableCell>
+                        <TableCell className="px-4 py-3 text-center">
+                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                            item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {item.status ? 'Active' : 'Inactive'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
 
-                {/* Courier */}
-                <TableCell className="px-4 py-3">
-                  <button
-                    onClick={() => handleEdit('4')}
-                    className="p-1 hover:bg-gray-100 rounded"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                  </button>
-                </TableCell>
-                <TableCell className="px-4 py-3 font-medium">Courier</TableCell>
-                <TableCell className="px-4 py-3 text-center">
-                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                    Active
-                  </span>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+              {activeTab === 'Visitor Comment' && (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-[#f6f4ee]">
+                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[300px]">Comment</TableHead>
+                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getFilteredData().map((item) => (
+                      <TableRow key={item.id} className="hover:bg-gray-50">
+                        <TableCell className="px-4 py-3">
+                          <button
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                          </button>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 font-medium">{item.comment}</TableCell>
+                        <TableCell className="px-4 py-3 text-center">
+                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                            item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {item.status ? 'Active' : 'Inactive'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </div>
           </div>
         </div>
