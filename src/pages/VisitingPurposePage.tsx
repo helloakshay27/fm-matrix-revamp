@@ -685,30 +685,73 @@ export const VisitingPurposePage = () => {
               </Select>
             </div>
 
-            {/* Purpose Input */}
-            <div className="space-y-2">
-              <Label>Enter purpose</Label>
-              <TextField
-                placeholder="enter purpose"
-                value={formData.purpose}
-                onChange={(e) => setFormData({...formData, purpose: e.target.value})}
-                fullWidth
-                variant="outlined"
-                size="small"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: '#d1d5db',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#C72030',
-                    },
-                  },
-                }}
-              />
+            {/* Multiple Users Purpose Input */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Enter purposes for multiple users</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const currentPurposes = formData.purpose ? formData.purpose.split('|') : [''];
+                    setFormData({...formData, purpose: [...currentPurposes, ''].join('|')});
+                  }}
+                  className="text-primary border-primary hover:bg-primary/10"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add User
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                {(formData.purpose ? formData.purpose.split('|') : ['']).map((purpose, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <TextField
+                        placeholder={`Enter purpose for user ${index + 1}`}
+                        value={purpose}
+                        onChange={(e) => {
+                          const purposes = formData.purpose ? formData.purpose.split('|') : [''];
+                          purposes[index] = e.target.value;
+                          setFormData({...formData, purpose: purposes.join('|')});
+                        }}
+                        fullWidth
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '& fieldset': {
+                              borderColor: '#d1d5db',
+                            },
+                            '&:hover fieldset': {
+                              borderColor: '#C72030',
+                            },
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#C72030',
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                    {(formData.purpose ? formData.purpose.split('|') : ['']).length > 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const purposes = formData.purpose ? formData.purpose.split('|') : [''];
+                          purposes.splice(index, 1);
+                          setFormData({...formData, purpose: purposes.join('|')});
+                        }}
+                        className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Active Checkbox */}
