@@ -11,6 +11,7 @@ import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { VisitorAnalyticsContent } from '@/components/VisitorAnalyticsContent';
 
 export const VisitorsDashboard = () => {
   const [selectedPerson, setSelectedPerson] = useState('');
@@ -620,9 +621,7 @@ export const VisitorsDashboard = () => {
           </TabsContent>
 
           <TabsContent value="analytics" className="bg-white rounded-lg border border-gray-200 mt-4 p-6">
-            <div className="text-center text-gray-500 py-16">
-              Analytics content will be displayed here
-            </div>
+            <VisitorAnalyticsContent />
           </TabsContent>
         </Tabs>
 
