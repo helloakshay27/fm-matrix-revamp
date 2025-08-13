@@ -480,11 +480,26 @@ export const VisitingPurposePage = () => {
             {/* Move In/Out Purpose Input */}
             <div className="space-y-2">
               <Label>Enter move in/ out purpose</Label>
-              <Input
+              <TextField
                 placeholder="enter purpose"
                 value={moveInOutFormData.purpose}
                 onChange={(e) => setMoveInOutFormData({...moveInOutFormData, purpose: e.target.value})}
-                className="w-full"
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                }}
               />
             </div>
 
