@@ -66,6 +66,11 @@ interface CheckpointData {
   created_at: string;
   updated_at: string;
   qr_code_available: boolean;
+  qr_code_url?: string;
+  building_name?: string;
+  wing_name?: string;
+  floor_name?: string;
+  room_name?: string;
 }
 
 interface PatrollingDetail {
@@ -447,30 +452,107 @@ export const PatrollingDetailPage: React.FC = () => {
                     <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                       <QrCode className="h-4 w-4" />
                     </div>
-                    QR CODE AVAILABILITY
+                    QR CODES ({patrolling.checkpoints.filter(cp => cp.qr_code_available).length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {patrolling.checkpoints
                       .filter(cp => cp.qr_code_available)
                       .map((checkpoint) => (
-                        <div key={checkpoint.id} className="flex items-center gap-3 p-3 border rounded-lg bg-white">
-                          <QrCode className="w-8 h-8 text-green-600" />
-                          <div>
-                            <p className="font-medium text-sm">{checkpoint.name}</p>
-                            <p className="text-xs text-gray-600">Order #{checkpoint.order_sequence}</p>
-                            <Badge variant="default" className="text-xs mt-1">
-                              QR Available
-                            </Badge>
+                        <div key={checkpoint.id} className="p-4 border rounded-lg bg-white shadow-sm">
+                          <div className="text-center">
+                            <div className="mb-3">
+                              <p className="font-medium text-sm">{checkpoint.name}</p>
+                              <p className="text-xs text-gray-600">Order #{checkpoint.order_sequence}</p>
+                              <Badge variant="default" className="text-xs mt-1">
+                                <QrCode className="w-3 h-3 mr-1" />
+                                QR Available
+                              </Badge>
+                            </div>
+                            
+                            {checkpoint.qr_code_url ? (
+                              <div className="space-y-3">
+                                <div className="flex justify-center">
+                                  <img 
+                                    src={checkpoint.qr_code_url} 
+                                    alt={`QR Code for ${checkpoint.name}`}
+                                    className="w-32 h-32 object-contain border border-gray-200 rounded"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                  />
+                                  <div className="hidden w-32 h-32 border border-gray-200 rounded flex items-center justify-center bg-gray-50">
+                                    <div className="text-center">
+                                      <QrCode className="w-8 h-8 text-gray-400 mx-auto mb-1" />
+                                      <p className="text-xs text-gray-500">QR Code Error</p>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="flex gap-2 justify-center">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => window.open(checkpoint.qr_code_url, '_blank')}
+                                    className="text-xs"
+                                  >
+                                    <Eye className="w-3 h-3 mr-1" />
+                                    View
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={async () => {
+                                      try {
+                                        const response = await fetch(checkpoint.qr_code_url!);
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const a = document.createElement('a');
+                                        a.href = url;
+                                        a.download = `checkpoint_${checkpoint.id}_qr_code.png`;
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        window.URL.revokeObjectURL(url);
+                                        document.body.removeChild(a);
+                                        toast.success('QR Code downloaded successfully!');
+                                      } catch (error) {
+                                        toast.error('Failed to download QR Code');
+                                      }
+                                    }}
+                                    className="text-xs"
+                                  >
+                                    <Download className="w-3 h-3 mr-1" />
+                                    Download
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="w-32 h-32 border border-gray-200 rounded flex items-center justify-center bg-gray-50 mx-auto">
+                                <div className="text-center">
+                                  <QrCode className="w-8 h-8 text-gray-400 mx-auto mb-1" />
+                                  <p className="text-xs text-gray-500">QR Code Available</p>
+                                  <p className="text-xs text-gray-400">No URL provided</p>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
                   </div>
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-800">
+                  
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <QrCode className="w-5 h-5 text-blue-600" />
+                      <p className="text-sm font-medium text-blue-800">QR Code Summary</p>
+                    </div>
+                    <p className="text-sm text-blue-700">
                       <strong>{patrolling.checkpoints.filter(cp => cp.qr_code_available).length}</strong> out of{' '}
                       <strong>{patrolling.checkpoints.length}</strong> checkpoints have QR codes available.
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Guards can scan these QR codes to check in at each checkpoint during patrol.
                     </p>
                   </div>
                 </CardContent>
@@ -640,7 +722,7 @@ export const PatrollingDetailPage: React.FC = () => {
                         <TableHead>Name</TableHead>
                         <TableHead>Description</TableHead>
                         <TableHead>Estimated Time</TableHead>
-                        {/* <TableHead>Location</TableHead> */}
+                        <TableHead>Location</TableHead>
                         <TableHead>Assigned Schedules</TableHead>
                         <TableHead>QR Code</TableHead>
                         <TableHead>Created</TableHead>
@@ -658,21 +740,61 @@ export const PatrollingDetailPage: React.FC = () => {
                             <TableCell className="font-medium">{checkpoint.name}</TableCell>
                             <TableCell>{checkpoint.description || '—'}</TableCell>
                             <TableCell>{checkpoint.estimated_time_minutes} min</TableCell>
-                            {/* <TableCell>
+                            <TableCell>
                               <div className="text-sm">
-                                <div>Building: {checkpoint.building_id || 'N/A'}</div>
-                                <div>Wing: {checkpoint.wing_id || 'N/A'}</div>
-                                <div>Floor: {checkpoint.floor_id || 'N/A'}</div>
-                                <div>Room: {checkpoint.room_id || 'N/A'}</div>
+                                <div>Building: {checkpoint.building_name || 'N/A'}</div>
+                                <div>Wing: {checkpoint.wing_name || 'N/A'}</div>
+                                <div>Floor: {checkpoint.floor_name || 'N/A'}</div>
+                                <div>Room: {checkpoint.room_name || 'N/A'}</div>
                               </div>
-                            </TableCell> */}
+                            </TableCell>
                             <TableCell>{checkpoint.schedule_ids.length}</TableCell>
                             <TableCell>
                               {checkpoint.qr_code_available ? (
-                                <Badge variant="default" className="text-xs">
-                                  <QrCode className="w-3 h-3 mr-1" />
-                                  Available
-                                </Badge>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="default" className="text-xs">
+                                    <QrCode className="w-3 h-3 mr-1" />
+                                    Available
+                                  </Badge>
+                                  {checkpoint.qr_code_url && (
+                                    <div className="flex gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => window.open(checkpoint.qr_code_url, '_blank')}
+                                        className="p-1 h-6 w-6"
+                                        title="View QR Code"
+                                      >
+                                        <Eye className="w-3 h-3" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={async () => {
+                                          try {
+                                            const response = await fetch(checkpoint.qr_code_url!);
+                                            const blob = await response.blob();
+                                            const url = window.URL.createObjectURL(blob);
+                                            const a = document.createElement('a');
+                                            a.href = url;
+                                            a.download = `checkpoint_${checkpoint.id}_qr_code.png`;
+                                            document.body.appendChild(a);
+                                            a.click();
+                                            window.URL.revokeObjectURL(url);
+                                            document.body.removeChild(a);
+                                            toast.success('QR Code downloaded successfully!');
+                                          } catch (error) {
+                                            toast.error('Failed to download QR Code');
+                                          }
+                                        }}
+                                        className="p-1 h-6 w-6"
+                                        title="Download QR Code"
+                                      >
+                                        <Download className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
                               ) : (
                                 <Badge variant="secondary" className="text-xs">
                                   Not Available

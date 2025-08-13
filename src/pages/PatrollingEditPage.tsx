@@ -70,7 +70,10 @@ const CheckpointLocationSelector: React.FC<{
     const selectedRoomId = currentLocation.roomId;
 
     useEffect(() => {
-        dispatch(fetchAllBuildings());
+        const siteId = localStorage.getItem('selectedSiteId');
+        if (siteId) {
+            dispatch(fetchAllBuildings(parseInt(siteId)));
+        }
     }, [dispatch]);
 
     const handleBuildingChange = (buildingId: number) => {
