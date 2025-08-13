@@ -97,17 +97,22 @@ const WorkOrderAddPage: React.FC = () => {
             </MuiSelect>
           </FormControl>
 
-          <div className="space-y-2">
-            <div className="text-sm font-medium text-foreground">
-              Select WO Date<span className="text-red-500">*</span>
-            </div>
-            <ResponsiveDatePicker
-              value={formData.woDate}
-              onChange={(date) => handleInputChange('woDate', date)}
-              placeholder="Select work order date"
-              className="w-full"
-            />
-          </div>
+          <TextField
+            label="Select WO Date*"
+            value={formData.woDate instanceof Date ? formData.woDate.toISOString().split('T')[0] : ''}
+            onChange={(e) => handleInputChange('woDate', new Date(e.target.value))}
+            fullWidth
+            variant="outlined"
+            type="date"
+            InputLabelProps={{ shrink: true }}
+            sx={{
+              mt: 1,
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px', sm: '10px', md: '12px' },
+              },
+              height: { xs: 28, sm: 36, md: 45 },
+            }}
+          />
 
           {/* Second Row */}
           <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
