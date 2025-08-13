@@ -54,20 +54,47 @@ const InventoryConsumptionDashboard = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Monthly consumption data
+  // Get dynamic date range based on current date
+  const getCurrentDateRange = (monthName: string) => {
+    const now = new Date();
+    const currentMonth = now.getMonth(); // 0-11
+    const currentDay = now.getDate();
+    const currentYear = now.getFullYear();
+    
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                   'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    const monthIndex = months.indexOf(monthName);
+    
+    // If it's the current month, show 1 to current day
+    if (monthIndex === currentMonth) {
+      return `1 to ${currentDay}`;
+    }
+    
+    // If it's a past month in the current year, show full month
+    if (monthIndex < currentMonth) {
+      const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate();
+      return `1 to ${daysInMonth}`;
+    }
+    
+    // If it's a future month, show as not yet reached
+    return '1 to 0';
+  };
+
+  // Monthly consumption data with dynamic date ranges
   const monthlyData = [
-    { month: 'January', dateRange: '1 to 31', amount: '₹24,000', details: generateMonthlyDetails('January') },
-    { month: 'February', dateRange: '1 to 28', amount: '₹25,000', details: generateMonthlyDetails('February') },
-    { month: 'March', dateRange: '1 to 31', amount: '₹26,000', details: generateMonthlyDetails('March') },
-    { month: 'April', dateRange: '1 to 30', amount: '₹15,000', details: generateMonthlyDetails('April') },
-    { month: 'May', dateRange: '1 to 31', amount: '₹22,000', details: generateMonthlyDetails('May') },
-    { month: 'June', dateRange: '1 to 30', amount: '₹28,000', details: generateMonthlyDetails('June') },
-    { month: 'July', dateRange: '1 to 31', amount: '₹30,000', details: generateMonthlyDetails('July') },
-    { month: 'August', dateRange: '1 to 31', amount: '₹27,000', details: generateMonthlyDetails('August') },
-    { month: 'September', dateRange: '1 to 30', amount: '₹23,000', details: generateMonthlyDetails('September') },
-    { month: 'October', dateRange: '1 to 31', amount: '₹29,000', details: generateMonthlyDetails('October') },
-    { month: 'November', dateRange: '1 to 30', amount: '₹25,500', details: generateMonthlyDetails('November') },
-    { month: 'December', dateRange: '1 to 31', amount: '₹31,000', details: generateMonthlyDetails('December') }
+    { month: 'January', dateRange: getCurrentDateRange('January'), amount: '₹24,000', details: generateMonthlyDetails('January') },
+    { month: 'February', dateRange: getCurrentDateRange('February'), amount: '₹25,000', details: generateMonthlyDetails('February') },
+    { month: 'March', dateRange: getCurrentDateRange('March'), amount: '₹26,000', details: generateMonthlyDetails('March') },
+    { month: 'April', dateRange: getCurrentDateRange('April'), amount: '₹15,000', details: generateMonthlyDetails('April') },
+    { month: 'May', dateRange: getCurrentDateRange('May'), amount: '₹22,000', details: generateMonthlyDetails('May') },
+    { month: 'June', dateRange: getCurrentDateRange('June'), amount: '₹28,000', details: generateMonthlyDetails('June') },
+    { month: 'July', dateRange: getCurrentDateRange('July'), amount: '₹30,000', details: generateMonthlyDetails('July') },
+    { month: 'August', dateRange: getCurrentDateRange('August'), amount: '₹27,000', details: generateMonthlyDetails('August') },
+    { month: 'September', dateRange: getCurrentDateRange('September'), amount: '₹23,000', details: generateMonthlyDetails('September') },
+    { month: 'October', dateRange: getCurrentDateRange('October'), amount: '₹29,000', details: generateMonthlyDetails('October') },
+    { month: 'November', dateRange: getCurrentDateRange('November'), amount: '₹25,500', details: generateMonthlyDetails('November') },
+    { month: 'December', dateRange: getCurrentDateRange('December'), amount: '₹31,000', details: generateMonthlyDetails('December') }
   ];
 
   // Generate sample details for each month
