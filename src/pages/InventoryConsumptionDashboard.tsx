@@ -8,15 +8,6 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchInventoryConsumptionHistory } from '@/store/slices/inventoryConsumptionSlice';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 
 const InventoryConsumptionDashboard = () => {
   const navigate = useNavigate();
