@@ -21,7 +21,7 @@ export const DeletePatrollingModal = ({ isOpen, onClose, onConfirm, patrollingId
       <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-lg font-semibold text-center">
-            app.lockated.com says
+            Delete Patrolling Record
           </AlertDialogTitle>
           <AlertDialogDescription className="text-center text-gray-700">
             Are you sure you want to delete this record?

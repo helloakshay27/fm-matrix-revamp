@@ -127,6 +127,7 @@ import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
 import { PatrollingDashboard } from './pages/PatrollingDashboard';
 import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
 import { PatrollingCreatePage } from './pages/PatrollingCreatePage';
+import { PatrollingEditPage } from './pages/PatrollingEditPage';
 import { VisitorFormPage } from './pages/VisitorFormPage';
 import { VisitorManagementSetup } from './pages/VisitorManagementSetup';
 import { AddVisitorGatePage } from './pages/AddVisitorGatePage';
@@ -607,6 +608,7 @@ import DesignInsightsSetupDashboard from "./pages/DesignInsightsSetupDashboard";
 import CRMOccupantUsersDashboard from "./pages/CRMOccupantUsersDashboard";
 import CRMFMUserDashboard from "./pages/CRMFMUserDashboard";
 import CRMCustomersDashboard from "./pages/CRMCustomersDashboard";
+import { PatrollingDetailPage } from "./pages/PatrollingDetailPage";
 import { WorkOrderAddPage } from "./pages/WorkOrderAddPage";
 
 
@@ -1508,13 +1510,13 @@ function App() {
                 />
                 <Route
                   path="/security/patrolling/details/:id"
-                  element={<PatrollingDetailsPage />}
+                  element={<PatrollingDetailPage />}
                 />
                 <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
                 <Route path="/security/staff/edit/:id" element={<EditStaffPage />} />
                 <Route path="/security/patrolling" element={<PatrollingDashboard />} />
                 <Route path="/security/patrolling/create" element={<PatrollingCreatePage />} />
-                <Route path="/security/patrolling/details/:id" element={<PatrollingDetailsPage />} />
+                <Route path="/security/patrolling/edit/:id" element={<PatrollingEditPage />} />
 
                 {/* Security Vehicle Routes */}
                 <Route

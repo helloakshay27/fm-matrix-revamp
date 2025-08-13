@@ -100,6 +100,16 @@ export const fetchBuildings = createAsyncThunk<Building[], number>(
   }
 );
 
+export const fetchAllBuildings = createAsyncThunk<Building[], number>(
+  'serviceLocation/fetchAllBuildings',
+  async (siteId: number) => {
+    const response = await axios.get(`${BASE_URL}/pms/sites/${siteId}/buildings.json`, {
+      headers: { Authorization: `Bearer ${TOKEN}` }
+    });
+    return response.data.buildings.map((item: any) => item);
+  }
+);
+
 export const fetchWings = createAsyncThunk<Wing[], number>(
   'serviceLocation/fetchWings',
   async (buildingId: number) => {
@@ -305,6 +315,19 @@ const serviceLocationSlice = createSlice({
       .addCase(fetchBuildings.rejected, (state, action) => {
         state.loading.buildings = false;
         state.error = action.error.message || 'Failed to fetch buildings';
+      })
+      // All Buildings
+      .addCase(fetchAllBuildings.pending, (state) => {
+        state.loading.buildings = true;
+        state.error = null;
+      })
+      .addCase(fetchAllBuildings.fulfilled, (state, action) => {
+        state.loading.buildings = false;
+        state.buildings = action.payload;
+      })
+      .addCase(fetchAllBuildings.rejected, (state, action) => {
+        state.loading.buildings = false;
+        state.error = action.error.message || 'Failed to fetch all buildings';
       })
       // Wings
       .addCase(fetchWings.pending, (state) => {
