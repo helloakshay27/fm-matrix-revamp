@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
+import { TicketPagination } from '@/components/TicketPagination';
 
 interface SupportStaffData {
   id: string;
@@ -25,6 +26,8 @@ export const SupportStaffPage = () => {
   const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
   const [formData, setFormData] = useState({
     categoryName: '',
     days: '',
@@ -131,6 +134,13 @@ export const SupportStaffPage = () => {
 
   const [filteredStaff, setFilteredStaff] = useState<SupportStaffData[]>(sampleStaff);
 
+  // Pagination calculations
+  const totalRecords = filteredStaff.length;
+  const totalPages = Math.ceil(totalRecords / perPage);
+  const startIndex = (currentPage - 1) * perPage;
+  const endIndex = startIndex + perPage;
+  const currentPageData = filteredStaff.slice(startIndex, endIndex);
+
   useEffect(() => {
     setCurrentSection('Settings');
   }, [setCurrentSection]);
@@ -141,7 +151,17 @@ export const SupportStaffPage = () => {
       staff.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredStaff(filtered);
+    setCurrentPage(1); // Reset to first page when filtering
   }, [searchTerm]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePerPageChange = (newPerPage: number) => {
+    setPerPage(newPerPage);
+    setCurrentPage(1); // Reset to first page when changing per page
+  };
 
   const iconOptions = [
     { id: '1', icon: '📦', name: 'Delivery' },
@@ -256,7 +276,7 @@ export const SupportStaffPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredStaff.map((staff) => (
+            {currentPageData.map((staff) => (
               <TableRow key={staff.id} className="hover:bg-gray-50">
                 <TableCell className="font-medium">
                   {staff.sNo}
@@ -292,6 +312,17 @@ export const SupportStaffPage = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      <TicketPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalRecords={totalRecords}
+        perPage={perPage}
+        isLoading={false}
+        onPageChange={handlePageChange}
+        onPerPageChange={handlePerPageChange}
+      />
 
       </div>
 
