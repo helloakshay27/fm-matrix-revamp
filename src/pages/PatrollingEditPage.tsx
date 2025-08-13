@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store/store';
 import {
-    fetchSites,
+    fetchAllBuildings,
     fetchBuildings,
     fetchWings,
     fetchAreas,
@@ -36,7 +36,6 @@ const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.
 const CheckpointLocationSelector: React.FC<{
     fieldStyles: any;
     onLocationChange: (location: {
-        siteId: number | null;
         buildingId: number | null;
         wingId: number | null;
         areaId: number | null;
@@ -46,7 +45,6 @@ const CheckpointLocationSelector: React.FC<{
     disabled?: boolean;
     checkpointIndex: number;
     currentLocation: {
-        siteId: number | null;
         buildingId: number | null;
         wingId: number | null;
         areaId: number | null;
@@ -65,7 +63,6 @@ const CheckpointLocationSelector: React.FC<{
         loading
     } = useSelector((state: RootState) => state.serviceLocation);
 
-    const selectedSiteId = currentLocation.siteId;
     const selectedBuildingId = currentLocation.buildingId;
     const selectedWingId = currentLocation.wingId;
     const selectedAreaId = currentLocation.areaId;
@@ -73,25 +70,12 @@ const CheckpointLocationSelector: React.FC<{
     const selectedRoomId = currentLocation.roomId;
 
     useEffect(() => {
-        dispatch(fetchSites());
+        dispatch(fetchAllBuildings());
     }, [dispatch]);
-
-    const handleSiteChange = (siteId: number) => {
-        dispatch(fetchBuildings(siteId));
-        onLocationChange({
-            siteId,
-            buildingId: null,
-            wingId: null,
-            areaId: null,
-            floorId: null,
-            roomId: null,
-        });
-    };
 
     const handleBuildingChange = (buildingId: number) => {
         dispatch(fetchWings(buildingId));
         onLocationChange({
-            siteId: selectedSiteId,
             buildingId,
             wingId: null,
             areaId: null,
@@ -104,7 +88,6 @@ const CheckpointLocationSelector: React.FC<{
         dispatch(fetchAreas(wingId));
         dispatch(fetchFloors(selectedBuildingId!));
         onLocationChange({
-            siteId: selectedSiteId,
             buildingId: selectedBuildingId,
             wingId,
             areaId: null,
@@ -115,7 +98,6 @@ const CheckpointLocationSelector: React.FC<{
 
     const handleAreaChange = (areaId: number) => {
         onLocationChange({
-            siteId: selectedSiteId,
             buildingId: selectedBuildingId,
             wingId: selectedWingId,
             areaId,
@@ -127,7 +109,6 @@ const CheckpointLocationSelector: React.FC<{
     const handleFloorChange = (floorId: number) => {
         dispatch(fetchRooms(floorId));
         onLocationChange({
-            siteId: selectedSiteId,
             buildingId: selectedBuildingId,
             wingId: selectedWingId,
             areaId: selectedAreaId,
@@ -138,7 +119,6 @@ const CheckpointLocationSelector: React.FC<{
 
     const handleRoomChange = (roomId: number) => {
         onLocationChange({
-            siteId: selectedSiteId,
             buildingId: selectedBuildingId,
             wingId: selectedWingId,
             areaId: selectedAreaId,
@@ -149,26 +129,6 @@ const CheckpointLocationSelector: React.FC<{
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Site */}
-            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>Site *</InputLabel>
-                <MuiSelect
-                    value={selectedSiteId || ''}
-                    onChange={(e) => handleSiteChange(Number(e.target.value))}
-                    label="Site *"
-                    notched
-                    displayEmpty
-                    disabled={disabled || loading.sites}
-                >
-                    <MenuItem value="">Select Site</MenuItem>
-                    {Array.isArray(sites) && sites.map((site) => (
-                        <MenuItem key={site.id} value={site.id}>
-                            {site.name}
-                        </MenuItem>
-                    ))}
-                </MuiSelect>
-            </FormControl>
-
             {/* Building */}
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                 <InputLabel shrink>Building *</InputLabel>
@@ -178,7 +138,7 @@ const CheckpointLocationSelector: React.FC<{
                     label="Building *"
                     notched
                     displayEmpty
-                    disabled={disabled || !selectedSiteId || loading.buildings}
+                    disabled={disabled || loading.buildings}
                 >
                     <MenuItem value="">Select Building</MenuItem>
                     {Array.isArray(buildings) && buildings.map((building) => (
@@ -300,7 +260,6 @@ export const PatrollingEditPage: React.FC = () => {
         id: string;
         name: string;
         description: string;
-        siteId: number | null;
         buildingId: number | null;
         wingId: number | null;
         floorId: number | null;
@@ -405,7 +364,6 @@ export const PatrollingEditPage: React.FC = () => {
                     id: c.id.toString(),
                     name: c.name,
                     description: c.description,
-                    siteId: null, // Will need to fetch location data
                     buildingId: c.building_id,
                     wingId: c.wing_id,
                     floorId: c.floor_id,
@@ -534,7 +492,6 @@ export const PatrollingEditPage: React.FC = () => {
         id: Date.now().toString(),
         name: '',
         description: '',
-        siteId: null,
         buildingId: null,
         wingId: null,
         floorId: null,
@@ -558,7 +515,6 @@ export const PatrollingEditPage: React.FC = () => {
 
     // Handle location changes for checkpoints
     const handleLocationChange = (checkpointIndex: number, location: {
-        siteId: number | null;
         buildingId: number | null;
         wingId: number | null;
         areaId: number | null;
@@ -568,7 +524,6 @@ export const PatrollingEditPage: React.FC = () => {
         setCheckpoints(prev => prev.map((item, i) =>
             i === checkpointIndex ? {
                 ...item,
-                siteId: location.siteId,
                 buildingId: location.buildingId,
                 wingId: location.wingId,
                 floorId: location.floorId,
@@ -1126,7 +1081,6 @@ export const PatrollingEditPage: React.FC = () => {
                                     disabled={isSubmitting}
                                     checkpointIndex={idx}
                                     currentLocation={{
-                                        siteId: c.siteId,
                                         buildingId: c.buildingId,
                                         wingId: c.wingId,
                                         areaId: c.areaId,
