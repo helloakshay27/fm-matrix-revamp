@@ -56,7 +56,7 @@ export const DisposalAssetTable: React.FC<DisposalAssetTableProps> = ({
   soldValues,
   onSoldValueChange
 }) => {
-  console.log(selectedAssets)
+  console.log('selectedAssets:', selectedAssets)
   const breakdownOptions = [
     'Breakdown',
     'Maintenance Required',
@@ -81,32 +81,41 @@ export const DisposalAssetTable: React.FC<DisposalAssetTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {selectedAssets.map((asset, index) => (
-            <TableRow key={index}>
-              <TableCell className="font-medium">{typeof asset.name === 'string' ? asset.name : ''}</TableCell>
-              <TableCell>{typeof asset.assetNumber === 'string' || typeof asset.assetNumber === 'number' ? asset.assetNumber : ''}</TableCell>
-              <TableCell>
-                <StatusBadge
-                  status={asset.status || ''}
-                  assetId={asset.id}
-                />
-              </TableCell>
-              <TableCell>{typeof asset.siteName === 'string' ? asset.siteName : ''}</TableCell>
-              <TableCell>{typeof asset.purchaseCost === 'string' || typeof asset.purchaseCost === 'number' ? asset.purchaseCost : 'NA'}</TableCell>
-              <TableCell>{asset.currentBookValue}</TableCell>
-              <TableCell>
-                <TextField
-                  size="small"
-                  placeholder="Enter Sold Value"
-                  value={soldValues[asset.id] || ''}
-                  onChange={(e) => onSoldValueChange(e.target.value, asset.id.toString())}
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  fullWidth
-                />
-              </TableCell>
-            </TableRow>
-          ))}
+          {selectedAssets.map((asset, index) => {
+            // Debug: log each asset to check available keys
+            console.log('asset row:', asset);
+            // Asset number can be asset.assetNumber, asset.asset_number, or asset.asset_code
+            const assetNumber = asset.assetNumber || asset.asset_number || asset.asset_code || '';
+            const purchaseCost = asset.purchaseCost || asset.purchase_cost;
+            const currentBookValue = asset.currentBookValue || asset.current_book_value;
+            const siteName = asset.siteName || asset.site_name;
+            return (
+              <TableRow key={index}>
+                <TableCell className="font-medium">{typeof asset.name === 'string' ? asset.name : ''}</TableCell>
+                <TableCell>{typeof assetNumber === 'string' || typeof assetNumber === 'number' ? assetNumber : ''}</TableCell>
+                <TableCell>
+                  <StatusBadge
+                    status={asset.status || ''}
+                    assetId={asset.id}
+                  />
+                </TableCell>
+                <TableCell>{typeof siteName === 'string' ? siteName : ''}</TableCell>
+                <TableCell>{typeof purchaseCost === 'string' || typeof purchaseCost === 'number' ? purchaseCost : 'NA'}</TableCell>
+                <TableCell>{currentBookValue}</TableCell>
+                <TableCell>
+                  <TextField
+                    size="small"
+                    placeholder="Enter Sold Value"
+                    value={soldValues[asset.id] || ''}
+                    onChange={(e) => onSoldValueChange(e.target.value, asset.id.toString())}
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
+                  />
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

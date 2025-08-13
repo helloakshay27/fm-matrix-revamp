@@ -76,17 +76,32 @@ export const IncidentSetupDashboard = () => {
   }]);
   const [incidenceStatuses, setIncidenceStatuses] = useState([]);
   const [incidenceLevels, setIncidenceLevels] = useState([]);
-  const [escalations, setEscalations] = useState([{
-    id: 1,
-    level: 'Level 1',
-    escalateInDays: '1',
-    users: 'Mahendra Lungare, Vinayak Mane'
-  }, {
-    id: 2,
-    level: 'Level 2',
-    escalateInDays: '2',
-    users: 'Abdul A'
-  }]);
+  const [escalations, setEscalations] = useState([]);
+  // Fetch Escalations from API
+  const fetchEscalations = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/pms/escalations.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        // Map API data to local escalation format
+        const mapped = (result.data || []).map(item => ({
+          id: item.id,
+          level: item.name,
+          escalateInDays: item.after_days ? String(item.after_days) : '',
+          users: Array.isArray(item.escalate_to_users) ? item.escalate_to_users.join(', ') : ''
+        }));
+        setEscalations(mapped);
+      } else {
+        setEscalations([]);
+      }
+    } catch (error) {
+      setEscalations([]);
+    }
+  };
   const [selectedEscalationLevel, setSelectedEscalationLevel] = useState('');
   const [escalateInDays, setEscalateInDays] = useState('');
   const [escalateToUsers, setEscalateToUsers] = useState('');
@@ -119,6 +134,7 @@ export const IncidentSetupDashboard = () => {
   const [whoGotInjured, setWhoGotInjured] = useState([]);
   const [propertyDamageCategories, setPropertyDamageCategories] = useState([]);
   const [rcaCategories, setRcaCategories] = useState([]);
+  const [escalateToUsersList, setEscalateToUsersList] = useState([]);
   const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category', 'Incident Disclaimer'];
 
 
@@ -367,15 +383,37 @@ export const IncidentSetupDashboard = () => {
       console.error('Error fetching categories:', error);
     }
   };
-
+  const fetchEscalateToUsers = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/pms/users/get_escalate_to_users.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        setEscalateToUsersList(result.users || []);
+      } else {
+        console.error('Failed to fetch escalate to users');
+      }
+    } catch (error) {
+      console.error('Error fetching escalate to users:', error);
+    }
+  };
   useEffect(() => {
     if (selectedCategory === 'Category') {
       fetchCategories();
     } else if (selectedCategory === 'Sub Category') {
+      fetchCategories();
       fetchSubCategories();
     } else if (selectedCategory === 'Sub Sub Category') {
+      fetchCategories();
+      fetchSubCategories();
       fetchSubSubCategories();
     } else if (selectedCategory === 'Sub Sub Sub Category') {
+      fetchCategories();
+      fetchSubCategories();
+      fetchSubSubCategories();
       fetchSubSubSubCategories();
     } else if (selectedCategory === 'Who got injured') {
       fetchWhoGotInjured();
@@ -388,9 +426,14 @@ export const IncidentSetupDashboard = () => {
     } else if (selectedCategory === 'Secondary Category') {
       fetchSecondaryCategories();
     } else if (selectedCategory === 'Secondary Sub Category') {
+      fetchSecondaryCategories();
       fetchSecondarySubCategories();
     } else if (selectedCategory === 'RCA Category') {
       fetchRCACategories();
+    } else if (selectedCategory === 'Escalations') {
+      fetchIncidenceLevels();
+      fetchEscalateToUsers();
+      fetchEscalations();
     }
   }, [selectedCategory]);
 
@@ -568,15 +611,39 @@ export const IncidentSetupDashboard = () => {
       }
     } else if (selectedCategory === 'Escalations') {
       if (selectedEscalationLevel && escalateInDays && escalateToUsers) {
-        setEscalations([...escalations, {
-          id: newId,
-          level: selectedEscalationLevel,
-          escalateInDays: escalateInDays,
-          users: escalateToUsers
-        }]);
-        setSelectedEscalationLevel('');
-        setEscalateInDays('');
-        setEscalateToUsers('');
+        try {
+          const usersArray = Array.isArray(escalateToUsers)
+            ? escalateToUsers
+            : escalateToUsers.split(',').map(u => u.trim()).filter(Boolean);
+          const payload = {
+            escalation_matrix: {
+              name: selectedEscalationLevel,
+              after_days: Number(escalateInDays),
+              escalate_to_users: usersArray
+            }
+          };
+          const response = await fetch(`${baseUrl}/pms/add_escalation.json`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+          });
+          if (response.ok) {
+            await fetchEscalations();
+            setSelectedEscalationLevel('');
+            setEscalateInDays('');
+            setEscalateToUsers('');
+          } else {
+            const errorText = await response.text();
+            console.error('Failed to add escalation:', response.status, errorText);
+            alert('Failed to add escalation. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error adding escalation:', error);
+          alert('An error occurred while adding the escalation.');
+        }
       }
     } else if (selectedCategory === 'Approval Setup') {
       if (selectedApprovalUsers) {
@@ -1655,7 +1722,7 @@ export const IncidentSetupDashboard = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Escalate To Users
                         </label>
-                        <Select value={escalateToUsers} onValueChange={setEscalateToUsers}>
+                        {/* <Select value={escalateToUsers} onValueChange={setEscalateToUsers}>
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select up to 15 Options..." />
                           </SelectTrigger>
@@ -1665,7 +1732,44 @@ export const IncidentSetupDashboard = () => {
                             <SelectItem value="Abdul A">Abdul A</SelectItem>
                             <SelectItem value="John Doe">John Doe</SelectItem>
                           </SelectContent>
+                        </Select> */}
+                        <Select
+                          value={escalateToUsers}
+                          onValueChange={value => {
+                            const currentUsers = escalateToUsers ? escalateToUsers.split(', ').filter(u => u) : [];
+                            if (!currentUsers.includes(value)) {
+                              const newUsers = [...currentUsers, value].filter(u => u);
+                              setEscalateToUsers(newUsers.join(', '));
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select up to 15 Options..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white z-50">
+                            {escalateToUsersList.map(user => (
+                              <SelectItem key={user.id} value={user.full_name}>
+                                {user.full_name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
                         </Select>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {escalateToUsers.split(', ').filter(user => user.trim()).map((user, index) => (
+                            <div key={index} className="bg-gray-200 px-3 py-1 rounded-md flex items-center gap-2">
+                              <span className="text-sm">{user}</span>
+                              <button
+                                onClick={() => {
+                                  const userList = escalateToUsers.split(', ').filter(u => u !== user);
+                                  setEscalateToUsers(userList.join(', '));
+                                }}
+                                className="text-gray-500 hover:text-gray-700"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </>
                   ) : selectedCategory === 'Secondary Sub Category' ? (

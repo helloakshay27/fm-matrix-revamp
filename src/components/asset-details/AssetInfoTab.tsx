@@ -87,7 +87,7 @@ interface Asset {
   consumption_pms_asset_measures?: any[];
   non_consumption_pms_asset_measures?: any[];
   asset_type_category?: string; // <-- Added property to fix type error
-  it_assets?: boolean;
+  it_asset?: boolean;
 }
 type ExtraFieldsGrouped = {
   [group: string]: { field_name: string; field_value: string }[];
@@ -501,9 +501,9 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                     </div>
                   </div>
 
-                  {/* System Details */}
+
                   {
-                    asset.it_assets && (
+                    asset.it_asset && (
                       <div className="border-t pt-8">
                         <div className="text-lg font-semibold text-black-600 mb-6">
                           System Details
@@ -570,9 +570,9 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                     )
                   }
 
-                  {/* Hard Disk Details */}
+
                   {
-                    asset.it_assets && (
+                    asset.it_asset && (
                       <div className="border-t pt-8">
                         <div className="text-lg font-semibold text-black-600 mb-6">
                           Hard Disk Details

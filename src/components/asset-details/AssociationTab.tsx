@@ -32,12 +32,8 @@ interface Asset {
   id: number;
   name: string;
   asset_number?: string;
-  pms_asset_group?: {
-    name: string;
-  };
-  pms_asset_sub_group?: {
-    name: string;
-  };
+  asset_group: string;
+  asset_sub_group: string;
   meter_tag_type?: string;
   parent_meter_id?: number;
 }
@@ -59,7 +55,7 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
 
   const fetchAssets = async () => {
     if (!show) return;
-    
+
     try {
       const token = localStorage.getItem("auth_token");
       const response = await fetch(
@@ -68,12 +64,12 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-             Authorization: getAuthHeader(),
+            Authorization: getAuthHeader(),
           }
         }
       );
       const data = await response.json();
-      
+
       if (Array.isArray(data)) {
         setAssets(data);
       } else if (data.assets && Array.isArray(data.assets)) {
@@ -96,12 +92,12 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!assetId) {
       alert("Invalid asset ID. Please close and reopen the modal.");
       return;
     }
-    
+
     if (parentId === assetId || childIds.includes(assetId as number)) {
       alert("You cannot associate an asset with itself.");
       return;
@@ -159,6 +155,7 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
     asset.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+
   return (
     <Dialog open={show} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
@@ -166,15 +163,15 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
           <DialogTitle className="text-lg font-semibold">
             Associate Asset - {assetName}
           </DialogTitle>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </button>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           {/* Search */}
           <div className="flex justify-end">
@@ -211,8 +208,8 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
                   {filteredAssets.map((asset) => (
                     <tr key={asset.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm text-gray-900">{asset.name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{asset.pms_asset_group?.name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{asset.pms_asset_sub_group?.name}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{asset.asset_group}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{asset.asset_sub_group}</td>
                       <td className="px-4 py-3 text-sm">
                         {asset.meter_tag_type === "SubMeter" && (
                           <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded">
@@ -270,9 +267,9 @@ const AssociateAssetModal: React.FC<AssociateAssetModalProps> = ({
 export const AssociationTab: React.FC<AssociationTabProps> = ({ asset, assetId }) => {
   const [hierarchyData, setHierarchyData] = useState<AssetNode | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState<{ id: number | null; name: string }>({ 
-    id: null, 
-    name: '' 
+  const [selectedAsset, setSelectedAsset] = useState<{ id: number | null; name: string }>({
+    id: null,
+    name: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -295,12 +292,12 @@ export const AssociationTab: React.FC<AssociationTabProps> = ({ asset, assetId }
     return (
       <div key={node.id} className="flex flex-col items-center">
         <div className="flex flex-col items-center">
-          <div 
+          <div
             className={`
               flex flex-col items-center justify-center p-4 rounded-lg cursor-pointer 
               min-w-[180px] min-h-[80px] text-center transition-all
-              ${isBreakdown 
-                ? 'bg-red-500 text-white shadow-red-200' 
+              ${isBreakdown
+                ? 'bg-red-500 text-white shadow-red-200'
                 : 'bg-gradient-to-b from-white to-gray-50 shadow-lg hover:shadow-xl'
               } border border-gray-200 shadow-lg
             `}
@@ -310,11 +307,10 @@ export const AssociationTab: React.FC<AssociationTabProps> = ({ asset, assetId }
               {node.name}
             </span>
             {node.meter_tag_type && (
-              <span className={`text-xs mt-2 px-2 py-1 rounded-full ${
-                isBreakdown 
-                  ? 'bg-red-400 text-white' 
-                  : 'bg-blue-100 text-blue-800'
-              }`}>
+              <span className={`text-xs mt-2 px-2 py-1 rounded-full ${isBreakdown
+                ? 'bg-red-400 text-white'
+                : 'bg-blue-100 text-blue-800'
+                }`}>
                 {node.meter_tag_type}
               </span>
             )}
