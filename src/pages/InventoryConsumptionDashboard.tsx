@@ -100,6 +100,16 @@ const InventoryConsumptionDashboard = () => {
     setExpandedMonth(expandedMonth === month ? null : month);
   };
 
+  // Get current month
+  const getCurrentMonth = () => {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                   'July', 'August', 'September', 'October', 'November', 'December'];
+    const now = new Date();
+    return months[now.getMonth()];
+  };
+
+  const currentMonth = getCurrentMonth();
+
   // Handle MUI Select change
   const handleSelectChange = (field: string) => (event: SelectChangeEvent<string>) => {
     setFilterValues(prev => ({
@@ -162,7 +172,14 @@ const InventoryConsumptionDashboard = () => {
       {/* Monthly Consumption Boxes */}
       <div className="space-y-4">
         {monthlyData.map((monthData) => (
-          <div key={monthData.month} className="border border-gray-200 rounded-lg bg-white shadow-sm">
+          <div 
+            key={monthData.month} 
+            className={`border rounded-lg bg-white shadow-sm ${
+              monthData.month === currentMonth 
+                ? 'border-[#C72030] border-2 shadow-md' 
+                : 'border-gray-200'
+            }`}
+          >
             {/* Month Header Box */}
             <div 
               className="flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 transition-colors"
