@@ -648,15 +648,15 @@ const WorkOrderAddPage: React.FC = () => {
                   }}
                 />
                 </div>
-
-                {/* Total Amount Display for this item */}
-                <div className="mt-4 flex justify-end">
-                  <div className="bg-purple-700 text-white px-6 py-2 rounded">
-                    Total Amount:- 1000
-                  </div>
-                </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Total Amount Display - Outside the card */}
+        <div className="mt-4 flex justify-end">
+          <div className="bg-purple-700 text-white px-6 py-2 rounded">
+            Total Amount:- 1000
           </div>
         </div>
 
