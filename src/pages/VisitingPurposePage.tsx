@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLayout } from '@/contexts/LayoutContext';
 
 interface VisitingPurposeData {
   id: string;
@@ -23,6 +24,7 @@ interface VisitingPurposeData {
 export const VisitingPurposePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMoveInOutModalOpen, setIsMoveInOutModalOpen] = useState(false);
@@ -90,6 +92,10 @@ export const VisitingPurposePage = () => {
 
   const [filteredPurposes, setFilteredPurposes] = useState<VisitingPurposeData[]>(samplePurposes);
   const [purposes, setPurposes] = useState<VisitingPurposeData[]>(samplePurposes);
+
+  useEffect(() => {
+    setCurrentSection('Settings');
+  }, [setCurrentSection]);
 
   useEffect(() => {
     const filtered = purposes.filter(purpose =>

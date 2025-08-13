@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLayout } from '@/contexts/LayoutContext';
 
 interface SupportStaffData {
   id: string;
@@ -20,6 +21,7 @@ interface SupportStaffData {
 export const SupportStaffPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -91,6 +93,10 @@ export const SupportStaffPage = () => {
   ];
 
   const [filteredStaff, setFilteredStaff] = useState<SupportStaffData[]>(sampleStaff);
+
+  useEffect(() => {
+    setCurrentSection('Settings');
+  }, [setCurrentSection]);
 
   useEffect(() => {
     const filtered = sampleStaff.filter(staff =>
