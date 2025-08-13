@@ -934,15 +934,15 @@ export const PatrollingEditPage: React.FC = () => {
 
                                             {/* Show parsed options preview */}
                                             {q.options && q.options.length > 0 && (
-                                                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs">
-                                                    <p className="font-medium text-green-800 mb-1">
-                                                        ✅ Parsed Options ({q.options.length}):
+                                                <div className="mt-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs">
+                                                    <p className="font-medium text-gray-800 mb-1">
+                                                        ✅ Multi-Options ({q.options.length}):
                                                     </p>
                                                     <div className="flex flex-wrap gap-1">
                                                         {q.options.map((option, optIdx) => (
                                                             <span
                                                                 key={optIdx}
-                                                                className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded group"
+                                                                className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded group"
                                                             >
                                                                 {option}
                                                                 <button
@@ -953,7 +953,7 @@ export const PatrollingEditPage: React.FC = () => {
                                                                         updateQuestion(idx, 'options', newOptions);
                                                                         updateQuestion(idx, 'optionsText', newOptionsText);
                                                                     }}
-                                                                    className="ml-1 text-green-600 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                    className="ml-1 text-gray-600 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                                                                     disabled={isSubmitting}
                                                                 >
                                                                     ×
