@@ -24,7 +24,13 @@ export const VisitingPurposePage = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isMoveInOutModalOpen, setIsMoveInOutModalOpen] = useState(false);
   const [formData, setFormData] = useState({
+    site: '',
+    purpose: '',
+    active: true
+  });
+  const [moveInOutFormData, setMoveInOutFormData] = useState({
     site: '',
     purpose: '',
     active: true
@@ -85,10 +91,33 @@ export const VisitingPurposePage = () => {
   };
 
   const handleMoveInOut = () => {
-    toast({
-      title: "Move In/Out",
-      description: "Move In/Out functionality",
+    setIsMoveInOutModalOpen(true);
+  };
+
+  const handleMoveInOutModalClose = () => {
+    setIsMoveInOutModalOpen(false);
+    setMoveInOutFormData({
+      site: '',
+      purpose: '',
+      active: true
     });
+  };
+
+  const handleMoveInOutSubmit = () => {
+    if (!moveInOutFormData.purpose) {
+      toast({
+        title: "Error",
+        description: "Please enter a move in/out purpose",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Move In/Out purpose created successfully",
+    });
+    handleMoveInOutModalClose();
   };
 
   const handleWorkType = () => {
@@ -354,6 +383,71 @@ export const VisitingPurposePage = () => {
             <div className="flex justify-end pt-4">
               <Button 
                 onClick={handleSubmit}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Move In/Out Purpose Modal */}
+      <Dialog open={isMoveInOutModalOpen} onOpenChange={setIsMoveInOutModalOpen}>
+        <DialogContent className="max-w-md bg-white z-50">
+          <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
+            <DialogTitle className="text-lg font-semibold">Add Move In/Out Purpose</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleMoveInOutModalClose}
+              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Site Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm text-gray-600">Select site</Label>
+              <Select value={moveInOutFormData.site} onValueChange={(value) => setMoveInOutFormData({...moveInOutFormData, site: value})}>
+                <SelectTrigger className="w-full bg-white border border-gray-300">
+                  <SelectValue placeholder="Select Site" />
+                </SelectTrigger>
+                <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
+                  <SelectItem value="site1">Lockated - Main Office</SelectItem>
+                  <SelectItem value="site2">Zycus Infotech - Pune</SelectItem>
+                  <SelectItem value="site3">Arvog Finance - Mumbai</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Move In/Out Purpose Input */}
+            <div className="space-y-2">
+              <Label>Enter move in/ out purpose</Label>
+              <Input
+                placeholder="enter purpose"
+                value={moveInOutFormData.purpose}
+                onChange={(e) => setMoveInOutFormData({...moveInOutFormData, purpose: e.target.value})}
+                className="w-full"
+              />
+            </div>
+
+            {/* Active Checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="moveInOutActive"
+                checked={moveInOutFormData.active}
+                onCheckedChange={(checked) => setMoveInOutFormData({...moveInOutFormData, active: checked as boolean})}
+              />
+              <Label htmlFor="moveInOutActive">Active</Label>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end pt-4">
+              <Button 
+                onClick={handleMoveInOutSubmit}
                 className="bg-green-500 hover:bg-green-600 text-white px-6"
               >
                 Submit
