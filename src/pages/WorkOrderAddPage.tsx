@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Settings, Trash2 } from 'lucide-react';
+import { ArrowLeft, Settings, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
@@ -800,31 +800,32 @@ const WorkOrderAddPage: React.FC = () => {
                 <h3 className="text-md font-medium text-foreground mb-4">Selected Files:</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {attachedFiles.map((file, index) => (
-                    <div key={index} className="relative border border-gray-200 rounded-lg overflow-hidden">
-                      {file.type.startsWith('image/') ? (
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={file.name}
-                          className="w-full h-24 object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-24 bg-gray-100 flex items-center justify-center">
-                          <span className="text-gray-500 text-xs text-center p-2">{file.name}</span>
-                        </div>
-                      )}
-                      <div className="p-2">
-                        <p className="text-xs text-gray-600 truncate" title={file.name}>{file.name}</p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(index)}
-                          className="mt-1 h-6 w-full text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
-                        >
-                          <Trash2 className="h-3 w-3 mr-1" />
-                          Remove
-                        </Button>
-                      </div>
-                    </div>
+                     <div key={index} className="relative border border-gray-200 rounded-lg overflow-hidden">
+                       {/* Remove Button - Top Right */}
+                       <Button
+                         variant="ghost"
+                         size="sm"
+                         onClick={() => removeFile(index)}
+                         className="absolute top-1 right-1 z-10 h-6 w-6 p-0 bg-red-500 text-white hover:bg-red-600 rounded-full"
+                       >
+                         <X className="h-3 w-3" />
+                       </Button>
+                       
+                       {file.type.startsWith('image/') ? (
+                         <img
+                           src={URL.createObjectURL(file)}
+                           alt={file.name}
+                           className="w-full h-24 object-cover"
+                         />
+                       ) : (
+                         <div className="w-full h-24 bg-gray-100 flex items-center justify-center">
+                           <span className="text-gray-500 text-xs text-center p-2">{file.name}</span>
+                         </div>
+                       )}
+                       <div className="p-2">
+                         <p className="text-xs text-gray-600 truncate" title={file.name}>{file.name}</p>
+                       </div>
+                     </div>
                   ))}
                 </div>
               </div>
