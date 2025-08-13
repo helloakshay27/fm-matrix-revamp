@@ -30,7 +30,7 @@ export const SupportStaffPage = () => {
     days: '',
     hours: '',
     minutes: '',
-    selectedIcons: [] as string[]
+    selectedIcon: '' as string
   });
 
   // Field styles for Material-UI components
@@ -177,7 +177,7 @@ export const SupportStaffPage = () => {
       days: '',
       hours: '',
       minutes: '',
-      selectedIcons: []
+      selectedIcon: ''
     });
   };
 
@@ -364,15 +364,12 @@ export const SupportStaffPage = () => {
                   key={option.id}
                   className="flex items-center gap-2 p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer"
                   onClick={() => {
-                    const updatedIcons = formData.selectedIcons.includes(option.id)
-                      ? formData.selectedIcons.filter(id => id !== option.id)
-                      : [...formData.selectedIcons, option.id];
-                    setFormData({...formData, selectedIcons: updatedIcons});
+                    setFormData({...formData, selectedIcon: option.id});
                   }}
                 >
                   <input
                     type="radio"
-                    checked={formData.selectedIcons.includes(option.id)}
+                    checked={formData.selectedIcon === option.id}
                     onChange={() => {}}
                     className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
                     style={{
