@@ -209,7 +209,7 @@ const InventoryConsumptionDashboard = () => {
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-xl font-bold text-green-600">{monthData.amount}</span>
+                <span className="text-xl font-bold text-red-600">{monthData.amount}</span>
                 {expandedMonth === monthData.month ? (
                   <ChevronUp className="w-5 h-5 text-gray-400" />
                 ) : (
