@@ -54,6 +54,21 @@ const InventoryConsumptionDashboard = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Helper function to add ordinal suffix to numbers
+  const getOrdinalSuffix = (num: number) => {
+    if (num <= 0) return '0';
+    const remainder = num % 100;
+    if (remainder >= 11 && remainder <= 13) {
+      return `${num}th`;
+    }
+    switch (num % 10) {
+      case 1: return `${num}st`;
+      case 2: return `${num}nd`;
+      case 3: return `${num}rd`;
+      default: return `${num}th`;
+    }
+  };
+
   // Get dynamic date range based on current date
   const getCurrentDateRange = (monthName: string) => {
     const now = new Date();
@@ -66,19 +81,19 @@ const InventoryConsumptionDashboard = () => {
     
     const monthIndex = months.indexOf(monthName);
     
-    // If it's the current month, show 1 to current day
+    // If it's the current month, show 1st to current day
     if (monthIndex === currentMonth) {
-      return `1 to ${currentDay}`;
+      return `1st to ${getOrdinalSuffix(currentDay)}`;
     }
     
     // If it's a past month in the current year, show full month
     if (monthIndex < currentMonth) {
       const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate();
-      return `1 to ${daysInMonth}`;
+      return `1st to ${getOrdinalSuffix(daysInMonth)}`;
     }
     
     // If it's a future month, show as not yet reached
-    return '1 to 0';
+    return '1st to 0';
   };
 
   // Monthly consumption data with dynamic date ranges
