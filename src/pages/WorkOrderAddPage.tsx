@@ -41,6 +41,8 @@ const WorkOrderAddPage: React.FC = () => {
     totalAmount: '1000.0'
   }]);
 
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+
   const handleInputChange = (field: string, value: string | Date) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -82,8 +84,21 @@ const WorkOrderAddPage: React.FC = () => {
     }
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      setAttachedFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeFile = (indexToRemove: number) => {
+    setAttachedFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+  };
+
   const handleSubmit = () => {
     console.log('Work Order Data:', formData);
+    console.log('Attached Files:', attachedFiles);
     // Handle form submission logic here
   };
 
@@ -760,20 +775,60 @@ const WorkOrderAddPage: React.FC = () => {
           </div>
           
           <div className="p-6">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-orange-50">
-              <input
-                type="file"
-                multiple
-                className="hidden"
-                id="file-upload"
-              />
-              <label 
-                htmlFor="file-upload" 
-                className="cursor-pointer text-gray-600"
-              >
-                Drag & Drop or <span className="text-red-500 underline">Choose files</span> No file chosen
-              </label>
-            </div>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              id="file-upload"
+              onChange={handleFileUpload}
+            />
+            <label 
+              htmlFor="file-upload" 
+              className="block cursor-pointer"
+            >
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-orange-50 hover:bg-orange-100 transition-colors">
+                <span className="text-gray-600">
+                  Drag & Drop or <span className="text-red-500 underline">Choose files</span> {attachedFiles.length === 0 ? 'No file chosen' : `${attachedFiles.length} file(s) selected`}
+                </span>
+              </div>
+            </label>
+            
+            {/* File Preview Section */}
+            {attachedFiles.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-md font-medium text-foreground mb-4">Selected Files:</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {attachedFiles.map((file, index) => (
+                    <div key={index} className="relative border border-gray-200 rounded-lg overflow-hidden">
+                      {file.type.startsWith('image/') ? (
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={file.name}
+                          className="w-full h-24 object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-24 bg-gray-100 flex items-center justify-center">
+                          <span className="text-gray-500 text-xs text-center p-2">{file.name}</span>
+                        </div>
+                      )}
+                      <div className="p-2">
+                        <p className="text-xs text-gray-600 truncate" title={file.name}>{file.name}</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(index)}
+                          className="mt-1 h-6 w-full text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
