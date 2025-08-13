@@ -709,7 +709,7 @@ export const VisitingPurposePage = () => {
                   <div key={index} className="flex items-center gap-2">
                     <div className="flex-1">
                       <TextField
-                        placeholder={`Enter purpose for user ${index + 1}`}
+                        placeholder="Enter purpose"
                         value={purpose}
                         onChange={(e) => {
                           const purposes = formData.purpose ? formData.purpose.split('|') : [''];
