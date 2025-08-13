@@ -438,33 +438,39 @@ export const VisitingPurposePage = () => {
           </DialogHeader>
           
           <div className="space-y-4">
-            {/* Site Selection */}
-            <div className="space-y-2">
-              <Label className="text-sm text-gray-600">Select site</Label>
-              <Select value={formData.site} onValueChange={(value) => setFormData({...formData, site: value})}>
-                <SelectTrigger className="w-full bg-white border border-gray-300">
-                  <SelectValue placeholder="Select Site" />
-                </SelectTrigger>
-                <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
-                  <SelectItem value="site1">Lockated - Main Office</SelectItem>
-                  <SelectItem value="site2">Zycus Infotech - Pune</SelectItem>
-                  <SelectItem value="site3">Arvog Finance - Mumbai</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Site Selection */}
+              <div className="space-y-2">
+                <Label className="text-sm text-gray-600">Select site</Label>
+                <Select value={formData.site} onValueChange={(value) => setFormData({...formData, site: value})}>
+                  <SelectTrigger className="w-full bg-white border border-gray-300">
+                    <SelectValue placeholder="Select Site" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
+                    <SelectItem value="site1">Lockated - Main Office</SelectItem>
+                    <SelectItem value="site2">Zycus Infotech - Pune</SelectItem>
+                    <SelectItem value="site3">Arvog Finance - Mumbai</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Purpose Input */}
-            <div className="space-y-2">
-              <Label>Enter purpose</Label>
+              {/* Purpose Input */}
               <TextField
+                label="Enter purpose"
                 placeholder="enter purpose"
                 value={formData.purpose}
                 onChange={(e) => setFormData({...formData, purpose: e.target.value})}
                 fullWidth
                 variant="outlined"
-                size="small"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: {
+                    backgroundColor: '#fff',
+                    borderRadius: '4px',
                     '& fieldset': {
                       borderColor: '#d1d5db',
                     },
