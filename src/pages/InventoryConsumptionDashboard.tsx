@@ -38,6 +38,22 @@ const InventoryConsumptionDashboard = () => {
     dispatch(fetchInventoryConsumptionHistory());
   }, [dispatch]);
 
+  // Scroll to current month on page load
+  useEffect(() => {
+    const currentMonth = getCurrentMonth();
+    const timer = setTimeout(() => {
+      const currentMonthElement = document.getElementById(`month-${currentMonth}`);
+      if (currentMonthElement) {
+        currentMonthElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+      }
+    }, 100); // Small delay to ensure DOM is ready
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Monthly consumption data
   const monthlyData = [
     { month: 'January', dateRange: '1 to 31', amount: '₹24,000', details: generateMonthlyDetails('January') },
@@ -173,7 +189,8 @@ const InventoryConsumptionDashboard = () => {
       <div className="space-y-4">
         {monthlyData.map((monthData) => (
           <div 
-            key={monthData.month} 
+            key={monthData.month}
+            id={`month-${monthData.month}`}
             className={`border rounded-lg bg-white shadow-sm ${
               monthData.month === currentMonth 
                 ? 'border-[#C72030] border-2 shadow-md' 
