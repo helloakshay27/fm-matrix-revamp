@@ -78,7 +78,13 @@ const InventoryConsumptionDashboard = () => {
   const renderExpandedCell = (item: any, columnKey: string) => {
     const value = item[columnKey];
     if (columnKey === 'action') {
-      return <span className="text-sm font-medium text-blue-600">{value}</span>;
+      return (
+        <div className="flex gap-2 justify-center">
+          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100" onClick={() => handleViewItem(item)} title="View Details">
+            <Eye className="w-4 h-4 text-gray-600" />
+          </Button>
+        </div>
+      );
     }
     if (columnKey === 'name') {
       return <span className="font-medium text-gray-900">{value}</span>;
