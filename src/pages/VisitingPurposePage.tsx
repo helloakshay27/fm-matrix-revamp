@@ -641,11 +641,27 @@ export const VisitingPurposePage = () => {
             {/* Comment Textarea */}
             <div className="space-y-2">
               <Label>Enter comment</Label>
-              <Textarea
+              <TextField
                 placeholder="Enter Comment"
                 value={commentFormData.comment}
                 onChange={(e) => setCommentFormData({...commentFormData, comment: e.target.value})}
-                className="w-full min-h-[80px] resize-none"
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={3}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                }}
               />
             </div>
 
