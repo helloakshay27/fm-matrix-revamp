@@ -30,8 +30,7 @@ export const SupportStaffPage = () => {
     days: '',
     hours: '',
     minutes: '',
-    selectedIcon: '',
-    serviceTypes: [] as string[]
+    selectedIcons: [] as string[]
   });
 
   // Field styles for Material-UI components
@@ -145,26 +144,38 @@ export const SupportStaffPage = () => {
   }, [searchTerm]);
 
   const iconOptions = [
-    { id: '1', icon: '📦', name: 'Delivery' },
-    { id: '2', icon: '🚛', name: 'Logistics' },
-    { id: '3', icon: '🏥', name: 'Medical' },
-    { id: '4', icon: '🏪', name: 'Shop' },
-    { id: '5', icon: '👨‍⚕️', name: 'Doctor' },
-    { id: '6', icon: '🧑‍🔧', name: 'Technician' },
-    { id: '7', icon: '🧳', name: 'Travel' },
-    { id: '8', icon: '💺', name: 'Haircut' },
-    { id: '9', icon: '🧊', name: 'Appliance' },
-    { id: '10', icon: '🏦', name: 'Banking' },
-    { id: '11', icon: '🔧', name: 'Maintenance' },
-    { id: '12', icon: '👨‍💼', name: 'Business' },
-    { id: '13', icon: '👩‍⚕️', name: 'Nurse' },
-    { id: '14', icon: '📋', name: 'Admin' },
-    { id: '15', icon: '🛠️', name: 'Tools' },
-    { id: '16', icon: '👨‍🍳', name: 'Chef' },
-    { id: '17', icon: '👩‍💻', name: 'IT Support' },
-    { id: '18', icon: '📦', name: 'Package' },
-    { id: '19', icon: '👮‍♂️', name: 'Security' },
-    { id: '20', icon: '🧹', name: 'Cleaning' }
+    { id: '1', icon: '📦', name: 'Package' },
+    { id: '2', icon: '📦', name: 'Delivery Box' },
+    { id: '3', icon: '🛒', name: 'Shopping Cart' },
+    { id: '4', icon: '🏥', name: 'Medical' },
+    { id: '5', icon: '👶', name: 'Baby Care' },
+    { id: '6', icon: '🧑‍⚕️', name: 'Nurse' },
+    { id: '7', icon: '💬', name: 'Communication' },
+    { id: '8', icon: '🧳', name: 'Luggage' },
+    { id: '9', icon: '💨', name: 'Hair Dryer' },
+    { id: '10', icon: '📦', name: 'Box' },
+    { id: '11', icon: '🌊', name: 'Washing' },
+    { id: '12', icon: '🏗️', name: 'Construction' },
+    { id: '13', icon: '💳', name: 'Payment' },
+    { id: '14', icon: '➕', name: 'Medical Plus' },
+    { id: '15', icon: '👨‍💼', name: 'Business' },
+    { id: '16', icon: '🏛️', name: 'Government' },
+    { id: '17', icon: '💼', name: 'Work' },
+    { id: '18', icon: '🧑‍🍳', name: 'Chef' },
+    { id: '19', icon: '👨‍💼', name: 'Manager' },
+    { id: '20', icon: '📦', name: 'Storage' },
+    { id: '21', icon: '👩‍💻', name: 'Receptionist' },
+    { id: '22', icon: '👨‍🔧', name: 'Technician' },
+    { id: '23', icon: '👩‍⚕️', name: 'Female Doctor' },
+    { id: '24', icon: '👩‍🏫', name: 'Teacher' },
+    { id: '25', icon: '🧑‍🚒', name: 'Worker' },
+    { id: '26', icon: '⚙️', name: 'Settings' },
+    { id: '27', icon: '📦', name: 'Package Delivery' },
+    { id: '28', icon: '👨‍🔧', name: 'Maintenance' },
+    { id: '29', icon: '👩‍🍳', name: 'Female Chef' },
+    { id: '30', icon: '👩‍💼', name: 'Female Manager' },
+    { id: '31', icon: '👩‍🏭', name: 'Factory Worker' },
+    { id: '32', icon: '⚙️', name: 'Engineering' }
   ];
 
   const handleAdd = () => {
@@ -178,9 +189,17 @@ export const SupportStaffPage = () => {
       days: '',
       hours: '',
       minutes: '',
-      selectedIcon: '',
-      serviceTypes: []
+      selectedIcons: []
     });
+  };
+
+  const handleIconToggle = (iconId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedIcons: prev.selectedIcons.includes(iconId)
+        ? prev.selectedIcons.filter(id => id !== iconId)
+        : [...prev.selectedIcons, iconId]
+    }));
   };
 
   const handleSubmit = () => {
@@ -364,15 +383,20 @@ export const SupportStaffPage = () => {
               {iconOptions.map((option) => (
                 <div
                   key={option.id}
-                  className={`flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 ${
-                    formData.selectedIcon === option.id 
+                  className={`relative flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 ${
+                    formData.selectedIcons.includes(option.id)
                       ? 'border-blue-500 bg-blue-50' 
                       : 'border-gray-200'
                   }`}
-                  onClick={() => setFormData({...formData, selectedIcon: option.id})}
+                  onClick={() => handleIconToggle(option.id)}
                 >
                   <div className="text-2xl mb-1">{option.icon}</div>
                   <div className="text-xs text-center">{option.name}</div>
+                  {formData.selectedIcons.includes(option.id) && (
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                      <span className="text-white text-xs">✓</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
