@@ -180,6 +180,25 @@ const navigationStructure = {
 };
 
 const modulesByPackage = {
+  'Security': [
+    {
+      name: 'Visitor Management',
+      icon: Users,
+      subItems: [
+        { name: 'Setup', href: '/security/visitor-management/setup' },
+        { name: 'Visiting Purpose', href: '/security/visitor-management/visiting-purpose' },
+        { name: 'Support Staff', href: '/security/visitor-management/support-staff' }
+      ]
+    },
+    {
+      name: 'Gate Pass',
+      icon: Car,
+      subItems: [
+        { name: 'Materials Type', href: '/security/gate-pass/materials-type' },
+        { name: 'Items Name', href: '/security/gate-pass/items-name' }
+      ]
+    }
+  ],
   'Master': [
     {
       name: 'Location Master',
@@ -393,38 +412,7 @@ const modulesByPackage = {
     { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
     { name: 'EV Consumption', icon: Car, href: '/utility/ev-consumption' },
     { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' }
-  ],
-  'Security': [
-    {
-      name: 'Gate Pass',
-      icon: Shield,
-      href: '/security/gate-pass',
-      subItems: [
-        { name: 'Inwards', href: '/security/gate-pass/inwards', color: 'text-[#1a1a1a]' },
-        { name: 'Outwards', href: '/security/gate-pass/outwards', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    { name: 'Visitor', icon: Users, href: '/security/visitor' },
-    { name: 'Staff', icon: Users, href: '/security/staff' },
-    {
-      name: 'Vehicle',
-      icon: Car,
-      href: '/security/vehicle',
-      subItems: [
-        {
-          name: 'R Vehicles',
-          href: '/security/vehicle/r-vehicles',
-          color: 'text-[#1a1a1a]',
-          subItems: [
-            { name: 'All', href: '/security/vehicle/r-vehicles', color: 'text-[#1a1a1a]' },
-            { name: 'History', href: '/security/vehicle/r-vehicles/history', color: 'text-[#1a1a1a]' }
-          ]
-        },
-        { name: 'G Vehicles', href: '/security/vehicle/g-vehicles', color: 'text-[#1a1a1a]' }
-      ]
-    },
-    { name: 'Patrolling', icon: Shield, href: '/security/patrolling' }
-  ],
+   ],
   'Value Added Services': [
     { name: 'F&B', icon: Coffee, href: '/vas/fnb' },
     { name: 'Parking', icon: Car, href: '/vas/parking' },
