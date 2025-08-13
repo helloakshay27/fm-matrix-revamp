@@ -316,6 +316,9 @@ import InvoiceDashboard from './pages/InvoiceDashboard';
 // Import WBS page
 import { WBSElementDashboard } from './pages/WBSElementDashboard';
 
+// Import Work Order pages
+import WorkOrderAddPage from './pages/WorkOrderAddPage';
+
 // Import Settings pages
 import { FMUsersDashboard } from './pages/settings/FMUsersDashboard';
 import { CloneRolePage } from './pages/settings/CloneRolePage';
@@ -741,6 +744,7 @@ function App() {
                 <Route path="/finance/po/details/:id" element={<PODetailsPage />} />
                 <Route path="/finance/po/feeds/:id" element={<POFeedsPage />} />
                 <Route path="/finance/wo" element={<WODashboard />} />
+                <Route path="/finance/wo/add" element={<WorkOrderAddPage />} />
                 <Route path="/finance/wo/details/:id" element={<WODetailsPage />} />
                 <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
                 <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
