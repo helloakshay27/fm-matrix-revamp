@@ -315,45 +315,77 @@ export const SupportStaffPage = () => {
           </DialogHeader>
           
           <div className="space-y-6">
-            {/* Category Name Input */}
-            <div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Category Name Input */}
               <TextField
+                label="Category Name"
                 placeholder="Enter Category Name"
                 value={formData.categoryName}
                 onChange={(e) => setFormData({...formData, categoryName: e.target.value})}
                 fullWidth
                 variant="outlined"
-                size="small"
-                sx={fieldStyles}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
               />
-            </div>
 
-
-            {/* Time Inputs */}
-            <div className="grid grid-cols-3 gap-4">
+              {/* Days Input */}
               <TextField
+                label="Days"
                 placeholder="Days"
                 value={formData.days}
                 onChange={(e) => setFormData({...formData, days: e.target.value})}
+                fullWidth
                 variant="outlined"
-                size="small"
-                sx={fieldStyles}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
               />
+
+              {/* Hours Input */}
               <TextField
+                label="Hours"
                 placeholder="Hrs"
                 value={formData.hours}
                 onChange={(e) => setFormData({...formData, hours: e.target.value})}
+                fullWidth
                 variant="outlined"
-                size="small"
-                sx={fieldStyles}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
               />
+
+              {/* Minutes Input */}
               <TextField
+                label="Minutes"
                 placeholder="Min"
                 value={formData.minutes}
                 onChange={(e) => setFormData({...formData, minutes: e.target.value})}
+                fullWidth
                 variant="outlined"
-                size="small"
-                sx={fieldStyles}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
               />
             </div>
 
