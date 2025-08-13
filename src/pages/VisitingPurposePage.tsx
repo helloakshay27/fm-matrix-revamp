@@ -791,7 +791,7 @@ export const VisitingPurposePage = () => {
                 checked={editingPurpose?.status || false}
                 onCheckedChange={(checked) => editingPurpose && setEditingPurpose({...editingPurpose, status: checked as boolean})}
               />
-              <Label htmlFor="editActive" className="text-purple-600">Active</Label>
+              <Label htmlFor="editActive" className="text-black">Active</Label>
             </div>
 
             {/* Update Button */}
