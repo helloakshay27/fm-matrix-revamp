@@ -12,10 +12,10 @@ const attendanceOptions = [
   { id: 'department', label: 'Department-wise Attendance', checked: true, chartSection: 'departmentChart' },
   { id: 'trends', label: 'Attendance Trends', checked: true, chartSection: 'trendsChart' },
   { id: 'matrix', label: 'Attendance Matrix', checked: true, chartSection: 'matrixChart' },
-  { id: 'overtime', label: 'Overtime Analysis', checked: false, chartSection: 'overtimeChart' },
-  { id: 'shifts', label: 'Shift-wise Attendance', checked: false, chartSection: 'shiftsChart' },
-  { id: 'monthly', label: 'Monthly Performance', checked: false, chartSection: 'monthlyChart' },
-  { id: 'leave', label: 'Leave Patterns', checked: false, chartSection: 'leaveChart' },
+  // { id: 'overtime', label: 'Overtime Analysis', checked: false, chartSection: 'overtimeChart' },
+  // { id: 'shifts', label: 'Shift-wise Attendance', checked: false, chartSection: 'shiftsChart' },
+  // { id: 'monthly', label: 'Monthly Performance', checked: false, chartSection: 'monthlyChart' },
+  // { id: 'leave', label: 'Leave Patterns', checked: false, chartSection: 'leaveChart' },
 ];
 
 interface AttendanceSelectorProps {
