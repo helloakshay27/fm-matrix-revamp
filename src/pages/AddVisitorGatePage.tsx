@@ -80,7 +80,7 @@ export const AddVisitorGatePage = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to List
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">ADD VISITOR GATE</h1>
+          
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
