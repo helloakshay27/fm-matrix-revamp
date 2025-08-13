@@ -501,7 +501,7 @@ export const PatrollingDetailPage: React.FC = () => {
                                     <Eye className="w-3 h-3 mr-1" />
                                     View
                                   </Button>
-                                  <Button
+                                  {/* <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={async () => {
@@ -525,7 +525,7 @@ export const PatrollingDetailPage: React.FC = () => {
                                   >
                                     <Download className="w-3 h-3 mr-1" />
                                     Download
-                                  </Button>
+                                  </Button> */}
                                 </div>
                               </div>
                             ) : (

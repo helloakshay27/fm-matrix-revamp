@@ -192,20 +192,7 @@ export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFi
         
         <div className="p-6 space-y-6">
           {/* Search Section */}
-          <div>
-            <h3 className="text-[14px] text-[#C72030] font-medium mb-4">Search</h3>
-            <TextField
-              label="Search All Fields"
-              placeholder="Enter patrol name, description, etc."
-              name="searchTerm"
-              value={filters.searchTerm || ''}
-              onChange={(e) => handleInputChange('searchTerm', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputProps={{ sx: fieldStyles }}
-              InputLabelProps={{ shrink: true }}
-            />
-          </div>
+      
 
           {/* Location Details */}
           <div>
@@ -352,23 +339,7 @@ export const PatrollingFilterModal = ({ isOpen, onClose, onApply }: PatrollingFi
               </FormControl>
 
               {/* Status */}
-              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>Status</InputLabel>
-                <MuiSelect
-                  value={filters.status || ''}
-                  onChange={(e) => handleInputChange('status', e.target.value)}
-                  label="Status"
-                  notched
-                  displayEmpty
-                  MenuProps={menuProps}
-                >
-                  <MenuItem value="">
-                    <em>All Status</em>
-                  </MenuItem>
-                  <MenuItem value="active">Active</MenuItem>
-                  <MenuItem value="inactive">Inactive</MenuItem>
-                </MuiSelect>
-              </FormControl>
+            
             </div>
           </div>
 

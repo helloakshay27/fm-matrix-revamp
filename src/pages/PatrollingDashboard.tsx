@@ -14,6 +14,7 @@ import { TicketPagination } from '@/components/TicketPagination';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
+import { useDebounce } from '@/hooks/useDebounce';
 
 // Type definitions for the API response
 interface PatrollingItem {
@@ -130,6 +131,7 @@ export const PatrollingDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchQuery = useDebounce(searchTerm, 1000);
   const [appliedFilters, setAppliedFilters] = useState<PatrollingFilters>({});
   const [patrollingData, setPatrollingData] = useState<PatrollingItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -223,20 +225,24 @@ export const PatrollingDashboard = () => {
 
   // Load data on component mount and when page/perPage/filters change
   useEffect(() => {
-    fetchPatrollingData(currentPage, perPage, searchTerm, appliedFilters);
-  }, [currentPage, perPage, searchTerm, appliedFilters]);
+    console.log('Effect triggered - debouncedSearchQuery:', debouncedSearchQuery); // Debug log
+    fetchPatrollingData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+  }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
 
   // Handle filter application
   const handleApplyFilters = (filters: PatrollingFilters) => {
     console.log('📊 Applying filters:', filters);
     setAppliedFilters(filters);
     setCurrentPage(1); // Reset to first page when applying filters
-  };
-
-  // Handle search
+  };  // Handle search
   const handleSearch = (term: string) => {
+    console.log('Search query:', term); // Debug log
     setSearchTerm(term);
     setCurrentPage(1); // Reset to first page when searching
+    // Force immediate search if query is empty (for clear search)
+    if (!term.trim()) {
+      fetchPatrollingData(1, perPage, '', appliedFilters);
+    }
   };
 
   // Handle page change
@@ -272,10 +278,10 @@ export const PatrollingDashboard = () => {
       <button onClick={() => handleView(patrol.id)} className="p-1 text-blue-600 hover:bg-blue-50 rounded" title="View">
         <Eye className="w-4 h-4" />
       </button>
-      <button onClick={() => handleEdit(patrol.id)} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Edit">
+      <button onClick={() => handleEdit(patrol.ids)} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Edit">
         <Edit className="w-4 h-4" />
       </button>
-      <button onClick={() => handleDelete(patrol.id)} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Delete">
+      <button onClick={() => handleDelete(patrol.ids)} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Delete">
         <Trash2 className="w-4 h-4" />
       </button>
     </div>,
@@ -286,8 +292,8 @@ export const PatrollingDashboard = () => {
     shift_type: <div className="text-sm text-gray-600">{getShiftType(patrol.schedules)}</div>,
     grace_time: <span className="text-sm text-gray-600">{patrol.grace_period_minutes} min</span>,
     status: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${patrol.active
-        ? 'bg-green-100 text-green-800'
-        : 'bg-red-100 text-red-800'
+      ? 'bg-green-100 text-green-800'
+      : 'bg-red-100 text-red-800'
       }`}>
       {patrol.active ? 'Active' : 'Inactive'}
     </span>
@@ -339,7 +345,7 @@ export const PatrollingDashboard = () => {
       });
 
       // Refresh the data
-      fetchPatrollingData(currentPage, perPage, searchTerm, appliedFilters);
+      fetchPatrollingData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
       setIsDeleteModalOpen(false);
       setSelectedPatrollingId(null);
     } catch (error: any) {
@@ -377,8 +383,8 @@ export const PatrollingDashboard = () => {
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
             leftActions={(
-              <Button variant="outline" onClick={() => navigate('/security/patrolling/create')}>
-                <Plus className="w-4 h-4 mr-2" /> New
+              <Button className='bg-primary text-primary-foreground hover:bg-primary/90'  onClick={() => navigate('/security/patrolling/create')}>
+                <Plus className="w-4 h-4 mr-2" /> Add
               </Button>
             )}
           />
