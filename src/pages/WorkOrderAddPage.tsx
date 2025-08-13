@@ -321,31 +321,33 @@ const WorkOrderAddPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Details Section Cards */}
-        {detailsForms.map((detailsData, index) => (
-          <div key={detailsData.id} className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                    <Settings className="w-4 h-4 text-white" />
-                  </div>
-                  <h2 className="text-lg font-semibold text-foreground">DETAILS {index + 1}</h2>
-                </div>
-                {detailsForms.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeDetailsForm(detailsData.id)}
-                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+        {/* Details Section Card */}
+        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                <Settings className="w-4 h-4 text-white" />
               </div>
+              <h2 className="text-lg font-semibold text-foreground">DETAILS</h2>
             </div>
-            
-            <div className="p-6">
+          </div>
+          
+          <div className="p-6">
+            {detailsForms.map((detailsData, index) => (
+              <div key={detailsData.id} className={`${index > 0 ? 'mt-8 pt-8 border-t border-gray-200' : ''}`}>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-md font-medium text-foreground">Item {index + 1}</h3>
+                  {detailsForms.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeDetailsForm(detailsData.id)}
+                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* First Row */}
                 <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -645,17 +647,18 @@ const WorkOrderAddPage: React.FC = () => {
                     height: { xs: 28, sm: 36, md: 45 },
                   }}
                 />
-              </div>
+                </div>
 
-              {/* Total Amount Display */}
-              <div className="mt-4 flex justify-end">
-                <div className="bg-purple-700 text-white px-6 py-2 rounded">
-                  Total Amount:- 1000
+                {/* Total Amount Display for this item */}
+                <div className="mt-4 flex justify-end">
+                  <div className="bg-purple-700 text-white px-6 py-2 rounded">
+                    Total Amount:- 1000
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
+        </div>
 
         {/* Add Items Button */}
         <div className="mt-6">
