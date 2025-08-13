@@ -301,13 +301,13 @@ export const VisitingPurposePage = () => {
       {/* Add Purpose Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="max-w-md bg-white z-50">
-          <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">Select Site</DialogTitle>
+          <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
+            <DialogTitle className="text-lg font-semibold">Add Purpose</DialogTitle>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleModalClose}
-              className="h-6 w-6 p-0"
+              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -316,11 +316,12 @@ export const VisitingPurposePage = () => {
           <div className="space-y-4">
             {/* Site Selection */}
             <div className="space-y-2">
+              <Label className="text-sm text-gray-600">Select site</Label>
               <Select value={formData.site} onValueChange={(value) => setFormData({...formData, site: value})}>
-                <SelectTrigger className="w-full bg-white">
+                <SelectTrigger className="w-full bg-white border border-gray-300">
                   <SelectValue placeholder="Select Site" />
                 </SelectTrigger>
-                <SelectContent className="bg-white z-50">
+                <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
                   <SelectItem value="site1">Lockated - Main Office</SelectItem>
                   <SelectItem value="site2">Zycus Infotech - Pune</SelectItem>
                   <SelectItem value="site3">Arvog Finance - Mumbai</SelectItem>
