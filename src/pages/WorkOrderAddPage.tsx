@@ -20,8 +20,32 @@ const WorkOrderAddPage: React.FC = () => {
     relatedTo: ''
   });
 
+  const [detailsData, setDetailsData] = useState({
+    service: '',
+    productDescription: 'Housekeeping',
+    quantityArea: '10.0',
+    uom: 'UOM',
+    expectedDate: new Date(),
+    rate: '100.0',
+    cgstRate: '',
+    cgstAmt: '0.0',
+    sgstRate: '',
+    sgstAmt: '0.0',
+    igstRate: '',
+    igstAmt: '0.0',
+    tcsRate: '',
+    tcsAmt: '0.0',
+    taxAmount: '0.0',
+    amount: '1000.0',
+    totalAmount: '1000.0'
+  });
+
   const handleInputChange = (field: string, value: string | Date) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleDetailsChange = (field: string, value: string | Date) => {
+    setDetailsData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = () => {
@@ -246,6 +270,338 @@ const WorkOrderAddPage: React.FC = () => {
               InputLabelProps={{ shrink: true }}
               sx={{ mt: 1 }}
             />
+          </div>
+        </div>
+
+        {/* Details Section Card */}
+        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                <Settings className="w-4 h-4 text-white" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">DETAILS</h2>
+            </div>
+          </div>
+          
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* First Row */}
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Select Service*</InputLabel>
+                <MuiSelect
+                  label="Select Service*"
+                  value={detailsData.service}
+                  onChange={(e) => handleDetailsChange('service', e.target.value)}
+                  displayEmpty
+                  sx={{
+                    height: { xs: 28, sm: 36, md: 45 },
+                    '& .MuiInputBase-input, & .MuiSelect-select': {
+                      padding: { xs: '8px', sm: '10px', md: '12px' },
+                    },
+                  }}
+                >
+                  <MenuItem value=""><em>Select Service</em></MenuItem>
+                  <MenuItem value="housekeeping">Housekeeping</MenuItem>
+                  <MenuItem value="maintenance">Maintenance</MenuItem>
+                  <MenuItem value="cleaning">Cleaning</MenuItem>
+                </MuiSelect>
+              </FormControl>
+
+              <TextField
+                label="Product Description*"
+                value={detailsData.productDescription}
+                onChange={(e) => handleDetailsChange('productDescription', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              <TextField
+                label="Quantity/Area*"
+                value={detailsData.quantityArea}
+                onChange={(e) => handleDetailsChange('quantityArea', e.target.value)}
+                fullWidth
+                variant="outlined"
+                type="number"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              {/* Second Row */}
+              <TextField
+                label="UOM"
+                value={detailsData.uom}
+                onChange={(e) => handleDetailsChange('uom', e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              <TextField
+                label="Expected Date*"
+                value={detailsData.expectedDate instanceof Date ? detailsData.expectedDate.toISOString().split('T')[0] : ''}
+                onChange={(e) => handleDetailsChange('expectedDate', new Date(e.target.value))}
+                fullWidth
+                variant="outlined"
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              <TextField
+                label="Rate*"
+                value={detailsData.rate}
+                onChange={(e) => handleDetailsChange('rate', e.target.value)}
+                fullWidth
+                variant="outlined"
+                type="number"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              {/* Third Row */}
+              <TextField
+                label="CGST Rate"
+                value={detailsData.cgstRate}
+                onChange={(e) => handleDetailsChange('cgstRate', e.target.value)}
+                fullWidth
+                variant="outlined"
+                type="number"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              <TextField
+                label="CGST Amt"
+                value={detailsData.cgstAmt}
+                onChange={(e) => handleDetailsChange('cgstAmt', e.target.value)}
+                fullWidth
+                variant="outlined"
+                type="number"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              <TextField
+                label="SGST Rate"
+                value={detailsData.sgstRate}
+                onChange={(e) => handleDetailsChange('sgstRate', e.target.value)}
+                fullWidth
+                variant="outlined"
+                type="number"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              {/* Fourth Row */}
+              <TextField
+                label="SGST Amt"
+                value={detailsData.sgstAmt}
+                onChange={(e) => handleDetailsChange('sgstAmt', e.target.value)}
+                fullWidth
+                variant="outlined"
+                type="number"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              <TextField
+                label="IGST Rate"
+                value={detailsData.igstRate}
+                onChange={(e) => handleDetailsChange('igstRate', e.target.value)}
+                fullWidth
+                variant="outlined"
+                type="number"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              <TextField
+                label="IGST Amt"
+                value={detailsData.igstAmt}
+                onChange={(e) => handleDetailsChange('igstAmt', e.target.value)}
+                fullWidth
+                variant="outlined"
+                type="number"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              {/* Fifth Row */}
+              <TextField
+                label="TCS Rate"
+                value={detailsData.tcsRate}
+                onChange={(e) => handleDetailsChange('tcsRate', e.target.value)}
+                fullWidth
+                variant="outlined"
+                type="number"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              <TextField
+                label="TCS Amt"
+                value={detailsData.tcsAmt}
+                onChange={(e) => handleDetailsChange('tcsAmt', e.target.value)}
+                fullWidth
+                variant="outlined"
+                type="number"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              <TextField
+                label="Tax Amount"
+                value={detailsData.taxAmount}
+                onChange={(e) => handleDetailsChange('taxAmount', e.target.value)}
+                fullWidth
+                variant="outlined"
+                type="number"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              {/* Sixth Row */}
+              <TextField
+                label="Amount"
+                value={detailsData.amount}
+                onChange={(e) => handleDetailsChange('amount', e.target.value)}
+                fullWidth
+                variant="outlined"
+                type="number"
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+
+              <TextField
+                label="Total Amount"
+                value={detailsData.totalAmount}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  readOnly: true,
+                }}
+                sx={{
+                  mt: 1,
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px', sm: '10px', md: '12px' },
+                    backgroundColor: '#f5f5f5',
+                  },
+                  height: { xs: 28, sm: 36, md: 45 },
+                }}
+              />
+            </div>
+
+            {/* Add Items Button */}
+            <div className="mt-6">
+              <Button
+                className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
+                onClick={() => console.log('Add Items clicked')}
+              >
+                Add Items
+              </Button>
+            </div>
+
+            {/* Total Amount Display */}
+            <div className="mt-4 flex justify-end">
+              <div className="bg-purple-700 text-white px-6 py-2 rounded">
+                Total Amount:- 1000
+              </div>
+            </div>
           </div>
         </div>
 
