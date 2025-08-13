@@ -280,6 +280,10 @@ export const ViewSchedulePage = () => {
   const handleViewPerformance = () => {
     navigate(`/maintenance/schedule/performance/${id}`, { state: { formCode } });
   };
+  console.log("Selected Group ID:", selectedGroupId);
+  console.log("Selected Sub Group ID:", selectedSubGroupId);
+  console.log("groupOptions:", groupOptions);
+  
 
   return (
     <div className="p-6 mx-auto">
@@ -419,7 +423,9 @@ export const ViewSchedulePage = () => {
                  <Autocomplete
       options={groupOptions}
       getOptionLabel={(option) => option.name || ''}
-      value={groupOptions.find(group => group.id === selectedGroupId) || null}
+      value={
+        groupOptions.find(group => group.id ===  Number(selectedGroupId)) || null
+      }
       isOptionEqualToValue={(option, value) => option.id === value.id}
       disabled
       renderInput={(params) => (
@@ -436,7 +442,7 @@ export const ViewSchedulePage = () => {
                     <Autocomplete
       options={subGroupOptions}
       getOptionLabel={(option) => option.name || ''}
-      value={subGroupOptions.find(subGroup => subGroup.id === selectedSubGroupId) || null}
+      value={subGroupOptions.find(subGroup => subGroup.id === Number(selectedSubGroupId)) || null}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       disabled
       renderInput={(params) => (

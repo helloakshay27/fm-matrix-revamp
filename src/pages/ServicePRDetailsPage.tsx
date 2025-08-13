@@ -1,13 +1,36 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Edit, Copy, Printer, Rss, ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAppDispatch } from '@/store/hooks';
+import { getWorkOrderById } from '@/store/slices/workOrderSlice';
+import { numberToIndianCurrencyWords } from '@/utils/amountToText';
 
 export const ServicePRDetailsPage = () => {
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+
   const navigate = useNavigate();
   const { id } = useParams();
+
+  const [servicePR, setServicePR] = useState({});
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await dispatch(getWorkOrderById({ baseUrl, token, id })).unwrap();
+        setServicePR(response.page)
+      } catch (error) {
+        toast.error(error)
+      }
+    }
+
+    fetchData();
+  }, [])
 
   // Mock data - in real app this would come from API based on ID
   const servicePRData = {
@@ -273,17 +296,6 @@ export const ServicePRDetailsPage = () => {
 
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
-      {/* Breadcrumb */}
-      <div className="mb-2 text-sm text-gray-600">
-        <span
-          className="cursor-pointer hover:text-[#C72030]"
-          onClick={() => navigate('/finance/service-pr')}
-        >
-          Service PR
-        </span>
-        {' > '}
-        <span>Service PR Details</span>
-      </div>
 
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
@@ -326,40 +338,42 @@ export const ServicePRDetailsPage = () => {
 
       {/* Vendor/Contact Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">{servicePR.company?.site_name}</h2>
+        </div>
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left side - Contact details */}
           <div className="flex-1 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="text-sm font-medium text-gray-700">Phone</span>
-                <span className="ml-8">: {servicePRData.phone}</span>
+                <span className="ml-8">: {servicePR.company?.phone}</span>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-700">Fax</span>
-                <span className="ml-12">: {servicePRData.fax}</span>
+                <span className="ml-12">: {servicePR.company?.fax}</span>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-700">Email</span>
-                <span className="ml-8">: {servicePRData.email}</span>
+                <span className="ml-8">: {servicePR.company?.email}</span>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-700">GST</span>
-                <span className="ml-11">: {servicePRData.gst}</span>
+                <span className="ml-11">: {servicePR.company?.gst}</span>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-700">PAN</span>
-                <span className="ml-9">: {servicePRData.pan}</span>
+                <span className="ml-9">: {servicePR.company?.pan}</span>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-700">Address</span>
-                <span className="ml-5">: {servicePRData.address}</span>
+                <span className="ml-5">: {servicePR.company?.address}</span>
               </div>
             </div>
           </div>
 
           {/* Center - Contractor name */}
           <div className="flex flex-col items-center justify-center lg:min-w-[200px]">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">{servicePRData.contractor}</h2>
             <div className="w-16 h-16 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
               <span className="text-xs text-gray-500">image</span>
             </div>
@@ -370,7 +384,7 @@ export const ServicePRDetailsPage = () => {
       {/* Service PR Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
-          Service Purchase Request ({servicePRData.adminApproval})
+          Service Purchase Request ({servicePR.work_order?.wo_status})
         </h3>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
@@ -378,47 +392,47 @@ export const ServicePRDetailsPage = () => {
           <div className="space-y-4">
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">SPR Number</span>
-              <span className="text-sm">: {servicePRData.prNumber || '-'}</span>
+              <span className="text-sm">: {servicePR.work_order?.number || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">SPR Date</span>
-              <span className="text-sm">: {servicePRData.prDate}</span>
+              <span className="text-sm">: {servicePR.work_order?.wo_date}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Kind Attention</span>
-              <span className="text-sm">: {servicePRData.kindAttention || '-'}</span>
+              <span className="text-sm">: {servicePR.work_order?.kind_attention || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Subject</span>
-              <span className="text-sm">: {servicePRData.subject || '-'}</span>
+              <span className="text-sm">: {servicePR.work_order?.subject || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Related To</span>
-              <span className="text-sm">: {servicePRData.relatedTo || '-'}</span>
+              <span className="text-sm">: {servicePR.work_order?.related_to || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Payment Tenure(In Days)</span>
-              <span className="text-sm">: {servicePRData.paymentTenure || '-'}</span>
+              <span className="text-sm">: {servicePR.work_order?.payment_terms?.payment_tenure}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Retention(%)</span>
-              <span className="text-sm">: {servicePRData.retention || '-'}</span>
+              <span className="text-sm">: {servicePR.work_order?.payment_terms?.retention}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">TDS(%)</span>
-              <span className="text-sm">: {servicePRData.tds || '-'}</span>
+              <span className="text-sm">: {servicePR.work_order?.payment_terms?.tds || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">QC(%)</span>
-              <span className="text-sm">: {servicePRData.qc || '-'}</span>
+              <span className="text-sm">: {servicePR.work_order?.payment_terms?.qc || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Advance Amount</span>
-              <span className="text-sm">: {servicePRData.advanceAmount || '-'}</span>
+              <span className="text-sm">: {servicePR.work_order?.advance_amount || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Description</span>
-              <span className="text-sm">: {servicePRData.description || '-'}</span>
+              <span className="text-sm">: {servicePR.work_order?.description || '-'}</span>
             </div>
           </div>
 
@@ -426,43 +440,43 @@ export const ServicePRDetailsPage = () => {
           <div className="space-y-4">
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">Reference No.</span>
-              <span className="text-sm">: {servicePRData.referenceNo}</span>
+              <span className="text-sm">: {servicePR.work_order?.reference_no}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">ID</span>
-              <span className="text-sm">: {servicePRData.id}</span>
+              <span className="text-sm">: {servicePR.work_order?.id}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">Contractor</span>
-              <span className="text-sm">: {servicePRData.contractor}</span>
+              <span className="text-sm">: {servicePR.work_order?.supplier_details?.company_name}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">Address</span>
-              <span className="text-sm">: {servicePRData.address}</span>
+              <span className="text-sm">: {servicePR.work_order?.supplier_address?.address}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">Phone</span>
-              <span className="text-sm">: {servicePRData.phone}</span>
+              <span className="text-sm">: {servicePR.work_order?.supplier_details?.mobile1}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">Email</span>
-              <span className="text-sm">: {servicePRData.email}</span>
+              <span className="text-sm">: {servicePR.work_order?.supplier_details?.email}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">GST</span>
-              <span className="text-sm">: {servicePRData.gst}</span>
+              <span className="text-sm">: {servicePR.work_order?.supplier_details?.gstin_number}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">PAN</span>
-              <span className="text-sm">: {servicePRData.pan}</span>
+              <span className="text-sm">: {servicePR.work_order?.supplier_details?.pan_number}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">Work Category</span>
-              <span className="text-sm">: {servicePRData.workCategory}</span>
+              <span className="text-sm">: {servicePR.work_order?.work_category}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">Plant Detail</span>
-              <span className="text-sm">: {servicePRData.plantDetail}</span>
+              <span className="text-sm">: {servicePR.work_order?.plant_detail}</span>
             </div>
           </div>
         </div>
@@ -495,25 +509,25 @@ export const ServicePRDetailsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {servicePRData.services.map((item) => (
+              {servicePR.inventories?.map((item) => (
                 <TableRow key={item.sno} className="hover:bg-gray-50">
                   <TableCell className="text-sm">{item.sno}</TableCell>
-                  <TableCell className="text-sm">{item.boqDetails}</TableCell>
+                  <TableCell className="text-sm">{item.boq_details}</TableCell>
                   <TableCell className="text-sm">{item.quantity}</TableCell>
                   <TableCell className="text-sm">{item.uom}</TableCell>
-                  <TableCell className="text-sm">{item.expectedDate}</TableCell>
-                  <TableCell className="text-sm">{item.productDescription}</TableCell>
-                  <TableCell className="text-sm">{item.rate.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.wbsCode}</TableCell>
-                  <TableCell className="text-sm">{item.cgstRate.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.cgstAmount.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.sgstRate.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.sgstAmount.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.igstRate.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.igstAmount.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.tcsAmount.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.taxAmount.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm font-medium">{item.totalAmount.toFixed(2)}</TableCell>
+                  <TableCell className="text-sm">{item.expected_date}</TableCell>
+                  <TableCell className="text-sm">{item.product_description}</TableCell>
+                  <TableCell className="text-sm">{item.rate}</TableCell>
+                  <TableCell className="text-sm">{item.wbs_code}</TableCell>
+                  <TableCell className="text-sm">{item.cgst_rate}</TableCell>
+                  <TableCell className="text-sm">{item.cgst_amount}</TableCell>
+                  <TableCell className="text-sm">{item.sgst_rate}</TableCell>
+                  <TableCell className="text-sm">{item.sgst_amount}</TableCell>
+                  <TableCell className="text-sm">{item.igst_rate}</TableCell>
+                  <TableCell className="text-sm">{item.igst_amount}</TableCell>
+                  <TableCell className="text-sm">{item.tcs_amount}</TableCell>
+                  <TableCell className="text-sm">{item.tax_amount}</TableCell>
+                  <TableCell className="text-sm font-medium">{item.total_amount}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -524,23 +538,23 @@ export const ServicePRDetailsPage = () => {
         <div className="mt-6 border-t pt-4">
           <div className="flex justify-between items-center py-2">
             <span className="font-medium text-gray-700">Net Amount (INR):</span>
-            <span className="font-medium">{servicePRData.netAmount}</span>
+            <span className="font-medium">{servicePR.totals?.net_amount}</span>
           </div>
           <div className="flex justify-between items-center py-2">
             <span className="font-medium text-gray-700">Total Taxable Value Of Service PR:</span>
-            <span className="font-medium">{servicePRData.totalTaxableValue.toFixed(2)}</span>
+            <span className="font-medium">{servicePR.totals?.total_taxable}</span>
           </div>
           <div className="flex justify-between items-center py-2">
             <span className="font-medium text-gray-700">Taxes (INR):</span>
-            <span className="font-medium">{servicePRData.taxes.toFixed(2)}</span>
+            <span className="font-medium">{servicePR.totals?.taxes}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-t">
             <span className="font-semibold text-gray-900">Total Service PR Value (INR):</span>
-            <span className="font-semibold">{servicePRData.totalValue.toFixed(2)}</span>
+            <span className="font-semibold">{servicePR.totals?.total_value}</span>
           </div>
           <div className="mt-4">
             <span className="font-medium text-gray-700">Amount In Words: </span>
-            <span className="text-gray-900">{servicePRData.amountInWords}</span>
+            <span className="text-gray-900">{numberToIndianCurrencyWords(servicePR.totals?.total_value)}</span>
           </div>
         </div>
       </div>
@@ -567,7 +581,13 @@ export const ServicePRDetailsPage = () => {
       {/* Attachments Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Attachments</h3>
-        <p className="text-gray-500">{servicePRData.attachments}</p>
+        <div className='flex items-center gap-4 flex-wrap'>
+          {
+            servicePR.attachments.map(attachment => (
+              <img src={attachment.url} alt="" height={100} width={100} />
+            ))
+          }
+        </div>
       </div>
     </div>
   );

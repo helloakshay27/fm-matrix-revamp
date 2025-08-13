@@ -999,9 +999,14 @@ export const InventoryDashboard = () => {
                 }
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                  <Settings
-                    className="w-4 h-4 sm:w-6 sm:h-6"
-                    style={{ color: "#C72030" }}
+                  <img
+                    src={bio}
+                    alt="Green Product"
+                    className="w-6 h-6 sm:w-8 sm:h-8"
+                    style={{
+                      filter:
+                        "invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)",
+                    }}
                   />
                 </div>
                 <div className="flex flex-col min-w-0">
@@ -1099,7 +1104,14 @@ export const InventoryDashboard = () => {
       <InventoryAnalyticsFilterDialog
         isOpen={isAnalyticsFilterOpen}
         onClose={() => setIsAnalyticsFilterOpen(false)}
-        onApplyFilters={(filters) => setAnalyticsDateRange(filters)}
+        onApplyFilters={(filters) => {
+          // Parse DD/MM/YYYY to Date objects
+          const [startDay, startMonth, startYear] = filters.startDate.split('/').map(Number);
+          const [endDay, endMonth, endYear] = filters.endDate.split('/').map(Number);
+          const startDate = new Date(startYear, startMonth - 1, startDay);
+          const endDate = new Date(endYear, endMonth - 1, endDay);
+          setDateRange({ startDate, endDate });
+        }}
       />
     </div>
   );

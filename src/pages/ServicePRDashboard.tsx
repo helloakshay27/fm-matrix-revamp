@@ -23,7 +23,7 @@ export const ServicePRDashboard = () => {
     const fetchData = async () => {
       try {
         const response = await dispatch(getServicePr({ baseUrl, token })).unwrap();
-        setServicePR(response)
+        setServicePR(response.work_orders)
       } catch (error) {
         toast.error(error)
       }
@@ -72,7 +72,7 @@ export const ServicePRDashboard = () => {
   ];
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case "approved":
         return "bg-green-500 text-white";
       case "rejected":
@@ -87,27 +87,27 @@ export const ServicePRDashboard = () => {
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
       case "prNumber":
-      case "referenceNo":
+      case "reference_number":
         return (
           <span className="text-blue-600 hover:underline cursor-pointer">
             {item[columnKey]}
           </span>
         );
-      case "approvedStatus":
+      case "approved_status":
         return (
           <span
             className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-              item.approvedStatus
+              item.approved_status
             )}`}
           >
-            {item.approvedStatus}
+            {item.approved_status}
           </span>
         );
-      case "activeInactive":
+      case "active":
         return (
           <input
             type="checkbox"
-            checked={item.activeInactive}
+            checked={item.active}
             readOnly
             className="w-4 h-4"
           />
@@ -122,14 +122,14 @@ export const ServicePRDashboard = () => {
   const columns: ColumnConfig[] = [
     { key: "id", label: "ID", sortable: true, draggable: true, defaultVisible: true },
     { key: "prNumber", label: "PR No.", sortable: true, draggable: true, defaultVisible: true },
-    { key: "referenceNo", label: "Reference No.", sortable: true, draggable: true, defaultVisible: true },
-    { key: "supplierName", label: "Supplier Name", sortable: true, draggable: true, defaultVisible: true },
-    { key: "createdBy", label: "Created By", sortable: true, draggable: true, defaultVisible: true },
-    { key: "createdOn", label: "Created On", sortable: true, draggable: true, defaultVisible: true },
-    { key: "lastApprovedBy", label: "Last Approved By", sortable: true, draggable: true, defaultVisible: true },
-    { key: "approvedStatus", label: "Approved Status", sortable: true, draggable: true, defaultVisible: true },
-    { key: "prAmount", label: "PR Amount", sortable: true, draggable: true, defaultVisible: true },
-    { key: "activeInactive", label: "Active/Inactive", sortable: false, draggable: true, defaultVisible: true },
+    { key: "reference_number", label: "Reference No.", sortable: true, draggable: true, defaultVisible: true },
+    { key: "supplier", label: "Supplier Name", sortable: true, draggable: true, defaultVisible: true },
+    { key: "created_by", label: "Created By", sortable: true, draggable: true, defaultVisible: true },
+    { key: "created_on", label: "Created On", sortable: true, draggable: true, defaultVisible: true },
+    { key: "last_approved_by", label: "Last Approved By", sortable: true, draggable: true, defaultVisible: true },
+    { key: "approved_status", label: "Approved Status", sortable: true, draggable: true, defaultVisible: true },
+    { key: "total_amount", label: "PR Amount", sortable: true, draggable: true, defaultVisible: true },
+    { key: "active", label: "Active/Inactive", sortable: false, draggable: true, defaultVisible: true },
   ];
 
   const renderActions = (item: any) => (
@@ -175,7 +175,7 @@ export const ServicePRDashboard = () => {
     <div className="p-4 sm:p-6">
       {/* Table */}
       <EnhancedTable
-        data={servicePRData}
+        data={servicePR || []}
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
@@ -187,7 +187,7 @@ export const ServicePRDashboard = () => {
         searchPlaceholder="Search..."
         exportFileName="service-prs"
         pagination={true}
-        pageSize={5}
+        pageSize={10}
         enableSearch={true}
         enableSelection={true}
         leftActions={leftActions}

@@ -126,7 +126,14 @@ import { VisitorsDashboard } from './pages/VisitorsDashboard';
 import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
 import { PatrollingDashboard } from './pages/PatrollingDashboard';
 import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
+import { PatrollingCreatePage } from './pages/PatrollingCreatePage';
 import { VisitorFormPage } from './pages/VisitorFormPage';
+import { VisitorManagementSetup } from './pages/VisitorManagementSetup';
+import { AddVisitorGatePage } from './pages/AddVisitorGatePage';
+import { EditVisitorGatePage } from './pages/EditVisitorGatePage';
+import { SupportStaffPage } from './pages/SupportStaffPage';
+import { EditSupportStaffPage } from './pages/EditSupportStaffPage';
+import { VisitingPurposePage } from './pages/VisitingPurposePage';
 
 // Import new dashboard pages
 import { IncidentDashboard } from "./pages/IncidentDashboard";
@@ -207,10 +214,11 @@ import ParkingDetailsPage from "./pages/ParkingDetailsPage";
 import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
 
 // Import Design Insights pages
-import { DesignInsightsDashboard } from "./pages/DesignInsightsDashboard";
-import { AddDesignInsightDashboard } from "./pages/AddDesignInsightDashboard";
-import { DesignInsightDetailsDashboard } from "./pages/DesignInsightDetailsDashboard";
-import { EditDesignInsightDashboard } from "./pages/EditDesignInsightDashboard";
+import { DesignInsightsDashboard } from './pages/DesignInsightsDashboard';
+import { AddDesignInsightDashboard } from './pages/AddDesignInsightDashboard';
+import { DesignInsightDetailsDashboard } from './pages/DesignInsightDetailsDashboard';
+import { EditDesignInsightDashboard } from './pages/EditDesignInsightDashboard';
+import { HOTODashboard } from './pages/HOTODashboard';
 
 // Import Security pages
 import { VehicleParkingDashboard } from "./pages/VehicleParkingDashboard";
@@ -366,6 +374,8 @@ import InvoiceDashboard from './pages/InvoiceDashboard';
 
 // Import WBS page
 import { WBSElementDashboard } from "./pages/WBSElementDashboard";
+
+// Import Work Order pages
 
 // Import Settings pages
 import { FMUsersDashboard } from "./pages/settings/FMUsersDashboard";
@@ -552,18 +562,21 @@ import { AssetGroupsDashboard } from "./pages/setup/AssetGroupsDashboard";
 import ApprovalMatrixSetupPage from "./pages/settings/ApprovalMatrixSetupPage";
 import AddApprovalMatrixPage from "./pages/settings/AddApprovalMatrixPage";
 
-import { EmailRuleSetupPage } from "./pages/maintenance/EmailRuleSetupPage";
-import { TaskEscalationPage } from "./pages/maintenance/TaskEscalationPage";
-import { TicketManagementSetupPage } from "./pages/maintenance/TicketManagementSetupPage";
-import { MobileTicketsPage } from "./pages/mobile/MobileTicketsPage";
-import { MobileRestaurantPage } from "./pages/mobile/MobileRestaurantPage";
+
 import MobileAdminOrderDetailsPage from "./pages/MobileAdminOrderDetailsPage";
 import { MobileSurveyPage } from "./pages/mobile/MobileSurveyPage";
-import { MobileAssetPage } from "./pages/mobile/MobileAssetPage";
-import { MobileOrdersPage } from "./components/mobile/MobileOrdersPage";
+
 import { MobileOrderPlaced } from "./components/mobile/MobileOrderPlaced";
 import { ExternalFlowTester } from "./components/mobile/ExternalFlowTester";
-import { QRTestPage } from "./pages/QRTestPage";
+import { EmailRuleSetupPage } from './pages/maintenance/EmailRuleSetupPage';
+import { TaskEscalationPage } from './pages/maintenance/TaskEscalationPage';
+import { TicketManagementSetupPage } from './pages/maintenance/TicketManagementSetupPage';
+import { MobileTicketsPage } from './pages/mobile/MobileTicketsPage';
+import { TicketListPage } from './pages/TicketListPage';
+import { MobileRestaurantPage } from './pages/mobile/MobileRestaurantPage';
+import { MobileAssetPage } from './pages/mobile/MobileAssetPage';
+import { MobileOrdersPage } from './components/mobile/MobileOrdersPage';
+import { QRTestPage } from './pages/QRTestPage';
 
 import { EscalationMatrixPage } from "./pages/maintenance/EscalationMatrixPage";
 
@@ -594,6 +607,7 @@ import DesignInsightsSetupDashboard from "./pages/DesignInsightsSetupDashboard";
 import CRMOccupantUsersDashboard from "./pages/CRMOccupantUsersDashboard";
 import CRMFMUserDashboard from "./pages/CRMFMUserDashboard";
 import CRMCustomersDashboard from "./pages/CRMCustomersDashboard";
+import { WorkOrderAddPage } from "./pages/WorkOrderAddPage";
 
 
 const queryClient = new QueryClient();
@@ -836,14 +850,9 @@ function App() {
                 <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
 
                 {/* Snagging Routes */}
-                <Route
-                  path="/transitioning/snagging"
-                  element={<SnaggingDashboard />}
-                />
-                <Route
-                  path="/transitioning/snagging/details/:id"
-                  element={<SnaggingDetailsPage />}
-                />
+                <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
+                <Route path="/transitioning/snagging/details/:id" element={<SnaggingDetailsPage />} />
+                <Route path="/transitioning/hoto" element={<HOTODashboard />} />
 
                 {/* Design Insights Routes */}
                 <Route
@@ -918,6 +927,14 @@ function App() {
                   path="/maintenance/ticket/:id/tag-vendor"
                   element={<TicketTagVendorPage />}
                 />
+                <Route path="/maintenance/ticket" element={<TicketDashboard />} />
+                <Route path="/tickets" element={<TicketListPage />} />
+                <Route path="/maintenance/ticket/add" element={<AddTicketDashboard />} />
+                <Route path="/maintenance/ticket/assign" element={<AssignTicketsPage />} />
+                <Route path="/maintenance/ticket/update/:id" element={<UpdateTicketsPage />} />
+                <Route path="/maintenance/ticket/details/:id" element={<TicketDetailsPage />} />
+                <Route path="/maintenance/ticket/:id/feeds" element={<TicketFeedsPage />} />
+                <Route path="/maintenance/ticket/:id/tag-vendor" element={<TicketTagVendorPage />} />
 
                 {/* Task Routes */}
                 <Route
@@ -1185,6 +1202,7 @@ function App() {
                 />
                 <Route path="/finance/po/feeds/:id" element={<POFeedsPage />} />
                 <Route path="/finance/wo" element={<WODashboard />} />
+                <Route path="/finance/wo/add" element={<WorkOrderAddPage />} />
                 <Route path="/finance/wo/details/:id" element={<WODetailsPage />} />
                 <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
                 <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
@@ -1469,6 +1487,12 @@ function App() {
                 <Route path="/security/visitor" element={<VisitorsDashboard />} />
                 <Route path="/visitor-form" element={<VisitorFormPage />} />
                 <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
+                <Route path="/security/visitor-management/setup" element={<VisitorManagementSetup />} />
+                <Route path="/security/visitor-management/add-gate" element={<AddVisitorGatePage />} />
+                <Route path="/security/visitor-management/edit/:id" element={<EditVisitorGatePage />} />
+                <Route path="/security/visitor-management/support-staff" element={<SupportStaffPage />} />
+                <Route path="/security/visitor-management/support-staff/edit/:id" element={<EditSupportStaffPage />} />
+                <Route path="/security/visitor-management/visiting-purpose" element={<VisitingPurposePage />} />
                 <Route path="/security/staff" element={<StaffsDashboard />} />
                 <Route
                   path="/security/staff/details/:id"
@@ -1486,6 +1510,11 @@ function App() {
                   path="/security/patrolling/details/:id"
                   element={<PatrollingDetailsPage />}
                 />
+                <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
+                <Route path="/security/staff/edit/:id" element={<EditStaffPage />} />
+                <Route path="/security/patrolling" element={<PatrollingDashboard />} />
+                <Route path="/security/patrolling/create" element={<PatrollingCreatePage />} />
+                <Route path="/security/patrolling/details/:id" element={<PatrollingDetailsPage />} />
 
                 {/* Security Vehicle Routes */}
                 <Route

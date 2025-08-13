@@ -1,14 +1,37 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate, useParams } from 'react-router-dom';
-import { Printer, MessageSquare, Edit, Copy, Rss } from 'lucide-react';
+import { Printer, Copy, Rss } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAppDispatch } from '@/store/hooks';
+import { getMaterialPRById } from '@/store/slices/materialPRSlice';
+import { numberToIndianCurrencyWords } from '@/utils/amountToText';
+
 export const PODetailsPage = () => {
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
+
   const navigate = useNavigate();
-  const {
-    id
-  } = useParams();
-  const poDetails = {
+  const { id } = useParams();
+
+  const [poDetails, setpoDetails] = useState({})
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await dispatch(getMaterialPRById({ baseUrl, token, id })).unwrap();
+        setpoDetails(response);
+      } catch (error) {
+        console.log(error)
+        toast.error(error)
+      }
+    }
+
+    fetchData();
+  }, [])
+
+  const poDetail = {
     poNumber: "121240",
     createdBy: "Sony Bhosle",
     createdOn: "22/04/2025",
@@ -85,15 +108,6 @@ export const PODetailsPage = () => {
     navigate(`/finance/po/feeds/${id}`);
   };
   return <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
-    {/* Breadcrumb */}
-    <div className="mb-2 text-sm text-gray-600">
-      <span className="cursor-pointer hover:text-[#C72030]" onClick={() => navigate('/finance/po')}>
-        Purchase Order
-      </span>
-      {' > '}
-      <span>Purchase Order Details</span>
-    </div>
-
     {/* Header */}
     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
       <div className="flex flex-col">
@@ -103,7 +117,7 @@ export const PODetailsPage = () => {
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gray-700">L1 Approval:</span>
           <span className="px-3 py-1 bg-green-500 text-white rounded text-xs font-medium">
-            Approved
+            {poDetails.all_level_approved ? "Approved" : poDetail.all_level_approved === false ? "Rejected" : "Pending"}
           </span>
         </div>
       </div>
@@ -131,40 +145,42 @@ export const PODetailsPage = () => {
 
     {/* Vendor/Contact Details Section */}
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">jyoti</h2>
+      </div>
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Left side - Contact details */}
         <div className="flex-1 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <span className="text-sm font-medium text-gray-700">Phone</span>
-              <span className="ml-8">: {poDetails.phone}</span>
+              <span className="ml-8">: {poDetails.billing_address?.phone}</span>
             </div>
             <div>
               <span className="text-sm font-medium text-gray-700">Fax</span>
-              <span className="ml-12">: NA</span>
+              <span className="ml-12">: {poDetails.billing_address?.fax}</span>
             </div>
             <div>
               <span className="text-sm font-medium text-gray-700">Email</span>
-              <span className="ml-8">: {poDetails.email}</span>
+              <span className="ml-8">: {poDetails.billing_address?.email}</span>
             </div>
             <div>
               <span className="text-sm font-medium text-gray-700">GST</span>
-              <span className="ml-11">: {poDetails.gst}</span>
+              <span className="ml-11">: {poDetails.billing_address?.gst_number}</span>
             </div>
             <div>
               <span className="text-sm font-medium text-gray-700">PAN</span>
-              <span className="ml-9">: {poDetails.pan}</span>
+              <span className="ml-9">: {poDetails.billing_address?.pan_number}</span>
             </div>
             <div>
               <span className="text-sm font-medium text-gray-700">Address</span>
-              <span className="ml-5">: {poDetails.address}</span>
+              <span className="ml-5">: {poDetails.billing_address?.address}</span>
             </div>
           </div>
         </div>
 
         {/* Center - Vendor name */}
         <div className="flex flex-col items-center justify-center lg:min-w-[200px]">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">jyoti</h2>
           <div className="w-16 h-16 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
             <span className="text-xs text-gray-500">image</span>
           </div>
@@ -183,35 +199,35 @@ export const PODetailsPage = () => {
         <div className="space-y-4">
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">PO No.</span>
-            <span className="text-sm">: {poDetails.poNumber}</span>
+            <span className="text-sm">: {poDetails.external_id}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">PO Date</span>
-            <span className="text-sm">: 23-04-25</span>
+            <span className="text-sm">: {poDetails.po_date}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">Plant Detail</span>
-            <span className="text-sm">: --Test-123</span>
+            <span className="text-sm">: {poDetails.plant_detail?.name}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">Address</span>
-            <span className="text-sm">: {orderDetails.address}</span>
+            <span className="text-sm">: {poDetails.supplier?.address}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">Email</span>
-            <span className="text-sm">: {orderDetails.email}</span>
+            <span className="text-sm">: {poDetails.supplier?.email}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">PAN</span>
-            <span className="text-sm">: {orderDetails.pan}</span>
+            <span className="text-sm">: {poDetails.supplier?.pan_number}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">Phone</span>
-            <span className="text-sm">: {orderDetails.phone}</span>
+            <span className="text-sm">: {poDetails.supplier?.mobile1}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">Related To</span>
-            <span className="text-sm">: {poDetails.relatedTo}</span>
+            <span className="text-sm">: {poDetails.related_to}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">Retention(%)</span>
@@ -219,7 +235,7 @@ export const PODetailsPage = () => {
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">QC(%)</span>
-            <span className="text-sm">: {poDetails.qc}</span>
+            <span className="text-sm">: {poDetails.quality_holding}</span>
           </div>
         </div>
 
@@ -227,15 +243,15 @@ export const PODetailsPage = () => {
         <div className="space-y-4">
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">Reference No.</span>
-            <span className="text-sm">: {orderDetails.referenceNo}</span>
+            <span className="text-sm">: {poDetails.reference_number}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">ID</span>
-            <span className="text-sm">: {orderDetails.id}</span>
+            <span className="text-sm">: {poDetails.id}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">Supplier</span>
-            <span className="text-sm">: {poDetails.supplier}</span>
+            <span className="text-sm">: {poDetails.supplier?.company_name}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">Phone</span>
@@ -243,19 +259,19 @@ export const PODetailsPage = () => {
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">GST</span>
-            <span className="text-sm">: {poDetails.gst}</span>
+            <span className="text-sm">: {poDetail.gst}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">Delivery Address</span>
-            <span className="text-sm">: {poDetails.deliveryAddress}<br />demo world</span>
+            <span className="text-sm">: {poDetail.deliveryAddress}<br />demo world</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">Email</span>
-            <span className="text-sm">: {poDetails.email}</span>
+            <span className="text-sm">: {poDetail.email}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">Payment Tenure(In Days)</span>
-            <span className="text-sm">: {poDetails.paymentTenure}</span>
+            <span className="text-sm">: {poDetails.payment_tenure}</span>
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">TDS(%)</span>
@@ -263,7 +279,7 @@ export const PODetailsPage = () => {
           </div>
           <div className="flex">
             <span className="text-sm font-medium text-gray-700 w-44">Advance Amount</span>
-            <span className="text-sm">: {poDetails.advanceAmount}</span>
+            <span className="text-sm">: {poDetails.advance_amount}</span>
           </div>
         </div>
       </div>
@@ -292,21 +308,21 @@ export const PODetailsPage = () => {
             </tr>
           </thead>
           <tbody>
-            {items.map(item => <tr key={item.sNo} className="hover:bg-gray-50">
-              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{item.sNo}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.itemDetails}</td>
+            {poDetails.pms_pr_inventories?.map((item, index) => <tr key={item.sNo} className="hover:bg-gray-50">
+              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{index + 1}</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm">{item.inventory?.name}</td>
               <td className="border border-gray-300 px-3 py-2 text-sm"></td>
               <td className="border border-gray-300 px-3 py-2 text-sm">{item.sacHsnCode}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.expectedDate}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">Testing</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm">{item.expected_date.split('T')[0]}</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm">{item.prod_desc}</td>
               <td className="border border-gray-300 px-3 py-2 text-sm">{item.quantity}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">Piece</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">70.0</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm">{item.unit}</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm">{item.movingAvgRate}</td>
               <td className="border border-gray-300 px-3 py-2 text-sm">{item.rate}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.totalAmount}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">20.0</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm"></td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.wbsCode}</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm">{item.total_value}</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm">{item.approved_qty}</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm">{item.transfer_qty}</td>
+              <td className="border border-gray-300 px-3 py-2 text-sm">{item.wbs_code}</td>
             </tr>)}
           </tbody>
         </table>
@@ -316,24 +332,24 @@ export const PODetailsPage = () => {
       <div className="mt-6 border-t border-gray-200 pt-6">
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-lg font-medium text-gray-900">Net Amount (INR):</span>
-            <span className="text-lg font-semibold text-gray-900">2360.000</span>
+            <span className="font-medium text-gray-700">Net Amount (INR):</span>
+            <span className="font-medium">{poDetails.net_amount}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-lg font-medium text-gray-900">Total Taxable Value Of PO:</span>
-            <span className="text-lg font-semibold text-gray-900">2360.000</span>
+            <span className="font-medium text-gray-700">Total Taxable Value Of PO:</span>
+            <span className="font-medium">{poDetails.total_tax_amount}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-lg font-medium text-gray-900">Taxes (INR):</span>
-            <span className="text-lg font-semibold text-gray-900">0.000</span>
+            <span className="font-medium text-gray-700">Taxes (INR):</span>
+            <span className="font-medium">{poDetails.taxes}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-lg font-medium text-gray-900">Total PO Value (INR):</span>
-            <span className="text-lg font-semibold text-gray-900">2360.00</span>
+            <span className="font-medium text-gray-700">Total PO Value (INR):</span>
+            <span className="font-medium">{poDetails.total_amount}</span>
           </div>
           <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-            <span className="text-lg font-medium text-gray-900">Amount In Words:</span>
-            <span className="text-lg font-semibold text-gray-900">Two Thousand, Three Hundred Sixty Rupees Only</span>
+            <span className="font-medium text-gray-700">Amount In Words:</span>
+            <span className="font-medium">{numberToIndianCurrencyWords(poDetails.total_amount)}</span>
           </div>
         </div>
       </div>

@@ -444,7 +444,7 @@ export const VisitorFormPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className=" mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Camera Permission Modal */}
           {showCameraModal && (
@@ -701,7 +701,7 @@ export const VisitorFormPage = () => {
             </div>
 
             {/* Form Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormControl
                 fullWidth
                 variant="outlined"
@@ -928,7 +928,7 @@ export const VisitorFormPage = () => {
                 <h3 className="text-lg font-semibold text-gray-800">Days Validity</h3>
                 
                 {/* Pass Valid From and To */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <TextField
                     label="Pass Valid From"
                     type="date"
@@ -1027,7 +1027,7 @@ export const VisitorFormPage = () => {
                 {showGoodsForm && (
                   <div className="space-y-6">
                     {/* Goods Form Fields */}
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-3 gap-6">
                       <div>
                         <FormControl
                           fullWidth
@@ -1263,7 +1263,7 @@ export const VisitorFormPage = () => {
               <div className="space-y-4">
                 {additionalVisitors.map((visitor, index) => (
                   <div key={visitor.id} className="border-t pt-4">
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-3 gap-6">
                       <div>
                         <TextField
                           label="Additional Visitor Name"

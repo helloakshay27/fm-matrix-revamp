@@ -144,6 +144,7 @@ export const API_CONFIG = {
     SUPPORT_STAFF_CATEGORIES: '/pms/admin/support_staff_categories.json',
     CREATE_VISITOR: '/pms/admin/visitors/new_visitor.json',
     UNEXPECTED_VISITORS: '/pms/admin/visitors/unexpected_visitors.json',
+    EXPECTED_VISITORS: '/pms/admin/visitors/expected_visitors.json',
     VISITOR_HISTORY: '/pms/admin/visitors/visitor_history.json',
     ITEM_MOVEMENT_TYPES: '/item_movement_types.json',
     ITEM_TYPES: '/item_movement_types/movement_types.json',

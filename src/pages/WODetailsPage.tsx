@@ -2,10 +2,35 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Copy, Printer, Rss } from 'lucide-react';
+import { useAppDispatch } from '@/store/hooks';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { getWorkOrderById } from '@/store/slices/workOrderSlice';
+import { numberToIndianCurrencyWords } from '@/utils/amountToText';
 
 export const WODetailsPage = () => {
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem('token');
+  const baseUrl = localStorage.getItem('baseUrl');
+
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const [workOrder, setWorkOrder] = useState({})
+
+  useEffect(() => {
+    const fetchWorkOrder = async () => {
+      try {
+        const response = await dispatch(getWorkOrderById({ baseUrl, token, id })).unwrap();
+        setWorkOrder(response.page);
+      } catch (error) {
+        console.log(error)
+        toast.error(error)
+      }
+    }
+
+    fetchWorkOrder();
+  }, [])
 
   // Mock data - in real app, this would come from API
   const woDetails = {
@@ -129,40 +154,42 @@ export const WODetailsPage = () => {
 
       {/* Vendor/Contact Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">{workOrder.company?.site_name}</h2>
+        </div>
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left side - Contact details */}
           <div className="flex-1 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <span className="text-sm font-medium text-gray-700">Phone</span>
-                <span className="ml-8">: {woDetails.phone}</span>
+                <span className="ml-8">: {workOrder.company?.phone}</span>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-700">Fax</span>
-                <span className="ml-12">: {woDetails.fax}</span>
+                <span className="ml-12">: {workOrder.company?.fax}</span>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-700">Email</span>
-                <span className="ml-8">: {woDetails.email}</span>
+                <span className="ml-8">: {workOrder.company?.email}</span>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-700">GST</span>
-                <span className="ml-11">: {woDetails.gst}</span>
+                <span className="ml-11">: {workOrder.company?.gst}</span>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-700">PAN</span>
-                <span className="ml-9">: {woDetails.pan}</span>
+                <span className="ml-9">: {workOrder.company?.pan}</span>
               </div>
               <div>
                 <span className="text-sm font-medium text-gray-700">Address</span>
-                <span className="ml-5">: {woDetails.address}</span>
+                <span className="ml-5">: {workOrder.company?.address}</span>
               </div>
             </div>
           </div>
 
           {/* Center - Vendor name */}
           <div className="flex flex-col items-center justify-center lg:min-w-[200px]">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">{woDetails.vendorName}</h2>
             <div className="w-16 h-16 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
               <span className="text-xs text-gray-500">image</span>
             </div>
@@ -173,7 +200,7 @@ export const WODetailsPage = () => {
       {/* Work Order Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
-          Work Order ({woDetails.status})
+          Work Order ({workOrder.work_order?.wo_status})
         </h3>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
@@ -181,47 +208,47 @@ export const WODetailsPage = () => {
           <div className="space-y-4">
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">WO Number</span>
-              <span className="text-sm">: {woDetails.woNumber || '-'}</span>
+              <span className="text-sm">: {workOrder.work_order?.number || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">WO Date</span>
-              <span className="text-sm">: {woDetails.woDate}</span>
+              <span className="text-sm">: {workOrder.work_order?.wo_date}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Kind Attention</span>
-              <span className="text-sm">: {woDetails.kindAttention || '-'}</span>
+              <span className="text-sm">: {workOrder.work_order?.kind_attention || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Subject</span>
-              <span className="text-sm">: {woDetails.subject || '-'}</span>
+              <span className="text-sm">: {workOrder.work_order?.subject || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Related To</span>
-              <span className="text-sm">: {woDetails.relatedTo || '-'}</span>
+              <span className="text-sm">: {workOrder.work_order?.related_to || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Payment Tenure(In Days)</span>
-              <span className="text-sm">: {woDetails.paymentTenure || '-'}</span>
+              <span className="text-sm">: {workOrder.payment_terms?.payment_tenure || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Retention(%)</span>
-              <span className="text-sm">: {woDetails.retention || '-'}</span>
+              <span className="text-sm">: {workOrder.payment_terms?.retention || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">TDS(%)</span>
-              <span className="text-sm">: {woDetails.tds || '-'}</span>
+              <span className="text-sm">: {workOrder.payment_terms?.tds || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">QC(%)</span>
-              <span className="text-sm">: {woDetails.qc || '-'}</span>
+              <span className="text-sm">: {workOrder.payment_terms?.qc || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Advance Amount</span>
-              <span className="text-sm">: {woDetails.advanceAmount || '-'}</span>
+              <span className="text-sm">: {workOrder.work_order?.advance_amount || '-'}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">Description</span>
-              <span className="text-sm">: {woDetails.description || '-'}</span>
+              <span className="text-sm">: {workOrder.work_order?.description || '-'}</span>
             </div>
           </div>
 
@@ -229,39 +256,39 @@ export const WODetailsPage = () => {
           <div className="space-y-4">
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">Reference No.</span>
-              <span className="text-sm">: {woDetails.referenceNo}</span>
+              <span className="text-sm">: {workOrder.work_order?.reference_number}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">ID</span>
-              <span className="text-sm">: {woDetails.woId}</span>
+              <span className="text-sm">: {workOrder.work_order?.id}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">Contractor</span>
-              <span className="text-sm">: {woDetails.contractor}</span>
+              <span className="text-sm">: {workOrder.work_order?.contractor}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">Address</span>
-              <span className="text-sm">: {woDetails.contractorAddress}</span>
+              <span className="text-sm">: {workOrder.work_order?.contractorAddress}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">Phone</span>
-              <span className="text-sm">: {woDetails.contractorPhone}</span>
+              <span className="text-sm">: {workOrder.work_order?.supplier_details?.mobile1}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">Email</span>
-              <span className="text-sm">: {woDetails.contractorEmail}</span>
+              <span className="text-sm">: {workOrder.work_order?.supplier_details?.email}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">GST</span>
-              <span className="text-sm">: {woDetails.contractorGst}</span>
+              <span className="text-sm">: {workOrder.work_order?.supplier_details?.gstin_number}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">PAN</span>
-              <span className="text-sm">: {woDetails.contractorPan}</span>
+              <span className="text-sm">: {workOrder.work_order?.supplier_details?.pan_number}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">Work Category</span>
-              <span className="text-sm">: {woDetails.workCategory}</span>
+              <span className="text-sm">: {workOrder.work_order?.work_category}</span>
             </div>
           </div>
         </div>
@@ -295,26 +322,26 @@ export const WODetailsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {boqData.map((item) => (
+              {workOrder.inventories?.map((item) => (
                 <TableRow key={item.sNo} className="hover:bg-gray-50">
-                  <TableCell className="text-sm">{item.sNo}</TableCell>
-                  <TableCell className="text-sm">{item.boqDetails}</TableCell>
+                  <TableCell className="text-sm">{item.sno}</TableCell>
+                  <TableCell className="text-sm">{item.boq_details}</TableCell>
                   <TableCell className="text-sm">{item.quantity}</TableCell>
                   <TableCell className="text-sm">{item.uom}</TableCell>
-                  <TableCell className="text-sm">{item.expectedDate}</TableCell>
-                  <TableCell className="text-sm">{item.productDescription}</TableCell>
-                  <TableCell className="text-sm">{item.rate.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.wbsCode}</TableCell>
-                  <TableCell className="text-sm">{item.cgstRate.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.cgstAmount.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.sgstRate.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.sgstAmount.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.igstRate.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.igstAmount.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.tcsRate.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.tcsAmount.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm">{item.taxAmount.toFixed(2)}</TableCell>
-                  <TableCell className="text-sm font-medium">{item.totalAmount.toFixed(3)}</TableCell>
+                  <TableCell className="text-sm">{item.expected_date}</TableCell>
+                  <TableCell className="text-sm">{item.product_description}</TableCell>
+                  <TableCell className="text-sm">{item.rate}</TableCell>
+                  <TableCell className="text-sm">{item.wbs_code}</TableCell>
+                  <TableCell className="text-sm">{item.cgst_rate}</TableCell>
+                  <TableCell className="text-sm">{item.cgst_amount}</TableCell>
+                  <TableCell className="text-sm">{item.sgst_rate}</TableCell>
+                  <TableCell className="text-sm">{item.sgst_amount}</TableCell>
+                  <TableCell className="text-sm">{item.igst_rate}</TableCell>
+                  <TableCell className="text-sm">{item.igst_amount}</TableCell>
+                  <TableCell className="text-sm">{item.tcs_rate}</TableCell>
+                  <TableCell className="text-sm">{item.tcs_amount}</TableCell>
+                  <TableCell className="text-sm">{item.tax_amount}</TableCell>
+                  <TableCell className="text-sm font-medium">{item.total_amount}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -325,23 +352,23 @@ export const WODetailsPage = () => {
         <div className="mt-6 border-t pt-4">
           <div className="flex justify-between items-center py-2">
             <span className="font-medium text-gray-700">Net Amount (INR):</span>
-            <span className="font-medium">1000.000</span>
+            <span className="font-medium">{workOrder.totals?.net_amount}</span>
           </div>
           <div className="flex justify-between items-center py-2">
             <span className="font-medium text-gray-700">Total Taxable Value Of WO:</span>
-            <span className="font-medium">1000.000</span>
+            <span className="font-medium">{workOrder.totals?.total_taxable}</span>
           </div>
           <div className="flex justify-between items-center py-2">
             <span className="font-medium text-gray-700">Taxes (INR):</span>
-            <span className="font-medium">0.000</span>
+            <span className="font-medium">{workOrder.totals?.taxes}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-t">
             <span className="font-semibold text-gray-900">Total WO Value (INR):</span>
-            <span className="font-semibold">1000.00</span>
+            <span className="font-semibold">{workOrder.totals?.total_value}</span>
           </div>
           <div className="mt-4">
             <span className="font-medium text-gray-700">Amount In Words: </span>
-            <span className="text-gray-900">One Thousand Rupees Only</span>
+            <span className="text-gray-900">{numberToIndianCurrencyWords(workOrder.totals?.total_value)}</span>
           </div>
         </div>
       </div>

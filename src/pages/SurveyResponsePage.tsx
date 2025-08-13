@@ -8,6 +8,7 @@ import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModa
 import { SurveyResponseAnalytics } from '@/components/SurveyResponseAnalytics';
 import { surveyApi, SurveyResponseData } from '@/services/surveyApi';
 import { apiClient } from '@/utils/apiClient';
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { toast } from 'sonner';
 
 interface FilterState {
@@ -16,6 +17,15 @@ interface FilterState {
   surveyType: string;
   startDate: Date | null;
   endDate: Date | null;
+}
+
+interface AnalyticsData {
+  statistics?: any;
+  status?: any;
+  distributions?: any;
+  typeWise?: any;
+  categoryWise?: any;
+  dateRange?: any;
 }
 
 export const SurveyResponsePage = () => {
@@ -27,6 +37,12 @@ export const SurveyResponsePage = () => {
   const [responseData, setResponseData] = useState<SurveyResponseData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({});
+  const [summaryStats, setSummaryStats] = useState({
+    total_active_surveys: 20,
+    total_feedback_count: 10,
+    total_survey_count: 10,
+  });
   const [appliedFilters, setAppliedFilters] = useState<FilterState>({
     surveyTitle: '',
     surveyMappingId: '',
@@ -35,10 +51,77 @@ export const SurveyResponsePage = () => {
     endDate: null
   });
 
+  // Handle analytics data updates from the analytics component
+  const handleAnalyticsChange = (data: AnalyticsData) => {
+    setAnalyticsData(data);
+    
+    // Update summary stats based on analytics data
+    if (data.distributions?.info || data.statistics) {
+      setSummaryStats(prev => ({
+        total_active_surveys: data.statistics?.active_surveys || data.status?.info?.total_active_surveys || prev.total_active_surveys,
+        total_feedback_count: data.distributions?.info?.total_feedback_surveys || data.distributions?.info?.total_feedback_count || prev.total_feedback_count,
+        total_survey_count: data.distributions?.info?.total_assessment_surveys || data.statistics?.total_surveys || data.distributions?.info?.total_survey_count || prev.total_survey_count,
+      }));
+    }
+  };
+
   // Fetch survey responses on component mount
   useEffect(() => {
     fetchSurveyResponses();
+    fetchSummaryStats();
   }, []);
+
+  // Update summary stats when response data changes
+  useEffect(() => {
+    if (responseData.length > 0) {
+      fetchSummaryStats();
+    }
+  }, [responseData]);
+
+  // Fetch summary statistics from API
+  const fetchSummaryStats = async () => {
+    try {
+      // Fetch from the survey details API with analytics flag
+      const url = getFullUrl(API_CONFIG.ENDPOINTS.SURVEY_DETAILS);
+      const urlWithParams = new URL(url);
+      urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN || '');
+      urlWithParams.searchParams.append('analytics', 'true');
+      
+      const response = await fetch(urlWithParams.toString());
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Survey summary stats API response:', data);
+        
+        // Extract counts from the API response
+        const activeCount = data.survey_status?.active_survey || 
+                          data.analytics?.total_surveys || 
+                          responseData.length || 20;
+        
+        const feedbackCount = data.distributions?.info?.total_feedback_surveys ||
+                            data.analytics?.total_feedback_count ||
+                            data.survey_details?.surveys?.filter((s: any) => s.survey_type === 'feedback')?.length ||
+                            10;
+                            
+        const surveyCount = data.distributions?.info?.total_assessment_surveys ||
+                          data.analytics?.total_survey_count ||
+                          data.survey_details?.surveys?.length ||
+                          10;
+        
+        setSummaryStats({
+          total_active_surveys: activeCount,
+          total_feedback_count: feedbackCount,
+          total_survey_count: surveyCount,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching summary stats:', error);
+      // Keep default values on error
+      setSummaryStats(prev => ({
+        ...prev,
+        total_active_surveys: responseData.length || 20
+      }));
+    }
+  };
 
   const fetchSurveyResponses = async (filters?: FilterState) => {
     setIsLoading(true);
@@ -53,6 +136,9 @@ export const SurveyResponsePage = () => {
       }
       console.log('Fetched survey responses:', data);
       setResponseData(data);
+      
+      // Fetch summary stats after getting response data
+      setTimeout(() => fetchSummaryStats(), 100);
     } catch (error) {
       console.error('Error fetching survey responses:', error);
       toast.error('Failed to fetch survey responses');
@@ -165,6 +251,19 @@ export const SurveyResponsePage = () => {
     item.id.toString().includes(searchTerm)
   );
 
+  // Get dynamic counts from analytics data and summary stats
+  const getTotalActiveCount = () => {
+    return summaryStats.total_active_surveys;
+  };
+
+  const getFeedbackCount = () => {
+    return summaryStats.total_feedback_count;
+  };
+
+  const getSurveyCount = () => {
+    return summaryStats.total_survey_count;
+  };
+
   return (
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
       {/* Breadcrumb */}
@@ -224,46 +323,53 @@ export const SurveyResponsePage = () => {
 
         {/* Tab Content */}
         <TabsContent value="list" className="mt-0">
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
-              <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
-                <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
-                <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-                  <Activity className="w-4 h-4 text-white" />
-                </div>
+          {/* AMC List-Style Statistics Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-6">
+            {/* Total Active */}
+            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                <Activity className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
               </div>
-              <div className="min-w-0">
-                <div className="text-xl sm:text-2xl font-bold text-[#C72030]">20</div>
-                <div className="text-sm text-gray-600 truncate">Total Active</div>
+              <div className="flex flex-col min-w-0 justify-start">
+                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                  {getTotalActiveCount()}
+                  {isLoading && <span className="ml-1 text-xs animate-pulse">...</span>}
+                </div>
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Active</span>
               </div>
             </div>
 
-            <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3">
-              <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
-                <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
-                <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-                  <ThumbsUp className="w-4 h-4 text-white" />
-                </div>
+            {/* Feedback */}
+            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                <ThumbsUp className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
               </div>
-              <div className="min-w-0">
-                <div className="text-xl sm:text-2xl font-bold text-[#C72030]">10</div>
-                <div className="text-sm text-gray-600 truncate">Feedback</div>
+              <div className="flex flex-col min-w-0 justify-start">
+                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                  {getFeedbackCount()}
+                  {isLoading && <span className="ml-1 text-xs animate-pulse">...</span>}
+                </div>
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Feedback</span>
               </div>
             </div>
 
-            <div className="bg-[#F6F4EE] p-4 rounded-lg flex items-center space-x-3 sm:col-span-2 lg:col-span-1">
-              <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
-                <div className="absolute inset-0 bg-[#C72030] opacity-10 rounded-full"></div>
-                <div className="relative w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-                  <ClipboardList className="w-4 h-4 text-white" />
-                </div>
+            {/* Survey */}
+            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                <ClipboardList className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
               </div>
-              <div className="min-w-0">
-                <div className="text-xl sm:text-2xl font-bold text-[#C72030]">10</div>
-                <div className="text-sm text-gray-600 truncate">Survey</div>
+              <div className="flex flex-col min-w-0 justify-start">
+                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                  {getSurveyCount()}
+                  {isLoading && <span className="ml-1 text-xs animate-pulse">...</span>}
+                </div>
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Survey</span>
               </div>
             </div>
+
+            {/* Placeholder for 2 more cards if needed */}
+            <div className="hidden sm:flex"></div>
+            <div className="hidden sm:flex"></div>
           </div>
 
           {/* Enhanced Data Table */}
@@ -299,7 +405,7 @@ export const SurveyResponsePage = () => {
 
         <TabsContent value="analytics" className="mt-0">
           {/* Survey Response Analytics */}
-          <SurveyResponseAnalytics />
+          <SurveyResponseAnalytics onAnalyticsChange={handleAnalyticsChange} />
         </TabsContent>
       </Tabs>
 

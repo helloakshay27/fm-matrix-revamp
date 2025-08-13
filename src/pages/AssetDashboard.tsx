@@ -318,9 +318,9 @@ export const AssetDashboard = () => {
   // Fetch initial assets data only on component mount
   useEffect(() => {
     // Only fetch if we don't have any filters applied and no assets loaded
-    if (Object.keys(filters).length === 0 && assets.length === 0) {
-      dispatch(fetchAssetsData({ page: currentPage }));
-    }
+    // if (Object.keys(filters).length === 0 && assets.length === 0) {
+    dispatch(fetchAssetsData({ page: currentPage }));
+    // }
   }, [dispatch]); // Remove currentPage and assets.length from dependencies
 
   // Handle page changes separately when filters are applied
@@ -353,7 +353,7 @@ export const AssetDashboard = () => {
     currentBookValue: asset.current_book_value,
     floor: asset.pms_floor || null,
     category: asset.asset_type_category || "N/A",
-    
+
   }));
 
   const transformedSearchedAssets = searchAssets.map((asset, index) => ({
@@ -846,7 +846,7 @@ export const AssetDashboard = () => {
 
               {/* API-driven Pagination */}
               <div className="mt-6">
-               
+
 
                 <Pagination>
                   <PaginationContent>

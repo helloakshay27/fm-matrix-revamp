@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Edit, Eye } from "lucide-react";
+import { Edit, Eye, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { WOFilterDialog } from "@/components/WOFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -26,7 +26,7 @@ export const WODashboard = () => {
         const response = await dispatch(
           fetchWorkOrders({ baseUrl, token })
         ).unwrap();
-        setWorkOrders(response[0].work_orders);
+        setWorkOrders(response.work_orders);
       } catch (error) {
         console.log(error);
         toast.error(error);
@@ -297,6 +297,19 @@ export const WODashboard = () => {
     </div>
   );
 
+  const leftActions = (
+    <>
+      <Button
+        style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+        className="hover:bg-[#F2EEE9]/90"
+        onClick={() => navigate('/finance/wo/add')}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add
+      </Button>
+    </>
+  );
+
   return (
     <div className="p-4 sm:p-6">
       {/* Enhanced Table */}
@@ -317,6 +330,7 @@ export const WODashboard = () => {
         pageSize={10}
         enableSearch={true}
         onFilterClick={() => setIsFilterDialogOpen(true)}
+        leftActions={leftActions}
       />
 
       {/* Filter Dialog */}
