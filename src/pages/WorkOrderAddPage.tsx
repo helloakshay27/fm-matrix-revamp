@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
-import { Textarea } from '@/components/ui/textarea';
 import { useNavigate } from 'react-router-dom';
 
 const WorkOrderAddPage: React.FC = () => {
@@ -58,42 +55,52 @@ const WorkOrderAddPage: React.FC = () => {
       <div className="p-6 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* First Row */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">
-              Select Contractor<span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.contractor} onValueChange={(value) => handleInputChange('contractor', value)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Contractor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="modwin-mumbai">MODWIN NETWORKS PVT.LTD --Mumbai</SelectItem>
-                <SelectItem value="contractor-2">ABC CONTRACTORS --Delhi</SelectItem>
-                <SelectItem value="contractor-3">XYZ SERVICES --Bangalore</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>Select Contractor*</InputLabel>
+            <MuiSelect
+              label="Select Contractor*"
+              value={formData.contractor}
+              onChange={(e) => handleInputChange('contractor', e.target.value)}
+              displayEmpty
+              sx={{
+                height: { xs: 28, sm: 36, md: 45 },
+                '& .MuiInputBase-input, & .MuiSelect-select': {
+                  padding: { xs: '8px', sm: '10px', md: '12px' },
+                },
+              }}
+            >
+              <MenuItem value=""><em>Select Contractor</em></MenuItem>
+              <MenuItem value="modwin-mumbai">MODWIN NETWORKS PVT.LTD --Mumbai</MenuItem>
+              <MenuItem value="contractor-2">ABC CONTRACTORS --Delhi</MenuItem>
+              <MenuItem value="contractor-3">XYZ SERVICES --Bangalore</MenuItem>
+            </MuiSelect>
+          </FormControl>
+
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>Plant Detail*</InputLabel>
+            <MuiSelect
+              label="Plant Detail*"
+              value={formData.plantDetail}
+              onChange={(e) => handleInputChange('plantDetail', e.target.value)}
+              displayEmpty
+              sx={{
+                height: { xs: 28, sm: 36, md: 45 },
+                '& .MuiInputBase-input, & .MuiSelect-select': {
+                  padding: { xs: '8px', sm: '10px', md: '12px' },
+                },
+              }}
+            >
+              <MenuItem value=""><em>Select Plant Id</em></MenuItem>
+              <MenuItem value="plant-1">Plant A - Mumbai</MenuItem>
+              <MenuItem value="plant-2">Plant B - Delhi</MenuItem>
+              <MenuItem value="plant-3">Plant C - Bangalore</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">
-              Plant Detail<span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.plantDetail} onValueChange={(value) => handleInputChange('plantDetail', value)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Plant Id" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="plant-1">Plant A - Mumbai</SelectItem>
-                <SelectItem value="plant-2">Plant B - Delhi</SelectItem>
-                <SelectItem value="plant-3">Plant C - Bangalore</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">
+            <div className="text-sm font-medium text-foreground">
               Select WO Date<span className="text-red-500">*</span>
-            </Label>
+            </div>
             <ResponsiveDatePicker
               value={formData.woDate}
               onChange={(date) => handleInputChange('woDate', date)}
@@ -103,91 +110,136 @@ const WorkOrderAddPage: React.FC = () => {
           </div>
 
           {/* Second Row */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">
-              Select Billing Address<span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.billingAddress} onValueChange={(value) => handleInputChange('billingAddress', value)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Billing Address" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="demo">demo</SelectItem>
-                <SelectItem value="address-1">Main Office - Mumbai</SelectItem>
-                <SelectItem value="address-2">Branch Office - Delhi</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>Select Billing Address*</InputLabel>
+            <MuiSelect
+              label="Select Billing Address*"
+              value={formData.billingAddress}
+              onChange={(e) => handleInputChange('billingAddress', e.target.value)}
+              displayEmpty
+              sx={{
+                height: { xs: 28, sm: 36, md: 45 },
+                '& .MuiInputBase-input, & .MuiSelect-select': {
+                  padding: { xs: '8px', sm: '10px', md: '12px' },
+                },
+              }}
+            >
+              <MenuItem value=""><em>Select Billing Address</em></MenuItem>
+              <MenuItem value="demo">demo</MenuItem>
+              <MenuItem value="address-1">Main Office - Mumbai</MenuItem>
+              <MenuItem value="address-2">Branch Office - Delhi</MenuItem>
+            </MuiSelect>
+          </FormControl>
 
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">Retention(%)</Label>
-            <Input
-              placeholder="Retention"
-              value={formData.retention}
-              onChange={(e) => handleInputChange('retention', e.target.value)}
-              type="number"
-              min="0"
-              max="100"
-            />
-          </div>
+          <TextField
+            label="Retention(%)"
+            placeholder="Retention"
+            value={formData.retention}
+            onChange={(e) => handleInputChange('retention', e.target.value)}
+            fullWidth
+            variant="outlined"
+            type="number"
+            InputLabelProps={{ shrink: true }}
+            inputProps={{ min: 0, max: 100 }}
+            sx={{
+              mt: 1,
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px', sm: '10px', md: '12px' },
+              },
+              height: { xs: 28, sm: 36, md: 45 },
+            }}
+          />
 
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">TDS(%)</Label>
-            <Input
-              placeholder="TDS"
-              value={formData.tds}
-              onChange={(e) => handleInputChange('tds', e.target.value)}
-              type="number"
-              min="0"
-              max="100"
-            />
-          </div>
+          <TextField
+            label="TDS(%)"
+            placeholder="TDS"
+            value={formData.tds}
+            onChange={(e) => handleInputChange('tds', e.target.value)}
+            fullWidth
+            variant="outlined"
+            type="number"
+            InputLabelProps={{ shrink: true }}
+            inputProps={{ min: 0, max: 100 }}
+            sx={{
+              mt: 1,
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px', sm: '10px', md: '12px' },
+              },
+              height: { xs: 28, sm: 36, md: 45 },
+            }}
+          />
 
           {/* Third Row */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">QC(%)</Label>
-            <Input
-              placeholder="QC"
-              value={formData.qc}
-              onChange={(e) => handleInputChange('qc', e.target.value)}
-              type="number"
-              min="0"
-              max="100"
-            />
-          </div>
+          <TextField
+            label="QC(%)"
+            placeholder="QC"
+            value={formData.qc}
+            onChange={(e) => handleInputChange('qc', e.target.value)}
+            fullWidth
+            variant="outlined"
+            type="number"
+            InputLabelProps={{ shrink: true }}
+            inputProps={{ min: 0, max: 100 }}
+            sx={{
+              mt: 1,
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px', sm: '10px', md: '12px' },
+              },
+              height: { xs: 28, sm: 36, md: 45 },
+            }}
+          />
 
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">Payment Tenure(In Days)</Label>
-            <Input
-              placeholder="Payment Tenure"
-              value={formData.paymentTenure}
-              onChange={(e) => handleInputChange('paymentTenure', e.target.value)}
-              type="number"
-              min="0"
-            />
-          </div>
+          <TextField
+            label="Payment Tenure(In Days)"
+            placeholder="Payment Tenure"
+            value={formData.paymentTenure}
+            onChange={(e) => handleInputChange('paymentTenure', e.target.value)}
+            fullWidth
+            variant="outlined"
+            type="number"
+            InputLabelProps={{ shrink: true }}
+            inputProps={{ min: 0 }}
+            sx={{
+              mt: 1,
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px', sm: '10px', md: '12px' },
+              },
+              height: { xs: 28, sm: 36, md: 45 },
+            }}
+          />
 
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-foreground">Advance Amount</Label>
-            <Input
-              placeholder="Advance Amount"
-              value={formData.advanceAmount}
-              onChange={(e) => handleInputChange('advanceAmount', e.target.value)}
-              type="number"
-              min="0"
-            />
-          </div>
+          <TextField
+            label="Advance Amount"
+            placeholder="Advance Amount"
+            value={formData.advanceAmount}
+            onChange={(e) => handleInputChange('advanceAmount', e.target.value)}
+            fullWidth
+            variant="outlined"
+            type="number"
+            InputLabelProps={{ shrink: true }}
+            inputProps={{ min: 0 }}
+            sx={{
+              mt: 1,
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px', sm: '10px', md: '12px' },
+              },
+              height: { xs: 28, sm: 36, md: 45 },
+            }}
+          />
 
           {/* Full Width Field */}
-          <div className="md:col-span-3 space-y-2">
-            <Label className="text-sm font-medium text-foreground">
-              Related To<span className="text-red-500">*</span>
-            </Label>
-            <Textarea
+          <div className="md:col-span-3">
+            <TextField
+              label="Related To*"
               placeholder="Related To"
               value={formData.relatedTo}
               onChange={(e) => handleInputChange('relatedTo', e.target.value)}
-              className="min-h-[100px] resize-none"
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={4}
+              InputLabelProps={{ shrink: true }}
+              sx={{ mt: 1 }}
             />
           </div>
         </div>
