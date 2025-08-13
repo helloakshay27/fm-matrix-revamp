@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Chip, OutlinedInput } from '@mui/material';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -29,8 +30,45 @@ export const SupportStaffPage = () => {
     days: '',
     hours: '',
     minutes: '',
-    selectedIcon: ''
+    selectedIcon: '',
+    serviceTypes: [] as string[]
   });
+
+  // Field styles for Material-UI components
+  const fieldStyles = {
+    backgroundColor: '#fff',
+    borderRadius: '4px',
+    '& .MuiOutlinedInput-root': {
+      '& fieldset': {
+        borderColor: '#ddd',
+      },
+      '&:hover fieldset': {
+        borderColor: '#C72030',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
+
+  // Service type options
+  const serviceTypeOptions = [
+    'Delivery',
+    'Chef',
+    'Cleaning',
+    'Maintenance',
+    'Security',
+    'Catering',
+    'Housekeeping',
+    'Plumbing',
+    'Electrical',
+    'Gardening'
+  ];
 
   // Sample data matching the uploaded image structure
   const sampleStaff: SupportStaffData[] = [
@@ -140,7 +178,8 @@ export const SupportStaffPage = () => {
       days: '',
       hours: '',
       minutes: '',
-      selectedIcon: ''
+      selectedIcon: '',
+      serviceTypes: []
     });
   };
 
@@ -280,37 +319,69 @@ export const SupportStaffPage = () => {
           <div className="space-y-6">
             {/* Category Name Input */}
             <div>
-              <Input
+              <TextField
                 placeholder="Enter Category Name"
                 value={formData.categoryName}
                 onChange={(e) => setFormData({...formData, categoryName: e.target.value})}
-                className="w-full"
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={fieldStyles}
               />
+            </div>
+
+            {/* Service Types Multi-Select */}
+            <div>
+              <FormControl fullWidth sx={fieldStyles}>
+                <InputLabel>Select Service Types</InputLabel>
+                <MuiSelect
+                  multiple
+                  value={formData.serviceTypes}
+                  onChange={(e) => setFormData({...formData, serviceTypes: typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value})}
+                  input={<OutlinedInput label="Select Service Types" />}
+                  renderValue={(selected) => (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {selected.map((value) => (
+                        <Chip key={value} label={value} size="small" />
+                      ))}
+                    </div>
+                  )}
+                >
+                  {serviceTypeOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
             </div>
 
             {/* Time Inputs */}
             <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Input
-                  placeholder="Days"
-                  value={formData.days}
-                  onChange={(e) => setFormData({...formData, days: e.target.value})}
-                />
-              </div>
-              <div>
-                <Input
-                  placeholder="Hrs"
-                  value={formData.hours}
-                  onChange={(e) => setFormData({...formData, hours: e.target.value})}
-                />
-              </div>
-              <div>
-                <Input
-                  placeholder="Min"
-                  value={formData.minutes}
-                  onChange={(e) => setFormData({...formData, minutes: e.target.value})}
-                />
-              </div>
+              <TextField
+                placeholder="Days"
+                value={formData.days}
+                onChange={(e) => setFormData({...formData, days: e.target.value})}
+                variant="outlined"
+                size="small"
+                sx={fieldStyles}
+              />
+              <TextField
+                placeholder="Hrs"
+                value={formData.hours}
+                onChange={(e) => setFormData({...formData, hours: e.target.value})}
+                variant="outlined"
+                size="small"
+                sx={fieldStyles}
+              />
+              <TextField
+                placeholder="Min"
+                value={formData.minutes}
+                onChange={(e) => setFormData({...formData, minutes: e.target.value})}
+                variant="outlined"
+                size="small"
+                sx={fieldStyles}
+              />
             </div>
 
             {/* Icon Selection Grid */}
