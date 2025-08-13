@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -26,6 +27,7 @@ export const VisitingPurposePage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMoveInOutModalOpen, setIsMoveInOutModalOpen] = useState(false);
   const [isWorkTypeModalOpen, setIsWorkTypeModalOpen] = useState(false);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     site: '',
     purpose: '',
@@ -40,6 +42,10 @@ export const VisitingPurposePage = () => {
     site: '',
     staffType: '',
     workType: '',
+    active: true
+  });
+  const [commentFormData, setCommentFormData] = useState({
+    comment: '',
     active: true
   });
 
@@ -159,10 +165,32 @@ export const VisitingPurposePage = () => {
   };
 
   const handleVisitorCategory = () => {
-    toast({
-      title: "Visitor Category",
-      description: "Visitor Category functionality",
+    setIsCommentModalOpen(true);
+  };
+
+  const handleCommentModalClose = () => {
+    setIsCommentModalOpen(false);
+    setCommentFormData({
+      comment: '',
+      active: true
     });
+  };
+
+  const handleCommentSubmit = () => {
+    if (!commentFormData.comment.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a comment",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Comment created successfully",
+    });
+    handleCommentModalClose();
   };
 
   const handleModalClose = () => {
@@ -560,6 +588,56 @@ export const VisitingPurposePage = () => {
             <div className="flex justify-end pt-4">
               <Button 
                 onClick={handleWorkTypeSubmit}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Comment Modal */}
+      <Dialog open={isCommentModalOpen} onOpenChange={setIsCommentModalOpen}>
+        <DialogContent className="max-w-md bg-white z-50">
+          <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
+            <DialogTitle className="text-lg font-semibold">Add Comment</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCommentModalClose}
+              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Comment Textarea */}
+            <div className="space-y-2">
+              <Label>Enter comment</Label>
+              <Textarea
+                placeholder="Enter Comment"
+                value={commentFormData.comment}
+                onChange={(e) => setCommentFormData({...commentFormData, comment: e.target.value})}
+                className="w-full min-h-[80px] resize-none"
+              />
+            </div>
+
+            {/* Active Checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="commentActive"
+                checked={commentFormData.active}
+                onCheckedChange={(checked) => setCommentFormData({...commentFormData, active: checked as boolean})}
+              />
+              <Label htmlFor="commentActive">Active</Label>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end pt-4">
+              <Button 
+                onClick={handleCommentSubmit}
                 className="bg-green-500 hover:bg-green-600 text-white px-6"
               >
                 Submit
