@@ -700,7 +700,7 @@ export const VisitingPurposePage = () => {
                   className="text-primary border-primary hover:bg-primary/10"
                 >
                   <Plus className="w-4 h-4 mr-1" />
-                  Add User
+                  Add
                 </Button>
               </div>
               
