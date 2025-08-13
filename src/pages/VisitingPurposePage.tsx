@@ -30,6 +30,8 @@ export const VisitingPurposePage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMoveInOutModalOpen, setIsMoveInOutModalOpen] = useState(false);
   const [isWorkTypeModalOpen, setIsWorkTypeModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingPurpose, setEditingPurpose] = useState<VisitingPurposeData | null>(null);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     site: '',
@@ -253,10 +255,34 @@ export const VisitingPurposePage = () => {
   };
 
   const handleEdit = (purposeId: string) => {
+    const purpose = purposes.find(p => p.id === purposeId);
+    if (purpose) {
+      setEditingPurpose(purpose);
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setEditingPurpose(null);
+  };
+
+  const handleEditSubmit = () => {
+    if (!editingPurpose) return;
+
+    setPurposes(prev => 
+      prev.map(p => 
+        p.id === editingPurpose.id 
+          ? { ...p, purpose: editingPurpose.purpose, status: editingPurpose.status }
+          : p
+      )
+    );
+
     toast({
-      title: "Edit Purpose",
-      description: `Editing purpose ID: ${purposeId}`,
+      title: "Success",
+      description: "Purpose updated successfully",
     });
+    handleEditModalClose();
   };
 
   const handleDelete = (purposeId: string) => {
@@ -712,6 +738,69 @@ export const VisitingPurposePage = () => {
                 className="bg-green-500 hover:bg-green-600 text-white px-6"
               >
                 Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Purpose Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-md bg-white z-50">
+          <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
+            <DialogTitle className="text-lg font-semibold">Edit Purpose</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleEditModalClose}
+              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Purpose Input */}
+            <div className="space-y-2">
+              <TextField
+                value={editingPurpose?.purpose || ''}
+                onChange={(e) => editingPurpose && setEditingPurpose({...editingPurpose, purpose: e.target.value})}
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                }}
+              />
+            </div>
+
+            {/* Active Checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="editActive"
+                checked={editingPurpose?.status || false}
+                onCheckedChange={(checked) => editingPurpose && setEditingPurpose({...editingPurpose, status: checked as boolean})}
+              />
+              <Label htmlFor="editActive" className="text-purple-600">Active</Label>
+            </div>
+
+            {/* Update Button */}
+            <div className="flex justify-start pt-4">
+              <Button 
+                onClick={handleEditSubmit}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
+              >
+                UPDATE
               </Button>
             </div>
           </div>
