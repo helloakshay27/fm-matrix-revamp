@@ -306,23 +306,6 @@ export const VisitingPurposePage = () => {
 
           <div className="flex-1"></div>
 
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-80"
-              />
-            </div>
-            <Button variant="outline" size="icon" className="border-gray-300">
-              <RefreshCw className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="icon" className="border-gray-300">
-              <Grid3X3 className="w-4 h-4" />
-            </Button>
-          </div>
         </div>
 
         {/* Table */}
