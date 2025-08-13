@@ -322,32 +322,37 @@ export const VisitingPurposePage = () => {
 
             {/* Action Buttons Bar */}
             <div className="flex items-center gap-3 p-6 border-b border-gray-200">
-          <Button 
-            onClick={handleAddPurpose}
-            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Purpose
-          </Button>
-          
-          <Button 
-            onClick={handleMoveInOut}
-            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Move In/Out
-          </Button>
-          
-          <Button 
-            onClick={handleWorkType}
-            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Work Type
-          </Button>
-          
+              {activeTab === 'Visit Purpose' && (
+                <Button 
+                  onClick={handleAddPurpose}
+                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Purpose
+                </Button>
+              )}
+              
+              {activeTab === 'Move In/Out' && (
+                <Button 
+                  onClick={handleMoveInOut}
+                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Move In/Out
+                </Button>
+              )}
+              
+              {activeTab === 'Work Type' && (
+                <Button 
+                  onClick={handleWorkType}
+                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Work Type
+                </Button>
+              )}
 
-            <div className="flex-1"></div>
+              <div className="flex-1"></div>
 
             </div>
 
