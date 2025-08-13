@@ -293,10 +293,6 @@ export const SupportStaffPage = () => {
         </Table>
       </div>
 
-      {/* Showing results count */}
-      <div className="mt-4 text-sm text-gray-600">
-        Showing 1 to {filteredStaff.length} of {filteredStaff.length} rows
-      </div>
       </div>
 
       {/* Add Modal */}
