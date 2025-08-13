@@ -34,10 +34,17 @@ const initialState: InventoryConsumptionDetailsState = {
 }
 
 // Async thunk for fetching inventory consumption details
+// export const fetchInventoryConsumptionDetails = createAsyncThunk(
+//   'inventoryConsumptionDetails/fetchDetails',
+//   async (resourceId: string) => {
+//     const response = await apiClient.get(`/pms/inventories/inventory_assets_consumption_details.json?resource_id=${resourceId}`)
+//     return response.data
+//   }
+// )
 export const fetchInventoryConsumptionDetails = createAsyncThunk(
-  'inventoryConsumptionDetails/fetchDetails',
-  async (resourceId: string) => {
-    const response = await apiClient.get(`/pms/inventories/inventory_assets_consumption_details.json?resource_id=${resourceId}`)
+  'inventoryConsumptionDetails/fetch',
+  async ({ id, start_date, end_date }: { id: string; start_date: string; end_date: string }) => {
+    const response = await apiClient.get(`/pms/inventories/inventory_assets_consumption_details.json?resource_id=${id}&q[start_date]=${start_date}&q[end_date]=${end_date}`)
     return response.data
   }
 )
