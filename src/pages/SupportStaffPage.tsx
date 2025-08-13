@@ -328,22 +328,13 @@ export const SupportStaffPage = () => {
                 )}
                 {visibleColumns.actions && (
                   <TableCell>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(staff.id)}
-                        className="p-1 hover:bg-gray-100 rounded"
-                        title="Edit"
-                      >
-                        <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(staff.id)}
-                        className="p-1 hover:bg-gray-100 rounded"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleEdit(staff.id)}
+                      className="p-1 hover:bg-gray-100 rounded"
+                      title="Edit"
+                    >
+                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                    </button>
                   </TableCell>
                 )}
                 {visibleColumns.name && (
