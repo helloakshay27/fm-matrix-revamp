@@ -56,7 +56,7 @@ export const VisitingPurposePage = () => {
   const samplePurposes: VisitingPurposeData[] = [
     {
       id: '1',
-      purpose: 'vendor',
+      purpose: 'Vendor',
       status: true,
       createdOn: '15/01/2025 11:04 AM',
       createdBy: 'Abdul A'
@@ -70,23 +70,16 @@ export const VisitingPurposePage = () => {
     },
     {
       id: '3',
-      purpose: 'Delivery',
+      purpose: 'Personal',
       status: true,
       createdOn: '15/01/2025 11:02 AM',
       createdBy: 'Abdul A'
     },
     {
       id: '4',
-      purpose: 'Maintenance',
-      status: false,
-      createdOn: '15/01/2025 11:01 AM',
-      createdBy: 'Abdul A'
-    },
-    {
-      id: '5',
-      purpose: 'Interview',
+      purpose: 'Courier',
       status: true,
-      createdOn: '15/01/2025 11:00 AM',
+      createdOn: '15/01/2025 11:01 AM',
       createdBy: 'Abdul A'
     }
   ];
