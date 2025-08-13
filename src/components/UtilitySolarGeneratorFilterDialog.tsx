@@ -74,7 +74,7 @@ export const UtilitySolarGeneratorFilterDialog = ({
                   <Button 
                     variant="outline" 
                     className={cn(
-                      "w-full justify-start text-left font-normal rounded-none shadow-none border-gray-300 text-black hover:bg-gray-100 hover:text-black", 
+                      "w-full justify-start text-left font-normal rounded-none shadow-none border border-gray-300 text-black hover:bg-gray-100 hover:text-black hover:border-gray-400 focus:border-gray-400 focus:ring-0", 
                       !dateRange?.from && "text-gray-500"
                     )}
                   >
