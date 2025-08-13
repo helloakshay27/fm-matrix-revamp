@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { X } from 'lucide-react';
+import { TextField } from '@mui/material';
+import { X, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface MoveInOutData {
@@ -23,22 +24,31 @@ interface EditMoveInOutModalProps {
 }
 
 export const EditMoveInOutModal = ({ isOpen, onClose, moveInOutData, onUpdate }: EditMoveInOutModalProps) => {
-  const [purpose, setPurpose] = useState('');
+  const [purposes, setPurposes] = useState<string[]>(['']);
   const [status, setStatus] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     if (moveInOutData && isOpen) {
-      setPurpose(moveInOutData.purpose);
+      // Split the purpose string by pipe separator or use single purpose
+      const purposeArray = moveInOutData.purpose.includes('|') 
+        ? moveInOutData.purpose.split('|') 
+        : [moveInOutData.purpose];
+      setPurposes(purposeArray);
       setStatus(moveInOutData.status);
+    } else {
+      setPurposes(['']);
+      setStatus(true);
     }
   }, [moveInOutData, isOpen]);
 
   const handleSubmit = () => {
-    if (!purpose.trim()) {
+    const validPurposes = purposes.filter(p => p.trim());
+    
+    if (validPurposes.length === 0) {
       toast({
         title: "Error",
-        description: "Please enter a move in/out purpose",
+        description: "Please enter at least one move in/out purpose",
         variant: "destructive"
       });
       return;
@@ -47,7 +57,7 @@ export const EditMoveInOutModal = ({ isOpen, onClose, moveInOutData, onUpdate }:
     if (moveInOutData) {
       const updatedData = {
         ...moveInOutData,
-        purpose: purpose.trim(),
+        purpose: validPurposes.join('|'),
         status
       };
       onUpdate(updatedData);
@@ -60,9 +70,26 @@ export const EditMoveInOutModal = ({ isOpen, onClose, moveInOutData, onUpdate }:
   };
 
   const handleClose = () => {
-    setPurpose('');
+    setPurposes(['']);
     setStatus(true);
     onClose();
+  };
+
+  const addPurpose = () => {
+    setPurposes([...purposes, '']);
+  };
+
+  const removePurpose = (index: number) => {
+    if (purposes.length > 1) {
+      const newPurposes = purposes.filter((_, i) => i !== index);
+      setPurposes(newPurposes);
+    }
+  };
+
+  const updatePurpose = (index: number, value: string) => {
+    const newPurposes = [...purposes];
+    newPurposes[index] = value;
+    setPurposes(newPurposes);
   };
 
   return (
@@ -83,17 +110,62 @@ export const EditMoveInOutModal = ({ isOpen, onClose, moveInOutData, onUpdate }:
         </DialogHeader>
         
         <div className="px-6 py-4 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="purpose" className="text-sm font-medium text-gray-700">
-              Enter move in/ out purpose
-            </Label>
-            <Input
-              id="purpose"
-              placeholder="Enter move in/ out purpose"
-              value={purpose}
-              onChange={(e) => setPurpose(e.target.value)}
-              className="w-full"
-            />
+          {/* Multiple Move In/Out Purpose Input */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Enter move in/ out purpose</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addPurpose}
+                className="text-primary border-primary hover:bg-primary/10"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
+            </div>
+            
+            <div className="space-y-3">
+              {purposes.map((purpose, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <TextField
+                      placeholder="Enter purpose"
+                      value={purpose}
+                      onChange={(e) => updatePurpose(index, e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: '#d1d5db',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: '#C72030',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#C72030',
+                          },
+                        },
+                      }}
+                    />
+                  </div>
+                  {purposes.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removePurpose(index)}
+                      className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
           
           <div className="flex items-center space-x-2">
@@ -112,7 +184,7 @@ export const EditMoveInOutModal = ({ isOpen, onClose, moveInOutData, onUpdate }:
           <Button
             onClick={handleSubmit}
             className="bg-green-600 hover:bg-green-700 text-white px-8"
-            disabled={!purpose.trim()}
+            disabled={purposes.every(p => !p.trim())}
           >
             Update
           </Button>

@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { X } from 'lucide-react';
+import { TextField } from '@mui/material';
+import { X, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface VisitorCommentData {
@@ -23,22 +24,31 @@ interface EditVisitorCommentModalProps {
 }
 
 export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate }: EditVisitorCommentModalProps) => {
-  const [comment, setComment] = useState('');
+  const [comments, setComments] = useState<string[]>(['']);
   const [status, setStatus] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     if (commentData && isOpen) {
-      setComment(commentData.comment);
+      // Split the comment string by pipe separator or use single comment
+      const commentArray = commentData.comment.includes('|') 
+        ? commentData.comment.split('|') 
+        : [commentData.comment];
+      setComments(commentArray);
       setStatus(commentData.status);
+    } else {
+      setComments(['']);
+      setStatus(true);
     }
   }, [commentData, isOpen]);
 
   const handleSubmit = () => {
-    if (!comment.trim()) {
+    const validComments = comments.filter(c => c.trim());
+    
+    if (validComments.length === 0) {
       toast({
         title: "Error",
-        description: "Please enter a comment",
+        description: "Please enter at least one comment",
         variant: "destructive"
       });
       return;
@@ -47,7 +57,7 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
     if (commentData) {
       const updatedData = {
         ...commentData,
-        comment: comment.trim(),
+        comment: validComments.join('|'),
         status
       };
       onUpdate(updatedData);
@@ -60,9 +70,26 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
   };
 
   const handleClose = () => {
-    setComment('');
+    setComments(['']);
     setStatus(true);
     onClose();
+  };
+
+  const addComment = () => {
+    setComments([...comments, '']);
+  };
+
+  const removeComment = (index: number) => {
+    if (comments.length > 1) {
+      const newComments = comments.filter((_, i) => i !== index);
+      setComments(newComments);
+    }
+  };
+
+  const updateComment = (index: number, value: string) => {
+    const newComments = [...comments];
+    newComments[index] = value;
+    setComments(newComments);
   };
 
   return (
@@ -83,17 +110,64 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
         </DialogHeader>
         
         <div className="px-6 py-4 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="comment" className="text-sm font-medium text-gray-700">
-              Comment
-            </Label>
-            <Textarea
-              id="comment"
-              placeholder="Enter visitor comment"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="w-full min-h-[100px]"
-            />
+          {/* Multiple Comment Input */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Comment</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addComment}
+                className="text-primary border-primary hover:bg-primary/10"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
+            </div>
+            
+            <div className="space-y-3">
+              {comments.map((comment, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <TextField
+                      placeholder="Enter visitor comment"
+                      value={comment}
+                      onChange={(e) => updateComment(index, e.target.value)}
+                      fullWidth
+                      variant="outlined"
+                      multiline
+                      rows={2}
+                      size="small"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: '#d1d5db',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: '#C72030',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#C72030',
+                          },
+                        },
+                      }}
+                    />
+                  </div>
+                  {comments.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeComment(index)}
+                      className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
           
           <div className="flex items-center space-x-2">
@@ -112,7 +186,7 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
           <Button
             onClick={handleSubmit}
             className="bg-green-600 hover:bg-green-700 text-white px-8"
-            disabled={!comment.trim()}
+            disabled={comments.every(c => !c.trim())}
           >
             Update
           </Button>
