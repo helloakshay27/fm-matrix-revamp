@@ -96,6 +96,16 @@ const InventoryConsumptionDashboard = () => {
     return '1st to 0';
   };
 
+  // Check if a month is disabled (future months)
+  const isMonthDisabled = (monthName: string) => {
+    const now = new Date();
+    const currentMonth = now.getMonth(); // 0-11
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                   'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthIndex = months.indexOf(monthName);
+    return monthIndex > currentMonth;
+  };
+
   // Monthly consumption data with dynamic date ranges
   const monthlyData = [
     { month: 'January', dateRange: getCurrentDateRange('January'), amount: '₹24,000', details: generateMonthlyDetails('January') },
@@ -155,6 +165,8 @@ const InventoryConsumptionDashboard = () => {
 
   // Toggle month expansion
   const toggleMonth = (month: string) => {
+    // Don't allow expansion of disabled months
+    if (isMonthDisabled(month)) return;
     setExpandedMonth(expandedMonth === month ? null : month);
   };
 
@@ -241,7 +253,11 @@ const InventoryConsumptionDashboard = () => {
           >
             {/* Month Header Box */}
             <div 
-              className="flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+              className={`flex items-center justify-between p-6 transition-colors ${
+                isMonthDisabled(monthData.month) 
+                  ? 'opacity-50 cursor-not-allowed bg-gray-100' 
+                  : 'cursor-pointer hover:bg-gray-50'
+              }`}
               onClick={() => toggleMonth(monthData.month)}
             >
               <div className="flex items-center gap-4">
