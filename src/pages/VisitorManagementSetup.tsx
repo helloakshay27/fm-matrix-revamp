@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -7,6 +7,7 @@ import { Switch } from '../components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLayout } from '../contexts/LayoutContext';
 
 interface VisitorGateData {
   id: number;
@@ -22,8 +23,13 @@ interface VisitorGateData {
 
 export const VisitorManagementSetup = () => {
   const navigate = useNavigate();
+  const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'smartsecure' | 'quikgate'>('smartsecure');
+
+  useEffect(() => {
+    setCurrentSection('Settings');
+  }, [setCurrentSection]);
   
   // Sample data with state management
   const [visitorGateData, setVisitorGateData] = useState<VisitorGateData[]>([
