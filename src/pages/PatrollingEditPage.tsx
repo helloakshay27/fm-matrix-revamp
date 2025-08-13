@@ -563,7 +563,6 @@ export const PatrollingEditPage: React.FC = () => {
             if (hasEstimatedDurationError) errorFields.push('Grace Period');
             if (hasStartDateError) errorFields.push('Start Date');
             if (hasEndDateError) errorFields.push('End Date');
-            if (hasGraceError) errorFields.push('Grace Period (Validity)');
 
             toast.info(`Please fill in the following required fields: ${errorFields.join(', ')}`, {
                 duration: 5000,
@@ -744,38 +743,28 @@ export const PatrollingEditPage: React.FC = () => {
                         </div>
                         <div>
                             <TextField
-                                type="number"
-                                label={<>Grace Period (minutes)<span className="text-red-500">*</span></>}
-                                placeholder="Enter grace period in minutes"
-                                value={estimatedDuration}
-                                onChange={(e) => handleEstimatedDurationChange(e.target.value)}
+                                label={<>Description<span className="text-red-500">*</span></>}
+                                value={description}
+                                onChange={(e) => handleDescriptionChange(e.target.value)}
                                 fullWidth
                                 variant="outlined"
-                                error={errors.estimatedDuration}
-                                helperText={errors.estimatedDuration ? 'Grace Period is required' : ''}
-                                slotProps={{ inputLabel: { shrink: true } }}
-                                InputProps={{ sx: fieldStyles }}
+                                error={errors.description}
+                                helperText={errors.description ? 'Description is required' : ''}
+                                slotProps={{
+                                    inputLabel: {
+                                        shrink: true,
+                                    },
+                                }}
+                                InputProps={{
+                                    sx: fieldStyles,
+                                }}
                                 disabled={isSubmitting}
                             />
                         </div>
+
                     </div>
 
-                    <div>
-                        <TextField
-                            label={<>Description<span className="text-red-500">*</span></>}
-                            value={description}
-                            onChange={(e) => handleDescriptionChange(e.target.value)}
-                            fullWidth
-                            multiline
-                            rows={3}
-                            variant="outlined"
-                            error={errors.description}
-                            helperText={errors.description ? 'Description is required' : ''}
-                            slotProps={{ inputLabel: { shrink: true } }}
-                            InputProps={{ sx: fieldStyles }}
-                            disabled={isSubmitting}
-                        />
-                    </div>
+
                 </div>
             </Section>
 
@@ -813,13 +802,15 @@ export const PatrollingEditPage: React.FC = () => {
                     </div>
                     <div>
                         <TextField
-                            label={<>Grace Period (Validity)<span className="text-red-500">*</span></>}
-                            value={grace}
-                            onChange={(e) => handleGraceChange(e.target.value)}
+                            type="number"
+                            label={<>Grace Period (minutes)<span className="text-red-500">*</span></>}
+                            placeholder="Enter grace period in minutes"
+                            value={estimatedDuration}
+                            onChange={(e) => handleEstimatedDurationChange(e.target.value)}
                             fullWidth
                             variant="outlined"
-                            error={errors.grace}
-                            helperText={errors.grace ? 'Grace Period is required' : ''}
+                            error={errors.estimatedDuration}
+                            helperText={errors.estimatedDuration ? 'Grace Period is required' : ''}
                             slotProps={{ inputLabel: { shrink: true } }}
                             InputProps={{ sx: fieldStyles }}
                             disabled={isSubmitting}
@@ -900,7 +891,7 @@ export const PatrollingEditPage: React.FC = () => {
                                                         .split(',')
                                                         .map(opt => opt.trim())
                                                         .filter(opt => opt !== '');
-                                                    
+
                                                     // Update both raw text and parsed options
                                                     updateQuestion(idx, 'optionsText', inputValue);
                                                     updateQuestion(idx, 'options', optionsArray);
