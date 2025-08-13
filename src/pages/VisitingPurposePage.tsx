@@ -13,6 +13,9 @@ import { Switch } from '@/components/ui/switch';
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
+import { EditMoveInOutModal } from '@/components/EditMoveInOutModal';
+import { EditWorkTypeModal } from '@/components/EditWorkTypeModal';
+import { EditVisitorCommentModal } from '@/components/EditVisitorCommentModal';
 
 interface VisitingPurposeData {
   id: string;
@@ -59,6 +62,14 @@ export const VisitingPurposePage = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingPurpose, setEditingPurpose] = useState<VisitingPurposeData | null>(null);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  
+  // Edit modal states for different types
+  const [isEditMoveInOutModalOpen, setIsEditMoveInOutModalOpen] = useState(false);
+  const [editingMoveInOut, setEditingMoveInOut] = useState<MoveInOutData | null>(null);
+  const [isEditWorkTypeModalOpen, setIsEditWorkTypeModalOpen] = useState(false);
+  const [editingWorkType, setEditingWorkType] = useState<WorkTypeData | null>(null);
+  const [isEditVisitorCommentModalOpen, setIsEditVisitorCommentModalOpen] = useState(false);
+  const [editingVisitorComment, setEditingVisitorComment] = useState<VisitorCommentData | null>(null);
   const [formData, setFormData] = useState({
     site: '',
     purpose: '',
@@ -424,6 +435,56 @@ export const VisitingPurposePage = () => {
     setActiveTab(tab);
   };
 
+  // Edit handlers for different types
+  const handleEditMoveInOut = (itemId: string) => {
+    const item = moveInOutData.find(m => m.id === itemId);
+    if (item) {
+      setEditingMoveInOut(item);
+      setIsEditMoveInOutModalOpen(true);
+    }
+  };
+
+  const handleEditWorkType = (itemId: string) => {
+    const item = workTypeData.find(w => w.id === itemId);
+    if (item) {
+      setEditingWorkType(item);
+      setIsEditWorkTypeModalOpen(true);
+    }
+  };
+
+  const handleEditVisitorComment = (itemId: string) => {
+    const item = commentsData.find(c => c.id === itemId);
+    if (item) {
+      setEditingVisitorComment(item);
+      setIsEditVisitorCommentModalOpen(true);
+    }
+  };
+
+  // Update handlers for different types
+  const handleUpdateMoveInOut = (updatedData: MoveInOutData) => {
+    setMoveInOutData(prev => 
+      prev.map(item => 
+        item.id === updatedData.id ? updatedData : item
+      )
+    );
+  };
+
+  const handleUpdateWorkType = (updatedData: WorkTypeData) => {
+    setWorkTypeData(prev => 
+      prev.map(item => 
+        item.id === updatedData.id ? updatedData : item
+      )
+    );
+  };
+
+  const handleUpdateVisitorComment = (updatedData: VisitorCommentData) => {
+    setCommentsData(prev => 
+      prev.map(item => 
+        item.id === updatedData.id ? updatedData : item
+      )
+    );
+  };
+
   return (
     <>
       <div className="p-6 bg-gray-50 min-h-screen">
@@ -547,14 +608,15 @@ export const VisitingPurposePage = () => {
                   <TableBody>
                     {getFilteredData().map((item) => (
                       <TableRow key={item.id} className="hover:bg-gray-50">
-                        <TableCell className="px-4 py-3">
-                          <button
-                            className="p-1 hover:bg-gray-100 rounded"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                          </button>
-                        </TableCell>
+                         <TableCell className="px-4 py-3">
+                           <button
+                             onClick={() => handleEditMoveInOut(item.id)}
+                             className="p-1 hover:bg-gray-100 rounded"
+                             title="Edit"
+                           >
+                             <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                           </button>
+                         </TableCell>
                         <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
                         <TableCell className="px-4 py-3 text-center">
                           <span className={`px-3 py-1 text-xs font-medium rounded-full ${
@@ -586,14 +648,15 @@ export const VisitingPurposePage = () => {
                   <TableBody>
                     {getFilteredData().map((item) => (
                       <TableRow key={item.id} className="hover:bg-gray-50">
-                        <TableCell className="px-4 py-3">
-                          <button
-                            className="p-1 hover:bg-gray-100 rounded"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                          </button>
-                        </TableCell>
+                         <TableCell className="px-4 py-3">
+                           <button
+                             onClick={() => handleEditWorkType(item.id)}
+                             className="p-1 hover:bg-gray-100 rounded"
+                             title="Edit"
+                           >
+                             <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                           </button>
+                         </TableCell>
                         <TableCell className="px-4 py-3 font-medium">{item.staffType}</TableCell>
                         <TableCell className="px-4 py-3 font-medium">{item.workType}</TableCell>
                         <TableCell className="px-4 py-3 text-center">
@@ -625,14 +688,15 @@ export const VisitingPurposePage = () => {
                   <TableBody>
                     {getFilteredData().map((item) => (
                       <TableRow key={item.id} className="hover:bg-gray-50">
-                        <TableCell className="px-4 py-3">
-                          <button
-                            className="p-1 hover:bg-gray-100 rounded"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                          </button>
-                        </TableCell>
+                         <TableCell className="px-4 py-3">
+                           <button
+                             onClick={() => handleEditVisitorComment(item.id)}
+                             className="p-1 hover:bg-gray-100 rounded"
+                             title="Edit"
+                           >
+                             <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                           </button>
+                         </TableCell>
                         <TableCell className="px-4 py-3 font-medium">{item.comment}</TableCell>
                         <TableCell className="px-4 py-3 text-center">
                           <span className={`px-3 py-1 text-xs font-medium rounded-full ${
@@ -1124,6 +1188,30 @@ export const VisitingPurposePage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Move In/Out Modal */}
+      <EditMoveInOutModal
+        isOpen={isEditMoveInOutModalOpen}
+        onClose={() => setIsEditMoveInOutModalOpen(false)}
+        moveInOutData={editingMoveInOut}
+        onUpdate={handleUpdateMoveInOut}
+      />
+
+      {/* Edit Work Type Modal */}
+      <EditWorkTypeModal
+        isOpen={isEditWorkTypeModalOpen}
+        onClose={() => setIsEditWorkTypeModalOpen(false)}
+        workTypeData={editingWorkType}
+        onUpdate={handleUpdateWorkType}
+      />
+
+      {/* Edit Visitor Comment Modal */}
+      <EditVisitorCommentModal
+        isOpen={isEditVisitorCommentModalOpen}
+        onClose={() => setIsEditVisitorCommentModalOpen(false)}
+        commentData={editingVisitorComment}
+        onUpdate={handleUpdateVisitorComment}
+      />
     </>
   );
 };
