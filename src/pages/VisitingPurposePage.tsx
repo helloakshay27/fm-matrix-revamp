@@ -687,7 +687,22 @@ export const VisitingPurposePage = () => {
 
             {/* Multiple Users Purpose Input */}
             <div className="space-y-4">
-              <Label>Enter purposes for multiple users</Label>
+              <div className="flex items-center justify-between">
+                <Label>Enter purposes for multiple users</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const currentPurposes = formData.purpose ? formData.purpose.split('|') : [''];
+                    setFormData({...formData, purpose: [...currentPurposes, ''].join('|')});
+                  }}
+                  className="text-primary border-primary hover:bg-primary/10"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add User
+                </Button>
+              </div>
               
               <div className="space-y-3">
                 {(formData.purpose ? formData.purpose.split('|') : ['']).map((purpose, index) => (
