@@ -93,15 +93,14 @@ export const UtilitySolarGeneratorFilterDialog = ({
                     )}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 bg-white border shadow-lg" align="start">
                   <Calendar 
-                    initialFocus 
                     mode="range" 
-                    defaultMonth={dateRange?.from} 
                     selected={dateRange} 
                     onSelect={handleDateRangeSelect} 
                     numberOfMonths={2} 
-                    className={cn("p-3 pointer-events-auto")} 
+                    initialFocus 
+                    className="p-3 pointer-events-auto rounded-md"
                   />
                 </PopoverContent>
               </Popover>
