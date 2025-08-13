@@ -35,7 +35,7 @@ export const VisitingPurposePage = () => {
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     site: '',
-    purposes: [''],
+    purpose: '',
     active: true
   });
   const [moveInOutFormData, setMoveInOutFormData] = useState({
@@ -199,47 +199,24 @@ export const VisitingPurposePage = () => {
     setIsAddModalOpen(false);
     setFormData({
       site: '',
-      purposes: [''],
+      purpose: '',
       active: true
     });
   };
 
-  const addPurposeField = () => {
-    setFormData(prev => ({
-      ...prev,
-      purposes: [...prev.purposes, '']
-    }));
-  };
-
-  const removePurposeField = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      purposes: prev.purposes.filter((_, i) => i !== index)
-    }));
-  };
-
-  const updatePurposeField = (index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      purposes: prev.purposes.map((purpose, i) => i === index ? value : purpose)
-    }));
-  };
-
   const handleSubmit = () => {
-    const validPurposes = formData.purposes.filter(purpose => purpose.trim() !== '');
-    
-    if (validPurposes.length === 0) {
+    if (!formData.purpose) {
       toast({
         title: "Error",
-        description: "Please enter at least one purpose",
+        description: "Please enter a purpose",
         variant: "destructive"
       });
       return;
     }
 
-    const newPurposes: VisitingPurposeData[] = validPurposes.map((purpose, index) => ({
-      id: (purposes.length + index + 1).toString(),
-      purpose: purpose.trim(),
+    const newPurpose: VisitingPurposeData = {
+      id: (purposes.length + 1).toString(),
+      purpose: formData.purpose,
       status: formData.active,
       createdOn: new Date().toLocaleString('en-GB', {
         day: '2-digit',
@@ -250,12 +227,12 @@ export const VisitingPurposePage = () => {
         hour12: true
       }),
       createdBy: 'Current User'
-    }));
+    };
 
-    setPurposes(prev => [...prev, ...newPurposes]);
+    setPurposes(prev => [...prev, newPurpose]);
     toast({
       title: "Success",
-      description: `${newPurposes.length} purpose(s) created successfully`,
+      description: "Visiting purpose created successfully",
     });
     handleModalClose();
   };
@@ -320,28 +297,34 @@ export const VisitingPurposePage = () => {
     <>
       <div className="p-6 min-h-screen">
         {/* Action Buttons Bar */}
-        <div className="flex bg-white p-1 rounded-lg mb-6 w-fit">
+        <div className="flex items-center gap-3 mb-6">
           <Button 
             onClick={handleAddPurpose}
-            className="px-6 py-2 text-sm font-medium transition-colors rounded-md border-none bg-[#EDEAE3] text-[#C72030] shadow-sm"
-            variant="ghost"
+            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
           >
+            <Plus className="w-4 h-4 mr-2" />
             Add Purpose
           </Button>
+          
           <Button 
             onClick={handleMoveInOut}
-            className="px-6 py-2 text-sm font-medium transition-colors rounded-md border-none bg-transparent text-gray-600 hover:bg-white/50"
-            variant="ghost"
+            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
           >
+            <Plus className="w-4 h-4 mr-2" />
             Move In/Out
           </Button>
+          
           <Button 
             onClick={handleWorkType}
-            className="px-6 py-2 text-sm font-medium transition-colors rounded-md border-none bg-transparent text-gray-600 hover:bg-white/50"
-            variant="ghost"
+            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
           >
+            <Plus className="w-4 h-4 mr-2" />
             Work Type
           </Button>
+          
+
+          <div className="flex-1"></div>
+
         </div>
 
         {/* Table */}
@@ -470,57 +453,30 @@ export const VisitingPurposePage = () => {
               </Select>
             </div>
 
-            {/* Multiple Purpose Inputs */}
+            {/* Purpose Input */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Enter purposes</Label>
-                <Button
-                  type="button"
-                  onClick={addPurposeField}
-                  className="text-sm px-3 py-1 h-auto bg-blue-500 hover:bg-blue-600 text-white"
-                >
-                  <Plus className="w-3 h-3 mr-1" />
-                  Add More
-                </Button>
-              </div>
-              
-              <div className="space-y-3">
-                {formData.purposes.map((purpose, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <TextField
-                      placeholder="Enter purpose"
-                      value={purpose}
-                      onChange={(e) => updatePurposeField(index, e.target.value)}
-                      fullWidth
-                      variant="outlined"
-                      size="small"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '& fieldset': {
-                            borderColor: '#d1d5db',
-                          },
-                          '&:hover fieldset': {
-                            borderColor: '#C72030',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#C72030',
-                          },
-                        },
-                      }}
-                    />
-                    {formData.purposes.length > 1 && (
-                      <Button
-                        type="button"
-                        onClick={() => removePurposeField(index)}
-                        className="h-10 w-10 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                        variant="ghost"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <Label>Enter purpose</Label>
+              <TextField
+                placeholder="enter purpose"
+                value={formData.purpose}
+                onChange={(e) => setFormData({...formData, purpose: e.target.value})}
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                }}
+              />
             </div>
 
             {/* Active Checkbox */}
