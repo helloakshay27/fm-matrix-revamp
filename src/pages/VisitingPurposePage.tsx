@@ -332,24 +332,24 @@ export const VisitingPurposePage = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-[#f6f4ee]">
-                <TableHead className="w-20">Action</TableHead>
-                <TableHead className="min-w-[200px]">Purpose</TableHead>
-                <TableHead className="w-32 text-center">Status</TableHead>
-                <TableHead className="w-20">Action</TableHead>
-                <TableHead className="min-w-[200px]">Purpose</TableHead>
-                <TableHead className="w-32 text-center">Status</TableHead>
-                <TableHead className="w-20">Action</TableHead>
-                <TableHead className="min-w-[200px]">Purpose</TableHead>
-                <TableHead className="w-32 text-center">Status</TableHead>
-                <TableHead className="w-20">Action</TableHead>
-                <TableHead className="min-w-[200px]">Purpose</TableHead>
-                <TableHead className="w-32 text-center">Status</TableHead>
+                <TableHead className="w-20 px-4 py-3">Action</TableHead>
+                <TableHead className="min-w-[150px] px-4 py-3">Purpose</TableHead>
+                <TableHead className="w-24 text-center px-4 py-3">Status</TableHead>
+                <TableHead className="w-20 px-4 py-3">Action</TableHead>
+                <TableHead className="min-w-[150px] px-4 py-3">Purpose</TableHead>
+                <TableHead className="w-24 text-center px-4 py-3">Status</TableHead>
+                <TableHead className="w-20 px-4 py-3">Action</TableHead>
+                <TableHead className="min-w-[150px] px-4 py-3">Purpose</TableHead>
+                <TableHead className="w-24 text-center px-4 py-3">Status</TableHead>
+                <TableHead className="w-20 px-4 py-3">Action</TableHead>
+                <TableHead className="min-w-[150px] px-4 py-3">Purpose</TableHead>
+                <TableHead className="w-24 text-center px-4 py-3">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow className="hover:bg-gray-50">
                 {/* Vendor */}
-                <TableCell>
+                <TableCell className="px-4 py-3">
                   <button
                     onClick={() => handleEdit('1')}
                     className="p-1 hover:bg-gray-100 rounded"
@@ -358,15 +358,15 @@ export const VisitingPurposePage = () => {
                     <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
                   </button>
                 </TableCell>
-                <TableCell className="font-medium">Vendor</TableCell>
-                <TableCell className="text-center">
+                <TableCell className="font-medium px-4 py-3">Vendor</TableCell>
+                <TableCell className="text-center px-4 py-3">
                   <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
                     Active
                   </span>
                 </TableCell>
 
                 {/* Meeting */}
-                <TableCell>
+                <TableCell className="px-4 py-3">
                   <button
                     onClick={() => handleEdit('2')}
                     className="p-1 hover:bg-gray-100 rounded"
@@ -375,15 +375,15 @@ export const VisitingPurposePage = () => {
                     <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
                   </button>
                 </TableCell>
-                <TableCell className="font-medium">Meeting</TableCell>
-                <TableCell className="text-center">
+                <TableCell className="font-medium px-4 py-3">Meeting</TableCell>
+                <TableCell className="text-center px-4 py-3">
                   <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
                     Active
                   </span>
                 </TableCell>
 
                 {/* Personal */}
-                <TableCell>
+                <TableCell className="px-4 py-3">
                   <button
                     onClick={() => handleEdit('3')}
                     className="p-1 hover:bg-gray-100 rounded"
@@ -392,15 +392,15 @@ export const VisitingPurposePage = () => {
                     <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
                   </button>
                 </TableCell>
-                <TableCell className="font-medium">Personal</TableCell>
-                <TableCell className="text-center">
+                <TableCell className="font-medium px-4 py-3">Personal</TableCell>
+                <TableCell className="text-center px-4 py-3">
                   <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
                     Active
                   </span>
                 </TableCell>
 
                 {/* Courier */}
-                <TableCell>
+                <TableCell className="px-4 py-3">
                   <button
                     onClick={() => handleEdit('4')}
                     className="p-1 hover:bg-gray-100 rounded"
@@ -409,8 +409,8 @@ export const VisitingPurposePage = () => {
                     <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
                   </button>
                 </TableCell>
-                <TableCell className="font-medium">Courier</TableCell>
-                <TableCell className="text-center">
+                <TableCell className="font-medium px-4 py-3">Courier</TableCell>
+                <TableCell className="text-center px-4 py-3">
                   <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
                     Active
                   </span>
