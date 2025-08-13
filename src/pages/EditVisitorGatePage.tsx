@@ -275,25 +275,6 @@ export const EditVisitorGatePage = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center justify-between bg-white p-4 rounded border">
-                  <Label htmlFor="status">Status</Label>
-                  <Switch
-                    id="status"
-                    checked={formData.status}
-                    onCheckedChange={(checked) => handleInputChange('status', checked)}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between bg-white p-4 rounded border">
-                  <Label htmlFor="active">Active</Label>
-                  <Switch
-                    id="active"
-                    checked={formData.active}
-                    onCheckedChange={(checked) => handleInputChange('active', checked)}
-                  />
-                </div>
-              </div>
             </div>
           </div>
 
