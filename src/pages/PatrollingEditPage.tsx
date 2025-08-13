@@ -86,7 +86,6 @@ const CheckpointLocationSelector: React.FC<{
 
     const handleWingChange = (wingId: number) => {
         dispatch(fetchAreas(wingId));
-        dispatch(fetchFloors(selectedBuildingId!));
         onLocationChange({
             buildingId: selectedBuildingId,
             wingId,
@@ -97,6 +96,7 @@ const CheckpointLocationSelector: React.FC<{
     };
 
     const handleAreaChange = (areaId: number) => {
+        dispatch(fetchFloors(areaId));
         onLocationChange({
             buildingId: selectedBuildingId,
             wingId: selectedWingId,
