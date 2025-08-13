@@ -289,15 +289,6 @@ export const SupportStaffPage = () => {
               className="pl-10 w-80"
             />
           </div>
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="border-gray-300"
-            onClick={handleRefresh}
-            title="Refresh data"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </Button>
           <ColumnVisibilityDropdown
             columns={columns}
             onColumnToggle={handleColumnToggle}
