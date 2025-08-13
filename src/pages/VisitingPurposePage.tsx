@@ -316,43 +316,87 @@ export const VisitingPurposePage = () => {
                 <TableHead className="w-20">Action</TableHead>
                 <TableHead className="min-w-[200px]">Purpose</TableHead>
                 <TableHead className="w-32 text-center">Status</TableHead>
+                <TableHead className="w-20">Action</TableHead>
+                <TableHead className="min-w-[200px]">Purpose</TableHead>
+                <TableHead className="w-32 text-center">Status</TableHead>
+                <TableHead className="w-20">Action</TableHead>
+                <TableHead className="min-w-[200px]">Purpose</TableHead>
+                <TableHead className="w-32 text-center">Status</TableHead>
+                <TableHead className="w-20">Action</TableHead>
+                <TableHead className="min-w-[200px]">Purpose</TableHead>
+                <TableHead className="w-32 text-center">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPurposes.map((purpose) => (
-                <TableRow key={purpose.id} className="hover:bg-gray-50">
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(purpose.id)}
-                        className="p-1 hover:bg-gray-100 rounded"
-                        title="Edit"
-                      >
-                        <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(purpose.id)}
-                        className="p-1 hover:bg-gray-100 rounded"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
-                      </button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {purpose.purpose}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                      purpose.status 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {purpose.status ? 'Active' : 'Inactive'}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))}
+              <TableRow className="hover:bg-gray-50">
+                {/* Vendor */}
+                <TableCell>
+                  <button
+                    onClick={() => handleEdit('1')}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                  </button>
+                </TableCell>
+                <TableCell className="font-medium">Vendor</TableCell>
+                <TableCell className="text-center">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </TableCell>
+
+                {/* Meeting */}
+                <TableCell>
+                  <button
+                    onClick={() => handleEdit('2')}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                  </button>
+                </TableCell>
+                <TableCell className="font-medium">Meeting</TableCell>
+                <TableCell className="text-center">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </TableCell>
+
+                {/* Personal */}
+                <TableCell>
+                  <button
+                    onClick={() => handleEdit('3')}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                  </button>
+                </TableCell>
+                <TableCell className="font-medium">Personal</TableCell>
+                <TableCell className="text-center">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </TableCell>
+
+                {/* Courier */}
+                <TableCell>
+                  <button
+                    onClick={() => handleEdit('4')}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                  </button>
+                </TableCell>
+                <TableCell className="font-medium">Courier</TableCell>
+                <TableCell className="text-center">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </TableCell>
+              </TableRow>
             </TableBody>
           </Table>
         </div>
