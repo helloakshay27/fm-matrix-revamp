@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Label } from '../components/ui/label';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Switch } from '../components/ui/switch';
+import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
 import { useLayout } from '../contexts/LayoutContext';
@@ -26,6 +25,31 @@ export const EditVisitorGatePage = () => {
   const { id } = useParams();
   const { setCurrentSection } = useLayout();
   const [loading, setLoading] = useState(true);
+  
+  // Field styles for Material-UI components
+  const fieldStyles = {
+    height: '45px',
+    backgroundColor: '#fff',
+    borderRadius: '4px',
+    '& .MuiOutlinedInput-root': {
+      height: '45px',
+      '& fieldset': {
+        borderColor: '#ddd',
+      },
+      '&:hover fieldset': {
+        borderColor: '#C72030',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
+  
   const [formData, setFormData] = useState({
     site: '',
     user: '',
@@ -35,6 +59,13 @@ export const EditVisitorGatePage = () => {
     status: true,
     active: true
   });
+
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   // Sample data - in real app, this would come from API
   const sampleData: VisitorGateData[] = [
@@ -117,107 +148,164 @@ export const EditVisitorGatePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-white">
+      <div className="p-6">
         {/* Header */}
-        <div className="flex items-center mb-6">
+        <div className="mb-6">
           <Button
             variant="ghost"
-            size="icon"
-            onClick={handleBack}
-            className="mr-3"
+            onClick={() => navigate('/security/visitor-management/setup')}
+            className="mb-4 p-0 h-auto text-gray-600 hover:text-gray-900"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to List
           </Button>
-          <h1 className="text-xl font-semibold">Edit Visitor Gate</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="site">Site</Label>
-            <Select value={formData.site} onValueChange={(value) => setFormData({...formData, site: value})}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Site" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Zycus Infotech - Zycus Infotech Pvt Ltd">Zycus Infotech - Zycus Infotech Pvt Ltd</SelectItem>
-                <SelectItem value="Arvog - Arvog Finance">Arvog - Arvog Finance</SelectItem>
-                <SelectItem value="Lockated - Lockated HO">Lockated - Lockated HO</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="user">User</Label>
-            <Select value={formData.user} onValueChange={(value) => setFormData({...formData, user: value})}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select User" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Security Tab 1">Security Tab 1</SelectItem>
-                <SelectItem value="Security Tab">Security Tab</SelectItem>
-                <SelectItem value="Tech Secure">Tech Secure</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="tower">Tower</Label>
-            <Select value={formData.tower} onValueChange={(value) => setFormData({...formData, tower: value})}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Tower" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="GJ 07">GJ 07</SelectItem>
-                <SelectItem value="Trade World">Trade World</SelectItem>
-                <SelectItem value="Jyoti Tower">Jyoti Tower</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="gateName">Gate Name</Label>
-            <Input
-              id="gateName"
-              value={formData.gateName}
-              onChange={(e) => setFormData({...formData, gateName: e.target.value})}
-              placeholder="Enter gate name"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="gateDevice">Gate Device</Label>
-            <Input
-              id="gateDevice"
-              value={formData.gateDevice}
-              onChange={(e) => setFormData({...formData, gateDevice: e.target.value})}
-              placeholder="Enter gate device"
-            />
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="status">Status</Label>
-              <Switch
-                id="status"
-                checked={formData.status}
-                onCheckedChange={(checked) => setFormData({...formData, status: checked})}
-              />
+          {/* Gate Configuration Section */}
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 bg-[#F2EEE9] border-b border-gray-200 flex items-center">
+              <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
+                1
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">GATE CONFIGURATION</h2>
             </div>
+            <div className="p-6 space-y-6 bg-gray-50">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  required
+                  sx={{ '& .MuiInputBase-root': fieldStyles }}
+                >
+                  <InputLabel shrink>Site</InputLabel>
+                  <MuiSelect
+                    value={formData.site}
+                    onChange={(e) => handleInputChange('site', e.target.value)}
+                    label="Site"
+                    notched
+                    displayEmpty
+                  >
+                    <MenuItem value="">Select Site</MenuItem>
+                    <MenuItem value="Zycus Infotech - Zycus Infotech Pvt Ltd">Zycus Infotech - Zycus Infotech Pvt Ltd</MenuItem>
+                    <MenuItem value="Arvog - Arvog Finance">Arvog - Arvog Finance</MenuItem>
+                    <MenuItem value="Lockated - Lockated HO">Lockated - Lockated HO</MenuItem>
+                  </MuiSelect>
+                </FormControl>
 
-            <div className="flex items-center justify-between">
-              <Label htmlFor="active">Active</Label>
-              <Switch
-                id="active"
-                checked={formData.active}
-                onCheckedChange={(checked) => setFormData({...formData, active: checked})}
-              />
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  required
+                  sx={{ '& .MuiInputBase-root': fieldStyles }}
+                >
+                  <InputLabel shrink>User</InputLabel>
+                  <MuiSelect
+                    value={formData.user}
+                    onChange={(e) => handleInputChange('user', e.target.value)}
+                    label="User"
+                    notched
+                    displayEmpty
+                  >
+                    <MenuItem value="">Select User</MenuItem>
+                    <MenuItem value="Security Tab 1">Security Tab 1</MenuItem>
+                    <MenuItem value="Security Tab">Security Tab</MenuItem>
+                    <MenuItem value="Tech Secure">Tech Secure</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  required
+                  sx={{ '& .MuiInputBase-root': fieldStyles }}
+                >
+                  <InputLabel shrink>Tower</InputLabel>
+                  <MuiSelect
+                    value={formData.tower}
+                    onChange={(e) => handleInputChange('tower', e.target.value)}
+                    label="Tower"
+                    notched
+                    displayEmpty
+                  >
+                    <MenuItem value="">Select Tower</MenuItem>
+                    <MenuItem value="GJ 07">GJ 07</MenuItem>
+                    <MenuItem value="Trade World">Trade World</MenuItem>
+                    <MenuItem value="Jyoti Tower">Jyoti Tower</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TextField
+                  label="Gate Name"
+                  placeholder="Enter gate name"
+                  value={formData.gateName}
+                  onChange={(e) => handleInputChange('gateName', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
+                />
+
+                <TextField
+                  label="Gate Device"
+                  placeholder="Enter gate device"
+                  value={formData.gateDevice}
+                  onChange={(e) => handleInputChange('gateDevice', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  required
+                  slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
+                  }}
+                  InputProps={{
+                    sx: fieldStyles,
+                  }}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center justify-between bg-white p-4 rounded border">
+                  <Label htmlFor="status">Status</Label>
+                  <Switch
+                    id="status"
+                    checked={formData.status}
+                    onCheckedChange={(checked) => handleInputChange('status', checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between bg-white p-4 rounded border">
+                  <Label htmlFor="active">Active</Label>
+                  <Switch
+                    id="active"
+                    checked={formData.active}
+                    onCheckedChange={(checked) => handleInputChange('active', checked)}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white">
-            Update
-          </Button>
+          {/* Submit Button */}
+          <div className="flex justify-center pt-6">
+            <Button
+              type="submit"
+              className="px-12 py-3 bg-[#C72030] hover:bg-[#A01928] text-white font-medium"
+            >
+              Update
+            </Button>
+          </div>
         </form>
       </div>
     </div>
