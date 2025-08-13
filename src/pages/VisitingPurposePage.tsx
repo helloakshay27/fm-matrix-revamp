@@ -297,34 +297,28 @@ export const VisitingPurposePage = () => {
     <>
       <div className="p-6 min-h-screen">
         {/* Action Buttons Bar */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex bg-white p-1 rounded-lg mb-6 w-fit">
           <Button 
             onClick={handleAddPurpose}
-            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+            className="px-6 py-2 text-sm font-medium transition-colors rounded-md border-none bg-[#EDEAE3] text-[#C72030] shadow-sm"
+            variant="ghost"
           >
-            <Plus className="w-4 h-4 mr-2" />
             Add Purpose
           </Button>
-          
           <Button 
             onClick={handleMoveInOut}
-            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+            className="px-6 py-2 text-sm font-medium transition-colors rounded-md border-none bg-transparent text-gray-600 hover:bg-white/50"
+            variant="ghost"
           >
-            <Plus className="w-4 h-4 mr-2" />
             Move In/Out
           </Button>
-          
           <Button 
             onClick={handleWorkType}
-            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+            className="px-6 py-2 text-sm font-medium transition-colors rounded-md border-none bg-transparent text-gray-600 hover:bg-white/50"
+            variant="ghost"
           >
-            <Plus className="w-4 h-4 mr-2" />
             Work Type
           </Button>
-          
-
-          <div className="flex-1"></div>
-
         </div>
 
         {/* Table */}
