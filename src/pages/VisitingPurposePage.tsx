@@ -26,7 +26,7 @@ export const VisitingPurposePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { setCurrentSection } = useLayout();
-  const [activeTab, setActiveTab] = useState('Visitor In');
+  const [activeTab, setActiveTab] = useState('Visit Purpose');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMoveInOutModalOpen, setIsMoveInOutModalOpen] = useState(false);
@@ -305,7 +305,7 @@ export const VisitingPurposePage = () => {
           <div className="bg-white rounded-lg border border-gray-200">
             {/* Tab Navigation */}
             <div className="flex border-b border-gray-200">
-              {['Visitor In', 'Visitor Out', 'History'].map((tab) => (
+              {['Visit Purpose', 'Move In/Out', 'Work Type', 'Visitor Comment'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => handleTabClick(tab)}
