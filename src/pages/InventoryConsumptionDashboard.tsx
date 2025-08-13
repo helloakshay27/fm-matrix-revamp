@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
-import { Download, Filter, Eye, X } from 'lucide-react';
+import { Download, Filter, Eye, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
@@ -25,8 +25,7 @@ const InventoryConsumptionDashboard = () => {
   const { inventories, loading, error } = useSelector((state: RootState) => state.inventoryConsumption);
   
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 7;
+  const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
   const [filterValues, setFilterValues] = useState({
     group: '',
     subGroup: '',
@@ -38,86 +37,61 @@ const InventoryConsumptionDashboard = () => {
   useEffect(() => {
     dispatch(fetchInventoryConsumptionHistory());
   }, [dispatch]);
-  
-  // Transform API data to match table structure
-  const consumptionData = inventories.map(item => ({
-    id: item.id,
-    inventory: item.name,
-    stock: item.quantity.toString(),
-    unit: item.unit || '',
-    minStockLevel: item.min_stock_level,
-    group: item.group || '-',
-    subGroup: item.sub_group || '-',
-    criticality: item.criticality === 0 ? 'Non-Critical' : 'Critical'
-  }));
 
-  // Calculate pagination
-  const totalPages = Math.ceil(Math.max(consumptionData.length, 1) / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedData = consumptionData.slice(startIndex, startIndex + pageSize);
+  // Monthly consumption data
+  const monthlyData = [
+    { month: 'January', dateRange: '1 to 31', amount: '₹24,000', details: generateMonthlyDetails('January') },
+    { month: 'February', dateRange: '1 to 28', amount: '₹25,000', details: generateMonthlyDetails('February') },
+    { month: 'March', dateRange: '1 to 31', amount: '₹26,000', details: generateMonthlyDetails('March') },
+    { month: 'April', dateRange: '1 to 30', amount: '₹15,000', details: generateMonthlyDetails('April') },
+    { month: 'May', dateRange: '1 to 31', amount: '₹22,000', details: generateMonthlyDetails('May') },
+    { month: 'June', dateRange: '1 to 30', amount: '₹28,000', details: generateMonthlyDetails('June') },
+    { month: 'July', dateRange: '1 to 31', amount: '₹30,000', details: generateMonthlyDetails('July') },
+    { month: 'August', dateRange: '1 to 31', amount: '₹27,000', details: generateMonthlyDetails('August') },
+    { month: 'September', dateRange: '1 to 30', amount: '₹23,000', details: generateMonthlyDetails('September') },
+    { month: 'October', dateRange: '1 to 31', amount: '₹29,000', details: generateMonthlyDetails('October') },
+    { month: 'November', dateRange: '1 to 30', amount: '₹25,500', details: generateMonthlyDetails('November') },
+    { month: 'December', dateRange: '1 to 31', amount: '₹31,000', details: generateMonthlyDetails('December') }
+  ];
 
-  // Define table columns for drag and drop functionality
-  const columns: ColumnConfig[] = [{
-    key: 'actions',
-    label: 'Actions',
-    sortable: false,
-    draggable: true
-  }, {
-    key: 'inventory',
-    label: 'Inventory',
-    sortable: true,
-    draggable: true
-  }, {
-    key: 'stock',
-    label: 'Stock',
-    sortable: true,
-    draggable: true
-  }, {
-    key: 'unit',
-    label: 'Unit',
-    sortable: true,
-    draggable: true
-  }, {
-    key: 'minStockLevel',
-    label: 'Min. Stock Level',
-    sortable: true,
-    draggable: true
-  }, {
-    key: 'group',
-    label: 'Group',
-    sortable: true,
-    draggable: true
-  }, {
-    key: 'subGroup',
-    label: 'Sub Group',
-    sortable: true,
-    draggable: true
-  }, {
-    key: 'criticality',
-    label: 'Criticality',
-    sortable: true,
-    draggable: true
-  }];
+  // Generate sample details for each month
+  function generateMonthlyDetails(month: string) {
+    return [
+      { id: `${month}-1`, action: 'Consume', name: 'Tissue', contentStock: '84', consumed: '100', amount: '₹2,800' },
+      { id: `${month}-2`, action: 'Consume', name: 'Hand Sanitizer', contentStock: '50', consumed: '25', amount: '₹1,250' },
+      { id: `${month}-3`, action: 'Consume', name: 'Cleaning Spray', contentStock: '75', consumed: '40', amount: '₹1,600' },
+      { id: `${month}-4`, action: 'Consume', name: 'Paper Towels', contentStock: '120', consumed: '80', amount: '₹2,400' },
+      { id: `${month}-5`, action: 'Consume', name: 'Disinfectant', contentStock: '60', consumed: '35', amount: '₹1,750' }
+    ];
+  }
 
-  // Render cell content
-  const renderCell = (item: any, columnKey: string) => {
-    if (columnKey === 'actions') {
-      return (
-        <div className="flex gap-2 justify-center">
-          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100" onClick={() => handleViewItem(item)} title="View Details">
-            <Eye className="w-4 h-4 text-gray-600" />
-          </Button>
-        </div>
-      );
-    }
+  // Define table columns for expanded view
+  const expandedColumns: ColumnConfig[] = [
+    { key: 'action', label: 'Action', sortable: false, draggable: false },
+    { key: 'name', label: 'Name', sortable: true, draggable: false },
+    { key: 'contentStock', label: 'Content Stock', sortable: true, draggable: false },
+    { key: 'consumed', label: 'Consumed', sortable: true, draggable: false },
+    { key: 'amount', label: 'Amount', sortable: true, draggable: false }
+  ];
+
+  // Render cell content for expanded table
+  const renderExpandedCell = (item: any, columnKey: string) => {
     const value = item[columnKey];
-    if (columnKey === 'criticality') {
-      return <span className="text-sm text-gray-600">{value}</span>;
+    if (columnKey === 'action') {
+      return <span className="text-sm font-medium text-blue-600">{value}</span>;
     }
-    if (columnKey === 'inventory') {
-      return <span className="font-medium">{value}</span>;
+    if (columnKey === 'name') {
+      return <span className="font-medium text-gray-900">{value}</span>;
     }
-    return value || '-';
+    if (columnKey === 'amount') {
+      return <span className="font-semibold text-green-600">{value}</span>;
+    }
+    return <span className="text-gray-700">{value}</span>;
+  };
+
+  // Toggle month expansion
+  const toggleMonth = (month: string) => {
+    setExpandedMonth(expandedMonth === month ? null : month);
   };
 
   // Handle MUI Select change
@@ -160,62 +134,75 @@ const InventoryConsumptionDashboard = () => {
 
   return (
     <div className="p-6 space-y-6">
-
       {/* Header */}
-      <div className="space-y-4">
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Consumption LIST</h1>
-        
+        <div className="flex gap-3">
+          <Button className="bg-[#C72030] text-white hover:bg-[#A01B28] transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2">
+            <Download className="w-4 h-4" />
+            Import
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setIsFilterOpen(true)}
+            className="border border-gray-400 text-gray-700 hover:bg-gray-50 transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2"
+          >
+            <Filter className="w-4 h-4" />
+            Filter
+          </Button>
+        </div>
       </div>
 
-      {/* Enhanced Table with Drag and Drop */}
-      <EnhancedTable 
-        data={paginatedData} 
-        columns={columns} 
-        renderCell={renderCell}
-        storageKey="inventory-consumption-table" 
-        emptyMessage="No consumption data available" 
-        enableExport={true} 
-        exportFileName="inventory-consumption" 
-        hideTableExport={false} 
-        hideTableSearch={false} 
-        hideColumnsButton={false} 
-        searchPlaceholder="Search inventory items..."
-        loading={loading}
-        pagination={false}
-        selectable={true}
-        selectedItems={selectedItems}
-        onSelectItem={(itemId: string, checked: boolean) => {
-          if (checked) {
-            setSelectedItems(prev => [...prev, itemId]);
-          } else {
-            setSelectedItems(prev => prev.filter(id => id !== itemId));
-          }
-        }}
-        onSelectAll={(checked: boolean) => {
-          if (checked) {
-            setSelectedItems(paginatedData.map(item => item.id.toString()));
-          } else {
-            setSelectedItems([]);
-          }
-        }}
-        getItemId={(item) => item.id.toString()}
-        leftActions={
-          <div className="flex gap-3">
-            <Button className="bg-[#C72030] text-white hover:bg-[#A01B28] transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Import
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsFilterOpen(true)}
-              className="border border-gray-400 text-gray-700 hover:bg-gray-50 transition-colors duration-200 rounded-lg px-4 py-2 h-10 text-sm font-medium flex items-center gap-2"
+      {/* Monthly Consumption Boxes */}
+      <div className="space-y-4">
+        {monthlyData.map((monthData) => (
+          <div key={monthData.month} className="border border-gray-200 rounded-lg bg-white shadow-sm">
+            {/* Month Header Box */}
+            <div 
+              className="flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+              onClick={() => toggleMonth(monthData.month)}
             >
-              <Filter className="w-4 h-4" />
-              Filter
-            </Button>
+              <div className="flex items-center gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{monthData.month}</h3>
+                  <p className="text-sm text-gray-600">{monthData.dateRange}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-xl font-bold text-green-600">{monthData.amount}</span>
+                {expandedMonth === monthData.month ? (
+                  <ChevronUp className="w-5 h-5 text-gray-400" />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-gray-400" />
+                )}
+              </div>
+            </div>
+
+            {/* Expanded Table */}
+            {expandedMonth === monthData.month && (
+              <div className="border-t border-gray-200 bg-gray-50">
+                <div className="p-4">
+                  <EnhancedTable 
+                    data={monthData.details} 
+                    columns={expandedColumns} 
+                    renderCell={renderExpandedCell}
+                    storageKey={`consumption-table-${monthData.month}`}
+                    emptyMessage="No consumption data available" 
+                    enableExport={false} 
+                    hideTableExport={true} 
+                    hideTableSearch={true} 
+                    hideColumnsButton={true} 
+                    loading={false}
+                    pagination={false}
+                    selectable={false}
+                    getItemId={(item) => item.id}
+                  />
+                </div>
+              </div>
+            )}
           </div>
-        }
-      />
+        ))}
+      </div>
 
       {/* Floating Filter Modal */}
       {isFilterOpen && (
@@ -461,37 +448,6 @@ const InventoryConsumptionDashboard = () => {
         </div>
       )}
 
-      {/* Custom Pagination */}
-      <div className="flex justify-center mt-6">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious 
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-              />
-            </PaginationItem>
-            
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <PaginationItem key={page}>
-                <PaginationLink 
-                  onClick={() => setCurrentPage(page)}
-                  isActive={currentPage === page}
-                >
-                  {page}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-            
-            <PaginationItem>
-              <PaginationNext 
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
     </div>
   );
 };
