@@ -225,9 +225,6 @@ export const VisitorManagementSetup = () => {
               className="pl-10 w-80"
             />
           </div>
-          <Button variant="outline" size="icon" className="border-gray-300">
-            <RefreshCw className="w-4 h-4" />
-          </Button>
           <ColumnVisibilityDropdown
             columns={columns}
             onColumnToggle={handleColumnToggle}
