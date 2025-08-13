@@ -949,26 +949,98 @@ export const PatrollingCreatePage: React.FC = () => {
               {q.inputType === 'multiple_choice' && (
                 <div className="mt-4">
                   <Label className="mb-2 block">Options (comma separated)</Label>
-                  <TextField
-                    placeholder="Option 1, Option 2, Option 3"
-                    value={q.options?.join(', ') || ''}
-                    onChange={(e) => {
-                      const optionsArray = e.target.value.split(',').map(opt => opt.trim()).filter(opt => opt !== '');
-                      updateQuestion(idx, 'options', optionsArray);
-                    }}
-                    fullWidth
-                    variant="outlined"
-                    helperText="Enter options separated by commas. At least 2 options required for multiple choice."
-                    slotProps={{
-                      inputLabel: {
-                        shrink: true,
-                      },
-                    }}
-                    InputProps={{
-                      sx: fieldStyles,
-                    }}
-                    disabled={isSubmitting}
-                  />
+                  <div className="relative">
+                    <div className="w-full">
+                      {/* Simple comma-separated input that works */}
+                      <input
+                        type="text"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
+                        placeholder="Option 1, Option 2, Option 3"
+                        defaultValue={q.options?.join(', ') || ''}
+                        onBlur={(e) => {
+                          const inputValue = e.target.value;
+                          console.log('📝 Input changed:', inputValue); // Debug log
+                          // Split by comma and clean up
+                          const optionsArray = inputValue
+                            .split(',')
+                            .map(opt => opt.trim())
+                            .filter(opt => opt !== '');
+                          console.log('📊 Parsed options:', optionsArray); // Debug log
+                          updateQuestion(idx, 'options', optionsArray);
+                        }}
+                        onKeyDown={(e) => {
+                          console.log('⌨️ Key pressed:', e.key); // Debug log
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const inputValue = e.currentTarget.value;
+                            const optionsArray = inputValue
+                              .split(',')
+                              .map(opt => opt.trim())
+                              .filter(opt => opt !== '');
+                            updateQuestion(idx, 'options', optionsArray);
+                          }
+                        }}
+                        autoComplete="off"
+                        spellCheck={false}
+                        disabled={isSubmitting}
+                        style={{
+                          height: '45px',
+                          fontSize: '14px',
+                        }}
+                      />
+                      
+                      {/* Help text and examples */}
+                      <div className="mt-1 text-xs text-gray-600">
+                        Enter options separated by commas. At least 2 options required for multiple choice.
+                      </div>
+                      
+                      {/* Show examples when field is empty */}
+                      {(!q.options || q.options.length === 0) && (
+                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                          <p className="font-medium text-blue-800 mb-1">💡 Examples:</p>
+                          <div className="text-blue-700 space-y-1">
+                            <div>• <code>Yes, No, Maybe</code></div>
+                            <div>• <code>Secure, Issues Found, Needs Attention</code></div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Show parsed options preview */}
+                      {q.options && q.options.length > 0 && (
+                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs">
+                          <p className="font-medium text-green-800 mb-1">
+                            ✅ Parsed Options ({q.options.length}):
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {q.options.map((option, optIdx) => (
+                              <span
+                                key={optIdx}
+                                className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded group"
+                              >
+                                {option}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newOptions = q.options?.filter((_, i) => i !== optIdx) || [];
+                                    updateQuestion(idx, 'options', newOptions);
+                                  }}
+                                  className="ml-1 text-green-600 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  disabled={isSubmitting}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                          {q.options.length < 2 && (
+                            <p className="text-amber-600 mt-1">
+                              ⚠️ Add at least {2 - q.options.length} more option(s)
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
