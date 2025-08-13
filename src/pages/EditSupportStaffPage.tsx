@@ -5,11 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLayout } from '@/contexts/LayoutContext';
 
 export const EditSupportStaffPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { toast } = useToast();
+  const { setCurrentSection } = useLayout();
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     categoryName: '',
@@ -41,6 +43,10 @@ export const EditSupportStaffPage = () => {
     { id: '19', icon: '👮‍♂️', name: 'Security' },
     { id: '20', icon: '🧹', name: 'Cleaning' }
   ];
+
+  useEffect(() => {
+    setCurrentSection('Settings');
+  }, [setCurrentSection]);
 
   // Simulate loading existing data
   useEffect(() => {
