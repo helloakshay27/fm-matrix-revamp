@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -6,9 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
+import { useLayout } from '../contexts/LayoutContext';
 
 export const AddVisitorGatePage = () => {
   const navigate = useNavigate();
+  const { setCurrentSection } = useLayout();
   const [formData, setFormData] = useState({
     site: '',
     user: '',
@@ -16,6 +18,10 @@ export const AddVisitorGatePage = () => {
     gateName: '',
     gateDevice: ''
   });
+
+  useEffect(() => {
+    setCurrentSection('Settings');
+  }, [setCurrentSection]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

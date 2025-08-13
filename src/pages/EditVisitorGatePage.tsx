@@ -7,6 +7,7 @@ import { Label } from '../components/ui/label';
 import { Switch } from '../components/ui/switch';
 import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
+import { useLayout } from '../contexts/LayoutContext';
 
 interface VisitorGateData {
   id: number;
@@ -23,6 +24,7 @@ interface VisitorGateData {
 export const EditVisitorGatePage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { setCurrentSection } = useLayout();
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     site: '',
@@ -59,6 +61,10 @@ export const EditVisitorGatePage = () => {
       createdBy: 'Mahendra Lungare'
     }
   ];
+
+  useEffect(() => {
+    setCurrentSection('Settings');
+  }, [setCurrentSection]);
 
   useEffect(() => {
     // Simulate loading data
