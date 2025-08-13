@@ -26,6 +26,7 @@ export const VisitingPurposePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { setCurrentSection } = useLayout();
+  const [activeTab, setActiveTab] = useState('Visitor In');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMoveInOutModalOpen, setIsMoveInOutModalOpen] = useState(false);
@@ -293,11 +294,34 @@ export const VisitingPurposePage = () => {
     });
   };
 
+  const handleTabClick = (tab: string) => {
+    setActiveTab(tab);
+  };
+
   return (
     <>
-      <div className="p-6 min-h-screen">
-        {/* Action Buttons Bar */}
-        <div className="flex items-center gap-3 mb-6">
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="mb-6">
+          <div className="bg-white rounded-lg border border-gray-200">
+            {/* Tab Navigation */}
+            <div className="flex border-b border-gray-200">
+              {['Visitor In', 'Visitor Out', 'History'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => handleTabClick(tab)}
+                  className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab
+                      ? 'border-primary text-primary bg-primary/5'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Action Buttons Bar */}
+            <div className="flex items-center gap-3 p-6 border-b border-gray-200">
           <Button 
             onClick={handleAddPurpose}
             className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
@@ -323,12 +347,12 @@ export const VisitingPurposePage = () => {
           </Button>
           
 
-          <div className="flex-1"></div>
+            <div className="flex-1"></div>
 
-        </div>
+            </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-lg border overflow-hidden">
+            {/* Table */}
+            <div className="overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-[#f6f4ee]">
@@ -418,6 +442,8 @@ export const VisitingPurposePage = () => {
               </TableRow>
             </TableBody>
           </Table>
+            </div>
+          </div>
         </div>
 
       </div>
