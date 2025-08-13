@@ -246,6 +246,7 @@ export const PatrollingEditPage: React.FC = () => {
         inputType: string;
         mandatory: boolean;
         options?: string[];
+        optionsText?: string; // Store raw input text for options
     };
     type Shift = {
         id: string;
@@ -345,7 +346,8 @@ export const PatrollingEditPage: React.FC = () => {
                     task: q.task,
                     inputType: q.type === 'multiple' ? 'multiple_choice' : 'yes_no',
                     mandatory: q.mandatory,
-                    options: q.options || []
+                    options: q.options || [],
+                    optionsText: q.options ? q.options.join(', ') : ''
                 })));
 
                 // Populate schedules
@@ -477,7 +479,8 @@ export const PatrollingEditPage: React.FC = () => {
         task: '',
         inputType: '',
         mandatory: false,
-        options: []
+        options: [],
+        optionsText: ''
     }]);
     const addShift = () => setShifts(prev => [...prev, {
         id: Date.now().toString(),
@@ -889,20 +892,20 @@ export const PatrollingEditPage: React.FC = () => {
                                                 type="text"
                                                 className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
                                                 placeholder="Option 1, Option 2, Option 3"
-                                                defaultValue={q.options?.join(', ') || ''}
-                                                onBlur={(e) => {
+                                                value={q.optionsText || ''}
+                                                onChange={(e) => {
                                                     const inputValue = e.target.value;
-                                                    console.log('📝 Input changed:', inputValue); // Debug log
-                                                    // Split by comma and clean up
+                                                    // Parse options for preview/validation
                                                     const optionsArray = inputValue
                                                         .split(',')
                                                         .map(opt => opt.trim())
                                                         .filter(opt => opt !== '');
-                                                    console.log('📊 Parsed options:', optionsArray); // Debug log
+                                                    
+                                                    // Update both raw text and parsed options
+                                                    updateQuestion(idx, 'optionsText', inputValue);
                                                     updateQuestion(idx, 'options', optionsArray);
                                                 }}
                                                 onKeyDown={(e) => {
-                                                    console.log('⌨️ Key pressed:', e.key); // Debug log
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault();
                                                         const inputValue = e.currentTarget.value;
@@ -955,7 +958,9 @@ export const PatrollingEditPage: React.FC = () => {
                                                                     type="button"
                                                                     onClick={() => {
                                                                         const newOptions = q.options?.filter((_, i) => i !== optIdx) || [];
+                                                                        const newOptionsText = newOptions.join(', ');
                                                                         updateQuestion(idx, 'options', newOptions);
+                                                                        updateQuestion(idx, 'optionsText', newOptionsText);
                                                                     }}
                                                                     className="ml-1 text-green-600 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                                                                     disabled={isSubmitting}
