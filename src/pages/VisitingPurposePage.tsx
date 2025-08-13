@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { TextField } from '@mui/material';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -399,11 +400,26 @@ export const VisitingPurposePage = () => {
             {/* Purpose Input */}
             <div className="space-y-2">
               <Label>Enter purpose</Label>
-              <Input
+              <TextField
                 placeholder="enter purpose"
                 value={formData.purpose}
                 onChange={(e) => setFormData({...formData, purpose: e.target.value})}
-                className="w-full"
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                }}
               />
             </div>
 
