@@ -18,7 +18,7 @@ export const EditSupportStaffPage = () => {
     days: '',
     hours: '',
     minutes: '',
-    selectedIcons: [] as string[]
+    selectedIcon: '' as string
   });
 
   const iconOptions = [
@@ -54,13 +54,13 @@ export const EditSupportStaffPage = () => {
     setTimeout(() => {
       // Pre-populate with sample data based on ID
       const sampleData = {
-        '1': { categoryName: 'DTDC', days: '2', hours: '4', minutes: '30', selectedIcons: ['1'] },
-        '2': { categoryName: 'Swiggy/Instamrt', days: '0', hours: '1', minutes: '15', selectedIcons: ['2'] },
-        '3': { categoryName: 'OLA', days: '0', hours: '0', minutes: '30', selectedIcons: ['7'] },
-        '4': { categoryName: 'Flipkart', days: '1', hours: '0', minutes: '0', selectedIcons: ['1'] },
-        '5': { categoryName: 'Amazon', days: '2', hours: '0', minutes: '0', selectedIcons: ['1'] },
-        '6': { categoryName: 'UBER', days: '0', hours: '0', minutes: '20', selectedIcons: ['7'] },
-        '7': { categoryName: 'Zomato', days: '0', hours: '1', minutes: '0', selectedIcons: ['16'] }
+        '1': { categoryName: 'DTDC', days: '2', hours: '4', minutes: '30', selectedIcon: '1' },
+        '2': { categoryName: 'Swiggy/Instamrt', days: '0', hours: '1', minutes: '15', selectedIcon: '2' },
+        '3': { categoryName: 'OLA', days: '0', hours: '0', minutes: '30', selectedIcon: '7' },
+        '4': { categoryName: 'Flipkart', days: '1', hours: '0', minutes: '0', selectedIcon: '1' },
+        '5': { categoryName: 'Amazon', days: '2', hours: '0', minutes: '0', selectedIcon: '1' },
+        '6': { categoryName: 'UBER', days: '0', hours: '0', minutes: '20', selectedIcon: '7' },
+        '7': { categoryName: 'Zomato', days: '0', hours: '1', minutes: '0', selectedIcon: '16' }
       };
       
       if (id && sampleData[id as keyof typeof sampleData]) {
@@ -187,15 +187,12 @@ export const EditSupportStaffPage = () => {
                   key={option.id}
                   className="flex items-center gap-2 p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer"
                   onClick={() => {
-                    const updatedIcons = formData.selectedIcons.includes(option.id)
-                      ? formData.selectedIcons.filter(id => id !== option.id)
-                      : [...formData.selectedIcons, option.id];
-                    setFormData({...formData, selectedIcons: updatedIcons});
+                    setFormData({...formData, selectedIcon: option.id});
                   }}
                 >
                   <input
                     type="radio"
-                    checked={formData.selectedIcons.includes(option.id)}
+                    checked={formData.selectedIcon === option.id}
                     onChange={() => {}}
                     className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
                     style={{
