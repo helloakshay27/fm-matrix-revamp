@@ -25,6 +25,7 @@ export const VisitingPurposePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMoveInOutModalOpen, setIsMoveInOutModalOpen] = useState(false);
+  const [isWorkTypeModalOpen, setIsWorkTypeModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     site: '',
     purpose: '',
@@ -33,6 +34,12 @@ export const VisitingPurposePage = () => {
   const [moveInOutFormData, setMoveInOutFormData] = useState({
     site: '',
     purpose: '',
+    active: true
+  });
+  const [workTypeFormData, setWorkTypeFormData] = useState({
+    site: '',
+    staffType: '',
+    workType: '',
     active: true
   });
 
@@ -121,10 +128,34 @@ export const VisitingPurposePage = () => {
   };
 
   const handleWorkType = () => {
-    toast({
-      title: "Work Type",
-      description: "Work Type functionality",
+    setIsWorkTypeModalOpen(true);
+  };
+
+  const handleWorkTypeModalClose = () => {
+    setIsWorkTypeModalOpen(false);
+    setWorkTypeFormData({
+      site: '',
+      staffType: '',
+      workType: '',
+      active: true
     });
+  };
+
+  const handleWorkTypeSubmit = () => {
+    if (!workTypeFormData.workType) {
+      toast({
+        title: "Error",
+        description: "Please enter a work type",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Work type created successfully",
+    });
+    handleWorkTypeModalClose();
   };
 
   const handleVisitorCategory = () => {
@@ -448,6 +479,87 @@ export const VisitingPurposePage = () => {
             <div className="flex justify-end pt-4">
               <Button 
                 onClick={handleMoveInOutSubmit}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Work Type Modal */}
+      <Dialog open={isWorkTypeModalOpen} onOpenChange={setIsWorkTypeModalOpen}>
+        <DialogContent className="max-w-md bg-white z-50">
+          <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
+            <DialogTitle className="text-lg font-semibold">Add Work Type</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleWorkTypeModalClose}
+              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Site Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm text-gray-600">Select Site</Label>
+              <Select value={workTypeFormData.site} onValueChange={(value) => setWorkTypeFormData({...workTypeFormData, site: value})}>
+                <SelectTrigger className="w-full bg-white border border-gray-300">
+                  <SelectValue placeholder="Select Site" />
+                </SelectTrigger>
+                <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
+                  <SelectItem value="site1">Lockated - Main Office</SelectItem>
+                  <SelectItem value="site2">Zycus Infotech - Pune</SelectItem>
+                  <SelectItem value="site3">Arvog Finance - Mumbai</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Staff Type Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm text-gray-600">Select Staff Type</Label>
+              <Select value={workTypeFormData.staffType} onValueChange={(value) => setWorkTypeFormData({...workTypeFormData, staffType: value})}>
+                <SelectTrigger className="w-full bg-white border border-gray-300">
+                  <SelectValue placeholder="Select Staff Type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
+                  <SelectItem value="permanent">Permanent Staff</SelectItem>
+                  <SelectItem value="contract">Contract Staff</SelectItem>
+                  <SelectItem value="temporary">Temporary Staff</SelectItem>
+                  <SelectItem value="vendor">Vendor Staff</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Work Type Input */}
+            <div className="space-y-2">
+              <Label>Enter Work Type</Label>
+              <Input
+                placeholder="Enter Work Type"
+                value={workTypeFormData.workType}
+                onChange={(e) => setWorkTypeFormData({...workTypeFormData, workType: e.target.value})}
+                className="w-full"
+              />
+            </div>
+
+            {/* Active Checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="workTypeActive"
+                checked={workTypeFormData.active}
+                onCheckedChange={(checked) => setWorkTypeFormData({...workTypeFormData, active: checked as boolean})}
+              />
+              <Label htmlFor="workTypeActive">Active</Label>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end pt-4">
+              <Button 
+                onClick={handleWorkTypeSubmit}
                 className="bg-green-500 hover:bg-green-600 text-white px-6"
               >
                 Submit
