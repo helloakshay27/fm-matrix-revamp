@@ -823,6 +823,7 @@ function App() {
                 <Route path="/utility/stp/add-asset" element={<AddSTPAssetDashboard />} />
                 <Route path="/utility/ev-consumption" element={<UtilityEVConsumptionDashboard />} />
                 <Route path="/utility/daily-readings" element={<UtilityDailyReadingsDashboard />} />
+                <Route path="/utility/solar-generator" element={<UtilitySolarGeneratorDashboard />} />
                 <Route path="/utility/utility-request" element={<UtilityRequestDashboard />} />
                 <Route path="/utility/utility-request/details/:id" element={<UtilityRequestDetailsPage />} />
                 <Route path="/utility/utility-request/add" element={<AddUtilityRequestPage />} />
