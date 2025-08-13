@@ -262,7 +262,7 @@ const InventoryConsumptionDashboard = () => {
             >
               <div className="flex items-center gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{monthData.month}</h3>
+                  <h2 className="text-xl font-semibold text-gray-900">{monthData.month}</h2>
                   <p className="text-sm text-gray-600">{monthData.dateRange}</p>
                 </div>
               </div>
