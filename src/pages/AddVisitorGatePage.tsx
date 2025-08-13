@@ -5,6 +5,7 @@ import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
+import { ArrowLeft } from 'lucide-react';
 
 export const AddVisitorGatePage = () => {
   const navigate = useNavigate();
@@ -33,6 +34,15 @@ export const AddVisitorGatePage = () => {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-md mx-auto">
+        <Button
+          onClick={() => navigate('/security/visitor-management/setup')}
+          variant="ghost"
+          className="flex items-center gap-2 mb-6 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to List
+        </Button>
+        
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="site">Site</Label>
