@@ -688,7 +688,7 @@ export const VisitingPurposePage = () => {
             {/* Multiple Users Purpose Input */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label>Enter purposes for multiple users</Label>
+                <Label>Enter Purpose</Label>
                 <Button
                   type="button"
                   variant="outline"
