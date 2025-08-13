@@ -66,13 +66,12 @@ const UtilitySolarGeneratorDashboard = () => {
       </div>
 
       {/* Filters Button */}
-      <div className="flex justify-start">
+      <div className="flex justify-end">
         <Button
           onClick={() => setIsFilterOpen(!isFilterOpen)}
           className="bg-white text-black hover:bg-gray-50 transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border border-gray-300"
         >
           <Filter className="w-4 h-4" />
-          Filters
         </Button>
       </div>
 
