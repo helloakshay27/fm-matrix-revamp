@@ -30,8 +30,7 @@ export const SupportStaffPage = () => {
     days: '',
     hours: '',
     minutes: '',
-    selectedIcon: '',
-    serviceTypes: [] as string[]
+    selectedIcons: [] as string[]
   });
 
   // Field styles for Material-UI components
@@ -178,8 +177,7 @@ export const SupportStaffPage = () => {
       days: '',
       hours: '',
       minutes: '',
-      selectedIcon: '',
-      serviceTypes: []
+      selectedIcons: []
     });
   };
 
@@ -360,19 +358,25 @@ export const SupportStaffPage = () => {
             </div>
 
             {/* Icon Selection Grid */}
-            <div className="grid grid-cols-6 gap-4">
+            <div className="grid grid-cols-6 gap-3">
               {iconOptions.map((option) => (
                 <div
                   key={option.id}
-                  className={`flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 ${
-                    formData.selectedIcon === option.id 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200'
-                  }`}
-                  onClick={() => setFormData({...formData, selectedIcon: option.id})}
+                  className="flex items-center gap-2 p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    const updatedIcons = formData.selectedIcons.includes(option.id)
+                      ? formData.selectedIcons.filter(id => id !== option.id)
+                      : [...formData.selectedIcons, option.id];
+                    setFormData({...formData, selectedIcons: updatedIcons});
+                  }}
                 >
-                  <div className="text-2xl mb-1">{option.icon}</div>
-                  <div className="text-xs text-center">{option.name}</div>
+                  <input
+                    type="radio"
+                    checked={formData.selectedIcons.includes(option.id)}
+                    onChange={() => {}}
+                    className="w-4 h-4"
+                  />
+                  <div className="text-lg">{option.icon}</div>
                 </div>
               ))}
             </div>
