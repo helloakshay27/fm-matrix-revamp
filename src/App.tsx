@@ -376,7 +376,6 @@ import InvoiceDashboard from './pages/InvoiceDashboard';
 import { WBSElementDashboard } from "./pages/WBSElementDashboard";
 
 // Import Work Order pages
-import WorkOrderAddPage from './pages/WorkOrderAddPage';
 
 // Import Settings pages
 import { FMUsersDashboard } from "./pages/settings/FMUsersDashboard";
@@ -608,6 +607,7 @@ import DesignInsightsSetupDashboard from "./pages/DesignInsightsSetupDashboard";
 import CRMOccupantUsersDashboard from "./pages/CRMOccupantUsersDashboard";
 import CRMFMUserDashboard from "./pages/CRMFMUserDashboard";
 import CRMCustomersDashboard from "./pages/CRMCustomersDashboard";
+import { WorkOrderAddPage } from "./pages/WorkOrderAddPage";
 
 
 const queryClient = new QueryClient();

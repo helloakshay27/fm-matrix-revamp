@@ -9,9 +9,15 @@ import {
   InputLabel,
   Select as MuiSelect,
   MenuItem,
+  Box,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from "@mui/material";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
+  changePlantDetails,
   createMaterialPR,
   getAddresses,
   getInventories,
@@ -35,10 +41,13 @@ export const AddMaterialPRDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
+  const { data } = useAppSelector(state => state.changePlantDetails)
+
   const [suppliers, setSuppliers] = useState([]);
   const [plantDetails, setPlantDetails] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [inventories, setInventories] = useState([]);
+  const [showRadio, setShowRadio] = useState(false)
 
   const [supplierDetails, setSupplierDetails] = useState({
     supplier: "",
@@ -70,6 +79,12 @@ export const AddMaterialPRDashboard = () => {
   ]);
 
   const [files, setFiles] = useState([]);
+
+  useEffect(() => {
+    if (data.length > 0) {
+      setShowRadio(true)
+    }
+  }, [data])
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -133,6 +148,12 @@ export const AddMaterialPRDashboard = () => {
   const handleSupplierChange = (e) => {
     const { name, value } = e.target;
     setSupplierDetails((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePlantDetailsChange = (e) => {
+    const { name, value } = e.target;
+    setSupplierDetails((prev) => ({ ...prev, [name]: value }));
+    dispatch(changePlantDetails({ baseUrl, id: value, token }))
   };
 
   const handleItemChange = (id, field, value) => {
@@ -258,6 +279,7 @@ export const AddMaterialPRDashboard = () => {
         createMaterialPR({ baseUrl, token, data: payload })
       ).unwrap();
       toast.success("Material PR created successfully");
+      navigate("/finance/material-pr");
     } catch (error) {
       toast.error(error);
     }
@@ -307,7 +329,7 @@ export const AddMaterialPRDashboard = () => {
                   label="Plant Detail*"
                   name="plantDetail"
                   value={supplierDetails.plantDetail}
-                  onChange={handleSupplierChange}
+                  onChange={handlePlantDetailsChange}
                   displayEmpty
                   sx={fieldStyles}
                 >
@@ -468,21 +490,41 @@ export const AddMaterialPRDashboard = () => {
                 sx={{ mt: 1 }}
               />
 
-              <div className="md:col-span-3">
-                <TextField
-                  label="Terms & Conditions*"
-                  name="termsConditions"
-                  value={supplierDetails.termsConditions}
-                  onChange={handleSupplierChange}
-                  placeholder=""
-                  fullWidth
-                  variant="outlined"
-                  multiline
-                  minRows={4}
-                  InputLabelProps={{ shrink: true }}
-                  sx={{ mt: 1 }}
-                />
-              </div>
+              <TextField
+                label="Terms & Conditions*"
+                name="termsConditions"
+                value={supplierDetails.termsConditions}
+                onChange={handleSupplierChange}
+                placeholder=""
+                fullWidth
+                variant="outlined"
+                multiline
+                minRows={4}
+                InputLabelProps={{ shrink: true }}
+                sx={{ mt: 1 }}
+              />
+
+              {
+                showRadio && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "start",
+                    }}
+                  >
+                    <FormLabel component="legend" sx={{ minWidth: "80px", fontSize: "14px" }}>
+                      Apply WBS
+                    </FormLabel>
+                    <RadioGroup
+                      row
+                    >
+                      <FormControlLabel value="individual" control={<Radio />} label="Individual" />
+                      <FormControlLabel value="overall" control={<Radio />} label="All Items" />
+                    </RadioGroup>
+                  </Box>
+                )
+              }
             </CardContent>
           </Card>
 

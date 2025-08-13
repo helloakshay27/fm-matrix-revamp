@@ -124,6 +124,23 @@ export const getMaterialPRById = createAsyncThunk(
     }
 )
 
+export const changePlantDetails = createAsyncThunk(
+    'changePlantDetails',
+    async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/wbs_costs/get_by_plant_code.json?plant_code=${id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to change plant details'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const getSuppliersSlice = createApiSlice("getSuppliers", getSuppliers);
 const getPlantDetailsSlice = createApiSlice("getPlantDetails", getPlantDetails);
 const getAddressesSlice = createApiSlice("getAddresses", getAddresses);
@@ -131,6 +148,7 @@ const getInventoriesSlice = createApiSlice("getInventories", getInventories);
 const createMaterialPRSlice = createApiSlice("createMaterialPR", createMaterialPR);
 const getMaterialPRSlice = createApiSlice("getMaterialPR", getMaterialPR);
 const getMaterialPRByIdSlice = createApiSlice("getMaterialPRById", getMaterialPRById);
+const changePlantDetailsSlice = createApiSlice("changePlantDetails", changePlantDetails);
 
 export const getSuppliersReducer = getSuppliersSlice.reducer
 export const getPlantDetailsReducer = getPlantDetailsSlice.reducer
@@ -139,3 +157,4 @@ export const getInventoriesReducer = getInventoriesSlice.reducer
 export const createMaterialPRReducer = createMaterialPRSlice.reducer
 export const getMaterialPRReducer = getMaterialPRSlice.reducer
 export const getMaterialPRByIdReducer = getMaterialPRByIdSlice.reducer
+export const changePlantDetailsReducer = changePlantDetailsSlice.reducer
