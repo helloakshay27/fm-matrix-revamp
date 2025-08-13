@@ -238,10 +238,19 @@ const CheckpointLocationSelector: React.FC<{
 export const PatrollingEditPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const dispatch = useDispatch<AppDispatch>();
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => { document.title = 'Edit Patrolling'; }, []);
+
+    // Fetch buildings when component loads
+    useEffect(() => {
+        const siteId = localStorage.getItem('selectedSiteId');
+        if (siteId) {
+            dispatch(fetchAllBuildings(parseInt(siteId)));
+        }
+    }, [dispatch]);
 
     type Question = {
         id: string;
@@ -365,17 +374,45 @@ export const PatrollingEditPage: React.FC = () => {
                 })));
 
                 // Populate checkpoints
-                setCheckpoints(data.checkpoints.map((c: any) => ({
+                const checkpointsData = data.checkpoints.map((c: any) => ({
                     id: c.id.toString(),
                     name: c.name,
                     description: c.description,
                     buildingId: c.building_id,
                     wingId: c.wing_id,
                     floorId: c.floor_id,
-                    areaId: null,
+                    areaId: c.area_id,
                     roomId: c.room_id,
                     scheduleIds: c.schedule_ids.map((id: number) => id.toString())
-                })));
+                }));
+                
+                setCheckpoints(checkpointsData);
+
+                // Fetch dependent location data for existing checkpoints
+                const uniqueBuildingIds = [...new Set(checkpointsData.map(c => c.buildingId).filter(id => id !== null && id !== undefined))] as number[];
+                const uniqueWingIds = [...new Set(checkpointsData.map(c => c.wingId).filter(id => id !== null && id !== undefined))] as number[];
+                const uniqueAreaIds = [...new Set(checkpointsData.map(c => c.areaId).filter(id => id !== null && id !== undefined))] as number[];
+                const uniqueFloorIds = [...new Set(checkpointsData.map(c => c.floorId).filter(id => id !== null && id !== undefined))] as number[];
+
+                // Fetch wings for all unique building IDs
+                for (const buildingId of uniqueBuildingIds) {
+                    dispatch(fetchWings(buildingId));
+                }
+
+                // Fetch areas for all unique wing IDs
+                for (const wingId of uniqueWingIds) {
+                    dispatch(fetchAreas(wingId));
+                }
+
+                // Fetch floors for all unique area IDs
+                for (const areaId of uniqueAreaIds) {
+                    dispatch(fetchFloors(areaId));
+                }
+
+                // Fetch rooms for all unique floor IDs
+                for (const floorId of uniqueFloorIds) {
+                    dispatch(fetchRooms(floorId));
+                }
 
             } else {
                 throw new Error('Failed to fetch patrolling data');

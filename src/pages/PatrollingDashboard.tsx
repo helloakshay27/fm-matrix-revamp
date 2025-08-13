@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { BulkUploadModal } from '@/components/BulkUploadModal';
 import { ExportModal } from '@/components/ExportModal';
-import { PatrollingFilterModal } from '@/components/PatrollingFilterModal';
+import { PatrollingFilterModal, PatrollingFilters } from '@/components/PatrollingFilterModal';
 import { AddPatrollingModal } from '@/components/AddPatrollingModal';
 import { EditPatrollingModal } from '@/components/EditPatrollingModal';
 import { DeletePatrollingModal } from '@/components/DeletePatrollingModal';
@@ -13,6 +13,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { toast } from 'sonner';
+import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 
 // Type definitions for the API response
 interface PatrollingItem {
@@ -129,6 +130,7 @@ export const PatrollingDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
+  const [appliedFilters, setAppliedFilters] = useState<PatrollingFilters>({});
   const [patrollingData, setPatrollingData] = useState<PatrollingItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
@@ -141,22 +143,53 @@ export const PatrollingDashboard = () => {
   });
 
   // Fetch patrolling data from API
-  const fetchPatrollingData = async (page = 1, per_page = 10, search = '') => {
+  const fetchPatrollingData = async (page = 1, per_page = 10, search = '', filters: PatrollingFilters = {}) => {
     setLoading(true);
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
-      
+
       if (!baseUrl || !token) {
         throw new Error('API configuration is missing');
       }
 
-      // Build API URL with search parameter if provided
+      // Build API URL with parameters
       let apiUrl = getFullUrl(`/patrolling/setup.json?page=${page}&per_page=${per_page}`);
+
+      // Add search parameter
       if (search.trim()) {
-        apiUrl += `&search=${encodeURIComponent(search.trim())}`;
+        apiUrl += `&q[search_all_fields_cont]=${encodeURIComponent(search.trim())}`;
       }
-      
+
+      // Add filter parameters based on the API structure you provided
+      if (filters.buildingId) {
+        apiUrl += `&q[patrolling_checkpoints_building_id_eq]=${filters.buildingId}`;
+      }
+
+      if (filters.wingId) {
+        apiUrl += `&q[patrolling_checkpoints_wing_id_eq]=${filters.wingId}`;
+      }
+
+      if (filters.areaId) {
+        apiUrl += `&q[patrolling_checkpoints_area_id_eq]=${filters.areaId}`;
+      }
+
+      if (filters.floorId) {
+        apiUrl += `&q[patrolling_checkpoints_floor_id_eq]=${filters.floorId}`;
+      }
+
+      if (filters.roomId) {
+        apiUrl += `&q[patrolling_checkpoints_room_id_eq]=${filters.roomId}`;
+      }
+
+      // Handle status filter
+      if (filters.status) {
+        const isActive = filters.status === 'active';
+        apiUrl += `&q[active_eq]=${isActive}`;
+      }
+
+      console.log('🔗 API URL with filters:', apiUrl);
+
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
@@ -171,7 +204,7 @@ export const PatrollingDashboard = () => {
       }
 
       const result: ApiResponse = await response.json();
-      
+
       if (result.success) {
         setPatrollingData(result.data);
         setPagination(result.pagination);
@@ -188,10 +221,17 @@ export const PatrollingDashboard = () => {
     }
   };
 
-  // Load data on component mount and when page/perPage changes
+  // Load data on component mount and when page/perPage/filters change
   useEffect(() => {
-    fetchPatrollingData(currentPage, perPage, searchTerm);
-  }, [currentPage, perPage, searchTerm]);
+    fetchPatrollingData(currentPage, perPage, searchTerm, appliedFilters);
+  }, [currentPage, perPage, searchTerm, appliedFilters]);
+
+  // Handle filter application
+  const handleApplyFilters = (filters: PatrollingFilters) => {
+    console.log('📊 Applying filters:', filters);
+    setAppliedFilters(filters);
+    setCurrentPage(1); // Reset to first page when applying filters
+  };
 
   // Handle search
   const handleSearch = (term: string) => {
@@ -245,11 +285,10 @@ export const PatrollingDashboard = () => {
     </span>,
     shift_type: <div className="text-sm text-gray-600">{getShiftType(patrol.schedules)}</div>,
     grace_time: <span className="text-sm text-gray-600">{patrol.grace_period_minutes} min</span>,
-    status: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-      patrol.active 
-        ? 'bg-green-100 text-green-800' 
+    status: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${patrol.active
+        ? 'bg-green-100 text-green-800'
         : 'bg-red-100 text-red-800'
-    }`}>
+      }`}>
       {patrol.active ? 'Active' : 'Inactive'}
     </span>
   });
@@ -257,31 +296,31 @@ export const PatrollingDashboard = () => {
     console.log('View patrolling:', id);
     navigate(`/security/patrolling/details/${id}`);
   };
-  
+
   const handleEdit = (id: number) => {
     console.log('Edit patrolling:', id);
     navigate(`/security/patrolling/edit/${id}`);
   };
-  
+
   const handleDelete = (id: number) => {
     console.log('Delete patrolling:', id);
     setSelectedPatrollingId(id);
     setIsDeleteModalOpen(true);
   };
-  
+
   const handleDeleteConfirm = async () => {
     if (!selectedPatrollingId) return;
-    
+
     try {
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
-      
+
       if (!baseUrl || !token) {
         throw new Error('API configuration is missing');
       }
 
       const apiUrl = getFullUrl(`/patrolling/setup/${selectedPatrollingId}.json`);
-      
+
       const response = await fetch(apiUrl, {
         method: 'DELETE',
         headers: {
@@ -298,9 +337,9 @@ export const PatrollingDashboard = () => {
       toast.success('Patrolling deleted successfully!', {
         duration: 3000,
       });
-      
+
       // Refresh the data
-      fetchPatrollingData(currentPage, perPage, searchTerm);
+      fetchPatrollingData(currentPage, perPage, searchTerm, appliedFilters);
       setIsDeleteModalOpen(false);
       setSelectedPatrollingId(null);
     } catch (error: any) {
@@ -325,13 +364,15 @@ export const PatrollingDashboard = () => {
 
       {!loading && (
         <>
-          <EnhancedTable
+          <EnhancedTaskTable
             data={displayedData}
             columns={columns}
             renderRow={renderRow}
             storageKey="patrolling-dashboard-v3"
             hideTableExport={true}
             hideTableSearch={false}
+            enableSearch={true}
+
             searchTerm={searchTerm}
             onSearchChange={handleSearch}
             onFilterClick={() => setIsFilterOpen(true)}
@@ -354,7 +395,11 @@ export const PatrollingDashboard = () => {
         </>
       )}
 
-      <PatrollingFilterModal isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
+      <PatrollingFilterModal
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApply={handleApplyFilters}
+      />
       {selectedPatrollingId !== null && (
         <DeletePatrollingModal
           isOpen={isDeleteModalOpen}
