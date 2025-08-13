@@ -587,7 +587,7 @@ export const PatrollingCreatePage: React.FC = () => {
         "name": patrolName,
         "description": description,
         "estimated_duration_minutes": parseInt(estimatedDuration) || 0,
-        "autoTicket": autoTicket,
+        "auto_ticket": autoTicket,
         "validity": {
           "startDate": startDate,
           "endDate": endDate,
