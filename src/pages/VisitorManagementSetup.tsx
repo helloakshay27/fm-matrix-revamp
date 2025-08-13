@@ -221,39 +221,13 @@ export const VisitorManagementSetup = () => {
             {filteredData.map((item) => (
               <TableRow key={item.id} className="hover:bg-gray-50">
                 <TableCell>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEdit(item.id)}
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                    </button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <button
-                          className="p-1 hover:bg-gray-100 rounded"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
-                        </button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the visitor gate entry.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(item.id)}>
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+                  <button
+                    onClick={() => handleEdit(item.id)}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                  </button>
                 </TableCell>
                 <TableCell className="font-medium">{item.id}</TableCell>
                 <TableCell className="max-w-[300px]">
