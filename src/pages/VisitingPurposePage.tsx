@@ -576,11 +576,26 @@ export const VisitingPurposePage = () => {
             {/* Work Type Input */}
             <div className="space-y-2">
               <Label>Enter Work Type</Label>
-              <Input
+              <TextField
                 placeholder="Enter Work Type"
                 value={workTypeFormData.workType}
                 onChange={(e) => setWorkTypeFormData({...workTypeFormData, workType: e.target.value})}
-                className="w-full"
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                }}
               />
             </div>
 
