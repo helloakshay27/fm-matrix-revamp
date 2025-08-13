@@ -93,7 +93,13 @@ export const UtilitySolarGeneratorFilterDialog = ({
                     )}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-white border shadow-lg z-50" align="start" side="bottom">
+                <PopoverContent 
+                  className="w-auto p-0 bg-white border shadow-lg z-50" 
+                  align="start" 
+                  side="bottom" 
+                  sideOffset={5}
+                  avoidCollisions={false}
+                >
                   <Calendar 
                     mode="range" 
                     selected={dateRange} 
