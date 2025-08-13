@@ -230,6 +230,16 @@ export const SupportStaffPage = () => {
     });
   };
 
+  const handleRefresh = () => {
+    setSearchTerm('');
+    setCurrentPage(1);
+    setFilteredStaff(sampleStaff);
+    toast({
+      title: "Refreshed",
+      description: "Data has been refreshed successfully",
+    });
+  };
+
   return (
     <>
       <div className="p-6 min-h-screen">
@@ -253,7 +263,13 @@ export const SupportStaffPage = () => {
               className="pl-10 w-80"
             />
           </div>
-          <Button variant="outline" size="icon" className="border-gray-300">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="border-gray-300"
+            onClick={handleRefresh}
+            title="Refresh data"
+          >
             <RefreshCw className="w-4 h-4" />
           </Button>
           <Button variant="outline" size="icon" className="border-gray-300">
