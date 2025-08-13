@@ -61,6 +61,7 @@ export const VisitingPurposePage = () => {
   const [isWorkTypeModalOpen, setIsWorkTypeModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingPurpose, setEditingPurpose] = useState<VisitingPurposeData | null>(null);
+  const [editingPurposes, setEditingPurposes] = useState<string[]>(['']);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   
   // Edit modal states for different types
@@ -396,6 +397,11 @@ export const VisitingPurposePage = () => {
     const purpose = purposes.find(p => p.id === purposeId);
     if (purpose) {
       setEditingPurpose(purpose);
+      // Split the purpose string by pipe separator or use single purpose
+      const purposeArray = purpose.purpose.includes('|') 
+        ? purpose.purpose.split('|') 
+        : [purpose.purpose];
+      setEditingPurposes(purposeArray);
       setIsEditModalOpen(true);
     }
   };
@@ -403,15 +409,27 @@ export const VisitingPurposePage = () => {
   const handleEditModalClose = () => {
     setIsEditModalOpen(false);
     setEditingPurpose(null);
+    setEditingPurposes(['']);
   };
 
   const handleEditSubmit = () => {
     if (!editingPurpose) return;
 
+    const validPurposes = editingPurposes.filter(p => p.trim());
+    
+    if (validPurposes.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please enter at least one purpose",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setPurposes(prev => 
       prev.map(p => 
         p.id === editingPurpose.id 
-          ? { ...p, purpose: editingPurpose.purpose, status: editingPurpose.status }
+          ? { ...p, purpose: validPurposes.join('|'), status: editingPurpose.status }
           : p
       )
     );
@@ -483,6 +501,24 @@ export const VisitingPurposePage = () => {
         item.id === updatedData.id ? updatedData : item
       )
     );
+  };
+
+  // Helper functions for editing purposes
+  const addEditPurpose = () => {
+    setEditingPurposes([...editingPurposes, '']);
+  };
+
+  const removeEditPurpose = (index: number) => {
+    if (editingPurposes.length > 1) {
+      const newPurposes = editingPurposes.filter((_, i) => i !== index);
+      setEditingPurposes(newPurposes);
+    }
+  };
+
+  const updateEditPurpose = (index: number, value: string) => {
+    const newPurposes = [...editingPurposes];
+    newPurposes[index] = value;
+    setEditingPurposes(newPurposes);
   };
 
   return (
@@ -1142,28 +1178,62 @@ export const VisitingPurposePage = () => {
           </DialogHeader>
           
           <div className="space-y-4">
-            {/* Purpose Input */}
-            <div className="space-y-2">
-              <TextField
-                value={editingPurpose?.purpose || ''}
-                onChange={(e) => editingPurpose && setEditingPurpose({...editingPurpose, purpose: e.target.value})}
-                fullWidth
-                variant="outlined"
-                size="small"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: '#d1d5db',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#C72030',
-                    },
-                  },
-                }}
-              />
+            {/* Multiple Purpose Input */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Enter Purpose</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addEditPurpose}
+                  className="text-primary border-primary hover:bg-primary/10"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                {editingPurposes.map((purpose, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <TextField
+                        placeholder="Enter purpose"
+                        value={purpose}
+                        onChange={(e) => updateEditPurpose(index, e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '& fieldset': {
+                              borderColor: '#d1d5db',
+                            },
+                            '&:hover fieldset': {
+                              borderColor: '#C72030',
+                            },
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#C72030',
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                    {editingPurposes.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeEditPurpose(index)}
+                        className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Active Checkbox */}
@@ -1181,6 +1251,7 @@ export const VisitingPurposePage = () => {
               <Button 
                 onClick={handleEditSubmit}
                 className="bg-green-500 hover:bg-green-600 text-white px-6"
+                disabled={editingPurposes.every(p => !p.trim())}
               >
                 UPDATE
               </Button>
