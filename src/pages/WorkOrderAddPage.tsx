@@ -650,6 +650,16 @@ const WorkOrderAddPage: React.FC = () => {
                 </div>
               </div>
             ))}
+            
+            {/* Add Items Button inside details card */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <Button
+                className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
+                onClick={addNewDetailsForm}
+              >
+                Add Items
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -658,16 +668,6 @@ const WorkOrderAddPage: React.FC = () => {
           <div className="bg-purple-700 text-white px-6 py-2 rounded">
             Total Amount:- 1000
           </div>
-        </div>
-
-        {/* Add Items Button */}
-        <div className="mt-6">
-          <Button
-            className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
-            onClick={addNewDetailsForm}
-          >
-            Add Items
-          </Button>
         </div>
 
         {/* Action Buttons */}
