@@ -214,10 +214,11 @@ import ParkingDetailsPage from "./pages/ParkingDetailsPage";
 import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
 
 // Import Design Insights pages
-import { DesignInsightsDashboard } from "./pages/DesignInsightsDashboard";
-import { AddDesignInsightDashboard } from "./pages/AddDesignInsightDashboard";
-import { DesignInsightDetailsDashboard } from "./pages/DesignInsightDetailsDashboard";
-import { EditDesignInsightDashboard } from "./pages/EditDesignInsightDashboard";
+import { DesignInsightsDashboard } from './pages/DesignInsightsDashboard';
+import { AddDesignInsightDashboard } from './pages/AddDesignInsightDashboard';
+import { DesignInsightDetailsDashboard } from './pages/DesignInsightDetailsDashboard';
+import { EditDesignInsightDashboard } from './pages/EditDesignInsightDashboard';
+import { HOTODashboard } from './pages/HOTODashboard';
 
 // Import Security pages
 import { VehicleParkingDashboard } from "./pages/VehicleParkingDashboard";
@@ -373,6 +374,9 @@ import InvoiceDashboard from './pages/InvoiceDashboard';
 
 // Import WBS page
 import { WBSElementDashboard } from "./pages/WBSElementDashboard";
+
+// Import Work Order pages
+import WorkOrderAddPage from './pages/WorkOrderAddPage';
 
 // Import Settings pages
 import { FMUsersDashboard } from "./pages/settings/FMUsersDashboard";
@@ -846,14 +850,9 @@ function App() {
                 <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
 
                 {/* Snagging Routes */}
-                <Route
-                  path="/transitioning/snagging"
-                  element={<SnaggingDashboard />}
-                />
-                <Route
-                  path="/transitioning/snagging/details/:id"
-                  element={<SnaggingDetailsPage />}
-                />
+                <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
+                <Route path="/transitioning/snagging/details/:id" element={<SnaggingDetailsPage />} />
+                <Route path="/transitioning/hoto" element={<HOTODashboard />} />
 
                 {/* Design Insights Routes */}
                 <Route
@@ -1203,6 +1202,7 @@ function App() {
                 />
                 <Route path="/finance/po/feeds/:id" element={<POFeedsPage />} />
                 <Route path="/finance/wo" element={<WODashboard />} />
+                <Route path="/finance/wo/add" element={<WorkOrderAddPage />} />
                 <Route path="/finance/wo/details/:id" element={<WODetailsPage />} />
                 <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
                 <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />

@@ -5,18 +5,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLayout } from '@/contexts/LayoutContext';
 
 export const EditSupportStaffPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { toast } = useToast();
+  const { setCurrentSection } = useLayout();
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     categoryName: '',
     days: '',
     hours: '',
     minutes: '',
-    selectedIcon: ''
+    selectedIcons: [] as string[]
   });
 
   const iconOptions = [
@@ -42,19 +44,23 @@ export const EditSupportStaffPage = () => {
     { id: '20', icon: '🧹', name: 'Cleaning' }
   ];
 
+  useEffect(() => {
+    setCurrentSection('Settings');
+  }, [setCurrentSection]);
+
   // Simulate loading existing data
   useEffect(() => {
     // Simulate API call to fetch existing data
     setTimeout(() => {
       // Pre-populate with sample data based on ID
       const sampleData = {
-        '1': { categoryName: 'DTDC', days: '2', hours: '4', minutes: '30', selectedIcon: '1' },
-        '2': { categoryName: 'Swiggy/Instamrt', days: '0', hours: '1', minutes: '15', selectedIcon: '2' },
-        '3': { categoryName: 'OLA', days: '0', hours: '0', minutes: '30', selectedIcon: '7' },
-        '4': { categoryName: 'Flipkart', days: '1', hours: '0', minutes: '0', selectedIcon: '1' },
-        '5': { categoryName: 'Amazon', days: '2', hours: '0', minutes: '0', selectedIcon: '1' },
-        '6': { categoryName: 'UBER', days: '0', hours: '0', minutes: '20', selectedIcon: '7' },
-        '7': { categoryName: 'Zomato', days: '0', hours: '1', minutes: '0', selectedIcon: '16' }
+        '1': { categoryName: 'DTDC', days: '2', hours: '4', minutes: '30', selectedIcons: ['1'] },
+        '2': { categoryName: 'Swiggy/Instamrt', days: '0', hours: '1', minutes: '15', selectedIcons: ['2'] },
+        '3': { categoryName: 'OLA', days: '0', hours: '0', minutes: '30', selectedIcons: ['7'] },
+        '4': { categoryName: 'Flipkart', days: '1', hours: '0', minutes: '0', selectedIcons: ['1'] },
+        '5': { categoryName: 'Amazon', days: '2', hours: '0', minutes: '0', selectedIcons: ['1'] },
+        '6': { categoryName: 'UBER', days: '0', hours: '0', minutes: '20', selectedIcons: ['7'] },
+        '7': { categoryName: 'Zomato', days: '0', hours: '1', minutes: '0', selectedIcons: ['16'] }
       };
       
       if (id && sampleData[id as keyof typeof sampleData]) {
@@ -175,19 +181,28 @@ export const EditSupportStaffPage = () => {
           {/* Icon Selection Grid */}
           <div className="space-y-2">
             <Label>Select Icon</Label>
-            <div className="grid grid-cols-6 gap-4">
+            <div className="grid grid-cols-6 gap-3">
               {iconOptions.map((option) => (
                 <div
                   key={option.id}
-                  className={`flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
-                    formData.selectedIcon === option.id 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200'
-                  }`}
-                  onClick={() => setFormData({...formData, selectedIcon: option.id})}
+                  className="flex items-center gap-2 p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    const updatedIcons = formData.selectedIcons.includes(option.id)
+                      ? formData.selectedIcons.filter(id => id !== option.id)
+                      : [...formData.selectedIcons, option.id];
+                    setFormData({...formData, selectedIcons: updatedIcons});
+                  }}
                 >
-                  <div className="text-2xl mb-1">{option.icon}</div>
-                  <div className="text-xs text-center">{option.name}</div>
+                  <input
+                    type="radio"
+                    checked={formData.selectedIcons.includes(option.id)}
+                    onChange={() => {}}
+                    className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
+                    style={{
+                      accentColor: '#dc2626'
+                    }}
+                  />
+                  <div className="text-lg">{option.icon}</div>
                 </div>
               ))}
             </div>

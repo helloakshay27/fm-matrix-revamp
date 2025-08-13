@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -7,6 +7,7 @@ import { Switch } from '../components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useLayout } from '../contexts/LayoutContext';
 
 interface VisitorGateData {
   id: number;
@@ -22,8 +23,13 @@ interface VisitorGateData {
 
 export const VisitorManagementSetup = () => {
   const navigate = useNavigate();
+  const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'smartsecure' | 'quikgate'>('smartsecure');
+
+  useEffect(() => {
+    setCurrentSection('Settings');
+  }, [setCurrentSection]);
   
   // Sample data with state management
   const [visitorGateData, setVisitorGateData] = useState<VisitorGateData[]>([
@@ -278,17 +284,6 @@ export const VisitorManagementSetup = () => {
             ))}
           </TableBody>
         </Table>
-      </div>
-
-      {/* Footer */}
-      <div className="mt-6 text-center">
-        <div className="inline-flex items-center gap-2 text-sm text-gray-600">
-          <span>Powered by</span>
-          <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center">
-            <span className="text-white text-xs font-bold">L</span>
-          </div>
-          <span className="font-semibold text-gray-800">LOCKATED</span>
-        </div>
       </div>
     </div>
   );
