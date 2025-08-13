@@ -1,8 +1,18 @@
-import React, { useState, useEffect } from 'react';
+  // Export Attendance Matrix chart as Excel
+
+  // Export Department-wise Attendance chart as Excel
+
+  // Export Regular vs Overtime chart as Excel
+
+  // Export Attendance Status chart summary as Excel
+
+import { useDebounce } from '@/hooks/useDebounce';
+import React, { useState, useEffect, useMemo } from 'react';
+import { AMCAnalyticsFilterDialog } from '@/components/AMCAnalyticsFilterDialog';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, Trash2, BarChart3, Users, Download, Calendar, AlertCircle, CheckCircle, Clock, UserCheck, Flag } from 'lucide-react';
+import { Eye, Trash2, BarChart3, Download } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -18,6 +28,8 @@ import { fetchAttendanceData, AttendanceRecord } from '@/store/slices/attendance
 import { AttendanceExportModal } from '@/components/AttendanceExportModal';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, TextField } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -48,22 +60,34 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
     </div>
   );
 };
-const columns: ColumnConfig[] = [{
-  key: 'actions',
-  label: 'Actions',
-  sortable: false,
-  defaultVisible: true
-}, {
-  key: 'name',
-  label: 'Name',
-  sortable: true,
-  defaultVisible: true
-}, {
-  key: 'department',
-  label: 'Department',
-  sortable: true,
-  defaultVisible: true
-}];
+
+const columns: ColumnConfig[] = [
+  {
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+    defaultVisible: true
+  },
+  {
+    key: 'name',
+    label: 'Name',
+    sortable: true,
+    defaultVisible: true
+  },
+  {
+    key: 'department',
+    label: 'Department',
+    sortable: true,
+    defaultVisible: true
+  },
+  {
+    key: 'source_of_attendance',
+    label: 'Attendance Method',
+    sortable: true,
+    defaultVisible: true
+  }
+];
+
 export const AttendanceDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -80,6 +104,11 @@ export const AttendanceDashboard = () => {
   ]);
   const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'departmentChart', 'trendsChart', 'matrixChart']);
   const [activeTab, setActiveTab] = useState<string>("attendancelist");
+  // Filter modal state
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [departmentFilter, setDepartmentFilter] = useState('');
+   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 600);
 
   const pageSize = 10;
 
@@ -91,65 +120,86 @@ export const AttendanceDashboard = () => {
     })
   );
 
+  // Fetch attendance on mount and when filters/search change
   useEffect(() => {
-    dispatch(fetchAttendanceData());
-  }, [dispatch]);
-
-  // Calculate pagination
-  const totalPages = Math.ceil(attendance.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedData = attendance.slice(startIndex, startIndex + pageSize);
-  const handleViewDetails = (id: number) => {
-    navigate(`/maintenance/attendance/details/${id}`);
+    let paramString = '';
+    if (debouncedSearchQuery && debouncedSearchQuery.trim()) {
+      // Only encode the value, not the param name
+      paramString = `${encodeURIComponent(debouncedSearchQuery.trim())}`;
+    } else if (departmentFilter && departmentFilter.trim()) {
+      paramString = `${encodeURIComponent(departmentFilter.trim())}`;
+    }
+    dispatch(fetchAttendanceData(paramString));
+  }, [dispatch, debouncedSearchQuery, departmentFilter]);
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
   };
 
-    const handleExport = async () => {
-      const baseUrl = localStorage.getItem('baseUrl');
-      const token = localStorage.getItem('token');
-      const siteId = localStorage.getItem('selectedSiteId');
 
-      try {
-        if (!baseUrl || !token || !siteId) {
-          toast.error('Missing base URL, token, or site ID');
-          return;
-        }
-  
-        let url = `https://${baseUrl}/attendances/export.xlsx?site_id=${siteId}`;
-        if (selectedItems.length > 0) {
-          const ids = selectedItems.join(',');
-          url += `&ids=${ids}`;
-        }
-  
-        const response = await axios.get(url, {
-          responseType: 'blob',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-  
-        if (!response.data || response.data.size === 0) {
-          toast.error('Empty file received from server');
-          return;
-        }
-  
-        const blob = new Blob([response.data], {
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        });
-  
-        const downloadUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = 'attendance_export.xlsx';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(downloadUrl);
-        toast.success('Attendance data exported successfully');
-      } catch (error) {
-        console.error('Export failed:', error);
-        toast.error('Failed to export AMC data');
+  // Memoized filtered data (no longer needed since filtering is done via API)
+  const filteredAttendance = useMemo(() => attendance, [attendance]);
+
+  // Memoized pagination
+  const totalPages = useMemo(() => Math.ceil(filteredAttendance.length / pageSize), [filteredAttendance.length, pageSize]);
+  const startIndex = useMemo(() => (currentPage - 1) * pageSize, [currentPage, pageSize]);
+  const paginatedData = useMemo(() => filteredAttendance.slice(startIndex, startIndex + pageSize), [filteredAttendance, startIndex, pageSize]);
+
+  const handleViewDetails = (row: any) => {
+    const id = row.user_id;
+    if (id) {
+      navigate(`/maintenance/attendance/details/${id}`);
+    }
+  };
+
+  const handleExport = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    const siteId = localStorage.getItem('selectedSiteId');
+
+    try {
+      if (!baseUrl || !token || !siteId) {
+        toast.error('Missing base URL, token, or site ID');
+        return;
       }
-    };
+
+      let url = `https://${baseUrl}/pms/attendances/export.xlsx`;
+      if (selectedItems.length > 0) {
+        const ids = selectedItems.join(',');
+        url += `&ids=${ids}`;
+      }
+
+      const response = await axios.get(url, {
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.data || response.data.size === 0) {
+        toast.error('Empty file received from server');
+        return;
+      }
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'attendance_export.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      toast.success('Attendance data exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export attendance data');
+    }
+  };
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedItems(attendance.map(item => String(item.id)));
@@ -157,6 +207,7 @@ export const AttendanceDashboard = () => {
       setSelectedItems([]);
     }
   };
+
   const handleSelectItem = (itemId: string, checked: boolean) => {
     if (checked) {
       setSelectedItems(prev => [...prev, itemId]);
@@ -164,9 +215,8 @@ export const AttendanceDashboard = () => {
       setSelectedItems(prev => prev.filter(id => id !== itemId));
     }
   };
+
   const handleBulkDelete = (selectedItems: AttendanceRecord[]) => {
-    // Note: This would need to be implemented as a Redux action
-    // For now, we'll just clear the selection since we can't modify Redux state directly
     setSelectedItems([]);
   };
 
@@ -174,7 +224,6 @@ export const AttendanceDashboard = () => {
     setVisibleSections(selectedSections);
   };
 
-  // Handle drag end for chart reordering
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
 
@@ -188,84 +237,232 @@ export const AttendanceDashboard = () => {
     }
   };
 
-  // Analytics data calculations
-  const presentCount = Math.floor(attendance.length * 0.85); // 85% present
-  const absentCount = Math.floor(attendance.length * 0.1);   // 10% absent  
-  const lateCount = attendance.length - presentCount - absentCount; // remainder late
 
-  // Attendance status data
-  const statusData = [
-    { name: 'Present', value: presentCount, color: '#c6b692' },
-    { name: 'Absent', value: absentCount, color: '#d8dcdd' },
-    { name: 'Late', value: lateCount, color: '#e5e7eb' }
-  ];
+// Utility: Format date for API
+function formatDateForApi(dateStr: string) {
+  if (!dateStr) return '';
+  if (/\d{4}-\d{2}-\d{2}/.test(dateStr)) return dateStr;
+  const [day, month, year] = dateStr.split('/');
+  return `${year}-${month}-${day}`;
+}
 
-  // Department-wise attendance data
-  const departmentData = attendance.reduce((acc, record) => {
-    const dept = record.department || 'Unknown';
-    acc[dept] = (acc[dept] || 0) + 1;
-    return acc;
-  }, {});
+// Utility: Generic export function for all chart exports
+async function handleChartExport({ endpoint, filename, successMsg, errorMsg, fromDate, toDate }: {
+  endpoint: string,
+  filename: string,
+  successMsg: string,
+  errorMsg: string,
+  fromDate: string,
+  toDate: string
+}) {
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+  const siteId = localStorage.getItem('selectedSiteId');
+  try {
+    if (!baseUrl || !token || !siteId) {
+      toast.error('Missing base URL, token, or site ID');
+      return;
+    }
+    const url = `https://${baseUrl}/pms/attendances/${endpoint}?site_id=${siteId}&from_date=${formatDateForApi(fromDate)}&to_date=${formatDateForApi(toDate)}&export=true`;
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) {
+      toast.error(errorMsg);
+      return;
+    }
+    const blob = await response.blob();
+    if (!blob || blob.size === 0) {
+      toast.error('Empty file received from server');
+      return;
+    }
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+    toast.success(successMsg);
+  } catch (error) {
+    console.error('Export failed:', error);
+    toast.error(errorMsg);
+  }
+}
 
-  const departmentChartData = Object.entries(departmentData).map(([name, value]) => ({ name, value }));
+  const defaultFrom = '2010-01-01';
+  const defaultTo = '2025-01-02';
+  const [fromDate, setFromDate] = useState(defaultFrom);
+  const [toDate, setToDate] = useState(defaultTo);
+  const [statusChartData, setStatusChartData] = useState<{ present_count: number; absent_count: number; late_count: number } | null>(null);
+  const [trendsChartData, setTrendsChartData] = useState<{ regular_count: number; overtime_count: number } | null>(null);
+  const [chartsLoading, setChartsLoading] = useState(false);
+  const [isChartFilterOpen, setIsChartFilterOpen] = useState(false);
 
-  // Attendance Matrix (by shift/time)
-  const matrixData = [
-    { shift: 'Morning', 'Present': 45, 'Late': 5, 'Absent': 2, 'Leave': 1 },
-    { shift: 'Day', 'Present': 38, 'Late': 3, 'Absent': 1, 'Leave': 2 },
-    { shift: 'Evening', 'Present': 32, 'Late': 4, 'Absent': 3, 'Leave': 1 },
-    { shift: 'Night', 'Present': 28, 'Late': 2, 'Absent': 1, 'Leave': 0 }
-  ];
+  const fetchChartsData = async (from: string, to: string) => {
+    setChartsLoading(true);
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const siteId = localStorage.getItem('selectedSiteId');
+      if (!baseUrl || !token || !siteId) return;
+      const statusUrl = `https://${baseUrl}/pms/attendances/attendance_summary.json?site_id=${siteId}&from_date=${formatDateForApi(from)}&to_date=${formatDateForApi(to)}`;
+      const statusRes = await fetch(statusUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (statusRes.ok) {
+        setStatusChartData(await statusRes.json());
+      } else {
+        setStatusChartData(null);
+      }
+      const trendsUrl = `https://${baseUrl}/pms/attendances/attendance_shifts.json?site_id=${siteId}&from_date=${formatDateForApi(from)}&to_date=${formatDateForApi(to)}`;
+      const trendsRes = await fetch(trendsUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (trendsRes.ok) {
+        setTrendsChartData(await trendsRes.json());
+      } else {
+        setTrendsChartData(null);
+      }
+    } catch (e) {
+      setStatusChartData(null);
+      setTrendsChartData(null);
+    } finally {
+      setChartsLoading(false);
+    }
+  };
 
-  // Overtime vs Regular attendance
-  const regularHours = Math.floor(attendance.length * 0.75);
-  const overtimeHours = attendance.length - regularHours;
+  useEffect(() => {
+    fetchChartsData(fromDate, toDate);
+  }, [fromDate, toDate]);
 
-  const trendsData = [
-    { name: 'Regular Hours', value: regularHours, color: '#c6b692' },
-    { name: 'Overtime', value: overtimeHours, color: '#d8dcdd' }
-  ];
+  const statusData = useMemo(() =>
+    statusChartData
+      ? [
+        { name: 'Present', value: statusChartData.present_count, color: '#c6b692' },
+        { name: 'Absent', value: statusChartData.absent_count, color: '#d8dcdd' },
+        { name: 'Late', value: statusChartData.late_count, color: '#e5e7eb' }
+      ]
+      : [
+        { name: 'Present', value: 0, color: '#c6b692' },
+        { name: 'Absent', value: 0, color: '#d8dcdd' },
+        { name: 'Late', value: 0, color: '#e5e7eb' }
+      ]
+  , [statusChartData]);
 
-  // Custom export handler for attendance page
+  const [departmentChartData, setDepartmentChartData] = useState<{ name: string; value: number }[]>([]);
+
+  const fetchDepartmentChartData = async (from: string, to: string) => {
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const siteId = localStorage.getItem('selectedSiteId');
+      if (!baseUrl || !token || !siteId) return;
+      const url = `https://${baseUrl}/pms/attendances/department_wise_attendance.json?site_id=${siteId}&from_date=${formatDateForApi(from)}&to_date=${formatDateForApi(to)}`;
+      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.department_counts)) {
+          setDepartmentChartData(
+            data.department_counts.map((item: any) => ({
+              name: item.department_name || 'Unknown',
+              value: item.present_count || 0
+            }))
+          );
+        } else {
+          setDepartmentChartData([]);
+        }
+      } else {
+        setDepartmentChartData([]);
+      }
+    } catch (e) {
+      setDepartmentChartData([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchDepartmentChartData(fromDate, toDate);
+  }, [fromDate, toDate]);
+
+  const [matrixData, setMatrixData] = useState<{ shift: string; present: number; late: number; absent: number; leave: number }[]>([]);
+
+  const fetchMatrixData = async (from: string, to: string) => {
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      const siteId = localStorage.getItem('selectedSiteId');
+      if (!baseUrl || !token || !siteId) return;
+      const url = `https://${baseUrl}/pms/attendances/attendance_matrix.json?site_id=${siteId}&from_date=${formatDateForApi(from)}&to_date=${formatDateForApi(to)}`;
+      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.matrix)) {
+          setMatrixData(data.matrix);
+        } else {
+          setMatrixData([]);
+        }
+      } else {
+        setMatrixData([]);
+      }
+    } catch (e) {
+      setMatrixData([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchMatrixData(fromDate, toDate);
+  }, [fromDate, toDate]);
+
+  const trendsData = useMemo(() =>
+    trendsChartData
+      ? [
+        { name: 'Regular Hours', value: trendsChartData.regular_count, color: '#c6b692' },
+        { name: 'Overtime', value: trendsChartData.overtime_count, color: '#d8dcdd' }
+      ]
+      : [
+        { name: 'Regular Hours', value: 0, color: '#c6b692' },
+        { name: 'Overtime', value: 0, color: '#d8dcdd' }
+      ]
+  , [trendsChartData]);
 
   const renderCell = (item: AttendanceRecord, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
         return (
           <>
-          <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item.user_id)} className="hover:bg-gray-100">
-            <Eye className="w-4 h-4" />
-          </Button>
-          
-         </>
+            <Button variant="ghost" size="sm" onClick={() => handleViewDetails(item)} className="hover:bg-gray-100">
+              <Eye className="w-4 h-4" />
+            </Button>
+          </>
         );
-
       case 'name':
         return <span className="font-medium text-center block">{item.name}</span>;
       case 'department':
         return <span className="text-center block">{item.department || '-'}</span>;
+      case 'source_of_attendance': {
+        const anyItem = item as any;
+        const source = anyItem.source_of_attendance || anyItem.source || anyItem.attendance_source || '-';
+        return <span className="text-center block">{source}</span>;
+      }
       default:
         return '-';
     }
   };
+
   const bulkActions = [{
     label: 'Delete Selected',
     icon: Trash2,
     variant: 'destructive' as const,
     onClick: handleBulkDelete
   }];
+
   const renderPaginationItems = () => {
     const items = [];
     const showEllipsis = totalPages > 7;
     if (showEllipsis) {
-      // Show first page
       items.push(<PaginationItem key={1}>
         <PaginationLink onClick={() => setCurrentPage(1)} isActive={currentPage === 1}>
           1
         </PaginationLink>
       </PaginationItem>);
 
-      // Show ellipsis or pages 2-3
       if (currentPage > 4) {
         items.push(<PaginationItem key="ellipsis1">
           <PaginationEllipsis />
@@ -280,7 +477,6 @@ export const AttendanceDashboard = () => {
         }
       }
 
-      // Show current page area
       if (currentPage > 3 && currentPage < totalPages - 2) {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(<PaginationItem key={i}>
@@ -291,7 +487,6 @@ export const AttendanceDashboard = () => {
         }
       }
 
-      // Show ellipsis or pages before last
       if (currentPage < totalPages - 3) {
         items.push(<PaginationItem key="ellipsis2">
           <PaginationEllipsis />
@@ -308,7 +503,6 @@ export const AttendanceDashboard = () => {
         }
       }
 
-      // Show last page
       if (totalPages > 1) {
         items.push(<PaginationItem key={totalPages}>
           <PaginationLink onClick={() => setCurrentPage(totalPages)} isActive={currentPage === totalPages}>
@@ -317,7 +511,6 @@ export const AttendanceDashboard = () => {
         </PaginationItem>);
       }
     } else {
-      // Show all pages if total is 7 or less
       for (let i = 1; i <= totalPages; i++) {
         items.push(<PaginationItem key={i}>
           <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
@@ -330,9 +523,66 @@ export const AttendanceDashboard = () => {
   };
 
   const handleFilterClick = () => {
-    console.log('Filter clicked');
-  }
+    setFilterModalOpen(true);
+  };
 
+  const handleApplyFilter = () => {
+    setFilterModalOpen(false);
+    setCurrentPage(1);
+    // No need to dispatch here, useEffect will handle it
+  };
+
+  const handleResetFilter = () => {
+    setDepartmentFilter('');
+    setFilterModalOpen(false);
+    setCurrentPage(1);
+    // No need to dispatch here, useEffect will handle it
+  };
+
+  const departmentList = useMemo(
+    () => Array.from(new Set(attendance.map(item => item.department).filter(Boolean))),
+    [attendance]
+  );
+
+  const handleAttendanceStatusExport = () =>
+    handleChartExport({
+      endpoint: 'attendance_summary.json',
+      filename: 'attendance_summary.xlsx',
+      successMsg: 'Attendance summary exported successfully',
+      errorMsg: 'Failed to export attendance summary',
+      fromDate,
+      toDate,
+    });
+
+  const handleRegularOvertimeExport = () =>
+    handleChartExport({
+      endpoint: 'attendance_shifts.json',
+      filename: 'regular_vs_overtime.xlsx',
+      successMsg: 'Regular vs Overtime exported successfully',
+      errorMsg: 'Failed to export regular vs overtime',
+      fromDate,
+      toDate,
+    });
+
+  const handleDepartmentWiseExport = () =>
+    handleChartExport({
+      endpoint: 'department_wise_attendance.json',
+      filename: 'department_wise_attendance.xlsx',
+      successMsg: 'Department-wise attendance exported successfully',
+      errorMsg: 'Failed to export department-wise attendance',
+      fromDate,
+      toDate,
+    });
+
+  const handleAttendanceMatrixExport = () =>
+    handleChartExport({
+      endpoint: 'attendance_matrix.json',
+      filename: 'attendance_matrix.xlsx',
+      successMsg: 'Attendance matrix exported successfully',
+      errorMsg: 'Failed to export attendance matrix',
+      fromDate,
+      toDate,
+    });
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       {loading && (
@@ -345,6 +595,34 @@ export const AttendanceDashboard = () => {
           <div className="text-red-600">Error: {error}</div>
         </div>
       )}
+
+      <Dialog open={filterModalOpen} onClose={() => setFilterModalOpen(false)}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px 0 24px' }}>
+          <DialogTitle sx={{ p: 0, fontSize: 20, flex: 1 }}>Filter</DialogTitle>
+          <IconButton aria-label="close" onClick={() => setFilterModalOpen(false)} sx={{ ml: 2 }}>
+            <CloseIcon />
+          </IconButton>
+        </div>
+        <DialogContent sx={{ minWidth: 400, maxWidth: 500, width: 1 }}>
+          <TextField
+            fullWidth
+            label="Department"
+            variant="outlined"
+            value={departmentFilter}
+            onChange={e => setDepartmentFilter(e.target.value)}
+            sx={{ mt: 2 }}
+            placeholder="Enter department name"
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button variant="outline" onClick={handleResetFilter}>
+            Reset
+          </Button>
+          <Button onClick={handleApplyFilter} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+            Apply
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {!loading && (
         <>
@@ -379,20 +657,14 @@ export const AttendanceDashboard = () => {
                 <BarChart3 className="w-4 h-4" />
                 Analytics
               </TabsTrigger>
-
             </TabsList>
 
             <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-              {/* Header with Attendance Selector */}
               <div className="flex justify-end">
                 <AttendanceSelector onSelectionChange={handleSelectionChange} />
               </div>
-
-              {/* Main Analytics Layout */}
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
-                {/* Left Section - Charts */}
                 <div className="xl:col-span-8 space-y-4 sm:space-y-6">
-                  {/* All Charts with Drag and Drop */}
                   <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
@@ -400,41 +672,68 @@ export const AttendanceDashboard = () => {
                   >
                     <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
                       <div className="space-y-4 sm:space-y-6">
-                        {/* Top Row - Two Donut Charts */}
+                        <div className="flex justify-end mb-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                            onClick={() => setIsChartFilterOpen(true)}
+                          >
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="inline-block mr-1"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0013 13.414V19a1 1 0 01-1.447.894l-2-1A1 1 0 019 18v-4.586a1 1 0 00-.293-.707L2.293 6.707A1 1 0 012 6V4z" /></svg>
+                            Filter
+                          </Button>
+                          <AMCAnalyticsFilterDialog
+                            isOpen={isChartFilterOpen}
+                            onClose={() => setIsChartFilterOpen(false)}
+                            onApplyFilters={({ startDate, endDate }) => {
+                              setFromDate(startDate);
+                              setToDate(endDate);
+                              setIsChartFilterOpen(false);
+                            }}
+                          />
+                        </div>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                           {chartOrder.filter(id => ['statusChart', 'trendsChart'].includes(id)).map((chartId) => {
                             if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
                               return (
                                 <SortableChartItem key={chartId} id={chartId}>
-                                  <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                                  <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm min-h-[340px] h-[340px] flex flex-col">
                                     <div className="flex items-center justify-between mb-4 sm:mb-6">
                                       <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Attendance Status</h3>
-                                      <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                                      <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" onClick={handleAttendanceStatusExport} />
                                     </div>
-                                    <div className="relative flex items-center justify-center">
-                                      <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
-                                        <PieChart>
-                                          <Pie
-                                            data={statusData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={40}
-                                            outerRadius={80}
-                                            paddingAngle={2}
-                                            dataKey="value"
-                                            label={({ value }) => value}
-                                            labelLine={false}
-                                          >
-                                            {statusData.map((entry, index) => (
-                                              <Cell key={`cell-${index}`} fill={entry.color} />
-                                            ))}
-                                          </Pie>
-                                          <Tooltip />
-                                        </PieChart>
-                                      </ResponsiveContainer>
+                                    <div className="relative flex items-center justify-center min-h-[220px]">
+                                      {chartsLoading ? (
+                                        <div className="text-gray-400">Loading...</div>
+                                      ) : (
+                                        <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
+                                          <PieChart>
+                                            <Pie
+                                              data={statusData}
+                                              cx="50%"
+                                              cy="50%"
+                                              innerRadius={40}
+                                              outerRadius={80}
+                                              paddingAngle={2}
+                                              dataKey="value"
+                                              label={({ value }) => value}
+                                              labelLine={false}
+                                              startAngle={90}
+                                              endAngle={-270}
+                                            >
+                                              {statusData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                              ))}
+                                            </Pie>
+                                            <Tooltip />
+                                          </PieChart>
+                                        </ResponsiveContainer>
+                                      )}
                                       <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="text-center">
-                                          <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {attendance.length}</div>
+                                          <div className="text-sm sm:text-lg font-semibold text-gray-700">
+                                            Total: {statusData.reduce((sum, item) => sum + item.value, 0)}
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
@@ -454,10 +753,10 @@ export const AttendanceDashboard = () => {
                             if (chartId === 'trendsChart' && visibleSections.includes('trendsChart')) {
                               return (
                                 <SortableChartItem key={chartId} id={chartId}>
-                                  <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
+                                  <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm min-h-[340px] h-[340px] flex flex-col">
                                     <div className="flex items-center justify-between mb-4 sm:mb-6">
                                       <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Regular vs Overtime</h3>
-                                      <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
+                                      <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" onClick={handleRegularOvertimeExport} />
                                     </div>
                                     <div className="relative flex items-center justify-center">
                                       <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
@@ -472,6 +771,8 @@ export const AttendanceDashboard = () => {
                                             dataKey="value"
                                             label={({ value }) => value}
                                             labelLine={false}
+                                            startAngle={90}
+                                            endAngle={-270}
                                           >
                                             {trendsData.map((entry, index) => (
                                               <Cell key={`cell-${index}`} fill={entry.color} />
@@ -482,7 +783,7 @@ export const AttendanceDashboard = () => {
                                       </ResponsiveContainer>
                                       <div className="absolute inset-0 flex items-center justify-center">
                                         <div className="text-center">
-                                          <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {attendance.length}</div>
+                                          <div className="text-sm sm:text-lg font-semibold text-gray-700">Total: {trendsData.reduce((sum, item) => sum + item.value, 0)}</div>
                                         </div>
                                       </div>
                                     </div>
@@ -503,7 +804,6 @@ export const AttendanceDashboard = () => {
                           })}
                         </div>
 
-                        {/* Bottom Charts - Department and Matrix */}
                         {chartOrder.filter(id => ['departmentChart', 'matrixChart'].includes(id)).map((chartId) => {
                           if (chartId === 'departmentChart' && visibleSections.includes('departmentChart')) {
                             return (
@@ -511,7 +811,7 @@ export const AttendanceDashboard = () => {
                                 <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
                                   <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Department-wise Attendance</h3>
-                                    <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{ color: '#C72030' }} />
+                                    <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{ color: '#C72030' }} onClick={handleDepartmentWiseExport} />
                                   </div>
                                   <div className="w-full overflow-x-auto">
                                     <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
@@ -542,11 +842,9 @@ export const AttendanceDashboard = () => {
                                 <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
                                   <div className="flex items-center justify-between mb-4 sm:mb-6">
                                     <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Attendance Matrix</h3>
-                                    <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} />
+                                    <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} onClick={handleAttendanceMatrixExport} />
                                   </div>
-
                                   <div className="space-y-4 sm:space-y-6">
-                                    {/* Table - Horizontally scrollable on mobile */}
                                     <div className="overflow-x-auto -mx-3 sm:mx-0">
                                       <div className="min-w-[500px] px-3 sm:px-0">
                                         <table className="w-full border-collapse border border-gray-300">
@@ -567,10 +865,10 @@ export const AttendanceDashboard = () => {
                                             {matrixData.map((row, index) => (
                                               <tr key={index} className="bg-white">
                                                 <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.shift}</td>
-                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.Present}</td>
-                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.Late}</td>
-                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.Absent}</td>
-                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.Leave}</td>
+                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.present}</td>
+                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.late}</td>
+                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.absent}</td>
+                                                <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row.leave}</td>
                                               </tr>
                                             ))}
                                           </tbody>
@@ -589,8 +887,6 @@ export const AttendanceDashboard = () => {
                     </SortableContext>
                   </DndContext>
                 </div>
-
-                {/* Right Sidebar - Recent Attendance */}
                 <div className="xl:col-span-4 order-first xl:order-last">
                   <RecentAttendanceSidebar />
                 </div>
@@ -598,32 +894,32 @@ export const AttendanceDashboard = () => {
             </TabsContent>
 
             <TabsContent value="attendancelist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-              {/* Enhanced Table */}
               <EnhancedTable
                 data={paginatedData}
                 columns={columns}
                 renderCell={renderCell}
-                onRowClick={item => handleViewDetails(item.id)}
+                onRowClick={item => handleViewDetails(item)}
                 selectable={true}
                 selectedItems={selectedItems}
                 onSelectAll={handleSelectAll}
                 onSelectItem={handleSelectItem}
-                getItemId={item => String(item.id)}
+                getItemId={item => String(item.id || item.user_id)}
                 storageKey="attendance-dashboard-table"
                 emptyMessage="No attendance records found"
-                searchPlaceholder="Search attendance records..."
+                searchPlaceholder="Search..."
+                onSearchChange={handleSearch}
+                searchTerm={searchQuery}
+                enableSearch={true}
                 enableExport={true}
                 exportFileName="attendance-records"
                 bulkActions={bulkActions}
                 showBulkActions={true}
                 pagination={false}
                 loading={loading}
-                // onExport={handleExport}
                 handleExport={handleExport}
                 onFilterClick={handleFilterClick}
               />
 
-              {/* Custom Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center mt-6">
                   <Pagination>
@@ -655,7 +951,6 @@ export const AttendanceDashboard = () => {
           />
         </>
       )}
-
     </div>
   );
 };

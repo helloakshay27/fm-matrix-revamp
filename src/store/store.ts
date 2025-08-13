@@ -46,10 +46,10 @@ import { addCurrencyReducer, getCurrencyReducer } from './slices/currencySlice'
 import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from './slices/eventSlice'
 import { createUserGroupReducer, fetchUserGroupsReducer } from './slices/userGroupSlice'
 import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
-import { fetchWorkOrdersReducer } from './slices/workOrderSlice'
-import { createMaterialPRReducer, getAddressesReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer } from './slices/materialPRSlice'
-import { getPurchaseOrdersReducer } from './slices/purchaseOrderSlice'
-import { getServicePrReducer } from './slices/servicePRSlice'
+import { fetchWorkOrdersReducer, getWorkOrderByIdReducer } from './slices/workOrderSlice'
+import { changePlantDetailsReducer, createMaterialPRReducer, getAddressesReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer } from './slices/materialPRSlice'
+import { createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer } from './slices/purchaseOrderSlice'
+import { createServicePRReducer, getServicePrReducer, getServicesReducer } from './slices/servicePRSlice'
 
 export const store = configureStore({
   reducer: {
@@ -166,6 +166,7 @@ export const store = configureStore({
 
     // Work Order
     fetchWorkOrders: fetchWorkOrdersReducer,
+    getWorkOrderById: getWorkOrderByIdReducer,
 
     // Material PR
     getSuppliers: getSuppliersReducer,
@@ -175,12 +176,18 @@ export const store = configureStore({
     createMaterialPR: createMaterialPRReducer,
     getMaterialPR: getMaterialPRReducer,
     getMaterialPRById: getMaterialPRByIdReducer,
+    changePlantDetails: changePlantDetailsReducer,
 
     // Purchase Order
     getPurchaseOrders: getPurchaseOrdersReducer,
+    createPurchaseOrder: createPurchaseOrderReducer,
+    getUnits: getUnitsReducer,
+    materialPRChange: materialPRChangeReducer,
 
     // Service PR
     getServicePr: getServicePrReducer,
+    createServicePR: createServicePRReducer,
+    getServices: getServicesReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

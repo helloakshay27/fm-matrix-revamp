@@ -22,6 +22,9 @@ import {
   Wind,
   ArrowDown,
   ArrowUp,
+  Building,
+  Truck,
+  CloudRain,
   Percent,
   Users,
   Settings,
@@ -462,6 +465,11 @@ const AddAssetPage = () => {
   const [showBoardRatioOptions, setShowBoardRatioOptions] = useState(false);
   const [showRenewableOptions, setShowRenewableOptions] = useState(false);
   const [showFreshWaterOptions, setShowFreshWaterOptions] = useState(false);
+  const [showWaterSourceOptions, setShowWaterSourceOptions] = useState(false);
+  const [showWaterDistributionOptions, setShowWaterDistributionOptions] = useState(false);
+  
+  // Additional state for tracking the third level selection
+  const [tertiaryCategory, setTertiaryCategory] = useState("");
   const [allocationBasedOn, setAllocationBasedOn] = useState("department");
   const [customFieldModalOpen, setCustomFieldModalOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState("");
@@ -1160,6 +1168,11 @@ const AddAssetPage = () => {
       icon: Recycle,
     },
     {
+      value: "water-distribution",
+      label: "Water Distribution",
+      icon: Building,
+    },
+    {
       value: "iex-gdam",
       label: "IEX-GDAM",
       icon: BarChart,
@@ -1209,43 +1222,216 @@ const AddAssetPage = () => {
     },
   ];
 
-  // Fresh water sub-options
+  // Fresh water main options (Source and Destination)
   const getFreshWaterOptions = () => [
     {
-      value: "source-input",
-      label: "Source Input",
+      value: "source",
+      label: "Source",
       icon: ArrowDown,
     },
     {
-      value: "destination-output",
-      label: "Destination Output",
+      value: "destination",
+      label: "Destination",
       icon: ArrowUp,
     },
   ];
 
+  // Water source sub-options (shown when Source is selected)
+  const getWaterSourceOptions = () => [
+    {
+      value: "municipal-corporation",
+      label: "Municipal Corporation",
+      icon: Building,
+    },
+    {
+      value: "tanker",
+      label: "Tanker",
+      icon: Truck,
+    },
+    {
+      value: "borewell",
+      label: "Borewell",
+      icon: ArrowDown,
+    },
+    {
+      value: "rainwater",
+      label: "Rainwater",
+      icon: CloudRain,
+    },
+    {
+      value: "jackwell",
+      label: "Jackwell",
+      icon: ArrowUp,
+    },
+    {
+      value: "pump",
+      label: "Pump",
+      icon: Zap,
+    },
+  ];
+
+  // Water distribution sub-options
+  const getWaterDistributionOptions = () => [
+    {
+      value: "irrigation",
+      label: "Irrigation",
+      icon: Droplet,
+    },
+    {
+      value: "domestic",
+      label: "Domestic",
+      icon: Building,
+    },
+    {
+      value: "flushing",
+      label: "Flushing",
+      icon: ArrowDown,
+    },
+  ];
+
+  // Asset Meter Type ID mapping based on database values
+  const getAssetMeterTypeId = (meterCategory, subCategory = null, tertiaryCategory = null) => {
+    // Create mapping from UI selections to database IDs
+    const meterTypeMapping = {
+      // Board category mappings
+      "board": {
+        "ht-panel": 5, // HT Panel
+        "vcb": 8,      // VCB
+        "transformer": 2, // Transformer
+        "lt-panel": 9,  // LT Panel
+      },
+      // DG category
+      "dg": 1, // DG
+      
+      // Renewable energy mappings
+      "renewable": {
+        "solar": 7,      // Solar Panel
+        "bio-methanol": 10, // Bio Methanol
+        "wind": 11,       // Wind
+      },
+      
+      // Fresh water mappings (three-level hierarchy)
+      "fresh-water": {
+        "source": {
+          "municipal-corporation": 12, // Municipal Corporation
+          "tanker": 13,               // Tanker  
+          "borewell": 14,             // Borewell
+          "rainwater": 15,            // Rainwater
+          "jackwell": 16,             // Jackwell
+          "pump": 3,                  // Pump (general pump type)
+        },
+        "destination": {
+          // You can add destination-specific mappings here if needed
+          // For now, using a generic mapping
+          "output": 18, // Domestic (as a placeholder for destination)
+        }
+      },
+      
+      // Recycled water
+      "recycled": 6, // Recycled Water
+      
+      // Water distribution mappings
+      "water-distribution": {
+        "irrigation": 17,  // Irrigation
+        "domestic": 18,    // Domestic
+        "flushing": 19,    // Flushing
+      },
+      
+      // IEX-GDAM
+      "iex-gdam": 21, // IEX GDAM
+    };
+
+    // Handle three-level hierarchy (for fresh-water with source/destination)
+    if (tertiaryCategory && meterTypeMapping[meterCategory] && 
+        meterTypeMapping[meterCategory][subCategory] && 
+        typeof meterTypeMapping[meterCategory][subCategory] === 'object') {
+      return meterTypeMapping[meterCategory][subCategory][tertiaryCategory] || null;
+    }
+    // Handle two-level hierarchy - but make sure we don't return nested objects
+    else if (subCategory && meterTypeMapping[meterCategory] && typeof meterTypeMapping[meterCategory] === 'object') {
+      const result = meterTypeMapping[meterCategory][subCategory];
+      // If the result is still an object (nested structure), return null instead
+      return (typeof result === 'number') ? result : null;
+    } 
+    // Handle single-level
+    else if (typeof meterTypeMapping[meterCategory] === 'number') {
+      return meterTypeMapping[meterCategory];
+    }
+    
+    return null;
+  };
+
   // Handle meter category change
   const handleMeterCategoryChange = (value) => {
+    console.log('Meter category changed:', value);
     setMeterCategoryType(value);
     setSubCategoryType(""); // Reset sub-category when main category changes
+    setTertiaryCategory(""); // Reset tertiary category when main category changes
 
-    // Show Board Ratio options if Board is selected
+    // Log the meter type ID that will be used
+    const meterTypeId = getAssetMeterTypeId(value, null, null);
+    console.log('Asset Meter Type ID for category:', value, '=', meterTypeId, typeof meterTypeId);
+
+    // Show appropriate sub-options based on selection
     if (value === "board") {
       setShowBoardRatioOptions(true);
       setShowRenewableOptions(false);
       setShowFreshWaterOptions(false);
-    } else if (value === "renewable") {
+      setShowWaterSourceOptions(false);
+      setShowWaterDistributionOptions(false);
+    } else if (value === "renewable") {sp
       setShowRenewableOptions(true);
       setShowBoardRatioOptions(false);
       setShowFreshWaterOptions(false);
+      setShowWaterSourceOptions(false);
+      setShowWaterDistributionOptions(false);
     } else if (value === "fresh-water") {
       setShowFreshWaterOptions(true);
       setShowBoardRatioOptions(false);
       setShowRenewableOptions(false);
+      setShowWaterSourceOptions(false);
+      setShowWaterDistributionOptions(false);
+    } else if (value === "water-distribution") {
+      setShowWaterDistributionOptions(true);
+      setShowBoardRatioOptions(false);
+      setShowRenewableOptions(false);
+      setShowFreshWaterOptions(false);
+      setShowWaterSourceOptions(false);
     } else {
       setShowBoardRatioOptions(false);
       setShowRenewableOptions(false);
       setShowFreshWaterOptions(false);
+      setShowWaterSourceOptions(false);
+      setShowWaterDistributionOptions(false);
     }
+  };
+
+  // Handle sub-category change
+  const handleSubCategoryChange = (value) => {
+    console.log('Sub-category changed:', value);
+    setSubCategoryType(value);
+    setTertiaryCategory(""); // Reset tertiary category when sub-category changes
+
+    // Special handling for fresh-water source/destination
+    if (meterCategoryType === "fresh-water" && value === "source") {
+      setShowWaterSourceOptions(true);
+    } else {
+      setShowWaterSourceOptions(false);
+    }
+
+    // Log the meter type ID that will be used with the sub-category
+    const meterTypeId = getAssetMeterTypeId(meterCategoryType, value, null);
+    console.log('Asset Meter Type ID for category:', meterCategoryType, 'sub-category:', value, '=', meterTypeId, typeof meterTypeId);
+  };
+
+  // Handle tertiary category change (for water sources)
+  const handleTertiaryCategoryChange = (value) => {
+    console.log('Tertiary category changed:', value);
+    setTertiaryCategory(value);
+
+    // Log the meter type ID that will be used with all three levels
+    const meterTypeId = getAssetMeterTypeId(meterCategoryType, subCategoryType, value);
+    console.log('Asset Meter Type ID for category:', meterCategoryType, 'sub-category:', subCategoryType, 'tertiary:', value, '=', meterTypeId, typeof meterTypeId);
   };
 
   interface HandleFieldChangeFn {
@@ -2931,6 +3117,10 @@ const AddAssetPage = () => {
         // Meter fields
         meter_tag_type: formData.meter_tag_type,
         parent_meter_id: formData.parent_meter_id,
+        asset_meter_type_id: (() => {
+          const meterTypeId = getAssetMeterTypeId(meterCategoryType, subCategoryType, tertiaryCategory);
+          return typeof meterTypeId === 'number' ? meterTypeId : null;
+        })(),
 
         // Warranty
         warranty: formData.warranty === "Yes" ? true : false,
@@ -9693,6 +9883,26 @@ const AddAssetPage = () => {
                               })}
                             </div>
 
+                            {/* Meter Type ID Indicator */}
+                            {(meterCategoryType || subCategoryType || tertiaryCategory) && (
+                              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                  <span className="text-sm text-blue-700">
+                                    <strong>Selected Meter Type:</strong> {meterCategoryType}
+                                    {subCategoryType && ` → ${subCategoryType}`}
+                                    {tertiaryCategory && ` → ${tertiaryCategory}`}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-blue-600 mt-1">
+                                  Asset Meter Type ID: {(() => {
+                                    const meterTypeId = getAssetMeterTypeId(meterCategoryType, subCategoryType, tertiaryCategory);
+                                    return typeof meterTypeId === 'number' ? meterTypeId : 'Not mapped';
+                                  })()}
+                                </div>
+                              </div>
+                            )}
+
                             {/* Board Ratio Options (Second Image) */}
                             {showBoardRatioOptions && (
                               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -9712,9 +9922,9 @@ const AddAssetPage = () => {
                                           checked={
                                             subCategoryType === option.value
                                           }
-                                          onChange={(e) =>
-                                            setSubCategoryType(e.target.value)
-                                          }
+                                          onChange={(e) => {
+                                            handleSubCategoryChange(e.target.value);
+                                          }}
                                           className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                                           style={{
                                             accentColor: "#C72030",
@@ -9753,9 +9963,9 @@ const AddAssetPage = () => {
                                           checked={
                                             subCategoryType === option.value
                                           }
-                                          onChange={(e) =>
-                                            setSubCategoryType(e.target.value)
-                                          }
+                                          onChange={(e) => {
+                                            handleSubCategoryChange(e.target.value);
+                                          }}
                                           className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                                           style={{
                                             accentColor: "#C72030",
@@ -9794,9 +10004,9 @@ const AddAssetPage = () => {
                                           checked={
                                             subCategoryType === option.value
                                           }
-                                          onChange={(e) =>
-                                            setSubCategoryType(e.target.value)
-                                          }
+                                          onChange={(e) => {
+                                            handleSubCategoryChange(e.target.value);
+                                          }}
                                           className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
                                           style={{
                                             accentColor: "#C72030",
@@ -9805,6 +10015,88 @@ const AddAssetPage = () => {
                                         <IconComponent className="w-4 h-4 text-gray-600" />
                                         <label
                                           htmlFor={`fresh-water-${option.value}`}
+                                          className="text-xs sm:text-sm cursor-pointer"
+                                        >
+                                          {option.label}
+                                        </label>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Water Source Options (shown when Source is selected) */}
+                            {showWaterSourceOptions && (
+                              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4 mt-4">
+                                {getWaterSourceOptions().map((option) => {
+                                  const IconComponent = option.icon;
+                                  return (
+                                    <div
+                                      key={option.value}
+                                      className="p-3 sm:p-4 rounded-lg text-center bg-white border"
+                                    >
+                                      <div className="flex items-center justify-center space-x-2">
+                                        <input
+                                          type="radio"
+                                          id={`water-source-${option.value}`}
+                                          name="waterSourceCategory"
+                                          value={option.value}
+                                          checked={
+                                            tertiaryCategory === option.value
+                                          }
+                                          onChange={(e) => {
+                                            handleTertiaryCategoryChange(e.target.value);
+                                          }}
+                                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                          style={{
+                                            accentColor: "#C72030",
+                                          }}
+                                        />
+                                        <IconComponent className="w-4 h-4 text-gray-600" />
+                                        <label
+                                          htmlFor={`water-source-${option.value}`}
+                                          className="text-xs sm:text-sm cursor-pointer"
+                                        >
+                                          {option.label}
+                                        </label>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Water Distribution Options */}
+                            {showWaterDistributionOptions && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                                {getWaterDistributionOptions().map((option) => {
+                                  const IconComponent = option.icon;
+                                  return (
+                                    <div
+                                      key={option.value}
+                                      className="p-3 sm:p-4 rounded-lg text-center bg-white border"
+                                    >
+                                      <div className="flex items-center justify-center space-x-2">
+                                        <input
+                                          type="radio"
+                                          id={`water-distribution-${option.value}`}
+                                          name="waterDistributionCategory"
+                                          value={option.value}
+                                          checked={
+                                            subCategoryType === option.value
+                                          }
+                                          onChange={(e) => {
+                                            handleSubCategoryChange(e.target.value);
+                                          }}
+                                          className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                          style={{
+                                            accentColor: "#C72030",
+                                          }}
+                                        />
+                                        <IconComponent className="w-4 h-4 text-gray-600" />
+                                        <label
+                                          htmlFor={`water-distribution-${option.value}`}
                                           className="text-xs sm:text-sm cursor-pointer"
                                         >
                                           {option.label}

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Chip, OutlinedInput } from '@mui/material';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLayout } from '@/contexts/LayoutContext';
 
 interface SupportStaffData {
   id: string;
@@ -20,6 +22,7 @@ interface SupportStaffData {
 export const SupportStaffPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -27,8 +30,44 @@ export const SupportStaffPage = () => {
     days: '',
     hours: '',
     minutes: '',
-    selectedIcon: ''
+    selectedIcons: [] as string[]
   });
+
+  // Field styles for Material-UI components
+  const fieldStyles = {
+    backgroundColor: '#fff',
+    borderRadius: '4px',
+    '& .MuiOutlinedInput-root': {
+      '& fieldset': {
+        borderColor: '#ddd',
+      },
+      '&:hover fieldset': {
+        borderColor: '#C72030',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
+
+  // Service type options
+  const serviceTypeOptions = [
+    'Delivery',
+    'Chef',
+    'Cleaning',
+    'Maintenance',
+    'Security',
+    'Catering',
+    'Housekeeping',
+    'Plumbing',
+    'Electrical',
+    'Gardening'
+  ];
 
   // Sample data matching the uploaded image structure
   const sampleStaff: SupportStaffData[] = [
@@ -93,6 +132,10 @@ export const SupportStaffPage = () => {
   const [filteredStaff, setFilteredStaff] = useState<SupportStaffData[]>(sampleStaff);
 
   useEffect(() => {
+    setCurrentSection('Settings');
+  }, [setCurrentSection]);
+
+  useEffect(() => {
     const filtered = sampleStaff.filter(staff =>
       staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       staff.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
@@ -134,7 +177,7 @@ export const SupportStaffPage = () => {
       days: '',
       hours: '',
       minutes: '',
-      selectedIcon: ''
+      selectedIcons: []
     });
   };
 
@@ -254,17 +297,6 @@ export const SupportStaffPage = () => {
       <div className="mt-4 text-sm text-gray-600">
         Showing 1 to {filteredStaff.length} of {filteredStaff.length} rows
       </div>
-
-      {/* Footer */}
-      <div className="mt-6 text-center">
-        <div className="inline-flex items-center gap-2 text-sm text-gray-600">
-          <span>Powered by</span>
-          <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center">
-            <span className="text-white text-xs font-bold">L</span>
-          </div>
-          <span className="font-semibold text-gray-800">LOCKATED</span>
-        </div>
-        </div>
       </div>
 
       {/* Add Modal */}
@@ -285,53 +317,69 @@ export const SupportStaffPage = () => {
           <div className="space-y-6">
             {/* Category Name Input */}
             <div>
-              <Input
+              <TextField
                 placeholder="Enter Category Name"
                 value={formData.categoryName}
                 onChange={(e) => setFormData({...formData, categoryName: e.target.value})}
-                className="w-full"
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={fieldStyles}
               />
             </div>
 
+
             {/* Time Inputs */}
             <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Input
-                  placeholder="Days"
-                  value={formData.days}
-                  onChange={(e) => setFormData({...formData, days: e.target.value})}
-                />
-              </div>
-              <div>
-                <Input
-                  placeholder="Hrs"
-                  value={formData.hours}
-                  onChange={(e) => setFormData({...formData, hours: e.target.value})}
-                />
-              </div>
-              <div>
-                <Input
-                  placeholder="Min"
-                  value={formData.minutes}
-                  onChange={(e) => setFormData({...formData, minutes: e.target.value})}
-                />
-              </div>
+              <TextField
+                placeholder="Days"
+                value={formData.days}
+                onChange={(e) => setFormData({...formData, days: e.target.value})}
+                variant="outlined"
+                size="small"
+                sx={fieldStyles}
+              />
+              <TextField
+                placeholder="Hrs"
+                value={formData.hours}
+                onChange={(e) => setFormData({...formData, hours: e.target.value})}
+                variant="outlined"
+                size="small"
+                sx={fieldStyles}
+              />
+              <TextField
+                placeholder="Min"
+                value={formData.minutes}
+                onChange={(e) => setFormData({...formData, minutes: e.target.value})}
+                variant="outlined"
+                size="small"
+                sx={fieldStyles}
+              />
             </div>
 
             {/* Icon Selection Grid */}
-            <div className="grid grid-cols-6 gap-4">
+            <div className="grid grid-cols-6 gap-3">
               {iconOptions.map((option) => (
                 <div
                   key={option.id}
-                  className={`flex flex-col items-center justify-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 ${
-                    formData.selectedIcon === option.id 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200'
-                  }`}
-                  onClick={() => setFormData({...formData, selectedIcon: option.id})}
+                  className="flex items-center gap-2 p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    const updatedIcons = formData.selectedIcons.includes(option.id)
+                      ? formData.selectedIcons.filter(id => id !== option.id)
+                      : [...formData.selectedIcons, option.id];
+                    setFormData({...formData, selectedIcons: updatedIcons});
+                  }}
                 >
-                  <div className="text-2xl mb-1">{option.icon}</div>
-                  <div className="text-xs text-center">{option.name}</div>
+                  <input
+                    type="radio"
+                    checked={formData.selectedIcons.includes(option.id)}
+                    onChange={() => {}}
+                    className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
+                    style={{
+                      accentColor: '#dc2626'
+                    }}
+                  />
+                  <div className="text-lg">{option.icon}</div>
                 </div>
               ))}
             </div>

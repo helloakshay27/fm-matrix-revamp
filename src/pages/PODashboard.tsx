@@ -1,15 +1,61 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus, Eye } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { POFilterDialog } from "@/components/POFilterDialog";
 import { ColumnConfig } from '@/hooks/useEnhancedTable'; // Adjust the import path as needed
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { toast } from 'sonner';
+import { useAppDispatch } from '@/store/hooks';
+import { getPurchaseOrders } from '@/store/slices/purchaseOrderSlice';
 
 export const PODashboard = () => {
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem('token');
+  const baseUrl = localStorage.getItem('baseUrl');
+
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [poList, setPoList] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await dispatch(getPurchaseOrders({ baseUrl, token })).unwrap();
+        const formattedData = response.purchase_orders.map((item: any) => ({
+          id: item.id,
+          poNumber: item.external_id,
+          referenceNo: item.reference_number,
+          createdBy: item.created_by,
+          createdOn: item.created_at.split('T')[0],
+          supplier: item.supplier?.company_name,
+          paymentTenure: item.payment_tenure,
+          activeInactive: item.active,
+          lastApprovedBy: item.approval_levels[item.approval_levels.length - 1].approved_by,
+          approvalStatus: item.all_level_approved ? "Approved" : item.all_level_approved === false ? "Rejected" : "Pending",
+          advanceAmount: item.advance_amount,
+          poAmount: item.po_amount,
+          retention: item.retention,
+          tds: item.tds,
+          qc: item.quality_holding,
+          tdsAmount: item.total_tax_amount,
+          retentionAmount: item.retention_amount,
+          retentionOutstanding: item.retention_outstanding,
+          qcAmount: item.qc_amount,
+          qcOutstanding: item.qc_outstanding,
+        }))
+
+        console.log(formattedData)
+        setPoList(formattedData)
+      } catch (error) {
+        console.log(error);
+        toast.error(error);
+      }
+    }
+
+    fetchData();
+  }, [])
 
   const poData = [
     {
@@ -93,7 +139,7 @@ export const PODashboard = () => {
   ];
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'approved':
         return 'bg-green-500 text-white';
       case 'rejected':
@@ -136,7 +182,7 @@ export const PODashboard = () => {
         return (
           <span
             className={
-              item.debitCreditNoteRaised.toLowerCase() === "yes"
+              item.debitCreditNoteRaised?.toLowerCase() === "yes"
                 ? "text-green-600 font-semibold"
                 : "text-red-600 font-semibold"
             }
@@ -276,7 +322,7 @@ export const PODashboard = () => {
     <div className="p-4 sm:p-6">
       {/* Enhanced Table */}
       <EnhancedTable
-        data={poData}
+        data={poList || []}
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
@@ -290,7 +336,7 @@ export const PODashboard = () => {
         // enableExport={true}
         exportFileName="purchase-orders"
         pagination={true}
-        pageSize={2}
+        pageSize={10}
         enableSearch={true}
         leftActions={leftActions}
         onFilterClick={() => setIsFilterDialogOpen(true)}

@@ -7,30 +7,22 @@ import {
   InputLabel,
   Select as MuiSelect,
   MenuItem,
-  Box,
-  FormLabel,
-  RadioGroup,
-  Radio,
-  FormControlLabel,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import {
-  changePlantDetails,
   getAddresses,
   getPlantDetails,
   getSuppliers,
 } from "@/store/slices/materialPRSlice";
 import { toast } from "sonner";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import { createServicePR, getServices } from "@/store/slices/servicePRSlice";
 
-export const AddServicePRDashboard: React.FC = () => {
+export const WorkOrderAddPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
   const navigate = useNavigate();
-
-  const { data } = useAppSelector(state => state.changePlantDetails)
 
   const [suppliers, setSuppliers] = useState([]);
   const [plantDetails, setPlantDetails] = useState([]);
@@ -78,7 +70,6 @@ export const AddServicePRDashboard: React.FC = () => {
   ]);
 
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const [showRadio, setShowRadio] = useState(false)
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -172,12 +163,6 @@ export const AddServicePRDashboard: React.FC = () => {
     );
   };
 
-  useEffect(() => {
-    if (data.length > 0) {
-      setShowRadio(true)
-    }
-  }, [data])
-
   const addNewDetailsForm = () => {
     const newId = Math.max(...detailsForms.map((form) => form.id)) + 1;
     const newForm = {
@@ -209,12 +194,6 @@ export const AddServicePRDashboard: React.FC = () => {
     }
   };
 
-  const handlePlantDetailsChange = (e) => {
-    const { value } = e.target;
-    setFormData((prev) => ({ ...prev, plantDetail: value }));
-    dispatch(changePlantDetails({ baseUrl, id: value, token }))
-  };
-
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
@@ -236,7 +215,7 @@ export const AddServicePRDashboard: React.FC = () => {
   const handleSubmit = async () => {
     const payload = {
       pms_work_order: {
-        letter_of_indent: true,
+        letter_of_indent: false,
         pms_supplier_id: formData.contractor,
         plant_detail_id: formData.plantDetail,
         wo_date: formData.woDate,
@@ -266,8 +245,8 @@ export const AddServicePRDashboard: React.FC = () => {
 
     try {
       await dispatch(createServicePR({ data: payload, baseUrl, token })).unwrap();
-      toast.success("Service PR created successfully");
-      navigate('/finance/service-pr')
+      toast.success("Work Order created successfully");
+      navigate('/finance/wo')
     } catch (error) {
       console.log(error);
       toast.error(error);
@@ -346,7 +325,9 @@ export const AddServicePRDashboard: React.FC = () => {
                 <MuiSelect
                   label="Plant Detail*"
                   value={formData.plantDetail}
-                  onChange={handlePlantDetailsChange}
+                  onChange={(e) =>
+                    handleInputChange("plantDetail", e.target.value)
+                  }
                   displayEmpty
                   sx={{
                     height: {
@@ -632,28 +613,6 @@ export const AddServicePRDashboard: React.FC = () => {
                     mt: 1,
                   }}
                 />
-
-                {
-                  showRadio && (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
-                      }}
-                    >
-                      <FormLabel component="legend" sx={{ minWidth: "80px" }}>
-                        Apply WBS
-                      </FormLabel>
-                      <RadioGroup
-                        row
-                      >
-                        <FormControlLabel value="individual" control={<Radio />} label="Individual" />
-                        <FormControlLabel value="overall" control={<Radio />} label="All Items" />
-                      </RadioGroup>
-                    </Box>
-                  )
-                }
               </div>
             </div>
           </div>

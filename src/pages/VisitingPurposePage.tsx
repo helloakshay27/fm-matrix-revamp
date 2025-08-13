@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { TextField } from '@mui/material';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useLayout } from '@/contexts/LayoutContext';
 
 interface VisitingPurposeData {
   id: string;
@@ -22,11 +25,30 @@ interface VisitingPurposeData {
 export const VisitingPurposePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isMoveInOutModalOpen, setIsMoveInOutModalOpen] = useState(false);
+  const [isWorkTypeModalOpen, setIsWorkTypeModalOpen] = useState(false);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     site: '',
     purpose: '',
+    active: true
+  });
+  const [moveInOutFormData, setMoveInOutFormData] = useState({
+    site: '',
+    purpose: '',
+    active: true
+  });
+  const [workTypeFormData, setWorkTypeFormData] = useState({
+    site: '',
+    staffType: '',
+    workType: '',
+    active: true
+  });
+  const [commentFormData, setCommentFormData] = useState({
+    comment: '',
     active: true
   });
 
@@ -34,7 +56,7 @@ export const VisitingPurposePage = () => {
   const samplePurposes: VisitingPurposeData[] = [
     {
       id: '1',
-      purpose: 'vendor',
+      purpose: 'Vendor',
       status: true,
       createdOn: '15/01/2025 11:04 AM',
       createdBy: 'Abdul A'
@@ -48,29 +70,26 @@ export const VisitingPurposePage = () => {
     },
     {
       id: '3',
-      purpose: 'Delivery',
+      purpose: 'Personal',
       status: true,
       createdOn: '15/01/2025 11:02 AM',
       createdBy: 'Abdul A'
     },
     {
       id: '4',
-      purpose: 'Maintenance',
-      status: false,
-      createdOn: '15/01/2025 11:01 AM',
-      createdBy: 'Abdul A'
-    },
-    {
-      id: '5',
-      purpose: 'Interview',
+      purpose: 'Courier',
       status: true,
-      createdOn: '15/01/2025 11:00 AM',
+      createdOn: '15/01/2025 11:01 AM',
       createdBy: 'Abdul A'
     }
   ];
 
   const [filteredPurposes, setFilteredPurposes] = useState<VisitingPurposeData[]>(samplePurposes);
   const [purposes, setPurposes] = useState<VisitingPurposeData[]>(samplePurposes);
+
+  useEffect(() => {
+    setCurrentSection('Settings');
+  }, [setCurrentSection]);
 
   useEffect(() => {
     const filtered = purposes.filter(purpose =>
@@ -85,24 +104,93 @@ export const VisitingPurposePage = () => {
   };
 
   const handleMoveInOut = () => {
-    toast({
-      title: "Move In/Out",
-      description: "Move In/Out functionality",
+    setIsMoveInOutModalOpen(true);
+  };
+
+  const handleMoveInOutModalClose = () => {
+    setIsMoveInOutModalOpen(false);
+    setMoveInOutFormData({
+      site: '',
+      purpose: '',
+      active: true
     });
+  };
+
+  const handleMoveInOutSubmit = () => {
+    if (!moveInOutFormData.purpose) {
+      toast({
+        title: "Error",
+        description: "Please enter a move in/out purpose",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Move In/Out purpose created successfully",
+    });
+    handleMoveInOutModalClose();
   };
 
   const handleWorkType = () => {
-    toast({
-      title: "Work Type",
-      description: "Work Type functionality",
+    setIsWorkTypeModalOpen(true);
+  };
+
+  const handleWorkTypeModalClose = () => {
+    setIsWorkTypeModalOpen(false);
+    setWorkTypeFormData({
+      site: '',
+      staffType: '',
+      workType: '',
+      active: true
     });
   };
 
-  const handleVisitorCategory = () => {
+  const handleWorkTypeSubmit = () => {
+    if (!workTypeFormData.workType) {
+      toast({
+        title: "Error",
+        description: "Please enter a work type",
+        variant: "destructive"
+      });
+      return;
+    }
+
     toast({
-      title: "Visitor Category",
-      description: "Visitor Category functionality",
+      title: "Success",
+      description: "Work type created successfully",
     });
+    handleWorkTypeModalClose();
+  };
+
+  const handleVisitorCategory = () => {
+    setIsCommentModalOpen(true);
+  };
+
+  const handleCommentModalClose = () => {
+    setIsCommentModalOpen(false);
+    setCommentFormData({
+      comment: '',
+      active: true
+    });
+  };
+
+  const handleCommentSubmit = () => {
+    if (!commentFormData.comment.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a comment",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: "Comment created successfully",
+    });
+    handleCommentModalClose();
   };
 
   const handleModalClose = () => {
@@ -213,28 +301,11 @@ export const VisitingPurposePage = () => {
             className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Visitor Category
+            Visitor Comment
           </Button>
 
           <div className="flex-1"></div>
 
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-80"
-              />
-            </div>
-            <Button variant="outline" size="icon" className="border-gray-300">
-              <RefreshCw className="w-4 h-4" />
-            </Button>
-            <Button variant="outline" size="icon" className="border-gray-300">
-              <Grid3X3 className="w-4 h-4" />
-            </Button>
-          </div>
         </div>
 
         {/* Table */}
@@ -245,69 +316,103 @@ export const VisitingPurposePage = () => {
                 <TableHead className="w-20">Action</TableHead>
                 <TableHead className="min-w-[200px]">Purpose</TableHead>
                 <TableHead className="w-32 text-center">Status</TableHead>
+                <TableHead className="w-20">Action</TableHead>
+                <TableHead className="min-w-[200px]">Purpose</TableHead>
+                <TableHead className="w-32 text-center">Status</TableHead>
+                <TableHead className="w-20">Action</TableHead>
+                <TableHead className="min-w-[200px]">Purpose</TableHead>
+                <TableHead className="w-32 text-center">Status</TableHead>
+                <TableHead className="w-20">Action</TableHead>
+                <TableHead className="min-w-[200px]">Purpose</TableHead>
+                <TableHead className="w-32 text-center">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPurposes.map((purpose) => (
-                <TableRow key={purpose.id} className="hover:bg-gray-50">
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(purpose.id)}
-                        className="p-1 hover:bg-gray-100 rounded"
-                        title="Edit"
-                      >
-                        <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(purpose.id)}
-                        className="p-1 hover:bg-gray-100 rounded"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
-                      </button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {purpose.purpose}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                      purpose.status 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {purpose.status ? 'Active' : 'Inactive'}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))}
+              <TableRow className="hover:bg-gray-50">
+                {/* Vendor */}
+                <TableCell>
+                  <button
+                    onClick={() => handleEdit('1')}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                  </button>
+                </TableCell>
+                <TableCell className="font-medium">Vendor</TableCell>
+                <TableCell className="text-center">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </TableCell>
+
+                {/* Meeting */}
+                <TableCell>
+                  <button
+                    onClick={() => handleEdit('2')}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                  </button>
+                </TableCell>
+                <TableCell className="font-medium">Meeting</TableCell>
+                <TableCell className="text-center">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </TableCell>
+
+                {/* Personal */}
+                <TableCell>
+                  <button
+                    onClick={() => handleEdit('3')}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                  </button>
+                </TableCell>
+                <TableCell className="font-medium">Personal</TableCell>
+                <TableCell className="text-center">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </TableCell>
+
+                {/* Courier */}
+                <TableCell>
+                  <button
+                    onClick={() => handleEdit('4')}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                  </button>
+                </TableCell>
+                <TableCell className="font-medium">Courier</TableCell>
+                <TableCell className="text-center">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </TableCell>
+              </TableRow>
             </TableBody>
           </Table>
         </div>
 
-        {/* Footer */}
-        <div className="mt-6 text-center">
-          <div className="inline-flex items-center gap-2 text-sm text-gray-600">
-            <span>Powered by</span>
-            <div className="w-6 h-6 bg-gray-800 rounded-full flex items-center justify-center">
-              <span className="text-white text-xs font-bold">L</span>
-            </div>
-            <span className="font-semibold text-gray-800">LOCKATED</span>
-          </div>
-        </div>
       </div>
 
       {/* Add Purpose Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="max-w-md bg-white z-50">
-          <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">Select Site</DialogTitle>
+          <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
+            <DialogTitle className="text-lg font-semibold">Add Purpose</DialogTitle>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleModalClose}
-              className="h-6 w-6 p-0"
+              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -316,11 +421,12 @@ export const VisitingPurposePage = () => {
           <div className="space-y-4">
             {/* Site Selection */}
             <div className="space-y-2">
+              <Label className="text-sm text-gray-600">Select site</Label>
               <Select value={formData.site} onValueChange={(value) => setFormData({...formData, site: value})}>
-                <SelectTrigger className="w-full bg-white">
+                <SelectTrigger className="w-full bg-white border border-gray-300">
                   <SelectValue placeholder="Select Site" />
                 </SelectTrigger>
-                <SelectContent className="bg-white z-50">
+                <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
                   <SelectItem value="site1">Lockated - Main Office</SelectItem>
                   <SelectItem value="site2">Zycus Infotech - Pune</SelectItem>
                   <SelectItem value="site3">Arvog Finance - Mumbai</SelectItem>
@@ -331,11 +437,26 @@ export const VisitingPurposePage = () => {
             {/* Purpose Input */}
             <div className="space-y-2">
               <Label>Enter purpose</Label>
-              <Input
+              <TextField
                 placeholder="enter purpose"
                 value={formData.purpose}
                 onChange={(e) => setFormData({...formData, purpose: e.target.value})}
-                className="w-full"
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                }}
               />
             </div>
 
@@ -353,6 +474,248 @@ export const VisitingPurposePage = () => {
             <div className="flex justify-end pt-4">
               <Button 
                 onClick={handleSubmit}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Move In/Out Purpose Modal */}
+      <Dialog open={isMoveInOutModalOpen} onOpenChange={setIsMoveInOutModalOpen}>
+        <DialogContent className="max-w-md bg-white z-50">
+          <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
+            <DialogTitle className="text-lg font-semibold">Add Move In/Out Purpose</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleMoveInOutModalClose}
+              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Site Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm text-gray-600">Select site</Label>
+              <Select value={moveInOutFormData.site} onValueChange={(value) => setMoveInOutFormData({...moveInOutFormData, site: value})}>
+                <SelectTrigger className="w-full bg-white border border-gray-300">
+                  <SelectValue placeholder="Select Site" />
+                </SelectTrigger>
+                <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
+                  <SelectItem value="site1">Lockated - Main Office</SelectItem>
+                  <SelectItem value="site2">Zycus Infotech - Pune</SelectItem>
+                  <SelectItem value="site3">Arvog Finance - Mumbai</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Move In/Out Purpose Input */}
+            <div className="space-y-2">
+              <Label>Enter move in/ out purpose</Label>
+              <TextField
+                placeholder="enter purpose"
+                value={moveInOutFormData.purpose}
+                onChange={(e) => setMoveInOutFormData({...moveInOutFormData, purpose: e.target.value})}
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                }}
+              />
+            </div>
+
+            {/* Active Checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="moveInOutActive"
+                checked={moveInOutFormData.active}
+                onCheckedChange={(checked) => setMoveInOutFormData({...moveInOutFormData, active: checked as boolean})}
+              />
+              <Label htmlFor="moveInOutActive">Active</Label>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end pt-4">
+              <Button 
+                onClick={handleMoveInOutSubmit}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Work Type Modal */}
+      <Dialog open={isWorkTypeModalOpen} onOpenChange={setIsWorkTypeModalOpen}>
+        <DialogContent className="max-w-md bg-white z-50">
+          <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
+            <DialogTitle className="text-lg font-semibold">Add Work Type</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleWorkTypeModalClose}
+              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Site Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm text-gray-600">Select Site</Label>
+              <Select value={workTypeFormData.site} onValueChange={(value) => setWorkTypeFormData({...workTypeFormData, site: value})}>
+                <SelectTrigger className="w-full bg-white border border-gray-300">
+                  <SelectValue placeholder="Select Site" />
+                </SelectTrigger>
+                <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
+                  <SelectItem value="site1">Lockated - Main Office</SelectItem>
+                  <SelectItem value="site2">Zycus Infotech - Pune</SelectItem>
+                  <SelectItem value="site3">Arvog Finance - Mumbai</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Staff Type Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm text-gray-600">Select Staff Type</Label>
+              <Select value={workTypeFormData.staffType} onValueChange={(value) => setWorkTypeFormData({...workTypeFormData, staffType: value})}>
+                <SelectTrigger className="w-full bg-white border border-gray-300">
+                  <SelectValue placeholder="Select Staff Type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
+                  <SelectItem value="permanent">Permanent Staff</SelectItem>
+                  <SelectItem value="contract">Contract Staff</SelectItem>
+                  <SelectItem value="temporary">Temporary Staff</SelectItem>
+                  <SelectItem value="vendor">Vendor Staff</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Work Type Input */}
+            <div className="space-y-2">
+              <Label>Enter Work Type</Label>
+              <TextField
+                placeholder="Enter Work Type"
+                value={workTypeFormData.workType}
+                onChange={(e) => setWorkTypeFormData({...workTypeFormData, workType: e.target.value})}
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                }}
+              />
+            </div>
+
+            {/* Active Checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="workTypeActive"
+                checked={workTypeFormData.active}
+                onCheckedChange={(checked) => setWorkTypeFormData({...workTypeFormData, active: checked as boolean})}
+              />
+              <Label htmlFor="workTypeActive">Active</Label>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end pt-4">
+              <Button 
+                onClick={handleWorkTypeSubmit}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Comment Modal */}
+      <Dialog open={isCommentModalOpen} onOpenChange={setIsCommentModalOpen}>
+        <DialogContent className="max-w-md bg-white z-50">
+          <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
+            <DialogTitle className="text-lg font-semibold">Add Comment</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCommentModalClose}
+              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Comment Textarea */}
+            <div className="space-y-2">
+              <Label>Enter comment</Label>
+              <TextField
+                placeholder="Enter Comment"
+                value={commentFormData.comment}
+                onChange={(e) => setCommentFormData({...commentFormData, comment: e.target.value})}
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={3}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#d1d5db',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#C72030',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#C72030',
+                    },
+                  },
+                }}
+              />
+            </div>
+
+            {/* Active Checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="commentActive"
+                checked={commentFormData.active}
+                onCheckedChange={(checked) => setCommentFormData({...commentFormData, active: checked as boolean})}
+              />
+              <Label htmlFor="commentActive">Active</Label>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end pt-4">
+              <Button 
+                onClick={handleCommentSubmit}
                 className="bg-green-500 hover:bg-green-600 text-white px-6"
               >
                 Submit
