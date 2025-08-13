@@ -374,7 +374,10 @@ export const SupportStaffPage = () => {
                     type="radio"
                     checked={formData.selectedIcons.includes(option.id)}
                     onChange={() => {}}
-                    className="w-4 h-4"
+                    className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
+                    style={{
+                      accentColor: '#dc2626'
+                    }}
                   />
                   <div className="text-lg">{option.icon}</div>
                 </div>
