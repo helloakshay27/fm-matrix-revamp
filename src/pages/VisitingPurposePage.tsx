@@ -26,7 +26,6 @@ export const VisitingPurposePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { setCurrentSection } = useLayout();
-  const [activeTab, setActiveTab] = useState('visitor-in');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMoveInOutModalOpen, setIsMoveInOutModalOpen] = useState(false);
@@ -297,40 +296,6 @@ export const VisitingPurposePage = () => {
   return (
     <>
       <div className="p-6 min-h-screen">
-        {/* Tab Navigation */}
-        <div className="flex gap-1 mb-6 bg-gray-200 p-1 rounded-lg w-fit">
-          <button 
-            onClick={() => setActiveTab('visitor-in')}
-            className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'visitor-in' 
-                ? 'bg-[#C72030] text-white shadow-sm' 
-                : 'bg-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Visitor In
-          </button>
-          <button 
-            onClick={() => setActiveTab('visitor-out')}
-            className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'visitor-out' 
-                ? 'bg-[#C72030] text-white shadow-sm' 
-                : 'bg-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Visitor Out
-          </button>
-          <button 
-            onClick={() => setActiveTab('history')}
-            className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-              activeTab === 'history' 
-                ? 'bg-[#C72030] text-white shadow-sm' 
-                : 'bg-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            History
-          </button>
-        </div>
-
         {/* Action Buttons Bar */}
         <div className="flex items-center gap-3 mb-6">
           <Button 
@@ -356,194 +321,103 @@ export const VisitingPurposePage = () => {
             <Plus className="w-4 h-4 mr-2" />
             Work Type
           </Button>
+          
 
           <div className="flex-1"></div>
+
         </div>
 
-        {/* Tab Content */}
+        {/* Table */}
         <div className="bg-white rounded-lg border overflow-hidden">
-          {activeTab === 'visitor-in' && (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-[#f6f4ee]">
-                  <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[150px]">Visitor Name</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[120px]">Phone</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[120px]">Purpose</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[120px]">Check In</TableHead>
-                  <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow className="hover:bg-gray-50">
-                  <TableCell className="px-4 py-3">
-                    <button
-                      onClick={() => handleEdit('1')}
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                    </button>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 font-medium">John Doe</TableCell>
-                  <TableCell className="px-4 py-3">+91 9876543210</TableCell>
-                  <TableCell className="px-4 py-3">Meeting</TableCell>
-                  <TableCell className="px-4 py-3">10:30 AM</TableCell>
-                  <TableCell className="px-4 py-3 text-center">
-                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                      Checked In
-                    </span>
-                  </TableCell>
-                </TableRow>
-                <TableRow className="hover:bg-gray-50">
-                  <TableCell className="px-4 py-3">
-                    <button
-                      onClick={() => handleEdit('2')}
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                    </button>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 font-medium">Jane Smith</TableCell>
-                  <TableCell className="px-4 py-3">+91 9876543211</TableCell>
-                  <TableCell className="px-4 py-3">Vendor</TableCell>
-                  <TableCell className="px-4 py-3">11:15 AM</TableCell>
-                  <TableCell className="px-4 py-3 text-center">
-                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                      Checked In
-                    </span>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          )}
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                <TableHead className="px-4 py-3 w-20">Action</TableHead>
+                <TableHead className="px-4 py-3 min-w-[200px]">Purpose</TableHead>
+                <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
+                <TableHead className="px-4 py-3 w-20">Action</TableHead>
+                <TableHead className="px-4 py-3 min-w-[200px]">Purpose</TableHead>
+                <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
+                <TableHead className="px-4 py-3 w-20">Action</TableHead>
+                <TableHead className="px-4 py-3 min-w-[200px]">Purpose</TableHead>
+                <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
+                <TableHead className="px-4 py-3 w-20">Action</TableHead>
+                <TableHead className="px-4 py-3 min-w-[200px]">Purpose</TableHead>
+                <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow className="hover:bg-gray-50">
+                {/* Vendor */}
+                <TableCell className="px-4 py-3">
+                  <button
+                    onClick={() => handleEdit('1')}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                  </button>
+                </TableCell>
+                <TableCell className="px-4 py-3 font-medium">Vendor</TableCell>
+                <TableCell className="px-4 py-3 text-center">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </TableCell>
 
-          {activeTab === 'visitor-out' && (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-[#f6f4ee]">
-                  <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[150px]">Visitor Name</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[120px]">Phone</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[120px]">Purpose</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[120px]">Check Out</TableHead>
-                  <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow className="hover:bg-gray-50">
-                  <TableCell className="px-4 py-3">
-                    <button
-                      onClick={() => handleEdit('3')}
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                    </button>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 font-medium">Mike Johnson</TableCell>
-                  <TableCell className="px-4 py-3">+91 9876543212</TableCell>
-                  <TableCell className="px-4 py-3">Personal</TableCell>
-                  <TableCell className="px-4 py-3">2:45 PM</TableCell>
-                  <TableCell className="px-4 py-3 text-center">
-                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                      Checked Out
-                    </span>
-                  </TableCell>
-                </TableRow>
-                <TableRow className="hover:bg-gray-50">
-                  <TableCell className="px-4 py-3">
-                    <button
-                      onClick={() => handleEdit('4')}
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                    </button>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 font-medium">Sarah Wilson</TableCell>
-                  <TableCell className="px-4 py-3">+91 9876543213</TableCell>
-                  <TableCell className="px-4 py-3">Courier</TableCell>
-                  <TableCell className="px-4 py-3">1:20 PM</TableCell>
-                  <TableCell className="px-4 py-3 text-center">
-                    <span className="px-3 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
-                      Checked Out
-                    </span>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          )}
+                {/* Meeting */}
+                <TableCell className="px-4 py-3">
+                  <button
+                    onClick={() => handleEdit('2')}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                  </button>
+                </TableCell>
+                <TableCell className="px-4 py-3 font-medium">Meeting</TableCell>
+                <TableCell className="px-4 py-3 text-center">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </TableCell>
 
-          {activeTab === 'history' && (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-[#f6f4ee]">
-                  <TableHead className="px-4 py-3 w-20">Action</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[150px]">Visitor Name</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[120px]">Phone</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[120px]">Purpose</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[120px]">Check In</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[120px]">Check Out</TableHead>
-                  <TableHead className="px-4 py-3 min-w-[100px]">Duration</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow className="hover:bg-gray-50">
-                  <TableCell className="px-4 py-3">
-                    <button
-                      onClick={() => handleEdit('5')}
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                    </button>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 font-medium">Robert Brown</TableCell>
-                  <TableCell className="px-4 py-3">+91 9876543214</TableCell>
-                  <TableCell className="px-4 py-3">Meeting</TableCell>
-                  <TableCell className="px-4 py-3">9:00 AM</TableCell>
-                  <TableCell className="px-4 py-3">12:30 PM</TableCell>
-                  <TableCell className="px-4 py-3">3h 30m</TableCell>
-                </TableRow>
-                <TableRow className="hover:bg-gray-50">
-                  <TableCell className="px-4 py-3">
-                    <button
-                      onClick={() => handleEdit('6')}
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                    </button>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 font-medium">Emily Davis</TableCell>
-                  <TableCell className="px-4 py-3">+91 9876543215</TableCell>
-                  <TableCell className="px-4 py-3">Vendor</TableCell>
-                  <TableCell className="px-4 py-3">2:00 PM</TableCell>
-                  <TableCell className="px-4 py-3">4:15 PM</TableCell>
-                  <TableCell className="px-4 py-3">2h 15m</TableCell>
-                </TableRow>
-                <TableRow className="hover:bg-gray-50">
-                  <TableCell className="px-4 py-3">
-                    <button
-                      onClick={() => handleEdit('7')}
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                    </button>
-                  </TableCell>
-                  <TableCell className="px-4 py-3 font-medium">Alex Thompson</TableCell>
-                  <TableCell className="px-4 py-3">+91 9876543216</TableCell>
-                  <TableCell className="px-4 py-3">Personal</TableCell>
-                  <TableCell className="px-4 py-3">10:45 AM</TableCell>
-                  <TableCell className="px-4 py-3">11:30 AM</TableCell>
-                  <TableCell className="px-4 py-3">45m</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          )}
+                {/* Personal */}
+                <TableCell className="px-4 py-3">
+                  <button
+                    onClick={() => handleEdit('3')}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                  </button>
+                </TableCell>
+                <TableCell className="px-4 py-3 font-medium">Personal</TableCell>
+                <TableCell className="px-4 py-3 text-center">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </TableCell>
+
+                {/* Courier */}
+                <TableCell className="px-4 py-3">
+                  <button
+                    onClick={() => handleEdit('4')}
+                    className="p-1 hover:bg-gray-100 rounded"
+                    title="Edit"
+                  >
+                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                  </button>
+                </TableCell>
+                <TableCell className="px-4 py-3 font-medium">Courier</TableCell>
+                <TableCell className="px-4 py-3 text-center">
+                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    Active
+                  </span>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
 
       </div>
