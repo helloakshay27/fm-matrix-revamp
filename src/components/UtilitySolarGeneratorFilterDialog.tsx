@@ -94,7 +94,7 @@ export const UtilitySolarGeneratorFilterDialog = ({
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent 
-                  className="w-40 p-0 bg-white border shadow-lg z-50" 
+                  className="w-auto p-0 bg-white border shadow-lg z-50" 
                   align="start" 
                   side="bottom" 
                   sideOffset={5}
