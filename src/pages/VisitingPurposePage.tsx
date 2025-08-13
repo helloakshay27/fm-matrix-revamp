@@ -811,7 +811,7 @@ export const VisitingPurposePage = () => {
             {/* Multiple Move In/Out Purpose Input */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label>Enter Purpose</Label>
+                <Label>Enter move in/ out purpose</Label>
                 <Button
                   type="button"
                   variant="outline"
