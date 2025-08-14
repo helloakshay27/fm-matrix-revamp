@@ -345,7 +345,7 @@ export const PatrollingEditPage: React.FC = () => {
                 // Populate form fields
                 setPatrolName(data.name);
                 setDescription(data.description);
-                setEstimatedDuration(data.estimated_duration_minutes.toString());
+                setEstimatedDuration(data.grace_period_minutes.toString());
                 setAutoTicket(data.auto_ticket);
                 setStartDate(data.validity_start_date);
                 setEndDate(data.validity_end_date);
