@@ -205,25 +205,7 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
           </div>
         );
 
-      case 'locationWise':
-        const locationData = data || [
-          { location: 'Reception', count: 45 },
-          { location: 'Main Gate', count: 35 },
-          { location: 'Side Entrance', count: 20 },
-          { location: 'Parking', count: 15 },
-          { location: 'Emergency Exit', count: 5 }
-        ];
-
-        return (
-          <div className="space-y-3">
-            {locationData.map((item, index) => (
-              <div key={index} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
-                <span className="text-sm font-medium">{item.location}</span>
-                <span className="text-sm font-bold text-[#C72030]">{item.count}</span>
-              </div>
-            ))}
-          </div>
-        );
+      // locationWise case removed
 
       default:
         return <div>No data available</div>;
