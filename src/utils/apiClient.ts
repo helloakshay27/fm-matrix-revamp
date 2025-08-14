@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { API_CONFIG, getAuthHeader } from '@/config/apiConfig'
+import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig'
 
 // Create configured axios instance
 export const apiClient = axios.create({
@@ -30,5 +30,29 @@ apiClient.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+export const apiClientUtil = {
+  put: async <T>(endpoint: string, data: any): Promise<T> => {
+    const baseUrl = API_CONFIG.BASE_URL;
+    if (!baseUrl || baseUrl === 'https://api.example.com') {
+      throw new Error('API base URL is not configured. Please set VITE_API_BASE_URL in your .env file or ensure it is set in localStorage.');
+    }
+    const url = getFullUrl(endpoint);
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        Authorization: getAuthHeader(),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  },
+};
 
 export default apiClient

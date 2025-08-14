@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
-import { apiClient } from '@/utils/apiClient'
 
 // Types for inventory consumption details
 export interface ConsumptionDetail {
@@ -35,10 +34,24 @@ const initialState: InventoryConsumptionDetailsState = {
 
 // Async thunk for fetching inventory consumption details
 export const fetchInventoryConsumptionDetails = createAsyncThunk(
-  'inventoryConsumptionDetails/fetchDetails',
-  async (resourceId: string) => {
-    const response = await apiClient.get(`/pms/inventories/inventory_assets_consumption_details.json?resource_id=${resourceId}`)
-    return response.data
+  'inventoryConsumptionDetails/fetch',
+  async ({ id, start_date, end_date }: { id: string; start_date: string; end_date: string }) => {
+    const baseUrl = localStorage.getItem('baseUrl')
+    const token = localStorage.getItem('token')
+    if (!baseUrl || !token) throw new Error('Missing baseUrl/token')
+
+    const url = `https://${baseUrl}/pms/inventories/inventory_assets_consumption_details.json?resource_id=${id}&q[start_date]=${start_date}&q[end_date]=${end_date}`
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json'
+      }
+    })
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`)
+    }
+    return await response.json()
   }
 )
 

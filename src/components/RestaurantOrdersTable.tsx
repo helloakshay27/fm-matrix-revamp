@@ -1,161 +1,525 @@
 import { useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Eye } from "lucide-react";
+import { Download, Eye, Loader2 } from "lucide-react";
 import { toast } from 'sonner';
-import { useAppDispatch } from '@/store/hooks';
-import { useParams } from 'react-router-dom';
-import { exportOrders, fetchRestaurantOrders } from '@/store/slices/f&bSlice';
-import { AlertDialog, AlertDialogCancel, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
-import { AlertDialogAction } from '@radix-ui/react-alert-dialog';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { exportOrders, fetchRestaurantOrders, fetchRestaurants } from '@/store/slices/f&bSlice';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { EnhancedTable } from './enhanced-table/EnhancedTable';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
+import axios from 'axios';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from './ui/pagination';
 
 interface RestaurantOrder {
   id: number;
-  created_at: string; // e.g., "21/07/2025 01:20 PM"
+  meeting_room: string;
+  created_at: string;
   created_by: string;
   details_url: string;
   item_count: number;
   payment_status: string;
   payment_status_class: string;
   restaurant_name: string;
+  restaurant_id: number;
   status_name: string;
   total_amount: number;
+  items: { id: number; menu_name: string; quantity: number; price: number }[];
+  statuses: string[]; // Added statuses array
 }
 
+const getStatusBadgeVariant = (status: string) => {
+  switch (status) {
+    case 'Confirmed':
+      return 'success';
+    case 'Pending':
+      return 'warning';
+    case 'Cancelled':
+      return 'destructive';
+    case 'Completed':
+      return 'default';
+    default:
+      return 'default';
+  }
+};
+
 export const RestaurantOrdersTable = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
-  const { id } = useParams()
+
+  const { loading } = useAppSelector(state => state.fetchRestaurantOrders)
 
   const [orders, setOrders] = useState<RestaurantOrder[]>([]);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<RestaurantOrder | null>(null);
+  const [restoId, setRestoId] = useState<number | undefined>();
+  const [statusUpdating, setStatusUpdating] = useState<number | null>(null);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
+
+  useEffect(() => {
+    const fetchRestaurant = async () => {
+      try {
+        const response = await dispatch(fetchRestaurants({ baseUrl, token })).unwrap();
+        setRestoId(response[0]?.id);
+      } catch (error) {
+        console.error('Error fetching restaurants:', error);
+        toast.error('Failed to fetch restaurants');
+      }
+    };
+
+    fetchRestaurant();
+  }, [dispatch, baseUrl, token]);
 
   useEffect(() => {
     const fetchOrders = async () => {
-      try {
-        const response = await dispatch(fetchRestaurantOrders({ baseUrl, token, id: Number(id) })).unwrap();
-        setOrders(response);
-      } catch (error) {
-        console.log(error)
+      if (restoId) {
+        try {
+          const response = await dispatch(fetchRestaurantOrders({ baseUrl, token, id: Number(restoId), pageSize: 10, currentPage: pagination.current_page })).unwrap();
+          setOrders(response.food_orders);
+          setPagination({
+            current_page: response.current_page,
+            total_count: response.total_records,
+            total_pages: response.total_pages
+          })
+        } catch (error) {
+          console.error('Error fetching orders:', error);
+          toast.error('Failed to fetch orders');
+        }
       }
-    }
+    };
 
-    fetchOrders()
-  }, [])
+    fetchOrders();
+  }, [dispatch, restoId, baseUrl, token]);
+
+  const handleStatusUpdate = async (orderId: number, newStatus: string) => {
+    setStatusUpdating(orderId);
+    try {
+      await axios.post(
+        `https://${baseUrl}/crm/create_osr_log.json`,
+        {
+          osr_log: {
+            about: 'FoodOrder',
+            about_id: orderId,
+            osr_status_id: newStatus.id,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === orderId ? { ...order, status_name: newStatus.name } : order
+        )
+      );
+
+      toast.success(`Order ${orderId} status updated to ${newStatus}`);
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast.error('Failed to update order status');
+    } finally {
+      setStatusUpdating(null);
+    }
+  };
 
   const handleExport = async () => {
-    // Create CSV content
     try {
-      const response = await dispatch(exportOrders({ baseUrl, token, id: Number(id) })).unwrap();
-      const blob = new Blob([response], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
+      const response = await dispatch(exportOrders({ baseUrl, token, id: Number(restoId) })).unwrap();
 
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'orders.xlsx'; // Desired file name
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
+      const url = window.URL.createObjectURL(new Blob([response]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "orders.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
       toast.success('Orders exported successfully!');
     } catch (error) {
-      console.log(error)
+      console.error('Error exporting orders:', error);
+      toast.error('Failed to export orders');
     }
   };
 
   const handleViewOrder = (order: RestaurantOrder) => {
-    navigate(`/vas/fnb/details/${id}/restaurant-order/${order.id}`);
+    const restoId = orders.find((o) => o.id === order.id)?.restaurant_id;
+    navigate(`/vas/fnb/details/${restoId}/restaurant-order/${order.id}`);
   };
 
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-start">
-        <Button
-          onClick={handleExport}
-          className="bg-[#8B4B8C] hover:bg-[#8B4B8C]/90 text-white flex items-center gap-2"
-        >
-          Export
-        </Button>
-      </div>
+  const handlePageChange = async (page: number) => {
+    setPagination((prev) => ({
+      ...prev,
+      current_page: page,
+    }));
+    try {
+      const response = await dispatch(fetchRestaurantOrders({ baseUrl, token, id: Number(restoId), pageSize: 10, currentPage: page })).unwrap();
+      setOrders(response.food_orders);
+    } catch (error) {
+      toast.error('Failed to fetch bookings');
+    }
+  };
 
-      <div className="bg-white rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-100">
-              <TableHead className="font-medium">Actions</TableHead>
-              <TableHead className="font-medium text-center">Order ID</TableHead>
-              <TableHead className="font-medium text-center">Restaurant</TableHead>
-              <TableHead className="font-medium text-center">Created on</TableHead>
-              <TableHead className="font-medium text-center">Created by</TableHead>
-              <TableHead className="font-medium text-center">Status</TableHead>
-              <TableHead className="font-medium text-center">Amount Paid (₹)</TableHead>
-              <TableHead className="font-medium text-center">No.of Items</TableHead>
-              <TableHead className="font-medium text-center">Payment Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {orders.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-gray-500">
-                  No orders found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              orders.map((order) => (
-                <TableRow key={order.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewOrder(order)}
-                        className="p-1 h-8 w-8"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">{order.id}</TableCell>
-                  <TableCell className="text-center">{order.restaurant_name}</TableCell>
-                  <TableCell className="text-center">{order.created_at}</TableCell>
-                  <TableCell className="text-center">{order.created_by}</TableCell>
-                  <TableCell className="text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs ${order.status_name === 'Completed'
-                      ? 'bg-green-100 text-green-800'
-                      : order.status_name === 'Confirmed'
-                        ? 'bg-blue-100 text-blue-800'
-                        : order.status_name === 'Pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                      {order.status_name}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">₹{order.total_amount}</TableCell>
-                  <TableCell className="text-center">{order.item_count}</TableCell>
-                  <TableCell className="text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs ${order.payment_status === 'Paid'
-                      ? 'bg-green-100 text-green-800'
-                      : order.payment_status === 'Pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
-                      }`}>
-                      {order.payment_status}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+  const renderPaginationItems = () => {
+    if (!pagination.total_pages || pagination.total_pages <= 0) {
+      return null;
+    }
+    const items = [];
+    const totalPages = pagination.total_pages;
+    const currentPage = pagination.current_page;
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      items.push(
+        <PaginationItem key={1} className='cursor-pointer'>
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+            disabled={loading}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1" >
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                disabled={loading}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                disabled={loading}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find((item) => item.key === i.toString())) {
+            items.push(
+              <PaginationItem key={i} className='cursor-pointer'>
+                <PaginationLink
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                  disabled={loading}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+              disabled={loading}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+              disabled={loading}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
+  const columns: ColumnConfig[] = [
+    {
+      key: 'id',
+      label: 'Order ID',
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: 'restaurant_name',
+      label: 'Restaurant',
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: 'meeting_room',
+      label: 'Meeting Room',
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: 'created_at',
+      label: 'Created on',
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: 'created_by',
+      label: 'Created by',
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: 'status_name',
+      label: 'Status',
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: 'total_amount',
+      label: `Amount Paid (${localStorage.getItem('currency')})`,
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: 'items',
+      label: 'Name of Items',
+      sortable: false,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: 'payment_status',
+      label: 'Payment Status',
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+  ];
+
+  useEffect(() => {
+    const storageKey = 'restaurant-orders-table-columns';
+    const savedVisibility = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    if (!savedVisibility.items) {
+      const updatedVisibility = columns.reduce((acc, column) => ({
+        ...acc,
+        [column.key]: column.defaultVisible !== false,
+      }), {});
+      localStorage.setItem(storageKey, JSON.stringify(updatedVisibility));
+    }
+  }, []);
+
+  const renderCell = (item: RestaurantOrder, columnKey: string) => {
+    switch (columnKey) {
+      case 'items':
+        if (!item.items || item.items.length === 0) return '-';
+        const fullItemsText = item.items.map((i) => `${i.menu_name} (${i.quantity})`).join(', ');
+        const maxItems = 2;
+        const maxLength = 50;
+        let truncatedItems = item.items
+          .slice(0, maxItems)
+          .map((i) => `${i.menu_name} (${i.quantity})`)
+          .join(', ');
+        if (fullItemsText.length > maxLength || item.items.length > maxItems) {
+          truncatedItems = truncatedItems.slice(0, maxLength).trim() + '...';
+        }
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="truncate max-w-[150px] inline-block">
+                  {truncatedItems}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{fullItemsText}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      case 'status_name':
+        if (statusUpdating === item.id) {
+          return <Loader2 className="w-4 h-4 animate-spin" />;
+        }
+        return (
+          <Select
+            value={item.status_name}
+            onValueChange={(newStatus) => handleStatusUpdate(item.id, newStatus)}
+            disabled={statusUpdating === item.id}
+          >
+            <SelectTrigger className="w-[140px] border-none bg-transparent flex justify-center items-center [&>svg]:hidden">
+              <SelectValue asChild>
+                <Badge
+                  variant={getStatusBadgeVariant(item.status_name)}
+                  className={cn(
+                    'cursor-pointer',
+                    item.status_name === 'Completed' && 'bg-[#A4F4E7] hover:bg-[#A4F4E7] text-black',
+                    item.status_name === 'Pending' && 'bg-[#F4C790] hover:bg-[#F4C790] text-black',
+                    item.status_name === 'Confirmed' && 'bg-[#A3E4DB] hover:bg-[#8CDAD1] text-black',
+                    item.status_name === 'Cancelled' && 'bg-[#E4626F] hover:bg-[#E4626F] text-white'
+                  )}
+                >
+                  {item.status_name}
+                </Badge>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {item.statuses.map((status) => (
+                <SelectItem key={status.id} value={status}>
+                  <Badge
+                    variant={getStatusBadgeVariant(status.name)}
+                    className={cn(
+                      status === 'Completed' && 'bg-[#A4F4E7] hover:bg-[#A4F4E7] text-black',
+                      status === 'Pending' && 'bg-[#F4C790] hover:bg-[#F4C790] text-black',
+                      status === 'Confirmed' && 'bg-[#A3E4DB] hover:bg-[#8CDAD1] text-black',
+                      status === 'Cancelled' && 'bg-[#E4626F] hover:bg-[#E4626F] text-white'
+                    )}
+                  >
+                    {status.name}
+                  </Badge>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      case 'payment_status':
+        return item.payment_status ? (
+          <span
+            className={`px-2 py-1 rounded-full text-xs ${item.payment_status === 'Paid'
+              ? 'bg-green-100 text-green-800'
+              : item.payment_status === 'Pending'
+                ? 'bg-yellow-100 text-yellow-800'
+                : item.payment_status === 'Unpaid'
+                  ? 'bg-red-100 text-red-800'
+                  : 'bg-gray-100 text-gray-500'
+              }`}
+          >
+            {item.payment_status}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-500">-</span>
+        );
+      case 'total_amount':
+        return `${localStorage.getItem('currency')} ${item.total_amount}` || '';
+      default:
+        return item[columnKey as keyof RestaurantOrder]?.toString() || '';
+    }
+  };
+
+  const renderActions = (order: RestaurantOrder) => (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleViewOrder(order)}
+        className="p-1 h-8 w-8"
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+
+  const leftActions = (
+    <Button
+      onClick={handleExport}
+      className="bg-[#8B4B8C] hover:bg-[#8B4B8C]/90 text-white flex items-center gap-2"
+    >
+      <Download className="w-4 h-4" />
+      Export
+    </Button>
+  );
+
+  return (
+    <div className="p-[30px]">
+      <EnhancedTable
+        data={orders}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        storageKey="restaurant-orders-table"
+        className="min-w-full"
+        emptyMessage="No orders found."
+        leftActions={leftActions}
+        enableSearch={true}
+        enableSelection={false}
+        hideTableExport={true}
+        pagination={true}
+        pageSize={10}
+        loading={loading}
+      />
+
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                className={pagination.current_page === 1 || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+            {renderPaginationItems()}
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                className={pagination.current_page === pagination.total_pages || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </div>
   );

@@ -93,12 +93,15 @@ export const createInventoryConsumption = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
+      // Use direct JSON endpoint to avoid 302 redirect that triggers unwanted GET without .json
       const response = await axios.post(
         `https://${baseUrl}/pms/inventories/new_inventory_consumption_addition.json`,
         data,
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
           },
         }
       );

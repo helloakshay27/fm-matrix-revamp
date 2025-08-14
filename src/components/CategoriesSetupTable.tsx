@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { AddCategoryModal } from "./AddCategoryModal";
@@ -9,6 +8,9 @@ import { useAppDispatch } from '@/store/hooks';
 import { createRestaurantCategory, deleteCategory, fetchRestaurantCategory } from '@/store/slices/f&bSlice';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { EnhancedTable } from './enhanced-table/EnhancedTable';
+import { SelectionPanel } from './water-asset-details/PannelTab';
 
 interface Category {
   id: number;
@@ -18,7 +20,7 @@ interface Category {
 }
 
 export const CategoriesSetupTable = () => {
-  const { id } = useParams()
+  const { id } = useParams();
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
@@ -28,19 +30,20 @@ export const CategoriesSetupTable = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [showActionPanel, setShowActionPanel] = useState(false);
 
   const fetchData = async () => {
     try {
       const response = await dispatch(fetchRestaurantCategory({ baseUrl, token, id: Number(id) })).unwrap();
       setCategories(response);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   useEffect(() => {
     fetchData();
-  }, [])
+  }, [dispatch, id, baseUrl, token]);
 
   const handleAddCategory = async (categoryData: { category: string; timings?: string }) => {
     const payload = {
@@ -50,13 +53,14 @@ export const CategoriesSetupTable = () => {
         timing: categoryData.timings
       },
       restaurant_id: Number(id)
-    }
+    };
     try {
       await dispatch(createRestaurantCategory({ baseUrl, token, data: payload, id: Number(id) })).unwrap();
       fetchData();
       toast.success('Category added successfully');
     } catch (error) {
-      console.log(error)
+      console.log(error);
+      toast.error('Failed to add category');
     }
   };
 
@@ -67,7 +71,7 @@ export const CategoriesSetupTable = () => {
       toast.success('Category deleted successfully');
       setIsDeleteDialogOpen(false);
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast.error('Failed to delete category');
     }
   };
@@ -82,57 +86,89 @@ export const CategoriesSetupTable = () => {
     setIsDeleteDialogOpen(true);
   };
 
+  const columns: ColumnConfig[] = [
+    {
+      key: 'name',
+      label: 'Category Name',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'timing',
+      label: 'Timings',
+      sortable: true,
+      draggable: true,
+    },
+  ];
+
+  const renderCell = (item: Category, columnKey: string) => {
+    switch (columnKey) {
+      case 'name':
+        return item.name || '';
+      case 'timing':
+        return item.timing || '';
+      default:
+        return item[columnKey as keyof Category]?.toString() || '';
+    }
+  };
+
+  const renderActions = (category: Category) => (
+    <div className="flex items-center justify-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => openEditModal(category)}
+        className="p-1 h-8 w-8"
+      >
+        <Pencil className="w-4 h-4" />
+      </Button>
+      {/* <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => openDeleteDialog(category)}
+        className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button> */}
+    </div>
+  );
+
+  const leftActions = (
+    <div className="flex flex-wrap gap-2">
+      <Button
+        className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
+        onClick={() => setShowActionPanel(true)}
+      >
+        <Plus className="w-4 h-4" />
+        Action
+      </Button>
+    </div>
+  );
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-start">
-        <Button
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add
-        </Button>
-      </div>
-
-      <div className="bg-white rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-100">
-              <TableHead className="font-medium">Actions</TableHead>
-              <TableHead className="font-medium text-center">Category Name</TableHead>
-              <TableHead className="font-medium text-center">Timings</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {[...categories].reverse().map((category: Category) => (
-              <TableRow key={category.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEditModal(category)}
-                      className="p-1 h-8 w-8"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openDeleteDialog(category)}
-                      className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell className="text-center">{category.name}</TableCell>
-                <TableCell className="text-center">{category.timing}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      {showActionPanel && (
+        <SelectionPanel
+          // actions={selectionActions}
+          onAdd={() => setIsAddModalOpen(true)}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
+      <EnhancedTable
+        data={[...categories].reverse()}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        storageKey="categories-setup-table"
+        className="min-w-full"
+        emptyMessage="No categories available"
+        leftActions={leftActions}
+        enableSearch={true}
+        enableSelection={false}
+        hideTableExport={true}
+        pagination={true}
+        pageSize={5}
+      />
 
       <AddCategoryModal
         isOpen={isAddModalOpen}

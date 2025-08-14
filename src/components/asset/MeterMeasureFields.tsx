@@ -23,18 +23,9 @@ interface MeterMeasureFieldsProps {
   onFieldChange: (id: string, field: keyof MeterMeasureField, value: string | boolean) => void;
   onAddField: () => void;
   onRemoveField: (id: string) => void;
+  unitTypes?: Array<{ id: number; unit_name: string }>;
+  loadingUnitTypes?: boolean;
 }
-
-const unitTypeOptions = [
-  { value: 'kwh', label: 'kWh' },
-  { value: 'kw', label: 'kW' },
-  { value: 'volts', label: 'Volts' },
-  { value: 'amps', label: 'Amps' },
-  { value: 'celsius', label: '°C' },
-  { value: 'percentage', label: '%' },
-  { value: 'ppm', label: 'PPM' },
-  { value: 'other', label: 'Other' },
-];
 
 export const MeterMeasureFields: React.FC<MeterMeasureFieldsProps> = ({
   title,
@@ -43,7 +34,13 @@ export const MeterMeasureFields: React.FC<MeterMeasureFieldsProps> = ({
   onFieldChange,
   onAddField,
   onRemoveField,
+  unitTypes = [],
+  loadingUnitTypes = false,
 }) => {
+  const meterUnitTypes = unitTypes.map(unit => ({
+    value: unit.id.toString(),
+    label: unit.unit_name,
+  }));
   return (
     <div className="mb-6">
       <div className="bg-blue-50 rounded-lg p-4">
@@ -90,11 +87,17 @@ export const MeterMeasureFields: React.FC<MeterMeasureFieldsProps> = ({
                         <SelectValue placeholder="Select Unit Type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {unitTypeOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
+                        {loadingUnitTypes ? (
+                          <SelectItem value="loading" disabled>Loading...</SelectItem>
+                        ) : meterUnitTypes.length > 0 ? (
+                          meterUnitTypes.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-options" disabled>No unit types available</SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>

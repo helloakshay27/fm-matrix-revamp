@@ -12,6 +12,7 @@ import { useAppDispatch } from '@/store/hooks';
 import { createRestaurantStatus, deleteRestaurantStatus, editRestaurantStatus, fetchRestaurantStatuses } from '@/store/slices/f&bSlice';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { SelectionPanel } from './water-asset-details/PannelTab';
 
 export interface StatusItem {
   id: number;
@@ -47,6 +48,7 @@ export const StatusSetupTable = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<StatusItem | null>(null);
+  const [showActionPanel, setShowActionPanel] = useState(false);
 
   const fetchStatus = async () => {
     try {
@@ -183,7 +185,7 @@ export const StatusSetupTable = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-start">
+      {/* <div className="flex justify-start">
         <Button
           onClick={() => setIsAddModalOpen(true)}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
@@ -191,7 +193,15 @@ export const StatusSetupTable = () => {
           <Plus className="w-4 h-4 text-black" />
           Add
         </Button>
-      </div>
+      </div> */}
+
+      {showActionPanel && (
+        <SelectionPanel
+          // actions={selectionActions}
+          onAdd={() => setIsAddModalOpen(true)}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
 
       <EnhancedTable
         data={statusItems}
@@ -199,8 +209,20 @@ export const StatusSetupTable = () => {
         renderRow={renderRow}
         enableSearch={true}
         enableSelection={true}
-        enableExport={true}
         storageKey="status-table"
+        pagination={true}
+        pageSize={5}
+        leftActions={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
+              onClick={() => setShowActionPanel(true)}
+            >
+              <Plus className="w-4 h-4" />
+              Action
+            </Button>
+          </div>
+        }
       />
 
       <AddStatusModal

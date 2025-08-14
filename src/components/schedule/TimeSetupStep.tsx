@@ -4,7 +4,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Check, ChevronUp, Settings } from 'lucide-react';
-import { Box, Card, CardHeader, Typography, IconButton, Collapse, CardContent } from '@mui/material';
+import { Box, Card, CardHeader, Typography, IconButton, Collapse, CardContent, Button as MuiButton } from '@mui/material';
+import Edit from '@mui/icons-material/Edit';
 
 interface TimeSetupStepProps {
   data: {
@@ -27,6 +28,8 @@ interface TimeSetupStepProps {
   isCompleted?: boolean;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  disabled?: boolean;
+  onEdit?: () => void;
 }
 
 export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({ 
@@ -35,7 +38,9 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
   onChange, 
   isCompleted, 
   isCollapsed, 
-  onToggleCollapse 
+  onToggleCollapse, 
+  disabled = false,
+  onEdit
 }) => {
   // Use props data instead of local state
   const {
@@ -65,13 +70,36 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
   const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   return (
-    <div className="bg-gray-50">
+    <div className='p-6'>
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-[#C72030] rounded-full flex items-center justify-center">
-          <Settings className="w-5 h-5 text-white" />
+      <div className="flex items-center gap-3 mb-6 justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-[#C72030] rounded-full flex items-center justify-center">
+            <Settings className="w-5 h-5 text-white" />
+          </div>
+          <h2 className="text-xl font-semibold text-[#C72030]">Time Setup</h2>
         </div>
-        <h2 className="text-xl font-semibold text-[#C72030]">Time Setup</h2>
+        {disabled && (
+          <MuiButton
+            variant="outlined"
+            size="small"
+            startIcon={<Edit />}
+            onClick={onEdit}
+            sx={{
+              color: '#C72030',
+              borderColor: '#C72030',
+              fontSize: '12px',
+              padding: '4px 12px',
+              minWidth: 'auto',
+              '&:hover': {
+                borderColor: '#C72030',
+                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+              }
+            }}
+          >
+            Edit
+          </MuiButton>
+        )}
       </div>
 
     <Card sx={{ mb: 2, pt:3, border: isCompleted ? '1px solid #059669' : '1px solid #E5E7EB' }}>
@@ -102,10 +130,10 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
               <div className="border-r border-gray-300 p-4">
                 <div className="space-y-4">
                   <RadioGroup value={hourMode} onValueChange={(value: 'specific') => {
-                    onChange?.('hourMode', value);
+                    if (!disabled) onChange?.('hourMode', value);
                   }}>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="specific" id="hour-specific" />
+                      <RadioGroupItem value="specific" id="hour-specific" disabled={disabled} />
                       <Label htmlFor="hour-specific" className="text-sm">
                         Choose one or more specific hours
                       </Label>
@@ -117,10 +145,12 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                       id="select-all-hours"
                       checked={selectedHours.length === hours.length}
                       onCheckedChange={(checked) => {
+                        if (disabled) return;
                         const newHours = checked ? hours : [];
                         onChange?.('selectedHours', newHours);
                       }}
                       className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                      disabled={disabled}
                     />
                     <Label htmlFor="select-all-hours" className="text-sm">
                       Select All
@@ -134,12 +164,14 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                           id={`hour-${hour}`}
                           checked={selectedHours.includes(hour)}
                           onCheckedChange={(checked) => {
+                            if (disabled) return;
                             const newHours = checked 
                               ? [...selectedHours, hour]
                               : selectedHours.filter(h => h !== hour);
                             onChange?.('selectedHours', newHours);
                           }}
                           className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                          disabled={disabled}
                         />
                         <Label htmlFor={`hour-${hour}`} className="text-xs">
                           {hour}
@@ -154,17 +186,17 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
               <div className="border-r border-gray-300 p-4">
                 <div className="space-y-4">
                   <RadioGroup value={minuteMode} onValueChange={(value: 'specific' | 'between') => {
-                    onChange?.('minuteMode', value);
+                    if (!disabled) onChange?.('minuteMode', value);
                   }}>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="specific" id="minute-specific" />
+                      <RadioGroupItem value="specific" id="minute-specific" disabled={disabled} />
                       <Label htmlFor="minute-specific" className="text-sm">
                         Specific minutes (choose one or many)
                       </Label>
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="between" id="minute-between" />
+                      <RadioGroupItem value="between" id="minute-between" disabled={disabled} />
                       <Label htmlFor="minute-between" className="text-sm">
                         Every minute between minute
                       </Label>
@@ -179,12 +211,14 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                             id={`minute-${minute}`}
                             checked={selectedMinutes.includes(minute)}
                             onCheckedChange={(checked) => {
+                              if (disabled) return;
                               const newMinutes = checked 
                                 ? [...selectedMinutes, minute]
                                 : selectedMinutes.filter(m => m !== minute);
                               onChange?.('selectedMinutes', newMinutes);
                             }}
                             className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                            disabled={disabled}
                           />
                           <Label htmlFor={`minute-${minute}`} className="text-xs">
                             {minute} min
@@ -197,7 +231,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                   {minuteMode === 'between' && (
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm">
-                        <Select value={betweenMinuteStart} onValueChange={(value) => onChange?.('betweenMinuteStart', value)}>
+                        <Select value={betweenMinuteStart} onValueChange={(value) => { if (!disabled) onChange?.('betweenMinuteStart', value); }} disabled={disabled}>
                           <SelectTrigger className="w-16 h-8">
                             <SelectValue />
                           </SelectTrigger>
@@ -210,7 +244,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <span>and minute</span>
-                        <Select value={betweenMinuteEnd} onValueChange={(value) => onChange?.('betweenMinuteEnd', value)}>
+                        <Select value={betweenMinuteEnd} onValueChange={(value) => { if (!disabled) onChange?.('betweenMinuteEnd', value); }} disabled={disabled}>
                           <SelectTrigger className="w-16 h-8">
                             <SelectValue />
                           </SelectTrigger>
@@ -230,10 +264,10 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
               <div className="border-r border-gray-300 p-4">
                 <div className="space-y-4">
                   <RadioGroup value={dayMode} onValueChange={(value: 'weekdays' | 'specific') => {
-                    onChange?.('dayMode', value);
+                    if (!disabled) onChange?.('dayMode', value);
                   }}>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="weekdays" id="day-weekdays" />
+                      <RadioGroupItem value="weekdays" id="day-weekdays" disabled={disabled} />
                       <Label htmlFor="day-weekdays" className="text-sm">
                         Days of week
                       </Label>
@@ -250,15 +284,17 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                   {dayMode === 'weekdays' && (
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="select-all-weekdays"
-                          checked={selectedWeekdays.length === weekdays.length}
-                          onCheckedChange={(checked) => {
-                            const newWeekdays = checked ? weekdays : [];
-                            onChange?.('selectedWeekdays', newWeekdays);
-                          }}
-                          className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
-                        />
+                    <Checkbox
+                      id="select-all-weekdays"
+                      checked={selectedWeekdays.length === weekdays.length}
+                      onCheckedChange={(checked) => {
+                        if (disabled) return;
+                        const newWeekdays = checked ? weekdays : [];
+                        onChange?.('selectedWeekdays', newWeekdays);
+                      }}
+                      className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                      disabled={disabled}
+                    />
                         <Label htmlFor="select-all-weekdays" className="text-sm">
                           Select All
                         </Label>
@@ -269,12 +305,14 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                             id={`weekday-${day}`}
                             checked={selectedWeekdays.includes(day)}
                             onCheckedChange={(checked) => {
+                              if (disabled) return;
                               const newWeekdays = checked 
                                 ? [...selectedWeekdays, day]
                                 : selectedWeekdays.filter(w => w !== day);
                               onChange?.('selectedWeekdays', newWeekdays);
                             }}
                             className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                            disabled={disabled}
                           />
                           <Label htmlFor={`weekday-${day}`} className="text-sm">
                             {day}
@@ -291,10 +329,12 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                           id="select-all-days"
                           checked={selectedDays.length === days.length}
                           onCheckedChange={(checked) => {
+                            if (disabled) return;
                             const newDays = checked ? days : [];
                             onChange?.('selectedDays', newDays);
                           }}
                           className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                          disabled={disabled}
                         />
                         <Label htmlFor="select-all-days" className="text-sm">
                           Select All
@@ -307,12 +347,14 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                               id={`day-${day}`}
                               checked={selectedDays.includes(day)}
                               onCheckedChange={(checked) => {
+                                if (disabled) return;
                                 const newDays = checked 
                                   ? [...selectedDays, day]
                                   : selectedDays.filter(d => d !== day);
                                 onChange?.('selectedDays', newDays);
                               }}
                               className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                              disabled={disabled}
                             />
                             <Label htmlFor={`day-${day}`} className="text-xs">
                               {day}
@@ -329,24 +371,24 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
               <div className="p-4">
                 <div className="space-y-4">
                   <RadioGroup value={monthMode} onValueChange={(value: 'all' | 'specific' | 'between') => {
-                    onChange?.('monthMode', value);
+                    if (!disabled) onChange?.('monthMode', value);
                   }}>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="all" id="month-all" />
+                      <RadioGroupItem value="all" id="month-all" disabled={disabled} />
                       <Label htmlFor="month-all" className="text-sm">
                         All months
                       </Label>
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="specific" id="month-specific" />
+                      <RadioGroupItem value="specific" id="month-specific" disabled={disabled} />
                       <Label htmlFor="month-specific" className="text-sm">
                         Specific months
                       </Label>
                     </div>
                     
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="between" id="month-between" />
+                      <RadioGroupItem value="between" id="month-between" disabled={disabled} />
                       <Label htmlFor="month-between" className="text-sm">
                         Every month between
                       </Label>
@@ -360,10 +402,12 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                           id="select-all-months"
                           checked={selectedMonths.length === months.length}
                           onCheckedChange={(checked) => {
+                            if (disabled) return;
                             const newMonths = checked ? months : [];
                             onChange?.('selectedMonths', newMonths);
                           }}
                           className="data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                          disabled={disabled}
                         />
                         <Label htmlFor="select-all-months" className="text-sm">
                           Select All
@@ -376,12 +420,14 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                               id={`month-${month}`}
                               checked={selectedMonths.includes(month)}
                               onCheckedChange={(checked) => {
+                                if (disabled) return;
                                 const newMonths = checked 
                                   ? [...selectedMonths, month]
                                   : selectedMonths.filter(m => m !== month);
                                 onChange?.('selectedMonths', newMonths);
                               }}
                               className="h-4 w-4 data-[state=checked]:bg-[#C72030] data-[state=checked]:border-[#C72030]"
+                              disabled={disabled}
                             />
                             <Label htmlFor={`month-${month}`} className="text-sm">
                               {month}
@@ -394,7 +440,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
 
                   {monthMode === 'between' && (
                     <div className="space-y-2">
-                      <Select value={betweenMonthStart} onValueChange={(value) => onChange?.('betweenMonthStart', value)}>
+                      <Select value={betweenMonthStart} onValueChange={(value) => { if (!disabled) onChange?.('betweenMonthStart', value); }} disabled={disabled}>
                         <SelectTrigger className="w-32 h-8">
                           <SelectValue />
                         </SelectTrigger>
@@ -406,7 +452,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
                       </Select>
                       <div className="flex items-center gap-2">
                         <span className="text-sm">and</span>
-                        <Select value={betweenMonthEnd} onValueChange={(value) => onChange?.('betweenMonthEnd', value)}>
+                        <Select value={betweenMonthEnd} onValueChange={(value) => { if (!disabled) onChange?.('betweenMonthEnd', value); }} disabled={disabled}>
                           <SelectTrigger className="w-32 h-8">
                             <SelectValue />
                           </SelectTrigger>

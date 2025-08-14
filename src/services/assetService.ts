@@ -5,6 +5,16 @@ export interface Asset {
   name: string;
 }
 
+export interface AssetSubGroup {
+    id: number;
+    name: string;
+    created_at: string;
+    updated_at: string;
+    group_id: string;
+    status: string;
+    useful_life: string | null;
+  }
+
 export interface AssetGroup {
   id: number;
   name: string;
@@ -17,32 +27,9 @@ export interface AssetGroup {
   group_type: string;
 }
 
-export interface AssetSubGroup {
+export interface Supplier {
   id: number;
   name: string;
-  created_at: string;
-  updated_at: string;
-  group_id: string;
-  status: string;
-  useful_life: number | null;
-}
-
-export interface EmailRule {
-  id: number;
-  rule_name: string;
-  trigger_type: string;
-  trigger_to: string;
-  period_type: string;
-  period_value: string;
-  active: number;
-  created_at: string;
-  updated_at: string;
-  company_id: number;
-  created_by: number;
-  site_id: number;
-  role_ids: string[];
-  role_names: string;
-  created_by_name: string;
 }
 
 export interface User {
@@ -50,9 +37,22 @@ export interface User {
   full_name: string;
 }
 
-export interface Supplier {
+export interface EmailRule {
   id: number;
-  name: string;
+  company_id: number;
+  created_by: number;
+  trigger_to: string;
+  period_type: string;
+  period_value: string;
+  active: number;
+  created_at: string;
+  updated_at: string;
+  rule_name: string;
+  trigger_type: string;
+  site_id: number;
+  role_ids: string[];
+  role_names: string;
+  created_by_name: string;
 }
 
 // Get base URL from environment or use a default
@@ -153,8 +153,8 @@ export const assetService = {
       return mockAssetGroups;
     }
   },
-
-  async getAssetSubGroups(groupId: number): Promise<{ asset_groups: AssetSubGroup[] }> {
+  
+    async getAssetSubGroups(groupId: number): Promise<{ asset_groups: AssetSubGroup[] }> {
     try {
       console.log('Fetching asset sub-groups for group ID:', groupId);
       const url = `${API_CONFIG.BASE_URL}/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`;
@@ -340,5 +340,5 @@ export const assetService = {
       console.log('Using mock suppliers data:', mockSuppliers);
       return mockSuppliers;
     }
-  }
+  },
 };

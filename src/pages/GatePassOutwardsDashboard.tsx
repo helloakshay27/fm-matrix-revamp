@@ -1,12 +1,38 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { SlidersHorizontal } from 'lucide-react';
+import { Filter, Eye, Plus } from 'lucide-react';
 import { GatePassOutwardsFilterModal } from '@/components/GatePassOutwardsFilterModal';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
 export const GatePassOutwardsDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleViewDetails = (id: string) => {
+    navigate(`/security/gate-pass/outwards/${id}`);
+  };
+
+  // Column configuration for the enhanced table
+  const columns: ColumnConfig[] = [
+    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
+    { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
+    { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
+    { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
+    { key: 'returnableNonReturnable', label: 'Returnable/Non Returnable', sortable: true, hideable: true, draggable: true },
+    { key: 'expectedReturnDate', label: 'Expected Return Date', sortable: true, hideable: true, draggable: true },
+    { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true },
+    { key: 'personName', label: 'Person Name', sortable: true, hideable: true, draggable: true },
+    { key: 'profileImage', label: 'Profile Image', sortable: false, hideable: true, draggable: true },
+    { key: 'passNo', label: 'Pass No.', sortable: true, hideable: true, draggable: true },
+    { key: 'modeOfTransport', label: 'Mode of Transport', sortable: true, hideable: true, draggable: true },
+    { key: 'lrNo', label: 'LR No.', sortable: true, hideable: true, draggable: true },
+    { key: 'tripId', label: 'Trip ID', sortable: true, hideable: true, draggable: true },
+    { key: 'gateEntry', label: 'Gate Entry', sortable: true, hideable: true, draggable: true },
+    { key: 'itemDetails', label: 'Item Details', sortable: false, hideable: true, draggable: true, width: '300px' }
+  ];
 
   // Data matching the screenshot
   const outwardData = [
@@ -72,78 +98,93 @@ export const GatePassOutwardsDashboard = () => {
     }
   ];
 
-  return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg border border-gray-200">
-        {/* Breadcrumb */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-            <span>Outwards</span>
-            <span>&gt;</span>
-            <span>Outwards</span>
-          </div>
-          
-          <h1 className="text-xl font-semibold text-gray-900 mb-4">Outward List</h1>
-          
-          {/* Filters Button */}
-          <Button 
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-none flex items-center gap-2"
-            onClick={() => setIsFilterModalOpen(true)}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            Filters
-          </Button>
-        </div>
+  // Prepare data with index for the enhanced table
+  const dataWithIndex = outwardData.map((item, index) => ({
+    ...item,
+    sNo: index + 1
+  }));
 
-        {/* Data Table */}
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="text-left font-semibold">ID</TableHead>
-                <TableHead className="text-left font-semibold">Type</TableHead>
-                <TableHead className="text-left font-semibold">Returnable/Non Returnable</TableHead>
-                <TableHead className="text-left font-semibold">Expected Return Date</TableHead>
-                <TableHead className="text-left font-semibold">Category</TableHead>
-                <TableHead className="text-left font-semibold">Person Name</TableHead>
-                <TableHead className="text-left font-semibold">Profile Image</TableHead>
-                <TableHead className="text-left font-semibold">Pass No.</TableHead>
-                <TableHead className="text-left font-semibold">Mode of Transport</TableHead>
-                <TableHead className="text-left font-semibold">LR No.</TableHead>
-                <TableHead className="text-left font-semibold">Trip ID</TableHead>
-                <TableHead className="text-left font-semibold">Gate Entry</TableHead>
-                <TableHead className="text-left font-semibold">Item Details</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {outwardData.map((entry) => (
-                <TableRow key={entry.id} className="hover:bg-gray-50">
-                  <TableCell className="font-medium">{entry.id}</TableCell>
-                  <TableCell>{entry.type}</TableCell>
-                  <TableCell>{entry.returnableNonReturnable}</TableCell>
-                  <TableCell>{entry.expectedReturnDate}</TableCell>
-                  <TableCell>{entry.category}</TableCell>
-                  <TableCell className="font-medium">{entry.personName}</TableCell>
-                  <TableCell>
-                    <img 
-                      src={entry.profileImage} 
-                      alt={`${entry.personName} profile`}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  </TableCell>
-                  <TableCell>{entry.passNo}</TableCell>
-                  <TableCell>{entry.modeOfTransport}</TableCell>
-                  <TableCell>{entry.lrNo}</TableCell>
-                  <TableCell>{entry.tripId}</TableCell>
-                  <TableCell>{entry.gateEntry}</TableCell>
-                  <TableCell className="max-w-xs">{entry.itemDetails}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+  // Render row function for enhanced table
+  const renderRow = (entry: any) => ({
+    sNo: entry.sNo,
+    actions: (
+      <div className="flex gap-2 justify-center">
+        <div title="View details">
+          <Eye 
+            className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+            onClick={() => handleViewDetails(entry.id)}
+          />
         </div>
       </div>
+    ),
+    id: (
+      <button
+        onClick={() => handleViewDetails(entry.id)}
+        className="text-[#C72030] hover:underline hover:text-[#C72030]/80 transition-colors font-medium"
+      >
+        {entry.id}
+      </button>
+    ),
+    type: entry.type || '--',
+    returnableNonReturnable: entry.returnableNonReturnable,
+    expectedReturnDate: entry.expectedReturnDate || '--',
+    category: entry.category,
+    personName: entry.personName,
+    profileImage: (
+      <img 
+        src={entry.profileImage} 
+        alt={`${entry.personName} profile`}
+        className="w-8 h-8 rounded-full object-cover border border-gray-200 mx-auto"
+      />
+    ),
+    passNo: entry.passNo || '--',
+    modeOfTransport: entry.modeOfTransport || '--',
+    lrNo: entry.lrNo || '--',
+    tripId: entry.tripId || '--',
+    gateEntry: entry.gateEntry || '--',
+    itemDetails: (
+      <div className="max-w-xs">
+        <div className="truncate" title={entry.itemDetails}>
+          {entry.itemDetails}
+        </div>
+      </div>
+    )
+  });
+
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Outward List</h1>
+      
+      <div className="flex justify-between items-center mb-6">
+        <Button 
+          onClick={() => navigate('/security/gate-pass/outwards/add')}
+          style={{ backgroundColor: '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
+        
+        <Button 
+          variant="outline"
+          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white p-2 rounded-md"
+          onClick={() => setIsFilterModalOpen(true)}
+        >
+          <Filter className="w-4 h-4" />
+        </Button>
+      </div>
+
+      <EnhancedTable
+        data={dataWithIndex}
+        columns={columns}
+        renderRow={renderRow}
+        storageKey="outward-gate-pass-table"
+        emptyMessage="No outward entries available"
+        enableSearch={true}
+        enableExport={true}
+        searchPlaceholder="Search outward entries..."
+        exportFileName="outward-gate-pass-entries"
+      />
 
       <GatePassOutwardsFilterModal 
         isOpen={isFilterModalOpen}

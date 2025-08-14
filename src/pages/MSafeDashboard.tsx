@@ -1,43 +1,353 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, FileText } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
+import { fetchFMUsers, FMUser } from '@/store/slices/fmUserSlice';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { MSafeImportModal } from '@/components/MSafeImportModal';
+import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
+import { toast } from 'sonner';
+import axios from 'axios';
+
 
 export const MSafeDashboard = () => {
-  return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-semibold text-gray-900">M Safe</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Link to="/maintenance/m-safe/non-fte-users">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">NON FTE USERS</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">
-                Manage non-FTE users and their details
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-        
-        <Link to="/maintenance/m-safe/krcc-form-list">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">KRCC FORM LIST</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground">
-                View and manage KRCC forms
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+
+  const [fmUsers, setFmUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+
+  const cardData = [
+    {
+      title: "User Management",
+      count: fmUsers?.length || 0,
+      icon: Users
+    },
+    {
+      title: "Active Users",
+      count: fmUsers?.filter(user => user.status === 'approved').length || 0,
+      icon: UserCheck
+    },
+    {
+      title: "Pending Approvals",
+      count: fmUsers?.filter(user => user.status === 'pending').length || 0,
+      icon: Clock
+    },
+    {
+      title: "System Settings",
+      count: 12,
+      icon: Settings
+    }
+  ];
+
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const url = `https://${baseUrl}/pms/users/fte_users.json`;
+        const response = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setFmUsers(Array.isArray(response.data) ? response.data : response.data?.users || []);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
+  const getStatusBadge = (status: string) => {
+    if (!status) {
+      return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
+    }
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return <Badge className="bg-green-500 text-white hover:bg-green-600">Approved</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-500 text-white hover:bg-yellow-600">Pending</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-500 text-white hover:bg-red-600">Rejected</Badge>;
+      default:
+        return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{status}</Badge>;
+    }
+  };
+  const getTypeBadge = (type: string) => {
+    if (!type) {
+      return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
+    }
+    switch (type.toLowerCase()) {
+      case 'admin':
+        return <Badge className="bg-blue-500 text-white hover:bg-blue-600">Admin</Badge>;
+      case 'site':
+        return <Badge className="bg-purple-500 text-white hover:bg-purple-600">Site</Badge>;
+      case 'company':
+        return <Badge className="bg-orange-500 text-white hover:bg-orange-600">Company</Badge>;
+      default:
+        return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{type}</Badge>;
+    }
+  };
+  const getYesNoBadge = (value: boolean | string) => {
+    const isYes = value === true || value === 'yes' || value === 'Yes';
+    return <Badge className={isYes ? "bg-green-500 text-white hover:bg-green-600" : "bg-red-500 text-white hover:bg-red-600"}>
+      {isYes ? 'Yes' : 'No'}
+    </Badge>;
+  };
+  const columns: ColumnConfig[] = [
+    { key: 'name', label: 'Name', sortable: true, hideable: true },
+    { key: 'org_user_id', label: 'Emp ID', sortable: true, hideable: true },
+    { key: 'email', label: 'Email', sortable: true, hideable: true },
+    { key: 'mobile', label: 'Mobile', sortable: true, hideable: true },
+    { key: 'gender', label: 'Gender', sortable: true, hideable: true },
+    { key: 'active', label: 'Active', sortable: true, hideable: true },
+    { key: 'birth_date', label: 'Birth Date', sortable: true, hideable: true },
+    { key: 'joining_date', label: 'Joining Date', sortable: true, hideable: true },
+    { key: 'status', label: 'Status', sortable: true, hideable: true },
+    { key: 'cluster_name', label: 'Cluster', sortable: true, hideable: true },
+    { key: 'department_name', label: 'Department', sortable: true, hideable: true },
+    { key: 'circle_name', label: 'Circle', sortable: true, hideable: true },
+    { key: 'work_location', label: 'Work Location', sortable: true, hideable: true },
+    { key: 'company_name', label: 'Company Name', sortable: true, hideable: true },
+    { key: 'role_name', label: 'Role', sortable: true, hideable: true },
+    { key: 'employee_type', label: 'Employee Type', sortable: true, hideable: true },
+    { key: 'created_at', label: 'Created At', sortable: true, hideable: true },
+    { key: 'line_manager_name', label: 'Line Manager Name', sortable: false, hideable: true },
+    { key: 'line_manager_email', label: 'Line Manager Email', sortable: false, hideable: true },
+    { key: 'line_manager_mobile', label: 'Line Manager Mobile', sortable: false, hideable: true },
+  ];
+
+  const handleToggleActive = (user: any) => {
+    setFmUsers(prevUsers =>
+      prevUsers.map(u =>
+        u.id === user.id
+          ? { ...u, active: !u.active }
+          : u
+      )
+    );
+  };
+
+  const renderCell = (user: any, columnKey: string): React.ReactNode => {
+    switch (columnKey) {
+      case 'name':
+        return `${user.firstname || ''} ${user.lastname || ''}`.trim() || '-';
+      case 'org_user_id':
+        return user.org_user_id || user.lock_user_permission?.employee_id || user.employee_id || '-';
+      case 'email':
+        return user.email || '-';
+      case 'mobile':
+        return user.mobile || '-';
+      case 'gender':
+        return user.gender || '-';
+      case 'active': {
+        const isActive = user.lock_role && typeof user.lock_role.active !== 'undefined' ? user.lock_role.active === 1 : !!user.active;
+        return (
+          <div className="flex justify-center">
+            <Switch checked={isActive} />
+          </div>
+        );
+      }
+      case 'birth_date':
+        return user.birth_date || '-';
+      case 'joining_date':
+        return user.lock_user_permission?.joining_date || user.joining_date || '-';
+      case 'status': {
+        const statusVal = user.lock_user_permission?.status || user.status;
+        return statusVal ? getStatusBadge(statusVal) : '-';
+      }
+      case 'cluster_name':
+        return user.cluster_name || '-';
+      case 'department_name':
+        return user.lock_user_permission?.department_name || user.department_name || '-';
+      case 'circle_name':
+        return user.lock_user_permission?.circle_name || user.circle_name || '-';
+      case 'work_location':
+        return user.work_location || '-';
+      case 'company_name':
+        return user.company_name || '-';
+      case 'role_name':
+        return user.lock_user_permission?.role_name || user.role_name || user.lock_role?.name || user.lock_role?.display_name || '-';
+      case 'employee_type':
+        return user.employee_type || '-';
+      case 'created_at':
+        if (!user.created_at) return '-';
+        try {
+          const date = new Date(user.created_at);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          return `${day}/${month}/${year} ${hours}:${minutes}`;
+        } catch {
+          return user.created_at;
+        }
+      case 'line_manager_name':
+        return user.report_to?.name || 'NA';
+      case 'line_manager_email':
+        return user.report_to?.email || 'NA';
+      case 'line_manager_mobile':
+        return user.report_to?.mobile || 'NA';
+      default:
+        return '-';
+    }
+  };
+  const renderActions = (user: FMUser) =>
+  (
+    <div className="flex items-center justify-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate(`/maintenance/m-safe/user/${user.id}`, { state: { user } })}
+        className="h-8 w-8 p-0"
+      >
+        <Eye className="h-4 w-4" />
+      </Button>
     </div>
-  );
+  )
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(fmUsers.map(user => user.id.toString()));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+
+  const handleRefresh = () => {
+    dispatch(fetchFMUsers());
+  };
+  const handleActionClick = () => {
+    setShowActionPanel(true);
+  };
+  const handleExport = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    try {
+      if (!baseUrl || !token) {
+        toast.error('Missing base URL or token');
+        return;
+      }
+
+      let url = `api`;
+      if (selectedItems.length > 0) {
+        const ids = selectedItems.join(',');
+        url += `&ids=${ids}`;
+      }
+
+      const response = await axios.get(url, {
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.data || response.data.size === 0) {
+        toast.error('Empty file received from server');
+        return;
+      }
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'm-safe.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      toast.success('M-Safe data exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export M-Safe data');
+    }
+  };
+
+
+  const handleImport = (file) => {
+    alert(`Imported file: ${file.name}`);
+  };
+
+
+  const handleFiltersClick = () => {
+    setIsFilterModalOpen(true);
+  };
+
+  const handleApplyFilters = (filters: { name: string; email: string; mobile: string }) => {
+
+    console.log('Filtered Users:');
+  }
+
+
+  return (
+    <>
+      <div className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {cardData.map((card, index) => (
+            <div
+              key={index}
+              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]"
+            >
+              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54] rounded-full">
+                <card.icon className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                  {card.count}
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                  {card.title}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {showActionPanel && (
+          <SelectionPanel
+            actions={[
+              { label: 'Import', icon: UploadIcon, onClick: () => setImportModalOpen(true) },
+            ]}
+            onClearSelection={() => setShowActionPanel(false)}
+          />
+        )}
+
+        <div className="rounded-lg">
+          <EnhancedTable data={fmUsers || []} leftActions={
+            <Button
+              onClick={handleActionClick}
+              className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+            >
+              <Plus className="w-4 h-4" />
+              Action
+            </Button>
+          } columns={columns} onFilterClick={handleFiltersClick}
+            renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} enableExport={true} exportFileName="fm-users" pagination={true} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
+        </div>
+
+        <MSafeImportModal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} onImport={handleImport} />
+        <MSafeFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
+      </div>;
+    </>
+  )
 };

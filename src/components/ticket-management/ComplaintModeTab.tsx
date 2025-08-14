@@ -16,10 +16,11 @@ import {
 } from '@/components/ui/form';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { EditComplaintModeModal } from './modals/EditComplaintModeModal';
-import { ticketManagementAPI } from '@/services/ticketManagementAPI';
+import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
+import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
 import {
   createComplaintMode,
   fetchComplaintModes,
@@ -51,6 +52,7 @@ export const ComplaintModeTab: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingComplaintMode, setEditingComplaintMode] = useState<any>(null);
+  const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
 
   const form = useForm<ComplaintModeFormData>({
     resolver: zodResolver(complaintModeSchema),
@@ -61,7 +63,18 @@ export const ComplaintModeTab: React.FC = () => {
 
   useEffect(() => {
     fetchComplaintModes();
+    loadUserAccount();
   }, []);
+
+  const loadUserAccount = async () => {
+    try {
+      const account = await ticketManagementAPI.getUserAccount();
+      setUserAccount(account);
+    } catch (error) {
+      console.error('Error loading user account:', error);
+      toast.error('Failed to load user account');
+    }
+  };
 
   const fetchComplaintModes = async () => {
     setIsLoading(true);
@@ -77,21 +90,35 @@ export const ComplaintModeTab: React.FC = () => {
   };
 
   const handleSubmit = async (data: ComplaintModeFormData) => {
+    if (!userAccount?.company_id) {
+      toast.error('Unable to determine company ID. Please refresh and try again.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const complaintModeData = {
         name: data.complaintMode,
         of_phase: 'pms',
-        society_id: '15', // Default society ID
+        society_id: userAccount.company_id.toString(),
+        active: 1,
       };
 
       await ticketManagementAPI.createComplaintMode(complaintModeData);
       toast.success('Complaint mode created successfully!');
       form.reset();
       fetchComplaintModes();
-    } catch (error) {
-      toast.error('Failed to create complaint mode');
+    } catch (error: any) {
       console.error('Error creating complaint mode:', error);
+      
+      // Check for 422 error with "name has already been taken" message
+      if (error.response?.status === 422 && 
+          error.response?.data?.name && 
+          error.response.data.name.includes('has already been taken')) {
+        toast.error('Complaint mode name has already been taken');
+      } else {
+        toast.error('Failed to create complaint mode');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -103,52 +130,25 @@ export const ComplaintModeTab: React.FC = () => {
     setEditModalOpen(true);
   };
 
-  const currentSiteId =
-    accounts && accounts.length > 0
-      ? accounts[0].site_id || accounts[0].society_id || '111'
-      : '111';
-
-  // Handle update
-  const handleUpdate = async (updatedComplaintMode: any) => {
-    try {
-      const payload = {
-        id: updatedComplaintMode.id,
-        name: updatedComplaintMode.name,
-        of_phase: 'pms',
-        society_id: currentSiteId,
-      };
-      const resultAction = await dispatch(updateComplaintMode(payload));
-      if (updateComplaintMode.fulfilled.match(resultAction)) {
-        toast.success('Complaint mode updated successfully!');
-        dispatch(fetchComplaintModes());
-      } else {
-        toast.error(
-          (resultAction.payload as any)?.message || 'Failed to update complaint mode'
-        );
-      }
-    } catch {
-      toast.error('Failed to update complaint mode');
-    }
+  const handleUpdate = (updatedComplaintMode: ComplaintModeType) => {
+    setComplaintModes(complaintModes.map(mode => 
+      mode.id === updatedComplaintMode.id ? updatedComplaintMode : mode
+    ));
   };
 
-  // Handle delete
-  const handleDelete = async (complaintMode: any) => {
+  const handleDelete = async (complaintMode: ComplaintModeType) => {
+    if (!confirm('Are you sure you want to delete this complaint mode?')) {
+      return;
+    }
+    
     try {
-      const resultAction = await dispatch(deleteComplaintMode(complaintMode.id));
-      if (deleteComplaintMode.fulfilled.match(resultAction)) {
-        toast.success('Complaint mode deleted successfully!');
-        dispatch(fetchComplaintModes());
-      } else {
-        toast.error(
-          (resultAction.payload as any)?.message || 'Failed to delete complaint mode'
-        );
-      }
-    } catch {
+      await ticketManagementAPI.deleteComplaintMode(complaintMode.id);
+      setComplaintModes(complaintModes.filter(mode => mode.id !== complaintMode.id));
+      toast.success('Complaint mode deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting complaint mode:', error);
       toast.error('Failed to delete complaint mode');
     }
-  };
-  const getComplaintModeName = (id: number) => {
-    return complaintModes?.find(mode => mode.id === id)?.name || 'Unknown Mode';
   };
 
   const columns = [

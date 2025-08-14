@@ -1,446 +1,489 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Filter, Search, RefreshCw, Grid, MoreVertical, Eye, Plus } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-
-// Sample events data based on the image
-const eventsData = [
-  {
-    id: 1,
-    title: 'Test Event',
-    unit: '',
-    createdBy: 'GodrejLiving',
-    startDate: '08/04/2024 11:00 AM',
-    endDate: '09/04/2024 12:00 PM',
-    eventType: 'General',
-    status: 'Published',
-    expired: true,
-    attachments: '',
-    createdOn: '08/04/2024'
-  },
-  {
-    id: 2,
-    title: 'Christmas Eve',
-    unit: '',
-    createdBy: 'GodrejHisociety',
-    startDate: '24/12/2024 8:30 PM',
-    endDate: '24/12/2024 9:30 PM',
-    eventType: 'General',
-    status: 'Published',
-    expired: true,
-    attachments: '',
-    createdOn: '05/04/2024'
-  },
-  {
-    id: 3,
-    title: 'Christmas Eve',
-    unit: '',
-    createdBy: 'GodrejHisociety',
-    startDate: '15/04/2024 7:45 PM',
-    endDate: '15/04/2024 8:45 PM',
-    eventType: 'General',
-    status: 'Published',
-    expired: true,
-    attachments: '',
-    createdOn: '05/04/2024'
-  },
-  {
-    id: 4,
-    title: 'New Event',
-    unit: '',
-    createdBy: 'GodrejLiving',
-    startDate: '14/08/2023 3:45 PM',
-    endDate: '14/08/2023 6:45 PM',
-    eventType: 'General',
-    status: 'Published',
-    expired: true,
-    attachments: '',
-    createdOn: '14/08/2023'
-  }
-];
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { Badge } from '@/components/ui/badge';
+import { Eye } from 'lucide-react';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { toast } from 'sonner';
+import { fetchEvents } from '@/store/slices/eventSlice';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
 export const CRMEventsPage = () => {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
+
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem("token");
+
+  const { loading } = useAppSelector(state => state.fetchEvents)
+
+  const [events, setEvents] = useState([])
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedEvents, setSelectedEvents] = useState<number[]>([]);
   const [filters, setFilters] = useState({
     unit: '',
-    dateRange: undefined as Date | undefined,
-    status: ''
+    dateRange: {
+      from: undefined,
+      to: undefined,
+    },
+    status: '',
   });
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
+  const [openFilterDialog, setOpenFilterDialog] = useState(false);
 
-  // Column visibility state
-  const [visibleColumns, setVisibleColumns] = useState([
-    { key: 'actions', label: 'Actions', visible: true },
-    { key: 'title', label: 'Title', visible: true },
-    { key: 'unit', label: 'Unit', visible: true },
-    { key: 'createdBy', label: 'Created By', visible: true },
-    { key: 'startDate', label: 'Start Date', visible: true },
-    { key: 'endDate', label: 'End Date', visible: true },
-    { key: 'eventType', label: 'Event Type', visible: true },
-    { key: 'status', label: 'Status', visible: true },
-    { key: 'expired', label: 'Expired', visible: true },
-    { key: 'attachments', label: 'Attachments', visible: true },
-    { key: 'createdOn', label: 'Created On', visible: true }
-  ]);
-
-  const handleEventSelection = (eventId: number) => {
-    setSelectedEvents(prev => 
-      prev.includes(eventId) 
-        ? prev.filter(id => id !== eventId)
-        : [...prev, eventId]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedEvents.length === eventsData.length) {
-      setSelectedEvents([]);
-    } else {
-      setSelectedEvents(eventsData.map(event => event.id));
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await dispatch(fetchEvents({ baseUrl, token, page: pagination.current_page, per_page: 10 })).unwrap();
+        const mappedEvents = response.classifieds.map(event => ({
+          id: event.id,
+          event_name: event.event_name,
+          unit: event.event_at || '-',
+          created_by: event.created_by || 'Unknown',
+          from_time: event.from_time,
+          to_time: event.to_time,
+          event_type: event.event_type || '-',
+          status: event.status,
+          is_expired: event.is_expired === 1,
+          attachments: event.documents || [],
+          created_at: event.created_at,
+        }));
+        setEvents(mappedEvents);
+        setPagination({
+          current_page: response.pagination.current_page,
+          total_count: response.pagination.total_count,
+          total_pages: response.pagination.total_pages
+        })
+      } catch (error) {
+        console.log(error);
+        toast.error('Failed to fetch data');
+      }
     }
+
+    fetchData();
+  }, [])
+
+  const columns = [
+    { key: 'event_name', label: 'Title', sortable: true, defaultVisible: true },
+    { key: 'unit', label: 'Unit', sortable: true, defaultVisible: true },
+    { key: 'created_by', label: 'Created By', sortable: true, defaultVisible: true },
+    { key: 'from_time', label: 'Start Date', sortable: true, defaultVisible: true },
+    { key: 'to_time', label: 'End Date', sortable: true, defaultVisible: true },
+    { key: 'event_type', label: 'Event Type', sortable: true, defaultVisible: true },
+    { key: 'status', label: 'Status', sortable: true, defaultVisible: true },
+    { key: 'is_expired', label: 'Expired', sortable: true, defaultVisible: true },
+    { key: 'attachments', label: 'Attachments', sortable: true, defaultVisible: true },
+    { key: 'created_at', label: 'Created On', sortable: true, defaultVisible: true },
+  ];
+
+  // Handle view event
+  const handleViewEvent = (event) => {
+    navigate(`/crm/events/details/${event.id}`);
   };
 
-  const handleViewEvent = (eventId: number) => {
-    navigate(`/crm/events/details/${eventId}`);
-  };
-
+  // Handle add event
   const handleAddEvent = () => {
     navigate('/crm/events/add');
   };
 
-  const handleColumnToggle = (columnKey: string, visible: boolean) => {
-    setVisibleColumns(prev => 
-      prev.map(col => 
-        col.key === columnKey ? { ...col, visible } : col
-      )
-    );
+  // Handle filter dialog
+  const handleOpenFilterDialog = () => {
+    setOpenFilterDialog(true);
   };
 
-  const getStatusBadge = (status: string) => {
-    return (
-      <Badge className="bg-green-600 text-white">
-        {status}
-      </Badge>
-    );
+  const handleCloseFilterDialog = () => {
+    setOpenFilterDialog(false);
   };
 
-  const getEventTypeBadge = (type: string) => {
-    return (
-      <Badge className="bg-green-600 text-white">
-        {type}
-      </Badge>
-    );
-  };
+  const handleApplyFilters = async () => {
+    const formatedStartDate = filters.dateRange.from ? format(new Date(filters.dateRange.from), "MM/dd/yyyy") : null;
+    const formatedEndDate = filters.dateRange.to ? format(new Date(filters.dateRange.to), "MM/dd/yyyy") : null;
 
-  const getExpiredBadge = (expired: boolean) => {
-    if (expired) {
-      return (
-        <Badge className="bg-red-600 text-white">
-          Expired
-        </Badge>
-      );
+    const filterParams = {
+      "q[publish_in]": filters.status,
+      ...(formatedStartDate && formatedEndDate && { "q[date_range]": `${formatedStartDate} - ${formatedEndDate}` }),
+    };
+
+    const queryString = new URLSearchParams(filterParams).toString();
+
+    try {
+      const response = await dispatch(fetchEvents({ baseUrl, token, params: queryString, page: pagination.current_page, per_page: 10 })).unwrap();
+      const mappedEvents = response.classifieds.map(event => ({
+        id: event.id,
+        event_name: event.event_name,
+        unit: event.event_at || '-',
+        created_by: event.created_by || 'Unknown',
+        from_time: event.from_time,
+        to_time: event.to_time,
+        event_type: event.event_type || '-',
+        status: event.status,
+        is_expired: event.is_expired === 1,
+        attachments: event.documents || [],
+        created_at: event.created_at,
+      }));
+      setEvents(mappedEvents);
+      setPagination({
+        current_page: response.pagination.current_page,
+        total_count: response.pagination.total_count,
+        total_pages: response.pagination.total_pages
+      })
+    } catch (error) {
+      console.log(error);
+      toast.error('Failed to fetch data');
     }
-    return null;
+    setOpenFilterDialog(false);
   };
 
-  const filteredEvents = eventsData.filter(event =>
-    event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleResetFilters = () => {
+    setFilters({
+      unit: '',
+      dateRange: undefined,
+      status: '',
+    });
+  };
+
+  // Render cell content
+  const renderCell = (item, columnKey) => {
+    switch (columnKey) {
+      case 'status':
+        return (
+          <Badge className="bg-green-600 text-white">{item.status}</Badge>
+        );
+      case 'event_type':
+        return (
+          <Badge className="bg-blue-600 text-white">{item.event_type}</Badge>
+        );
+      case 'is_expired':
+        return item.is_expired ? (
+          <Badge className="bg-red-600 text-white">Expired</Badge>
+        ) : (
+          <Badge className="bg-green-600 text-white">Active</Badge>
+        );
+      case 'attachments':
+        return item.attachments.length > 0 ? (
+          <img
+            style={{ width: "100%", height: "50px" }}
+            src={item.attachments[0].document}
+          />
+        ) : (
+          'None'
+        );
+      case 'from_time':
+      case 'to_time':
+      case 'created_at':
+        return item[columnKey] ? format(new Date(item[columnKey]), 'MM/dd/yyyy HH:mm') : 'N/A';
+      default:
+        return item[columnKey] || 'N/A';
+    }
+  };
+
+  const handlePageChange = async (page: number) => {
+    setPagination((prev) => ({
+      ...prev,
+      current_page: page,
+    }));
+    try {
+      const response = await dispatch(fetchEvents({ baseUrl, token, page: page, per_page: 10 })).unwrap();
+      const mappedEvents = response.classifieds.map(event => ({
+        id: event.id,
+        event_name: event.event_name,
+        unit: event.event_at || '-',
+        created_by: event.created_by || 'Unknown',
+        from_time: event.from_time,
+        to_time: event.to_time,
+        event_type: event.event_type || '-',
+        status: event.status,
+        is_expired: event.is_expired === 1,
+        attachments: event.documents || [],
+        created_at: event.created_at,
+      }));
+      setEvents(mappedEvents);
+      setPagination({
+        current_page: response.pagination.current_page,
+        total_count: response.pagination.total_count,
+        total_pages: response.pagination.total_pages
+      })
+    } catch (error) {
+      toast.error('Failed to fetch bookings');
+    }
+  };
+
+  const renderPaginationItems = () => {
+    if (!pagination.total_pages || pagination.total_pages <= 0) {
+      return null;
+    }
+    const items = [];
+    const totalPages = pagination.total_pages;
+    const currentPage = pagination.current_page;
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      items.push(
+        <PaginationItem key={1} className='cursor-pointer'>
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+            disabled={loading}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1" >
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                disabled={loading}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                disabled={loading}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find((item) => item.key === i.toString())) {
+            items.push(
+              <PaginationItem key={i} className='cursor-pointer'>
+                <PaginationLink
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                  disabled={loading}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+              disabled={loading}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+              disabled={loading}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
+  // Render actions
+  const renderActions = (item) => (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 text-blue-600"
+      onClick={() => handleViewEvent(item)}
+    >
+      <Eye className="h-4 w-4" />
+    </Button>
   );
+
+  const getDateRangeLabel = () => {
+    const { from, to } = filters.dateRange;
+    if (from && to) {
+      return `${format(from, 'MM/dd/yyyy')} - ${format(to, 'MM/dd/yyyy')}`;
+    } else if (from) {
+      return `${format(from, 'MM/dd/yyyy')} - ...`;
+    } else {
+      return 'Select Date Range';
+    }
+  };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-600 mb-4">
-        Events &gt; Event List
-      </div>
-
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-4">Event List</h1>
-        
-        {/* Filters Section */}
-        <div className="bg-white p-4 rounded-lg shadow mb-4">
-          <div className="flex items-center gap-4 mb-4">
-            <h3 className="font-medium text-gray-700">Filter</h3>
-          </div>
-          
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex-1">
-              <Select onValueChange={(value) => setFilters(prev => ({ ...prev, unit: value }))}>
-                <SelectTrigger className="w-full border-gray-300">
-                  <SelectValue placeholder="Select Unit" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                  <SelectItem value="unit1">Unit 1</SelectItem>
-                  <SelectItem value="unit2">Unit 2</SelectItem>
-                  <SelectItem value="unit3">Unit 3</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+      </div>
 
-            <div className="flex-1">
+      {/* Filter Dialog */}
+      <Dialog open={openFilterDialog} onClose={handleCloseFilterDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Filter Events</DialogTitle>
+        <DialogContent>
+          <div className="flex flex-col gap-4 mt-4">
+
+            {/* Date Range Picker */}
+            <FormControl fullWidth>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal border-gray-300",
-                      !filters.dateRange && "text-gray-400"
+                      'w-full justify-start text-left font-normal',
+                      !filters.dateRange?.from && 'text-gray-400'
                     )}
+                    style={{ border: "1px solid #ccc", padding: "25px 15px", borderRadius: "3px" }}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filters.dateRange ? format(filters.dateRange, "MM/dd/yyyy") : "Select Date Range"}
+                    {getDateRangeLabel()}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0" align="start" style={{ zIndex: 9999 }}>
                   <Calendar
-                    mode="single"
+                    mode="range"
                     selected={filters.dateRange}
-                    onSelect={(date) => setFilters(prev => ({ ...prev, dateRange: date }))}
+                    onSelect={(range) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        dateRange: {
+                          from: range?.from,
+                          to: range?.to,
+                        },
+                      }))
+                    }
                     initialFocus
                     className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
-            </div>
+            </FormControl>
 
-            <div className="flex-1">
-              <Select onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
-                <SelectTrigger className="w-full border-gray-300">
-                  <SelectValue placeholder="Select Status" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
+            {/* Status Filter */}
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={filters.status}
+                onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value }))}
+                label="Status"
+              >
+                <MenuItem value="Select" disabled>Select Status</MenuItem>
+                <MenuItem value="1">Published</MenuItem>
+                <MenuItem value="2">Disabled</MenuItem>
               </Select>
-            </div>
-
-            <Button className="bg-green-600 hover:bg-green-700 text-white px-6">
-              Apply
-            </Button>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white px-6">
-              Reset
-            </Button>
+            </FormControl>
           </div>
-        </div>
+        </DialogContent>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between">
-          <Button 
-            onClick={handleAddEvent}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Event
+        <DialogActions>
+          <Button onClick={handleResetFilters} color="secondary">
+            Reset
           </Button>
+          <Button onClick={() => handleApplyFilters(filters)} color="primary">
+            Apply
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-80 border-gray-300"
-              />
-            </div>
-            <Button variant="outline" size="icon" className="border-gray-300">
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-            <ColumnVisibilityDropdown 
-              columns={visibleColumns}
-              onColumnToggle={handleColumnToggle}
-            />
-            <Button variant="outline" size="icon" className="border-gray-300">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-            <Button className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4">
-              Go!
+      {/* Enhanced Table */}
+      <EnhancedTable
+        data={events || []}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        storageKey="crm-events-table"
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search events..."
+        enableExport={true}
+        exportFileName="events"
+        pagination={true}
+        pageSize={10}
+        enableSearch={true}
+        loading={loading}
+        leftActions={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
+              onClick={handleAddEvent}
+            >
+              <Plus className="w-4 h-4" />
+              Add
             </Button>
           </div>
-        </div>
-      </div>
+        }
+        onFilterClick={handleOpenFilterDialog}
+      />
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="w-12">
-                <input
-                  type="checkbox"
-                  checked={selectedEvents.length === eventsData.length}
-                  onChange={handleSelectAll}
-                  className="rounded border-gray-300"
-                />
-              </TableHead>
-              {visibleColumns.find(col => col.key === 'actions')?.visible && (
-                <TableHead className="text-gray-700 font-medium">Actions</TableHead>
-              )}
-              {visibleColumns.find(col => col.key === 'title')?.visible && (
-                <TableHead className="text-gray-700 font-medium">Title</TableHead>
-              )}
-              {visibleColumns.find(col => col.key === 'unit')?.visible && (
-                <TableHead className="text-gray-700 font-medium">Unit</TableHead>
-              )}
-              {visibleColumns.find(col => col.key === 'createdBy')?.visible && (
-                <TableHead className="text-gray-700 font-medium">Created By</TableHead>
-              )}
-              {visibleColumns.find(col => col.key === 'startDate')?.visible && (
-                <TableHead className="text-gray-700 font-medium">Start Date</TableHead>
-              )}
-              {visibleColumns.find(col => col.key === 'endDate')?.visible && (
-                <TableHead className="text-gray-700 font-medium">End Date</TableHead>
-              )}
-              {visibleColumns.find(col => col.key === 'eventType')?.visible && (
-                <TableHead className="text-gray-700 font-medium">Event Type</TableHead>
-              )}
-              {visibleColumns.find(col => col.key === 'status')?.visible && (
-                <TableHead className="text-gray-700 font-medium">Status</TableHead>
-              )}
-              {visibleColumns.find(col => col.key === 'expired')?.visible && (
-                <TableHead className="text-gray-700 font-medium">Expired</TableHead>
-              )}
-              {visibleColumns.find(col => col.key === 'attachments')?.visible && (
-                <TableHead className="text-gray-700 font-medium">Attachments</TableHead>
-              )}
-              {visibleColumns.find(col => col.key === 'createdOn')?.visible && (
-                <TableHead className="text-gray-700 font-medium">Created On</TableHead>
-              )}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredEvents.map((event) => (
-              <TableRow key={event.id} className="hover:bg-gray-50">
-                <TableCell>
-                  <input
-                    type="checkbox"
-                    checked={selectedEvents.includes(event.id)}
-                    onChange={() => handleEventSelection(event.id)}
-                    className="rounded border-gray-300"
-                  />
-                </TableCell>
-                {visibleColumns.find(col => col.key === 'actions')?.visible && (
-                  <TableCell>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 text-blue-600"
-                      onClick={() => handleViewEvent(event.id)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                )}
-                {visibleColumns.find(col => col.key === 'title')?.visible && (
-                  <TableCell className="font-medium">{event.title}</TableCell>
-                )}
-                {visibleColumns.find(col => col.key === 'unit')?.visible && (
-                  <TableCell>{event.unit}</TableCell>
-                )}
-                {visibleColumns.find(col => col.key === 'createdBy')?.visible && (
-                  <TableCell>{event.createdBy}</TableCell>
-                )}
-                {visibleColumns.find(col => col.key === 'startDate')?.visible && (
-                  <TableCell>{event.startDate}</TableCell>
-                )}
-                {visibleColumns.find(col => col.key === 'endDate')?.visible && (
-                  <TableCell>{event.endDate}</TableCell>
-                )}
-                {visibleColumns.find(col => col.key === 'eventType')?.visible && (
-                  <TableCell>{getEventTypeBadge(event.eventType)}</TableCell>
-                )}
-                {visibleColumns.find(col => col.key === 'status')?.visible && (
-                  <TableCell>{getStatusBadge(event.status)}</TableCell>
-                )}
-                {visibleColumns.find(col => col.key === 'expired')?.visible && (
-                  <TableCell>{getExpiredBadge(event.expired)}</TableCell>
-                )}
-                {visibleColumns.find(col => col.key === 'attachments')?.visible && (
-                  <TableCell>{event.attachments}</TableCell>
-                )}
-                {visibleColumns.find(col => col.key === 'createdOn')?.visible && (
-                  <TableCell className="text-gray-600">{event.createdOn}</TableCell>
-                )}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-
-        {/* Footer */}
-        <div className="px-4 py-3 border-t bg-gray-50 text-sm text-gray-600">
-          Showing 1 to 4 of 4 rows
-        </div>
-      </div>
-
-      {/* Updated Pagination */}
-      <div className="mt-6">
+      <div className="flex justify-center mt-6">
         <Pagination>
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious href="#" />
+              <PaginationPrevious
+                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                className={pagination.current_page === 1 || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
             </PaginationItem>
+            {renderPaginationItems()}
             <PaginationItem>
-              <PaginationLink href="#" isActive>
-                1
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                2
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                3
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationEllipsis />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">
-                10
-              </PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext href="#" />
+              <PaginationNext
+                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                className={pagination.current_page === pagination.total_pages || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+              />
             </PaginationItem>
           </PaginationContent>
         </Pagination>
-      </div>
-
-      {/* Footer branding */}
-      <div className="text-center text-xs text-gray-500 mt-8">
-        <p>Powered by</p>
-        <div className="flex items-center justify-center mt-1">
-          <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs mr-2">
-            L
-          </div>
-          <span className="font-semibold">LOCATED</span>
-        </div>
       </div>
     </div>
   );

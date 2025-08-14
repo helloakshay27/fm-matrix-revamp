@@ -1,660 +1,1336 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Plus, Upload } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAppDispatch } from '@/store/hooks';
-import { fetchFacilitySetup } from '@/store/slices/facilitySetupsSlice';
-import { facilityBookingSetupDetails } from '@/store/slices/facilityBookingsSlice';
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronUp,
+  QrCode,
+} from "lucide-react";
+import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Box,
+  Dialog,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import { useAppDispatch } from "@/store/hooks";
+import { facilityBookingSetupDetails } from "@/store/slices/facilityBookingsSlice";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { QRCodeModal } from "@/components/QRCodeModal";
+import axios from "axios";
+
+// Custom theme for MUI components
+const muiTheme = createTheme({
+  components: {
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          fontSize: "16px",
+        },
+      },
+      defaultProps: {
+        shrink: true,
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          width: "100%",
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "6px",
+            height: "36px",
+            "@media (min-width: 768px)": {
+              height: "45px",
+            },
+          },
+          "& .MuiOutlinedInput-input": {
+            padding: "8px 14px",
+            "@media (min-width: 768px)": {
+              padding: "12px 14px",
+            },
+          },
+        },
+      },
+      defaultProps: {
+        InputLabelProps: {
+          shrink: true,
+        },
+      },
+    },
+    MuiFormControl: {
+      styleOverrides: {
+        root: {
+          width: "100%",
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "6px",
+            height: "36px",
+            "@media (min-width: 768px)": {
+              height: "45px",
+            },
+          },
+          "& .MuiSelect-select": {
+            padding: "8px 14px",
+            "@media (min-width: 768px)": {
+              padding: "12px 14px",
+            },
+          },
+        },
+      },
+    },
+  },
+});
 
 export const BookingSetupDetailPage = () => {
-  const dispatch = useAppDispatch();
-  const baseUrl = localStorage.getItem('baseUrl');
-  const token = localStorage.getItem('token');
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
   const { id } = useParams();
-
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [selectedFile, setSelectedFile] = useState();
+  const [selectedBookingFiles, setSelectedBookingFiles] = useState([]);
+  const [showQr, setShowQr] = useState(false);
+  const [qrUrl, setQrUrl] = useState("");
+  const [additionalOpen, setAdditionalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    facilityName: "",
+    isBookable: true,
+    isRequest: false,
+    active: "Select",
+    department: "Select Department",
+    appKey: "",
+    postpaid: false,
+    prepaid: false,
+    payOnFacility: false,
+    complimentary: false,
+    gstPercentage: "",
+    sgstPercentage: "",
+    perSlotCharge: "",
+    bookingAllowedBefore: { day: "", hour: "", minute: "" },
+    advanceBooking: { day: "", hour: "", minute: "" },
+    canCancelBefore: { day: "", hour: "", minute: "" },
+    allowMultipleSlots: false,
+    maximumSlots: "",
+    facilityBookedTimes: "",
+    description: "",
+    termsConditions: "",
+    cancellationText: "",
+    amenities: {
+      tv: false,
+      whiteboard: false,
+      casting: false,
+      smartPenForTV: false,
+      wirelessCharging: false,
+      meetingRoomInventory: false,
+    },
+    seaterInfo: "Select a seater",
+    floorInfo: "Select a floor",
+    sharedContentInfo: "",
+    slots: [
+      {
+        startTime: { hour: "00", minute: "00" },
+        breakTimeStart: { hour: "00", minute: "00" },
+        breakTimeEnd: { hour: "00", minute: "00" },
+        endTime: { hour: "00", minute: "00" },
+        concurrentSlots: "",
+        slotBy: 15,
+        wrapTime: "",
+      },
+    ],
+  });
+  const [departments, setDepartments] = useState([]);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
+  const [cancellationRules, setCancellationRules] = useState([
+    {
+      description:
+        "If user cancels the booking selected hours/days prior to schedule, a percentage of the amount will be deducted",
+      time: { type: "Hr", value: "00", day: "0" },
+      deduction: "",
+    },
+    {
+      description:
+        "If user cancels the booking selected hours/days prior to schedule, a percentage of the amount will be deducted",
+      time: { type: "Hr", value: "00", day: "0" },
+      deduction: "",
+    },
+    {
+      description:
+        "If user cancels the booking selected hours/days prior to schedule, a percentage of the amount will be deducted",
+      time: { type: "Hr", value: "00", day: "0" },
+      deduction: "",
+    },
+  ]);
 
-  // Mock data - in real app this would come from API based on id
-  const [bookingData, setBookingData] = useState({});
+  const handleDownloadQr = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/admin/facility_setups/facility_qr_codes.pdf?access_token=${token}&facility_ids[]=${id}`,
+        {
+          responseType: 'blob',
+        }
+      );
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await dispatch(facilityBookingSetupDetails({ baseUrl, token, id })).unwrap();
-        setBookingData(response);
-      } catch (error) {
-        console.log(error)
-      }
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+
+      a.download = 'facility_qr_codes.pdf';
+
+      document.body.appendChild(a);
+      a.click();
+
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
     }
-
-    fetchData();
-  }, [])
-
-  const handleBack = () => {
-    navigate('/vas/booking/setup');
   };
 
+
+  const handleAdditionalOpen = () => {
+    setAdditionalOpen(!additionalOpen);
+  };
+
+  const fetchDepartments = async () => {
+    if (departments.length > 0) return;
+    setLoadingDepartments(true);
+    try {
+      const response = await fetch(
+        `https://${baseUrl}/pms/departments.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+      let departmentsList = [];
+      if (Array.isArray(data)) {
+        departmentsList = data;
+      } else if (data && Array.isArray(data.departments)) {
+        departmentsList = data.departments;
+      } else if (data && data.length !== undefined) {
+        departmentsList = Array.from(data);
+      }
+      setDepartments(departmentsList);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+      setDepartments([]);
+    } finally {
+      setLoadingDepartments(false);
+    }
+  };
+
+  const handleEditClick = (id) => {
+    navigate(`/settings/vas/booking/setup/edit/${id}`);
+  }
+
+  const fetchFacilityBookingDetails = async () => {
+    try {
+      const response = await dispatch(
+        facilityBookingSetupDetails({ baseUrl, token, id })
+      ).unwrap();
+      setFormData({
+        facilityName: response.fac_name,
+        isBookable: response.fac_type === "bookable" ? true : false,
+        isRequest: response.fac_type === "request" ? true : false,
+        active: response.active,
+        department: response.department_id,
+        appKey: response.app_key,
+        postpaid: response.postpaid,
+        prepaid: response.prepaid,
+        payOnFacility: response.pay_on_facility,
+        complimentary: response.complementary,
+        gstPercentage: response.gst,
+        sgstPercentage: response.sgst,
+        perSlotCharge: response?.facility_charge?.per_slot_charge,
+        bookingAllowedBefore: {
+          day: response.bb_dhm.d,
+          hour: response.bb_dhm.h,
+          minute: response.bb_dhm.m,
+        },
+        advanceBooking: {
+          day: response.ab_dhm.d,
+          hour: response.ab_dhm.h,
+          minute: response.ab_dhm.m,
+        },
+        canCancelBefore: {
+          day: response.cb_dhm.d,
+          hour: response.cb_dhm.h,
+          minute: response.cb_dhm.m,
+        },
+        allowMultipleSlots: response.multi_slot,
+        maximumSlots: response.max_slots,
+        facilityBookedTimes: response.booking_limit,
+        description: response.description,
+        termsConditions: response.terms,
+        cancellationText: response.cancellation_policy,
+        amenities: {
+          tv: response.amenity_info[0].selected,
+          whiteboard: response.amenity_info[1].selected,
+          casting: response.amenity_info[2].selected,
+          smartPenForTV: response.amenity_info[3].selected,
+          wirelessCharging: response.amenity_info[4].selected,
+          meetingRoomInventory: response.amenity_info[5].selected,
+        },
+        seaterInfo: response.seater_info,
+        floorInfo: response.location_info,
+        sharedContentInfo: response.shared_content,
+        slots: response.facility_slots.map((slot) => ({
+          startTime: { hour: slot.facility_slot.start_hour, minute: slot.facility_slot.start_min },
+          breakTimeStart: { hour: slot.facility_slot.break_start_hour, minute: slot.facility_slot.break_start_min },
+          breakTimeEnd: { hour: slot.facility_slot.break_end_hour, minute: slot.facility_slot.break_end_min },
+          endTime: { hour: slot.facility_slot.end_hour, minute: slot.facility_slot.end_min },
+          concurrentSlots: slot.facility_slot.max_bookings,
+          slotBy: slot.facility_slot.breakminutes_label,
+          wrapTime: slot.facility_slot.wrap_time,
+        })),
+      });
+      const transformedRules = response.cancellation_rules.map((rule: any) => ({
+        description: rule.description,
+        time: {
+          type: rule.hour, // You can dynamically determine this if needed
+          value: rule.min,
+          day: rule.day,
+        },
+        deduction: rule.deduction?.toString() || '',
+      }));
+
+      setCancellationRules([...transformedRules]);
+
+      // setCancellationRules(response.cancellation_rules)
+      setSelectedFile(response?.cover_image?.document);
+      setSelectedBookingFiles(
+        response?.documents.map((doc) => doc.document.document)
+      );
+      setQrUrl(response?.qr_code.document);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  console.log(cancellationRules)
+
+  useEffect(() => {
+    fetchDepartments();
+    fetchFacilityBookingDetails();
+  }, []);
+
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="mb-4 p-0 h-auto font-normal text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Booking Setup &gt; Booking Setup List
-          </Button>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">BOOKING SETUP DETAIL</h1>
-        </div>
+    <ThemeProvider theme={muiTheme}>
+      <div className="px-5 bg-white min-h-screen">
+        <div className="bg-white rounded-lg max-w-6xl mx-auto pt-3">
+          <div className="flex items-center justify-between pr-6">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/settings/vas/booking/setup")}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Booking List
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleEditClick(id)}
+                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+              >
+                Edit
+              </Button>
+              {/* <button
+                className="bg-[#F6F4EE] py-2 px-4 rounded mt-2 flex items-center gap-2"
+                onClick={() => setShowQr(true)}
+              >
+                <QrCode className="w-4 h-4" color="#000" /> QR Code
+              </button> */}
 
-        <div className="space-y-6">
-          {/* Basic Info */}
-          <Card>
-            <CardContent className="p-6">
-              {/* Radio buttons */}
-              <div className="flex items-center space-x-6 mb-6">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    id="bookable"
-                    name="type"
-                    value="bookable"
-                    defaultChecked
-                    disabled
-                    className="w-4 h-4 text-blue-600"
+              <Button
+                onClick={() => setShowQr(true)}
+                className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+              >
+                <svg
+                  width="14"
+                  height="15"
+                  viewBox="0 0 14 15"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M0.332031 4.20609V0.935059H3.66536V2.24347H1.66536V4.20609H0.332031ZM0.332031 14.0192V10.7481H1.66536V12.7108H3.66536V14.0192H0.332031ZM10.332 14.0192V12.7108H12.332V10.7481H13.6654V14.0192H10.332ZM12.332 4.20609V2.24347H10.332V0.935059H13.6654V4.20609H12.332ZM10.6654 11.0752H11.6654V12.0566H10.6654V11.0752ZM10.6654 9.11263H11.6654V10.0939H10.6654V9.11263ZM9.66536 10.0939H10.6654V11.0752H9.66536V10.0939ZM8.66536 11.0752H9.66536V12.0566H8.66536V11.0752ZM7.66536 10.0939H8.66536V11.0752H7.66536V10.0939ZM9.66536 8.13132H10.6654V9.11263H9.66536V8.13132ZM8.66536 9.11263H9.66536V10.0939H8.66536V9.11263ZM7.66536 8.13132H8.66536V9.11263H7.66536V8.13132ZM11.6654 2.89768V6.82291H7.66536V2.89768H11.6654ZM6.33203 8.13132V12.0566H2.33203V8.13132H6.33203ZM6.33203 2.89768V6.82291H2.33203V2.89768H6.33203ZM5.33203 11.0752V9.11263H3.33203V11.0752H5.33203ZM5.33203 5.8416V3.87898H3.33203V5.8416H5.33203ZM10.6654 5.8416V3.87898H8.66536V5.8416H10.6654Z"
+                    fill="#C72030"
                   />
-                  <label htmlFor="bookable" className="text-sm font-medium">Bookable</label>
+                </svg>
+                View QR
+              </Button>
+            </div>
+          </div>
+          <div className="p-6 space-y-8">
+            {/* Basic Info */}
+            <div className="border rounded-lg">
+              <div
+                className="flex items-center gap-2 bg-[#F6F4EE] p-6"
+                style={{ border: "1px solid #D9D9D9" }}
+              >
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  1
                 </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    id="request"
-                    name="type"
-                    value="request"
-                    disabled
-                    className="w-4 h-4 text-blue-600"
+                <h3 className="text-lg font-semibold text-[#C72030]">
+                  Basic Info
+                </h3>
+              </div>
+              <div
+                className="p-[31px] bg-[#F6F7F7] space-y-4"
+                style={{ border: "1px solid #D9D9D9" }}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <TextField
+                    label="Facility Name*"
+                    value={formData.facilityName}
+                    variant="outlined"
+                    InputProps={{ readOnly: true }}
                   />
-                  <label htmlFor="request" className="text-sm font-medium">Request</label>
-                </div>
-              </div>
-
-              {/* Form fields */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <Label className="text-sm font-medium">
-                    Facility Name<span className="text-red-500">*</span>
-                  </Label>
-                  <Input value={bookingData.fac_name} className="mt-1" readOnly />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">
-                    Active<span className="text-red-500">*</span>
-                  </Label>
-                  <Select value="Yes" disabled>
-                    <SelectTrigger className="mt-1" value={bookingData.active}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Yes">Yes</SelectItem>
-                      <SelectItem value="No">No</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Department</Label>
-                  <Select value={bookingData.department} disabled>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select Department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Slot">Slot</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Configure App Key */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">1</span>
-                CONFIGURE APP KEY
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div>
-                <Label className="text-sm font-medium">App Key</Label>
-                <Input value={bookingData.appKey} className="mt-1" readOnly />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Configure Payment */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">2</span>
-                CONFIGURE PAYMENT
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="flex items-center space-x-2">
-                  <Switch checked={bookingData.paymentPortland} disabled />
-                  <Label className="text-sm">Portland</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch checked={bookingData.prepaid} disabled />
-                  <Label className="text-sm">Prepaid</Label>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Complimentary</Label>
-                  <div className="mt-1 text-sm text-gray-500">Not configured</div>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">GST(%) :</Label>
-                  <Input value={bookingData.gst} className="mt-1" readOnly />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Configure Slot */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">3</span>
-                CONFIGURE SLOT
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <Button size="sm" className="bg-purple-800 hover:bg-purple-900 text-white px-6">
-                  Add
-                </Button>
-              </div>
-
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <div className="grid grid-cols-7 gap-4 mb-4">
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Start Time</Label>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Break Time Start</Label>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Break Time End</Label>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">End Time</Label>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Concurrent Slots</Label>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Slot by</Label>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700">Wrap Time</Label>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-7 gap-4">
-                  <div className="flex gap-1">
-                    <Select value="09" disabled>
-                      <SelectTrigger className="h-8 w-16">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="09">09</SelectItem>
-                      </SelectContent>
+                  <FormControl>
+                    <InputLabel className="bg-[#F6F7F7]">Active*</InputLabel>
+                    <Select
+                      value={formData.active}
+                      label="Active*"
+                      disabled
+                    >
+                      <MenuItem value="Select">Select</MenuItem>
+                      <MenuItem value="1">Yes</MenuItem>
+                      <MenuItem value="0">No</MenuItem>
                     </Select>
-                    <Select value="00" disabled>
-                      <SelectTrigger className="h-8 w-16">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="00">00</SelectItem>
-                      </SelectContent>
+                  </FormControl>
+                  <FormControl>
+                    <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
+                    <Select
+                      value={formData.department}
+                      label="Department"
+                      disabled
+                    >
+                      <MenuItem value="Select Department">
+                        {loadingDepartments ? "Loading..." : "Select Department"}
+                      </MenuItem>
+                      {Array.isArray(departments) &&
+                        departments.map((dept, index) => (
+                          <MenuItem key={index} value={dept.id}>
+                            {dept.department_name}
+                          </MenuItem>
+                        ))}
                     </Select>
-                  </div>
-
-                  <div className="flex gap-1">
-                    <Select value="13" disabled>
-                      <SelectTrigger className="h-8 w-16">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="13">13</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select value="00" disabled>
-                      <SelectTrigger className="h-8 w-16">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="00">00</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex gap-1">
-                    <Select value="14" disabled>
-                      <SelectTrigger className="h-8 w-16">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="14">14</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select value="00" disabled>
-                      <SelectTrigger className="h-8 w-16">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="00">00</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex gap-1">
-                    <Select value="19" disabled>
-                      <SelectTrigger className="h-8 w-16">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="19">19</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select value="00" disabled>
-                      <SelectTrigger className="h-8 w-16">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="00">00</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Select disabled>
-                      <SelectTrigger className="h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Select value="15 Minutes" disabled>
-                      <SelectTrigger className="h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15 Minutes">15 Minutes</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Select disabled>
-                      <SelectTrigger className="h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                    </Select>
-                  </div>
+                  </FormControl>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Charge Setup */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">4</span>
-                CHARGE SETUP
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Per Slot Charge:</Label>
-                  <Input value={bookingData.perSlotCharge} className="mt-1 w-64" readOnly />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Booking Allowed before :</Label>
-                  <div className="text-xs text-gray-500 mt-1">(Enter Time: DD Days, HH Hours, MM Minutes)</div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Input placeholder="Day" className="w-20" readOnly />
-                    <span className="text-gray-500">d</span>
-                    <Input placeholder="Hour" className="w-20" readOnly />
-                    <span className="text-gray-500">h</span>
-                    <Input placeholder="Mins" className="w-20" readOnly />
-                    <span className="text-gray-500">m</span>
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Advance Booking :</Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Input placeholder="Day" className="w-20" readOnly />
-                    <span className="text-gray-500">d</span>
-                    <Input placeholder="Hour" className="w-20" readOnly />
-                    <span className="text-gray-500">h</span>
-                    <Input placeholder="Mins" className="w-20" readOnly />
-                    <span className="text-gray-500">m</span>
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Can Cancel Before Schedule :</Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Input placeholder="Day" className="w-20" readOnly />
-                    <span className="text-gray-500">d</span>
-                    <Input placeholder="Hour" className="w-20" readOnly />
-                    <span className="text-gray-500">h</span>
-                    <Input placeholder="Mins" className="w-20" readOnly />
-                    <span className="text-gray-500">m</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Slot Setup */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">5</span>
-                SLOT SETUP
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
+                <div className="flex gap-6 bg-[#F6F7F7]">
                   <div className="flex items-center space-x-2">
                     <input
-                      type="checkbox"
-                      checked={bookingData.allowMultipleSlots}
+                      type="radio"
+                      id="bookable"
+                      name="type"
+                      checked={formData.isBookable}
                       disabled
-                      className="w-4 h-4 text-blue-600"
+                      className="text-blue-600"
                     />
-                    <Label className="text-sm font-medium">Allow Multiple Slots</Label>
+                    <label htmlFor="bookable">Bookable</label>
                   </div>
-                  <Input value="15" className="w-20" readOnly />
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <Label className="text-sm font-medium">Facility can be booked</Label>
-                  <Input value="10" className="w-20" readOnly />
-                  <span className="text-sm">times per day by User</span>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="request"
+                      name="type"
+                      checked={formData.isRequest}
+                      disabled
+                      className="text-blue-600"
+                    />
+                    <label htmlFor="request">Request</label>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Cover Image & Booking Summary Image */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                  <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">6</span>
-                  COVER IMAGE
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500">Drop & Drop or Choose file</p>
-                  <p className="text-xs text-gray-400 mt-1">Accepted file formats: JPG/JPEG (format: 516px, width: 516px), max 2 MB</p>
+            {/* Configure Slot */}
+            <div className="border rounded-lg">
+              <div
+                className="flex items-center gap-2 bg-[#F6F4EE] p-6"
+                style={{ border: "1px solid #D9D9D9" }}
+              >
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  2
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                  <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">6</span>
-                  Booking Summary Image
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                  <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500">Drop & Drop or Choose file</p>
-                  <p className="text-xs text-gray-400 mt-1">Accepted file formats: JPG/JPEG (format: 516px, width: 516px), max 2 MB</p>
+                <h3 className="text-lg font-semibold text-[#C72030]">
+                  CONFIGURE SLOT
+                </h3>
+              </div>
+              <div
+                className="p-[31px] bg-[#F6F7F7]"
+                style={{ border: "1px solid #D9D9D9" }}
+              >
+                <Button
+                  disabled
+                  className="bg-purple-600 hover:bg-purple-700 mb-4 opacity-50 cursor-not-allowed"
+                >
+                  Add
+                </Button>
+                <div className="grid grid-cols-7 gap-2 mb-2 text-sm font-medium text-gray-600">
+                  <div>Start Time</div>
+                  <div>Break Time Start</div>
+                  <div>Break Time End</div>
+                  <div>End Time</div>
+                  <div>Concurrent Slots</div>
+                  <div>Slot by</div>
+                  <div>Wrap Time</div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                {formData.slots.map((slot, index) => (
+                  <div key={index} className="grid grid-cols-7 gap-2 mb-2">
+                    <div className="flex gap-1">
+                      <FormControl size="small">
+                        <Select
+                          value={slot.startTime.hour}
+                          disabled
+                        >
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <MenuItem key={i} value={i.toString()}>
+                              {i.toString().padStart(2, "0")}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <FormControl size="small">
+                        <Select
+                          value={slot.startTime.minute}
+                          disabled
+                        >
+                          {Array.from({ length: 60 }, (_, i) => (
+                            <MenuItem key={i} value={i.toString()}>
+                              {i.toString().padStart(2, "0")}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </div>
+                    <div className="flex gap-1">
+                      <FormControl size="small">
+                        <Select
+                          value={slot.breakTimeStart.hour}
+                          disabled
+                        >
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <MenuItem key={i} value={i.toString()}>
+                              {i.toString().padStart(2, "0")}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <FormControl size="small">
+                        <Select
+                          value={slot.breakTimeStart.minute}
+                          disabled
+                        >
+                          {Array.from({ length: 60 }, (_, i) => (
+                            <MenuItem key={i} value={i.toString()}>
+                              {i.toString().padStart(2, "0")}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </div>
+                    <div className="flex gap-1">
+                      <FormControl size="small">
+                        <Select
+                          value={slot.breakTimeEnd.hour}
+                          disabled
+                        >
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <MenuItem key={i} value={i.toString()}>
+                              {i.toString().padStart(2, "0")}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <FormControl size="small">
+                        <Select
+                          value={slot.breakTimeEnd.minute}
+                          disabled
+                        >
+                          {Array.from({ length: 60 }, (_, i) => (
+                            <MenuItem key={i} value={i.toString()}>
+                              {i.toString().padStart(2, "0")}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </div>
+                    <div className="flex gap-1">
+                      <FormControl size="small">
+                        <Select
+                          value={slot.endTime.hour}
+                          disabled
+                        >
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <MenuItem key={i} value={i.toString()}>
+                              {i.toString().padStart(2, "0")}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <FormControl size="small">
+                        <Select
+                          value={slot.endTime.minute}
+                          disabled
+                        >
+                          {Array.from({ length: 60 }, (_, i) => (
+                            <MenuItem key={i} value={i.toString()}>
+                              {i.toString().padStart(2, "0")}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </div>
+                    <TextField
+                      size="small"
+                      value={slot.concurrentSlots}
+                      variant="outlined"
+                      InputProps={{ readOnly: true }}
+                    />
+                    <FormControl size="small">
+                      <Select
+                        value={slot.slotBy}
+                        disabled
+                      >
+                        <MenuItem value={"15 Minutes"}>15 Minutes</MenuItem>
+                        <MenuItem value={"30 Minutes"}>Half hour</MenuItem>
+                        <MenuItem value={"45 Minutes"}>45 Minutes</MenuItem>
+                        <MenuItem value={"60 Minutes"}>1 hour</MenuItem>
+                        <MenuItem value={"90 Minutes"}>1 and a half hours</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <TextField
+                      size="small"
+                      value={slot.wrapTime}
+                      variant="outlined"
+                      InputProps={{ readOnly: true }}
+                    />
+                  </div>
+                ))}
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Booking Allowed before :
+                    </label>
+                    <p className="text-sm text-gray-600 mb-2">
+                      (Enter Time: DD Days, HH Hours, MM Minutes)
+                    </p>
+                    <div className="flex gap-2 items-center">
+                      <TextField
+                        placeholder="Day"
+                        size="small"
+                        style={{ width: "80px" }}
+                        variant="outlined"
+                        value={formData.bookingAllowedBefore.day}
+                        InputProps={{ readOnly: true }}
+                      />
+                      <span>d</span>
+                      <TextField
+                        placeholder="Hour"
+                        size="small"
+                        style={{ width: "80px" }}
+                        variant="outlined"
+                        value={formData.bookingAllowedBefore.hour}
+                        InputProps={{ readOnly: true }}
+                      />
+                      <span>h</span>
+                      <TextField
+                        placeholder="Mins"
+                        size="small"
+                        style={{ width: "80px" }}
+                        variant="outlined"
+                        value={formData.bookingAllowedBefore.minute}
+                        InputProps={{ readOnly: true }}
+                      />
+                      <span>m</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Advance Booking :
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <TextField
+                        placeholder="Day"
+                        size="small"
+                        style={{ width: "80px" }}
+                        variant="outlined"
+                        value={formData.advanceBooking.day}
+                        InputProps={{ readOnly: true }}
+                      />
+                      <span>d</span>
+                      <TextField
+                        placeholder="Hour"
+                        size="small"
+                        style={{ width: "80px" }}
+                        variant="outlined"
+                        value={formData.advanceBooking.hour}
+                        InputProps={{ readOnly: true }}
+                      />
+                      <span>h</span>
+                      <TextField
+                        placeholder="Mins"
+                        size="small"
+                        style={{ width: "80px" }}
+                        variant="outlined"
+                        value={formData.advanceBooking.minute}
+                        InputProps={{ readOnly: true }}
+                      />
+                      <span>m</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">
+                      Can Cancel Before Schedule :
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <TextField
+                        placeholder="Day"
+                        size="small"
+                        style={{ width: "80px" }}
+                        variant="outlined"
+                        value={formData.canCancelBefore.day}
+                        InputProps={{ readOnly: true }}
+                      />
+                      <span>d</span>
+                      <TextField
+                        placeholder="Hour"
+                        size="small"
+                        style={{ width: "80px" }}
+                        variant="outlined"
+                        value={formData.canCancelBefore.hour}
+                        InputProps={{ readOnly: true }}
+                      />
+                      <span>h</span>
+                      <TextField
+                        placeholder="Mins"
+                        size="small"
+                        style={{ width: "80px" }}
+                        variant="outlined"
+                        value={formData.canCancelBefore.minute}
+                        InputProps={{ readOnly: true }}
+                      />
+                      <span>m</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4 flex items-center justify-between mt-4">
+                  <div className="flex flex-col gap-5">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="allowMultipleSlots"
+                        checked={formData.allowMultipleSlots}
+                        disabled
+                      />
+                      <label htmlFor="allowMultipleSlots">
+                        Allow Multiple Slots
+                      </label>
+                    </div>
+                    {formData.allowMultipleSlots && (
+                      <div>
+                        <TextField
+                          label="Maximum no. of slots"
+                          value={formData.maximumSlots}
+                          variant="outlined"
+                          size="small"
+                          style={{ width: "200px" }}
+                          InputProps={{ readOnly: true }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>Facility can be booked</span>
+                    <TextField
+                      value={formData.facilityBookedTimes}
+                      variant="outlined"
+                      size="small"
+                      style={{ width: "80px" }}
+                      InputProps={{ readOnly: true }}
+                    />
+                    <span>times per day by User</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-          {/* Description */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">7</span>
-                DESCRIPTION
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder="Enter description..."
-                className="min-h-[100px]"
-                readOnly
-              />
-            </CardContent>
-          </Card>
+            {/* Configure Payment */}
+            <div className="border rounded-lg">
+              <div
+                className="flex items-center gap-2 bg-[#F6F4EE] p-6"
+                style={{ border: "1px solid #D9D9D9" }}
+              >
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  3
+                </div>
+                <h3 className="text-lg font-semibold text-[#C72030]">
+                  CONFIGURE PAYMENT
+                </h3>
+              </div>
+              <div
+                className="p-[31px] bg-[#F6F7F7] space-y-6"
+                style={{ border: "1px solid #D9D9D9" }}
+              >
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="postpaid"
+                      checked={formData.postpaid}
+                      disabled
+                    />
+                    <label htmlFor="postpaid">Postpaid</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="prepaid"
+                      checked={formData.prepaid}
+                      disabled
+                    />
+                    <label htmlFor="prepaid">Prepaid</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="payOnFacility"
+                      checked={formData.payOnFacility}
+                      disabled
+                    />
+                    <label htmlFor="payOnFacility">Pay on Facility</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="complimentary"
+                      checked={formData.complimentary}
+                      disabled
+                    />
+                    <label htmlFor="complimentary">Complimentary</label>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <TextField
+                    label="SGST(%)"
+                    value={formData.sgstPercentage}
+                    variant="outlined"
+                    InputProps={{ readOnly: true }}
+                  />
+                  <TextField
+                    label="GST(%)"
+                    value={formData.gstPercentage}
+                    variant="outlined"
+                    InputProps={{ readOnly: true }}
+                  />
+                </div>
+                <TextField
+                  label="Per Slot Charge"
+                  value={formData.perSlotCharge}
+                  variant="outlined"
+                  InputProps={{ readOnly: true }}
+                />
+              </div>
+            </div>
 
-          {/* Terms & Conditions and Cancellation Text */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                  <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">8</span>
-                  TERMS & CONDITIONS
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+            {/* Cover Image and Booking Summary Image */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="border rounded-lg w-full">
+                <div
+                  className="flex items-center gap-2 bg-[#F6F4EE] p-6"
+                  style={{ border: "1px solid #D9D9D9" }}
+                >
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    4
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">
+                    COVER IMAGE
+                  </h3>
+                </div>
+                <div
+                  className="p-6 bg-[#F6F7F7]"
+                  style={{ border: "1px solid #D9D9D9" }}
+                >
+                  {selectedFile && (
+                    <div className="flex gap-2 flex-wrap">
+                      <img
+                        src={selectedFile}
+                        alt="cover-preview"
+                        className="h-[80px] w-20 rounded border border-gray-200"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="border rounded-lg w-full">
+                <div
+                  className="flex items-center gap-2 bg-[#F6F4EE] p-6"
+                  style={{ border: "1px solid #D9D9D9" }}
+                >
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    5
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">
+                    Booking Summary Image
+                  </h3>
+                </div>
+                <div
+                  className="p-6 bg-[#F6F7F7]"
+                  style={{ border: "1px solid #D9D9D9" }}
+                >
+                  {selectedBookingFiles.length > 0 && (
+                    <div className="flex gap-2 flex-wrap">
+                      {selectedBookingFiles.map((file, index) => (
+                        <img
+                          key={index}
+                          src={file}
+                          alt={`cover-preview-${index}`}
+                          className="h-[80px] w-20 rounded border border-gray-200 bg-cover"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="border rounded-lg">
+              <div
+                className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                style={{ border: "1px solid #D9D9D9" }}
+              >
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  6
+                </div>
+                <h3 className="text-lg font-semibold text-[#C72030]">
+                  DESCRIPTION
+                </h3>
+              </div>
+              <div
+                className="p-6 bg-[#F6F7F7]"
+                style={{ border: "1px solid #D9D9D9" }}
+              >
                 <Textarea
-                  placeholder="Enter terms and conditions..."
+                  value={formData.description}
                   className="min-h-[100px]"
                   readOnly
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                  <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">8</span>
-                  CANCELLATION TEXT
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Textarea
-                  placeholder="Enter cancellation text..."
-                  className="min-h-[100px]"
-                  readOnly
-                />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Block Days */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">9</span>
-                BLOCK DAYS
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Input placeholder="Select Date" className="w-full" readOnly />
+            {/* Terms & Conditions and Cancellation Text */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="border rounded-lg">
+                <div
+                  className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                  style={{ border: "1px solid #D9D9D9" }}
+                >
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    7
                   </div>
-                  <div className="flex items-center space-x-6">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="entireDay"
-                        name="blockType"
-                        value="entireDay"
-                        disabled
-                        className="w-4 h-4"
+                  <h3 className="text-lg font-semibold text-[#C72030]">
+                    TERMS & CONDITIONS
+                  </h3>
+                </div>
+                <div
+                  className="p-6 bg-[#F6F7F7]"
+                  style={{ border: "1px solid #D9D9D9" }}
+                >
+                  <Textarea
+                    value={formData.termsConditions}
+                    className="min-h-[100px]"
+                    readOnly
+                  />
+                </div>
+              </div>
+              <div className="border rounded-lg">
+                <div
+                  className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                  style={{ border: "1px solid #D9D9D9" }}
+                >
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                    8
+                  </div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">
+                    CANCELLATION POLICY
+                  </h3>
+                </div>
+                <div
+                  className="p-6 bg-[#F6F7F7]"
+                  style={{ border: "1px solid #D9D9D9" }}
+                >
+                  <Textarea
+                    value={formData.cancellationText}
+                    className="min-h-[100px]"
+                    readOnly
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Cancellation Rules */}
+            <div className="border rounded-lg">
+              <div
+                className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                style={{ border: "1px solid #D9D9D9" }}
+              >
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  9
+                </div>
+                <h3 className="text-lg font-semibold text-[#C72030]">
+                  RULE SETUP
+                </h3>
+              </div>
+              <div
+                className="p-6 bg-[#F6F7F7]"
+                style={{ border: "1px solid #D9D9D9" }}
+              >
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="font-medium text-gray-700">
+                    Rules Description
+                  </div>
+                  <div className="font-medium text-gray-700">Time</div>
+                  <div className="font-medium text-gray-700">Deduction</div>
+                </div>
+                {cancellationRules.map((rule, index) => (
+                  <div
+                    key={index}
+                    className="grid grid-cols-3 gap-4 mb-2 items-center"
+                  >
+                    <div className="text-sm text-gray-600">
+                      {rule.description}
+                    </div>
+                    <div className="flex gap-2">
+                      <TextField
+                        placeholder="Day"
+                        size="small"
+                        style={{ width: "80px" }}
+                        variant="outlined"
+                        value={rule.time.day}
+                        InputProps={{ readOnly: true }}
                       />
-                      <label htmlFor="entireDay" className="text-sm">Entire Day</label>
+                      <FormControl size="small" style={{ width: "80px" }}>
+                        <Select
+                          value={rule.time.type}
+                          disabled
+                        >
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <MenuItem key={i} value={i}>
+                              {i}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      <FormControl size="small" style={{ width: "80px" }}>
+                        <Select
+                          value={rule.time.value}
+                          disabled
+                        >
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <MenuItem
+                              key={i}
+                              value={i}
+                            >
+                              {i}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </div>
+                    <TextField
+                      placeholder="%"
+                      size="small"
+                      variant="outlined"
+                      value={rule.deduction}
+                      InputProps={{ readOnly: true }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Additional Setup */}
+            <div
+              className={`border rounded-lg overflow-hidden ${additionalOpen ? "h-auto" : "h-[3.8rem]"}`}
+            >
+              <div
+                className="flex justify-between p-6 bg-[#F6F4EE]"
+                style={{ border: "1px solid #D9D9D9" }}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold"></div>
+                  <h3 className="text-lg font-semibold text-[#C72030]">
+                    ADDITIONAL SETUP
+                  </h3>
+                </div>
+                {additionalOpen ? (
+                  <ChevronUp
+                    onClick={handleAdditionalOpen}
+                    className="cursor-pointer"
+                  />
+                ) : (
+                  <ChevronDown
+                    onClick={handleAdditionalOpen}
+                    className="cursor-pointer"
+                  />
+                )}
+              </div>
+              <div
+                className="p-6 space-y-4"
+                style={{ border: "1px solid #D9D9D9" }}
+                id="additional"
+              >
+                <div className="border rounded-lg">
+                  <div
+                    className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                    style={{ border: "1px solid #D9D9D9" }}
+                  >
+                    <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      11
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#C72030]">
+                      CONFIGURE AMENITY INFO
+                    </h3>
+                  </div>
+                  <div
+                    className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]"
+                    style={{ border: "1px solid #D9D9D9" }}
+                    id="amenities"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tv"
+                        checked={formData.amenities.tv}
+                        disabled
+                      />
+                      <label htmlFor="tv">TV</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id="selectedSlots"
-                        name="blockType"
-                        value="selectedSlots"
+                      <Checkbox
+                        id="whiteboard"
+                        checked={formData.amenities.whiteboard}
                         disabled
-                        className="w-4 h-4"
                       />
-                      <label htmlFor="selectedSlots" className="text-sm">Selected Slots</label>
+                      <label htmlFor="whiteboard">Whiteboard</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="casting"
+                        checked={formData.amenities.casting}
+                        disabled
+                      />
+                      <label htmlFor="casting">Casting</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="smartPenForTV"
+                        checked={formData.amenities.smartPenForTV}
+                        disabled
+                      />
+                      <label htmlFor="smartPenForTV">Smart Pen for TV</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="wirelessCharging"
+                        checked={formData.amenities.wirelessCharging}
+                        disabled
+                      />
+                      <label htmlFor="wirelessCharging">Wireless Charging</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="meetingRoomInventory"
+                        checked={formData.amenities.meetingRoomInventory}
+                        disabled
+                      />
+                      <label htmlFor="meetingRoomInventory">
+                        Meeting Room Inventory
+                      </label>
                     </div>
                   </div>
-                  <div>
+                </div>
+                <div className="border rounded-lg">
+                  <div
+                    className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                    style={{ border: "1px solid #D9D9D9" }}
+                    id="seater"
+                  >
+                    <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      12
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#C72030]">
+                      SEATER INFO
+                    </h3>
+                  </div>
+                  <div
+                    className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]"
+                    style={{ border: "1px solid #D9D9D9" }}
+                  >
+                    <FormControl>
+                      <InputLabel>Seater Info</InputLabel>
+                      <Select
+                        value={formData.seaterInfo}
+                        label="Seater Info"
+                        disabled
+                      >
+                        <MenuItem value="Select a seater">Select a seater</MenuItem>
+                        <MenuItem value="1 Seater">1 Seater</MenuItem>
+                        <MenuItem value="2 Seater">2 Seater</MenuItem>
+                        <MenuItem value="3 Seater">3 Seater</MenuItem>
+                        <MenuItem value="4 Seater">4 Seater</MenuItem>
+                        <MenuItem value="5 Seater">5 Seater</MenuItem>
+                        <MenuItem value="6 Seater">6 Seater</MenuItem>
+                        <MenuItem value="7 Seater">7 Seater</MenuItem>
+                        <MenuItem value="8 Seater">8 Seater</MenuItem>
+                        <MenuItem value="9 Seater">9 Seater</MenuItem>
+                        <MenuItem value="10 Seater">10 Seater</MenuItem>
+                        <MenuItem value="11 Seater">11 Seater</MenuItem>
+                        <MenuItem value="12 Seater">12 Seater</MenuItem>
+                        <MenuItem value="13 Seater">13 Seater</MenuItem>
+                        <MenuItem value="14 Seater">14 Seater</MenuItem>
+                        <MenuItem value="15 Seater">15 Seater</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </div>
+                </div>
+                <div className="border rounded-lg">
+                  <div
+                    className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                    style={{ border: "1px solid #D9D9D9" }}
+                    id="floor"
+                  >
+                    <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      13
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#C72030]">
+                      FLOOR INFO
+                    </h3>
+                  </div>
+                  <div
+                    className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6 bg-[#F6F7F7]"
+                    style={{ border: "1px solid #D9D9D9" }}
+                  >
+                    <FormControl>
+                      <InputLabel>Floor Info</InputLabel>
+                      <Select
+                        value={formData.floorInfo}
+                        label="Floor Info"
+                        disabled
+                      >
+                        <MenuItem value="Select a floor">Select a floor</MenuItem>
+                        <MenuItem value="1st Floor">1st Floor</MenuItem>
+                        <MenuItem value="2nd Floor">2nd Floor</MenuItem>
+                        <MenuItem value="3rd Floor">3rd Floor</MenuItem>
+                        <MenuItem value="4th Floor">4th Floor</MenuItem>
+                        <MenuItem value="5th Floor">5th Floor</MenuItem>
+                        <MenuItem value="6th Floor">6th Floor</MenuItem>
+                        <MenuItem value="7th Floor">7th Floor</MenuItem>
+                        <MenuItem value="8th Floor">8th Floor</MenuItem>
+                        <MenuItem value="9th Floor">9th Floor</MenuItem>
+                        <MenuItem value="10th Floor">10th Floor</MenuItem>
+                        <MenuItem value="11th Floor">11th Floor</MenuItem>
+                        <MenuItem value="12th Floor">12th Floor</MenuItem>
+                        <MenuItem value="13th Floor">13th Floor</MenuItem>
+                        <MenuItem value="14th Floor">14th Floor</MenuItem>
+                        <MenuItem value="15th Floor">15th Floor</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </div>
+                </div>
+                <div className="border rounded-lg">
+                  <div
+                    className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                    style={{ border: "1px solid #D9D9D9" }}
+                    id="shared"
+                  >
+                    <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      14
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#C72030]">
+                      Shared Content Info
+                    </h3>
+                  </div>
+                  <div
+                    className="p-6 bg-[#F6F7F7]"
+                    style={{ border: "1px solid #D9D9D9" }}
+                  >
                     <Textarea
-                      placeholder="Please mention block reason"
-                      className="min-h-[80px] resize-none"
+                      value={formData.sharedContentInfo}
+                      className="min-h-[100px]"
                       readOnly
                     />
                   </div>
                 </div>
-
-                <div className="mt-6">
-                  <div className="grid grid-cols-3 gap-4 py-3 bg-gray-100 px-4 font-semibold text-sm">
-                    <div>Block Days</div>
-                    <div>Blocked Slot</div>
-                    <div>Block Reason</div>
+                <div className="border rounded-lg">
+                  <div
+                    className="flex items-center gap-2 p-6 bg-[#F6F4EE]"
+                    style={{ border: "1px solid #D9D9D9" }}
+                    id="appKey"
+                  >
+                    <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      2
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#C72030]">
+                      CONFIGURE APP KEY
+                    </h3>
                   </div>
-                  <div className="min-h-[100px] border border-gray-200 p-4">
-                    {/* Empty state - no blocked days */}
+                  <div
+                    className="p-6 bg-[#F6F7F7]"
+                    style={{ border: "1px solid #D9D9D9" }}
+                    id="appKey"
+                  >
+                    <TextField
+                      label="App Key"
+                      value={formData.appKey}
+                      variant="outlined"
+                      InputProps={{ readOnly: true }}
+                    />
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Configure Amenity Info */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">10</span>
-                CONFIGURE AMENITY INFO
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" disabled />
-                  <Label className="text-sm">TV</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" disabled />
-                  <Label className="text-sm">Whiteboard</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" disabled />
-                  <Label className="text-sm">Cooking</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" disabled />
-                  <Label className="text-sm">Sound bar for TV</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" disabled />
-                  <Label className="text-sm">Wireless Charging</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="checkbox" disabled />
-                  <Label className="text-sm">Meeting Room - Hartomy</Label>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Seater Info */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">11</span>
-                SEATER INFO
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div>
-                <Label className="text-sm font-medium">Seater Info</Label>
-                <Select value={bookingData.seaterInfo} disabled>
-                  <SelectTrigger className="mt-1 w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="8 Seater">8 Seater</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Floor Info */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">12</span>
-                FLOOR INFO
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div>
-                <Label className="text-sm font-medium">Floor Info</Label>
-                <Select disabled>
-                  <SelectTrigger className="mt-1 w-48">
-                    <SelectValue placeholder="1st Floor" />
-                  </SelectTrigger>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Shared Content Info */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold text-[#C72030] flex items-center">
-                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-3">13</span>
-                Shared Content Info
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-3">
-                Text content will appear on booking room share icon in Application
-              </p>
-              <Textarea
-                placeholder="Enter shared content text..."
-                className="min-h-[100px]"
-                readOnly
-              />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+      {/* <Dialog
+        open={showQr}
+        onClose={() => setShowQr(false)}
+        aria-labelledby="qr-code-dialog-title"
+      >
+        <DialogContent>
+          <Box display="flex" justifyContent="center">
+            <img
+              src={qrUrl}
+              alt="QR Code"
+              style={{ width: "200px", height: "200px" }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <button
+            className="bg-[#F6F4EE] text-[#C72030] font-bold py-2 px-4 rounded mx-auto -mt-6 mb-4"
+            onClick={handleDownloadQr}
+          >
+            Download
+          </button>
+        </DialogActions>
+      </Dialog> */}
+
+      <QRCodeModal
+        isOpen={showQr}
+        onClose={() => setShowQr(false)}
+        qrCode={qrUrl}
+        handleDownloadQR={handleDownloadQr}
+      />
+    </ThemeProvider>
   );
 };

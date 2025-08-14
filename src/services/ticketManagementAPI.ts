@@ -50,7 +50,8 @@ export interface DepartmentOption {
 
 export interface SiteOption {
   id: number;
-  site_name: string;
+  name: string;
+  site_name?: string; // Keep for backward compatibility
 }
 
 export interface UnitOption {
@@ -164,6 +165,12 @@ export interface TicketResponse {
   resolution_time: string | null;
   escalation_resolution_name: string | null;
   complaint_status_id: number;
+  is_golden_ticket?: boolean;
+  is_flagged?: boolean;
+  updated_at?: string;
+  color_code?: string;
+  priority_status?: string;
+  effective_priority?: string;
 }
 
 export interface TicketListResponse {
@@ -197,14 +204,19 @@ export interface CreateTicketFormData {
   area_id: number;
   floor_id: number;
   tower_id?: number;
+  is_golden_ticket?: boolean;
+  is_flagged?: boolean;
 }
 
 export interface UserAccountResponse {
+  id: number;
   firstname: string;
   lastname: string;
   department_name: string;
   email: string;
   mobile: string;
+  site_id: number;
+  company_id: number;
 }
 
 export interface OccupantUserResponse {
@@ -234,10 +246,12 @@ export interface TicketFilters {
   site_id_eq?: number;
   unit_id_eq?: number;
   issue_status_in?: number[];
+  issue_status_eq?: string;
   priority_eq?: string;
   user_firstname_or_user_lastname_cont?: string;
   search_all_fields_cont?: string;
   assigned_to_in?: number[];
+  complaint_status_fixed_state_eq?: string;
 }
 
 // Helper function to format date for API (DD/MM/YYYY)
@@ -269,8 +283,42 @@ export const ticketManagementAPI = {
   },
 
   async getAllSites(): Promise<SiteOption[]> {
-    const response = await apiClient.get(ENDPOINTS.SITES);
-    return response.data.sites || [];
+    try {
+      console.log('🏢 Fetching sites from:', ENDPOINTS.SITES);
+      const response = await apiClient.get(ENDPOINTS.SITES);
+      console.log('✅ Sites API Response:', {
+        endpoint: ENDPOINTS.SITES,
+        responseData: response.data,
+        sitesArray: response.data.sites,
+        sitesLength: response.data.sites?.length || 0,
+        sampleSites: response.data.sites?.slice(0, 3)
+      });
+      
+      const rawSites = response.data.sites || [];
+      
+      // Map the raw site data to SiteOption format
+      const sites: SiteOption[] = rawSites.map((site: any) => ({
+        id: site.id,
+        name: site.name || site.site_name || `Site ${site.id}`,
+        site_name: site.name || site.site_name // Keep for backward compatibility
+      }));
+      
+      console.log('🔄 Mapped Sites:', {
+        originalCount: rawSites.length,
+        mappedCount: sites.length,
+        sampleMappedSites: sites.slice(0, 3)
+      });
+      
+      if (sites.length === 0) {
+        console.warn('⚠️ No sites found in response');
+      }
+      
+      return sites;
+    } catch (error) {
+      console.error('❌ Error fetching sites:', error);
+      console.error('❌ Endpoint that failed:', ENDPOINTS.SITES);
+      throw error;
+    }
   },
 
   async getUnits(): Promise<UnitOption[]> {
@@ -284,13 +332,156 @@ export const ticketManagementAPI = {
   },
 
   async getFMUsers(): Promise<UserOption[]> {
-    const response = await apiClient.get(ENDPOINTS.FM_USERS);
-    return response.data.fm_users || [];
+    try {
+      console.log('🔍 Fetching FM Users from:', ENDPOINTS.FM_USERS);
+      const response = await apiClient.get(ENDPOINTS.FM_USERS);
+      console.log('✅ FM Users API Response:', {
+        endpoint: ENDPOINTS.FM_USERS,
+        responseData: response.data,
+        fmUsersArray: response.data.fm_users,
+        fmUsersLength: response.data.fm_users?.length || 0
+      });
+      
+      const rawUsers = response.data.fm_users || [];
+      
+      // Map the raw user data to UserOption format
+      const users: UserOption[] = rawUsers.map((user: any) => ({
+        id: user.id,
+        name: `${user.firstname || ''} ${user.lastname || ''}`.trim() || user.email || `User ${user.id}`
+      }));
+      
+      console.log('🔄 Mapped FM Users:', {
+        originalCount: rawUsers.length,
+        mappedCount: users.length,
+        sampleMappedUsers: users.slice(0, 3)
+      });
+      
+      if (users.length === 0) {
+        console.warn('⚠️ No FM users found in response');
+      }
+      
+      return users;
+    } catch (error) {
+      console.error('❌ Error fetching FM Users:', error);
+      console.error('❌ Endpoint that failed:', ENDPOINTS.FM_USERS);
+      throw error;
+    }
   },
 
   async getSuppliers(): Promise<SupplierOption[]> {
     const response = await apiClient.get('/pms/suppliers.json');
     return response.data.suppliers || response.data || [];
+  },
+
+  async getSupportStaffCategories(): Promise<{ id: number; name: string }[]> {
+    try {
+      console.log('🔍 Fetching Support Staff Categories from:', ENDPOINTS.SUPPORT_STAFF_CATEGORIES);
+      const response = await apiClient.get(ENDPOINTS.SUPPORT_STAFF_CATEGORIES);
+      console.log('✅ Support Staff Categories API Response:', {
+        endpoint: ENDPOINTS.SUPPORT_STAFF_CATEGORIES,
+        responseData: response.data,
+        categoriesArray: response.data.support_staff_categories,
+        categoriesLength: response.data.support_staff_categories?.length || 0
+      });
+      
+      const rawCategories = response.data.support_staff_categories || response.data || [];
+      
+      // Map the raw category data to standard format
+      const categories = rawCategories.map((category: any) => ({
+        id: category.id,
+        name: category.name || category.category_name || `Category ${category.id}`
+      }));
+      
+      console.log('🔄 Mapped Support Staff Categories:', {
+        originalCount: rawCategories.length,
+        mappedCount: categories.length,
+        sampleMappedCategories: categories.slice(0, 3)
+      });
+      
+      if (categories.length === 0) {
+        console.warn('⚠️ No support staff categories found in response');
+      }
+      
+      return categories;
+    } catch (error) {
+      console.error('❌ Error fetching Support Staff Categories:', error);
+      console.error('❌ Endpoint that failed:', ENDPOINTS.SUPPORT_STAFF_CATEGORIES);
+      throw error;
+    }
+  },
+
+  async getItemMovementTypes(): Promise<{ id: number; name: string }[]> {
+    try {
+      console.log('🔍 Fetching Item Movement Types from:', ENDPOINTS.ITEM_MOVEMENT_TYPES);
+      const response = await apiClient.get(ENDPOINTS.ITEM_MOVEMENT_TYPES);
+      console.log('✅ Item Movement Types API Response:', {
+        endpoint: ENDPOINTS.ITEM_MOVEMENT_TYPES,
+        responseData: response.data,
+        typesArray: response.data.item_movement_types || response.data,
+        typesLength: (response.data.item_movement_types || response.data)?.length || 0
+      });
+      
+      const rawTypes = response.data.item_movement_types || response.data || [];
+      
+      // Map the raw type data to standard format
+      const types = rawTypes.map((type: any) => ({
+        id: type.id,
+        name: type.name || type.movement_type || `Type ${type.id}`
+      }));
+      
+      console.log('🔄 Mapped Item Movement Types:', {
+        originalCount: rawTypes.length,
+        mappedCount: types.length,
+        sampleMappedTypes: types.slice(0, 3)
+      });
+      
+      if (types.length === 0) {
+        console.warn('⚠️ No item movement types found in response');
+      }
+      
+      return types;
+    } catch (error) {
+      console.error('❌ Error fetching Item Movement Types:', error);
+      console.error('❌ Endpoint that failed:', ENDPOINTS.ITEM_MOVEMENT_TYPES);
+      throw error;
+    }
+  },
+
+  async getItemTypes(): Promise<{ id: number; name: string }[]> {
+    try {
+      console.log('🔍 Fetching Item Types from:', ENDPOINTS.ITEM_TYPES);
+      const response = await apiClient.get(ENDPOINTS.ITEM_TYPES);
+      console.log('✅ Item Types API Response:', {
+        endpoint: ENDPOINTS.ITEM_TYPES,
+        responseData: response.data,
+        itemsArray: response.data.item_movement || response.data.movement_types || response.data.item_types || response.data,
+        itemsLength: (response.data.item_movement || response.data.movement_types || response.data.item_types || response.data)?.length || 0
+      });
+      
+      const rawItems = response.data.item_movement || response.data.movement_types || response.data.item_types || response.data || [];
+      
+      // Map the raw item data to standard format
+      const items = rawItems.map((item: any) => ({
+        id: item.id,
+        name: item.name || item.type || item.movement_type || `Item ${item.id}`
+      }));
+      
+      console.log('🔄 Mapped Item Types:', {
+        originalCount: rawItems.length,
+        mappedCount: items.length,
+        sampleMappedItems: items.slice(0, 3)
+      });
+      
+      if (items.length === 0) {
+        console.warn('⚠️ No item types found in response');
+      }
+      
+      return items;
+    } catch (error) {
+      console.error('❌ Error fetching Item Types:', error);
+      console.error('❌ Endpoint that failed:', ENDPOINTS.ITEM_TYPES);
+      throw error;
+    }
   },
 
   // Categories
@@ -372,7 +563,10 @@ export const ticketManagementAPI = {
       });
     }
 
-    const response = await apiClient.get(`/pms/admin/complaints.json?${queryParams.toString()}`);
+    const url = `/pms/admin/complaints.json?${queryParams.toString()}`;
+    console.log('API URL:', url);
+    console.log('Query parameters:', Object.fromEntries(queryParams.entries()));
+    const response = await apiClient.get(url);
     return {
       complaints: response.data.complaints || [],
       pagination: response.data.pagination
@@ -417,6 +611,14 @@ export const ticketManagementAPI = {
     }
     if (ticketData.tower_id) {
       formData.append('complaint[tower_id]', ticketData.tower_id.toString());
+    }
+
+    // Add golden ticket and flagged parameters
+    if (ticketData.is_golden_ticket !== undefined) {
+      formData.append('complaint[is_golden_ticket]', ticketData.is_golden_ticket.toString());
+    }
+    if (ticketData.is_flagged !== undefined) {
+      formData.append('complaint[is_flagged]', ticketData.is_flagged.toString());
     }
 
     // Add attachments
@@ -494,6 +696,30 @@ export const ticketManagementAPI = {
     return response.data;
   },
 
+  async deleteSubCategory(subCategoryId: string) {
+    const response = await apiClient.post('/pms/admin/modify_helpdesk_sub_category.json', {
+      id: subCategoryId,
+      active: "0"
+    });
+    return response.data;
+  },
+
+  async updateSubCategory(subCategoryId: string | number, formData: FormData) {
+    // Add the ID to the FormData
+    formData.append('id', subCategoryId.toString());
+    formData.append('active', '1');
+    
+    const response = await apiClient.post('/pms/admin/modify_helpdesk_sub_category.json', formData);
+    return response.data;
+  },
+
+  async deleteComplaintMode(complaintModeId: number) {
+    const response = await apiClient.post('/pms/admin/delete_complaint_mode.json', {
+      id: complaintModeId
+    });
+    return response.data;
+  },
+
   async getEngineers() {
     const response = await apiClient.get('/pms/account_setups/fm_users.json');
     return response.data;
@@ -504,8 +730,37 @@ export const ticketManagementAPI = {
     return response.data;
   },
 
+  async getAllowedSites(userId: string) {
+    const response = await apiClient.get(`/pms/sites/allowed_sites.json?user_id=${userId}`);
+    return response.data;
+  },
+
+  async createBuilding(buildingData: any) {
+    const response = await apiClient.post('/buildings.json', { building: buildingData });
+    return response.data;
+  },
+
+  async updateBuilding(id: number, buildingData: any) {
+    const response = await apiClient.put(`/buildings/${id}.json`, { building: buildingData });
+    return response.data;
+  },
+
   async getWings() {
     const response = await apiClient.get('/pms/wings.json');
+    return response.data;
+  },
+
+  async createWing(wingData: { name: string; building_id: string; active: boolean }) {
+    const response = await apiClient.post('/pms/wings.json', {
+      pms_wing: wingData
+    });
+    return response.data;
+  },
+
+  async updateWing(wingId: number, wingData: { name: string; building_id: string; active: boolean }) {
+    const response = await apiClient.put(`/pms/wings/${wingId}.json`, {
+      pms_wing: wingData
+    });
     return response.data;
   },
 
@@ -546,18 +801,26 @@ export const ticketManagementAPI = {
   async updateOperationalDays(siteId: string, data: OperationalDay[]) {
     const response = await apiClient.patch(`/pms/sites/${siteId}.json`, {
       pms_site: {
-        helpdesk_operations_attributes: data.map(day => ({
-          id: day.id.toString(),
-          op_of: "Pms::Site",
-          op_of_id: siteId,
-          dayofweek: day.dayofweek,
-          of_phase: "pms",
-          is_open: day.is_open ? "1" : "0",
-          start_hour: day.start_hour.toString(),
-          start_min: day.start_min.toString().padStart(2, '0'),
-          end_hour: day.end_hour.toString(),
-          end_min: day.end_min.toString().padStart(2, '0')
-        }))
+        helpdesk_operations_attributes: data.map(day => {
+          const attributes: any = {
+            op_of: "Pms::Site",
+            op_of_id: siteId,
+            dayofweek: day.dayofweek,
+            of_phase: "pms",
+            is_open: day.is_open ? "1" : "0",
+            start_hour: day.start_hour.toString(),
+            start_min: day.start_min.toString().padStart(2, '0'),
+            end_hour: day.end_hour.toString(),
+            end_min: day.end_min.toString().padStart(2, '0')
+          };
+          
+          // Only include id for existing records (id > 0)
+          if (day.id > 0) {
+            attributes.id = day.id.toString();
+          }
+          
+          return attributes;
+        })
       },
       id: siteId
     });
@@ -607,6 +870,42 @@ export const ticketManagementAPI = {
     return response.data;
   },
 
+  // Update ticket
+  async updateTicket(ticketId: number, updateData: {
+    priority?: string;
+    issue_status?: string;
+    assigned_to?: string;
+    comment?: string;
+  }) {
+    try {
+      // Create URL-encoded data for the PATCH request (matching EditStatusDialog pattern)
+      const params = new URLSearchParams();
+      
+      if (updateData.priority) {
+        params.append('complaint[priority]', updateData.priority);
+      }
+      if (updateData.issue_status) {
+        params.append('complaint[issue_status]', updateData.issue_status);
+      }
+      if (updateData.assigned_to) {
+        params.append('complaint[assigned_to]', updateData.assigned_to);
+      }
+      if (updateData.comment) {
+        params.append('complaint[comment]', updateData.comment);
+      }
+
+      const response = await apiClient.patch(`/pms/admin/complaints/${ticketId}.json`, params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating ticket:', error);
+      throw error;
+    }
+  },
+
   // Get ticket details by ID
   async getTicketDetails(ticketId: string) {
     try {
@@ -633,6 +932,7 @@ export const ticketManagementAPI = {
   async getTicketSummary(filters?: TicketFilters): Promise<{
     total_tickets: number;
     open_tickets: number;
+    pending_tickets: number;
     in_progress_tickets: number;
     closed_tickets: number;
     complaints: number;
@@ -663,7 +963,21 @@ export const ticketManagementAPI = {
 
     const url = `${ENDPOINTS.TICKETS_SUMMARY}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await apiClient.get(url);
-    return response.data;
+    
+    // Ensure pending_tickets is included even if not returned by API
+    const summary = {
+      total_tickets: 0,
+      open_tickets: 0,
+      pending_tickets: 0,
+      in_progress_tickets: 0,
+      closed_tickets: 0,
+      complaints: 0,
+      suggestions: 0,
+      requests: 0,
+      ...response.data
+    };
+    
+    return summary;
   },
 
   // Export tickets with filters in Excel format
@@ -736,5 +1050,212 @@ export const ticketManagementAPI = {
   async getCreateTaskData(complaintId: string) {
     const response = await apiClient.get(`/pms/admin/complaints/${complaintId}/create_task.json`);
     return response.data;
+  },
+
+  // Create visitor
+  async createVisitor(visitorData: {
+    visitorType: string;
+    frequency: string;
+    host?: string;
+    tower?: string;
+    visitPurpose?: string;
+    supportCategory?: string;
+    passNumber: string;
+    vehicleNumber: string;
+    visitorName: string;
+    mobileNumber: string;
+    visitorComingFrom: string;
+    remarks: string;
+    skipHostApproval: boolean;
+    goodsInwards: boolean;
+    passValidFrom?: string;
+    passValidTo?: string;
+    daysPermitted?: { [key: string]: boolean };
+    capturedPhoto?: string;
+    additionalVisitors?: Array<{ name: string; mobile: string }>;
+    goodsData?: {
+      selectType: string;
+      category: string;
+      modeOfTransport: string;
+      lrNumber: string;
+      tripId: string;
+    };
+    items?: Array<{
+      selectItem: string;
+      uicInvoiceNo: string;
+      quantity: string;
+    }>;
+  }) {
+    try {
+      console.log('🔍 Creating visitor with data:', visitorData);
+      
+      // Get current user account to fetch site_id
+      let currentUserSiteId = '7'; // Default fallback value
+      try {
+        console.log('📡 Fetching current user account details for site_id...');
+        const userAccount = await this.getUserAccount();
+        currentUserSiteId = userAccount.site_id.toString();
+        console.log('✅ Got user site_id:', currentUserSiteId);
+      } catch (accountError) {
+        console.warn('⚠️ Failed to fetch user account, using default site_id:', accountError);
+      }
+      
+      const formData = new FormData();
+      
+      // Static fields
+      formData.append('gatekeeper[created_by]', 'Gatekeeper');
+      formData.append('gatekeeper[IsDelete]', '0');
+      formData.append('gatekeeper[approve]', '0');
+      formData.append('gatekeeper[parent_gk_id]', '');
+      
+      // Dynamic fields based on visitor type
+      if (visitorData.visitorType === 'support') {
+        formData.append('gatekeeper[guest_type]', 'Support Staff');
+        if (visitorData.supportCategory) {
+          formData.append('gatekeeper[support_staff_id]', visitorData.supportCategory);
+        }
+        formData.append('gatekeeper[support_staff_estimated_time]', '0');
+      } else {
+        formData.append('gatekeeper[guest_type]', 'Guest');
+        formData.append('gatekeeper[support_staff_id]', '');
+        formData.append('gatekeeper[support_staff_estimated_time]', '0');
+      }
+      
+      // Host and building
+      if (visitorData.host) {
+        formData.append('gatekeeper[person_to_meet_id]', visitorData.host);
+      }
+      if (visitorData.tower) {
+        formData.append('gatekeeper[building_id]', visitorData.tower);
+      }
+      
+      // Basic visitor details
+      formData.append('gatekeeper[guest_name]', visitorData.visitorName);
+      if (visitorData.visitPurpose) {
+        formData.append('gatekeeper[visit_purpose]', visitorData.visitPurpose);
+      }
+      formData.append('gatekeeper[guest_number]', visitorData.mobileNumber);
+      formData.append('gatekeeper[pass_number]', visitorData.passNumber || 'FILTERED');
+      formData.append('gatekeeper[guest_from]', visitorData.visitorComingFrom);
+      formData.append('gatekeeper[guest_vehicle_number]', visitorData.vehicleNumber || 'FILTERED');
+      formData.append('gatekeeper[remarks]', visitorData.remarks);
+      
+      // Frequency and dates
+      if (visitorData.frequency === 'frequently') {
+        if (visitorData.passValidFrom) {
+          // Convert date from YYYY-MM-DD to DD/MM/YYYY format
+          const fromDate = new Date(visitorData.passValidFrom);
+          const formattedFromDate = `${fromDate.getDate().toString().padStart(2, '0')}/${(fromDate.getMonth() + 1).toString().padStart(2, '0')}/${fromDate.getFullYear()}`;
+          formData.append('gatekeeper[pass_start_date]', formattedFromDate);
+        }
+        if (visitorData.passValidTo) {
+          // Convert date from YYYY-MM-DD to DD/MM/YYYY format
+          const toDate = new Date(visitorData.passValidTo);
+          const formattedToDate = `${toDate.getDate().toString().padStart(2, '0')}/${(toDate.getMonth() + 1).toString().padStart(2, '0')}/${toDate.getFullYear()}`;
+          formData.append('gatekeeper[pass_end_date]', formattedToDate);
+        }
+        
+        // Days permitted (0=Sunday, 1=Monday, ..., 6=Saturday)
+        if (visitorData.daysPermitted) {
+          const dayMapping = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+          Object.entries(visitorData.daysPermitted).forEach(([day, isSelected]) => {
+            if (isSelected && dayMapping[day as keyof typeof dayMapping] !== undefined) {
+              formData.append('gatekeeper[pass_days][]', dayMapping[day as keyof typeof dayMapping].toString());
+            }
+          });
+        }
+      } else {
+        formData.append('gatekeeper[pass_start_date]', '');
+        formData.append('gatekeeper[pass_end_date]', '');
+      }
+      
+      formData.append('gatekeeper[mimo_type]', 'move_in');
+      formData.append('value', visitorData.frequency === 'frequently' ? 'Frequently' : 'Once');
+      formData.append('skip_approval', visitorData.skipHostApproval.toString());
+      
+      // Additional visitors
+      if (visitorData.additionalVisitors && visitorData.additionalVisitors.length > 0) {
+        visitorData.additionalVisitors.forEach((visitor, index) => {
+          if (visitor.name && visitor.mobile) {
+            const timestamp = Date.now() + index;
+            formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][name]`, visitor.name);
+            formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][mobile]`, visitor.mobile);
+            formData.append(`gatekeeper[additional_visitors_attributes][${timestamp}][_destroy]`, 'false');
+          }
+        });
+      }
+      
+      // Goods/Items (if goods inwards is enabled)
+      if (visitorData.goodsInwards && visitorData.goodsData && visitorData.items) {
+        const timestamp = Date.now();
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][_destroy]`, 'false');
+        // Pass the selected type ID from the dropdown
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_movement_type_id]`, visitorData.goodsData.selectType || '');
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][resource_type]`, 'Pms::Site');
+        // Use the current user's site_id
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][resource_id]`, currentUserSiteId);
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_of_type]`, 'User');
+        if (visitorData.host) {
+          formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_of_id]`, visitorData.host);
+        }
+        
+        // Transport mode mapping
+        const transportMapping: { [key: string]: string } = {
+          truck: 'By Truck',
+          van: 'By Van',
+          bike: 'By Bike',
+          hand: 'By Hand',
+          courier: 'By Courier'
+        };
+        const mappedTransport = transportMapping[visitorData.goodsData.modeOfTransport] || 'By Hand';
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][mode_of_transport]`, mappedTransport);
+        
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][lr_number]`, visitorData.goodsData.lrNumber || 'FILTERED');
+        formData.append(`gatekeeper[item_movements_attributes][${timestamp}][trip_id]`, visitorData.goodsData.tripId);
+        
+        // Add items
+        visitorData.items.forEach((item, itemIndex) => {
+          if (item.selectItem && item.quantity) {
+            const itemTimestamp = Date.now() + itemIndex;
+            formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_details_attributes][${itemTimestamp}][item_movement_id]`, item.selectItem);
+            formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_details_attributes][${itemTimestamp}][number]`, item.uicInvoiceNo || 'FILTERED');
+            formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_details_attributes][${itemTimestamp}][quantity]`, item.quantity);
+            formData.append(`gatekeeper[item_movements_attributes][${timestamp}][item_details_attributes][${itemTimestamp}][_destroy]`, 'false');
+          }
+        });
+        
+        // Pass the selected item movement type ID instead of hardcoded value
+        formData.append('item_movement_type_id', visitorData.goodsData.selectType || '1');
+      }
+      
+      // Add photo if captured
+      if (visitorData.capturedPhoto) {
+        try {
+          console.log('📷 Processing captured photo for upload...');
+          // Convert base64 to blob
+          const base64Response = await fetch(visitorData.capturedPhoto);
+          const blob = await base64Response.blob();
+          formData.append('gatekeeper[image]', blob, 'visitor_photo.jpg');
+          console.log('✅ Photo successfully added to form data');
+        } catch (photoError) {
+          console.error('❌ Error processing photo:', photoError);
+          // Continue without photo if there's an error
+        }
+      } else {
+        console.log('⚠️ No photo captured - skipping image upload');
+      }
+      
+      console.log('🚀 Sending visitor creation request to:', ENDPOINTS.CREATE_VISITOR);
+      
+      const response = await apiClient.post(ENDPOINTS.CREATE_VISITOR, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      console.log('✅ Visitor created successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error creating visitor:', error);
+      throw error;
+    }
   },
 };

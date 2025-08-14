@@ -1,21 +1,21 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import {
+  DialogContent,
+  DialogActions,
+  IconButton,
   TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
+  SelectChangeEvent,
+  Button,
+  Box,
+  Grid,
 } from '@mui/material';
-import { useToast } from '@/hooks/use-toast';
-import { X } from 'lucide-react';
+import CloseIcon from '@mui/icons-material/Close';
 
 interface InventoryFilterDialogProps {
   open: boolean;
@@ -28,20 +28,14 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
   onOpenChange,
   onApply,
 }) => {
-  const { toast } = useToast();
   const [filters, setFilters] = useState({
     name: '',
     code: '',
     category: '',
     criticality: '',
-    inventoryType: '',
   });
 
   const handleApply = () => {
-    toast({
-      title: 'Success',
-      description: 'Filters applied successfully!',
-    });
     onApply(filters);
     onOpenChange(false);
   };
@@ -52,163 +46,158 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
       code: '',
       category: '',
       criticality: '',
-      inventoryType: '',
     });
   };
 
-  const handleExport = () => {
-    toast({
-      title: 'Success',
-      description: 'Export functionality executed with current filters',
-    });
+  const handleChange = (field: string) => (event: SelectChangeEvent<string>) => {
+    setFilters({ ...filters, [field]: event.target.value });
   };
 
-  // Consistent field styling
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
+  const fieldHeightSx = {
+    height: 48,
+    '& .MuiInputBase-input': {
+      padding: '12px 14px',
+    },
+    '& .MuiSelect-select': {
+      padding: '12px 14px',
     },
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl overflow-visible">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-            className="h-6 w-6 p-0 hover:bg-gray-100"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </DialogHeader>
+    <Dialog open={open} onClose={() => onOpenChange(false)} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        FILTER BY
+        <IconButton size="small" onClick={() => onOpenChange(false)}>
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </DialogTitle>
 
-        <div className="space-y-4">
-          {/* Row 1 */}
-          <div className="grid grid-cols-2 gap-4">
-            <TextField
-              label="Name"
-              placeholder="Enter Name"
-              value={filters.name}
-              onChange={(e) => setFilters({ ...filters, name: e.target.value })}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-            />
+      <DialogContent dividers>
+        <Box sx={{ mt: 1 }}>
+          <Grid container spacing={2}>
+            {/* Row 1 */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Name"
+                placeholder="Enter Name"
+                value={filters.name}
+                onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldHeightSx }}
+              />
+            </Grid>
 
-            <FormControl fullWidth>
-              <InputLabel id="category-label" shrink>
-                Category
-              </InputLabel>
-              <Select
-                labelId="category-label"
-                label="Category"
-                value={filters.category}
-                displayEmpty
-                onChange={(e) =>
-                  setFilters({ ...filters, category: e.target.value })
-                }
-                sx={fieldStyles}
-              >
-                <MenuItem value="">
-                  <em>Select Category</em>
-                </MenuItem>
-                <MenuItem value="electronics">Electronics</MenuItem>
-                <MenuItem value="consumable">Consumable</MenuItem>
-                <MenuItem value="equipment">Equipment</MenuItem>
-                <MenuItem value="furniture">Furniture</MenuItem>
-              </Select>
-            </FormControl>
-          </div>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel shrink id="category-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Category
+                </InputLabel>
+                <Select
+                  labelId="category-label"
+                  value={filters.category}
+                  onChange={handleChange('category')}
+                  displayEmpty
+                  sx={fieldHeightSx}
 
-          {/* Row 2 */}
-          <div className="grid grid-cols-2 gap-4">
-            <TextField
-              label="Code"
-              placeholder="Find Code"
-              value={filters.code}
-              onChange={(e) => setFilters({ ...filters, code: e.target.value })}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-            />
+                >
+                  <MenuItem value="">
+                    <em>Select Category</em>
+                  </MenuItem>
+                  <MenuItem value="Non Technical">Non Technical</MenuItem>
+                  <MenuItem value="Technical">Technical</MenuItem>
+                  <MenuItem value="Housekeeping">Housekeeping</MenuItem>
+                  <MenuItem value="Stationary">Stationary</MenuItem>
+                  <MenuItem value="Pantry">Pantry</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
 
-            <FormControl fullWidth>
-              <InputLabel id="criticality-label" shrink>
-                Criticality
-              </InputLabel>
-              <Select
-                labelId="criticality-label"
-                label="Criticality"
-                value={filters.criticality}
-                displayEmpty
-                onChange={(e) =>
-                  setFilters({ ...filters, criticality: e.target.value })
-                }
-                sx={fieldStyles}
-              >
-                <MenuItem value="">
-                  <em>Select Criticality</em>
-                </MenuItem>
-                <MenuItem value="critical">Critical</MenuItem>
-                <MenuItem value="non-critical">Non-Critical</MenuItem>
-              </Select>
-            </FormControl>
-          </div>
+            {/* Row 2 */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Code"
+                placeholder="Find Code"
+                value={filters.code}
+                onChange={(e) => setFilters({ ...filters, code: e.target.value })}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldHeightSx }}
+              />
+            </Grid>
 
-          {/* Row 3 */}
-          <div className="grid grid-cols-2 gap-4">
-            <FormControl fullWidth>
-              <InputLabel id="inventory-type-label" shrink>
-                Inventory Type
-              </InputLabel>
-              <Select
-                labelId="inventory-type-label"
-                label="Inventory Type"
-                value={filters.inventoryType}
-                displayEmpty
-                onChange={(e) =>
-                  setFilters({ ...filters, inventoryType: e.target.value })
-                }
-                sx={fieldStyles}
-              >
-                <MenuItem value="">
-                  <em>Select Inventory Type</em>
-                </MenuItem>
-                <MenuItem value="asset">Asset</MenuItem>
-                <MenuItem value="consumable">Consumable</MenuItem>
-                <MenuItem value="spare-part">Spare Part</MenuItem>
-              </Select>
-            </FormControl>
-          </div>
-        </div>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel shrink id="criticality-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Criticality
+                </InputLabel>
+                <Select
+                  labelId="criticality-label"
+                  value={filters.criticality}
+                  onChange={handleChange('criticality')}
+                  displayEmpty
+                  sx={fieldHeightSx}
 
-        {/* Actions */}
-        <div className="flex gap-3 pt-4">
-          <Button
-            onClick={handleExport}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 px-6"
-          >
-            Export
-          </Button>
-          <Button
-            onClick={handleApply}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 px-6"
-          >
-            Apply
-          </Button>
-          <Button onClick={handleReset} variant="outline" className="px-6">
-            Reset
-          </Button>
-        </div>
+                >
+                  <MenuItem value="">
+                    <em>Select Criticality</em>
+                  </MenuItem>
+                  <MenuItem value="critical">Critical</MenuItem>
+                  <MenuItem value="non-critical">Non-Critical</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </Box>
       </DialogContent>
+
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button
+          onClick={handleApply}
+          startIcon={<span style={{ fontSize: 18, fontWeight: 'bold' }}>+</span>}
+          sx={{
+            height: '45px',
+            backgroundColor: '#F7F3F0',
+            color: '#C72030',
+            borderRadius: '6px',
+            textTransform: 'none',
+            fontWeight: 500,
+            fontSize: '16px',
+            padding: '0 20px',
+            boxShadow: 'none',
+            '&:hover': {
+              backgroundColor: '#eee7e3',
+              boxShadow: 'none',
+            },
+          }}
+        >
+          Apply
+        </Button>
+
+        <Button
+          onClick={handleReset}
+          sx={{
+            height: '45px',
+            backgroundColor: '#F7F3F0',
+            color: '#C72030',
+            borderRadius: '6px',
+            textTransform: 'none',
+            fontWeight: 500,
+            fontSize: '16px',
+            padding: '0 20px',
+            boxShadow: 'none',
+            '&:hover': {
+              backgroundColor: '#eee7e3',
+              boxShadow: 'none',
+            },
+          }}
+        >
+          Reset
+        </Button>
+      </DialogActions>
+
     </Dialog>
   );
 };

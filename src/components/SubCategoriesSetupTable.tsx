@@ -7,10 +7,11 @@ import { AddSubCategoryModal } from "./AddSubCategoryModal";
 import { EditSubCategoryModal } from "./EditSubCategoryModal";
 import { EnhancedTable } from "./enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { useAppDispatch } from '@/store/hooks';
 import { createSubcategory, deleteSubCategory, fetchSubcategory } from '@/store/slices/f&bSlice';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useAppDispatch } from '@/store/hooks';
+import { SelectionPanel } from './water-asset-details/PannelTab';
 
 export interface SubCategory {
   id: number;
@@ -40,6 +41,7 @@ export const SubCategoriesSetupTable = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedSubCategory, setSelectedSubCategory] = useState<SubCategory | null>(null);
+  const [showActionPanel, setShowActionPanel] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -106,7 +108,7 @@ export const SubCategoriesSetupTable = () => {
       </span>
     ),
     actions: (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         <Button
           variant="ghost"
           size="sm"
@@ -115,21 +117,21 @@ export const SubCategoriesSetupTable = () => {
         >
           <Pencil className="w-4 h-4" />
         </Button>
-        <Button
+        {/* <Button
           variant="ghost"
           size="sm"
           onClick={() => openDeleteDialog(item)}
           className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
         >
           <Trash2 className="w-4 h-4" />
-        </Button>
+        </Button> */}
       </div>
     )
   });
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-start">
+      {/* <div className="flex justify-start">
         <Button
           onClick={() => setIsAddModalOpen(true)}
           className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
@@ -137,7 +139,15 @@ export const SubCategoriesSetupTable = () => {
           <Plus className="w-4 h-4" />
           Add
         </Button>
-      </div>
+      </div> */}
+
+      {showActionPanel && (
+        <SelectionPanel
+          // actions={selectionActions}
+          onAdd={() => setIsAddModalOpen(true)}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
 
       <EnhancedTable
         data={[...subCategories].reverse()}
@@ -147,6 +157,19 @@ export const SubCategoriesSetupTable = () => {
         enableSelection={true}
         enableExport={true}
         storageKey="subcategories-table"
+        pagination={true}
+        pageSize={5}
+        leftActions={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
+              onClick={() => setShowActionPanel(true)}
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </Button>
+          </div>
+        }
       />
 
       <AddSubCategoryModal

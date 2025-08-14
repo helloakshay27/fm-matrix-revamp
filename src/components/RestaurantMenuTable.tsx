@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Upload, Eye, Pencil } from "lucide-react";
 import { AddMenuItemModal } from "./AddMenuItemModal";
@@ -9,7 +8,10 @@ import { StatusBadge } from "./ui/status-badge";
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
-import { createMenu, fetchMenu } from '@/store/slices/f&bSlice';
+import { createMenu, fetchMenu, updateMenu } from '@/store/slices/f&bSlice';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { EnhancedTable } from './enhanced-table/EnhancedTable';
+import { SelectionPanel } from './water-asset-details/PannelTab';
 
 interface MenuItem {
   id: number;
@@ -31,8 +33,8 @@ interface MenuItem {
   igst_amt: number | null;
   veg_menu: boolean | null;
   description: string;
-  created_at: string; // ISO string format
-  updated_at: string; // ISO string format
+  created_at: string;
+  updated_at: string;
   discounted_amount: number;
 }
 
@@ -48,29 +50,35 @@ export const RestaurantMenuTable = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [loading, setLoading] = useState(false)
+
+  const fetchMenuItems = async () => {
+    setLoading(true)
+    try {
+      const response = await dispatch(fetchMenu({ baseUrl, token, id: Number(id) })).unwrap();
+      setMenuItems(response);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false)
+    }
+  };
 
   useEffect(() => {
-    const fetchMenuItems = async () => {
-      try {
-        const response = await dispatch(fetchMenu({ baseUrl, token, id: Number(id) })).unwrap();
-        setMenuItems(response);
-      } catch (error) {
-        console.log(error)
-      }
-    }
     fetchMenuItems();
-  }, [])
+  }, [dispatch, id, baseUrl, token]);
 
   const handleAddMenuItem = async (menuItemData: any, selectedFile: File) => {
     const menuItem = new FormData();
 
     menuItem.append('manage_restaurant_menu[name]', menuItemData.productName);
-    menuItem.append('manage_restaurant_menu[restaurant_id]', id);
+    menuItem.append('manage_restaurant_menu[restaurant_id]', id!);
     menuItem.append('manage_restaurant_menu[sku]', menuItemData.sku);
     menuItem.append('manage_restaurant_menu[master_price]', menuItemData.masterPrice);
     menuItem.append('manage_restaurant_menu[display_price]', menuItemData.displayPrice);
     menuItem.append('manage_restaurant_menu[stock]', menuItemData.stock);
-    menuItem.append('manage_restaurant_menu[active]', menuItemData.active);
+    menuItem.append('manage_restaurant_menu[active]', "1");
     menuItem.append('manage_restaurant_menu[category_id]', menuItemData.category);
     menuItem.append('manage_restaurant_menu[sub_category_id]', menuItemData.subCategory);
     menuItem.append('manage_restaurant_menu[sgst_rate]', menuItemData.sgstRate);
@@ -78,14 +86,17 @@ export const RestaurantMenuTable = () => {
     menuItem.append('manage_restaurant_menu[cgst_rate]', menuItemData.cgstRate);
     menuItem.append('manage_restaurant_menu[cgst_amt]', menuItemData.cgstAmount);
     menuItem.append('manage_restaurant_menu[description]', menuItemData.description);
-    menuItem.append('images[]', selectedFile);
-    menuItem.append('restaurant_id', id);
+    if (selectedFile) {
+      menuItem.append('images[]', selectedFile);
+    }
+    menuItem.append('restaurant_id', id!);
 
     try {
-      await dispatch(createMenu({ baseUrl, token, id: Number(id), data: menuItem }));
+      await dispatch(createMenu({ baseUrl, token, id: Number(id), data: menuItem })).unwrap();
       toast.success('Menu item added successfully');
+      fetchMenuItems();
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast.error('Failed to add menu item');
     }
   };
@@ -108,95 +119,178 @@ export const RestaurantMenuTable = () => {
   };
 
   const handleEditProduct = (menuItem: MenuItem) => {
-    navigate(`/vas/fnb/restaurant-menu/edit/${menuItem.id}`);
+    navigate(`/vas/fnb/details/${id}/restaurant-menu/edit/${menuItem.id}`);
   };
+
+  const toggleActive = async (mid: number, active: number) => {
+    const payload = {
+      manage_restaurant_menu: {
+        active: active === 1 ? 0 : 1
+      }
+    };
+    try {
+      await dispatch(updateMenu({ baseUrl, token, id: Number(id), mid: Number(mid), data: payload })).unwrap();
+      // Update the local state only on success
+      setMenuItems(prevItems =>
+        prevItems.map(item =>
+          item.id === mid ? { ...item, active: active === 1 ? 0 : 1 } : item
+        )
+      );
+      toast.success('Menu item status updated successfully');
+    } catch (error) {
+      console.log(error);
+      toast.error('Failed to update menu item status');
+    }
+  };
+
+  const columns: ColumnConfig[] = [
+    {
+      key: 'sku',
+      label: 'SKU',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'name',
+      label: 'Products',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'master_price',
+      label: 'Master Price',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'display_price',
+      label: 'Display Price',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'category_name',
+      label: 'Category',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'sub_category_name',
+      label: 'Subcategory',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'created_at',
+      label: 'Created On',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'updated_at',
+      label: 'Updated On',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'active',
+      label: 'Status',
+      sortable: true,
+      draggable: true,
+    },
+  ];
+
+  const renderCell = (item: MenuItem, columnKey: string) => {
+    switch (columnKey) {
+      case 'sku':
+        return item.sku || '';
+      case 'name':
+        return item.name || '';
+      case 'master_price':
+        return `${localStorage.getItem('currency')}${item.master_price}`;
+      case 'display_price':
+        return `${localStorage.getItem('currency')}${item.display_price}`;
+      case 'category_id':
+        return item.category_id || '';
+      case 'sub_category_id':
+        return item.sub_category_id || '';
+      case 'created_at':
+        return item.created_at.split('T')[0] || '';
+      case 'updated_at':
+        return item.updated_at.split('T')[0] || '';
+      case 'active':
+        return (
+          <div className="flex items-center justify-center">
+            <div
+              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${item.active ? "bg-green-500" : "bg-gray-300"}`}
+              onClick={() => toggleActive(item.id, item.active)}
+            >
+              <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? "translate-x-6" : "translate-x-1"}`} />
+            </div>
+          </div>
+        );
+      default:
+        return item[columnKey as keyof MenuItem]?.toString() || '';
+    }
+  };
+
+  const renderActions = (menuItem: MenuItem) => (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleViewDetails(menuItem)}
+        className="p-1 h-8 w-8"
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleEditProduct(menuItem)}
+        className="p-1 h-8 w-8"
+      >
+        <Pencil className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+
+  const leftActions = (
+    <div className="flex gap-2">
+      <Button
+        className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
+        onClick={() => setShowActionPanel(true)}
+      >
+        <Plus className="w-4 h-4" />
+        Actions
+      </Button>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-start gap-2">
-        <Button
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add
-        </Button>
-        <Button
-          onClick={() => setIsImportModalOpen(true)}
-          className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
-        >
-          <Upload className="w-4 h-4" />
-          Import
-        </Button>
-      </div>
-
-      <div className="bg-white rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-100">
-              <TableHead className="font-medium">Actions</TableHead>
-              <TableHead className="font-medium text-center">SKU</TableHead>
-              <TableHead className="font-medium text-center">Products</TableHead>
-              <TableHead className="font-medium text-center">Master Price</TableHead>
-              <TableHead className="font-medium text-center">Display Price</TableHead>
-              <TableHead className="font-medium text-center">Category</TableHead>
-              <TableHead className="font-medium text-center">Subcategory</TableHead>
-              <TableHead className="font-medium text-center">Created On</TableHead>
-              <TableHead className="font-medium text-center">Updated On</TableHead>
-              <TableHead className="font-medium text-center">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {menuItems.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-gray-500">
-                  No menu items found. Click "Add" to create your first menu item.
-                </TableCell>
-              </TableRow>
-            ) : (
-              menuItems.map((menuItem) => (
-                <TableRow key={menuItem.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewDetails(menuItem)}
-                        className="p-1 h-8 w-8"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditProduct(menuItem)}
-                        className="p-1 h-8 w-8"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">{menuItem.sku}</TableCell>
-                  <TableCell className="text-center">{menuItem.name}</TableCell>
-                  <TableCell className="text-center">₹{menuItem.master_price}</TableCell>
-                  <TableCell className="text-center">₹{menuItem.display_price}</TableCell>
-                  <TableCell className="text-center">{menuItem.category_id}</TableCell>
-                  <TableCell className="text-center">{menuItem.sub_category_id}</TableCell>
-                  <TableCell className="text-center">{menuItem.created_at.split('T')[0]}</TableCell>
-                  <TableCell className="text-center">{menuItem.updated_at.split('T')[0]}</TableCell>
-                  <TableCell className="text-center">
-                    <StatusBadge
-                      status={menuItem.active === 1 ? 'accepted' : 'rejected'}
-                    >
-                      {menuItem.active ? 'Active' : 'Inactive'}
-                    </StatusBadge>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {showActionPanel && (
+        <SelectionPanel
+          onAdd={() => setIsAddModalOpen(true)}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
+      <EnhancedTable
+        data={[...menuItems].reverse()}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        storageKey="restaurant-menu-table"
+        className="min-w-full"
+        emptyMessage="No menu items found. Click 'Add' to create your first menu item."
+        leftActions={leftActions}
+        enableSearch={true}
+        enableSelection={false}
+        hideTableExport={true}
+        pagination={true}
+        pageSize={5}
+        loading={loading}
+      />
 
       <AddMenuItemModal
         isOpen={isAddModalOpen}

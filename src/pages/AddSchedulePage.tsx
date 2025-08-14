@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 import { MappingStep } from '@/components/schedule/MappingStep';
-import {TimeSetupStep}  from '@/components/schedule/TimeSetupStep'
+import { TimeSetupStep } from '@/components/schedule/TimeSetupStep'
+import { format } from 'date-fns';
 import {
   TextField,
   FormControl,
@@ -36,6 +37,7 @@ import {
   Chip,
   OutlinedInput,
   SelectChangeEvent,
+  Autocomplete,
 } from '@mui/material';
 import {
   Settings,
@@ -46,9 +48,13 @@ import {
   ArrowBack
 } from '@mui/icons-material';
 import { Cog, ArrowLeft } from 'lucide-react';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { assetService, Asset, AssetGroup, AssetSubGroup, EmailRule, User, Supplier } from '../services/assetService';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { MuiSearchableDropdown } from '@/components/MuiSearchableDropdown';
+import { log } from 'console';
 
 // Styled Components
 const CustomStepConnector = styled(StepConnector)(({ theme }) => ({
@@ -76,7 +82,7 @@ const CustomStep = styled(Step)(({ theme }) => ({
 const RedButton = styled(MuiButton)(({ theme }) => ({
   backgroundColor: '#C72030',
   color: 'white',
-  borderRadius: '8px',
+  borderRadius: 0,
   textTransform: 'none',
   padding: '8px 16px',
   fontFamily: 'Work Sans, sans-serif',
@@ -91,7 +97,7 @@ const RedButton = styled(MuiButton)(({ theme }) => ({
 const DraftButton = styled(MuiButton)(({ theme }) => ({
   backgroundColor: '#f6f4ee',
   color: '#C72030',
-  borderRadius: '8px',
+  borderRadius: 0,
   textTransform: 'none',
   padding: '8px 16px',
   fontFamily: 'Work Sans, sans-serif',
@@ -104,7 +110,7 @@ const DraftButton = styled(MuiButton)(({ theme }) => ({
 const SectionCard = styled(Paper)(({ theme }) => ({
   backgroundColor: 'white',
   boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-  borderRadius: '8px',
+  borderRadius: 0,
   overflow: 'hidden',
   marginBottom: '24px',
 }));
@@ -143,8 +149,8 @@ interface TaskQuestion {
   weightage: string;
   rating: boolean;
   reading: boolean;
-  dropdownValues: Array<{label: string, type: string}>;
-  radioValues: Array<{label: string, type: string}>;
+  dropdownValues: Array<{ label: string, type: string }>;
+  radioValues: Array<{ label: string, type: string }>;
   checkboxValues: string[];
   checkboxSelectedStates: boolean[];
   optionsInputsValues: string[];
@@ -180,14 +186,13 @@ interface ChecklistMappingsData {
 
 export const AddSchedulePage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   // Stepper state
   const [customCode, setCustomCode] = useState('');
   const [activeStep, setActiveStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const steps = ['Basic Configuration', 'Schedule Setup', 'Question Setup', 'Time Setup', 'Mapping'];
-  
+
   // Form data
   const [formData, setFormData] = useState({
     // Basic Configuration
@@ -195,13 +200,13 @@ export const AddSchedulePage = () => {
     scheduleFor: 'Asset',
     activityName: '',
     description: '',
-    
+
     // Schedule Setup
     checklistType: 'Individual',
-    asset: '',
-    service: '',
+    asset: [],
+    service: [],
     assetGroup: '',
-    assetSubGroup: '',
+    assetSubGroup: [],
     assignTo: '',
     assignToType: 'user', // 'user' or 'group'
     selectedUsers: [],
@@ -222,7 +227,7 @@ export const AddSchedulePage = () => {
     endAt: '',
     supplier: '',
     startFrom: '',
-    
+
     // Mapping
     mappings: [],
 
@@ -232,7 +237,7 @@ export const AddSchedulePage = () => {
     ticketAssignedTo: '',
     ticketCategory: '',
   });
-  
+
   // Question Setup - Replace tasks state with sections
   const [questionSections, setQuestionSections] = useState<QuestionSection[]>([
     {
@@ -256,8 +261,8 @@ export const AddSchedulePage = () => {
           weightage: '',
           rating: false,
           reading: false,
-          dropdownValues: [{label: '', type: 'positive'}],
-          radioValues: [{label: '', type: 'positive'}],
+          dropdownValues: [{ label: '', type: 'positive' }],
+          radioValues: [{ label: '', type: 'positive' }],
           checkboxValues: [''],
           checkboxSelectedStates: [false],
           optionsInputsValues: ['']
@@ -265,7 +270,7 @@ export const AddSchedulePage = () => {
       ]
     }
   ]);
-  
+
   // Time Setup - Replace static state with dynamic state
   const [timeSetupData, setTimeSetupData] = useState({
     hourMode: 'specific',
@@ -282,15 +287,15 @@ export const AddSchedulePage = () => {
     betweenMonthStart: 'January',
     betweenMonthEnd: 'December'
   });
-  
+
   // Attachments
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
-  
+
   // Toggles
   const [createNew, setCreateNew] = useState(false);
   const [weightage, setWeightage] = useState(false);
   const [autoTicket, setAutoTicket] = useState(false); // Keep existing autoTicket
-  
+
   // Asset dropdown state
   const [assets, setAssets] = useState<Asset[]>([]);
   const [assetGroups, setAssetGroups] = useState<AssetGroup[]>([]);
@@ -303,9 +308,10 @@ export const AddSchedulePage = () => {
   const [templates, setTemplates] = useState<any[]>([]);
   const [helpdeskCategories, setHelpdeskCategories] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
+  const [editingStep, setEditingStep] = useState<number | null>(null);
   // Add task groups state
   const [taskGroups, setTaskGroups] = useState<any[]>([]);
-  const [taskSubGroups, setTaskSubGroups] = useState<{[key: string]: any[]}>({});
+  const [taskSubGroups, setTaskSubGroups] = useState<{ [key: string]: any[] }>({});
   const [loading, setLoading] = useState({
     assets: false,
     groups: false,
@@ -324,20 +330,328 @@ export const AddSchedulePage = () => {
   const [checklistMappings, setChecklistMappings] = useState<ChecklistMappingsData | null>(null);
   const [loadingMappings, setLoadingMappings] = useState(false);
 
-  // Add validation states
-  const [validationErrors, setValidationErrors] = useState<{[key: string]: string[]}>({});
+  // Add validation states - changed to field-level errors
+  const [fieldErrors, setFieldErrors] = useState<{ [fieldName: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // LocalStorage keys
+  const STORAGE_KEYS = {
+    FORM_DATA: 'addSchedule_formData',
+    QUESTION_SECTIONS: 'addSchedule_questionSections',
+    TIME_SETUP_DATA: 'addSchedule_timeSetupData',
+    ACTIVE_STEP: 'addSchedule_activeStep',
+    COMPLETED_STEPS: 'addSchedule_completedSteps',
+    ATTACHMENTS: 'addSchedule_attachments'
+  };
+
+  // Save to localStorage
+  const saveToLocalStorage = (key: string, data: any) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  };
+
+  // Load from localStorage
+  const loadFromLocalStorage = (key: string) => {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : null;
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+      return null;
+    }
+  };
+
+  // Clear specific step data from localStorage and reset to default values
+  const clearStepFromLocalStorage = (stepIndex: number) => {
+    switch (stepIndex) {
+      case 0: // Basic Configuration step
+        // Clear only basic configuration related form data
+        const savedFormData = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
+        if (savedFormData) {
+          const resetFormData = {
+            ...savedFormData,
+            // Reset only Basic Configuration fields
+            type: 'PPM',
+            scheduleFor: 'Asset',
+            activityName: '',
+            description: '',
+            selectedTemplate: ''
+          };
+          setFormData(resetFormData);
+          saveToLocalStorage(STORAGE_KEYS.FORM_DATA, resetFormData);
+        }
+        break;
+
+      case 1: // Schedule Setup step
+        // Clear only schedule setup related form data
+        const savedFormDataSchedule = loadFromLocalStorage(STORAGE_KEYS.FORM_DATA);
+        if (savedFormDataSchedule) {
+          const resetFormData = {
+            ...savedFormDataSchedule,
+            // Reset only Schedule Setup fields
+            checklistType: 'Individual',
+            asset: [],
+            service: [],
+            assetGroup: '',
+            assetSubGroup: [],
+            assignTo: '',
+            assignToType: 'user',
+            selectedUsers: [],
+            selectedGroups: [],
+            backupAssignee: '',
+            planDuration: '',
+            planDurationValue: '',
+            emailTriggerRule: '',
+            scanType: '',
+            category: '',
+            submissionTime: '',
+            submissionTimeValue: '',
+            supervisors: '',
+            lockOverdueTask: '',
+            frequency: '',
+            graceTime: '',
+            graceTimeValue: '',
+            endAt: '',
+            supplier: '',
+            startFrom: '',
+            mappings: [],
+            ticketLevel: 'checklist',
+            ticketAssignedTo: '',
+            ticketCategory: ''
+          };
+          setFormData(resetFormData);
+          saveToLocalStorage(STORAGE_KEYS.FORM_DATA, resetFormData);
+        }
+        // Reset asset group selection
+        setSelectedAssetGroup(undefined);
+        setAssetSubGroups([]);
+        break;
+
+      case 2: // Question Setup step
+        localStorage.removeItem(STORAGE_KEYS.QUESTION_SECTIONS);
+        // Reset question sections to default
+        setQuestionSections([
+          {
+            id: '1',
+            title: 'Questions',
+            autoTicket: false,
+            ticketLevel: 'checklist',
+            ticketAssignedTo: '',
+            ticketCategory: '',
+            tasks: [
+              {
+                id: '1',
+                group: '',
+                subGroup: '',
+                task: '',
+                inputType: '',
+                mandatory: false,
+                helpText: false,
+                helpTextValue: '',
+                autoTicket: false,
+                weightage: '',
+                rating: false,
+                reading: false,
+                dropdownValues: [{ label: '', type: 'positive' }],
+                radioValues: [{ label: '', type: 'positive' }],
+                checkboxValues: [''],
+                checkboxSelectedStates: [false],
+                optionsInputsValues: ['']
+              }
+            ]
+          }
+        ]);
+        break;
+
+      case 3: // Time Setup step
+        localStorage.removeItem(STORAGE_KEYS.TIME_SETUP_DATA);
+        // Reset time setup data to default
+        setTimeSetupData({
+          hourMode: 'specific',
+          minuteMode: 'specific',
+          dayMode: 'weekdays',
+          monthMode: 'all',
+          selectedHours: ['12'],
+          selectedMinutes: ['00'],
+          selectedWeekdays: [],
+          selectedDays: [],
+          selectedMonths: [],
+          betweenMinuteStart: '00',
+          betweenMinuteEnd: '59',
+          betweenMonthStart: 'January',
+          betweenMonthEnd: 'December'
+        });
+        break;
+
+      case 4: // Mapping step
+        // Clear attachments for mapping step
+        localStorage.removeItem(STORAGE_KEYS.ATTACHMENTS);
+        setAttachments([]);
+        break;
+
+      default:
+        break;
+    }
+  };
+
+  // Clear all form data from localStorage
+  const clearAllFromLocalStorage = () => {
+    Object.values(STORAGE_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
+  };
+
+  // Initialize component with localStorage data or clear current step if refreshed on that step
+  useEffect(() => {
+    // Always clear local storage and reset to basic configuration if page is refreshed or browser back button is clicked
+    const resetState = () => {
+      clearAllFromLocalStorage();
+      setActiveStep(0);
+      setCompletedSteps([]);
+      setFormData({
+        type: 'PPM',
+        scheduleFor: 'Asset',
+        activityName: '',
+        description: '',
+        checklistType: 'Individual',
+        asset: [],
+        service: [],
+        assetGroup: '',
+        assetSubGroup: [],
+        assignTo: '',
+        assignToType: 'user',
+        selectedUsers: [],
+        selectedGroups: [],
+        backupAssignee: '',
+        planDuration: '',
+        planDurationValue: '',
+        emailTriggerRule: '',
+        scanType: '',
+        category: '',
+        submissionTime: '',
+        submissionTimeValue: '',
+        supervisors: '',
+        lockOverdueTask: '',
+        frequency: '',
+        graceTime: '',
+        graceTimeValue: '',
+        endAt: '',
+        supplier: '',
+        startFrom: '',
+        mappings: [],
+        selectedTemplate: '',
+        ticketLevel: 'checklist',
+        ticketAssignedTo: '',
+        ticketCategory: '',
+      });
+      setQuestionSections([
+        {
+          id: '1',
+          title: 'Questions',
+          autoTicket: false,
+          ticketLevel: 'checklist',
+          ticketAssignedTo: '',
+          ticketCategory: '',
+          tasks: [
+            {
+              id: '1',
+              group: '',
+              subGroup: '',
+              task: '',
+              inputType: '',
+              mandatory: false,
+              helpText: false,
+              helpTextValue: '',
+              autoTicket: false,
+              weightage: '',
+              rating: false,
+              reading: false,
+              dropdownValues: [{ label: '', type: 'positive' }],
+              radioValues: [{ label: '', type: 'positive' }],
+              checkboxValues: [''],
+              checkboxSelectedStates: [false],
+              optionsInputsValues: ['']
+            }
+          ]
+        }
+      ]);
+      setTimeSetupData({
+        hourMode: 'specific',
+        minuteMode: 'specific',
+        dayMode: 'weekdays',
+        monthMode: 'all',
+        selectedHours: ['12'],
+        selectedMinutes: ['00'],
+        selectedWeekdays: [],
+        selectedDays: [],
+        selectedMonths: [],
+        betweenMinuteStart: '00',
+        betweenMinuteEnd: '59',
+        betweenMonthStart: 'January',
+        betweenMonthEnd: 'December'
+      });
+      setAttachments([]);
+    };
+
+    // Reset state on mount
+    resetState();
+
+    // Listen for browser back/forward navigation
+    window.addEventListener('popstate', resetState);
+
+    // Optionally, listen for page reload (F5, Ctrl+R)
+    window.addEventListener('beforeunload', resetState);
+
+    // Cleanup listeners on unmount
+    return () => {
+      window.removeEventListener('popstate', resetState);
+      window.removeEventListener('beforeunload', resetState);
+    };
+  }, []);
+
+  // Save form data to localStorage whenever it changes
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.FORM_DATA, formData);
+  }, [formData]);
+
+  // Save question sections to localStorage whenever they change
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.QUESTION_SECTIONS, questionSections);
+  }, [questionSections]);
+
+  // Save time setup data to localStorage whenever it changes
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.TIME_SETUP_DATA, timeSetupData);
+  }, [timeSetupData]);
+
+  // Save active step to localStorage whenever it changes
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.ACTIVE_STEP, activeStep);
+  }, [activeStep]);
+
+  // Save completed steps to localStorage whenever they change
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.COMPLETED_STEPS, completedSteps);
+  }, [completedSteps]);
+
+  // Save attachments to localStorage whenever they change
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.ATTACHMENTS, attachments);
+  }, [attachments]);
 
   // Load data on component mount
   useEffect(() => {
     // Check URL parameters to set both scheduleFor and type
     const urlParams = new URLSearchParams(window.location.search);
     const typeParam = urlParams.get('type');
-    
+
     // Define valid types for radio group
     const validRadioTypes = ['AMC', 'Preparedness', 'Hoto', 'Routine', 'Audit'];
     const validScheduleTypes = ['Asset', 'Service'];
-    
+
     // Handle scheduleFor based on Asset/Service
     if (validScheduleTypes.includes(typeParam)) {
       if (typeParam === 'Asset') {
@@ -360,7 +674,7 @@ export const AddSchedulePage = () => {
       setFormData(prev => ({ ...prev, scheduleFor: 'Asset' }));
       loadAssets();
     }
-    
+
     loadAssetGroups();
     loadEmailRules();
     loadUsers();
@@ -381,18 +695,22 @@ export const AddSchedulePage = () => {
   }, [selectedAssetGroup]);
 
   const loadAssets = async () => {
-    console.log('Starting to load assets...');
+    // console.log('Starting to load assets...'); 
     setLoading(prev => ({ ...prev, assets: true }));
     try {
       const data = await assetService.getAssets();
-      console.log('Assets loaded successfully:', data);
+      // console.log('Assets loaded successfully:', data);
       setAssets(data);
     } catch (error) {
       console.error('Failed to load assets:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load assets. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load assets. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoading(prev => ({ ...prev, assets: false }));
@@ -400,18 +718,22 @@ export const AddSchedulePage = () => {
   };
 
   const loadAssetGroups = async () => {
-    console.log('Starting to load asset groups...');
+    // console.log('Starting to load asset groups...');
     setLoading(prev => ({ ...prev, groups: true }));
     try {
       const data = await assetService.getAssetGroups();
-      console.log('Asset groups loaded successfully:', data);
+      // console.log('Asset groups loaded successfully:', data);
       setAssetGroups(data.asset_groups);
     } catch (error) {
       console.error('Failed to load asset groups:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load asset groups. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load asset groups. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoading(prev => ({ ...prev, groups: false }));
@@ -419,18 +741,22 @@ export const AddSchedulePage = () => {
   };
 
   const loadAssetSubGroups = async (groupId: number) => {
-    console.log('Loading sub-groups for group ID:', groupId);
+    // console.log('Loading sub-groups for group ID:', groupId);
     setLoading(prev => ({ ...prev, subGroups: true }));
     try {
       const data = await assetService.getAssetSubGroups(groupId);
-      console.log('Sub-groups loaded successfully:', data);
+      // console.log('Sub-groups loaded successfully:', data);
       setAssetSubGroups(data.asset_groups);
     } catch (error) {
       console.error('Failed to load asset sub-groups:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load asset sub-groups. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load asset sub-groups. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoading(prev => ({ ...prev, subGroups: false }));
@@ -438,18 +764,22 @@ export const AddSchedulePage = () => {
   };
 
   const loadEmailRules = async () => {
-    console.log('Starting to load email rules...');
+    // console.log('Starting to load email rules...');
     setLoading(prev => ({ ...prev, emailRules: true }));
     try {
       const data = await assetService.getEmailRules();
-      console.log('Email rules loaded successfully:', data);
+      // console.log('Email rules loaded successfully:', data);
       setEmailRules(data);
     } catch (error) {
       console.error('Failed to load email rules:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load email rules. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load email rules. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoading(prev => ({ ...prev, emailRules: false }));
@@ -457,7 +787,7 @@ export const AddSchedulePage = () => {
   };
 
   const loadUsers = async () => {
-    console.log('Starting to load users...');
+    // console.log('Starting to load users...');
     setLoading(prev => ({ ...prev, users: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ESCALATION_USERS}`, {
@@ -473,16 +803,20 @@ export const AddSchedulePage = () => {
       }
 
       const data = await response.json();
-      console.log('Users loaded successfully:', data);
-      
+      // console.log('Users loaded successfully:', data);
+
       // Extract users array from response
       setUsers(data.users || []);
     } catch (error) {
       console.error('Failed to load users:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load users. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load users. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       // Keep fallback mock data
       const mockUsers = [
@@ -497,18 +831,22 @@ export const AddSchedulePage = () => {
   };
 
   const loadSuppliers = async () => {
-    console.log('Starting to load suppliers...');
+    // console.log('Starting to load suppliers...');
     setLoading(prev => ({ ...prev, suppliers: true }));
     try {
       const data = await assetService.getSuppliers();
-      console.log('Suppliers loaded successfully:', data);
+      // console.log('Suppliers loaded successfully:', data);
       setSuppliers(data);
     } catch (error) {
       console.error('Failed to load suppliers:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load suppliers. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load suppliers. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoading(prev => ({ ...prev, suppliers: false }));
@@ -516,7 +854,7 @@ export const AddSchedulePage = () => {
   };
 
   const loadServices = async () => {
-    console.log('Starting to load services...');
+    // console.log('Starting to load services...');
     setLoading(prev => ({ ...prev, services: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/services/get_services.json`, {
@@ -532,14 +870,18 @@ export const AddSchedulePage = () => {
       }
 
       const data = await response.json();
-      console.log('Services loaded successfully:', data);
+      // console.log('Services loaded successfully:', data);
       setServices(data);
     } catch (error) {
       console.error('Failed to load services:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load services. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load services. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoading(prev => ({ ...prev, services: false }));
@@ -547,7 +889,7 @@ export const AddSchedulePage = () => {
   };
 
   const loadGroups = async () => {
-    console.log('Starting to load user groups...');
+    // console.log('Starting to load user groups...');
     setLoading(prev => ({ ...prev, groups: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER_GROUPS}`, {
@@ -563,21 +905,25 @@ export const AddSchedulePage = () => {
       }
 
       const data = await response.json();
-      console.log('User groups loaded successfully:', data);
-      
+      // console.log('User groups loaded successfully:', data);
+
       // Extract only id and name from the groups array
       const groupsArray = data.map((group: any) => ({
         id: group.id,
         name: group.name
       }));
-      
+
       setGroups(groupsArray);
     } catch (error) {
       console.error('Failed to load user groups:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load user groups. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load user groups. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       // Keep mock data as fallback
       const mockGroups = [
@@ -592,7 +938,7 @@ export const AddSchedulePage = () => {
   };
 
   const loadTemplates = async () => {
-    console.log('Starting to load templates...');
+    // console.log('Starting to load templates...');
     setLoading(prev => ({ ...prev, templates: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/custom_forms/get_templates.json`, {
@@ -608,14 +954,18 @@ export const AddSchedulePage = () => {
       }
 
       const templateData = await response.json();
-      console.log('Templates loaded successfully:', templateData);
+      // console.log('Templates loaded successfully:', templateData);
       setTemplates(templateData);
     } catch (error) {
       console.error('Failed to load templates:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load templates. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load templates. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       // Keep mock data as fallback
       const mockTemplates = [
@@ -630,7 +980,7 @@ export const AddSchedulePage = () => {
   };
 
   const loadHelpdeskCategories = async () => {
-    console.log('Starting to load helpdesk categories...', API_CONFIG.BASE_URL);
+    // console.log('Starting to load helpdesk categories...', API_CONFIG.BASE_URL);
     setLoading(prev => ({ ...prev, helpdeskCategories: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.HELPDESK_CATEGORIES}`, {
@@ -646,24 +996,25 @@ export const AddSchedulePage = () => {
       }
 
       const data = await response.json();
-      console.log("response", response);
-      console.log('Helpdesk categories loaded successfully:', data);
-      
+
       // Extract only id and name from helpdesk_categories
       const categoriesArray = (data.helpdesk_categories || []).map((category: any) => ({
         id: category.id,
         name: category.name
       }));
-      
+
       setHelpdeskCategories(categoriesArray);
     } catch (error) {
-      console.log('Failed to load helpdesk categories:', error);
-      
+
       console.error('Failed to load helpdesk categories:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load helpdesk categories. Using fallback data.",
-        variant: "destructive"
+      toast.error("Error: Failed to load helpdesk categories. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       // Keep mock data as fallback
       const mockCategories = [
@@ -679,7 +1030,6 @@ export const AddSchedulePage = () => {
   };
 
   const loadTaskGroups = async () => {
-    console.log('Starting to load task groups...');
     setLoading(prev => ({ ...prev, taskGroups: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TASK_GROUPS}`, {
@@ -695,21 +1045,24 @@ export const AddSchedulePage = () => {
       }
 
       const data = await response.json();
-      console.log('Task groups loaded successfully:', data);
-      
+
       // Extract only id and name from the groups array
       const groupsArray = data.map((group: any) => ({
         id: group.id,
         name: group.name
       }));
-      
+
       setTaskGroups(groupsArray);
     } catch (error) {
       console.error('Failed to load task groups:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load task groups. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load task groups. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       // Keep mock data as fallback
       const mockTaskGroups = [
@@ -725,8 +1078,7 @@ export const AddSchedulePage = () => {
 
   const loadTaskSubGroups = async (groupId: string) => {
     if (!groupId) return;
-    
-    console.log('Starting to load task sub-groups for group:', groupId);
+
     setLoading(prev => ({ ...prev, taskSubGroups: true }));
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TASK_SUB_GROUPS}?group_id=${groupId}`, {
@@ -742,14 +1094,13 @@ export const AddSchedulePage = () => {
       }
 
       const data = await response.json();
-      console.log('Task sub-groups loaded successfully:', data);
-      
+
       // Extract only id and name from the asset_groups array
       const subGroupsArray = (data.asset_groups || []).map((subGroup: any) => ({
         id: subGroup.id,
         name: subGroup.name
       }));
-      
+
       // Store sub-groups by group ID
       setTaskSubGroups(prev => ({
         ...prev,
@@ -757,10 +1108,14 @@ export const AddSchedulePage = () => {
       }));
     } catch (error) {
       console.error('Failed to load task sub-groups:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load task sub-groups. Using fallback data.",
-        variant: "destructive"
+      toast.error("Failed to load task sub-groups. Using fallback data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
       // Keep mock data as fallback
       const mockSubGroups = [
@@ -794,13 +1149,13 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? { ...task, [key]: value }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? { ...task, [key]: value }
+                : task
+            )
+          }
           : section
       )
     );
@@ -815,6 +1170,47 @@ export const AddSchedulePage = () => {
           : section
       )
     );
+  };
+
+  // Add attachment function
+  const addAttachment = (): void => {
+    // Create a hidden file input and trigger click
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = '*/*';
+    input.style.display = 'none';
+
+    input.onchange = (e: Event) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files && files.length > 0) {
+        const newAttachments: AttachmentFile[] = [];
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          // For now, just create a local URL for preview; in real app, upload to server
+          newAttachments.push({
+            id: `${Date.now()}-${i}`,
+            name: file.name,
+            url: URL.createObjectURL(file)
+          });
+        }
+        setAttachments(prev => [...prev, ...newAttachments]);
+
+        // Show success toast
+        toast(`${files.length} file(s) attached successfully!`);
+      }
+    };
+
+    input.onerror = () => {
+      // Show error toast
+      toast("Failed to attach files. Please try again.", {
+      });
+    };
+
+    document.body.appendChild(input);
+    input.click();
+    // Clean up after selection
+    input.remove();
   };
 
   const addQuestionSection = (): void => {
@@ -841,8 +1237,8 @@ export const AddSchedulePage = () => {
             weightage: '',
             rating: false,
             reading: false,
-            dropdownValues: [{label: '', type: 'positive'}],
-            radioValues: [{label: '', type: 'positive'}],
+            dropdownValues: [{ label: '', type: 'positive' }],
+            radioValues: [{ label: '', type: 'positive' }],
             checkboxValues: [''],
             checkboxSelectedStates: [false], // Add initial checkbox state
             optionsInputsValues: ['']
@@ -852,24 +1248,41 @@ export const AddSchedulePage = () => {
     ]);
   };
 
+  const removeQuestionSection = (sectionId: string): void => {
+    setQuestionSections(prevSections => prevSections.filter(section => section.id !== sectionId));
+  };
+
+  const removeTaskFromSection = (sectionId: string, taskId: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.filter(task => task.id !== taskId)
+          }
+          : section
+      )
+    );
+  };
+
   // Helper functions for managing dropdown values
   const updateDropdownValue = (sectionId: string, taskId: string, valueIndex: number, value: string) => {
     setQuestionSections(prevSections =>
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      dropdownValues: task.dropdownValues.map((val, idx) =>
-                        idx === valueIndex ? { ...val, label: value } : val
-                      )
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  dropdownValues: task.dropdownValues.map((val, idx) =>
+                    idx === valueIndex ? { ...val, label: value } : val
+                  )
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -880,18 +1293,18 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      dropdownValues: task.dropdownValues.map((val, idx) =>
-                        idx === valueIndex ? { ...val, type } : val
-                      )
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  dropdownValues: task.dropdownValues.map((val, idx) =>
+                    idx === valueIndex ? { ...val, type } : val
+                  )
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -902,16 +1315,16 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      dropdownValues: [...task.dropdownValues, {label: '', type: 'positive'}]
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  dropdownValues: [...task.dropdownValues, { label: '', type: 'positive' }]
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -922,16 +1335,16 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      dropdownValues: task.dropdownValues.filter((_, idx) => idx !== valueIndex)
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  dropdownValues: task.dropdownValues.filter((_, idx) => idx !== valueIndex)
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -943,18 +1356,18 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      radioValues: task.radioValues.map((val, idx) =>
-                        idx === valueIndex ? { ...val, label: value } : val
-                      )
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  radioValues: task.radioValues.map((val, idx) =>
+                    idx === valueIndex ? { ...val, label: value } : val
+                  )
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -965,18 +1378,18 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      radioValues: task.radioValues.map((val, idx) =>
-                        idx === valueIndex ? { ...val, type } : val
-                      )
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  radioValues: task.radioValues.map((val, idx) =>
+                    idx === valueIndex ? { ...val, type } : val
+                  )
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -987,16 +1400,16 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      radioValues: [...task.radioValues, {label: '', type: 'positive'}]
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  radioValues: [...task.radioValues, { label: '', type: 'positive' }]
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -1007,16 +1420,16 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      radioValues: task.radioValues.filter((_, idx) => idx !== valueIndex)
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  radioValues: task.radioValues.filter((_, idx) => idx !== valueIndex)
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -1028,18 +1441,18 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      checkboxValues: task.checkboxValues.map((val, idx) =>
-                        idx === valueIndex ? value : val
-                      )
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  checkboxValues: task.checkboxValues.map((val, idx) =>
+                    idx === valueIndex ? value : val
+                  )
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -1050,18 +1463,18 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      checkboxSelectedStates: task.checkboxSelectedStates.map((state, idx) =>
-                        idx === valueIndex ? checked : state
-                      )
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  checkboxSelectedStates: task.checkboxSelectedStates.map((state, idx) =>
+                    idx === valueIndex ? checked : state
+                  )
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -1072,17 +1485,17 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      checkboxValues: [...task.checkboxValues, ''],
-                      checkboxSelectedStates: [...task.checkboxSelectedStates, false]
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  checkboxValues: [...task.checkboxValues, ''],
+                  checkboxSelectedStates: [...task.checkboxSelectedStates, false]
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -1093,17 +1506,17 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      checkboxValues: task.checkboxValues.filter((_, idx) => idx !== valueIndex),
-                      checkboxSelectedStates: task.checkboxSelectedStates.filter((_, idx) => idx !== valueIndex)
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  checkboxValues: task.checkboxValues.filter((_, idx) => idx !== valueIndex),
+                  checkboxSelectedStates: task.checkboxSelectedStates.filter((_, idx) => idx !== valueIndex)
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -1115,18 +1528,18 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      optionsInputsValues: task.optionsInputsValues.map((val, idx) =>
-                        idx === valueIndex ? value : val
-                      )
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  optionsInputsValues: task.optionsInputsValues.map((val, idx) =>
+                    idx === valueIndex ? value : val
+                  )
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -1137,16 +1550,16 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      optionsInputsValues: [...task.optionsInputsValues, '']
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  optionsInputsValues: [...task.optionsInputsValues, '']
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -1157,16 +1570,16 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      optionsInputsValues: task.optionsInputsValues.filter((_, idx) => idx !== valueIndex)
-                    }
-                  : task
-              )
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  optionsInputsValues: task.optionsInputsValues.filter((_, idx) => idx !== valueIndex)
+                }
+                : task
+            )
+          }
           : section
       )
     );
@@ -1187,30 +1600,30 @@ export const AddSchedulePage = () => {
       prevSections.map(section =>
         section.id === id
           ? {
-              ...section,
-              tasks: [
-                ...section.tasks,
-                {
-                  id: (Date.now() + Math.random()).toString(),
-                  group: '',
-                  subGroup: '',
-                  task: '',
-                  inputType: '',
-                  mandatory: false,
-                  helpText: false,
-                  helpTextValue: '',
-                  autoTicket: false,
-                  weightage: '',
-                  rating: false,
-                  reading: false,
-                  dropdownValues: [{label: '', type: 'positive'}],
-                  radioValues: [{label: '', type: 'positive'}],
-                  checkboxValues: [''],
-                  checkboxSelectedStates: [false], // Add initial checkbox state
-                  optionsInputsValues: ['']
-                }
-              ]
-            }
+            ...section,
+            tasks: [
+              ...section.tasks,
+              {
+                id: (Date.now() + Math.random()).toString(),
+                group: section.tasks[0]?.group || '',
+                subGroup: section.tasks[0]?.subGroup || '',
+                task: '',
+                inputType: '',
+                mandatory: false,
+                helpText: false,
+                helpTextValue: '',
+                autoTicket: false,
+                weightage: '',
+                rating: false,
+                reading: false,
+                dropdownValues: [{ label: '', type: 'positive' }],
+                radioValues: [{ label: '', type: 'positive' }],
+                checkboxValues: [''],
+                checkboxSelectedStates: [false], // Add initial checkbox state
+                optionsInputsValues: ['']
+              }
+            ]
+          }
           : section
       )
     );
@@ -1231,65 +1644,59 @@ export const AddSchedulePage = () => {
   };
 
   // Helper function to map checklist_for to scheduleFor
-  const mapChecklistFor = (checklistFor: string): string => {
-    if (checklistFor.includes('Service')) return 'Service';
-    if (checklistFor.includes('Asset')) return 'Asset';
-    if (checklistFor.includes('Supplier')) return 'Supplier';
-    if (checklistFor.includes('Training')) return 'Training';
+  const mapChecklistFor = (checklistFor: string | null | undefined): string => {
+    const value = checklistFor ?? '';
+    if (value.includes('Service')) return 'Service';
+    if (value.includes('Asset')) return 'Asset';
+    if (value.includes('Supplier')) return 'Supplier';
+    if (value.includes('Training')) return 'Training';
     return 'Asset'; // default
   };
 
-  // Add effect to validate current step whenever form data changes
-  useEffect(() => {
-    let errors: string[] = [];
-    
-    switch (activeStep) {
-      case 0:
-        errors = validateBasicConfiguration();
-        break;
-      case 1:
-        errors = validateScheduleSetup();
-        break;
-      case 2:
-        errors = validateQuestionSetup();
-        break;
-      default:
-        errors = [];
-    }
-    
-    setValidationErrors(prev => ({
-      ...prev,
-      [activeStep]: errors
-    }));
-  }, [activeStep, formData, questionSections, weightage, autoTicket]);
 
   const handleSave = async () => {
-    console.log('Saving schedule with current form data:', formData);
-    
-    // Validate all sections before submission
-    const basicErrors = validateBasicConfiguration();
-    const scheduleErrors = validateScheduleSetup();
-    const questionErrors = validateQuestionSetup();
-    
-    const allErrors = [...basicErrors, ...scheduleErrors, ...questionErrors];
-    
-    if (allErrors.length > 0) {
-      console.log('Validation errors found:', allErrors)
-      toast({
-        title: "Validation Error",
-        description: `Please fix the following errors: ${allErrors.join(', ')}`,
-        variant: "destructive"
+
+    // Validate current step first
+    if (!validateCurrentStep()) {
+      toast.error("Please fill all required fields before proceeding.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
-      
+      return;
+    }
+
+    // Show success message for the current step completion
+    const stepMessages = {
+      0: "Basic Configuration saved successfully!",
+      1: "Schedule Setup saved successfully!",
+      2: "Question Setup saved successfully!",
+      3: "Time Setup saved successfully!",
+      4: "Mapping saved successfully!"
+    };
+
+    if (stepMessages[activeStep as keyof typeof stepMessages]) {
+      toast.success(stepMessages[activeStep as keyof typeof stepMessages], {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
+        },
+      });
     }
 
     setIsSubmitting(true);
-    console.log('Saving schedule with data:', formData, questionSections, timeSetupData, attachments);
-    
+
     try {
       const payload = buildAPIPayload();
       console.log('Submitting payload:', payload);
-      
+
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/custom_forms.json`, {
         method: 'POST',
         headers: {
@@ -1304,31 +1711,90 @@ export const AddSchedulePage = () => {
       }
 
       const result = await response.json();
-      console.log('Schedule created successfully:', result.custom_form_code, result);
       setCustomCode(result.custom_form_code);
-      
-      toast({
-        title: "Success",
-        description: "Schedule created successfully!",
+
+      toast.success("Checklist is scheduled successfully!", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
+        },
       });
-      
-      // Fetch checklist mappings when moving to mapping step
-      if (result?.custom_form_code) {
-        await fetchChecklistMappings(customCode);
+
+      // Check if any task has reading checkbox selected
+      const hasReadingTasks = questionSections.some(section =>
+        section.tasks.some(task => task.reading)
+      );
+
+      if (hasReadingTasks) {
+        // Fetch checklist mappings when moving to mapping step
+        if (result?.custom_form_code) {
+          const mappingsData = await (async () => {
+            try {
+              const response = await fetch(`${API_CONFIG.BASE_URL}/pms/custom_forms/checklist_mappings.json?id=${result.custom_form_code}`, {
+                method: 'GET',
+                headers: {
+                  'Authorization': getAuthHeader(),
+                  'Content-Type': 'application/json',
+                },
+              });
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              const data = await response.json();
+              setChecklistMappings(data);
+              return data;
+            } catch (error) {
+              console.error('Failed to load checklist mappings:', error);
+              toast.error("Failed to load checklist mappings.", {
+                position: 'top-right',
+                duration: 4000,
+                style: {
+                  background: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                },
+              });
+              return null;
+            }
+          })();
+
+          // If mappingsData exists and all assets' measures arrays are empty, skip mapping
+          if (
+            mappingsData &&
+            Array.isArray(mappingsData.assets) &&
+            mappingsData.assets.length > 0 &&
+            mappingsData.assets.every((asset: any) => Array.isArray(asset.measures) && asset.measures.length === 0)
+          ) {
+            clearAllFromLocalStorage();
+            navigate('/maintenance/schedule');
+            return;
+          }
+        }
+
+        // Move to next step (Mapping) after successful submission
+        if (activeStep < steps.length - 1) {
+          setActiveStep(activeStep + 1);
+          setCompletedSteps([...completedSteps, activeStep]);
+        }
+      } else {
+        // No reading tasks found, skip mapping and navigate directly to schedule list
+        clearAllFromLocalStorage(); // Clear all saved data on successful completion
+        navigate('/maintenance/schedule');
       }
-      
-      // Move to next step (Mapping) after successful submission
-      if (activeStep < steps.length - 1) {
-        setActiveStep(activeStep + 1);
-        setCompletedSteps([...completedSteps, activeStep]);
-      }
-      
+
     } catch (error) {
       console.error('Failed to create schedule:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create schedule. Please try again.",
-        variant: "destructive"
+      toast.error("Failed to create schedule. Please try again.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setIsSubmitting(false);
@@ -1341,17 +1807,56 @@ export const AddSchedulePage = () => {
 
 
   const handleFinish = () => {
-    toast({
-      title: "Success",
-      description: "Schedule setup completed successfully!",
+    toast.success("Schedule setup completed successfully!", {
+      position: 'top-right',
+      duration: 4000,
+      style: {
+        background: '#10b981',
+        color: 'white',
+        border: 'none',
+      },
     });
+    // Clear all saved data on successful completion
+    clearAllFromLocalStorage();
     // Navigate back to schedule list
     navigate('/maintenance/schedule');
   };
 
   // Load template data when a template is selected
   const loadTemplateData = async (templateId: string) => {
+    if (!templateId || templateId === '') {
+      console.log("Template unselected — clearing only template tasks.");
+      setQuestionSections(sections => {
+        // Always ensure only one section with one empty task remains
+        return [
+          {
+            id: (sections[0]?.id || Date.now().toString()),
+            tasks: [{
+              id: (Date.now() + 1).toString(),
+              group: '',
+              subGroup: '',
+              task: '',
+              inputType: '',
+              mandatory: false,
+              helpText: false,
+              helpTextValue: '',
+              autoTicket: false,
+              weightage: '',
+              rating: false,
+              reading: false,
+              dropdownValues: [{ label: '', type: 'positive' }],
+              radioValues: [{ label: '', type: 'positive' }],
+              checkboxValues: [''],
+              checkboxSelectedStates: [false],
+              optionsInputsValues: ['']
+            }]
+          }
+        ];
+      });
+      return; // Don't proceed to fetch
+    }
     setLoading(prev => ({ ...prev, templates: true }));
+    console.log(`Loading template data for ID: ${templateId}`);
     try {
       // Call the detailed template API with the selected template ID
       const response = await fetch(`${API_CONFIG.BASE_URL}/exisiting_checklist.json?id=${templateId}`, {
@@ -1367,21 +1872,20 @@ export const AddSchedulePage = () => {
       }
 
       const templateData = await response.json();
-      
+
       if (templateData && templateData.content) {
-        console.log('Detailed template data loaded:', templateData);
-        
+
         // Convert template content to tasks format
         const templateTasks = templateData.content.map((question: any, index: number) => {
           const inputType = mapInputType(question.type);
-          
+
           // Initialize default values for different input types
-          let dropdownValues = [{label: '', type: 'positive'}];
-          let radioValues = [{label: '', type: 'positive'}];
+          let dropdownValues = [{ label: '', type: 'positive' }];
+          let radioValues = [{ label: '', type: 'positive' }];
           let checkboxValues = [''];
           let checkboxSelectedStates = [false];
           let optionsInputsValues = [''];
-          
+
           // Map the values array based on input type
           if (question.values && Array.isArray(question.values) && question.values.length > 0) {
             if (inputType === 'dropdown') {
@@ -1401,7 +1905,7 @@ export const AddSchedulePage = () => {
               optionsInputsValues = question.values.map((val: any) => val.label || val.value || '');
             }
           }
-          
+
           return {
             id: (Date.now() + index).toString(),
             group: question.group_id || '',
@@ -1422,49 +1926,43 @@ export const AddSchedulePage = () => {
             optionsInputsValues: optionsInputsValues
           };
         });
-        
+
         // Update the first section with template tasks
         setQuestionSections(sections =>
           sections.map((section, index) =>
             index === 0 ? { ...section, tasks: templateTasks } : section
           )
         );
-        
+
         // Only update form data if fields are empty (don't overwrite user input)
         setFormData(prev => ({
           ...prev,
           activityName: prev.activityName || templateData.form_name || '',
           description: prev.description || templateData.description || '',
           type: templateData.schedule_type || prev.type,
-          scheduleFor: mapChecklistFor(templateData.checklist_for)
+          scheduleFor: prev.scheduleFor
         }));
-        
-        console.log('Template tasks loaded:', templateTasks);
-        toast({
-          title: "Success",
-          description: `Template "${templateData.form_name}" loaded successfully!`,
-        });
+
+        toast(`Template "${templateData.form_name}" loaded successfully!`);
+      } else {
+        // Handle case when template data is empty or invalid
+        toast("Template data is empty or invalid.");
       }
     } catch (error) {
       console.error('Failed to load template data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load template data.",
-        variant: "destructive"
-      });
+      toast("Failed to load template data.");
     } finally {
       setLoading(prev => ({ ...prev, templates: false }));
     }
   };
 
   const handleAssetGroupChange = (groupId: string) => {
-    console.log('Asset group changed to:', groupId); // Debug log
     const numericGroupId = groupId ? Number(groupId) : undefined;
     setSelectedAssetGroup(numericGroupId);
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       assetGroup: groupId,
-      assetSubGroup: '' // Reset sub-group when group changes
+      assetSubGroup: [] // Reset sub-group when group changes
     }));
   };
 
@@ -1473,206 +1971,339 @@ export const AddSchedulePage = () => {
       ...prev,
       checklistType: value,
       // Reset all asset-related fields when switching between types
-      asset: '',
+      asset: [],
       assetGroup: '',
-      assetSubGroup: ''
+      assetSubGroup: []
     }));
-    
+
     // Reset asset group selection state
     setSelectedAssetGroup(undefined);
     setAssetSubGroups([]);
   };
 
-  // Validation functions for each section
+  // Validation functions for each section - updated for field-level errors
   const validateBasicConfiguration = (): string[] => {
-    const errors: string[] = [];
-    
+    const errors: { [key: string]: string } = {};
+
+    if (!formData.type) {
+      errors['type'] = 'Type selection is required';
+    }
     if (!formData.activityName.trim()) {
-      errors.push('Activity Name is required');
+      errors['activityName'] = 'Activity Name is required';
     }
     if (!formData.description.trim()) {
-      errors.push('Description is required');
+      errors['description'] = 'Description is required';
     }
-    if (!formData.type) {
-      errors.push('Type selection is required');
-    }
-    
-    return errors;
+
+    // Update field errors
+    setFieldErrors(prev => ({
+      ...prev,
+      ...errors
+    }));
+
+    return Object.values(errors);
   };
 
   const validateScheduleSetup = (): string[] => {
-    const errors: string[] = [];
-    
+    const errors: { [key: string]: string } = {};
+
     if (!formData.checklistType) {
-      errors.push('Checklist Type is required');
+      errors['checklistType'] = 'Checklist Type is required';
     }
-    
-    // Asset validation based on checklist type
-    if (formData.checklistType === 'Individual' && !formData.asset) {
-      errors.push('Asset selection is required for Individual checklist type');
+
+    // Asset/Service validation based on scheduleFor and checklist type
+    if (formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && formData.asset.length === 0) {
+      errors['asset'] = 'At least one asset must be selected for Individual checklist type';
     }
-    
+
+    if (formData.scheduleFor === 'Service' && formData.service.length === 0) {
+      errors['service'] = 'At least one service must be selected';
+    }
+
     if (formData.checklistType === 'Asset Group') {
       if (!formData.assetGroup) {
-        errors.push('Asset Group selection is required');
+        errors['assetGroup'] = 'Asset Group selection is required';
+      }
+      if (formData.assetSubGroup.length === 0) {
+        errors['assetSubGroup'] = 'At least one Asset Sub-Group must be selected';
       }
     }
-    
+
     // Assignment validation
+    if (!formData.assignToType) {
+      errors['assignToType'] = 'Assign To type is required';
+    }
+
     if (formData.assignToType === 'user' && formData.selectedUsers.length === 0) {
-      errors.push('At least one user must be selected');
+      errors['selectedUsers'] = 'At least one user must be selected';
     }
-    
+
     if (formData.assignToType === 'group' && formData.selectedGroups.length === 0) {
-      errors.push('At least one group must be selected');
+      errors['selectedGroups'] = 'At least one group must be selected';
     }
-    
-    if (!formData.frequency) {
-      errors.push('Frequency is required');
+
+    if (!formData.backupAssignee) {
+      errors['backupAssignee'] = 'Backup Assignee is required';
     }
-    
+
     // Plan duration validation
+    if (!formData.planDuration) {
+      errors['planDuration'] = 'Plan Duration type is required';
+    }
     if (formData.planDuration && !formData.planDurationValue) {
-      errors.push('Plan Duration value is required when duration type is selected');
+      errors['planDurationValue'] = 'Plan Duration value is required when duration type is selected';
     }
-    
+
+    if (!formData.emailTriggerRule) {
+      errors['emailTriggerRule'] = 'Email Trigger Rule is required';
+    }
+
+    // if (!formData.scanType) {
+    //   errors['scanType'] = 'Scan Type is required';
+    // }
+
+    if (!formData.category) {
+      errors['category'] = 'Category is required';
+    }
+
     // Submission time validation
+    if (!formData.submissionTime) {
+      errors['submissionTime'] = 'Submission Time type is required';
+    }
     if (formData.submissionTime && !formData.submissionTimeValue) {
-      errors.push('Submission Time value is required when time type is selected');
+      errors['submissionTimeValue'] = 'Submission Time value is required when time type is selected';
     }
-    
+
+    if (!formData.supervisors) {
+      errors['supervisors'] = 'Supervisors selection is required';
+    }
+
+    if (!formData.lockOverdueTask) {
+      errors['lockOverdueTask'] = 'Lock Overdue Task selection is required';
+    }
+
     // Grace time validation
-    if (formData.graceTime && !formData.graceTimeValue) {
-      errors.push('Grace Time value is required when time type is selected');
+    if (!formData.graceTime) {
+      errors['graceTime'] = 'Grace Time type is required';
     }
-    
+    if (formData.graceTime && !formData.graceTimeValue) {
+      errors['graceTimeValue'] = 'Grace Time value is required when time type is selected';
+    }
+
+    if (!formData.startFrom) {
+      errors['startFrom'] = 'Start From date is required';
+    }
+
+    if (!formData.endAt) {
+      errors['endAt'] = 'End At date is required';
+    }
+
     // Date validation
     if (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom) {
-      errors.push('End date cannot be before start date');
+      errors['endAt'] = 'End date cannot be before start date';
     }
-    
-    return errors;
+
+    // Update field errors
+    setFieldErrors(prev => ({
+      ...prev,
+      ...errors
+    }));
+
+    return Object.values(errors);
   };
 
   const validateQuestionSetup = (): string[] => {
-    const errors: string[] = [];
-    
+    const errors: { [key: string]: string } = {};
+
     // Validate each section has at least one valid task
     questionSections.forEach((section, sectionIndex) => {
-      if (!section.title.trim()) {
-        errors.push(`Section ${sectionIndex + 1} title is required`);
+      if (!section.title || typeof section.title !== 'string' || !section.title.trim()) {
+        errors[`section_${sectionIndex}_title`] = `Section ${sectionIndex + 1} title is required`;
       }
-      
-      const validTasks = section.tasks.filter(task => task.task.trim());
+
+      const validTasks = section.tasks.filter(task => task && typeof task.task === 'string' && task.task.trim());
       if (validTasks.length === 0) {
-        errors.push(`Section ${sectionIndex + 1} must have at least one task with content`);
+        errors[`section_${sectionIndex}_tasks`] = `Section ${sectionIndex + 1} must have at least one task with content`;
       }
-      
+
       // Validate each task
       section.tasks.forEach((task, taskIndex) => {
-        if (task.task.trim()) {
+        if (task && typeof task.task === 'string' && task.task.trim()) {
           if (!task.inputType) {
-            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have an input type`);
+            errors[`section_${sectionIndex}_task_${taskIndex}_inputType`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have an input type selected`;
           }
-          
-          if (task.helpText && !task.helpTextValue.trim()) {
-            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} help text value is required when help text is enabled`);
+          // Group and SubGroup are mandatory
+          if (!task.group || !task.group.trim()) {
+            errors[`section_${sectionIndex}_task_${taskIndex}_group`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a group selected`;
           }
-          
-          if (weightage && task.rating && !task.weightage) {
-            errors.push(`Task ${taskIndex + 1} in Section ${sectionIndex + 1} weightage is required when rating is enabled`);
+          if (!task.subGroup || !task.subGroup.trim()) {
+            errors[`section_${sectionIndex}_task_${taskIndex}_subGroup`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} must have a sub-group selected`;
           }
+          // Help text is optional, but if enabled, value is required
+          if (task.helpText && (!task.helpTextValue || !task.helpTextValue.trim())) {
+            errors[`section_${sectionIndex}_task_${taskIndex}_helpTextValue`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} help text value is required when help text is enabled`;
+          }
+          // Validate input type specific values
+          if (task.inputType === 'dropdown' && task.dropdownValues.some(val => !val.label || !val.label.trim())) {
+            errors[`section_${sectionIndex}_task_${taskIndex}_dropdownValues`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} dropdown must have all option values filled`;
+          }
+          if (task.inputType === 'radio' && task.radioValues.some(val => !val.label || !val.label.trim())) {
+            errors[`section_${sectionIndex}_task_${taskIndex}_radioValues`] = `Task ${taskIndex + 1} in Section ${sectionIndex + 1} radio must have all option values filled`;
+          }
+          // Checkboxes are not mandatory, so skip validation for checkboxValues
+        } else if (section.tasks.length === 1) {
+          // If there's only one task and it's empty, require it to be filled
+          errors[`section_${sectionIndex}_task_${taskIndex}_task`] = `Section ${sectionIndex + 1} must have at least one task filled`;
         }
       });
-      
-      // Auto ticket validation
-      if (section.autoTicket) {
-        if (!section.ticketAssignedTo) {
-          errors.push(`Section ${sectionIndex + 1} auto ticket assigned to is required`);
-        }
-        if (!section.ticketCategory) {
-          errors.push(`Section ${sectionIndex + 1} auto ticket category is required`);
-        }
-      }
     });
-    
-    return errors;
+
+    // Update field errors
+    setFieldErrors(prev => ({
+      ...prev,
+      ...errors
+    }));
+
+    return Object.values(errors);
+  };
+
+  const validateTimeSetup = (): boolean => {
+    const errors: { [key: string]: string } = {};
+
+    // Validate hour settings
+    if (timeSetupData.hourMode === 'specific' && timeSetupData.selectedHours.length === 0) {
+      errors['timeSetup_hours'] = 'At least one hour must be selected when using specific hours';
+    }
+
+    // Validate minute settings
+    if (timeSetupData.minuteMode === 'specific' && timeSetupData.selectedMinutes.length === 0) {
+      errors['timeSetup_minutes'] = 'At least one minute must be selected when using specific minutes';
+    }
+
+    if (timeSetupData.minuteMode === 'between') {
+      if (!timeSetupData.betweenMinuteStart || !timeSetupData.betweenMinuteEnd) {
+        errors['timeSetup_minuteRange'] = 'Both start and end minutes are required for between minute range';
+      }
+    }
+
+    // Validate day settings
+    if (timeSetupData.dayMode === 'weekdays' && timeSetupData.selectedWeekdays.length === 0) {
+      errors['timeSetup_weekdays'] = 'At least one weekday must be selected when using specific weekdays';
+    }
+
+    if (timeSetupData.dayMode === 'specific' && timeSetupData.selectedDays.length === 0) {
+      errors['timeSetup_days'] = 'At least one day must be selected when using specific days';
+    }
+
+    // Validate month settings
+    if (timeSetupData.monthMode === 'specific' && timeSetupData.selectedMonths.length === 0) {
+      errors['timeSetup_months'] = 'At least one month must be selected when using specific months';
+    }
+
+    if (timeSetupData.monthMode === 'between') {
+      if (!timeSetupData.betweenMonthStart || !timeSetupData.betweenMonthEnd) {
+        errors['timeSetup_monthRange'] = 'Both start and end months are required for between month range';
+      }
+    }
+
+    // Update field errors
+    setFieldErrors(prev => ({
+      ...prev,
+      ...errors
+    }));
+
+    return Object.keys(errors).length === 0;
   };
 
   const validateCurrentStep = (): boolean => {
-    let errors: string[] = [];
-    
+    // Clear existing field errors for current step
+    setFieldErrors(prev => {
+      const clearedErrors = { ...prev };
+      Object.keys(clearedErrors).forEach(key => {
+        // Clear errors that might be related to current step
+        delete clearedErrors[key];
+      });
+      return clearedErrors;
+    });
+
+    let isValid = true;
+
     switch (activeStep) {
       case 0:
-        errors = validateBasicConfiguration();
+        isValid = validateBasicConfiguration().length === 0;
         break;
       case 1:
-        errors = validateScheduleSetup();
+        isValid = validateScheduleSetup().length === 0;
         break;
       case 2:
-        errors = validateQuestionSetup();
+        isValid = validateQuestionSetup().length === 0;
+        break;
+      case 3:
+        isValid = validateTimeSetup();
         break;
       default:
-        errors = [];
+        isValid = true;
     }
-    
-    // Always update validation errors for the current step
-    setValidationErrors(prev => ({
-      ...prev,
-      [activeStep]: errors
-    }));
-    
-    if (errors.length > 0) {
-      toast({
-        title: "Validation Error",
-        description: errors[0],
-        variant: "destructive"
-      });
+
+    if (!isValid) {
+      // No error toast, just rely on field-level errors and star on labels
       return false;
     }
-    
     return true;
   };
 
-  // Add effect to validate current step whenever form data changes
-  useEffect(() => {
-    let errors: string[] = [];
-    
-    switch (activeStep) {
-      case 0:
-        errors = validateBasicConfiguration();
-        break;
-      case 1:
-        errors = validateScheduleSetup();
-        break;
-      case 2:
-        errors = validateQuestionSetup();
-        break;
-      default:
-        errors = [];
-    }
-    
-    setValidationErrors(prev => ({
-      ...prev,
-      [activeStep]: errors
-    }));
-  }, [activeStep, formData, questionSections, weightage, autoTicket]);
-
   const handleNext = () => {
     if (!validateCurrentStep()) {
+      toast.error("Please fill all required fields before proceeding.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+      });
       return;
     }
-    
+
     // Mark current step as completed
     if (!completedSteps.includes(activeStep)) {
       setCompletedSteps([...completedSteps, activeStep]);
     }
-    
+
+    // Show success message for the completed step
+    const stepMessages = {
+      0: "Basic Configuration completed successfully!",
+      1: "Schedule Setup completed successfully!",
+      2: "Question Setup completed successfully!",
+      3: "Time Setup completed successfully!",
+      4: "Mapping completed successfully!"
+    };
+
+    // Always show toast for valid steps
+    const currentStepMessage = stepMessages[activeStep as keyof typeof stepMessages];
+    if (currentStepMessage) {
+      toast.success(currentStepMessage, {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
+        },
+      });
+    }
+
     if (activeStep < steps.length - 1) {
       setActiveStep(activeStep + 1);
+      // Scroll to top for better UX
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
     }
+    setEditingStep(null);
   };
-  
+
   const handleBack = () => {
     if (activeStep > 0) {
       const newActiveStep = activeStep - 1;
@@ -1681,30 +2312,52 @@ export const AddSchedulePage = () => {
       setActiveStep(newActiveStep);
     }
   };
-  
+
   const handleStepClick = (step: number) => {
     // Validate current step before allowing navigation
     if (step > activeStep && !validateCurrentStep()) {
       return;
     }
-    
+
     if (step < activeStep) {
-      // Going backwards - remove completion status from steps after the clicked step
       setCompletedSteps(completedSteps.filter(stepIndex => stepIndex < step));
     } else if (step > activeStep) {
-      // Going forwards - mark current step as completed
       if (!completedSteps.includes(activeStep)) {
         setCompletedSteps([...completedSteps, activeStep]);
+        // Show success message for the completed step
+        const stepMessages = {
+          0: "Basic Configuration completed successfully!",
+          1: "Schedule Setup completed successfully!",
+          2: "Question Setup completed successfully!",
+          3: "Time Setup completed successfully!",
+          4: "Mapping completed successfully!"
+        };
+        const currentStepMessage = stepMessages[activeStep as keyof typeof stepMessages];
+        if (currentStepMessage) {
+          toast.success(currentStepMessage, {
+            position: 'top-right',
+            duration: 4000,
+            style: {
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+            },
+          });
+        }
       }
     }
     setActiveStep(step);
+    setEditingStep(step);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
   };
 
   // Check if a step should be red (active or completed)
   const isStepRed = (stepIndex: number) => {
     return stepIndex === activeStep || completedSteps.includes(stepIndex);
   };
-  
+
   // Helper function to map input types back to API format
   const mapInputTypeToAPI = (inputType: string): string => {
     const typeMapping: { [key: string]: string } = {
@@ -1742,9 +2395,9 @@ export const AddSchedulePage = () => {
 
     // Build day part
     if (timeSetupData.dayMode === 'weekdays' && timeSetupData.selectedWeekdays.length > 0) {
-      const weekdayMap: {[key: string]: string} = {
+      const weekdayMap: { [key: string]: string } = {
         'Sunday': '1',
-        'Monday': '2', 
+        'Monday': '2',
         'Tuesday': '3',
         'Wednesday': '4',
         'Thursday': '5',
@@ -1760,14 +2413,14 @@ export const AddSchedulePage = () => {
 
     // Build month part
     if (timeSetupData.monthMode === 'specific' && timeSetupData.selectedMonths.length > 0) {
-      const monthMap: {[key: string]: string} = {
+      const monthMap: { [key: string]: string } = {
         'January': '1', 'February': '2', 'March': '3', 'April': '4',
         'May': '5', 'June': '6', 'July': '7', 'August': '8',
         'September': '9', 'October': '10', 'November': '11', 'December': '12'
       };
       month = timeSetupData.selectedMonths.map(m => monthMap[m]).join(',');
     } else if (timeSetupData.monthMode === 'between') {
-      const monthMap: {[key: string]: number} = {
+      const monthMap: { [key: string]: number } = {
         'January': 1, 'February': 2, 'March': 3, 'April': 4,
         'May': 5, 'June': 6, 'July': 7, 'August': 8,
         'September': 9, 'October': 10, 'November': 11, 'December': 12
@@ -1783,13 +2436,13 @@ export const AddSchedulePage = () => {
   // Helper function to format date to ISO string with time
   const formatDateToISO = (dateString: string) => {
     if (!dateString) return "";
-    
+
     // Create date object from the input date string
     const date = new Date(dateString);
-    
+
     // Set time to 13:30:00 (1:30 PM) as specified in the requirement
     date.setHours(13, 30, 0, 0);
-    
+
     // Return ISO string format
     return date.toISOString();
   };
@@ -1797,10 +2450,10 @@ export const AddSchedulePage = () => {
   // Build the API payload
   const buildAPIPayload = () => {
     // Build content array from question sections
-    const content = questionSections.flatMap(section => 
+    const content = questionSections.flatMap(section =>
       section.tasks.filter(task => task.task.trim()).map(task => {
         let values: any[] = [];
-        
+
         // Set values based on input type
         switch (task.inputType) {
           case 'dropdown':
@@ -1862,15 +2515,16 @@ export const AddSchedulePage = () => {
       }
     });
 
-    // Get selected asset IDs
-    const assetIds = formData.checklistType === 'Individual' ? [formData.asset] : [];
+    // Get selected asset IDs or service IDs based on scheduleFor
+    const assetIds = formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' ? formData.asset : [];
+    const serviceIds = formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' ? formData.service : []  ;
 
     // Get assigned people IDs
     const peopleAssignedIds = formData.assignToType === 'user' ? formData.selectedUsers : [];
 
     // Build dynamic cron fields
     const cronExpression = buildCronExpression();
-    
+
     // Build minute cron field
     let cronMinute = "off";
     let cronMinuteSpecificSpecific = "";
@@ -1906,9 +2560,8 @@ export const AddSchedulePage = () => {
     }
 
     return {
-      schedule_type: formData.type.toLowerCase(),
+      schedule_type: 'ppm',
       pms_custom_form: {
-        // pms_site_id: "7", // This should come from context/auth
         created_source: "form",
         create_ticket: autoTicket ? "1" : "0",
         ticket_level: formData.ticketLevel,
@@ -1918,24 +2571,24 @@ export const AddSchedulePage = () => {
         schedule_type: formData.type,
         form_name: formData.activityName,
         description: formData.description,
-        // custom_form: customForm,
         supervisors: formData.supervisors ? [formData.supervisors] : [],
         submission_time_type: formData.submissionTime || "",
         submission_time_value: formData.submissionTimeValue || "",
         supplier_id: formData.supplier || ""
       },
-      sch_type: formData.type.toLowerCase(),
+      sch_type: 'ppm',
       checklist_type: formData.scheduleFor,
       group_id: formData.assetGroup || "",
-      sub_group_id: formData.assetSubGroup || "",
+      sub_group_id: Array.isArray(formData.assetSubGroup) ? (formData.assetSubGroup[0] || "") : (formData.assetSubGroup || ""),
       content: content,
       checklist_upload_type: formData.checklistType,
       asset_ids: assetIds.filter(id => id),
+      service_ids: serviceIds.filter(id => id),
       training_subject_ids: [""],
       sub_group_ids: [""],
       pms_asset_task: {
         assignment_type: formData.assignToType === 'user' ? 'people' : 'group',
-        scan_type: formData.scanType || "",
+        scan_type: 'qr',
         plan_type: formData.planDuration || "",
         plan_value: formData.planDurationValue || "",
         priority: "Low", // Default or from form
@@ -1943,10 +2596,11 @@ export const AddSchedulePage = () => {
         grace_time_type: formData.graceTime || "",
         grace_time_value: formData.graceTimeValue || "",
         overdue_task_start_status: formData.lockOverdueTask || "false",
-        frequency: formData.frequency,
+        frequency: null, // Default or from form
         start_date: formatDateToISO(formData.startFrom),
         end_date: formatDateToISO(formData.endAt)
       },
+      backup_assigned_to_id:  formData.backupAssignee || "",
       people_assigned_to_ids: peopleAssignedIds,
       ppm_rule_ids: formData.emailTriggerRule ? [formData.emailTriggerRule] : [],
       amc_rule_ids: [""],
@@ -1958,7 +2612,7 @@ export const AddSchedulePage = () => {
       cronDay: cronDay,
       cronMonth: cronMonth,
       cron_expression: cronExpression,
-      expholder: ""
+      // expholder: ""
     };
   };
 
@@ -1967,49 +2621,16 @@ export const AddSchedulePage = () => {
     return !!type && type !== '';
   }
 
-  const renderSingleStep = (stepIndex: number) => {
+  const renderSingleStep = (stepIndex: number, disabled: boolean = false) => {
     switch (stepIndex) {
       case 0: // Basic Configuration
-        function addAttachment(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
-          // Create a hidden file input and trigger click
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.multiple = true;
-          input.accept = '*/*';
-          input.style.display = 'none';
-
-          input.onchange = (e: Event) => {
-            const files = (e.target as HTMLInputElement).files;
-            if (files) {
-              const newAttachments: AttachmentFile[] = [];
-              for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          // For now, just create a local URL for preview; in real app, upload to server
-          newAttachments.push({
-            id: `${Date.now()}-${i}`,
-            name: file.name,
-            url: URL.createObjectURL(file)
-          });
-              }
-              setAttachments(prev => [...prev, ...newAttachments]);
-            }
-          };
-
-          document.body.appendChild(input);
-          input.click();
-          // Clean up after selection
-          input.remove();
-        }
-
         return (
-          <Box>
-            {/* Header Outside the Box */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+          <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }} >
+            {/* Header with icon and title */}
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'space-between',
-              mb: 3,
-              px: 1
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box sx={{
@@ -2019,7 +2640,8 @@ export const AddSchedulePage = () => {
                   height: '32px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  marginBottom: '2'
                 }}>
                   <Cog size={16} color="white" />
                 </Box>
@@ -2027,157 +2649,10 @@ export const AddSchedulePage = () => {
                   Basic Configuration
                 </Typography>
               </Box>
-            </Box>
-
-            {/* Main Content in White Box */}
-            <SectionCard style={{ padding: '24px' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Type</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Typography variant="body2" sx={{ color: '#666' }}>
-                      Schedule For: <strong>{formData.scheduleFor}</strong>
-                    </Typography>
-                    {stepIndex < activeStep && (
-                      <MuiButton
-                        variant="outlined"
-                        size="small"
-                        startIcon={<Edit />}
-                        onClick={() => handleStepClick(stepIndex)}
-                        sx={{
-                          color: '#C72030',
-                          borderColor: '#C72030',
-                          fontSize: '12px',
-                          padding: '4px 12px',
-                          minWidth: 'auto',
-                          '&:hover': {
-                            borderColor: '#C72030',
-                            backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                          }
-                        }}
-                      >
-                        Edit
-                      </MuiButton>
-                    )}
-                  </Box>
-                </Box>
-              </Box>
-              
-              {/* Type Radio Group */}
-              <Box sx={{ mb: 3 }}>
-                <RadioGroup
-                  row
-                  value={formData.type}
-                  onChange={(e) => setFormData({...formData, type: e.target.value})}
-                  sx={{ mb: 2 }}
-                >
-                  <FormControlLabel 
-                    value="PPM" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="PPM" 
-                  />
-                  <FormControlLabel 
-                    value="AMC" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="AMC" 
-                  />
-                  <FormControlLabel 
-                    value="Preparedness" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="Preparedness" 
-                  />
-                  <FormControlLabel 
-                    value="Hoto" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="Hoto" 
-                  />
-                  <FormControlLabel 
-                    value="Routine" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="Routine" 
-                  />
-                  <FormControlLabel 
-                    value="Audit" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="Audit" 
-                  />
-                </RadioGroup>
-              </Box>
-              
-              <TextField
-                label="Activity Name"
-                placeholder="Enter Activity Name"
-                fullWidth
-                value={formData.activityName}
-                onChange={(e) => setFormData({...formData, activityName: e.target.value})}
-                sx={{ mb: 3 }}
-              />
-              
-              <TextField
-                label="Description"
-                placeholder="Enter Description/SOP"
-                fullWidth
-                multiline
-                rows={4}
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                sx={{ mb: 3 }}
-              />
-              
-              {/* Add Attachment Button */}
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <RedButton 
-                  startIcon={<AttachFile />}
-                  onClick={addAttachment}
-                >
-                  Add Attachment
-                </RedButton>
-              </Box>
-            </SectionCard>
-          </Box>
-        );
-        
-      case 1: // Schedule Setup
-        function handleMultiSelectChange(field: 'selectedUsers' | 'selectedGroups', e: SelectChangeEvent<any>) {
-          const {
-            target: { value }
-          } = e;
-          setFormData(prev => ({
-            ...prev,
-            [field]: typeof value === 'string' ? value.split(',') : value
-          }));
-        }
-
-        return (
-          <Box>
-            {/* Header Outside the Box */}
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 2,
-              mb: 3,
-              px: 1
-            }}>
-              <Box sx={{
-                backgroundColor: '#C72030',
-                borderRadius: '50%',
-                width: '32px',
-                height: '32px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Cog size={16} color="white" />
-              </Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
-                Schedule Setup
-              </Typography>
-            </Box>
-
-            {/* Main Content in White Box */}
-            <SectionCard style={{ padding: '24px' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3,  }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Checklist Type</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography variant="body2" sx={{ color: '#666' }}>
+                  Schedule For: <strong>{formData.scheduleFor}</strong>
+                </Typography>
                 {stepIndex < activeStep && (
                   <MuiButton
                     variant="outlined"
@@ -2200,208 +2675,665 @@ export const AddSchedulePage = () => {
                   </MuiButton>
                 )}
               </Box>
-              <Box sx={{ mb: 3 }}>
-                <RadioGroup
-                  row
-                  value={formData.checklistType}
-                  onChange={(e) => handleChecklistTypeChange(e.target.value)}
+            </Box>
+
+            {/* Type section */}
+            <Box sx={{ my: 3 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                Type
+              </Typography>
+              <RadioGroup
+                row
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                sx={{ mb: 2 }}
+              >
+                <FormControlLabel
+                  value="PPM"
+                  control={
+                    <Radio
+                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    />
+                  }
+                  label="PPM"
+                />
+                <FormControlLabel
+                  value="AMC"
+                  control={
+                    <Radio
+                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    />
+                  }
+                  label="AMC"
+                />
+                <FormControlLabel
+                  value="Preparedness"
+                  control={
+                    <Radio
+                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    />
+                  }
+                  label="Preparedness"
+                />
+                {/* <FormControlLabel
+                  value="Hoto"
+                  control={
+                    <Radio
+                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    />
+                  }
+                  label="Hoto"
+                /> */}
+                <FormControlLabel
+                  value="Routine"
+                  control={
+                    <Radio
+                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    />
+                  }
+                  label="Routine"
+                />
+                {/* <FormControlLabel
+                  value="Audit"
+                  control={
+                    <Radio
+                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    />
+                  }
+                  label="Audit"
+                /> */}
+              </RadioGroup>
+            </Box>
+
+            <TextField
+              disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+              label={<span>Activity Name <span style={{ color: 'currentColor' }}>*</span></span>}
+              placeholder="Enter Activity Name"
+              fullWidth
+              value={formData.activityName}
+              onChange={(e) => setFormData({ ...formData, activityName: e.target.value })}
+              sx={{ mb: 3 }}
+            />
+
+            <TextField
+              disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+              label={<span>Description <span style={{ color: 'currentColor' }}>*</span></span>}
+              placeholder="Enter Description/SOP"
+              fullWidth
+              multiline
+              rows={4}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              sx={{ mb: 3 }}
+            />
+
+            {/* Attachments Section */}
+            <Box sx={{ mb: 3 }}>
+              {/* Display existing attachments as placeholder boxes */}
+              {attachments.length > 0 && (
+                <Box sx={{
+                  display: 'flex',
+                  gap: 2,
+                  mb: 2,
+                  flexWrap: 'wrap'
+                }}>
+                  {attachments.map((attachment) => {
+  // Check if the file is an image by extension or mime type if available
+  const isImage = attachment.name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
+  const isReadOnly = stepIndex < activeStep && editingStep !== stepIndex;
+  return (
+    <Box
+      key={attachment.id}
+      sx={{
+        width: '120px',
+        height: '120px',
+        border: '2px dashed #ccc',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        position: 'relative',
+        backgroundColor: '#fafafa',
+        '&:hover': {
+          borderColor: '#999'
+        }
+      }}
+    >
+      {/* Close button - only show if not read-only */}
+      {!isReadOnly && (
+        <IconButton
+          size="small"
+          onClick={() => setAttachments(prev => prev.filter(a => a.id !== attachment.id))}
+          sx={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            backgroundColor: 'white',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            width: 20,
+            height: 20,
+            '&:hover': {
+              backgroundColor: '#f5f5f5'
+            }
+          }}
+        >
+          <Close sx={{ fontSize: 12 }} />
+        </IconButton>
+      )}
+
+      {/* Show image preview if image, else file icon and name */}
+      {isImage && attachment.url ? (
+        <img
+          src={attachment.url}
+          alt={attachment.name}
+          style={{
+            maxWidth: '100px',
+            maxHeight: '100px',
+            objectFit: 'contain',
+            marginBottom: 8,
+            borderRadius: 4,
+            opacity: isReadOnly ? 0.5 : 1 // Apply opacity if read-only
+          }}
+        />
+      ) : (
+        <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1, opacity: isReadOnly ? 0.5 : 1 }} />
+      )}
+      {!isImage && (
+        <Typography
+          variant="caption"
+          sx={{
+            textAlign: 'center',
+            px: 1,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            width: '100%',
+            opacity: isReadOnly ? 0.5 : 1
+          }}
+        >
+          {attachment.name}
+        </Typography>
+      )}
+    </Box>
+  );
+})}
+                </Box>
+              )}
+
+              {/* Add Attachment Button */}
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <MuiButton
+                  variant="outlined"
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                  // startIcon={<AttachFile />}
+                  onClick={addAttachment}
+                  sx={{
+                    borderColor: '#C72030',
+                    color: '#C72030',
+                    textTransform: 'none',
+                    fontFamily: 'Work Sans, sans-serif',
+                    fontWeight: 500,
+                    borderRadius: '0',
+                    padding: '8px 16px',
+                    '&:hover': {
+                      borderColor: '#B8252F',
+                      backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                    },
+                  }}
                 >
-                  <FormControlLabel 
-                    value="Individual" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="Individual" 
-                  />
-                  <FormControlLabel 
-                    value="Asset Group" 
-                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                    label="Asset Group" 
-                  />
-                  <FormControlLabel 
+                  Add Attachment
+                </MuiButton>
+              </Box>
+            </Box>
+          </SectionCard>
+        );
+
+      case 1: // Schedule Setup
+        function handleMultiSelectChange(field: 'selectedUsers' | 'selectedGroups' | 'service' | 'assetSubGroup' | 'asset', e: SelectChangeEvent<any>) {
+          const {
+            target: { value }
+          } = e;
+          setFormData(prev => ({
+            ...prev,
+            [field]: typeof value === 'string' ? value.split(',') : value
+          }));
+        }
+
+        function handleAutocompleteChange(field: 'service' | 'asset' | 'selectedUsers', value: any[]) {
+          setFormData(prev => ({
+            ...prev,
+            [field]: value.map(item => item.id.toString())
+          }));
+        }
+
+        return (
+          <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
+            {/* Header with icon and title */}
+            <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              mb: 3
+            }}>
+              <Box sx={{
+                backgroundColor: '#C72030',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Cog size={16} color="white" />
+              </Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                Schedule Setup
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              {
+                  formData.scheduleFor === 'Asset' && (<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                Checklist Type
+              </Typography>)}
+              {stepIndex < activeStep && (
+                <MuiButton
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Edit />}
+                  onClick={() => handleStepClick(stepIndex)}
+                  sx={{
+                    color: '#C72030',
+                    borderColor: '#C72030',
+                    fontSize: '12px',
+                    padding: '4px 12px',
+                    minWidth: 'auto',
+                    '&:hover': {
+                      borderColor: '#C72030',
+                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                    }
+                  }}
+                >
+                  Edit
+                </MuiButton>
+              )}
+            </Box>
+            <Box sx={{ mb: 3 }}>
+              {
+                  formData.scheduleFor === 'Asset' && (<RadioGroup
+                row
+                value={formData.checklistType}
+                onChange={(e) => handleChecklistTypeChange(e.target.value)}
+              >
+                <FormControlLabel
+                  value="Individual"
+                  control={
+                    <Radio
+                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    />
+                  }
+                  label="Individual"
+                />
+                
+                    <FormControlLabel
+                  value="Asset Group"
+                  control={
+                    <Radio
+                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                    />
+                  }
+                  label="Asset Group"
+                />
+                
+                {/* <FormControlLabel 
                     value="Branching" 
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
                     label="Branching" 
-                  />
-                </RadioGroup>
-              </Box>
-              
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-                {/* Conditional Asset/Service Dropdown - Show based on scheduleFor */}
-                {formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && (
-                  <MuiSearchableDropdown
-                    label="Asset"
-                    value={formData.asset}
-                    onChange={(value) => setFormData({...formData, asset: value.toString()})}
-                    options={assets ? assets.map(asset => ({
-                      id: asset.id,
-                      label: asset.name,
-                      value: asset.id.toString()
-                    })) : []}
-                    placeholder="Select Asset"
-                    disabled={loading.assets}
-                    loading={loading.assets}
-                    loadingText="Loading assets..."
-                    fullWidth
-                  />
-                )}
+                  /> */}
+              </RadioGroup>)}
+            </Box>
 
-                {/* Service Dropdown - Show when scheduleFor is Service */}
-                {formData.scheduleFor === 'Service' && (
-                  <MuiSearchableDropdown
-                    label="Service"
-                    value={formData.service}
-                    onChange={(value) => setFormData({...formData, service: value.toString()})}
-                    options={services ? services.map(service => ({
-                      id: service.id,
-                      label: service.service_name,
-                      value: service.id.toString()
-                    })) : []}
-                    placeholder="Select Service"
-                    disabled={loading.services}
-                    loading={loading.services}
-                    loadingText="Loading services..."
-                    fullWidth
-                  />
-                )}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+              {/* Conditional Asset/Service Dropdown - Show based on scheduleFor */}
+              {formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && (
+                <Box>
+                  <Autocomplete
+                    disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.assets}
 
-                {/* Conditional Asset Group Dropdown - Show for Asset Group and when scheduleFor is Asset */}
-                {formData.scheduleFor === 'Asset' && formData.checklistType === 'Asset Group' && (
-                  <>
-                    <MuiSearchableDropdown
-                      label="Asset Group"
-                      value={formData.assetGroup || ''}
-                      onChange={(value) => handleAssetGroupChange(value.toString())}
+                    multiple
+                    options={assets || []}
+                    getOptionLabel={(option) => option.name}
+                    value={assets?.filter(asset => formData.asset.includes(asset.id.toString())) || []}
+                    onChange={(event, newValue) => handleAutocompleteChange('asset', newValue)}
+                    renderInput={(params) => (
+                      <TextField
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                        {...params}
+                        label={
+                          <span>
+                            Select Assets <span style={{ color: 'currentColor' }}>*</span>
+                          </span>
+                        }
+                        placeholder="Search and select assets..."
+                      />
+                    )}
+                    renderTags={(tagValue, getTagProps) =>
+                      tagValue.map((option, index) => (
+                        <Chip
+                          key={option.id}
+                          label={option.name}
+                          size="small"
+                          {...getTagProps({ index })}
+                        />
+                      ))
+                    }
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    filterSelectedOptions
+                  />
+                  {loading.assets && (
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                      Loading assets...
+                    </Typography>
+                  )}
+                </Box>
+              )}
+
+              {/* Service Dropdown - Show when scheduleFor is Service */}
+              {formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' && (
+                <Box>
+                  <Autocomplete
+                    disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.services}
+
+                    multiple
+                    options={services || []}
+                    getOptionLabel={(option) => option.service_name}
+                    value={services?.filter(service => formData.service.includes(service.id.toString())) || []}
+                    onChange={(event, newValue) => handleAutocompleteChange('service', newValue)}
+                    renderInput={(params) => (
+                      <TextField
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                        {...params}
+                        label={
+                          <span>
+                            Select Services <span style={{ color: 'currentColor' }}>*</span>
+                          </span>
+                        }
+                        placeholder="Search and select services..."
+                      />
+                    )}
+                    renderTags={(tagValue, getTagProps) =>
+                      tagValue.map((option, index) => (
+                        <Chip
+                          key={option.id}
+                          label={option.service_name}
+                          size="small"
+                          {...getTagProps({ index })}
+                        />
+                      ))
+                    }
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    filterSelectedOptions
+                  />
+                  {loading.services && (
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                      Loading services...
+                    </Typography>
+                  )}
+                </Box>
+              )}
+
+              {/* Conditional Asset Group Dropdown - Show for Asset Group and when scheduleFor is Asset */}
+              {formData.scheduleFor === 'Asset' && formData.checklistType === 'Asset Group' && (
+                <>
+                  <Box>
+                    <Autocomplete
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.groups}
+
                       options={assetGroups.map(group => ({
                         id: group.id,
                         label: group.name,
                         value: group.id.toString()
                       }))}
-                      placeholder="Select Asset Group"
-                      disabled={loading.groups}
-                      loading={loading.groups}
-                      loadingText="Loading asset groups..."
-                      fullWidth
+                      getOptionLabel={(option) => option.label}
+                      value={assetGroups.map(group => ({
+                        id: group.id,
+                        label: group.name,
+                        value: group.id.toString()
+                      })).find(option => option.value === formData.assetGroup) || null}
+                      onChange={(event, newValue) => {
+                        const selectedValue = newValue ? newValue.value : '';
+                        handleAssetGroupChange(selectedValue);
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                          {...params}
+                          label={
+                            <span>
+                              Asset Group <span style={{ color: 'currentColor' }}>*</span>
+                            </span>
+                          }
+                          placeholder="Select Asset Group"
+                          fullWidth
+                        />
+                      )}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
                     />
-
-                    {/* Asset Sub-Group Dropdown - Show when Asset Group is selected */}
-                    {selectedAssetGroup && (
-                      <MuiSearchableDropdown
-                        label="Asset Sub-Group"
-                        value={formData.assetSubGroup || ''}
-                        onChange={(value) => setFormData({...formData, assetSubGroup: value.toString()})}
-                        options={assetSubGroups.map(subGroup => ({
-                          id: subGroup.id,
-                          label: subGroup.name,
-                          value: subGroup.id.toString()
-                        }))}
-                        placeholder="Select Asset Sub-Group"
-                        disabled={loading.subGroups}
-                        loading={loading.subGroups}
-                        loadingText="Loading sub-groups..."
-                        fullWidth
-                      />
+                    {loading.groups && (
+                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                        Loading asset groups...
+                      </Typography>
                     )}
-                  </>
-                )}
+                  </Box>
 
-                {/* Assign To Type Selection */}
-                <MuiSearchableDropdown
-                  label="Assign To"
-                  value={formData.assignToType}
-                  onChange={(value) => setFormData({...formData, assignToType: value.toString(), selectedUsers: [], selectedGroups: []})}
+                  {/* Asset Sub-Group Dropdown - Show when Asset Group is selected */}
+                  {selectedAssetGroup && (
+                    <FormControl fullWidth>
+                      <InputLabel>
+                        Select Asset Sub-Groups <span style={{ color: 'currentColor' }}>*</span>
+                      </InputLabel>
+                      <Select
+                        multiple
+                        value={formData.assetSubGroup}
+                        onChange={(e) => handleMultiSelectChange('assetSubGroup', e)}
+                        input={<OutlinedInput label="Select Asset Sub-Groups" />}
+                        renderValue={(selected) => (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {selected.map((value) => {
+                              const subGroup = assetSubGroups?.find(sg => sg.id.toString() === value);
+                              return (
+                                <Chip key={value} label={subGroup?.name || value} size="small" />
+                              );
+                            })}
+                          </Box>
+                        )}
+                        disabled={loading.subGroups}
+                      >
+                        {assetSubGroups && assetSubGroups.map((subGroup) => (
+                          <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
+                            {subGroup.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {loading.subGroups && (
+                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                          Loading sub-groups...
+                        </Typography>
+                      )}
+                    </FormControl>
+                  )}
+                </>
+              )}
+
+              {/* Assign To Type Selection */}
+              <Box>
+                <Autocomplete
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
                   options={[
                     { id: 'user', label: 'User', value: 'user' },
                     { id: 'group', label: 'Group', value: 'group' }
                   ]}
-                  placeholder="Select Assign To"
-                  fullWidth
+                  getOptionLabel={(option) => option.label}
+                  value={[
+                    { id: 'user', label: 'User', value: 'user' },
+                    { id: 'group', label: 'Group', value: 'group' }
+                  ].find(option => option.value === formData.assignToType) || null}
+                  onChange={(event, newValue) => {
+                    const selectedValue = newValue ? newValue.value : '';
+                    setFormData({ ...formData, assignToType: selectedValue, selectedUsers: [], selectedGroups: [] });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                      {...params}
+                      label={
+                        <span>
+                          Assign To <span style={{ color: 'currentColor' }}>*</span>
+                        </span>
+                      }
+                      placeholder="Select Assign To"
+                      fullWidth
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
                 />
+              </Box>
 
-                {/* Multi-select Users - Show when assignToType is 'user' */}
-                {formData.assignToType === 'user' && (
-                  <FormControl fullWidth>
-                    <InputLabel>Select Users</InputLabel>
-                    <Select
-                      multiple
-                      value={formData.selectedUsers}
-                      onChange={(e) => handleMultiSelectChange('selectedUsers', e)}
-                      input={<OutlinedInput label="Select Users" />}
-                      renderValue={(selected) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {selected.map((value) => {
-                            const user = users.find(u => u.id.toString() === value);
-                            return (
-                              <Chip key={value} label={user?.full_name || value} size="small" />
-                            );
-                          })}
-                        </Box>
-                      )}
-                      disabled={loading.users}
-                    >
-                      {users && users.map((user) => (
-                        <MenuItem key={user.id} value={user.id.toString()}>
-                          {user.full_name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                )}
+              {/* Multi-select Users - Show when assignToType is 'user' */}
+              {formData.assignToType === 'user' && (
+                <Box>
+                  <Autocomplete
+                    disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
 
-                {/* Multi-select Groups - Show when assignToType is 'group' */}
-                {formData.assignToType === 'group' && (
-                  <FormControl fullWidth>
-                    <InputLabel>Select Groups</InputLabel>
-                    <Select
-                      multiple
-                      value={formData.selectedGroups}
-                      onChange={(e) => handleMultiSelectChange('selectedGroups', e)}
-                      input={<OutlinedInput label="Select Groups" />}
-                      renderValue={(selected) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {selected.map((value) => {
-                            const group = groups.find(g => g.id.toString() === value);
-                            return (
-                              <Chip key={value} label={group?.name || value} size="small" />
-                            );
-                          })}
-                        </Box>
-                      )}
-                      disabled={loading.groups}
-                    >
-                      {groups.map((group) => (
-                        <MenuItem key={group.id} value={group.id.toString()}>
-                          {group.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {loading.groups && (
-                      <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                        Loading groups...
-                      </Typography>
+                    multiple
+                    options={users || []}
+                    getOptionLabel={(option) => option.full_name}
+                    value={users?.filter(user => formData.selectedUsers.includes(user.id.toString())) || []}
+                    onChange={(event, newValue) => handleAutocompleteChange('selectedUsers', newValue)}
+                    renderInput={(params) => (
+                      <TextField
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                        {...params}
+                        label={
+                          <span>
+                            Select Users <span style={{ color: 'currentColor' }}>*</span>
+                          </span>
+                        }
+                        placeholder="Search and select users..."
+                      />
                     )}
-                  </FormControl>
-                )}
-                
-                <MuiSearchableDropdown
-                  label="Backup Assignee"
-                  value={formData.backupAssignee}
-                  onChange={(value) => setFormData({...formData, backupAssignee: value.toString()})}
+                    renderTags={(tagValue, getTagProps) =>
+                      tagValue.map((option, index) => (
+                        <Chip
+                          key={option.id}
+                          label={option.full_name}
+                          size="small"
+                          {...getTagProps({ index })}
+                        />
+                      ))
+                    }
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    filterSelectedOptions
+                  />
+                </Box>
+              )}
+
+              {/* Multi-select Groups - Show when assignToType is 'group' */}
+              {formData.assignToType === 'group' && (
+                <FormControl fullWidth>
+                  <InputLabel>
+                    Select Groups <span style={{ color: 'currentColor' }}>*</span>
+                  </InputLabel>
+                  <Select
+                    multiple
+                    value={formData.selectedGroups}
+                    onChange={(e) => handleMultiSelectChange('selectedGroups', e)}
+                    input={<OutlinedInput label="Select Groups" />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => {
+                          const group = groups.find(g => g.id.toString() === value);
+                          return (
+                            <Chip key={value} label={group?.name || value} size="small" />
+                          );
+                        })}
+                      </Box>
+                    )}
+                    disabled={loading.groups}
+                  >
+                    {groups.map((group) => (
+                      <MenuItem key={group.id} value={group.id.toString()}>
+                        {group.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {loading.groups && (
+                    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                      Loading groups...
+                    </Typography>
+                  )}
+                </FormControl>
+              )}
+
+              <Box>
+                <Autocomplete
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
                   options={users ? users.map(user => ({
                     id: user.id,
                     label: user.full_name,
                     value: user.id.toString()
                   })) : []}
-                  placeholder="Select Backup Assignee"
-                  disabled={loading.users}
-                  loading={loading.users}
-                  loadingText="Loading users..."
-                  fullWidth
+                  getOptionLabel={(option) => option.label}
+                  value={users ? users.map(user => ({
+                    id: user.id,
+                    label: user.full_name,
+                    value: user.id.toString()
+                  })).find(option => option.value === formData.backupAssignee) || null : null}
+                  onChange={(event, newValue) => {
+                    const selectedValue = newValue ? newValue.value : '';
+                    setFormData({ ...formData, backupAssignee: selectedValue });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                      {...params}
+                      label={<span>Backup Assignee <span style={{ color: 'currentColor' }}>*</span></span>}
+                      placeholder="Select Backup Assignee"
+                      fullWidth
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
                 />
-                
-                {/* Plan Duration with conditional input */}
-                <MuiSearchableDropdown
-                  label="Plan Duration"
-                  value={formData.planDuration}
-                  onChange={(value) => setFormData({...formData, planDuration: value.toString(), planDurationValue: ''})}
+                {loading.users && (
+                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                    Loading users...
+                  </Typography>
+                )}
+              </Box>
+
+              {/* Plan Duration with conditional input */}
+              <Box>
+                <Autocomplete
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
                   options={[
                     { id: 'minutes', label: 'Minutes', value: 'minutes' },
                     { id: 'hour', label: 'Hour', value: 'hour' },
@@ -2409,121 +3341,285 @@ export const AddSchedulePage = () => {
                     { id: 'week', label: 'Week', value: 'week' },
                     { id: 'month', label: 'Month', value: 'month' }
                   ]}
-                  placeholder="Select Plan Duration"
-                  fullWidth
-                />
+                  getOptionLabel={(option) => option.label}
+                  value={[
+                    { id: 'minutes', label: 'Minutes', value: 'minutes' },
+                    { id: 'hour', label: 'Hour', value: 'hour' },
+                    { id: 'day', label: 'Day', value: 'day' },
+                    { id: 'week', label: 'Week', value: 'week' },
+                    { id: 'month', label: 'Month', value: 'month' }
+                  ].find(option => option.value === formData.planDuration) || null}
+                  onChange={(event, newValue) => {
+                    const selectedValue = newValue ? newValue.value : '';
+                    setFormData({ ...formData, planDuration: selectedValue, planDurationValue: '' });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                {/* Plan Duration Value Input - Show when duration type is selected */}
-                {needsValueInput(formData.planDuration) && (
-                  <TextField
-                    label={`Plan Duration (${formData.planDuration})`}
-                    type="number"
-                    fullWidth
-                    value={formData.planDurationValue}
-                    onChange={(e) => setFormData({...formData, planDurationValue: e.target.value})}
-                    placeholder={`Enter number of ${formData.planDuration}`}
-                  />
-                )}
-                
-                <MuiSearchableDropdown
-                  label="Email Trigger Rule"
-                  value={formData.emailTriggerRule}
-                  onChange={(value) => setFormData({...formData, emailTriggerRule: value.toString()})}
+                      {...params}
+                      label={<span>Plan Duration <span style={{ color: 'currentColor' }}>*</span></span>}
+                      placeholder="Select Plan Duration"
+                      fullWidth
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                />
+              </Box>
+
+              {/* Plan Duration Value Input - Show when duration type is selected */}
+              {needsValueInput(formData.planDuration) && (
+                <TextField
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                  label={<span>Plan Duration ({formData.planDuration}) <span style={{ color: 'currentColor' }}>*</span></span>}
+                  type="number"
+                  fullWidth
+                  value={formData.planDurationValue}
+                  onChange={(e) => {
+                      const value = e.target.value;
+                      if (Number(value) < 0) return;
+                      setFormData({ ...formData, planDurationValue: value });
+                    }}
+                  placeholder={`Enter number of ${formData.planDuration}`}
+                  inputProps={{
+    min: 0,
+    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+  }}
+                />
+              )}
+
+              <Box>
+                <Autocomplete
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.emailRules}
+
                   options={emailRules.map(rule => ({
                     id: rule.id,
                     label: rule.rule_name,
                     value: rule.id.toString()
                   }))}
-                  placeholder="Select Email Trigger Rule"
-                  disabled={loading.emailRules}
-                  loading={loading.emailRules}
-                  loadingText="Loading email rules..."
-                  fullWidth
+                  getOptionLabel={(option) => option.label}
+                  value={emailRules.map(rule => ({
+                    id: rule.id,
+                    label: rule.rule_name,
+                    value: rule.id.toString()
+                  })).find(option => option.value === formData.emailTriggerRule) || null}
+                  onChange={(event, newValue) => {
+                    const selectedValue = newValue ? newValue.value : '';
+                    setFormData({ ...formData, emailTriggerRule: selectedValue });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                      {...params}
+                      label={<span>Email Trigger Rule <span style={{ color: 'currentColor' }}>*</span></span>}
+                      placeholder="Select Email Trigger Rule"
+                      fullWidth
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
                 />
-                
-                <MuiSearchableDropdown
-                  label="Scan Type"
-                  value={formData.scanType}
-                  onChange={(value) => setFormData({...formData, scanType: value.toString()})}
+                {loading.emailRules && (
+                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                    Loading email rules...
+                  </Typography>
+                )}
+              </Box>
+
+              {/* <Box>
+                <Autocomplete
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
                   options={[
                     { id: 'qr', label: 'QR', value: 'qr' },
                     { id: 'nfc', label: 'NFC', value: 'nfc' }
                   ]}
-                  placeholder="Select Scan Type"
-                  fullWidth
+                  getOptionLabel={(option) => option.label}
+                  value={[
+                    { id: 'qr', label: 'QR', value: 'qr' },
+                    { id: 'nfc', label: 'NFC', value: 'nfc' }
+                  ].find(option => option.value === formData.scanType) || null}
+                  onChange={(event, newValue) => {
+                    const selectedValue = newValue ? newValue.value : '';
+                    setFormData({ ...formData, scanType: selectedValue });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                      {...params}
+                      label={<span>Scan Type <span style={{ color: 'currentColor' }}>*</span></span>}
+                      placeholder="Select Scan Type"
+                      fullWidth
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
                 />
-                
-                <MuiSearchableDropdown
-                  label="Category"
-                  value={formData.category}
-                  onChange={(value) => setFormData({...formData, category: value.toString()})}
+              </Box> */}
+
+              <Box>
+                <Autocomplete
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
                   options={[
-                    { id: 'technical', label: 'Technical', value: 'technical' },
-                    { id: 'non-technical', label: 'Non-Technical', value: 'non-technical' }
+                    { id: 'Technical', label: 'Technical', value: 'Technical' },
+                    { id: 'Non Technical', label: 'Non-Technical', value: 'Non Technical' }
                   ]}
-                  placeholder="Select Category"
-                  fullWidth
+                  getOptionLabel={(option) => option.label}
+                  value={[
+                    { id: 'Technical', label: 'Technical', value: 'Technical' },
+                    { id: 'Non Technical', label: 'Non-Technical', value: 'Non Technical' }
+                  ].find(option => option.value === formData.category) || null}
+                  onChange={(event, newValue) => {
+                    const selectedValue = newValue ? newValue.value : '';
+                    setFormData({ ...formData, category: selectedValue });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                      {...params}
+                      label={<span>Category <span style={{ color: 'currentColor' }}>*</span></span>}
+                      placeholder="Select Category"
+                      fullWidth
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
                 />
-                
-                {/* Submission Time with conditional input */}
-                <MuiSearchableDropdown
-                  label="Submission Time"
-                  value={formData.submissionTime}
-                  onChange={(value) => setFormData({...formData, submissionTime: value.toString(), submissionTimeValue: ''})}
+              </Box>
+
+              {/* Submission Time with conditional input */}
+              <Box>
+                <Autocomplete
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
                   options={[
                     { id: 'minutes', label: 'Minutes', value: 'minutes' },
                     { id: 'hour', label: 'Hour', value: 'hour' },
                     { id: 'day', label: 'Day', value: 'day' },
                     { id: 'week', label: 'Week', value: 'week' }
                   ]}
-                  placeholder="Select Submission Time"
-                  fullWidth
-                />
+                  getOptionLabel={(option) => option.label}
+                  value={[
+                    { id: 'minutes', label: 'Minutes', value: 'minutes' },
+                    { id: 'hour', label: 'Hour', value: 'hour' },
+                    { id: 'day', label: 'Day', value: 'day' },
+                    { id: 'week', label: 'Week', value: 'week' }
+                  ].find(option => option.value === formData.submissionTime) || null}
+                  onChange={(event, newValue) => {
+                    const selectedValue = newValue ? newValue.value : '';
+                    setFormData({ ...formData, submissionTime: selectedValue, submissionTimeValue: '' });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                {/* Submission Time Value Input - Show when time type is selected */}
-                {needsValueInput(formData.submissionTime) && (
-                  <TextField
-                    label={`Submission Time (${formData.submissionTime})`}
-                    type="number"
-                    fullWidth
-                    value={formData.submissionTimeValue}
-                    onChange={(e) => setFormData({...formData, submissionTimeValue: e.target.value})}
-                    placeholder={`Enter number of ${formData.submissionTime}`}
-                  />
-                )}
-                
-                <MuiSearchableDropdown
-                  label="Supervisors"
-                  value={formData.supervisors}
-                  onChange={(value) => setFormData({...formData, supervisors: value.toString()})}
+                      {...params}
+                      label={<span>Submission Time <span style={{ color: 'currentColor' }}>*</span></span>}
+                      placeholder="Select Submission Time"
+                      fullWidth
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                />
+              </Box>
+
+              {/* Submission Time Value Input - Show when time type is selected */}
+              {needsValueInput(formData.submissionTime) && (
+                <TextField
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                  label={<span>Submission Time ({formData.submissionTime}) <span style={{ color: 'currentColor' }}>*</span></span>}
+                  type="number"
+                  fullWidth
+                  value={formData.submissionTimeValue}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (Number(value) < 0) return;
+                    setFormData({ ...formData, submissionTimeValue: value });
+                  }}
+                  inputProps={{
+                    min: 0,
+                    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                  }}
+                  placeholder={`Enter number of ${formData.submissionTime}`}
+                />
+              )}
+
+              <Box>
+                <Autocomplete
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
+
                   options={users ? users.map(user => ({
                     id: user.id,
                     label: user.full_name,
                     value: user.id.toString()
                   })) : []}
-                  placeholder="Select Supervisors"
-                  disabled={loading.users}
-                  loading={loading.users}
-                  loadingText="Loading users..."
-                  fullWidth
+                  getOptionLabel={(option) => option.label}
+                  value={users ? users.map(user => ({
+                    id: user.id,
+                    label: user.full_name,
+                    value: user.id.toString()
+                  })).find(option => option.value === formData.supervisors) || null : null}
+                  onChange={(event, newValue) => {
+                    const selectedValue = newValue ? newValue.value : '';
+                    setFormData({ ...formData, supervisors: selectedValue });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                      {...params}
+                      label={<span>Supervisors <span style={{ color: 'currentColor' }}>*</span></span>}
+                      placeholder="Select Supervisors"
+                      fullWidth
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
                 />
-                
-                <MuiSearchableDropdown
-                  label="Lock Overdue Task"
-                  value={formData.lockOverdueTask}
-                  onChange={(value) => setFormData({...formData, lockOverdueTask: value.toString()})}
+                {loading.users && (
+                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                    Loading users...
+                  </Typography>
+                )}
+              </Box>
+
+              <Box>
+                <Autocomplete
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
                   options={[
                     { id: 'true', label: 'Yes', value: 'true' },
                     { id: 'false', label: 'No', value: 'false' }
                   ]}
-                  placeholder="Select Lock Status"
-                  fullWidth
+                  getOptionLabel={(option) => option.label}
+                  value={[
+                    { id: 'true', label: 'Yes', value: 'true' },
+                    { id: 'false', label: 'No', value: 'false' }
+                  ].find(option => option.value === formData.lockOverdueTask) || null}
+                  onChange={(event, newValue) => {
+                    const selectedValue = newValue ? newValue.value : '';
+                    setFormData({ ...formData, lockOverdueTask: selectedValue });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                      {...params}
+                      label={<span>Lock Overdue Task <span style={{ color: 'currentColor' }}>*</span></span>}
+                      placeholder="Select Lock Status"
+                      fullWidth
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
                 />
-                
-                <MuiSearchableDropdown
-                  label="Frequency"
-                  value={formData.frequency}
-                  onChange={(value) => setFormData({...formData, frequency: value.toString()})}
+              </Box>
+
+              {/* <Box>
+                <Autocomplete
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
                   options={[
                     { id: 'Daily', label: 'Daily', value: 'Daily' },
                     { id: 'Weekly', label: 'Weekly', value: 'Weekly' },
@@ -2532,134 +3628,228 @@ export const AddSchedulePage = () => {
                     { id: 'Half Yearly', label: 'Half Yearly', value: 'Half Yearly' },
                     { id: 'Yearly', label: 'Yearly', value: 'Yearly' }
                   ]}
-                  placeholder="Select Frequency"
-                  fullWidth
+                  getOptionLabel={(option) => option.label}
+                  value={[
+                    { id: 'Daily', label: 'Daily', value: 'Daily' },
+                    { id: 'Weekly', label: 'Weekly', value: 'Weekly' },
+                    { id: 'Monthly', label: 'Monthly', value: 'Monthly' },
+                    { id: 'Quarterly', label: 'Quarterly', value: 'Quarterly' },
+                    { id: 'Half Yearly', label: 'Half Yearly', value: 'Half Yearly' },
+                    { id: 'Yearly', label: 'Yearly', value: 'Yearly' }
+                  ].find(option => option.value === formData.frequency) || null}
+                  onChange={(event, newValue) => {
+                    const selectedValue = newValue ? newValue.value : '';
+                    setFormData({ ...formData, frequency: selectedValue });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                      {...params}
+                      label={
+                        <span>
+                          Frequency <span style={{ color: 'currentColor' }}>*</span>
+                        </span>
+                      }
+                      placeholder="Select Frequency"
+                      fullWidth
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
                 />
-                
-                {/* Grace Time with conditional input */}
-                <MuiSearchableDropdown
-                  label="Grace Time"
-                  value={formData.graceTime}
-                  onChange={(value) => setFormData({...formData, graceTime: value.toString(), graceTimeValue: ''})}
+              </Box> */}
+
+              {/* Grace Time with conditional input */}
+              <Box>
+                <Autocomplete
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
                   options={[
-                    { id: '', label: 'Select Grace Time', value: '' },
                     { id: 'minutes', label: 'Minutes', value: 'minutes' },
                     { id: 'hour', label: 'Hour', value: 'hour' },
                     { id: 'day', label: 'Day', value: 'day' },
                     { id: 'week', label: 'Week', value: 'week' }
                   ]}
-                  placeholder="Select Grace Time"
-                  fullWidth
-                />
+                  getOptionLabel={(option) => option.label}
+                  value={[
+                    { id: 'minutes', label: 'Minutes', value: 'minutes' },
+                    { id: 'hour', label: 'Hour', value: 'hour' },
+                    { id: 'day', label: 'Day', value: 'day' },
+                    { id: 'week', label: 'Week', value: 'week' }
+                  ].find(option => option.value === formData.graceTime) || null}
+                  onChange={(event, newValue) => {
+                    const selectedValue = newValue ? newValue.value : '';
+                    setFormData({ ...formData, graceTime: selectedValue, graceTimeValue: '' });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                {/* Grace Time Value Input - Show when time type is selected */}
-                {needsValueInput(formData.graceTime) && (
-                  <TextField
-                    label={`Grace Time (${formData.graceTime})`}
-                    type="number"
-                    fullWidth
-                    value={formData.graceTimeValue}
-                    onChange={(e) => setFormData({...formData, graceTimeValue: e.target.value})}
-                    placeholder={`Enter number of ${formData.graceTime}`}
-                  />
-                )}
-                
-                <MuiSearchableDropdown
-                  label="Supplier"
-                  value={formData.supplier}
-                  onChange={(value) => setFormData({...formData, supplier: value.toString()})}
+                      {...params}
+                      label={<span>Grace Time <span style={{ color: 'currentColor' }}>*</span></span>}
+                      placeholder="Select Grace Time"
+                      fullWidth
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                />
+              </Box>
+
+              {/* Grace Time Value Input - Show when time type is selected */}
+              {needsValueInput(formData.graceTime) && (
+                <TextField
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                  label={`Grace Time (${formData.graceTime}) *`}
+                  type="number"
+                  fullWidth
+                  value={formData.graceTimeValue}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (Number(value) < 0) return;
+                    setFormData({ ...formData, graceTimeValue: value });
+                  }}
+                  inputProps={{
+                    min: 0,
+                    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                  }}
+                  placeholder={`Enter number of ${formData.graceTime}`}
+                />
+              )}
+
+              <Box>
+                <Autocomplete
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.suppliers}
+
                   options={suppliers ? suppliers.map(supplier => ({
                     id: supplier.id,
                     label: supplier.name,
                     value: supplier.id.toString()
                   })) : []}
-                  placeholder="Select Supplier"
-                  disabled={loading.suppliers}
-                  loading={loading.suppliers}
-                  loadingText="Loading suppliers..."
-                  fullWidth
-                />
+                  getOptionLabel={(option) => option.label}
+                  value={suppliers ? suppliers.map(supplier => ({
+                    id: supplier.id,
+                    label: supplier.name,
+                    value: supplier.id.toString()
+                  })).find(option => option.value === formData.supplier) || null : null}
+                  onChange={(event, newValue) => {
+                    const selectedValue = newValue ? newValue.value : '';
+                    setFormData({ ...formData, supplier: selectedValue });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                <TextField
-                  label="Start From"
-                  type="date"
-                  fullWidth
-                  value={formData.startFrom}
-                  onChange={(e) => {
-                    const newStartDate = e.target.value;
-                    // If end date exists and new start date is after end date, clear end date
-                    if (formData.endAt && newStartDate > formData.endAt) {
-                      setFormData({...formData, startFrom: newStartDate, endAt: ''});
-                    } else {
-                      setFormData({...formData, startFrom: newStartDate});
-                    }
-                  }}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  inputProps={{
-                    max: formData.endAt || undefined
-                  }}
+                      {...params}
+                      label="Supplier"
+                      placeholder="Select Supplier"
+                      fullWidth
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
                 />
-                
-                <TextField
-                  label="End At"
-                  type="date"
-                  fullWidth
-                  value={formData.endAt}
-                  onChange={(e) => {
-                    const newEndDate = e.target.value;
-                    // If start date exists and new end date is before start date, clear start date
-                    if (formData.startFrom && newEndDate < formData.startFrom) {
-                      setFormData({...formData, endAt: newEndDate, startFrom: ''});
-                    } else {
-                      setFormData({...formData, endAt: newEndDate});
-                    }
-                  }}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  inputProps={{
-                    min: formData.startFrom || undefined
-                  }}
-                  error={formData.startFrom && formData.endAt && formData.endAt < formData.startFrom}
-                  helperText={
-                    formData.startFrom && formData.endAt && formData.endAt < formData.startFrom
-                      ? "End date cannot be before start date"
-                      : ""
-                  }
-                />
+                {loading.suppliers && (
+                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                    Loading suppliers...
+                  </Typography>
+                )}
               </Box>
-            </SectionCard>
-          </Box>
+
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label={
+                    <span>
+                      Start Date *
+                    </span>
+                  }
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: 'outlined',
+                      sx: {
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      }
+                    }
+                  }}
+                  value={formData.startFrom ? new Date(formData.startFrom) : null}
+                  onChange={(date) => {
+  const newStartDate = date ? format(date, 'yyyy-MM-dd') : '';
+  if (formData.endAt && newStartDate > formData.endAt) {
+    setFormData({ ...formData, startFrom: newStartDate, endAt: '' });
+  } else {
+    setFormData({ ...formData, startFrom: newStartDate });
+  }
+}}
+
+                  maxDate={formData.endAt ? new Date(formData.endAt) : undefined}
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                />
+              </LocalizationProvider>
+
+              <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <DatePicker
+                  label="End Date *"
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      variant: 'outlined',
+                      sx: {
+                        '& .MuiOutlinedInput-root': {
+                          height: { xs: '36px', md: '45px' }
+                        }
+                      },
+                      error: formData.startFrom && formData.endAt && formData.endAt < formData.startFrom,
+                      helperText: formData.startFrom && formData.endAt && formData.endAt < formData.startFrom
+                        ? "End date cannot be before start date"
+                        : ""
+                    }
+                  }}
+                  value={formData.endAt ? new Date(formData.endAt) : null}
+                  onChange={(date) => {
+  const newEndDate = date ? format(date, 'yyyy-MM-dd') : '';
+  if (formData.startFrom && newEndDate < formData.startFrom) {
+    setFormData({ ...formData, endAt: newEndDate, startFrom: '' });
+  } else {
+    setFormData({ ...formData, endAt: newEndDate });
+  }
+}}
+
+                  minDate={formData.startFrom ? new Date(formData.startFrom) : undefined}
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                />
+              </LocalizationProvider>
+            </Box>
+          </SectionCard>
         );
-        
+
       case 2: // Question Setup
         function handleTemplateChange(templateId: string) {
           setFormData(prev => ({ ...prev, selectedTemplate: templateId }));
-          if (templateId) {
+          // if (templateId) {
             loadTemplateData(templateId);
-          }
+          // }
         }
 
         function updateDropdownValue(sectionId: string, taskId: string, valueIndex: number, value: string): void {
           setQuestionSections(prevSections =>
             prevSections.map(section =>
               section.id === sectionId
-          ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-            ? {
-                ...task,
-                dropdownValues: task.dropdownValues.map((v, idx) =>
-                  idx === valueIndex ? {...v, label: value} : v
-                )
-              }
-            : task
-              )
-            }
-          : section
+                ? {
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? {
+                        ...task,
+                        dropdownValues: task.dropdownValues.map((v, idx) =>
+                          idx === valueIndex ? { ...v, label: value } : v
+                        )
+                      }
+                      : task
+                  )
+                }
+                : section
             )
           );
         }
@@ -2668,20 +3858,20 @@ export const AddSchedulePage = () => {
           setQuestionSections(prevSections =>
             prevSections.map(section =>
               section.id === sectionId
-          ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-            ? {
-                ...task,
-                dropdownValues: task.dropdownValues.map((v, idx) =>
-                  idx === valueIndex ? {...v, type: type} : v
-                )
-              }
-            : task
-              )
-            }
-          : section
+                ? {
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? {
+                        ...task,
+                        dropdownValues: task.dropdownValues.map((v, idx) =>
+                          idx === valueIndex ? { ...v, type: type } : v
+                        )
+                      }
+                      : task
+                  )
+                }
+                : section
             )
           );
         }
@@ -2690,18 +3880,18 @@ export const AddSchedulePage = () => {
           setQuestionSections(prevSections =>
             prevSections.map(section =>
               section.id === sectionId
-          ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-            ? {
-                ...task,
-                dropdownValues: [...task.dropdownValues, {label: '', type: 'positive'}]
-              }
-            : task
-              )
-            }
-          : section
+                ? {
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? {
+                        ...task,
+                        dropdownValues: [...task.dropdownValues, { label: '', type: 'positive' }]
+                      }
+                      : task
+                  )
+                }
+                : section
             )
           );
         }
@@ -2711,18 +3901,18 @@ export const AddSchedulePage = () => {
             prevSections.map(section =>
               section.id === sectionId
                 ? {
-                    ...section,
-                    tasks: section.tasks.map(task =>
-                      task.id === taskId
-                        ? {
-                            ...task,
-                            radioValues: task.radioValues.map((v, idx) =>
-                              idx === valueIndex ? {...v, label: value} : v
-                            )
-                          }
-                        : task
-                    )
-                  }
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? {
+                        ...task,
+                        radioValues: task.radioValues.map((v, idx) =>
+                          idx === valueIndex ? { ...v, label: value } : v
+                        )
+                      }
+                      : task
+                  )
+                }
                 : section
             )
           );
@@ -2733,18 +3923,18 @@ export const AddSchedulePage = () => {
             prevSections.map(section =>
               section.id === sectionId
                 ? {
-                    ...section,
-                    tasks: section.tasks.map(task =>
-                      task.id === taskId
-                        ? {
-                            ...task,
-                            radioValues: task.radioValues.map((v, idx) =>
-                              idx === valueIndex ? {...v, type: type} : v
-                            )
-                          }
-                        : task
-                    )
-                  }
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? {
+                        ...task,
+                        radioValues: task.radioValues.map((v, idx) =>
+                          idx === valueIndex ? { ...v, type: type } : v
+                        )
+                      }
+                      : task
+                  )
+                }
                 : section
             )
           );
@@ -2755,13 +3945,13 @@ export const AddSchedulePage = () => {
             prevSections.map(section =>
               section.id === sectionId
                 ? {
-                    ...section,
-                    tasks: section.tasks.map(task =>
-                      task.id === taskId
-                        ? { ...task, radioValues: [...task.radioValues, {label: '', type: 'positive'}] }
-                        : task
-                    )
-                  }
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? { ...task, radioValues: [...task.radioValues, { label: '', type: 'positive' }] }
+                      : task
+                  )
+                }
                 : section
             )
           );
@@ -2771,18 +3961,18 @@ export const AddSchedulePage = () => {
           setQuestionSections(prevSections =>
             prevSections.map(section =>
               section.id === sectionId
-          ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-            ? {
-                ...task,
-                dropdownValues: task.dropdownValues.filter((_, idx) => idx !== valueIndex)
-              }
-            : task
-              )
-            }
-          : section
+                ? {
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? {
+                        ...task,
+                        dropdownValues: task.dropdownValues.filter((_, idx) => idx !== valueIndex)
+                      }
+                      : task
+                  )
+                }
+                : section
             )
           );
         }
@@ -2792,16 +3982,16 @@ export const AddSchedulePage = () => {
             prevSections.map(section =>
               section.id === sectionId
                 ? {
-                    ...section,
-                    tasks: section.tasks.map(task =>
-                      task.id === taskId
-                        ? {
-                            ...task,
-                            radioValues: task.radioValues.filter((_, idx) => idx !== valueIndex)
-                          }
-                        : task
-                    )
-                  }
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? {
+                        ...task,
+                        radioValues: task.radioValues.filter((_, idx) => idx !== valueIndex)
+                      }
+                      : task
+                  )
+                }
                 : section
             )
           );
@@ -2813,17 +4003,17 @@ export const AddSchedulePage = () => {
             prevSections.map(section =>
               section.id === sectionId
                 ? {
-                    ...section,
-                    tasks: section.tasks.map(task =>
-                      task.id === taskId
-                        ? { 
-                            ...task, 
-                            checkboxValues: [...task.checkboxValues, ''],
-                            checkboxSelectedStates: [...task.checkboxSelectedStates, false]
-                          }
-                        : task
-                    )
-                  }
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? {
+                        ...task,
+                        checkboxValues: [...task.checkboxValues, ''],
+                        checkboxSelectedStates: [...task.checkboxSelectedStates, false]
+                      }
+                      : task
+                  )
+                }
                 : section
             )
           );
@@ -2834,18 +4024,18 @@ export const AddSchedulePage = () => {
             prevSections.map(section =>
               section.id === sectionId
                 ? {
-                    ...section,
-                    tasks: section.tasks.map(task =>
-                      task.id === taskId
-                        ? {
-                            ...task,
-                            checkboxValues: task.checkboxValues.map((v, idx) =>
-                              idx === valueIndex ? value : v
-                            )
-                          }
-                        : task
-                    )
-                  }
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? {
+                        ...task,
+                        checkboxValues: task.checkboxValues.map((v, idx) =>
+                          idx === valueIndex ? value : v
+                        )
+                      }
+                      : task
+                  )
+                }
                 : section
             )
           );
@@ -2856,18 +4046,18 @@ export const AddSchedulePage = () => {
             prevSections.map(section =>
               section.id === sectionId
                 ? {
-                    ...section,
-                    tasks: section.tasks.map(task =>
-                      task.id === taskId
-                        ? {
-                            ...task,
-                            checkboxSelectedStates: task.checkboxSelectedStates.map((state, idx) =>
-                              idx === valueIndex ? checked : state
-                            )
-                          }
-                        : task
-                    )
-                  }
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? {
+                        ...task,
+                        checkboxSelectedStates: task.checkboxSelectedStates.map((state, idx) =>
+                          idx === valueIndex ? checked : state
+                        )
+                      }
+                      : task
+                  )
+                }
                 : section
             )
           );
@@ -2878,17 +4068,17 @@ export const AddSchedulePage = () => {
             prevSections.map(section =>
               section.id === sectionId
                 ? {
-                    ...section,
-                    tasks: section.tasks.map(task =>
-                      task.id === taskId
-                        ? {
-                            ...task,
-                            checkboxValues: task.checkboxValues.filter((_, idx) => idx !== valueIndex),
-                            checkboxSelectedStates: task.checkboxSelectedStates.filter((_, idx) => idx !== valueIndex)
-                          }
-                        : task
-                    )
-                  }
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? {
+                        ...task,
+                        checkboxValues: task.checkboxValues.filter((_, idx) => idx !== valueIndex),
+                        checkboxSelectedStates: task.checkboxSelectedStates.filter((_, idx) => idx !== valueIndex)
+                      }
+                      : task
+                  )
+                }
                 : section
             )
           );
@@ -2900,13 +4090,13 @@ export const AddSchedulePage = () => {
             prevSections.map(section =>
               section.id === sectionId
                 ? {
-                    ...section,
-                    tasks: section.tasks.map(task =>
-                      task.id === taskId
-                        ? { ...task, optionsInputsValues: [...task.optionsInputsValues, ''] }
-                        : task
-                    )
-                  }
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? { ...task, optionsInputsValues: [...task.optionsInputsValues, ''] }
+                      : task
+                  )
+                }
                 : section
             )
           );
@@ -2917,18 +4107,18 @@ export const AddSchedulePage = () => {
             prevSections.map(section =>
               section.id === sectionId
                 ? {
-                    ...section,
-                    tasks: section.tasks.map(task =>
-                      task.id === taskId
-                        ? {
-                            ...task,
-                            optionsInputsValues: task.optionsInputsValues.map((v, idx) =>
-                              idx === valueIndex ? value : v
-                            )
-                          }
-                        : task
-                    )
-                  }
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? {
+                        ...task,
+                        optionsInputsValues: task.optionsInputsValues.map((v, idx) =>
+                          idx === valueIndex ? value : v
+                        )
+                      }
+                      : task
+                  )
+                }
                 : section
             )
           );
@@ -2939,16 +4129,16 @@ export const AddSchedulePage = () => {
             prevSections.map(section =>
               section.id === sectionId
                 ? {
-                    ...section,
-                    tasks: section.tasks.map(task =>
-                      task.id === taskId
-                        ? {
-                            ...task,
-                            optionsInputsValues: task.optionsInputsValues.filter((_, idx) => idx !== valueIndex)
-                          }
-                        : task
-                    )
-                  }
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? {
+                        ...task,
+                        optionsInputsValues: task.optionsInputsValues.filter((_, idx) => idx !== valueIndex)
+                      }
+                      : task
+                  )
+                }
                 : section
             )
           );
@@ -2957,100 +4147,156 @@ export const AddSchedulePage = () => {
         return (
           <div>
             {/* Header Outside the Box */}
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
-              <div className=" p-4 sm:p-6 bg-white">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold">
-                    <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                      <Cog className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </span>
-                    QUESTION SETUP
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1">
-                      <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
-                        <input
-                          type="checkbox"
-                          checked={createNew}
-                          onChange={(e) => setCreateNew(e.target.checked)}
-                          className="sr-only"
-                        />
-                        <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${createNew ? 'translate-x-6' : 'translate-x-1'}`}></span>
-                      </label>
-                      <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Create New</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
-                        <input
-                          type="checkbox"
-                          checked={weightage}
-                          onChange={(e) => setWeightage(e.target.checked)}
-                          className="sr-only"
-                        />
-                        <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${weightage ? 'translate-x-6' : 'translate-x-1'}`}></span>
-                      </label>
-                      <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Weightage</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
-                        <input
-                          type="checkbox"
-                          checked={autoTicket}
-                          onChange={(e) => setAutoTicket(e.target.checked)}
-                          className="sr-only"
-                        />
-                        <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${autoTicket ? 'translate-x-6' : 'translate-x-1'}`}></span>
-                      </label>
-                      <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Auto Ticket</span>
-                    </div>
-                    <button
-                      onClick={addQuestionSection}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
-                      style={{ fontFamily: 'Work Sans, sans-serif' }}
-                    >
-                      <Add className="w-4 h-4" />
-                      Add Section
-                    </button>
-                  </div>
+            <div className="flex justify-between items-center p-6">
+              <div className="flex items-center gap-2 text-[#C72030] text-lg font-semibold">
+                <span className="bg-[#C72030] text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
+                  <Cog className="w-6 h-6" />
+                </span>
+                QUESTION SETUP
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${createNew ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+                    <input
+                      type="checkbox"
+                      checked={createNew}
+                      onChange={(e) => setCreateNew(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${createNew ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                  </label>
+                  <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Create Template</span>
                 </div>
+                <div className="flex items-center gap-1">
+                  <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${weightage ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+                    <input
+                      type="checkbox"
+                      checked={weightage}
+                      onChange={(e) => setWeightage(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${weightage ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                  </label>
+                  <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Weightage</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <label className={`flex items-center w-12 h-6 rounded-full cursor-pointer transition-colors ${autoTicket ? 'bg-[#C72030]' : 'bg-gray-300'}`}>
+                    <input
+                      type="checkbox"
+                      checked={autoTicket}
+                      onChange={(e) => setAutoTicket(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${autoTicket ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                  </label>
+                  <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Auto Ticket</span>
+                </div>
+                
+                {/* Edit button for Question Setup step */}
+                {stepIndex < activeStep && (
+                  <MuiButton
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Edit />}
+                    onClick={() => handleStepClick(stepIndex)}
+                    sx={{
+                      color: '#C72030',
+                      borderColor: '#C72030',
+                      fontSize: '12px',
+                      padding: '4px 12px',
+                      minWidth: 'auto',
+                      '&:hover': {
+                        borderColor: '#C72030',
+                        backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                      }
+                    }}
+                  >
+                    Edit
+                  </MuiButton>
+                )}
               </div>
             </div>
 
             {/* Conditional Sections based on toggles */}
-            
-            {/* Create New Template Section */}
-            {createNew && (
-              <SectionCard style={{ padding: '24px' }} sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                  Select Template
-                </Typography>
-                <MuiSearchableDropdown
-                  value={formData.selectedTemplate}
-                  onChange={(value) => handleTemplateChange(value.toString())}
-                  options={[
-                    { id: '', label: 'Select Template', value: '' },
-                    ...(templates ? templates.map((template) => ({
-                      id: template.id.toString(),
-                      label: template.form_name,
-                      value: template.id.toString()
-                    })) : [])
-                  ]}
-                  label="Template"
-                  disabled={loading.templates}
-                />
-                {loading.templates && (
-                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                    Loading templates...
-                  </Typography>
-                )}
-                
-              </SectionCard>
-            )}
 
+            {/* Create New Template Section */}
+{createNew && (
+  <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
+  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+    Select Template
+  </Typography>
+
+  {(() => {
+    const templateOptions = [
+      { id: '', label: 'None', value: '' }, // Allow unselecting
+      ...(Array.isArray(templates) ? templates : []).map((template) => ({
+        id: String(template?.id ?? ''),
+        label: (template?.form_name ?? '').toString().trim(),
+        value: String(template?.id ?? ''),
+      })),
+    ];
+
+    const selectedTemplateValue = String(formData?.selectedTemplate ?? '');
+    const selectedTemplate =
+      templateOptions.find(
+        (opt) =>
+          opt &&
+          typeof opt.value === 'string' &&
+          opt.value === selectedTemplateValue
+      ) ?? null;
+
+    return (
+      <Autocomplete
+        options={templateOptions}
+        getOptionLabel={(option) => {
+          if (!option || typeof option !== 'object') return '';
+          return typeof option.label === 'string' ? option.label : '';
+        }}
+        isOptionEqualToValue={(option, value) => {
+          if (!option || !value) return false;
+          return String(option.value ?? '') === String(value.value ?? '');
+        }}
+        value={selectedTemplate}
+        onChange={(event, newValue) => {
+          if (newValue && typeof newValue.value !== 'undefined') {
+            handleTemplateChange(newValue.value ?? '');
+          } else {
+            handleTemplateChange(''); // Clear the selection
+          }
+        }}
+        disabled={
+          (stepIndex < activeStep && editingStep !== stepIndex) ||
+          loading.templates
+        }
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={
+              <span>
+                Template <span style={{ color: 'currentColor' }}>*</span>
+              </span>
+            }
+            fullWidth
+            disabled={stepIndex < activeStep && editingStep !== stepIndex}
+          />
+        )}
+        clearOnEscape
+        clearText="Clear"
+      />
+    );
+  })()}
+
+  {loading.templates && (
+    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+      Loading templates...
+    </Typography>
+  )}
+</SectionCard>
+)}
             {/* Auto Ticket Configuration Section */}
             {autoTicket && (
-              <SectionCard style={{ padding: '24px' }} sx={{ mb: 2 }}>
+              <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
                   Auto Ticket Configuration
                 </Typography>
@@ -3060,24 +4306,34 @@ export const AddSchedulePage = () => {
                     <RadioGroup
                       row
                       value={formData.ticketLevel}
-                      onChange={(e) => setFormData({...formData, ticketLevel: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, ticketLevel: e.target.value })}
                     >
-                      <FormControlLabel 
-                        value="checklist" 
-                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                        label="Checklist Level" 
+                      <FormControlLabel
+                        value="checklist"
+                        control={
+                          <Radio
+                            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                          />
+                        }
+                        label="Checklist Level"
                       />
-                      <FormControlLabel 
-                        value="question" 
-                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                        label="Question Level" 
+                      <FormControlLabel
+                        value="question"
+                        control={
+                          <Radio
+                            sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                            disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                          />
+                        }
+                        label="Question Level"
                       />
                     </RadioGroup>
                   </Box>
-                  
-                  <MuiSearchableDropdown
-                    value={formData.ticketAssignedTo}
-                    onChange={(value) => setFormData({...formData, ticketAssignedTo: value.toString()})}
+
+                  <Autocomplete
+                    disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
+
                     options={[
                       { id: '', label: 'Select Assigned To', value: '' },
                       ...users.map((user) => ({
@@ -3086,13 +4342,28 @@ export const AddSchedulePage = () => {
                         value: user.id.toString()
                       }))
                     ]}
-                    label="Assigned To"
-                    disabled={loading.users}
+                    getOptionLabel={(option) => option.label}
+                    value={[
+                      { id: '', label: 'Select Assigned To', value: '' },
+                      ...users.map((user) => ({
+                        id: user.id.toString(),
+                        label: user.full_name,
+                        value: user.id.toString()
+                      }))
+                    ].find(option => option.value === formData.ticketAssignedTo) || null}
+                    onChange={(event, newValue) => {
+                      if (newValue) setFormData({ ...formData, ticketAssignedTo: newValue.value });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                        {...params} label={<span>Assigned To <span style={{ color: 'currentColor' }}>*</span></span>} fullWidth />
+                    )}
                   />
-                  
-                  <MuiSearchableDropdown
-                    value={formData.ticketCategory}
-                    onChange={(value) => setFormData({...formData, ticketCategory: value.toString()})}
+
+                  <Autocomplete
+                    disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.helpdeskCategories}
+
                     options={[
                       { id: '', label: 'Select Category', value: '' },
                       ...helpdeskCategories.map((category) => ({
@@ -3101,8 +4372,23 @@ export const AddSchedulePage = () => {
                         value: category.id.toString()
                       }))
                     ]}
-                    label="Category"
-                    disabled={loading.helpdeskCategories}
+                    getOptionLabel={(option) => option.label}
+                    value={[
+                      { id: '', label: 'Select Category', value: '' },
+                      ...helpdeskCategories.map((category) => ({
+                        id: category.id.toString(),
+                        label: category.name,
+                        value: category.id.toString()
+                      }))
+                    ].find(option => option.value === formData.ticketCategory) || null}
+                    onChange={(event, newValue) => {
+                      if (newValue) setFormData({ ...formData, ticketCategory: newValue.value });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                        {...params} label={<span>Category <span style={{ color: 'currentColor' }}>*</span></span>} fullWidth />
+                    )}
                   />
                   {loading.helpdeskCategories && (
                     <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
@@ -3115,572 +4401,768 @@ export const AddSchedulePage = () => {
 
             {/* Main Content in White Box */}
             {questionSections.map((section, sectionIndex) => (
-              <div key={section.id} className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
+              <div key={section.id} className="overflow-hidden" >
                 <div className=" p-4 sm:p-6 bg-white">
                   <div className="flex justify-between items-center mb-4">
-                    <input
-                      type="text"
-                      value={section.title}
-                      onChange={(e) => updateSectionTitle(section.id, e.target.value)}
-                      className="text-lg font-semibold text-[#C72030] bg-transparent border-none border-b-2 border-[#C72030] focus:outline-none focus:border-[#C72030] px-0"
-                      style={{ fontFamily: 'Work Sans, sans-serif' }}
-                      placeholder="Section Title"
-                    />
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                      Section {sectionIndex + 1}
+                    </Typography>
+                    {questionSections.length > 1 && (
+                      <IconButton
+                        onClick={() => removeQuestionSection(section.id)}
+                        sx={{ color: '#C72030' }}
+                      >
+                        <Close />
+                      </IconButton>
+                    )}
                   </div>
-                {/* Individual Auto Ticket Configuration Section */}
-                {section.autoTicket && (
-                  <Box sx={{ 
-                    border: '1px solid #E0E0E0', 
-                    borderRadius: '8px', 
-                    padding: 2, 
-                    mb: 3,
-                    backgroundColor: '#F9F9F9'
-                  }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                      Auto Ticket Configuration
-                    </Typography>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-                      <Box>
-                        <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>Ticket Level</Typography>
-                        <RadioGroup
-                          row
-                          value={section.ticketLevel}
-                          onChange={(e) => updateSectionProperty(section.id, 'ticketLevel', e.target.value)}
-                        >
-                          <FormControlLabel 
-                            value="checklist" 
-                            control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                            label="Checklist Level" 
-                          />
-                          <FormControlLabel 
-                            value="question" 
-                            control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
-                            label="Question Level" 
-                          />
-                        </RadioGroup>
+                  {/* Individual Auto Ticket Configuration Section */}
+                  {section.autoTicket && (
+                    <Box sx={{
+                      border: '1px solid #E0E0E0',
+                      borderRadius: 0,
+                      padding: 2,
+                      mb: 3,
+                      backgroundColor: '#F9F9F9'
+                    }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                        Auto Ticket Configuration
+                      </Typography>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
+                        <Box>
+                          <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>Ticket Level</Typography>
+                          <RadioGroup
+                            row
+                            value={section.ticketLevel}
+                            onChange={(e) => updateSectionProperty(section.id, 'ticketLevel', e.target.value)}
+                          >
+                            <FormControlLabel
+                              value="checklist"
+                              control={
+                                <Radio
+                                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                                />
+                              }
+                              label="Checklist Level"
+                            />
+                            <FormControlLabel
+                              value="question"
+                              control={
+                                <Radio
+                                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                                />
+                              }
+                              label="Question Level"
+                            />
+                          </RadioGroup>
+                        </Box>
+
+                        <Autocomplete
+                          disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
+
+                          options={[
+                            { id: '', label: 'Select Assigned To', value: '' },
+                            ...users.map((user) => ({
+                              id: user.id.toString(),
+                              label: user.full_name,
+                              value: user.id.toString()
+                            }))
+                          ]}
+                          getOptionLabel={(option) => option.label}
+                          value={[
+                            { id: '', label: 'Select Assigned To', value: '' },
+                            ...users.map((user) => ({
+                              id: user.id.toString(),
+                              label: user.full_name,
+                              value: user.id.toString()
+                            }))
+                          ].find(option => option.value === section.ticketAssignedTo) || null}
+                          onChange={(event, newValue) => {
+                            if (newValue) updateSectionProperty(section.id, 'ticketAssignedTo', newValue.value);
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                              {...params} label={<span>Assigned To <span style={{ color: 'currentColor' }}>*</span></span>} fullWidth />
+                          )}
+                        />
+
+                        <Autocomplete
+                          disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.helpdeskCategories}
+
+                          options={[
+                            { id: '', label: 'Select Category', value: '' },
+                            ...helpdeskCategories.map((category) => ({
+                              id: category.id.toString(),
+                              label: category.name,
+                              value: category.id.toString()
+                            }))
+                          ]}
+                          getOptionLabel={(option) => option.label}
+                          value={[
+                            { id: '', label: 'Select Category', value: '' },
+                            ...helpdeskCategories.map((category) => ({
+                              id: category.id.toString(),
+                              label: category.name,
+                              value: category.id.toString()
+                            }))
+                          ].find(option => option.value === section.ticketCategory) || null}
+                          onChange={(event, newValue) => {
+                            if (newValue) updateSectionProperty(section.id, 'ticketCategory', newValue.value);
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                              {...params} label={<span>Category <span style={{ color: 'currentColor' }}>*</span></span>} fullWidth />
+                          )}
+                        />
+                        {loading.helpdeskCategories && (
+                          <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                            Loading categories...
+                          </Typography>
+                        )}
                       </Box>
-                      
-                      <MuiSearchableDropdown
-                        value={section.ticketAssignedTo}
-                        onChange={(value) => updateSectionProperty(section.id, 'ticketAssignedTo', value)}
-                        options={[
-                          { id: '', label: 'Select Assigned To', value: '' },
-                          ...users.map((user) => ({
-                            id: user.id.toString(),
-                            label: user.full_name,
-                            value: user.id.toString()
-                          }))
-                        ]}
-                        label="Assigned To"
-                        disabled={loading.users}
-                      />
-                      
-                      <MuiSearchableDropdown
-                        value={section.ticketCategory}
-                        onChange={(value) => updateSectionProperty(section.id, 'ticketCategory', value)}
-                        options={[
-                          { id: '', label: 'Select Category', value: '' },
-                          ...helpdeskCategories.map((category) => ({
-                            id: category.id.toString(),
-                            label: category.name,
-                            value: category.id.toString()
-                          }))
-                        ]}
-                        label="Category"
-                        disabled={loading.helpdeskCategories}
-                      />
-                      {loading.helpdeskCategories && (
-                        <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                          Loading categories...
-                        </Typography>
-                      )}
                     </Box>
-                  </Box>
-                )}
-                {section.tasks && section.tasks.map((task, taskIndex) => (
-                  <Box key={task.id} sx={{ mb: 3 }}>
-                    
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                      Task {taskIndex + 1}
-                    </Typography>
-                    
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 2 }}>
-                      <MuiSearchableDropdown
-                        value={task.group}
-                        onChange={(value) => handleTaskGroupChange(section.id, task.id, value.toString())}
-                        options={[
-                          { id: '', label: 'Select Group', value: '' },
-                          ...(taskGroups ? taskGroups.map((group) => ({
-                            id: group.id.toString(),
-                            label: group.name,
-                            value: group.id.toString()
-                          })) : [])
-                        ]}
-                        label="Group"
-                        disabled={loading.taskGroups}
+                  )}
+
+                  {/* Section Header with Group/Sub-Group */}
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
+                    <Box>
+                      <Autocomplete
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.taskGroups}
+
+                        options={taskGroups ? taskGroups.map((group) => ({
+                          id: group.id,
+                          label: group.name,
+                          value: group.id.toString()
+                        })) : []}
+                        getOptionLabel={(option) => option.label}
+                        value={taskGroups ? taskGroups.map((group) => ({
+                          id: group.id,
+                          label: group.name,
+                          value: group.id.toString()
+                        })).find(option => option.value === (section.tasks[0]?.group || '')) || null : null}
+                        onChange={(event, newValue) => {
+                          const selectedValue = newValue ? newValue.value : '';
+                          // Update group for all tasks in this section
+                          section.tasks.forEach(task => {
+                            handleTaskGroupChange(section.id, task.id, selectedValue);
+                          });
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                            {...params}
+                            label="Group"
+                            placeholder="Select Group"
+                            fullWidth
+                          />
+                        )}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
                       />
                       {loading.taskGroups && (
                         <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
                           Loading groups...
                         </Typography>
                       )}
-                      
-                      <MuiSearchableDropdown
-                        value={task.subGroup}
-                        onChange={(value) => updateTaskInSection(section.id, task.id, 'subGroup', value)}
-                        options={[
-                          { id: '', label: 'Select Sub-Group', value: '' },
-                          ...(task.group && taskSubGroups[task.group] ? taskSubGroups[task.group].map((subGroup) => ({
-                            id: subGroup.id.toString(),
-                            label: subGroup.name,
-                            value: subGroup.id.toString()
-                          })) : [])
-                        ]}
-                        label="Sub-Group"
-                        disabled={loading.taskSubGroups || !task.group}
+                    </Box>
+
+                    <Box>
+                      <Autocomplete
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.taskSubGroups || !section.tasks[0]?.group}
+
+                        options={section.tasks[0]?.group && taskSubGroups[section.tasks[0].group] ? taskSubGroups[section.tasks[0].group].map((subGroup) => ({
+                          id: subGroup.id,
+                          label: subGroup.name,
+                          value: subGroup.id.toString()
+                        })) : []}
+                        getOptionLabel={(option) => option.label}
+                        value={section.tasks[0]?.group && taskSubGroups[section.tasks[0].group] ? taskSubGroups[section.tasks[0].group].map((subGroup) => ({
+                          id: subGroup.id,
+                          label: subGroup.name,
+                          value: subGroup.id.toString()
+                        })).find(option => option.value === (section.tasks[0]?.subGroup || '')) || null : null}
+                        onChange={(event, newValue) => {
+                          const selectedValue = newValue ? newValue.value : '';
+                          // Update sub-group for all tasks in this section
+                          section.tasks.forEach(task => {
+                            updateTaskInSection(section.id, task.id, 'subGroup', selectedValue);
+                          });
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Sub-Group"
+                            placeholder="Select Sub-Group"
+                            fullWidth
+                            disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                          />
+                        )}
+                        isOptionEqualToValue={(option, value) => option.id === value.id}
                       />
                       {loading.taskSubGroups && (
                         <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
                           Loading sub-groups...
                         </Typography>
                       )}
-                      {!task.group && (
+                      {!section.tasks[0]?.group && (
                         <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
                           Please select a group first
                         </Typography>
                       )}
                     </Box>
-                    
-                    {/* Dashed Border Section */}
-                    <Box sx={{ 
-                      border: '2px dashed #E0E0E0', 
-                      padding: 2, 
-                      borderRadius: '8px',
-                      backgroundColor: '#FAFAFA'
-                    }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                        <Box sx={{ display: 'flex', gap: 4 }}>
-                          <FormControlLabel
-                            control={
-                              <Checkbox 
-                                checked={task.mandatory}
-                                onChange={(e) => updateTaskInSection(section.id, task.id, 'mandatory', e.target.checked)}
-                                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                              />
-                            }
-                            label="Mandatory"
-                          />
-                          <FormControlLabel
-                            control={
-                              <Checkbox 
-                                checked={task.helpText}
-                                onChange={(e) => updateTaskInSection(section.id, task.id, 'helpText', e.target.checked)}
-                                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                              />
-                            }
-                            label="Help Text"
-                          />
-                          <FormControlLabel
-                            control={
-                              <Checkbox 
-                                checked={task.reading}
-                                onChange={(e) => updateTaskInSection(section.id, task.id, 'reading', e.target.checked)}
-                                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                              />
-                            }
-                            label="Reading"
-                          />
-                          {weightage && (
+                  </Box>
+
+                  {section.tasks && section.tasks.map((task, taskIndex) => (
+                    <Box key={task.id} sx={{ mb: 3 }}>
+
+                      {/* Dashed Border Section */}
+                      <Box sx={{
+                        border: '2px dashed #E0E0E0',
+                        padding: 2,
+                        borderRadius: 0,
+                        backgroundColor: '#FAFAFA',
+                        position: 'relative'
+                      }}>
+                        {/* Close button for individual tasks - show for all tasks except the first task in the first section */}
+                        {!(sectionIndex === 0 && taskIndex === 0) && (
+                          <IconButton
+                            onClick={() => removeTaskFromSection(section.id, task.id)}
+                            sx={{
+                              position: 'absolute',
+                              top: 8,
+                              right: 8,
+                              color: '#666',
+                              padding: '4px',
+                              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                              '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 1)',
+                                color: '#C72030'
+                              }
+                            }}
+                            size="small"
+                          >
+                            <Close fontSize="small" />
+                          </IconButton>
+                        )}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <Box sx={{ display: 'flex', gap: 4 }}>
                             <FormControlLabel
                               control={
-                                <Checkbox 
-                                  checked={task.rating}
-                                  onChange={(e) => updateTaskInSection(section.id, task.id, 'rating', e.target.checked)}
+                                <Checkbox
+                                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                                  checked={task.mandatory}
+                                  onChange={(e) => updateTaskInSection(section.id, task.id, 'mandatory', e.target.checked)}
                                   sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
                                 />
                               }
-                              label="Rating"
+                              label="Mandatory"
+                            />
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                                  checked={task.helpText}
+                                  onChange={(e) => updateTaskInSection(section.id, task.id, 'helpText', e.target.checked)}
+                                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                />
+                              }
+                              label="Help Text"
+                            />
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  checked={task.reading}
+                                  onChange={(e) => {
+                                    const isChecked = e.target.checked;
+                                    updateTaskInSection(section.id, task.id, 'reading', isChecked);
+                                    // Auto-select numeric input type when reading is checked and no template is selected
+                                    if (isChecked && !formData.selectedTemplate) {
+                                      updateTaskInSection(section.id, task.id, 'inputType', 'number');
+                                    }
+                                  }}
+                                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                />
+                              }
+                              label="Reading"
+                            />
+                            {weightage && (
+                              <FormControlLabel
+                                control={
+                                  <Checkbox
+                                    checked={task.rating}
+                                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                                    onChange={(e) => updateTaskInSection(section.id, task.id, 'rating', e.target.checked)}
+                                    sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                  />
+                                }
+                                label="Rating"
+                              />
+                            )}
+                          </Box>
+                        </Box>
+
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: weightage ? '2fr 1fr 1fr' : '2fr 1fr' }, gap: 2 }}>
+                          <TextField
+                            disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                            label={<span>Task{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                            placeholder="Enter Task"
+                            fullWidth
+                            value={task.task}
+                            onChange={(e) => updateTaskInSection(section.id, task.id, 'task', e.target.value)}
+                          />
+
+                          <Autocomplete
+                            disabled={stepIndex < activeStep && editingStep !== stepIndex || task.reading && !formData.selectedTemplate}
+
+                            options={[
+                              { id: '', label: 'Select Input Type', value: '' },
+                              { id: 'text', label: 'Text', value: 'text' },
+                              { id: 'number', label: 'Numeric', value: 'number' },
+                              { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
+                              { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
+                              { id: 'radio', label: 'Radio', value: 'radio' },
+                              { id: 'date', label: 'Date', value: 'date' },
+                              { id: 'multiline', label: 'Multiline', value: 'multiline' },
+                              { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
+                            ]}
+                            getOptionLabel={(option) => option.label}
+                            value={[
+                              { id: '', label: 'Select Input Type', value: '' },
+                              { id: 'text', label: 'Text', value: 'text' },
+                              { id: 'number', label: 'Numeric', value: 'number' },
+                              { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
+                              { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
+                              { id: 'radio', label: 'Radio', value: 'radio' },
+                              { id: 'date', label: 'Date', value: 'date' },
+                              { id: 'multiline', label: 'Multiline', value: 'multiline' },
+                              { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
+                            ].find(option => option.value === task.inputType) || null}
+                            onChange={(event, newValue) => {
+                              if (!newValue) return;
+                              // Prevent changing input type if reading is checked and no template is selected
+                              if (task.reading && !formData.selectedTemplate) {
+                                return;
+                              }
+                              updateTaskInSection(section.id, task.id, 'inputType', newValue.value);
+                              // Reset values when changing input type
+                              if (newValue.value !== 'dropdown') {
+                                updateTaskInSection(section.id, task.id, 'dropdownValues', [{ label: '', type: 'positive' }]);
+                              }
+                              if (newValue.value !== 'radio') {
+                                updateTaskInSection(section.id, task.id, 'radioValues', [{ label: '', type: 'positive' }]);
+                              }
+                              if (newValue.value !== 'checkbox') {
+                                updateTaskInSection(section.id, task.id, 'checkboxValues', ['']);
+                                updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', [false]);
+                              }
+                              if (newValue.value !== 'options-inputs') {
+                                updateTaskInSection(section.id, task.id, 'optionsInputsValues', ['']);
+                              }
+                            }}
+                            renderInput={(params) => (
+                              <TextField
+                                disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                                {...params} label={<span>Input Type{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>} fullWidth />
+                            )}
+                          />
+
+                          {weightage && (
+                            <TextField
+                              disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                              label={<span>Weightage{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                              type="number"
+                              fullWidth
+                              value={task.weightage}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (Number(value) < 0) return;
+                                updateTaskInSection(section.id, task.id, 'weightage', value);
+                              }}
+                              inputProps={{
+                                min: 0,
+                                onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                              }}
+                              placeholder="Enter weightage"
                             />
                           )}
                         </Box>
-                      </Box>
-                      
-                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: weightage ? '2fr 1fr 1fr' : '2fr 1fr' }, gap: 2 }}>
-                        <TextField
-                          label="Task"
-                          placeholder="Enter Task"
-                          fullWidth
-                          value={task.task}
-                          onChange={(e) => updateTaskInSection(section.id, task.id, 'task', e.target.value)}
-                        />
-                        
-                        <MuiSearchableDropdown
-                          value={task.inputType}
-                          onChange={(value) => {
-                            updateTaskInSection(section.id, task.id, 'inputType', value);
-                            // Reset values when changing input type
-                            if (value !== 'dropdown') {
-                              updateTaskInSection(section.id, task.id, 'dropdownValues', [{label: '', type: 'positive'}]);
-                            }
-                            if (value !== 'radio') {
-                              updateTaskInSection(section.id, task.id, 'radioValues', [{label: '', type: 'positive'}]);
-                            }
-                            if (value !== 'checkbox') {
-                              updateTaskInSection(section.id, task.id, 'checkboxValues', ['']);
-                              updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', [false]);
-                            }
-                            if (value !== 'options-inputs') {
-                              updateTaskInSection(section.id, task.id, 'optionsInputsValues', ['']);
-                            }
-                          }}
-                          options={[
-                            { id: '', label: 'Select Input Type', value: '' },
-                            { id: 'text', label: 'Text', value: 'text' },
-                            { id: 'number', label: 'Number', value: 'number' },
-                            { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
-                            { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
-                            { id: 'radio', label: 'Radio', value: 'radio' },
-                            { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
-                          ]}
-                          label="Input Type"
-                        />
 
-                        {weightage && (
-                          <TextField
-                            label="Weightage"
-                            type="number"
-                            fullWidth
-                            value={task.weightage}
-                            onChange={(e) => updateTaskInSection(section.id, task.id, 'weightage', e.target.value)}
-                            placeholder="Enter weightage"
-                          />
-                        )}
-                      </Box>
+                        {task.helpText && (
+                          <Box sx={{ mt: 2 }}>
+                            <TextField
+                              disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                      {task.helpText && (
-                        <Box sx={{ mt: 2 }}>
-                          <TextField
-                            label="Help Text (Hint)"
-                            placeholder="Enter help text or hint"
-                            fullWidth
-                            value={task.helpTextValue}
-                            onChange={(e) => updateTaskInSection(section.id, task.id, 'helpTextValue', e.target.value)}
-                          />
-                        </Box>
-                      )}
-
-                      {/* Enter Value Section for Dropdown */}
-                      {task.inputType === 'dropdown' && (
-                        <Box sx={{ mt: 2 }}>
-                          <Box sx={{
-                            backgroundColor: '#F5F5F5',
-                            border: '1px solid #E0E0E0',
-                            borderRadius: '8px',
-                            padding: 2
-                          }}>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333' }}>
-                              Enter Value
-                            </Typography>
-                            
-                            {task.dropdownValues && task.dropdownValues.map((value, valueIndex) => (
-                              <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  placeholder="Enter option value"
-                                  value={value.label}
-                                  onChange={(e) => updateDropdownValue(section.id, task.id, valueIndex, e.target.value)}
-                                  sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                      backgroundColor: 'white'
-                                    }
-                                  }}
-                                />
-                                
-                                <MuiSearchableDropdown
-                                  value={value.type}
-                                  onChange={(newValue) => updateDropdownType(section.id, task.id, valueIndex, String(newValue))}
-                                  options={[
-                                    { id: 'positive', label: 'P', value: 'positive' },
-                                    { id: 'negative', label: 'N', value: 'negative' }
-                                  ]}
-                                  label="Type"
-                                />
-                                
-                                {task.dropdownValues.length > 1 && (
-                                  <IconButton 
-                                    size="small" 
-                                    onClick={() => removeDropdownValue(section.id, task.id, valueIndex)}
-                                    sx={{ color: '#C72030' }}
-                                  >
-                                    <Close />
-                                  </IconButton>
-                                )}
-                              </Box>
-                            ))}
-                            
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                              <MuiButton
-                                variant="outlined"
-                                size="small"
-                                startIcon={<Add />}
-                                onClick={() => addDropdownValue(section.id, task.id)}
-                                sx={{
-                                  color: '#C72030',
-                                  borderColor: '#C72030',
-                                  fontSize: '12px',
-                                  padding: '4px 12px',
-                                  '&:hover': {
-                                    borderColor: '#C72030',
-                                    backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                                  }
-                                }}
-                              >
-                                Add Option
-                              </MuiButton>
-                            </Box>
+                              label="Help Text (Hint)"
+                              placeholder="Enter help text or hint"
+                              fullWidth
+                              value={task.helpTextValue}
+                              onChange={(e) => updateTaskInSection(section.id, task.id, 'helpTextValue', e.target.value)}
+                            />
                           </Box>
-                        </Box>
-                      )}
+                        )}
 
-                      {/* Enter Value Section for Radio */}
-                      {task.inputType === 'radio' && (
-                        <Box sx={{ mt: 2 }}>
-                          <Box sx={{
-                            backgroundColor: '#F5F5F5',
-                            border: '1px solid #E0E0E0',
-                            borderRadius: '8px',
-                            padding: 2
-                          }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
-                                Selected
-                              </Typography>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+{task.inputType === 'dropdown' && (
+                          <Box sx={{ mt: 2 }}>
+                            <Box sx={{
+                              backgroundColor: '#F5F5F5',
+                              border: '1px solid #E0E0E0',
+                              borderRadius: 0,
+                              padding: 2
+                            }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333' }}>
                                 Enter Value
                               </Typography>
-                            </Box>
-                            
-                            {task.radioValues && task.radioValues.map((value, valueIndex) => (
-                              <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-                                <Radio
-                                  checked={valueIndex === 0} // First option selected by default
-                                  name={`radio-${section.id}-${task.id}`}
-                                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                                />
-                                
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  placeholder="Enter option value"
-                                  value={value.label}
-                                  onChange={(e) => updateRadioValue(section.id, task.id, valueIndex, e.target.value)}
-                                  sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                      backgroundColor: 'white'
-                                    }
-                                  }}
-                                />
-                                
-                                <FormControl size="small" sx={{ minWidth: 80 }}>
-                                  <InputLabel>Type</InputLabel>
-                                  <Select
-                                    value={value.type}
-                                    onChange={(e) => updateRadioType(section.id, task.id, valueIndex, e.target.value)}
+
+                              {task.dropdownValues && task.dropdownValues.map((value, valueIndex) => (
+                                <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                                  <TextField
+                                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                                    fullWidth
+                                    size="small"
+                                    placeholder="Enter option value"
+                                    value={value.label}
+                                    onChange={(e) => updateDropdownValue(section.id, task.id, valueIndex, e.target.value)}
+                                    label={<span>Option{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
                                     sx={{
-                                      backgroundColor: 'white',
-                                      '& .MuiSelect-select': {
-                                        color: '#666'
+                                      '& .MuiOutlinedInput-root': {
+                                        backgroundColor: 'white'
                                       }
                                     }}
-                                  >
-                                    <MenuItem value="positive">P</MenuItem>
-                                    <MenuItem value="negative">N</MenuItem>
-                                  </Select>
-                                </FormControl>
-                                
-                                {task.radioValues.length > 1 && (
-                                  <IconButton 
-                                    size="small" 
-                                    onClick={() => removeRadioValue(section.id, task.id, valueIndex)}
-                                    sx={{ color: '#C72030' }}
-                                  >
-                                    <Close />
-                                  </IconButton>
-                                )}
-                              </Box>
-                            ))}
-                            
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                              <MuiButton
-                                variant="outlined"
-                                size="small"
-                                startIcon={<Add />}
-                                onClick={() => addRadioValue(section.id, task.id)}
-                                sx={{
-                                  color: '#C72030',
-                                  borderColor: '#C72030',
-                                  fontSize: '12px',
-                                  padding: '4px 12px',
-                                  '&:hover': {
-                                    borderColor: '#C72030',
-                                    backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                                  }
-                                }}
-                              >
-                                Add Option
-                              </MuiButton>
-                            </Box>
-                          </Box>
-                        </Box>
-                      )}
+                                  />
 
-                      {/* Enter Value Section for Checkbox */}
-                      {task.inputType === 'checkbox' && (
-                        <Box sx={{ mt: 2 }}>
-                          <Box sx={{
-                            backgroundColor: '#F5F5F5',
-                            border: '1px solid #E0E0E0',
-                            borderRadius: '8px',
-                            padding: 2
-                          }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
-                                Selected
-                              </Typography>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
-                                Enter Value
-                              </Typography>
-                            </Box>
-                            
-                            {task.checkboxValues && task.checkboxValues.map((value, valueIndex) => (
-                              <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-                                <Checkbox
-                                  checked={task.checkboxSelectedStates?.[valueIndex] || false}
-                                  onChange={(e) => updateCheckboxSelectedState(section.id, task.id, valueIndex, e.target.checked)}
-                                  sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                                />
-                                
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  placeholder="Enter option value"
-                                  value={value}
-                                  onChange={(e) => updateCheckboxValue(section.id, task.id, valueIndex, e.target.value)}
-                                  sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                      backgroundColor: 'white'
-                                    }
-                                  }}
-                                />
-                                
-                                {task.checkboxValues.length > 1 && (
-                                  <IconButton 
-                                    size="small" 
-                                    onClick={() => removeCheckboxValue(section.id, task.id, valueIndex)}
-                                    sx={{ color: '#C72030' }}
-                                  >
-                                    <Close />
-                                  </IconButton>
-                                )}
-                              </Box>
-                            ))}
-                            
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                              <MuiButton
-                                variant="outlined"
-                                size="small"
-                                startIcon={<Add />}
-                                onClick={() => addCheckboxValue(section.id, task.id)}
-                                sx={{
-                                  color: '#C72030',
-                                  borderColor: '#C72030',
-                                  fontSize: '12px',
-                                  padding: '4px 12px',
-                                  '&:hover': {
-                                    borderColor: '#C72030',
-                                    backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                                  }
-                                }}
-                              >
-                                Add Option
-                              </MuiButton>
-                            </Box>
-                          </Box>
-                        </Box>
-                      )}
+                                  <Autocomplete
+                                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                      {/* Enter Value Section for Options & Inputs */}
-                      {task.inputType === 'options-inputs' && (
-                        <Box sx={{ mt: 2 }}>
-                          <Box sx={{
-                            backgroundColor: '#F5F5F5',
-                            border: '1px solid #E0E0E0',
-                            borderRadius: '8px',
-                            padding: 2
-                          }}>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333', textAlign: 'center' }}>
-                              Enter Value
-                            </Typography>
-                            
-                            {task.optionsInputsValues && task.optionsInputsValues.map((value, valueIndex) => (
-                              <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-                                <TextField
-                                  fullWidth
+                                    options={[
+                                      { id: 'positive', label: 'P', value: 'positive' },
+                                      { id: 'negative', label: 'N', value: 'negative' }
+                                    ]}
+                                    getOptionLabel={(option) => option.label}
+                                    value={['positive', 'negative'].includes(value.type)
+                                      ? { id: value.type, label: value.type === 'positive' ? 'P' : 'N', value: value.type }
+                                      : null}
+                                    onChange={(event, newValue) => {
+                                      if (newValue) updateDropdownType(section.id, task.id, valueIndex, newValue.value);
+                                    }}
+                                    renderInput={(params) => (
+                                      <TextField
+                                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                                        {...params}
+                                        label={<span>Type <span style={{ color: 'currentColor' }}>*</span></span>}
+                                        fullWidth
+                                      />
+                                    )}
+                                    isOptionEqualToValue={(option, value) => option.value === value.value}
+                                  />
+
+                                  {task.dropdownValues.length > 1 && (
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => removeDropdownValue(section.id, task.id, valueIndex)}
+                                      sx={{ color: '#C72030' }}
+                                    >
+                                      <Close />
+                                    </IconButton>
+                                  )}
+                                </Box>
+                              ))}
+
+                              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                <MuiButton
+                                  variant="outlined"
                                   size="small"
-                                  placeholder=""
-                                  value={value}
-                                  onChange={(e) => updateOptionsInputsValue(section.id, task.id, valueIndex, e.target.value)}
+                                  startIcon={<Add />}
+                                  onClick={() => addDropdownValue(section.id, task.id)}
                                   sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                      backgroundColor: 'white'
-                                    }
-                                  }}
-                                />
-                                
-                                <Typography 
-                                  variant="body2" 
-                                  sx={{ 
-                                    color: '#C72030', 
-                                    cursor: 'pointer',
+                                    color: '#C72030',
+                                    borderColor: '#C72030',
                                     fontSize: '12px',
-                                    minWidth: 'auto'
+                                    padding: '4px 12px',
+                                    '&:hover': {
+                                      borderColor: '#C72030',
+                                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                    }
                                   }}
-                                  onClick={() => removeOptionsInputsValue(section.id, task.id, valueIndex)}
                                 >
-                                  close
+                                  Add Option
+                                </MuiButton>
+                              </Box>
+                            </Box>
+                          </Box>
+                        )}
+
+                        {/* Enter Value Section for Radio */}
+                        {task.inputType === 'radio' && (
+                          <Box sx={{ mt: 2 }}>
+                            <Box sx={{
+                              backgroundColor: '#F5F5F5',
+                              border: '1px solid #E0E0E0',
+                              borderRadius: 0,
+                              padding: 2
+                            }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                                  Selected
+                                </Typography>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                                  Enter Value
                                 </Typography>
                               </Box>
-                            ))}
-                            
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                              <MuiButton
-                                variant="outlined"
-                                size="small"
-                                startIcon={<Add />}
-                                onClick={() => addOptionsInputsValue(section.id, task.id)}
-                                sx={{
-                                  color: '#C72030',
-                                  borderColor: '#C72030',
-                                  fontSize: '12px',
-                                  padding: '4px 12px',
-                                  '&:hover': {
+
+                              {task.radioValues && task.radioValues.map((value, valueIndex) => (
+                                <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                                  <Radio
+                                    checked={valueIndex === 0} // First option selected by default
+                                    name={`radio-${section.id}-${task.id}`}
+                                    sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                  />
+
+                                  <TextField
+                                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                                    fullWidth
+                                    size="small"
+                                    placeholder="Enter option value"
+                                    value={value.label}
+                                    onChange={(e) => updateRadioValue(section.id, task.id, valueIndex, e.target.value)}
+                                    label={<span>Option{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                                    sx={{
+                                      '& .MuiOutlinedInput-root': {
+                                        backgroundColor: 'white'
+                                      }
+                                    }}
+                                  />
+
+<FormControl size="small" sx={{ minWidth: 80 }}>
+  <Autocomplete
+    disableClearable
+    options={[
+      { value: 'positive', label: 'P' },
+      { value: 'negative', label: 'N' }
+    ]}
+    getOptionLabel={(option) => option.label}
+    isOptionEqualToValue={(option, value) => option.value === value.value}
+    value={
+      [{ value: 'positive', label: 'P' }, { value: 'negative', label: 'N' }]
+        .find(opt => opt.value === value.type) || { value: '', label: '' }
+    }
+    onChange={(_, newValue) => {
+      if (newValue) updateRadioType(section.id, task.id, valueIndex, newValue.value);
+    }}
+    renderInput={(params) => (
+      <TextField
+        {...params}
+        label={
+          <span>
+            Type <span style={{ color: 'currentColor' }}>*</span>
+          </span>
+        }
+        size="small"
+        sx={{
+          backgroundColor: 'white',
+          '& .MuiInputBase-input': { color: '#666' }
+        }}
+      />
+    )}
+  />
+</FormControl>
+                                  {task.radioValues.length > 1 && (
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => removeRadioValue(section.id, task.id, valueIndex)}
+                                      sx={{ color: '#C72030' }}
+                                    >
+                                      <Close />
+                                    </IconButton>
+                                  )}
+                                </Box>
+                              ))}
+
+                              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                <MuiButton
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<Add />}
+                                  onClick={() => addRadioValue(section.id, task.id)}
+                                  sx={{
+                                    color: '#C72030',
                                     borderColor: '#C72030',
-                                    backgroundColor: 'rgba(199, 32, 48, 0.04)'
-                                  }
-                                }}
-                              >
-                                + Add Option
-                              </MuiButton>
+                                    fontSize: '12px',
+                                    padding: '4px 12px',
+                                    '&:hover': {
+                                      borderColor: '#C72030',
+                                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                    }
+                                  }}
+                                >
+                                  Add Option
+                                </MuiButton>
+                              </Box>
                             </Box>
                           </Box>
-                        </Box>
-                      )}
+                        )}
+
+                        {/* Enter Value Section for Checkbox */}
+                        {task.inputType === 'checkbox' && (
+                          <Box sx={{ mt: 2 }}>
+                            <Box sx={{
+                              backgroundColor: '#F5F5F5',
+                              border: '1px solid #E0E0E0',
+                              borderRadius: 0,
+                              padding: 2
+                            }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                                  Selected
+                                </Typography>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#333' }}>
+                                  Enter Value
+                                </Typography>
+                              </Box>
+
+                              {task.checkboxValues && task.checkboxValues.map((value, valueIndex) => (
+                                <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                                  <Checkbox
+                                    checked={task.checkboxSelectedStates?.[valueIndex] || false}
+                                    onChange={(e) => updateCheckboxSelectedState(section.id, task.id, valueIndex, e.target.checked)}
+                                    sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                  />
+
+                                  <TextField
+                                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                                    fullWidth
+                                    size="small"
+                                    placeholder="Enter option value"
+                                    value={value}
+                                    onChange={(e) => updateCheckboxValue(section.id, task.id, valueIndex, e.target.value)}
+                                    label={<span>Option{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                                    sx={{
+                                      '& .MuiOutlinedInput-root': {
+                                        backgroundColor: 'white'
+                                      }
+                                    }}
+                                  />
+
+                                  {task.checkboxValues.length > 1 && (
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => removeCheckboxValue(section.id, task.id, valueIndex)}
+                                      sx={{ color: '#C72030' }}
+                                    >
+                                      <Close />
+                                    </IconButton>
+                                  )}
+                                </Box>
+                              ))}
+
+                              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                <MuiButton
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<Add />}
+                                  onClick={() => addCheckboxValue(section.id, task.id)}
+                                  sx={{
+                                    color: '#C72030',
+                                    borderColor: '#C72030',
+                                    fontSize: '12px',
+                                    padding: '4px 12px',
+                                    '&:hover': {
+                                      borderColor: '#C72030',
+                                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                    }
+                                  }}
+                                >
+                                  Add Option
+                                </MuiButton>
+                              </Box>
+                            </Box>
+                          </Box>
+                        )}
+
+                        {/* Enter Value Section for Options & Inputs */}
+                        {task.inputType === 'options-inputs' && (
+                          <Box sx={{ mt: 2 }}>
+                            <Box sx={{
+                              backgroundColor: '#F5F5F5',
+                              border: '1px solid #E0E0E0',
+                              borderRadius: 0,
+                              padding: 2
+                            }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#333', textAlign: 'center' }}>
+                                Enter Value
+                              </Typography>
+
+                              {task.optionsInputsValues && task.optionsInputsValues.map((value, valueIndex) => (
+                                <Box key={valueIndex} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                                  <TextField
+                                    disabled={stepIndex < activeStep && editingStep !== stepIndex}
+
+                                    fullWidth
+                                    size="small"
+                                    placeholder=""
+                                    value={value}
+                                    onChange={(e) => updateOptionsInputsValue(section.id, task.id, valueIndex, e.target.value)}
+                                    label={<span>Option{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                                    sx={{
+                                      '& .MuiOutlinedInput-root': {
+                                        backgroundColor: 'white'
+                                      }
+                                    }}
+                                  />
+
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      color: '#C72030',
+                                      cursor: 'pointer',
+                                      fontSize: '12px',
+                                      minWidth: 'auto'
+                                    }}
+                                    onClick={() => removeOptionsInputsValue(section.id, task.id, valueIndex)}
+                                  >
+                                    close
+                                  </Typography>
+                                </Box>
+                              ))}
+
+                              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                <MuiButton
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<Add />}
+                                  onClick={() => addOptionsInputsValue(section.id, task.id)}
+                                  sx={{
+                                    color: '#C72030',
+                                    borderColor: '#C72030',
+                                    fontSize: '12px',
+                                    padding: '4px 12px',
+                                    '&:hover': {
+                                      borderColor: '#C72030',
+                                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                    }
+                                  }}
+                                >
+                                  + Add Option
+                                </MuiButton>
+                              </Box>
+                            </Box>
+                          </Box>
+                        )}
+                      </Box>
                     </Box>
-                  </Box>
-                ))}
-                
-                  <div className="flex justify-end mt-4">
+                  ))}
+
+                  <div className="flex justify-end mt-4 gap-4">
                     <button
                       onClick={() => addTaskToSection(section.id)}
                       className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
@@ -3689,45 +5171,43 @@ export const AddSchedulePage = () => {
                       <Add className="w-4 h-4" />
                       Add Question
                     </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+                  {(questionSections.length === 1 || sectionIndex === questionSections.length - 1) && (
+  <button
+    onClick={addQuestionSection}
+    className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
+    style={{ fontFamily: 'Work Sans, sans-serif' }}
+  >
+    <Add className="w-4 h-4" />
+    Add Section
+  </button>
+)}
 
-            <TimeSetupStep
-              data={timeSetupData}
-              onChange={(field, value) => {
-                console.log('Time setup change:', field, value);
-                setTimeSetupData(prev => ({ ...prev, [field]: value }));
-              }}
-              isCompleted={false}
-              isCollapsed={false}
-            />
+                  </div>
+                {sectionIndex < questionSections.length - 1 && <hr className="my-6 border-t border-gray-200" />}
+              </div>
+            </div>
+          ))}
+
+
+
           </div>
         );
-        
+
       case 3: // Time Setup
         return (
-          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-            <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
-              <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-6">
-                <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
-                  <Cog className="w-3 h-3 sm:w-4 sm:h-4" />
-                </span>
-                TIME SETUP
-              </div>
-
-              <TimeSetupStep
-                data={timeSetupData}
-                onChange={(field, value) => {
-                  console.log('Time setup change:', field, value);
-                  setTimeSetupData(prev => ({ ...prev, [field]: value }));
-                }}
-                isCompleted={false}
-                isCollapsed={false}
-              />
-            </div>
-          </div>
+          <TimeSetupStep
+            data={timeSetupData}
+            onChange={(field, value) => {
+              setTimeSetupData(prev => ({ ...prev, [field]: value }));
+            }}
+            isCompleted={false}
+            isCollapsed={false}
+            disabled={3 < activeStep && editingStep !== 3}
+            onEdit={() => {
+              setActiveStep(3);
+              setEditingStep(3);
+            }}
+          />
         );
 
       case 4: // Mapping
@@ -3745,8 +5225,6 @@ export const AddSchedulePage = () => {
                 data={checklistMappings}
                 loading={loadingMappings}
                 onChange={(mappingData) => {
-                  console.log('Mapping data changed:', mappingData);
-                  // Handle mapping data changes if needed
                 }}
                 isCompleted={false}
                 isCollapsed={false}
@@ -3754,21 +5232,110 @@ export const AddSchedulePage = () => {
             </div>
           </div>
         );
-        
+
       default:
         return null;
     }
   };
 
+  {/* Navigation Buttons */ }
+  <div className="flex justify-between items-center mt-6 pt-4 sm:pt-6">
+    <div>
+      {activeStep > 0 && (
+        <button
+          onClick={handleBack}
+          className="border border-[#C72030] text-[#C72030] px-6 py-2 rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
+          style={{ fontFamily: 'Work Sans, sans-serif' }}
+        >
+          Back
+        </button>
+      )}
+    </div>
+
+    <div className="flex gap-4">
+      {activeStep < steps.length - 1 ? (
+        <>
+          {activeStep === 3 ? ( // Time Setup step
+            <button
+              onClick={handleSave}
+              disabled={isSubmitting}
+              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+              style={{ fontFamily: 'Work Sans, sans-serif' }}
+            >
+              {isSubmitting ? 'Saving...' : 'Save & Continue'}
+            </button>
+          ) : (
+            <button
+              onClick={handleNext}
+              className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] text-sm sm:text-base"
+              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
+            >
+              Next
+            </button>
+          )}
+        </>
+      ) : (
+        <button
+          onClick={handleFinish}
+          className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+          style={{ fontFamily: 'Work Sans, sans-serif' }}
+        >
+          Finish
+        </button>
+      )}
+    </div>
+  </div>
+
   const renderStepContent = () => {
-    // Show all steps up to and including the current active step
+    // Show only the current active step content
     return (
       <Box>
-        {Array.from({ length: activeStep + 1 }, (_, index) => (
-          <Box key={`step-content-${index}`} sx={{ mb: 3 }}>
-            {renderSingleStep(index)}
+        <Box sx={{ mb: 3 }}>
+          {renderSingleStep(activeStep)}
+        </Box>
+      </Box>
+    );
+  };
+
+  const renderCompletedSections = () => {
+    return (
+      <Box sx={{ mt: 4 }}>
+        {/* Progress Text */}
+        <Box sx={{
+          textAlign: 'center',
+          mb: 3,
+          fontFamily: 'Work Sans, sans-serif'
+        }}>
+          <Typography variant="body2" sx={{
+            color: '#666',
+            fontSize: '14px',
+            fontWeight: 500
+          }}>
+            You've completed {completedSteps.length} out of {steps.length} steps.
+          </Typography>
+        </Box>
+
+        {/* Completed Steps with Actual Content */}
+        {completedSteps.length > 0 && (
+          <Box>
+            {completedSteps.map((stepIndex) => (
+              <Box
+                key={`completed-section-${stepIndex}`}
+                sx={{
+                  backgroundColor: 'white',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 0,
+                  mb: 3,
+                  overflow: 'hidden',
+                  position: 'relative',
+                }}
+                className={editingStep !== stepIndex ? 'completed-section-disabled' : ''}
+              >
+                {renderSingleStep(stepIndex, editingStep !== stepIndex)}
+              </Box>
+            ))}
           </Box>
-        ))}
+        )}
       </Box>
     );
   };
@@ -3776,7 +5343,7 @@ export const AddSchedulePage = () => {
   // Add function to fetch checklist mappings
   const fetchChecklistMappings = async (customCode: string) => {
     if (!customCode) return;
-    
+
     setLoadingMappings(true);
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/custom_forms/checklist_mappings.json?id=${customCode}`, {
@@ -3792,14 +5359,17 @@ export const AddSchedulePage = () => {
       }
 
       const data = await response.json();
-      console.log('Checklist mappings loaded successfully:', data);
       setChecklistMappings(data);
     } catch (error) {
       console.error('Failed to load checklist mappings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load checklist mappings.",
-        variant: "destructive"
+      toast.error("Failed to load checklist mappings.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
       });
     } finally {
       setLoadingMappings(false);
@@ -3827,9 +5397,10 @@ export const AddSchedulePage = () => {
 
       {/* Custom Stepper - Bordered Box Design */}
       <Box sx={{ mb: 4 }}>
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+        {/* Main Stepper - Show all steps with proper progression */}
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           width: '100%'
         }}>
@@ -3839,9 +5410,9 @@ export const AddSchedulePage = () => {
                 onClick={() => handleStepClick(index)}
                 sx={{
                   cursor: 'pointer',
-                  backgroundColor: isStepRed(index) ? '#C72030' : 'white',
-                  color: isStepRed(index) ? 'white' : '#C4B89D',
-                  border: `2px solid ${isStepRed(index) ? '#C72030' : '#C4B89D'}`,
+                  backgroundColor: (index === activeStep || completedSteps.includes(index)) ? '#C72030' : 'white',
+                  color: (index === activeStep || completedSteps.includes(index)) ? 'white' : '#C4B89D',
+                  border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#C72030' : '#C4B89D'}`,
                   padding: '12px 20px',
                   fontSize: '13px',
                   fontWeight: 500,
@@ -3854,9 +5425,17 @@ export const AddSchedulePage = () => {
                   boxShadow: index === activeStep ? '0 2px 4px rgba(199, 32, 48, 0.3)' : 'none',
                   transition: 'all 0.2s ease',
                   fontFamily: 'Work Sans, sans-serif',
+                  position: 'relative',
                   '&:hover': {
                     opacity: 0.9
-                  }
+                  },
+                  '&::before': completedSteps.includes(index) && index !== activeStep ? {
+                    // content: `"${index + 1}."`,
+                    position: 'absolute',
+                    left: '8px',
+                    fontSize: '11px',
+                    fontWeight: 600
+                  } : {}
                 }}
               >
                 {label}
@@ -3887,8 +5466,8 @@ export const AddSchedulePage = () => {
           {activeStep > 0 && (
             <button
               onClick={handleBack}
-              className="border border-[#C72030] text-[#C72030] px-6 py-2 rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif' }}
+              className="border border-[#C72030] text-[#C72030] px-6 py-2 hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
+              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
             >
               Back
             </button>
@@ -3901,28 +5480,27 @@ export const AddSchedulePage = () => {
               {activeStep === 3 ? ( // Time Setup step
                 <button
                   onClick={handleSave}
-                  disabled={isSubmitting || validationErrors[activeStep]?.length > 0}
-                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-                  style={{ fontFamily: 'Work Sans, sans-serif' }}
+                  disabled={isSubmitting}
+                  className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
                 >
                   {isSubmitting ? 'Saving...' : 'Save & Continue'}
                 </button>
               ) : (
                 <button
-                  onClick={handleNext}
-                  disabled={validationErrors[activeStep]?.length > 0}
-                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-                  style={{ fontFamily: 'Work Sans, sans-serif' }}
-                >
-                  Next
-                </button>
+  onClick={handleNext}
+  className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
+>
+  Next
+</button>
               )}
             </>
           ) : (
             <button
               onClick={handleFinish}
-              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif' }}
+              className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
             >
               Finish
             </button>
@@ -3930,21 +5508,8 @@ export const AddSchedulePage = () => {
         </div>
       </div>
 
-      {/* Validation Errors Display */}
-      {validationErrors[activeStep]?.length > 0 && (
-        <div className="bg-red-50 border border-red-300 rounded-md p-3 mt-4">
-          <h4 className="text-red-800 font-semibold text-sm mb-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>
-            Please fix the following errors:
-          </h4>
-          <ul className="list-disc list-inside text-red-700 text-sm space-y-1">
-            {validationErrors[activeStep].map((error, index) => (
-              <li key={index} style={{ fontFamily: 'Work Sans, sans-serif' }}>
-                {error}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* Completed Sections */}
+      {renderCompletedSections()}
     </div>
   );
 

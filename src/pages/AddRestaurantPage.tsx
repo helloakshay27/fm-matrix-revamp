@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Paperclip, ArrowLeft } from 'lucide-react';
+import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Paperclip, ArrowLeft, Loader2, Loader } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TextField, Select, MenuItem, FormControl, InputLabel, Checkbox as MuiCheckbox, FormControlLabel } from '@mui/material';
 import { FileUploadSection } from '@/components/FileUploadSection';
 import { useAppDispatch } from '@/store/hooks';
 import { createRestaurant } from '@/store/slices/f&bSlice';
+import { toast } from 'sonner';
 
 const fieldStyles = {
   '& .MuiOutlinedInput-root': {
@@ -73,7 +74,6 @@ const initialSchedule: Schedule[] = [
 
 export const AddRestaurantPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const dispatch = useAppDispatch();
 
   const baseUrl = localStorage.getItem('baseUrl');
@@ -112,6 +112,8 @@ export const AddRestaurantPage = () => {
     orderNotAllowedText: ''
   });
 
+  const [loadingSubmit, setLoadingSubmit] = useState(false)
+
   // File states
   const [coverImages, setCoverImages] = useState<File[]>([]);
   const [menuFiles, setMenuFiles] = useState<File[]>([]);
@@ -147,7 +149,56 @@ export const AddRestaurantPage = () => {
     setBlockedDays(prev => prev.filter((_, i) => i !== index));
   };
 
+  const validateForm = () => {
+    if (!formData.restaurantName) {
+      toast.error('Please enter Restaurant Name');
+      return false;
+    } else if (!formData.costForTwo) {
+      toast.error('Please enter Cost For Two');
+      return false;
+    } else if (!formData.mobileNumber || !/^\d{10}$/.test(formData.mobileNumber)) {
+      toast.error('Please enter a valid 10-digit Mobile Number');
+      return false;
+    } else if (formData.anotherMobileNumber && !/^\d{10}$/.test(formData.anotherMobileNumber)) {
+      toast.error('Alternate number must be 10 digits');
+      return false;
+    } else if (!formData.landlineNumber) {
+      toast.error('Please enter a valid Landline Number');
+      return false;
+    } else if (!formData.deliveryTime) {
+      toast.error('Please enter Delivery Time');
+      return false;
+    } else if (!formData.servesAlcohol) {
+      toast.error('Please enter Serves Alcohol');
+      return false;
+    } else if (!formData.wheelchairAccessible) {
+      toast.error('Please enter Wheelchair Accessible');
+      return false;
+    } else if (!formData.cashOnDelivery) {
+      toast.error('Please enter Cash On Delivery');
+      return false;
+    } else if (!formData.pureVeg) {
+      toast.error('Please enter Pure Veg');
+      return false;
+    } else if (!formData.address) {
+      toast.error('Please enter Address');
+      return false;
+    } else if (!formData.tAndC) {
+      toast.error('Please enter Terms and Conditions');
+      return false;
+    } else if (!formData.disclaimer) {
+      toast.error('Please enter Disclaimer');
+      return false;
+    } else if (!formData.closingMessage) {
+      toast.error('Please enter Closing Message');
+      return false;
+    }
+    return true;
+  }
+
   const handleSubmit = async () => {
+    if (!validateForm()) return;
+    setLoadingSubmit(true)
     try {
       const dataToSubmit = new FormData();
 
@@ -215,24 +266,23 @@ export const AddRestaurantPage = () => {
 
       // Append blocked days
       blockedDays.forEach((day, index) => {
-        dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][date]`, day.date);
-        dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][order_blocked]`, day.orderBlocked ? '1' : '0');
-        dataToSubmit.append(`restaurant[blocked_days_attributes][${index}][booking_blocked]`, day.bookingBlocked ? '1' : '0');
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][ondate]`, day.date);
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][order_allowed]`, day.orderBlocked);
+        dataToSubmit.append(`restaurant[restaurant_blockings_attributes][${index}][booking_allowed]`, day.bookingBlocked);
       });
 
       await dispatch(createRestaurant({ baseUrl, token, data: dataToSubmit })).unwrap();
-      toast({
-        title: "Success",
-        description: "Restaurant saved successfully!",
-      });
-      navigate('/vas/fnb');
+      toast.success('Restaurant added successfully');
+      navigate('/settings/vas/fnb/setup');
     } catch (error) {
       console.log(error)
+    } finally {
+      setLoadingSubmit(false);
     }
   };
 
   const handleBack = () => {
-    navigate('/vas/fnb');
+    navigate('/settings/vas/fnb/setup');
   };
 
   const handleGoBack = () => {
@@ -259,12 +309,12 @@ export const AddRestaurantPage = () => {
         <div className="flex items-center gap-2 mb-2">
           <button
             onClick={handleGoBack}
-            className="text-gray-600 hover:text-gray-800 transition-colors"
+            className="text-gray-600 hover:text-gray-800 transition-colors flex items-center gap-2"
             aria-label="Go back"
           >
             <ArrowLeft className="w-4 h-4" />
+            <p className="text-gray-600 text-sm">Back</p>
           </button>
-          <p className="text-gray-600 text-sm">F&B List &gt; Create New F&B</p>
         </div>
         <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a] uppercase">NEW F&B</h1>
       </div>
@@ -290,8 +340,20 @@ export const AddRestaurantPage = () => {
               <TextField
                 label="Cost For Two"
                 required
+                type="number"
                 value={formData.costForTwo}
-                onChange={(e) => setFormData(prev => ({ ...prev, costForTwo: e.target.value }))}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || parseFloat(value) >= 0) {
+                    setFormData((prev) => ({ ...prev, costForTwo: value }));
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (['e', 'E', '+', '-'].includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                inputProps={{ min: 0 }}
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
@@ -302,9 +364,24 @@ export const AddRestaurantPage = () => {
               <TextField
                 label="Mobile Number"
                 required
+                type="text"
                 placeholder="Enter Number"
                 value={formData.mobileNumber}
-                onChange={(e) => setFormData(prev => ({ ...prev, mobileNumber: e.target.value }))}
+                onChange={(e) => {
+                  const onlyDigits = e.target.value.replace(/\D/g, '');
+                  if (onlyDigits.length <= 10) {
+                    setFormData((prev) => ({ ...prev, mobileNumber: onlyDigits }));
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    ['e', 'E', '+', '-', '.'].includes(e.key) ||
+                    (e.key.length === 1 && !/\d/.test(e.key))
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                inputProps={{ maxLength: 10 }}
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
@@ -314,10 +391,24 @@ export const AddRestaurantPage = () => {
             <div>
               <TextField
                 label="Another Mobile Number"
-                required
                 placeholder="Enter Number"
+                type="text"
                 value={formData.anotherMobileNumber}
-                onChange={(e) => setFormData(prev => ({ ...prev, anotherMobileNumber: e.target.value }))}
+                onChange={(e) => {
+                  const onlyDigits = e.target.value.replace(/\D/g, '');
+                  if (onlyDigits.length <= 10) {
+                    setFormData((prev) => ({ ...prev, anotherMobileNumber: onlyDigits }));
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    ['e', 'E', '+', '-', '.', ' '].includes(e.key) ||
+                    (e.key.length === 1 && !/\d/.test(e.key))
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                inputProps={{ maxLength: 10 }}
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
@@ -329,8 +420,23 @@ export const AddRestaurantPage = () => {
                 label="Landline Number"
                 required
                 placeholder="Enter Number"
+                type="text"
                 value={formData.landlineNumber}
-                onChange={(e) => setFormData(prev => ({ ...prev, landlineNumber: e.target.value }))}
+                onChange={(e) => {
+                  const onlyDigits = e.target.value.replace(/\D/g, '');
+                  if (onlyDigits.length <= 10) {
+                    setFormData((prev) => ({ ...prev, landlineNumber: onlyDigits }));
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    ['e', 'E', '+', '-', '.', ' '].includes(e.key) ||
+                    (e.key.length === 1 && !/\d/.test(e.key))
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                inputProps={{ maxLength: 10 }}
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
@@ -340,9 +446,23 @@ export const AddRestaurantPage = () => {
             <div>
               <TextField
                 label="Delivery Time"
+                required
                 placeholder="Mins"
+                type="text"
                 value={formData.deliveryTime}
-                onChange={(e) => setFormData(prev => ({ ...prev, deliveryTime: e.target.value }))}
+                onChange={(e) => {
+                  const onlyDigits = e.target.value.replace(/\D/g, '');
+                  setFormData((prev) => ({ ...prev, deliveryTime: onlyDigits }));
+                }}
+                onKeyDown={(e) => {
+                  if (
+                    ['e', 'E', '+', '-', '.', ' '].includes(e.key) ||
+                    (e.key.length === 1 && !/\d/.test(e.key))
+                  ) {
+                    e.preventDefault();
+                  }
+                }}
+                inputProps={{ inputMode: 'numeric' }}
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
@@ -422,6 +542,7 @@ export const AddRestaurantPage = () => {
             <div className="md:col-span-3">
               <TextField
                 label="Address"
+                required
                 value={formData.address}
                 onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                 fullWidth
@@ -435,6 +556,7 @@ export const AddRestaurantPage = () => {
             <div>
               <TextField
                 label="T&C"
+                required
                 value={formData.tAndC}
                 onChange={(e) => setFormData(prev => ({ ...prev, tAndC: e.target.value }))}
                 fullWidth
@@ -448,6 +570,7 @@ export const AddRestaurantPage = () => {
             <div>
               <TextField
                 label="Disclaimer"
+                required
                 value={formData.disclaimer}
                 onChange={(e) => setFormData(prev => ({ ...prev, disclaimer: e.target.value }))}
                 fullWidth
@@ -461,6 +584,7 @@ export const AddRestaurantPage = () => {
             <div>
               <TextField
                 label="Closing Message"
+                required
                 value={formData.closingMessage}
                 onChange={(e) => setFormData(prev => ({ ...prev, closingMessage: e.target.value }))}
                 fullWidth
@@ -516,7 +640,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.startTime.split(':')[0]}
                             onChange={(e) => updateSchedule(index, 'startTime', `${e.target.value}:${item.startTime.split(':')[1]}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 24 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -527,7 +651,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.startTime.split(':')[1]}
                             onChange={(e) => updateSchedule(index, 'startTime', `${item.startTime.split(':')[0]}:${e.target.value}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 60 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -542,7 +666,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.endTime.split(':')[0]}
                             onChange={(e) => updateSchedule(index, 'endTime', `${e.target.value}:${item.endTime.split(':')[1]}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 24 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -553,7 +677,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.endTime.split(':')[1]}
                             onChange={(e) => updateSchedule(index, 'endTime', `${item.endTime.split(':')[0]}:${e.target.value}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 60 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -568,7 +692,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.breakStartTime.split(':')[0]}
                             onChange={(e) => updateSchedule(index, 'breakStartTime', `${e.target.value}:${item.breakStartTime.split(':')[1]}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 24 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -579,7 +703,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.breakStartTime.split(':')[1]}
                             onChange={(e) => updateSchedule(index, 'breakStartTime', `${item.breakStartTime.split(':')[0]}:${e.target.value}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 60 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -594,7 +718,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.breakEndTime.split(':')[0]}
                             onChange={(e) => updateSchedule(index, 'breakEndTime', `${e.target.value}:${item.breakEndTime.split(':')[1]}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 24 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -605,7 +729,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.breakEndTime.split(':')[1]}
                             onChange={(e) => updateSchedule(index, 'breakEndTime', `${item.breakEndTime.split(':')[0]}:${e.target.value}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 60 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -636,7 +760,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.lastBookingTime.split(':')[0]}
                             onChange={(e) => updateSchedule(index, 'lastBookingTime', `${e.target.value}:${item.lastBookingTime.split(':')[1]}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 24 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -647,7 +771,7 @@ export const AddRestaurantPage = () => {
                           <select
                             value={item.lastBookingTime.split(':')[1]}
                             onChange={(e) => updateSchedule(index, 'lastBookingTime', `${item.lastBookingTime.split(':')[0]}:${e.target.value}`)}
-                            className="border border-gray-300 rounded px-2 py-1 text-xs w-12"
+                            className="border border-gray-300 rounded px-2 py-1 text-xs w-14"
                           >
                             {Array.from({ length: 60 }, (_, i) => (
                               <option key={i} value={i.toString().padStart(2, '0')}>
@@ -735,7 +859,19 @@ export const AddRestaurantPage = () => {
                 <TextField
                   label="Min Person"
                   value={tableBooking.minPerson}
-                  onChange={(e) => setTableBooking(prev => ({ ...prev, minPerson: e.target.value }))}
+                  onChange={(e) => {
+                    const digitsOnly = e.target.value.replace(/\D/g, '');
+                    setTableBooking((prev) => ({ ...prev, minPerson: digitsOnly }));
+                  }}
+                  onKeyDown={(e) => {
+                    if (
+                      ['e', 'E', '+', '-', '.', ' '].includes(e.key) ||
+                      (e.key.length === 1 && !/\d/.test(e.key))
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
+                  inputProps={{ inputMode: 'numeric' }}
                   fullWidth
                   variant="outlined"
                   sx={fieldStyles}
@@ -799,7 +935,7 @@ export const AddRestaurantPage = () => {
               </div>
               <div>
                 <TextField
-                  label="Delivery Charge (₹)"
+                  label={`Delivery Charge (${localStorage.getItem('currency')})`}
                   value={orderConfig.deliveryCharge}
                   onChange={(e) => setOrderConfig(prev => ({ ...prev, deliveryCharge: e.target.value }))}
                   fullWidth
@@ -810,7 +946,7 @@ export const AddRestaurantPage = () => {
               </div>
               <div>
                 <TextField
-                  label="Minimum Order (₹)"
+                  label={`Minimum Order (${localStorage.getItem('currency')})`}
                   value={orderConfig.minimumOrder}
                   onChange={(e) => setOrderConfig(prev => ({ ...prev, minimumOrder: e.target.value }))}
                   fullWidth
@@ -879,10 +1015,11 @@ export const AddRestaurantPage = () => {
       {/* Action Buttons */}
       <div className="flex justify-end gap-4 mt-6">
         <Button
+          disabled={loadingSubmit}
           onClick={handleSubmit}
-          className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8"
+          className="bg-[#C72030] hover:bg-[#A61B28] text-white px-8 text-center"
         >
-          Save
+          {loadingSubmit ? <Loader className="animate-spin mr-2" /> : 'Save'}
         </Button>
         <Button
           onClick={handleBack}

@@ -55,7 +55,7 @@ export const VendorBiddingSection: React.FC<VendorBiddingSectionProps> = ({
           </div>
           <div className="flex-1">
             <TextField
-              label="₹ Bidding Cost"
+             label={`Bidding Cost ${localStorage.getItem('currency')}`}
               value={typeof bid.bidding_cost === 'string' || typeof bid.bidding_cost === 'number' ? bid.bidding_cost : ''}
               onChange={(e) => updateVendorBid(index, 'bidding_cost', e.target.value)}
               variant="outlined"

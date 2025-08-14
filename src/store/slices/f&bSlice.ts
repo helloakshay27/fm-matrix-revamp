@@ -486,7 +486,7 @@ export const fetchMenu = createAsyncThunk(
     async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: number }, { rejectWithValue }) => {
         try {
             const response = await axios.get(
-                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_menus.json`,
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_menus.json?active`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -529,10 +529,10 @@ export const fetchRestaurantBookings = createAsyncThunk(
 
 export const fetchRestaurantOrders = createAsyncThunk(
     "fetchRestaurantOrders",
-    async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: number }, { rejectWithValue }) => {
+    async ({ baseUrl, token, id, pageSize, currentPage }: { baseUrl: string; token: string; id: number; pageSize: number; currentPage: number }, { rejectWithValue }) => {
         try {
             const response = await axios.get(
-                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.json`,
+                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.json?all=true&page=${currentPage}&per_page=${pageSize}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -573,6 +573,30 @@ export const fetchMenuDetails = createAsyncThunk(
     }
 )
 
+export const updateMenu = createAsyncThunk(
+    "updateMenu",
+    async ({ baseUrl, token, id, mid, data }: { baseUrl: string; token: string; id: number, mid: number, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(
+                `https://${baseUrl}/pms/admin/restaurants/${id}/restaurant_menus/${mid}.json`,
+                data,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to update menu";
+            return rejectWithValue(message);
+        }
+    }
+)
+
 export const fetchOrderDetails = createAsyncThunk(
     "fetchOrderDetails",
     async ({ baseUrl, token, id, oid }: { baseUrl: string; token: string; id: number, oid: number }, { rejectWithValue }) => {
@@ -601,11 +625,13 @@ export const exportOrders = createAsyncThunk(
     async ({ baseUrl, token, id }: { baseUrl: string; token: string; id: number }, { rejectWithValue }) => {
         try {
             const response = await axios.get(
-                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.xlsx`,
+                `https://${baseUrl}/pms/admin/restaurants/${id}/food_orders.xlsx?all=true`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
+                        Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     },
+                    responseType: "blob",
                 }
             );
             return response.data;
@@ -704,6 +730,14 @@ export const exportOrdersSlice = createApiSlice(
     "exportOrders",
     exportOrders
 );
+export const fetchRestaurantOrdersSlice = createApiSlice(
+    "fetchRestaurantOrders",
+    fetchRestaurantOrders
+)
+export const updateMenuSlice = createApiSlice(
+    "updateMenu",
+    updateMenu
+)
 
 export const fetchRestaurantsReducer = fetchRestaurantsSlice.reducer;
 export const createRestaurantReducer = createRestaurantSlice.reducer;
@@ -732,3 +766,5 @@ export const fetchMenuReducer = fetchMenuSlice.reducer;
 export const fetchMenuDetailsReducer = fetchMenuDetailsSlice.reducer;
 export const fetchOrderDetailsReducer = fetchOrderDetailsSlice.reducer;
 export const exportOrdersReducer = exportOrdersSlice.reducer;
+export const fetchRestaurantOrdersReducer = fetchRestaurantOrdersSlice.reducer
+export const updateMenuReducer = updateMenuSlice.reducer

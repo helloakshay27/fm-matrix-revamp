@@ -1,42 +1,45 @@
-import { createAsyncThunk } from '@reduxjs/toolkit'
-import createApiSlice from '../api/apiSlice'
-import { apiClient } from '@/utils/apiClient'
+import { createAsyncThunk } from '@reduxjs/toolkit';
+import createApiSlice from '../api/apiSlice';
+import { apiClient } from '@/utils/apiClient';
 
 export interface AttendanceRecord {
   id: number;
-  user_id: number; // Adding user_id to store the actual user ID from API
+  user_id: number;
   name: string;
   department: string;
 }
 
-// Fetch attendance data from API
 export const fetchAttendanceData = createAsyncThunk(
   'attendance/fetchAttendanceData',
-  async (_, { rejectWithValue }) => {
+  async (departmentFilter: string = '', { rejectWithValue }) => {
+    const baseUrl = localStorage.getItem('baseUrl');
     try {
-      const response = await apiClient.get('https://fm-uat-api.lockated.com/pms/attendances.json')
-      
+      // Construct the API URL with the department filter if provided
+      let url = `https://${baseUrl}/pms/attendances.json`;
+      if (departmentFilter) {
+        url += `?q[department_department_name_cont]=${encodeURIComponent(departmentFilter)}`;
+      }
+
+      const response = await apiClient.get(url);
+
       // Map API response to our AttendanceRecord interface
-      const mappedData: AttendanceRecord[] = response.data.map((item: any, index: number) => ({
+      const mappedData: AttendanceRecord[] = response.data.users.map((item: any, index: number) => ({
         id: index + 1, // Keep this for table row identification
         user_id: item.id || index + 1, // Use actual user ID from API, fallback to index
         name: item.full_name || '-',
-        department: item.department_name || '-'
-      }))
-      
-      return mappedData
+        department: item.department_name || '-',
+      }));
+
+      return mappedData;
     } catch (error: any) {
-      const message = error.response?.data?.message || error.message || 'Failed to fetch attendance data'
-      return rejectWithValue(message)
+      const message = error.response?.data?.message || error.message || 'Failed to fetch attendance data';
+      return rejectWithValue(message);
     }
   }
-)
+);
 
-// Create slice using the createApiSlice utility
-export const attendanceSlice = createApiSlice<AttendanceRecord[]>('attendance', fetchAttendanceData)
+export const attendanceSlice = createApiSlice<AttendanceRecord[]>('attendance', fetchAttendanceData);
 
-// Export reducer
-export const attendanceReducer = attendanceSlice.reducer
+export const attendanceReducer = attendanceSlice.reducer;
 
-// Export the default reducer
-export default attendanceReducer
+export default attendanceReducer;

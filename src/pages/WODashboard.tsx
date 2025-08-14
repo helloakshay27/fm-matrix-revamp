@@ -1,182 +1,339 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Edit, Search } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Edit, Eye, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { WOFilterDialog } from "@/components/WOFilterDialog";
-import { useNavigate } from 'react-router-dom';
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { toast } from "sonner";
+import { useAppDispatch } from "@/store/hooks";
+import { fetchWorkOrders } from "@/store/slices/workOrderSlice";
 
 export const WODashboard = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const dispatch = useAppDispatch();
 
-  const woData = [
-    {
-      id: 1175,
-      action: "Edit",
-      woNo: "NA",
-      referenceNo: "100/05/2025",
-      createdBy: "MORDEN LIFESCIENCES PVT LTD",
-      createdOn: "Pending",
-      supplier: "",
-      approvalStatus: "Pending",
-      paymentTenureInDays: "10000.00",
-      woAmount: "0.0",
-      totalAmtCritNAmount: "0.0",
-      generatedBy: "0.0",
-      retentionPercent: "0.0",
-      retentionOutstanding: "0.0",
-      qcAmount: "0.0",
-      noOfItems: "10000.00",
-      totalAmountPaid: "No",
-      outstanding: "Sun Engineering",
-      debtCollectionNoteRaised: "19/05/2025",
-      createdBy2: "",
-      uploadedBy: "",
-      updatedOn: ""
-    }
-  ];
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [workOrders, setWorkOrders] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await dispatch(
+          fetchWorkOrders({ baseUrl, token })
+        ).unwrap();
+        setWorkOrders(response.work_orders);
+      } catch (error) {
+        console.log(error);
+        toast.error(error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'approved':
-        return 'bg-green-500 text-white';
-      case 'rejected':
-        return 'bg-red-500 text-white';
-      case 'pending':
-        return 'bg-yellow-500 text-black';
+    switch (status?.toLowerCase()) {
+      case "approved":
+        return "bg-green-500 text-white";
+      case "rejected":
+        return "bg-red-500 text-white";
+      case "pending":
+        return "bg-yellow-500 text-black";
       default:
-        return 'bg-gray-500 text-white';
+        return "bg-gray-500 text-white";
     }
   };
 
-  const filteredData = woData.filter(item =>
-    item.referenceNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.createdBy.toLowerCase().includes(searchQuery.toLowerCase())
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case "approved_status":
+        return (
+          <span
+            className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+              item?.approved_status
+            )}`}
+          >
+            {item?.approved_status}
+          </span>
+        );
+      case "reference_number":
+        return (
+          <span className="text-blue-600 hover:underline cursor-pointer">
+            {item.reference_number}
+          </span>
+        );
+      case "active":
+        return (
+          <input
+            type="checkbox"
+            checked={item.active}
+            readOnly
+            className="w-4 h-4"
+          />
+        );
+      default:
+        return item[columnKey] || "";
+    }
+  };
+
+  const columns: ColumnConfig[] = [
+    {
+      key: "id",
+      label: "ID",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "wo_no",
+      label: "WO No.",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "reference_number",
+      label: "Reference No.",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "created_on",
+      label: "Created On",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "supplier",
+      label: "Supplier",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "approved_status",
+      label: "Approved Status",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "payment_tenure",
+      label: "Payment Tenure (Days)",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "advance_amount",
+      label: "Advance Amount",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "total_amount",
+      label: "Total Amount",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "total_work_completed_percent",
+      label: "Total Work Completed (%)",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "retention_percent",
+      label: "Retention (%)",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "tds_percent",
+      label: "TDS (%)",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "qc_percent",
+      label: "QC (%)",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "active",
+      label: "Active/Inactive",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "last_approved_by",
+      label: "Last Approved By",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "tds_amount",
+      label: "TDS Amount",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "retention_amount",
+      label: "Retention Amount",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "retention_outstanding",
+      label: "Retention Outstanding",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "qc_amount",
+      label: "QC Amount",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "qc_outstanding",
+      label: "QC Outstanding",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "no_of_invoices",
+      label: "No. of Invoices",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "total_amount_paid",
+      label: "Total Amount Paid",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "outstanding",
+      label: "Outstanding",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "debit_credit_note_raised",
+      label: "Debt/Credit Note Raised",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "created_by",
+      label: "Created By",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "updated_by",
+      label: "Updated By",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+    {
+      key: "updated_on",
+      label: "Updated On",
+      sortable: true,
+      draggable: true,
+      defaultVisible: true,
+    },
+  ];
+
+  const renderActions = (item: any) => (
+    <div className="flex items-center gap-3">
+      <Button
+        size="sm"
+        variant="ghost"
+        className="p-1"
+        onClick={() => navigate(`/finance/wo/details/${item.id}`)}
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="p-1"
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/finance/wo/edit/${item.id}`);
+        }}
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+
+  const leftActions = (
+    <>
+      <Button
+        style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+        className="hover:bg-[#F2EEE9]/90"
+        onClick={() => navigate('/finance/wo/add')}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add
+      </Button>
+    </>
   );
 
   return (
     <div className="p-4 sm:p-6">
-      {/* Breadcrumb */}
-      <div className="mb-2 text-sm text-gray-600">WO</div>
+      {/* Enhanced Table */}
+      <EnhancedTable
+        data={workOrders || []}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        storageKey="wo-dashboard-columns"
+        className="min-w-[1200px]"
+        emptyMessage="No work orders found"
+        searchTerm={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search WOs..."
+        // enableExport={true}
+        exportFileName="work-orders"
+        pagination={true}
+        pageSize={10}
+        enableSearch={true}
+        onFilterClick={() => setIsFilterDialogOpen(true)}
+        leftActions={leftActions}
+      />
 
-      {/* Title */}
-      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal mb-4">
-        WORK ORDER LIST
-      </h1>
-
-      {/* Buttons + Search */}
-      <div className="flex flex-col md:flex-row justify-between gap-4 flex-wrap mb-6">
-        {/* Left Side Buttons */}
-        <div className="flex flex-wrap gap-3">
-          <Button
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-            onClick={() => navigate('/finance/wo/add')}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setIsFilterDialogOpen(true)}
-          >
-            Filters
-          </Button>
-        </div>
-
-        {/* Right Side Search */}
-        <div className="flex flex-col sm:flex-row gap-2 w-full sm:items-center md:w-auto">
-          <div className="relative w-full sm:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4">
-              Go!
-            </Button>
-            <Button variant="outline" className="px-4" onClick={() => setSearchQuery('')}>
-              Reset
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Responsive Table */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <Table className="min-w-[1200px]">
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Action</TableHead>
-              <TableHead className="font-semibold">ID</TableHead>
-              <TableHead className="font-semibold">WO No.</TableHead>
-              <TableHead className="font-semibold">Reference No.</TableHead>
-              <TableHead className="font-semibold">Created by</TableHead>
-              <TableHead className="font-semibold">Supplier</TableHead>
-              <TableHead className="font-semibold">Approval Status</TableHead>
-              <TableHead className="font-semibold">Payment Tenure (in Days)</TableHead>
-              <TableHead className="font-semibold">Advance Amount</TableHead>
-              <TableHead className="font-semibold">Total Amount</TableHead>
-              <TableHead className="font-semibold">WO Amount</TableHead>
-              <TableHead className="font-semibold">Total Amt Crit N Amount</TableHead>
-              <TableHead className="font-semibold">Generated By</TableHead>
-              <TableHead className="font-semibold">Retention (%)</TableHead>
-              <TableHead className="font-semibold">Retention Outstanding</TableHead>
-              <TableHead className="font-semibold">QC Amount</TableHead>
-              <TableHead className="font-semibold">No of Items</TableHead>
-              <TableHead className="font-semibold">Total Amount Paid</TableHead>
-              <TableHead className="font-semibold">Outstanding</TableHead>
-              <TableHead className="font-semibold">Debt Collection Note Raised</TableHead>
-              <TableHead className="font-semibold">Created by</TableHead>
-              <TableHead className="font-semibold">Uploaded by</TableHead>
-              <TableHead className="font-semibold">Updated On</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredData.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>
-                  <Button size="sm" variant="ghost" className="p-1">
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-                <TableCell className="font-medium">{item.id}</TableCell>
-                <TableCell>{item.woNo}</TableCell>
-                <TableCell className="text-blue-600 hover:underline cursor-pointer">{item.referenceNo}</TableCell>
-                <TableCell>{item.createdBy}</TableCell>
-                <TableCell>{item.supplier}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.approvalStatus)}`}>
-                    {item.approvalStatus}
-                  </span>
-                </TableCell>
-                <TableCell>{item.paymentTenureInDays}</TableCell>
-                <TableCell>{item.woAmount}</TableCell>
-                <TableCell>{item.totalAmtCritNAmount}</TableCell>
-                <TableCell>{item.woAmount}</TableCell>
-                <TableCell>{item.totalAmtCritNAmount}</TableCell>
-                <TableCell>{item.generatedBy}</TableCell>
-                <TableCell>{item.retentionPercent}</TableCell>
-                <TableCell>{item.retentionOutstanding}</TableCell>
-                <TableCell>{item.qcAmount}</TableCell>
-                <TableCell>{item.noOfItems}</TableCell>
-                <TableCell>{item.totalAmountPaid}</TableCell>
-                <TableCell>{item.outstanding}</TableCell>
-                <TableCell>{item.debtCollectionNoteRaised}</TableCell>
-                <TableCell>{item.createdBy2}</TableCell>
-                <TableCell>{item.uploadedBy}</TableCell>
-                <TableCell>{item.updatedOn}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
+      {/* Filter Dialog */}
       <WOFilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}

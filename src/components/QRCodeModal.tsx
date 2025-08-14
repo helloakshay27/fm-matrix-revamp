@@ -7,8 +7,9 @@ interface QRCodeModalProps {
   isOpen: boolean;
   onClose: () => void;
   qrCode: string;
-  serviceName: string;
-  site: string;
+  serviceName?: string;
+  site?: string;
+  handleDownloadQR?: () => void;
 }
 
 export const QRCodeModal: React.FC<QRCodeModalProps> = ({
@@ -17,6 +18,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
   qrCode,
   serviceName,
   site,
+  handleDownloadQR,
 }) => {
   const handleDownload = async () => {
     if (!qrCode) return;
@@ -77,7 +79,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
           {/* Download Button */}
           {qrCode && (
             <Button
-              onClick={handleDownload}
+              onClick={handleDownloadQR || handleDownload}
               variant="outline"
               className="flex items-center gap-2 border-[#BF213E] text-[#BF213E] hover:bg-[#BF213E] hover:text-white"
             >

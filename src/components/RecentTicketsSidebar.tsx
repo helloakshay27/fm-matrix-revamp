@@ -1,69 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star, MessageSquare, Flag, ChevronRight, Building2, User, Globe, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AddCommentModal } from './AddCommentModal';
 import { useNavigate } from 'react-router-dom';
-const recentTickets = [{
-  id: '234-87654',
-  title: 'Floor not clean',
-  category: 'Housekeeping',
-  subCategory: 'Common Area',
-  assigneeName: 'Arman',
-  site: 'GoPhygital',
-  priority: 'P1',
-  tat: 'A',
-  status: 'In Progress',
-  nextStatus: 'Closed',
-  handledBy: 'Arman'
-}, {
-  id: '234-87654',
-  title: 'Floor not clean',
-  category: 'Housekeeping',
-  subCategory: 'Common Area',
-  assigneeName: 'Arman',
-  site: 'GoPhygital',
-  priority: 'P1',
-  tat: 'A',
-  status: 'In Progress',
-  nextStatus: 'Closed',
-  handledBy: 'Arman'
-}, {
-  id: '234-87654',
-  title: 'Floor not clean',
-  category: 'Housekeeping',
-  subCategory: 'Common Area',
-  assigneeName: 'Arman',
-  site: 'GoPhygital',
-  priority: 'P1',
-  tat: 'A',
-  status: 'In Progress',
-  nextStatus: 'Closed',
-  handledBy: 'Arman'
-}, {
-  id: '234-87655',
-  title: 'AC not working',
-  category: 'HVAC',
-  subCategory: 'Air Conditioning',
-  assigneeName: 'John',
-  site: 'GoPhygital',
-  priority: 'P2',
-  tat: 'B',
-  status: 'Open',
-  nextStatus: 'In Progress',
-  handledBy: 'John'
-}, {
-  id: '234-87656',
-  title: 'Elevator maintenance',
-  category: 'Mechanical',
-  subCategory: 'Elevator',
-  assigneeName: 'Sarah',
-  site: 'GoPhygital',
-  priority: 'P3',
-  tat: 'C',
-  status: 'Scheduled',
-  nextStatus: 'In Progress',
-  handledBy: 'Sarah'
-}];
+import { ticketAnalyticsAPI } from '@/services/ticketAnalyticsAPI';
+import { apiClient } from '@/utils/apiClient';
 export function RecentTicketsSidebar() {
   const [commentModal, setCommentModal] = useState<{
     isOpen: boolean;
@@ -72,27 +13,141 @@ export function RecentTicketsSidebar() {
     isOpen: false,
     ticketId: ''
   });
-  const [flaggedTickets, setFlaggedTickets] = useState<Set<string>>(new Set());
+  // Initialize state from localStorage
+  const [flaggedTickets, setFlaggedTickets] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('flaggedTickets');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+  
+  const [goldenTickets, setGoldenTickets] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('goldenTickets');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+  
+  const [recentTickets, setRecentTickets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Save to localStorage whenever state changes
+  useEffect(() => {
+    localStorage.setItem('flaggedTickets', JSON.stringify(Array.from(flaggedTickets)));
+  }, [flaggedTickets]);
+
+  useEffect(() => {
+    localStorage.setItem('goldenTickets', JSON.stringify(Array.from(goldenTickets)));
+  }, [goldenTickets]);
+
+  const fetchRecentTickets = async () => {
+    try {
+      setLoading(true);
+      const response = await ticketAnalyticsAPI.getRecentTickets();
+      const mappedTickets = response.complaints.map((ticket: any) => ({
+        id: ticket.id,
+        ticketNumber: ticket.ticket_number,
+        title: ticket.heading,
+        category: ticket.category_type,
+        subCategory: ticket.sub_category_type,
+        assigneeName: ticket.assigned_to || 'Unassigned',
+        site: ticket.site_name,
+        priority: ticket.priority,
+        tat: ticket.response_escalation,
+        status: ticket.issue_status,
+        nextStatus: ticket.status.name,
+        handledBy: ticket.updated_by
+      }));
+      setRecentTickets(mappedTickets);
+    } catch (error) {
+      console.error('Error fetching recent tickets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecentTickets();
+  }, []);
   const handleAddComment = (ticketId: string) => {
     setCommentModal({
       isOpen: true,
       ticketId
     });
   };
-  const handleFlag = (ticketId: string) => {
-    setFlaggedTickets(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(ticketId)) {
-        newSet.delete(ticketId);
-      } else {
-        newSet.add(ticketId);
-      }
-      return newSet;
-    });
+  const handleFlag = async (ticketId: string) => {
+    try {
+      // Update local state first for immediate UI feedback
+      setFlaggedTickets(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(ticketId)) {
+          newSet.delete(ticketId);
+        } else {
+          newSet.add(ticketId);
+        }
+        return newSet;
+      });
+
+      // Make API call
+      await apiClient.post(`/pms/admin/complaints/mark_as_flagged.json?ids=[${ticketId}]`);
+      
+      console.log(`Ticket ${ticketId} flagged/unflagged successfully`);
+      
+    } catch (error) {
+      console.error('Error flagging ticket:', error);
+      
+      // Revert state on error
+      setFlaggedTickets(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(ticketId)) {
+          newSet.delete(ticketId);
+        } else {
+          newSet.add(ticketId);
+        }
+        return newSet;
+      });
+    }
+  };
+  const handleGoldenTicket = async (ticketId: string) => {
+    try {
+      // Update local state first for immediate UI feedback
+      setGoldenTickets(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(ticketId)) {
+          newSet.delete(ticketId);
+        } else {
+          newSet.add(ticketId);
+        }
+        return newSet;
+      });
+
+      // Make API call
+      await apiClient.post(`/pms/admin/complaints/mark_as_golden_ticket.json?ids=[${ticketId}]`);
+      
+      console.log(`Ticket ${ticketId} marked/unmarked as golden ticket successfully`);
+      
+    } catch (error) {
+      console.error('Error marking as golden ticket:', error);
+      
+      // Revert state on error
+      setGoldenTickets(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(ticketId)) {
+          newSet.delete(ticketId);
+        } else {
+          newSet.add(ticketId);
+        }
+        return newSet;
+      });
+    }
   };
   const handleViewDetails = (ticketId: string) => {
-    navigate(`/maintenance/ticket-details/${ticketId}`);
+    navigate(`details/${ticketId}`);
   };
   return <>
       <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
@@ -101,9 +156,9 @@ export function RecentTicketsSidebar() {
           <h2 className="text-lg font-semibold text-red-600 mb-2">
             Recent Tickets
           </h2>
-          <div className="text-sm font-medium text-gray-800">
+          {/* <div className="text-sm font-medium text-gray-800">
             14/07/2025
-          </div>
+          </div> */}
         </div>
         
         {/* Tickets List */}
@@ -111,9 +166,11 @@ export function RecentTicketsSidebar() {
           {recentTickets.map((ticket, index) => <div key={`${ticket.id}-${index}`} className="bg-[#C4B89D]/20 rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60" style={{ borderWidth: '0.6px' }}>
               {/* Header with ID, Star, and Priority */}
               <div className="flex items-center justify-between mb-3">
-                <span className="font-semibold text-gray-800 text-sm">{ticket.id}</span>
+                <span className="font-semibold text-gray-800 text-sm">{ticket.ticketNumber}</span>
                 <div className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                  <button onClick={() => handleGoldenTicket(ticket.id)}>
+                    <Star className={`h-5 w-5 ${goldenTickets.has(ticket.id) ? 'text-yellow-600 fill-yellow-600' : 'text-black-200 fill-white-600'} cursor-pointer hover:opacity-80`} />
+                  </button>
                   <span className="bg-pink-300 text-pink-800 px-2 py-1 rounded text-xs font-medium">
                     {ticket.priority}
                   </span>
@@ -187,10 +244,15 @@ export function RecentTicketsSidebar() {
                   </button>
                   
                   <button 
-                    className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 ${flaggedTickets.has(ticket.id) ? 'opacity-60' : ''}`} 
-                    onClick={() => handleFlag(ticket.id)}
+                    type="button"
+                    className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 transition-all duration-200 ${flaggedTickets.has(ticket.id) ? 'opacity-60' : ''}`} 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleFlag(ticket.id);
+                    }}
                   >
-                    <Flag className="h-4 w-4 text-red-500" />
+                    <Flag className={`h-4 w-4 transition-colors duration-200 ${flaggedTickets.has(ticket.id) ? 'text-red-600 fill-red-600' : 'text-red-500'}`} />
                     Flag Issue
                   </button>
                 </div>

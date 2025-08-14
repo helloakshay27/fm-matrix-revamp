@@ -1,10 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parse, isValid } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface MaterialDatePickerProps {
@@ -15,9 +15,25 @@ interface MaterialDatePickerProps {
 }
 
 export const MaterialDatePicker = ({ value, onChange, placeholder = "Select date", className }: MaterialDatePickerProps) => {
-  const [date, setDate] = useState<Date | undefined>(
-    value ? new Date(value) : undefined
-  );
+  const parseDate = (dateString: string): Date | undefined => {
+    if (!dateString) return undefined;
+    
+    // Try to parse DD/MM/YYYY format first
+    const parsedDate = parse(dateString, 'dd/MM/yyyy', new Date());
+    if (isValid(parsedDate)) {
+      return parsedDate;
+    }
+    
+    // Fallback to default Date parsing
+    const fallbackDate = new Date(dateString);
+    return isValid(fallbackDate) ? fallbackDate : undefined;
+  };
+
+  const [date, setDate] = useState<Date | undefined>(parseDate(value));
+
+  useEffect(() => {
+    setDate(parseDate(value));
+  }, [value]);
 
   const handleDateSelect = (selectedDate: Date | undefined) => {
     setDate(selectedDate);

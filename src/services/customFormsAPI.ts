@@ -1,5 +1,5 @@
 import { apiClient } from '@/utils/apiClient';
-import { API_CONFIG, getAuthenticatedFetchOptions, ENDPOINTS } from '@/config/apiConfig';
+import { API_CONFIG, getAuthenticatedFetchOptions, ENDPOINTS, getFullUrl } from '@/config/apiConfig';
 
 export interface CustomForm {
   id: number;
@@ -38,10 +38,19 @@ export interface TransformedScheduleData {
   category: string;
   active: boolean;
   createdOn: string;
+  custom_form_code: string;
 }
 
 export const fetchCustomForms = async (queryParams?: Record<string, string>): Promise<CustomFormsResponse> => {
-  const baseUrl = `${API_CONFIG.BASE_URL}/pms/custom_forms.json`;
+  // Use the endpoint from API config
+  const baseUrl = getFullUrl(ENDPOINTS.CUSTOM_FORMS);
+  
+  console.log('API Config:', {
+    BASE_URL: API_CONFIG.BASE_URL,
+    TOKEN: API_CONFIG.TOKEN ? 'Present' : 'Missing',
+    ENDPOINT: ENDPOINTS.CUSTOM_FORMS,
+    FULL_URL: baseUrl
+  });
   
   // Build URL with query parameters
   const url = new URL(baseUrl);
@@ -53,11 +62,39 @@ export const fetchCustomForms = async (queryParams?: Record<string, string>): Pr
     });
   }
   
+  console.log('Final URL:', url.toString());
+  console.log('Request headers:', getAuthenticatedFetchOptions('GET'));
+  
   const response = await fetch(url.toString(), getAuthenticatedFetchOptions('GET'));
+  
+  console.log('Response status:', response.status);
+  console.log('Response ok:', response.ok);
+  
   if (!response.ok) {
-    throw new Error('Failed to fetch custom forms');
+    const errorText = await response.text();
+    console.error('API Error Response:', errorText);
+    throw new Error(`Failed to fetch custom forms: ${response.status} ${response.statusText}`);
   }
-  return response.json();
+  
+  const data = await response.json();
+  console.log('API Success Response:', data);
+  
+  // Validate the response structure
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid response format: Expected an object');
+  }
+  
+  // Check if custom_forms exists and is an array
+  if (!data.custom_forms) {
+    console.warn('No custom_forms field in response, returning empty array');
+    return { custom_forms: [] };
+  }
+  
+  if (!Array.isArray(data.custom_forms)) {
+    throw new Error('Invalid response format: custom_forms should be an array');
+  }
+  
+  return data;
 };
 
 // Interfaces for checklist master data
@@ -193,8 +230,9 @@ export const fetchChecklistMaster = async (): Promise<ChecklistMaster[]> => {
 
 export const transformChecklistData = (checklists: ChecklistMaster[]): TransformedChecklistData[] => {
   return checklists.map(checklist => {
-    // Parse checklist_for to get meter category and scheduled for
-    const checklistParts = checklist.checklist_for.split('::');
+    // Safely handle null/undefined checklist_for
+    const checklistFor = typeof checklist.checklist_for === 'string' ? checklist.checklist_for : '';
+    const checklistParts = checklistFor.split('::');
     const meterCategory = checklistParts[1] || 'Asset'; // Asset or Service
     const scheduledFor = checklistParts[1] || 'Asset';
 
@@ -220,13 +258,19 @@ export const fetchCustomFormDetails = async (formCode: string): Promise<CustomFo
   return response.json();
 };
 
+export const fetchCustomFormById = async (id: string): Promise<CustomForm> => {
+  const response = await apiClient.get(`${ENDPOINTS.CUSTOM_FORM_DETAILS}/${id}.json`);
+  return response.data;
+};
+
 export const transformCustomFormsData = (forms: CustomForm[]): TransformedScheduleData[] => {
   return forms.map(form => {
-    // Split checklist_for to get type and schedule type
-    const checklistParts = form.checklist_for.split('::');
-    const type = checklistParts[0] || '';
+    // Safely handle null/undefined checklist_for
+    const checklistFor = typeof form.checklist_for === 'string' ? form.checklist_for : '';
+    const checklistParts = checklistFor.split('::');
+    const type = form.schedule_type || '';
     const scheduleType = checklistParts[1] || '';
-    
+
     // Format dates
     const formatDate = (dateStr: string | null) => {
       if (!dateStr) return '';
@@ -250,8 +294,9 @@ export const transformCustomFormsData = (forms: CustomForm[]): TransformedSchedu
       validFrom: formatDate(form.start_date),
       validTill: formatDate(form.end_date),
       category: type === 'PPM' ? 'Technical' : 'Non Technical',
-      active: form.active === 1,
-      createdOn: formatDate(form.created_at)
+      active: form.active === true || form.active === 1 || form.active === null,
+      createdOn: formatDate(form.created_at),
+      custom_form_code: form.custom_form_code
     };
   });
 };

@@ -1,36 +1,35 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-
-import { TextField, MenuItem } from '@mui/material';
+import { TextField, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { CheckCircle, FileText, Shield, ArrowLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { fetchEntities } from '@/store/slices/entitiesSlice';
 import { fetchFacilitySetups } from '@/store/slices/facilitySetupsSlice';
 import { apiClient } from '@/utils/apiClient';
+import { toast } from 'sonner';
 
 export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  
+
   // Get FM users from Redux store
   const { data: fmUsersResponse, loading: fmUsersLoading, error: fmUsersError } = useAppSelector((state) => state.fmUsers);
   const fmUsers = fmUsersResponse?.fm_users || [];
-  
+
   // Get entities from Redux store
   const { data: entitiesResponse, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
-  const entities = Array.isArray(entitiesResponse?.entities) ? entitiesResponse.entities : 
-                   Array.isArray(entitiesResponse) ? entitiesResponse : [];
-  
+  const entities = Array.isArray(entitiesResponse?.entities) ? entitiesResponse.entities :
+    Array.isArray(entitiesResponse) ? entitiesResponse : [];
+
   // Get facility setups from Redux store
   const { data: facilitySetupsResponse, loading: facilitySetupsLoading, error: facilitySetupsError } = useAppSelector((state) => state.facilitySetups);
-  const facilities = Array.isArray(facilitySetupsResponse?.facility_setups) ? facilitySetupsResponse.facility_setups : 
-                     Array.isArray(facilitySetupsResponse) ? facilitySetupsResponse : [];
-  
+  const facilities = Array.isArray(facilitySetupsResponse?.facility_setups) ? facilitySetupsResponse.facility_setups :
+    Array.isArray(facilitySetupsResponse) ? facilitySetupsResponse : [];
+
   const [userType, setUserType] = useState('occupant');
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedFacility, setSelectedFacility] = useState('');
@@ -59,6 +58,8 @@ export const AddFacilityBookingPage = () => {
     formated_end_minute: string;
   }>>([]);
   const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
+  const [openCancelPolicy, setOpenCancelPolicy] = useState(false);
+  const [openTerms, setOpenTerms] = useState(false);
 
   // Fetch data on component mount
   useEffect(() => {
@@ -82,17 +83,16 @@ export const AddFacilityBookingPage = () => {
   };
 
   // Handle facility selection change
-  const handleFacilityChange = (facilityId: string) => {
-    setSelectedFacility(facilityId);
-    if (facilityId) {
-      fetchFacilityDetails(facilityId);
+  const handleFacilityChange = (facility: any) => {
+    setSelectedFacility(facility);
+    if (facility) {
+      fetchFacilityDetails(facility.id);
     } else {
       setFacilityDetails(null);
       setPaymentMethod('');
     }
   };
 
-  // Fetch available slots
   const fetchSlots = async (facilityId: string, date: string, userId: string) => {
     try {
       // Convert date from YYYY-MM-DD to YYYY/MM/DD format
@@ -103,7 +103,7 @@ export const AddFacilityBookingPage = () => {
           user_id: userId
         }
       });
-      
+
       if (response.data && response.data.slots) {
         setSlots(response.data.slots);
         setSelectedSlots([]); // Reset selected slots when new slots are fetched
@@ -117,7 +117,7 @@ export const AddFacilityBookingPage = () => {
   // Effect to fetch slots when facility, date, and user are all selected
   useEffect(() => {
     if (selectedFacility && selectedDate && selectedUser) {
-      fetchSlots(selectedFacility, selectedDate, selectedUser);
+      fetchSlots(selectedFacility.id, selectedDate, selectedUser);
     } else {
       setSlots([]);
       setSelectedSlots([]);
@@ -137,38 +137,37 @@ export const AddFacilityBookingPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    alert('Form submitted! Check console for details.');
-    console.log('=== FORM SUBMITTED - START ===');
-    
+
     try {
-      // Validate required fields first
       if (!selectedUser) {
-        alert('Please select a user');
+        toast.error('Please select a user');
         return;
       }
       if (!selectedFacility) {
-        alert('Please select a facility');
+        toast.error('Please select a facility');
         return;
       }
       if (!selectedDate) {
-        alert('Please select a date');
+        toast.error('Please select a date');
+        return;
+      }
+      if (comment && comment.length > 255) {
+        toast.error('Comment should not exceed 255 characters');
         return;
       }
       if (!paymentMethod) {
-        alert('Please select a payment method');
+        toast.error('Please select a payment method');
         return;
       }
       if (selectedSlots.length === 0) {
-        alert('Please select at least one slot');
+        toast.error('Please select at least one slot');
         return;
       }
 
-      // Hardcode some values for testing, since localStorage might be empty
-      const selectedSiteId = localStorage.getItem('selectedSiteId') || '7'; // fallback value
+      const selectedSiteId = localStorage.getItem('selectedSiteId') || '7';
       const userString = localStorage.getItem('user');
-      let userId = '2844'; // fallback value
-      
+      let userId = '2844';
+
       if (userString) {
         try {
           const user = JSON.parse(userString);
@@ -179,32 +178,20 @@ export const AddFacilityBookingPage = () => {
           console.error('Error parsing user from localStorage:', error);
         }
       }
-      
-      console.log('Using values:', { selectedSiteId, userId });
 
-      console.log('=== FORM SUBMISSION DEBUG ===');
-      console.log('selectedUser:', selectedUser);
-      console.log('selectedFacility:', selectedFacility);
-      console.log('selectedDate:', selectedDate);
-      console.log('paymentMethod:', paymentMethod);
-      console.log('selectedSlots:', selectedSlots);
-      console.log('userType:', userType);
-      console.log('selectedSiteId:', selectedSiteId);
-      console.log('userId:', userId);
-
-      // Try JSON payload instead of FormData
       const payload = {
         facility_booking: {
           user_society_type: 'User',
           resource_type: 'Pms::Site',
           resource_id: selectedSiteId,
-          book_by_id: selectedSlots[0], // Use first selected slot ID instead of user ID
+          book_by_id: selectedSlots[0],
           book_by: 'slot',
-          facility_id: selectedFacility,
+          facility_id: selectedFacility.id,
           startdate: selectedDate.replace(/-/g, '/'),
           comment: comment || '',
           payment_method: paymentMethod,
-          selected_slots: selectedSlots
+          selected_slots: selectedSlots,
+          entity_id: selectedCompany,
         },
         on_behalf_of: userType === 'occupant' ? 'occupant-user' : 'fm-user',
         occupant_user_id: userType === 'occupant' ? selectedUser : '',
@@ -213,8 +200,7 @@ export const AddFacilityBookingPage = () => {
 
       console.log('Payload being sent:', JSON.stringify(payload, null, 2));
       console.log('About to submit to API...');
-      
-      // Submit the booking with JSON payload
+
       const response = await apiClient.post('/pms/admin/facility_bookings.json', payload, {
         headers: {
           'Content-Type': 'application/json',
@@ -225,7 +211,7 @@ export const AddFacilityBookingPage = () => {
 
       if (response.status === 200 || response.status === 201) {
         console.log('Booking created successfully:', response.data);
-        alert('Booking created successfully!');
+        toast.error('Booking created successfully!');
         navigate('/vas/booking/list');
       }
     } catch (error: any) {
@@ -234,7 +220,7 @@ export const AddFacilityBookingPage = () => {
         console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
       }
-      alert('Error creating booking. Please check the console for details.');
+      toast.error('Error creating booking. Please check the console for details.');
     }
   };
 
@@ -271,16 +257,14 @@ export const AddFacilityBookingPage = () => {
     <div className="p-6 mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <button 
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
+          <button
             onClick={handleBackToList}
             className="flex items-center gap-1 hover:text-gray-800 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
           </button>
-          <span>Booking</span>
-          <span>&gt;</span>
-          <span>Add Facility Booking</span>
         </div>
         <div className="flex items-center gap-3 mb-6">
           <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: '#C72030' }}>
@@ -307,6 +291,38 @@ export const AddFacilityBookingPage = () => {
 
         {/* Form Fields Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="space-y-2">
+            <TextField
+              select
+              label="Company"
+              value={selectedCompany}
+              onChange={(e) => setSelectedCompany(e.target.value)}
+              variant="outlined"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
+              disabled={entitiesLoading}
+              helperText={entitiesError ? "Error loading companies" : ""}
+              error={!!entitiesError}
+            >
+              {entitiesLoading && (
+                <MenuItem value="" disabled>
+                  Loading companies...
+                </MenuItem>
+              )}
+              {!entitiesLoading && !entitiesError && entities.length === 0 && (
+                <MenuItem value="" disabled>
+                  No companies available
+                </MenuItem>
+              )}
+              {entities.map((entity) => (
+                <MenuItem key={entity.id} value={entity.id.toString()}>
+                  {entity.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </div>
+
           {/* User Selection */}
           <div className="space-y-2">
             <TextField
@@ -366,41 +382,8 @@ export const AddFacilityBookingPage = () => {
                 </MenuItem>
               )}
               {facilities.map((facility) => (
-                <MenuItem key={facility.id} value={facility.id.toString()}>
+                <MenuItem key={facility.id} value={facility}>
                   {facility.fac_name}
-                </MenuItem>
-              ))}
-            </TextField>
-          </div>
-
-          {/* Company Selection */}
-          <div className="space-y-2">
-            <TextField
-              select
-              label="Company"
-              value={selectedCompany}
-              onChange={(e) => setSelectedCompany(e.target.value)}
-              variant="outlined"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              sx={fieldStyles}
-              disabled={entitiesLoading}
-              helperText={entitiesError ? "Error loading companies" : ""}
-              error={!!entitiesError}
-            >
-              {entitiesLoading && (
-                <MenuItem value="" disabled>
-                  Loading companies...
-                </MenuItem>
-              )}
-              {!entitiesLoading && !entitiesError && entities.length === 0 && (
-                <MenuItem value="" disabled>
-                  No companies available
-                </MenuItem>
-              )}
-              {entities.map((entity) => (
-                <MenuItem key={entity.id} value={entity.id.toString()}>
-                  {entity.name}
                 </MenuItem>
               ))}
             </TextField>
@@ -439,6 +422,8 @@ export const AddFacilityBookingPage = () => {
                 height: 'auto',
               },
             }}
+            helperText={<span style={{ textAlign: 'right', display: 'block' }}>{`${comment.length}/255 characters`}</span>}
+            error={comment.length > 255}
           />
         </div>
 
@@ -456,8 +441,8 @@ export const AddFacilityBookingPage = () => {
                     onChange={() => handleSlotSelection(slot.id)}
                     className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <Label 
-                    htmlFor={`slot-${slot.id}`} 
+                  <Label
+                    htmlFor={`slot-${slot.id}`}
                     className="cursor-pointer text-sm font-medium"
                   >
                     {slot.ampm}
@@ -513,25 +498,83 @@ export const AddFacilityBookingPage = () => {
 
         {/* Submit Button */}
         <div className="flex justify-center">
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white px-8 py-2"
           >
             Submit
           </Button>
         </div>
 
-        {/* Footer Links */}
+        {/* Footer Links with Dialogs */}
         <div className="space-y-2 text-sm">
-          <div className="flex items-center gap-2 cursor-pointer hover:underline" style={{ color: '#C72030' }}>
+          <div
+            className="flex items-center gap-2 cursor-pointer hover:underline"
+            style={{ color: '#C72030' }}
+            onClick={() => setOpenCancelPolicy(true)}
+          >
             <FileText className="w-4 h-4" />
             Cancellation Policy
           </div>
-          <div className="flex items-center gap-2 cursor-pointer hover:underline" style={{ color: '#C72030' }}>
+          <div
+            className="flex items-center gap-2 cursor-pointer hover:underline"
+            style={{ color: '#C72030' }}
+            onClick={() => setOpenTerms(true)}
+          >
             <Shield className="w-4 h-4" />
             Terms & Conditions
           </div>
         </div>
+
+        {/* Cancellation Policy Dialog */}
+        <Dialog
+          open={openCancelPolicy}
+          onClose={() => setOpenCancelPolicy(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>Cancellation Policy</DialogTitle>
+          <DialogContent>
+            <div className="space-y-4">
+              {
+                selectedFacility.cancellation_policy
+              }
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setOpenCancelPolicy(false)}
+              className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Terms & Conditions Dialog */}
+        <Dialog
+          open={openTerms}
+          onClose={() => setOpenTerms(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>Terms & Conditions</DialogTitle>
+          <DialogContent>
+            <div className="space-y-4">
+              {
+                selectedFacility.terms
+              }
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setOpenTerms(false)}
+              className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white"
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
       </form>
     </div>
   );

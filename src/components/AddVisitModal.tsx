@@ -18,7 +18,6 @@ interface AddVisitModalProps {
   onClose: () => void;
   amcId: string;
 }
-
 interface AMCDetailsData {
   id: number;
   asset_id: number | null;
@@ -60,17 +59,22 @@ interface AMCDetailsDataWithVisits extends AMCDetailsData {
   amc_visit_logs: AmcVisitLog[];
 }
 
+
 export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
-  const dispatch = useAppDispatch(); 
+  const dispatch = useAppDispatch();
 
   const [formData, setFormData] = useState({
     vendor: '',
     startDate: '',
     technician: '',
+    remarks: '',
   });
+
   const [users, setUsers] = useState([]);
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const { data: amcData, loading, error } = useAppSelector(
     (state) => state.amcDetails as {
@@ -102,50 +106,74 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
   if (!isOpen) return null;
 
   const handleInputChange = (field: string, value: string) => {
+    if (field === 'vendor') {
+      // Only validate for visit number: must not be empty or a number <= 0
+      if (value !== '' && /^\d+$/.test(value) && Number(value) <= 0) {
+        toast.error('Visit Number must be a positive number greater than 0');
+        toast.dismiss();
+      }
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // If vendor is a number, it must be > 0; if not a number, allow any non-empty string
+    // Visit number must be a positive integer (numbers only, > 0)
+    if (!formData.vendor || !/^\d+$/.test(formData.vendor) || Number(formData.vendor) <= 0) {
+      toast.error('Visit Number must be a positive number greater than 0');
+      return;
+    }
+    setSubmitting(true);
 
-    const payload = {
-      pms_asset_amc: {
-        amc_visit_logs_attributes: [
-          {
-            visit_number: formData.vendor,
-            technician_id: formData.technician,
-            visit_date: formData.startDate,
+    const form = new FormData();
+    form.append('visit_number', formData.vendor);
+    form.append('technician_id', formData.technician);
+    form.append('visit_date', formData.startDate);
+    form.append('remarks', formData.remarks);
+
+    if (attachment) {
+      form.append('document', attachment);
+    }
+
+    try {
+      await axios.post(
+        `https://${baseUrl}/pms/asset_amcs/${amcId}/add_visit_log.json`,
+        form,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
           },
-        ],
-      },
-    };
-
-    axios
-      .patch(`https://${baseUrl}/pms/asset_amcs/${amcId}.json`, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then(() => {
-        toast.success('Visit added successfully');
-        setFormData({ vendor: '', startDate: '', technician: '' });
-        dispatch(fetchAMCDetails(amcId)); // ✅ Re-fetch updated data
-        handleClose();
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  };
-
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
+        }
+      );
+      toast.success('Visit added successfully');
+      setFormData({ vendor: '', startDate: '', technician: '', remarks: '' });
+      setAttachment(null);
+      dispatch(fetchAMCDetails(amcId));
+      handleClose();
+    } catch (error: any) {
+      console.error(error);
+      // Try to show error message from API response
+      const apiError = error?.response?.data;
+      if (apiError && (apiError.error || apiError.messages)) {
+        let msg = '';
+        if (apiError.error) msg += apiError.error;
+        if (apiError.messages && Array.isArray(apiError.messages)) {
+          msg += (msg ? ': ' : '') + apiError.messages.join(', ');
+        }
+        toast.error(msg || 'Failed to add visit');
+      } else {
+        toast.error('Failed to add visit');
+      }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleClose = () => {
-    setFormData({ vendor: '', startDate: '', technician: '' });
+    setFormData({ vendor: '', startDate: '', technician: '', remarks: '' });
+    setAttachment(null);
     onClose();
   };
 
@@ -162,66 +190,115 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="space-y-4">
-            <TextField
-              required
-              label="Vendor"
-              placeholder="Enter Visit Number"
-              name="vendor"
-              value={formData.vendor}
-              onChange={(e) => handleInputChange('vendor', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-            />
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <TextField
+            required
+            label="Visit Number"
+            placeholder="Enter Visit Number"
+            name="vendor"
+            value={formData.vendor}
+            onChange={(e) => {
+              // Only allow digits
+              const val = e.target.value.replace(/[^\d]/g, '');
+              handleInputChange('vendor', val);
+            }}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', min: 1 }}
+          />
 
-            <TextField
-              label="Start Date"
-              placeholder="Select Date"
-              name="startDate"
-              type="date"
-              value={formData.startDate}
-              onChange={(e) => handleInputChange('startDate', e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-            />
+          <TextField
+            label="Start Date"
+            type="date"
+            name="startDate"
+            value={formData.startDate}
+            onChange={(e) => handleInputChange('startDate', e.target.value)}
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+          />
 
-            <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-              <InputLabel id="technician-label" shrink>
-                Type
-              </InputLabel>
-              <Select
-                labelId="technician-label"
-                name="technician"
-                value={formData.technician || ''}
-                onChange={(e) => handleInputChange('technician', e.target.value)}
-                label="Type"
-                displayEmpty
-                notched
-              >
-                <MenuItem value="" disabled>
-                  <em>Select Technician</em>
+          <FormControl fullWidth variant="outlined">
+            <InputLabel id="technician-label" shrink>
+              Technician
+            </InputLabel>
+            <Select
+              labelId="technician-label"
+              name="technician"
+              value={formData.technician || ''}
+              onChange={(e) => handleInputChange('technician', e.target.value)}
+              label="Technician"
+              displayEmpty
+              notched
+            >
+              <MenuItem value="" disabled>
+                <em>Select Technician</em>
+              </MenuItem>
+              {users?.map((user) => (
+                <MenuItem key={user.id} value={user.id}>
+                  {user.full_name}
                 </MenuItem>
-                {users?.map((user: any) => (
-                  <MenuItem key={user.id} value={user.id}>
-                    {user.full_name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            label="Remarks"
+            placeholder="Enter remarks"
+            name="remarks"
+            value={formData.remarks}
+            onChange={(e) => handleInputChange('remarks', e.target.value)}
+            fullWidth
+            variant="outlined"
+            multiline
+            rows={3}
+            InputLabelProps={{ shrink: true }}
+          />
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700" htmlFor="attachment">
+              Attachment
+            </label>
+            <input
+              id="attachment"
+              type="file"
+              name="attachment"
+              onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+              className="block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+            />
           </div>
 
-          <div className="flex justify-center mt-6">
+          <div className="flex justify-center pt-4">
             <Button
               type="submit"
+              disabled={submitting}
               style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90 px-8"
+              className="text-white hover:bg-[#C72030]/90 px-8 py-2 rounded-md flex items-center justify-center gap-2"
             >
-              Submit
+              {submitting && (
+                <svg
+                  className="animate-spin h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  />
+                </svg>
+              )}
+              {submitting ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
         </form>

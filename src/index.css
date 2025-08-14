@@ -437,3 +437,122 @@
     transition: none;
   }
 }
+
+
+@media (min-width: 640px) {
+    .sm\:max-w-7xl {
+        max-width: 100% !important;
+    }
+}
+
+/* Sticky/Frozen Scrollbar Styles for Asset Table */
+.sticky-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+  /* Force scrollbar to always be visible */
+  overflow-x: scroll !important;
+  /* Set a minimum height to ensure scrollbar is always visible */
+  min-height: 200px;
+}
+
+.sticky-scrollbar::-webkit-scrollbar {
+  height: 12px;
+  /* Make scrollbar always visible */
+  background-color: #f1f1f1;
+}
+
+.sticky-scrollbar::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+  border-radius: 6px;
+}
+
+.sticky-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 6px;
+  border: 2px solid #f1f1f1;
+}
+
+.sticky-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+/* FullCalendar Custom Styles */
+.fc {
+  font-family: 'Inter', 'Work Sans', system-ui, -apple-system, sans-serif;
+}
+
+.fc-theme-standard .fc-scrollgrid {
+  border: 1px solid hsl(var(--border));
+}
+
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: hsl(var(--border));
+}
+
+.fc-col-header-cell {
+  background-color: hsl(var(--muted));
+  font-weight: 600;
+  color: hsl(var(--muted-foreground));
+}
+
+.fc-daygrid-day-number {
+  color: hsl(var(--foreground));
+  font-weight: 500;
+}
+
+.fc-day-today {
+  background-color: hsl(var(--accent)) !important;
+}
+
+.fc-event {
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.fc-event:hover {
+  filter: brightness(0.9);
+}
+
+.fc-button {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.fc-button:hover:not(:disabled) {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  filter: brightness(0.9);
+}
+
+.fc-button:focus {
+  box-shadow: 0 0 0 2px hsl(var(--ring));
+}
+
+.fc-timegrid-slot-label {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+}
+
+.fc-list-event-title {
+  font-weight: 500;
+}
+
+.fc-popover {
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.fc-more-link {
+  color: hsl(var(--primary));
+  font-weight: 500;
+}
+
+.fc-more-link:hover {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}

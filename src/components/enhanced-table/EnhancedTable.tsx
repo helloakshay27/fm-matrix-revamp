@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect } from 'react';
 import {
   DndContext,
@@ -34,6 +33,82 @@ import { useEnhancedTable, ColumnConfig } from '@/hooks/useEnhancedTable';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Search, Download, Loader2, Grid3x3, Plus, X, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAuthHeader, API_CONFIG } from '@/config/apiConfig';
+
+// Excel export utility function
+const exportToExcel = <T extends Record<string, any>>(
+  data: T[],
+  columns: ColumnConfig[],
+  fileName: string = 'table-export'
+) => {
+  if (data.length === 0) {
+    alert('No data to export');
+    return;
+  }
+
+  // Create CSV content
+  const headers = columns.map(col => col.label).join(',');
+  const csvContent = [
+    headers,
+    ...data.map(row =>
+      columns.map(col => {
+        const value = row[col.key];
+        // Handle values that might contain commas or quotes
+        const stringValue = String(value || '').replace(/"/g, '""');
+        return stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')
+          ? `"${stringValue}"`
+          : stringValue;
+      }).join(',')
+    )
+  ].join('\n');
+
+  // Create and trigger download
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${fileName}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+// Ticket export function for API integration
+const exportTicketRecords = async () => {
+  try {
+    const url = `${API_CONFIG.BASE_URL}/pms/admin/complaints.xlsx`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: getAuthHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Get the blob from the response
+    const blob = await response.blob();
+
+    // Create download link
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = 'ticket_records.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+
+  } catch (error) {
+    console.error('Error exporting tickets:', error);
+    alert('Failed to export ticket records');
+  }
+};
 
 interface BulkAction<T> {
   label: string;
@@ -78,6 +153,8 @@ interface EnhancedTableProps<T> {
   rightActions?: React.ReactNode;
   onFilterClick?: () => void;
   handleExport?: () => void;
+  enableGlobalSearch?: boolean; // Add this prop
+  onGlobalSearch?: (searchTerm: string) => void; // Add this prop
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -116,17 +193,93 @@ export function EnhancedTable<T extends Record<string, any>>({
   leftActions,
   rightActions,
   onFilterClick,
+  enableGlobalSearch = false, // Add this
+  onGlobalSearch, // Add this
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [apiSearchResults, setApiSearchResults] = useState<T[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchAbortController, setSearchAbortController] = useState<AbortController | null>(null);
+  const [lastProcessedSearch, setLastProcessedSearch] = useState(''); // Add this
 
   // Debounce the search input to avoid excessive API calls
-  const debouncedSearchInput = useDebounce(searchInput, 100);
+  const debouncedSearchInput = useDebounce(searchInput, 800);
 
-  const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
+  // Update internal search term when debounced input changes
+  useEffect(() => {
+    if (externalSearchTerm === undefined) {
+      if (enableGlobalSearch && onGlobalSearch) {
+        // Prevent duplicate processing of the same search term
+        if (debouncedSearchInput === lastProcessedSearch) {
+          return;
+        }
+
+        // Cancel previous search if it exists
+        if (searchAbortController) {
+          searchAbortController.abort();
+        }
+
+        // For global search, call the API search function
+        if (debouncedSearchInput.trim()) {
+          setIsSearching(true);
+          setLastProcessedSearch(debouncedSearchInput);
+          const newAbortController = new AbortController();
+          setSearchAbortController(newAbortController);
+          onGlobalSearch(debouncedSearchInput.trim());
+        } else {
+          // Clear search results when search is empty
+          setIsSearching(false);
+          setLastProcessedSearch('');
+          setSearchAbortController(null);
+          onGlobalSearch('');
+        }
+      } else {
+        // For local search, set internal search term
+        setInternalSearchTerm(debouncedSearchInput);
+      }
+    }
+  }, [debouncedSearchInput, externalSearchTerm, enableGlobalSearch, onGlobalSearch, lastProcessedSearch]);
+
+  // Add effect to reset loading state when search completes
+  useEffect(() => {
+    if (enableGlobalSearch && !loading) {
+      setIsSearching(false);
+      setSearchAbortController(null);
+    }
+  }, [loading, enableGlobalSearch]);
+
+  // Reset search state when data changes (search completes)
+  useEffect(() => {
+    if (enableGlobalSearch && data.length > 0 && isSearching) {
+      setIsSearching(false);
+    }
+  }, [data, enableGlobalSearch, isSearching]);
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (searchAbortController) {
+        searchAbortController.abort();
+      }
+    };
+  }, []);
+
+  // Get initial column visibility state from localStorage
+  const getSavedColumnVisibility = () => {
+    if (storageKey) {
+      const savedVisibility = localStorage.getItem(`${storageKey}-columns`);
+      if (savedVisibility) {
+        try {
+          return JSON.parse(savedVisibility);
+        } catch (e) {
+          console.error('Error parsing saved column visibility:', e);
+        }
+      }
+    }
+    return null;
+  };
 
   const {
     sortedData: baseSortedData,
@@ -140,8 +293,44 @@ export function EnhancedTable<T extends Record<string, any>>({
   } = useEnhancedTable({
     data,
     columns,
-    storageKey
+    storageKey,
+    initialColumnVisibility: getSavedColumnVisibility()
   });
+
+  // Wrap resetToDefaults to handle localStorage
+  const handleResetToDefaults = () => {
+    resetToDefaults();
+    if (storageKey) {
+      // Remove all stored column state
+      localStorage.removeItem(`${storageKey}-columns`);
+      localStorage.removeItem(`${storageKey}-column-order`);
+
+      // Set default column visibility state
+      const defaultVisibility = columns.reduce((acc, column) => ({
+        ...acc,
+        [column.key]: column.defaultVisible !== false
+      }), {});
+      localStorage.setItem(`${storageKey}-columns`, JSON.stringify(defaultVisibility));
+
+      // Set default column order
+      const defaultOrder = columns.map(column => column.key);
+      localStorage.setItem(`${storageKey}-column-order`, JSON.stringify(defaultOrder));
+    }
+  };
+
+  // Wrap toggleColumnVisibility to handle localStorage
+  const handleToggleColumnVisibility = (columnKey: string) => {
+    toggleColumnVisibility(columnKey);
+    if (storageKey) {
+      const updatedVisibility = {
+        ...columnVisibility,
+        [columnKey]: !columnVisibility[columnKey]
+      };
+      localStorage.setItem(`${storageKey}-columns`, JSON.stringify(updatedVisibility));
+    }
+  };
+
+  const searchTerm = externalSearchTerm !== undefined ? externalSearchTerm : internalSearchTerm;
 
   // Use API search results or filter data based on search term
   const filteredData = useMemo(() => {
@@ -182,6 +371,13 @@ export function EnhancedTable<T extends Record<string, any>>({
 
     if (over && active.id !== over.id) {
       reorderColumns(String(active.id), String(over.id));
+      // Save the new column order to localStorage
+      if (storageKey) {
+        const newOrder = columnIds.filter(id => id !== active.id);
+        const overIndex = newOrder.indexOf(String(over.id));
+        newOrder.splice(overIndex, 0, String(active.id));
+        localStorage.setItem(`${storageKey}-column-order`, JSON.stringify(newOrder));
+      }
     }
   };
 
@@ -216,70 +412,26 @@ export function EnhancedTable<T extends Record<string, any>>({
     onRowClick?.(item);
   };
 
+  // Handle search input changes
   const handleSearchInputChange = (value: string) => {
     setSearchInput(value);
-  };
-
-  const performSearch = async (searchTerm: string) => {
-    if (!searchTerm.trim()) {
-      setApiSearchResults(null);
-      setInternalSearchTerm('');
-      if (onSearchChange) {
-        onSearchChange('');
-      }
-      return;
-    }
-
-    try {
-      setIsSearching(true);
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('accessToken');
-
-      if (!token) {
-        alert('Authentication token not found. Please login first.');
-        return;
-      }
-
-      const response = await fetch(`https://fm-uat-api.lockated.com/pms/admin/complaints.json?per_page=20&page=1&q[search_all_fields_cont]=${searchTerm}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setApiSearchResults(data.complaints || []);
-        setCurrentPage(1);
-        setInternalSearchTerm(searchTerm);
-        if (onSearchChange) {
-          onSearchChange(searchTerm);
-        }
-      } else if (response.status === 401) {
-        alert('Unauthorized: Please check your authentication token or login again.');
-      } else {
-        alert(`Failed to search: ${response.status} ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error('Error searching:', error);
-      alert('An error occurred while searching. Please try again.');
-    } finally {
-      setIsSearching(false);
+    setCurrentPage(1); // Reset to first page when searching
+    if (onSearchChange) {
+      onSearchChange(value);
     }
   };
-
-  // Trigger search when debounced input changes
-  useEffect(() => {
-    performSearch(debouncedSearchInput);
-  }, [debouncedSearchInput]);
 
   const handleClearSearch = () => {
     setSearchInput('');
     setInternalSearchTerm('');
     setApiSearchResults(null);
     setCurrentPage(1);
+    setLastProcessedSearch(''); // Reset this too
     if (onSearchChange) {
       onSearchChange('');
+    }
+    if (enableGlobalSearch && onGlobalSearch) {
+      onGlobalSearch('');
     }
   };
 
@@ -331,19 +483,26 @@ export function EnhancedTable<T extends Record<string, any>>({
         </div>
 
         <div className="flex items-center gap-2">
-          {!hideTableSearch && (onSearchChange || !externalSearchTerm) && (
+          {!hideTableSearch && (onSearchChange || !externalSearchTerm || enableGlobalSearch) && (
             <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              {isSearching && (
+                <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 animate-spin" />
+              )}
+              {!isSearching && (
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              )}
               <Input
-                placeholder={searchPlaceholder}
+                placeholder={enableGlobalSearch ? `${searchPlaceholder}` : searchPlaceholder}
                 value={searchInput}
                 onChange={(e) => handleSearchInputChange(e.target.value)}
                 className="pl-10 pr-10"
+                disabled={isSearching}
               />
               {searchInput && (
                 <button
                   onClick={handleClearSearch}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={isSearching}
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -354,8 +513,10 @@ export function EnhancedTable<T extends Record<string, any>>({
           {onFilterClick && (
             <Button
               variant="outline"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+              size="sm"
+              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
               onClick={onFilterClick}
+              title='Filter'
             >
               <Filter className="w-4 h-4" />
             </Button>
@@ -365,8 +526,8 @@ export function EnhancedTable<T extends Record<string, any>>({
             <ColumnVisibilityMenu
               columns={columns}
               columnVisibility={columnVisibility}
-              onToggleVisibility={toggleColumnVisibility}
-              onResetToDefaults={resetToDefaults}
+              onToggleVisibility={handleToggleColumnVisibility}
+              onResetToDefaults={handleResetToDefaults}
             />
           )}
 
@@ -374,8 +535,9 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Button
               variant="outline"
               size="sm"
-              onClick={handleExport}
+              onClick={handleExport || (() => exportTicketRecords())}
               className="flex items-center gap-2"
+              title='Export'
             >
               <Download className="w-4 h-4" />
             </Button>
@@ -386,21 +548,21 @@ export function EnhancedTable<T extends Record<string, any>>({
       </div>
 
       <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="table-container sticky-scrollbar">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <Table className={className}>
-              <TableHeader>
+            <Table className={cn(className, "w-full min-w-max")}>
+              <TableHeader className="sticky-header">
                 <TableRow>
                   <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                     {renderActions && (
-                      <TableHead className="bg-[#f6f4ee] text-center" data-actions>Actions</TableHead>
+                      <TableHead className="bg-[#f6f4ee] text-center w-16 min-w-16 sticky top-0" data-actions>Actions</TableHead>
                     )}
                     {selectable && (
-                      <TableHead className="bg-[#f6f4ee] w-12 text-center" data-checkbox>
+                      <TableHead className="bg-[#f6f4ee] w-12 min-w-12 text-center sticky top-0" data-checkbox>
                         <div className="flex justify-center">
                           <Checkbox
                             checked={isAllSelected}
@@ -419,7 +581,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
                         onSort={() => handleSort(column.key)}
-                        className="bg-[#f6f4ee] text-center text-black"
+                        className="bg-[#f6f4ee] text-center text-black min-w-32 sticky top-0"
                       >
                         {column.label}
                       </SortableColumnHeader>
@@ -474,12 +636,12 @@ export function EnhancedTable<T extends Record<string, any>>({
                       onClick={(e) => handleRowClick(item, e)}
                     >
                       {renderActions && (
-                        <TableCell className="p-4 text-center" data-actions>
+                        <TableCell className="p-4 text-center w-16 min-w-16" data-actions>
                           {renderActions(item)}
                         </TableCell>
                       )}
                       {selectable && (
-                        <TableCell className="p-4 w-12 text-center" data-checkbox>
+                        <TableCell className="p-4 w-12 min-w-12 text-center" data-checkbox>
                           <div className="flex justify-center">
                             <Checkbox
                               checked={isSelected}
@@ -494,7 +656,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                         const renderedRow = renderRow ? renderRow(item) : item;
                         const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
                         return (
-                          <TableCell key={column.key} className="p-4 text-center">
+                          <TableCell key={column.key} className="p-4 text-center min-w-32">
                             {cellContent}
                           </TableCell>
                         );

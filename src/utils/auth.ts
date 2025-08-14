@@ -1,9 +1,26 @@
+
 // Authentication utility functions
 export interface User {
   id: number;
   email: string;
   firstname: string;
   lastname: string;
+  phone?: string;
+}
+
+export interface LoginResponse {
+  id: number;
+  email: string;
+  firstname: string;
+  lastname: string;
+  access_token: string;
+  phone?: string;
+}
+
+export interface OTPResponse {
+  success: boolean;
+  message: string;
+  otp?: string; // For development/testing
 }
 
 export interface Organization {
@@ -21,6 +38,8 @@ export interface Organization {
 export const AUTH_KEYS = {
   USER: 'user',
   TOKEN: 'token',
+  TEMP_PHONE: 'temp_phone',
+  TEMP_EMAIL: 'temp_email',
   BASE_URL: 'baseUrl'
 } as const;
 
@@ -67,13 +86,20 @@ export const isAuthenticated = (): boolean => {
 };
 
 // Clear all auth data
+
+
+
+// Clear all auth data
 export const clearAuth = (): void => {
   localStorage.removeItem(AUTH_KEYS.USER);
   localStorage.removeItem(AUTH_KEYS.TOKEN);
+  localStorage.removeItem(AUTH_KEYS.TEMP_PHONE);
+  localStorage.removeItem(AUTH_KEYS.TEMP_EMAIL);
   localStorage.removeItem(AUTH_KEYS.BASE_URL);
+  localStorage.clear();
+  
 };
 
-// Get organizations by email
 export const getOrganizationsByEmail = async (email: string): Promise<Organization[]> => {
   const response = await fetch(`https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`);
   
@@ -85,7 +111,7 @@ export const getOrganizationsByEmail = async (email: string): Promise<Organizati
   return data.organizations || [];
 };
 
-// Login with email and password
+
 export const loginUser = async (email: string, password: string, baseUrl: string): Promise<{ id: number; email: string; firstname: string; lastname: string; access_token: string }> => {
   const response = await fetch(`https://${baseUrl}/api/users/sign_in.json`, {
     method: 'POST',
@@ -104,4 +130,128 @@ export const loginUser = async (email: string, password: string, baseUrl: string
 
   const data = await response.json();
   return data;
+};
+
+
+// Login with email and password
+// export const loginWithEmail = async (email: string, password: string): Promise<LoginResponse> => {
+//   const response = await fetch('https://fm-uat-api.lockated.com/api/users/sign_in.json', {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify({
+//       email,
+//       password
+//     }),
+//   });
+
+//   if (!response.ok) {
+//     throw new Error('Login failed');
+//   }
+
+//   const data = await response.json();
+//   return data;
+// };
+
+// Login with phone and password (first step)
+export const loginWithPhone = async (phone: string, password: string): Promise<{ success: boolean; message: string }> => {
+  // Simulate API call for phone login
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Store temp phone for OTP verification
+  localStorage.setItem(AUTH_KEYS.TEMP_PHONE, phone);
+  
+  // For now, simulate success - replace with actual API call
+  return {
+    success: true,
+    message: 'OTP sent to your phone number'
+  };
+};
+
+// Verify OTP after phone login
+export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
+  const phone = localStorage.getItem(AUTH_KEYS.TEMP_PHONE);
+  
+  if (!phone) {
+    throw new Error('Phone number not found');
+  }
+
+  // Simulate API call for OTP verification
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // For development, accept "123456" as valid OTP
+  if (otp === '123456') {
+    // Clear temp phone
+    localStorage.removeItem(AUTH_KEYS.TEMP_PHONE);
+    
+    // Return mock user data
+    return {
+      id: 1,
+      email: 'user@example.com',
+      firstname: 'John',
+      lastname: 'Doe',
+      phone: phone,
+      access_token: 'mock-jwt-token'
+    };
+  } else {
+    throw new Error('Invalid OTP');
+  }
+};
+
+// Send forgot password OTP
+export const sendForgotPasswordOTP = async (emailOrPhone: string): Promise<OTPResponse> => {
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Store temp email/phone for password reset
+  if (emailOrPhone.includes('@')) {
+    localStorage.setItem(AUTH_KEYS.TEMP_EMAIL, emailOrPhone);
+  } else {
+    localStorage.setItem(AUTH_KEYS.TEMP_PHONE, emailOrPhone);
+  }
+  
+  return {
+    success: true,
+    message: 'OTP sent successfully',
+    otp: '123456' // For development
+  };
+};
+
+// Verify forgot password OTP
+export const verifyForgotPasswordOTP = async (otp: string): Promise<{ success: boolean; message: string }> => {
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  if (otp === '123456') {
+    return {
+      success: true,
+      message: 'OTP verified successfully'
+    };
+  } else {
+    throw new Error('Invalid OTP');
+  }
+};
+
+// Reset password
+export const resetPassword = async (newPassword: string, confirmPassword: string): Promise<{ success: boolean; message: string }> => {
+  if (newPassword !== confirmPassword) {
+    throw new Error('Passwords do not match');
+  }
+  
+  if (newPassword.length < 6) {
+    throw new Error('Password must be at least 6 characters long');
+  }
+  
+  // Simulate API call
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Clear temp data
+  localStorage.removeItem(AUTH_KEYS.TEMP_EMAIL);
+  localStorage.removeItem(AUTH_KEYS.TEMP_PHONE);
+  
+  return {
+    success: true,
+    message: 'Password reset successfully'
+  };
 };

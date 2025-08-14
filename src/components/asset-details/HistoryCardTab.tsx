@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import axios from 'axios';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
-import { useParams } from 'react-router-dom';
 
 interface HistoryCardTabProps {
   asset: Asset;
@@ -69,13 +68,20 @@ interface ActivityHistoryEntry {
 export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }) => {
   const [activeTab, setActiveTab] = useState<'history-details' | 'logs'>('history-details');
   const [activityHistory, setActivityHistory] = useState<ActivityHistoryEntry[]>([]);
-  const { id } = useParams();
 
   useEffect(() => {
     const fetchHistory = async () => {
+      // Use assetId prop if available, otherwise fall back to asset.id
+      const idToUse = assetId || asset.id;
+      
+      if (!idToUse) {
+        console.warn('No asset ID available for history fetch');
+        return;
+      }
+
       try {
         const response = await axios.get(
-          `${API_CONFIG.BASE_URL}/pms/assets/${id}/get_asset_history.json`,
+          `${API_CONFIG.BASE_URL}/pms/assets/${idToUse}/get_asset_history.json`,
           {
             headers: {
               Authorization: getAuthHeader(),
@@ -84,11 +90,12 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
         );
         setActivityHistory(response.data.activity_history || []);
       } catch (error) {
+        console.error('Failed to fetch asset history:', error);
         setActivityHistory([]);
       }
     };
     fetchHistory();
-  }, [id]);
+  }, [assetId, asset.id]);
 
   // Basic asset info mapped from asset prop
   const basicAssetInfo = [
@@ -114,12 +121,18 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold text-[#C72030]">Basic Asset Info</CardTitle>
+          <CardTitle className="text-base font-semibold text-[#1A1A1A]">Basic Asset Info</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
+                <TableHeader className="w-full text-center"> 
+                  <TableRow>
+                    <TableHead className="font-medium text-center">Label</TableHead>
+                    <TableHead className="font-medium text-center">Value</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {basicAssetInfo.map((item, index) => (
                     <TableRow key={index}>
@@ -137,35 +150,35 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
       {/* History Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold text-[#C72030]">History</CardTitle>
+          <CardTitle className="text-base font-semibold text-[#1A1A1A]">History</CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
+          <div className="bg-white rounded-lg border overflow-hidden">
             <div className="overflow-x-auto">
               <Table>
-                <thead>
-                  <tr>
-                    <th className="p-4 text-center font-medium text-gray-700">Date</th>
-                    <th className="p-4 text-center font-medium text-gray-700">Type of Activity</th>
-                    <th className="p-4 text-center font-medium text-gray-700">Description</th>
-                    <th className="p-4 text-center font-medium text-gray-700">Performed By</th>
-                  </tr>
-                </thead>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-medium">Date</TableHead>
+                    <TableHead className="font-medium">Type of Activity</TableHead>
+                    <TableHead className="font-medium">Description</TableHead>
+                    <TableHead className="font-medium">Performed By</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
                   {mappedHistoryTable.length > 0 ? (
                     mappedHistoryTable.map((row, idx) => (
                       <TableRow key={idx}>
-                        <TableCell className="p-4 text-center text-gray-900">{row.date}</TableCell>
-                        <TableCell className="p-4 text-center text-gray-900">{row.type}</TableCell>
-                        <TableCell className="p-4 text-center text-gray-900">
+                        <TableCell>{row.date}</TableCell>
+                        <TableCell>{row.type}</TableCell>
+                        <TableCell>
                           <div dangerouslySetInnerHTML={{ __html: row.description }} />
                         </TableCell>
-                        <TableCell className="p-4 text-center text-gray-900">{row.performedBy}</TableCell>
+                        <TableCell>{row.performedBy}</TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={4} className="p-4 text-center text-gray-400">No history available.</TableCell>
+                      <TableCell colSpan={4} className="text-center py-4 text-gray-400">No history available.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -224,15 +237,15 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
     <div className="space-y-6">
       <div className="flex items-center gap-2 mb-6">
         <FileText className="w-5 h-5 text-[#C72030]" />
-        <h2 className="text-xl font-bold text-[#C72030]">History In Details</h2>
+        <h2 className="text-lg font-semibold uppercase text-[#1A1A1A]">History In Details</h2>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-        <div className="flex border-b border-gray-200">
+        {/* <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab('history-details')}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'history-details'
-              ? 'bg-[#C72030] text-white border-b-2 border-[#C72030]'
+              ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#1A1A1A" border-[#EDEAE3]'
               : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
               }`}
           >
@@ -241,13 +254,36 @@ export const HistoryCardTab: React.FC<HistoryCardTabProps> = ({ asset, assetId }
           <button
             onClick={() => setActiveTab('logs')}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${activeTab === 'logs'
-              ? 'bg-[#C72030] text-white border-b-2 border-[#C72030]'
+              ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#1A1A1A] border-[#EDEAE3]'
               : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
               }`}
           >
             Logs
           </button>
-        </div>
+        </div> */}
+        <div className="flex border-b border-gray-200">
+  <button
+    onClick={() => setActiveTab('history-details')}
+    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+      activeTab === 'history-details'
+        ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#C72030] border-[#EDEAE3]'
+        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+    }`}
+  >
+    History Details
+  </button>
+  <button
+    onClick={() => setActiveTab('logs')}
+    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+      activeTab === 'logs'
+        ? 'bg-[#EDEAE3] text-lg font-semibold uppercase text-[#C72030] border-[#EDEAE3]'
+        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+    }`}
+  >
+    Logs
+  </button>
+</div>
+
 
         <div className="p-4 sm:p-6 ">
           {activeTab === 'history-details' && renderHistoryDetails()}

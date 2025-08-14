@@ -11,7 +11,8 @@ import {
   Star, MessageSquare, Coffee, Wifi, Home, ChevronDown,
   ChevronRight, ChevronLeft, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
-  Archive, TreePine, FlaskConical, Mail, ClipboardList
+  Archive, TreePine, FlaskConical, Mail, ClipboardList,
+  Currency
 } from 'lucide-react';
 
 const navigationStructure = {
@@ -96,7 +97,7 @@ const navigationStructure = {
         name: 'Checklist Setup',
         icon: CheckSquare,
         subItems: [
-          { name: 'Checklist Group and Sub Group', href: '/settings/checklist-setup/groups' },
+          { name: 'Checklist Group & Sub Group', href: '/settings/checklist-setup/groups' },
           { name: 'Email Rule', href: '/settings/checklist-setup/email-rule' },
           { name: 'Task Escalation', href: '/settings/checklist-setup/task-escalation' }
         ]
@@ -142,7 +143,7 @@ const navigationStructure = {
         subItems: [
           { name: 'Setup', href: '/settings/waste-management/setup' }
         ]
-      }
+      },
     ]
   },
   'Finance': {
@@ -250,23 +251,26 @@ const modulesByPackage = {
     }
   ],
   'Maintenance': [
-    { name: 'Assets', icon: Building, href: '/maintenance/asset' },
-    { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
+    { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
+    { name: 'Task', icon: CheckSquare, href: '/maintenance/task' },
+    { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule' },
     { name: 'Services', icon: Wrench, href: '/maintenance/service' },
-    { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
+    { name: 'Assets', icon: Building, href: '/maintenance/asset' },
+
     {
       name: 'Inventory',
       icon: Package,
       href: '/maintenance/inventory',
       subItems: [
-        { name: 'Inventory', href: '/maintenance/inventory', color: 'text-[#1a1a1a]' },
+        { name: 'Inventory Master', href: '/maintenance/inventory', color: 'text-[#1a1a1a]' },
         { name: 'Inventory Consumption', href: '/maintenance/inventory-consumption', color: 'text-[#1a1a1a]' },
-        { name: 'Eco-Friendly List', href: '/maintenance/eco-friendly-list', color: 'text-[#1a1a1a]' }
+        // { name: 'Eco-Friendly List', href: '/maintenance/eco-friendly-list', color: 'text-[#1a1a1a]' }
       ]
     },
-    { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
-    { name: 'Task', icon: CheckSquare, href: '/maintenance/task' },
-    { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule' },
+    { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
+    { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
+
+
     {
       name: 'Audit',
       icon: Clipboard,
@@ -308,10 +312,21 @@ const modulesByPackage = {
       href: '/maintenance/survey',
       subItems: [
         { name: 'Survey List', href: '/maintenance/survey/list', color: 'text-[#1a1a1a]' },
-        { name: 'Mapping', href: '/maintenance/survey/mapping', color: 'text-[#1a1a1a]' },
+        // { name: 'Mapping', href: '/maintenance/survey/mapping', color: 'text-[#1a1a1a]' },
         { name: 'Response', href: '/maintenance/survey/response', color: 'text-[#1a1a1a]' }
       ]
-    }
+    },
+    {
+      name: 'M Safe',
+      icon: Shield,
+      href: '/maintenance/m-safe',
+      subItems: [
+        { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]' },
+        { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' }
+      ]
+    },
+    { name: 'Krcc List', icon: ClipboardList, href: '/maintenance/krcc-list' },
+    // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
   ],
   'Safety': [
     { name: 'Incident', icon: AlertTriangle, href: '/safety/incident' },
@@ -364,7 +379,13 @@ const modulesByPackage = {
   'CRM': [
     { name: 'Lead', icon: Target, href: '/crm/lead' },
     { name: 'Opportunity', icon: Star, href: '/crm/opportunity' },
-    { name: 'CRM', icon: Users, href: '/crm/crm' },
+    {
+      name: 'CRM', icon: Users, subItems: [
+        { name: 'Customers', href: '/crm/customers' },
+        { name: 'FM Users', href: '/crm/fm-users' },
+        { name: 'Occupant Users', href: '/crm/occupant-users' }
+      ]
+    },
     { name: 'Events', icon: Calendar, href: '/crm/events' },
     { name: 'Broadcast', icon: Bell, href: '/crm/broadcast' },
     { name: 'Groups', icon: Users, href: '/crm/groups' },
@@ -375,6 +396,9 @@ const modulesByPackage = {
     { name: 'Energy', icon: Zap, href: '/utility/energy' },
     { name: 'Water', icon: Droplets, href: '/utility/water' },
     { name: 'STP', icon: Database, href: '/utility/stp' },
+    { name: 'Daily Readings', icon: ClipboardList, href: '/utility/daily-readings' },
+    { name: 'Utility Request', icon: FileText, href: '/utility/utility-request' },
+    { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
     { name: 'EV Consumption', icon: Car, href: '/utility/ev-consumption' },
     { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' }
   ],
@@ -495,7 +519,7 @@ const modulesByPackage = {
           name: 'Checklist Setup',
           href: '/settings/checklist-setup',
           subItems: [
-            { name: 'Checklist Group and Sub Group', href: '/settings/checklist-setup/groups' },
+            { name: 'Checklist Group & Sub Group', href: '/settings/checklist-setup/groups' },
             { name: 'Email Rule', href: '/settings/checklist-setup/email-rule' },
             { name: 'Task Escalation', href: '/settings/checklist-setup/task-escalation' }
           ]
@@ -531,6 +555,14 @@ const modulesByPackage = {
             { name: 'Setup', href: '/settings/waste-management/setup' }
           ]
         },
+
+        {
+          name: 'Design Insight Setup',
+          icon: Target,
+          subItems: [
+            { name: 'Setup', href: '/settings/design-insights/setup' }
+          ]
+        }
       ]
     },
     {
@@ -571,6 +603,13 @@ const modulesByPackage = {
       href: '/settings/vas',
       subItems: [
         {
+          name: 'F&B',
+          href: '/settings/vas/fnb',
+          subItems: [
+            { name: 'Setup', href: '/settings/vas/fnb/setup' },
+          ]
+        },
+        {
           name: 'MOM',
           href: '/settings/vas/mom',
           subItems: [
@@ -602,7 +641,12 @@ const modulesByPackage = {
           ]
         }
       ]
-    }
+    },
+    // {
+    //   name: 'Currency',
+    //   icon: Currency,
+    //   href: '/settings/currency',
+    // }
   ]
 };
 
@@ -613,6 +657,11 @@ export const Sidebar = () => {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [selectedDepartment, setSelectedRole] = useState('');
   const [selectedRole, setSelectedDepartment] = useState('');
+
+  // Reset expanded items on page load/refresh
+  React.useEffect(() => {
+    setExpandedItems([]);
+  }, []);
 
   const toggleExpanded = (itemName: string) => {
     setExpandedItems(prev =>
@@ -668,6 +717,18 @@ export const Sidebar = () => {
   const isActiveRoute = (href: string) => {
     const currentPath = location.pathname;
     const isActive = currentPath === href || currentPath.startsWith(href + '/');
+
+    // Debug logging for Services
+    if (href === '/maintenance/service') {
+      console.log('Services route check:', {
+        currentPath,
+        href,
+        exactMatch: currentPath === href,
+        prefixMatch: currentPath.startsWith(href + '/'),
+        isActive
+      });
+    }
+
     return isActive;
   };
 
@@ -679,33 +740,32 @@ export const Sidebar = () => {
       const settingsItems = modulesByPackage['Settings'];
       const itemsToExpand = [];
 
-      // Add all main categories to expanded items
+      // Find the active item and its parent
       settingsItems.forEach(item => {
-        itemsToExpand.push(item.name);
+        if (item.href && path.startsWith(item.href)) {
+          itemsToExpand.push(item.name);
+        }
+        if (item.subItems) {
+          item.subItems.forEach(subItem => {
+            if (subItem.href && path.startsWith(subItem.href)) {
+              itemsToExpand.push(item.name); // Add parent
+              itemsToExpand.push(subItem.name);
 
-        // If this category's path is in the current path, expand its children
-        if (item.href && path.includes(item.href)) {
-          if (item.subItems) {
-            item.subItems.forEach(subItem => {
-              if (subItem.href && path.includes(subItem.href)) {
-                itemsToExpand.push(subItem.name);
-
+              // If there are nested items
+              if ((subItem as any).subItems) {
+                (subItem as any).subItems.forEach((nestedItem: any) => {
+                  if (nestedItem.href && path.startsWith(nestedItem.href)) {
+                    itemsToExpand.push(subItem.name);
+                  }
+                });
               }
-            });
-          }
+            }
+          });
         }
       });
 
-      // Update expanded items state
-      setExpandedItems(prev => {
-        const newItems = [...prev];
-        itemsToExpand.forEach(item => {
-          if (!newItems.includes(item)) {
-            newItems.push(item);
-          }
-        });
-        return newItems;
-      });
+      // Update expanded items state with only the active path
+      setExpandedItems(itemsToExpand);
     }
   }, [currentSection, location.pathname]);
 
@@ -844,6 +904,40 @@ export const Sidebar = () => {
     );
   };
 
+  const CollapsedMenuItem = ({ module, level = 0 }) => {
+    const hasSubItems = module.subItems && module.subItems.length > 0;
+    const isExpanded = expandedItems.includes(module.name);
+    const active = module.href ? isActiveRoute(module.href) : false;
+
+    return (
+      <>
+        <button
+          key={module.name}
+          onClick={() => {
+            if (hasSubItems) {
+              toggleExpanded(module.name);
+            } else if (module.href) {
+              handleNavigation(module.href, currentSection);
+            }
+          }}
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded ? 'bg-[#f0e8dc] shadow-inner' : 'hover:bg-[#DBC2A9]'
+            }`}
+          title={module.name}
+        >
+          {(active || isExpanded) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}
+          {level === 0 ? (
+            <module.icon className={`w-5 h-5 ${active || isExpanded ? 'text-[#C72030]' : 'text-[#1a1a1a]'}`} />
+          ) : (
+            <div className={`w-${3 - level} h-${3 - level} rounded-full bg-[#1a1a1a]`}></div>
+          )}
+        </button>
+        {isExpanded && hasSubItems && module.subItems.map(subItem => (
+          <CollapsedMenuItem key={`${module.name}-${subItem.name}`} module={subItem} level={level + 1} />
+        ))}
+      </>
+    );
+  };
+
   return (
     <div
       className={`${isSidebarCollapsed ? 'w-16' : 'w-64'} bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
@@ -876,125 +970,13 @@ export const Sidebar = () => {
         <nav className="space-y-2">
           {currentSection === 'Settings' ? (
             isSidebarCollapsed ? (
-              // Collapsed Settings: show only icons, centered, with tooltip
-              <div className="flex flex-col items-center space-y-5 pt-4">
-                {currentModules.map((module) => (
-                  <button
-                    key={module.name}
-                    onClick={() => module.href && handleNavigation(module.href, currentSection)}
-                    className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
-                      ? 'bg-[#f0e8dc] shadow-inner'
-                      : 'hover:bg-[#DBC2A9]'
-                      }`}
-                    title={module.name}
-                  >
-                    {isActiveRoute(module.href) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}
-                    <module.icon className={`w-5 h-5 ${isActiveRoute(module.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}`} />
-                  </button>
+              <div className="flex flex-col items-center space-y-3 pt-4">
+                {currentModules.map(module => (
+                  <CollapsedMenuItem key={module.name} module={module} />
                 ))}
               </div>
             ) : (
-              <div className="space-y-1">
-                {currentModules.map((module) => (
-                  <div key={module.name} className="mb-3">
-                    <button
-                      onClick={() => isSidebarCollapsed ? handleNavigation(module.href || '/settings') : toggleExpanded(module.name)}
-                      className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'} w-full py-2 ${isSidebarCollapsed ? 'px-1' : 'px-3'} ${!isSidebarCollapsed && 'border-b border-gray-300'}`}
-                      title={isSidebarCollapsed ? module.name : ''}
-                    >
-                      <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'gap-2'}`}>
-                        <module.icon className="w-4 h-4" />
-                        {!isSidebarCollapsed && <span className="font-semibold text-[#1a1a1a] text-sm">{module.name}</span>}
-                      </div>
-                      {!isSidebarCollapsed && (expandedItems.includes(module.name) ?
-                        <ChevronDown className="w-4 h-4" /> :
-                        <ChevronRight className="w-4 h-4" />
-                      )}
-                    </button>
-                    {expandedItems.includes(module.name) && module.subItems && (
-                      <div className="pl-3 pt-1 space-y-1">
-                        {module.subItems.map((subItem) => (
-                          <div key={subItem.name} className="pl-4">
-                            {subItem.subItems ? (
-                              <div>
-                                <button
-                                  onClick={() => toggleExpanded(subItem.name)}
-                                  className="flex items-center justify-between w-full px-2 py-1 text-sm font-medium"
-                                >
-                                  <span className={isActiveRoute(subItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}>
-                                    {subItem.name}
-                                  </span>
-                                  {expandedItems.includes(subItem.name) ?
-                                    <ChevronDown className="w-3 h-3" /> :
-                                    <ChevronRight className="w-3 h-3" />
-                                  }
-                                </button>
-                                {expandedItems.includes(subItem.name) && subItem.subItems && (
-                                  <div className="pl-3 pt-1">
-                                    {subItem.subItems.map((nestedItem) => (
-                                      <div key={nestedItem.name} className="py-1">
-                                        {nestedItem.subItems ? (
-                                          <div>
-                                            <button
-                                              onClick={() => toggleExpanded(nestedItem.name)}
-                                              className="flex items-center justify-between w-full px-2 text-sm"
-                                            >
-                                              <span className={isActiveRoute(nestedItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'}>
-                                                {nestedItem.name}
-                                              </span>
-                                              {expandedItems.includes(nestedItem.name) ?
-                                                <ChevronDown className="w-3 h-3" /> :
-                                                <ChevronRight className="w-3 h-3" />
-                                              }
-                                            </button>
-                                            {expandedItems.includes(nestedItem.name) && nestedItem.subItems && (
-                                              <div className="pl-3 pt-1">
-                                                {nestedItem.subItems.map((item) => (
-                                                  <button
-                                                    key={item.name}
-                                                    onClick={() => handleNavigation(item.href, currentSection)}
-                                                    className={`block w-full text-left px-2 py-1 text-sm ${isActiveRoute(item.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
-                                                      }`}
-                                                  >
-                                                    {item.name}
-                                                  </button>
-                                                ))}
-                                              </div>
-                                            )}
-                                          </div>
-                                        ) : (
-                                          <button
-                                            onClick={() => handleNavigation(nestedItem.href, currentSection)}
-                                            className={`block w-full text-left px-2 py-1 text-sm ${isActiveRoute(nestedItem.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
-                                              }`}
-                                          >
-                                            {nestedItem.name}
-                                          </button>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => handleNavigation(subItem.href, currentSection)}
-                                className={`block w-full text-left px-2 py-1 text-sm font-medium rounded-md ${isActiveRoute(subItem.href)
-                                  ? 'text-[#C72030] bg-[#f0e8dc] shadow-inner relative pl-3'
-                                  : 'text-[#1a1a1a] hover:bg-[#DBC2A9]/50'
-                                  }`}
-                              >
-                                {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>}
-                                {subItem.name}
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              currentModules.map((module) => renderMenuItem(module))
             )
           ) : (
             isSidebarCollapsed ? (

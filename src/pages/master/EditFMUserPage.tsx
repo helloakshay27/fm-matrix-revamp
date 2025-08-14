@@ -2,331 +2,627 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLayout } from '@/contexts/LayoutContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, ArrowLeft } from 'lucide-react';
+import {
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Box,
+  Autocomplete,
+  Chip,
+} from '@mui/material';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
+import { createFmUser, editFMUser, fetchRoles, fetchSuppliers, fetchUnits, getUserDetails } from '@/store/slices/fmUserSlice';
+import { fetchDepartmentData } from '@/store/slices/departmentSlice';
+import { fetchAllowedSites } from '@/store/slices/siteSlice';
+import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
+import { RootState } from '@/store/store';
+import { toast } from 'sonner';
+import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 
 export const EditFMUserPage = () => {
+  const { id } = useParams()
+  const dispatch = useAppDispatch();
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+
+  const { data: entitiesData, loading, error } = useAppSelector((state) => state.entities);
+  const { data: suppliers, loading: suppliersLoading, error: suppliersError } = useAppSelector((state) => state.fetchSuppliers);
+  const { data: units, loading: unitsLoading, error: unitsError } = useAppSelector((state) => state.fetchUnits);
+  const { data: department, loading: departmentLoading, error: departmentError } = useAppSelector((state) => state.department);
+  const { data: roles, loading: roleLoading, error: roleError } = useAppSelector((state) => state.fetchRoles);
+  const { sites } = useAppSelector((state) => state.site);
+  const { selectedCompany } = useAppSelector((state: RootState) => state.project);
+
+  const [userAccount, setUserAccount] = useState({})
+  const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
-  const { id } = useParams();
-  
-  // Pre-fill with existing data (in real app, fetch from API)
+
+  const userId = JSON.parse(localStorage.getItem('user'))?.id;
+
+  useEffect(() => {
+    dispatch(fetchEntities());
+    dispatch(fetchSuppliers({ baseUrl, token }));
+    dispatch(fetchUnits({ baseUrl, token }));
+    dispatch(fetchDepartmentData());
+    dispatch(fetchRoles({ baseUrl, token }));
+    dispatch(fetchAllowedSites(userId));
+    dispatch(fetchAllowedCompanies())
+  }, [dispatch, baseUrl, token, userId]);
+
+  useEffect(() => {
+    const loadUserAccount = async () => {
+      try {
+        const account = await ticketManagementAPI.getUserAccount();
+        setUserAccount(account);
+      } catch (error) {
+        console.error('Error loading user account:', error);
+        toast.error('Failed to load user account');
+      }
+    };
+
+    loadUserAccount();
+  }, [])
+
+  useEffect(() => {
+    setCurrentSection('Master');
+  }, [setCurrentSection]);
+
+  console.log(userAccount)
+
+  const [lockId, setLockId] = useState()
+  const [loadingSubmitting, setLoadingSubmitting] = useState(false)
   const [formData, setFormData] = useState({
-    firstName: 'John',
-    lastName: 'Smith',
-    mobileNumber: '+91 9876543210',
-    emailAddress: 'john.smith@company.com',
-    gender: 'male',
-    selectEntity: 'headquarters',
-    supplier: 'supplier1',
-    employeeId: 'EMP001',
-    baseSite: 'site1',
-    selectBaseUnit: 'unit-a101',
-    selectDepartment: 'maintenance',
-    designation: 'Senior Technician',
-    selectUserType: 'admin',
-    selectRole: 'senior-technician',
-    selectAccessLevel: 'level2',
-    selectEmailPreference: 'all',
-    userType: 'internal',
-    dailyHelpdeskReport: true,
-    companyCluster: 'cluster1',
-    lastWorkingDay: '',
-    vendorCompanyName: 'Tech Solutions Ltd',
-    access: 'full'
+    firstName: '',
+    lastName: '',
+    mobileNumber: '',
+    emailAddress: '',
+    gender: '',
+    selectEntity: '',
+    supplier: '',
+    employeeId: '',
+    baseSite: '',
+    selectBaseUnit: '',
+    selectDepartment: '',
+    designation: '',
+    selectUserType: '',
+    selectRole: '',
+    selectAccessLevel: '',
+    selectEmailPreference: '',
+    selectedSites: [], // Store multiple selected site IDs
+    selectedCompanies: []
   });
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({
+  const [userData, setUserData] = useState({})
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await dispatch(getUserDetails({ baseUrl, token, id: Number(id) })).unwrap()
+        setUserData(response)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    if (userData) {
+      console.log('userData:', userData);
+      setLockId(userData.lock_user_permission?.id)
+      setFormData({
+        firstName: userData.firstname,
+        lastName: userData.lastname,
+        mobileNumber: userData.mobile,
+        emailAddress: userData.email,
+        gender: userData.gender,
+        selectEntity: userData.entity_id,
+        supplier: userData.supplier_id,
+        employeeId: userData.lock_user_permission?.employee_id,
+        baseSite: userData.site_id,
+        selectBaseUnit: userData.unit_id,
+        selectDepartment: userData.department_id,
+        designation: userData.lock_user_permission?.designation,
+        selectUserType: userData.user_type,
+        selectRole: userData.role_id,
+        selectAccessLevel: userData.lock_user_permission?.access_level,
+        selectEmailPreference: userData.urgency_email_enabled?.toString(),
+        selectedSites: userData.access_level === 'Site' ? userData.lock_user_permission?.access_to : [], // Store multiple selected site IDs
+        selectedCompanies: userData.access_level === 'Company' ? userData.lock_user_permission?.access_to : [],
+      })
+    } else {
+      console.log('userData not found for id:', id);
+    }
+  }, [userData, id]);
+
+  const handleInputChange = (field: string, value: string | string[]) => {
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
-  const handleSubmit = () => {
-    console.log('Form submitted:', formData);
-    // Add API call here
-    navigate('/master/user/fm-users');
+  const validateForm = () => {
+    if (!formData.firstName) {
+      toast.error('Please enter first name')
+      return false
+    } else if (!formData.lastName) {
+      toast.error('Please enter last name')
+      return false
+    } else if (!formData.mobileNumber) {
+      toast.error('Please enter mobile number')
+      return false
+    } else if (!formData.emailAddress) {
+      toast.error('Please enter email address')
+      return false
+    } else if (!formData.selectUserType) {
+      toast.error('Please select user type')
+      return false
+    } else if (!formData.selectRole) {
+      toast.error('Please select role')
+      return false
+    } else if (!formData.selectAccessLevel) {
+      toast.error('Please select access level')
+      return false
+    } else if (formData.selectAccessLevel === 'Site' && formData.selectedSites.length === 0) {
+      toast.error('Please select at least one site')
+      return false
+    } else if (formData.selectAccessLevel === 'Company' && formData.selectedCompanies.length === 0) {
+      toast.error('Please select at least one company')
+      return false
+    }
+    return true
+  }
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return
+    setLoadingSubmitting(true)
+    const payload = {
+      user: {
+        site_id: formData.baseSite,
+        lock_user_permissions_attributes: [
+          {
+            id: lockId,
+            account_id: userAccount.company_id,
+            employee_id: formData.employeeId,
+            designation: formData.designation,
+            unit_id: formData.selectBaseUnit,
+            department_id: formData.selectDepartment,
+            user_type: formData.selectUserType,
+            lock_role_id: formData.selectRole,
+            access_level: formData.selectAccessLevel,
+            access_to: formData.selectAccessLevel === 'Site' ? formData.selectedSites : formData.selectedCompanies,
+            urgency_email_enabled: formData.selectEmailPreference,
+          },
+        ],
+        firstname: formData.firstName,
+        lastname: formData.lastName,
+        mobile: formData.mobileNumber,
+        email: formData.emailAddress,
+        gender: formData.gender,
+        entity_id: formData.selectEntity,
+        supplier_id: formData.supplier,
+      },
+      lock_user_permission: lockId,
+    };
+    try {
+      await dispatch(editFMUser({ data: payload, baseUrl, token, id: Number(id) })).unwrap();
+      toast.success('User updated successfully');
+      navigate('/master/user/fm-users');
+    } catch (error) {
+      console.log(error)
+      toast.error(error);
+    } finally {
+      setLoadingSubmitting(false)
+    }
   };
 
   const handleCancel = () => {
     navigate('/master/user/fm-users');
   };
 
-  const { setCurrentSection } = useLayout();
-  
-  useEffect(() => {
-    setCurrentSection('Master');
-  }, [setCurrentSection]);
-
   return (
-    <div className="space-y-6">
-      <div className="space-y-6">
-        {/* Breadcrumb */}
-        <div className="text-sm text-gray-600">
-          Master &gt; User Master &gt; FM User &gt; Edit FM User
-        </div>
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/master/user/fm-users')}
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </Button>
+        <h1 className="text-2xl font-semibold text-[#1a1a1a]">Edit FM User</h1>
+      </div>
 
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate('/master/user/fm-users')}
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <h1 className="text-2xl font-semibold text-[#1a1a1a]">Edit FM User - {formData.firstName} {formData.lastName}</h1>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Profile Picture Section */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Picture</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center border-2 border-dashed border-gray-300">
-                    <Upload className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <Button variant="outline" className="w-full">
-                    Change Picture
-                  </Button>
-                  <p className="text-xs text-gray-500 text-center">
-                    Upload a profile picture (JPG, PNG up to 2MB)
-                  </p>
+      {/* Form Section */}
+      <div className="grid grid-cols-1 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>User Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Box component="form" noValidate>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Row 1 */}
+                <div>
+                  <TextField
+                    fullWidth
+                    label="First Name"
+                    variant="outlined"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    required
+                    InputLabelProps={{ shrink: true }}
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                <div>
+                  <TextField
+                    fullWidth
+                    label="Last Name"
+                    variant="outlined"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    required
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div>
+                  <TextField
+                    fullWidth
+                    label="Mobile Number"
+                    variant="outlined"
+                    value={formData.mobileNumber}
+                    onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
+                    required
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
 
-          {/* Form Section */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Basic Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name *</Label>
-                    <Input
-                      id="firstName"
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      placeholder="Enter first name"
+                {/* Row 2 */}
+                <div>
+                  <TextField
+                    fullWidth
+                    label="Email Address"
+                    variant="outlined"
+                    type="email"
+                    value={formData.emailAddress}
+                    onChange={(e) => handleInputChange('emailAddress', e.target.value)}
+                    required
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Gender</InputLabel>
+                    <Select
+                      value={formData.gender}
+                      onChange={(e) => handleInputChange('gender', e.target.value)}
+                      label="Gender"
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Gender</MenuItem>
+                      <MenuItem value="Male">Male</MenuItem>
+                      <MenuItem value="Female">Female</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select Entity</InputLabel>
+                    <Select
+                      value={formData.selectEntity}
+                      onChange={(e) => handleInputChange('selectEntity', e.target.value)}
+                      label="Select Entity"
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Entity</MenuItem>
+                      {loading && <MenuItem disabled>Loading...</MenuItem>}
+                      {error && <MenuItem disabled>Error: {error}</MenuItem>}
+                      {entitiesData?.entities?.map((entity: Entity) => (
+                        <MenuItem key={entity.id} value={entity.id}>
+                          {entity.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+
+                {/* Row 3 */}
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Supplier</InputLabel>
+                    <Select
+                      value={formData.supplier}
+                      onChange={(e) => handleInputChange('supplier', e.target.value)}
+                      label="Supplier"
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Supplier</MenuItem>
+                      {suppliersLoading && <MenuItem disabled>Loading...</MenuItem>}
+                      {suppliersError && <MenuItem disabled>Error: {suppliersError}</MenuItem>}
+                      {suppliers?.map((supplier) => (
+                        <MenuItem key={supplier.id} value={supplier.id}>
+                          {supplier.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+                <div>
+                  <TextField
+                    fullWidth
+                    label="Employee ID"
+                    variant="outlined"
+                    value={formData.employeeId}
+                    onChange={(e) => handleInputChange('employeeId', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Base Site</InputLabel>
+                    <Select
+                      value={formData.baseSite}
+                      onChange={(e) => handleInputChange('baseSite', e.target.value)}
+                      label="Base Site"
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Base Site</MenuItem>
+                      {sites?.map((site) => (
+                        <MenuItem key={site.id} value={site.id}>
+                          {site.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+
+                {/* Row 4 */}
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select Base Unit</InputLabel>
+                    <Select
+                      value={formData.selectBaseUnit}
+                      onChange={(e) => handleInputChange('selectBaseUnit', e.target.value)}
+                      label="Select Base Unit"
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Base Unit</MenuItem>
+                      {unitsLoading && <MenuItem disabled>Loading...</MenuItem>}
+                      {unitsError && <MenuItem disabled>Error: {unitsError}</MenuItem>}
+                      {units?.map((unit) => (
+                        <MenuItem key={unit.id} value={unit.id}>
+                          {unit?.building?.name} - {unit.unit_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select Department</InputLabel>
+                    <Select
+                      value={formData.selectDepartment}
+                      onChange={(e) => handleInputChange('selectDepartment', e.target.value)}
+                      label="Select Department"
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Department</MenuItem>
+                      {departmentLoading && <MenuItem disabled>Loading...</MenuItem>}
+                      {departmentError && <MenuItem disabled>Error: {departmentError}</MenuItem>}
+                      {department?.map((dept) => (
+                        <MenuItem key={dept.id} value={dept.id}>
+                          {dept.department_name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select Email Preference</InputLabel>
+                    <Select
+                      value={formData.selectEmailPreference}
+                      onChange={(e) => handleInputChange('selectEmailPreference', e.target.value)}
+                      label="Select Email Preference"
+                      displayEmpty
+                    >
+                      <MenuItem value="">Select Email Preference</MenuItem>
+                      <MenuItem value="0">All Emails</MenuItem>
+                      <MenuItem value="1">Critical Emails Only</MenuItem>
+                      <MenuItem value="2">No Emails</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+
+                {/* Row 5 */}
+                <div>
+                  <TextField
+                    fullWidth
+                    label="Designation"
+                    variant="outlined"
+                    value={formData.designation}
+                    onChange={(e) => handleInputChange('designation', e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select User Type*</InputLabel>
+                    <Select
+                      value={formData.selectUserType}
+                      onChange={(e) => handleInputChange('selectUserType', e.target.value)}
+                      label="Select User Type"
+                      displayEmpty
+                      required
+                    >
+                      <MenuItem value="">Select User Type</MenuItem>
+                      <MenuItem value="pms_admin">Admin (Web & App)</MenuItem>
+                      <MenuItem value="pms_technician">Technician (App)</MenuItem>
+                      <MenuItem value="pms_hse">Head Site Engineer</MenuItem>
+                      <MenuItem value="pms_se">Site Engineer</MenuItem>
+                      <MenuItem value="pms_occupant_admin">Customer Admin</MenuItem>
+                      <MenuItem value="pms_accounts">Accounts</MenuItem>
+                      <MenuItem value="pms_po">Purchase Officer</MenuItem>
+                      <MenuItem value="pms_qc">Quality Control</MenuItem>
+                      <MenuItem value="pms_security">Security</MenuItem>
+                      <MenuItem value="pms_security_supervisor">Security Supervisor</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select Role*</InputLabel>
+                    <Select
+                      value={formData.selectRole}
+                      onChange={(e) => handleInputChange('selectRole', e.target.value)}
+                      label="Select Role"
+                      displayEmpty
+                      required
+                    >
+                      <MenuItem value="">Select Role</MenuItem>
+                      {roleLoading && <MenuItem disabled>Loading...</MenuItem>}
+                      {roleError && <MenuItem disabled>Error: {roleError}</MenuItem>}
+                      {roles?.map((role) => (
+                        <MenuItem key={role.id} value={role.id}>
+                          {role.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+
+                {/* Row 6 */}
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select Access Level*</InputLabel>
+                    <Select
+                      value={formData.selectAccessLevel}
+                      onChange={(e) => {
+                        handleInputChange('selectAccessLevel', e.target.value);
+                        if (e.target.value !== 'Site') {
+                          handleInputChange('selectedSites', []);
+                        }
+                      }}
+                      label="Select Access Level"
+                      displayEmpty
+                      required
+                    >
+                      <MenuItem value="">Select Access Level</MenuItem>
+                      <MenuItem value="Company">Company</MenuItem>
+                      <MenuItem value="Site">Site</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+
+                {/* Multiple Site Selection */}
+                {formData.selectAccessLevel === 'Site' && (
+                  <div>
+                    <Autocomplete
+                      multiple
+                      options={sites || []}
+                      getOptionLabel={(option) => option.name || option.full_name || ''}
+                      value={sites?.filter((site) => formData.selectedSites.includes(site.id.toString())) || []}
+                      onChange={(event, newValue) => {
+                        handleInputChange('selectedSites', newValue.map((site) => site.id.toString()));
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label={
+                            <span>
+                              Select Sites*
+                            </span>
+                          }
+                          placeholder="Search and select sites..."
+                          variant="outlined"
+                          InputLabelProps={{ shrink: true }}
+                        />
+                      )}
+                      renderTags={(tagValue, getTagProps) =>
+                        tagValue.map((option, index) => (
+                          <Chip
+                            key={option.id}
+                            label={option.name || option.full_name || ''}
+                            size="small"
+                            {...getTagProps({ index })}
+                          />
+                        ))
+                      }
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      filterSelectedOptions
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input
-                      id="lastName"
-                      value={formData.lastName}
-                      onChange={(e) => handleInputChange('lastName', e.target.value)}
-                      placeholder="Enter last name"
+                )}
+                {formData.selectAccessLevel === 'Company' && (
+                  <div>
+                    <Autocomplete
+                      multiple
+                      options={selectedCompany ? [selectedCompany] : []} // Wrap single selectedCompany in an array
+                      getOptionLabel={(option) => option.name || ''} // Display the company name
+                      value={
+                        selectedCompany && formData.selectedCompanies.includes(selectedCompany.id.toString())
+                          ? [selectedCompany]
+                          : []
+                      } // Set the value to the selected company if its ID is in selectedCompanies
+                      onChange={(event, newValue) => {
+                        handleInputChange('selectedCompanies', newValue.map((company) => company.id.toString()));
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label={
+                            <span>
+                              Select Companies*
+                            </span>
+                          }
+                          placeholder="Search and select companies..."
+                          variant="outlined"
+                          InputLabelProps={{ shrink: true }}
+                        />
+                      )}
+                      renderTags={(tagValue, getTagProps) =>
+                        tagValue.map((option, index) => (
+                          <Chip
+                            key={option.id}
+                            label={option.name || ''}
+                            size="small"
+                            {...getTagProps({ index })}
+                          />
+                        ))
+                      }
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      filterSelectedOptions
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="mobileNumber">Mobile Number *</Label>
-                    <Input
-                      id="mobileNumber"
-                      value={formData.mobileNumber}
-                      onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
-                      placeholder="Enter mobile number"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="emailAddress">Email Address *</Label>
-                    <Input
-                      id="emailAddress"
-                      type="email"
-                      value={formData.emailAddress}
-                      onChange={(e) => handleInputChange('emailAddress', e.target.value)}
-                      placeholder="Enter email address"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Gender *</Label>
-                  <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white">
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Organization Information */}
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-medium mb-4">Organization Information</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Company Cluster</Label>
-                      <Select value={formData.companyCluster} onValueChange={(value) => handleInputChange('companyCluster', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select company cluster" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="cluster1">Cluster 1</SelectItem>
-                          <SelectItem value="cluster2">Cluster 2</SelectItem>
-                          <SelectItem value="cluster3">Cluster 3</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Last Working Day</Label>
-                      <Input
-                        type="date"
-                        value={formData.lastWorkingDay}
-                        onChange={(e) => handleInputChange('lastWorkingDay', e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div className="space-y-2">
-                      <Label>Vendor Company Name</Label>
-                      <Input
-                        value={formData.vendorCompanyName}
-                        onChange={(e) => handleInputChange('vendorCompanyName', e.target.value)}
-                        placeholder="Enter vendor company name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Access</Label>
-                      <Select value={formData.access} onValueChange={(value) => handleInputChange('access', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select access level" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="full">Full Access</SelectItem>
-                          <SelectItem value="limited">Limited Access</SelectItem>
-                          <SelectItem value="restricted">Restricted Access</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div className="space-y-2">
-                      <Label>Employee ID</Label>
-                      <Input
-                        value={formData.employeeId}
-                        onChange={(e) => handleInputChange('employeeId', e.target.value)}
-                        placeholder="Enter employee ID"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Select Entity *</Label>
-                      <Select value={formData.selectEntity} onValueChange={(value) => handleInputChange('selectEntity', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select entity" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="headquarters">Headquarters</SelectItem>
-                          <SelectItem value="branch">Branch Office</SelectItem>
-                          <SelectItem value="regional">Regional Office</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Role and Access Information */}
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-medium mb-4">Role & Access Information</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Designation</Label>
-                      <Input
-                        value={formData.designation}
-                        onChange={(e) => handleInputChange('designation', e.target.value)}
-                        placeholder="Enter designation"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Select Role *</Label>
-                      <Select value={formData.selectRole} onValueChange={(value) => handleInputChange('selectRole', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white">
-                          <SelectItem value="senior-technician">Senior Technician</SelectItem>
-                          <SelectItem value="facility-manager">Facility Manager</SelectItem>
-                          <SelectItem value="maintenance-staff">Maintenance Staff</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* User Type Selection */}
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-medium mb-4">User Type</h3>
-                  <RadioGroup 
-                    value={formData.userType} 
-                    onValueChange={(value) => handleInputChange('userType', value)}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="internal" id="internal" />
-                      <Label htmlFor="internal">Internal</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="external" id="external" />
-                      <Label htmlFor="external">External</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {/* Additional Options */}
-                <div className="border-t pt-6">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="dailyHelpdeskReport"
-                      checked={formData.dailyHelpdeskReport}
-                      onCheckedChange={(checked) => handleInputChange('dailyHelpdeskReport', checked)}
-                    />
-                    <Label htmlFor="dailyHelpdeskReport">Daily Helpdesk Report Email</Label>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-4 pt-6">
-                  <Button 
-                    onClick={handleSubmit}
-                    className="bg-[#C72030] hover:bg-[#a91b29] text-white"
-                  >
-                    Update
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={handleCancel}
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                )}
+              </div>
+            </Box>
+            {/* Action Buttons */}
+            <div className="flex justify-center gap-4 pt-6">
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                className="px-8 py-3 text-base font-medium rounded-lg"
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={loadingSubmitting}
+                onClick={handleSubmit}
+                className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-none px-8 py-3 text-base font-medium rounded-lg"
+              >
+                Submit
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

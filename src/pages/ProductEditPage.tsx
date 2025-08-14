@@ -5,7 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
+import { useAppDispatch } from '@/store/hooks';
+import { fetchMenuDetails, fetchRestaurantCategory, fetchSubcategory, updateMenu } from '@/store/slices/f&bSlice';
+import { toast } from 'sonner';
 
 interface MenuItem {
   id: number;
@@ -20,195 +23,25 @@ interface MenuItem {
   status: 'Active' | 'Inactive';
 }
 
-const mockMenuItems: MenuItem[] = [
-  {
-    id: 1,
-    sku: "Imperial Rolls",
-    productName: "Imperial Rolls",
-    masterPrice: 250,
-    displayPrice: 250,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "21/03/2023",
-    status: 'Inactive'
-  },
-  {
-    id: 2,
-    sku: "Corn Fritters",
-    productName: "Corn Fritters",
-    masterPrice: 220,
-    displayPrice: 220,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "20/04/2023",
-    status: 'Active'
-  },
-  {
-    id: 3,
-    sku: "Spring Rolls",
-    productName: "Spring Rolls",
-    masterPrice: 200,
-    displayPrice: 200,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 4,
-    sku: "Chicken Satay",
-    productName: "Chicken Satay",
-    masterPrice: 300,
-    displayPrice: 300,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "20/04/2023",
-    status: 'Active'
-  },
-  {
-    id: 5,
-    sku: "Tofu Satay",
-    productName: "Tofu Satay",
-    masterPrice: 300,
-    displayPrice: 300,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 6,
-    sku: "Dumpling",
-    productName: "Dumpling",
-    masterPrice: 200,
-    displayPrice: 200,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 7,
-    sku: "Golden Triangles",
-    productName: "Golden Triangles",
-    masterPrice: 250,
-    displayPrice: 250,
-    category: "Appetizers",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 8,
-    sku: "Tom Yum Gai",
-    productName: "Tom Yum Gai",
-    masterPrice: 200,
-    displayPrice: 200,
-    category: "Soups",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 9,
-    sku: "Glass Noodles Soup",
-    productName: "Glass Noodles Soup",
-    masterPrice: 250,
-    displayPrice: 250,
-    category: "Soups",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 10,
-    sku: "Beef Noodle Soup",
-    productName: "Beef Noodle Soup",
-    masterPrice: 280,
-    displayPrice: 280,
-    category: "Soups",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 11,
-    sku: "Larb Gai",
-    productName: "Larb Gai",
-    masterPrice: 200,
-    displayPrice: 200,
-    category: "Soups",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 12,
-    sku: "Ginger Salad",
-    productName: "Ginger Salad",
-    masterPrice: 200,
-    displayPrice: 200,
-    category: "Salads",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "18/04/2023",
-    status: 'Inactive'
-  },
-  {
-    id: 13,
-    sku: "Fish Cake Salad",
-    productName: "Fish Cake Salad",
-    masterPrice: 280,
-    displayPrice: 280,
-    category: "Salads",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 14,
-    sku: "Shrimp Salad",
-    productName: "Shrimp Salad",
-    masterPrice: 300,
-    displayPrice: 300,
-    category: "Salads",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  },
-  {
-    id: 15,
-    sku: "Duck Salad",
-    productName: "Duck Salad",
-    masterPrice: 340,
-    displayPrice: 340,
-    category: "Salads",
-    subCategory: "",
-    createdOn: "12/10/2021",
-    updatedOn: "12/10/2021",
-    status: 'Active'
-  }
-];
+interface Image {
+  id: string;
+  document: string;
+}
 
 export const ProductEditPage = () => {
-  const { id } = useParams();
+  const dispatch = useAppDispatch();
+  const { id, mid } = useParams();
   const navigate = useNavigate();
+  const token = localStorage.getItem('token');
+  const baseUrl = localStorage.getItem('baseUrl');
 
-  // Find the specific product based on the ID
-  const product = mockMenuItems.find(item => item.id === parseInt(id || '1')) || mockMenuItems[0];
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
+  const [attachments, setAttachments] = useState<Image[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     productName: "",
@@ -228,28 +61,62 @@ export const ProductEditPage = () => {
     description: ""
   });
 
-  // Pre-populate form with product data
   useEffect(() => {
-    if (product) {
-      setFormData({
-        productName: product.productName,
-        sku: product.sku,
-        masterPrice: product.masterPrice.toString(),
-        displayPrice: product.displayPrice.toString(),
-        stock: "20", // Default stock value
-        active: product.status === 'Active' ? "Yes" : "No",
-        category: product.category,
-        subcategory: product.subCategory,
-        sgstRate: "",
-        sgstAmount: "",
-        cgstRate: "",
-        cgstAmount: "",
-        igstRate: "",
-        igstAmount: "",
-        description: ""
-      });
-    }
-  }, [product]);
+    const fetchMenu = async () => {
+      try {
+        setIsLoading(true);
+        const response = await dispatch(fetchMenuDetails({ baseUrl, token, id: Number(id), mid: Number(mid) })).unwrap();
+        setFormData({
+          productName: response.name,
+          sku: response.sku,
+          masterPrice: response.master_price,
+          displayPrice: response.display_price,
+          stock: response.stock,
+          active: response.active.toString(),
+          category: response.category_id,
+          subcategory: response.sub_category_id,
+          sgstRate: response.sgst_rate,
+          sgstAmount: response.sgst_amt,
+          cgstRate: response.cgst_rate,
+          cgstAmount: response.cgst_amt,
+          igstRate: response.igst_rate,
+          igstAmount: response.igst_amt,
+          description: response.description
+        });
+        setAttachments(response.images.map((img: any) => ({
+          id: img.id,
+          document: img.document
+        })));
+      } catch (error) {
+        console.error('Error fetching menu items:', error);
+        setError('Failed to load menu details');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const fetchCategories = async () => {
+      try {
+        const response = await dispatch(fetchRestaurantCategory({ baseUrl, token, id: Number(id) })).unwrap();
+        setCategories(response);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    const fetchSubCategories = async () => {
+      try {
+        const response = await dispatch(fetchSubcategory({ baseUrl, token, id: Number(id) })).unwrap();
+        setSubCategories(response);
+      } catch (error) {
+        console.error('Error fetching subcategories:', error);
+      }
+    };
+
+    fetchMenu();
+    fetchCategories();
+    fetchSubCategories();
+  }, [dispatch, baseUrl, token, id, mid]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -258,10 +125,64 @@ export const ProductEditPage = () => {
     }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+        toast.error('Please upload a valid image file (JPEG, PNG, JPG)');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size exceeds 5MB limit');
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const imageId = attachments[index].id;
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+    setRemovedImageIds(prev => [...prev, imageId]);
+    toast.success('Image removed successfully');
+  };
+
   const handleSave = () => {
-    // Handle save logic here
-    console.log("Saving product data:", formData);
-    navigate(-1);
+    const dataToSend = new FormData();
+
+    dataToSend.append('manage_restaurant_menu[name]', formData.productName);
+    dataToSend.append('manage_restaurant_menu[restaurant_id]', id);
+    dataToSend.append('manage_restaurant_menu[sku]', formData.sku);
+    dataToSend.append('manage_restaurant_menu[master_price]', formData.masterPrice);
+    dataToSend.append('manage_restaurant_menu[display_price]', formData.displayPrice);
+    dataToSend.append('manage_restaurant_menu[stock]', formData.stock);
+    dataToSend.append('manage_restaurant_menu[active]', formData.active);
+    dataToSend.append('manage_restaurant_menu[category_id]', formData.category);
+    dataToSend.append('manage_restaurant_menu[sub_category_id]', formData.subcategory);
+    dataToSend.append('manage_restaurant_menu[sgst_rate]', formData.sgstRate);
+    dataToSend.append('manage_restaurant_menu[sgst_amt]', formData.sgstAmount);
+    dataToSend.append('manage_restaurant_menu[cgst_rate]', formData.cgstRate);
+    dataToSend.append('manage_restaurant_menu[cgst_amt]', formData.cgstAmount);
+    dataToSend.append('manage_restaurant_menu[igst_rate]', formData.igstRate);
+    dataToSend.append('manage_restaurant_menu[igst_amt]', formData.igstAmount);
+    dataToSend.append('manage_restaurant_menu[description]', formData.description);
+
+    if (selectedFile) {
+      dataToSend.append('images[]', selectedFile);
+    }
+
+    removedImageIds.forEach((imageId, index) => {
+      dataToSend.append(`image_remove[${index}]`, imageId);
+    });
+
+    try {
+      dispatch(updateMenu({ baseUrl, token, id: Number(id), mid: Number(mid), data: dataToSend })).unwrap();
+      toast.success('Menu item updated successfully');
+      navigate(-1);
+    } catch (error) {
+      console.error('Error updating menu item:', error);
+      toast.error('Failed to update menu item');
+    }
   };
 
   const handleBack = () => {
@@ -270,17 +191,8 @@ export const ProductEditPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Breadcrumb */}
-      <div className="bg-white border-b px-6 py-3">
-        <div className="flex items-center text-sm text-gray-600">
-          <span>Restaurant</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Restaurant Menu</span>
-        </div>
-      </div>
-
       <div className="p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">RESTAURANT MENU ADD</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">RESTAURANT MENU EDIT</h1>
 
         <div className="bg-white rounded-lg shadow">
           <div className="p-6">
@@ -288,7 +200,7 @@ export const ProductEditPage = () => {
               <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
                 <span className="text-white text-xs">○</span>
               </div>
-              <h2 className="text-lg font-semibold text-[#C72030]">ADD PRODUCT</h2>
+              <h2 className="text-lg font-semibold text-[#C72030]">EDIT MENU</h2>
             </div>
 
             <div className="grid grid-cols-3 gap-6 mb-6">
@@ -335,18 +247,6 @@ export const ProductEditPage = () => {
                   onChange={(e) => handleInputChange("stock", e.target.value)}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="active">Active</Label>
-                <Select value={formData.active} onValueChange={(value) => handleInputChange("active", value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Yes">Yes</SelectItem>
-                    <SelectItem value="No">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               {/* Row 3 */}
               <div className="space-y-2">
@@ -356,9 +256,12 @@ export const ProductEditPage = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Appetizers">Appetizers</SelectItem>
-                    <SelectItem value="Soups">Soups</SelectItem>
-                    <SelectItem value="Salads">Salads</SelectItem>
+                    <SelectItem value="Select" disabled>Select Category</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -369,8 +272,12 @@ export const ProductEditPage = () => {
                     <SelectValue placeholder="Select subcategory" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="subcategory1">Subcategory 1</SelectItem>
-                    <SelectItem value="subcategory2">Subcategory 2</SelectItem>
+                    <SelectItem value="Select" disabled>Select Subcategory</SelectItem>
+                    {subCategories.map((subcategory) => (
+                      <SelectItem key={subcategory.id} value={subcategory.id}>
+                        {subcategory.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -440,15 +347,52 @@ export const ProductEditPage = () => {
               />
             </div>
 
-            {/* Manuals Upload */}
+            {/* Image Upload */}
             <div className="mb-6">
-              <Label>Manuals Upload</Label>
+              <Label htmlFor="imageUpload">Image Upload</Label>
               <div className="mt-2 border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center bg-yellow-50">
-                <p className="text-gray-600">
-                  <span className="text-blue-600 underline cursor-pointer">Drag & Drop or Choose Files</span>
-                  <span className="mx-2">No file chosen</span>
-                </p>
+                <Input
+                  id="imageUpload"
+                  type="file"
+                  accept="image/jpeg,image/png,image/jpg"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <Label htmlFor="imageUpload" className="text-blue-600 underline cursor-pointer">
+                  Drag & Drop or Choose File
+                </Label>
+                <span className="mx-2 text-gray-600">
+                  {selectedFile ? selectedFile.name : 'No file chosen'}
+                </span>
               </div>
+            </div>
+
+            {/* Existing Images */}
+            <div className="mb-6">
+              <Label>Existing Images</Label>
+              {attachments.length > 0 ? (
+                <div className="grid grid-cols-8 gap-4 mt-2">
+                  {attachments.map((image, index) => (
+                    <div key={image.id} className="relative">
+                      <img
+                        src={image.document}
+                        alt={`Menu item ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 rounded-full"
+                        onClick={() => handleRemoveImage(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600 mt-2">No existing images available.</p>
+              )}
             </div>
 
             {/* Save Button */}

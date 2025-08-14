@@ -18,13 +18,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { ticketManagementAPI, OperationalDay } from '@/services/ticketManagementAPI';
+import { ticketManagementAPI, OperationalDay, UserAccountResponse } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 import { Upload, Download } from 'lucide-react';
 
 const timeOptions = Array.from({ length: 24 }, (_, i) => {
   const hour = i.toString().padStart(2, '0');
-  return [`${hour}:00`, `${hour}:30`];
+  return [`${hour}:00`, `${hour}:15`, `${hour}:30`, `${hour}:45`];
 }).flat();
 
 const daysOfWeek = [
@@ -38,10 +38,22 @@ export const OperationalDaysTab: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
 
   useEffect(() => {
+    loadUserAccount();
     fetchOperationalDays();
   }, []);
+
+  const loadUserAccount = async () => {
+    try {
+      const account = await ticketManagementAPI.getUserAccount();
+      setUserAccount(account);
+    } catch (error) {
+      console.error('Error loading user account:', error);
+      toast.error('Failed to load user account');
+    }
+  };
 
   const fetchOperationalDays = async () => {
     setIsLoading(true);
@@ -95,7 +107,19 @@ export const OperationalDaysTab: React.FC = () => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const siteId = '7'; // This should be dynamic based on current site
+      // Ensure user account is loaded to get site_id
+      if (!userAccount) {
+        await loadUserAccount();
+      }
+
+      // Get site_id from user account API response
+      const siteId = userAccount?.site_id?.toString();
+      
+      if (!siteId) {
+        toast.error('Unable to determine site ID from user account. Please refresh and try again.');
+        return;
+      }
+
       await ticketManagementAPI.updateOperationalDays(siteId, schedule);
       toast.success('Operational days saved successfully!');
     } catch (error) {

@@ -2,17 +2,17 @@
 import React, { useState } from 'react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Card, CardContent } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
-import { Eye, Filter, Upload, Users, Calendar } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { TaskTable } from '../components/maintenance/TaskTable';
+import { StatusCard } from '../components/maintenance/StatusCard';
+import { Calendar, Clock, AlertCircle, CheckCircle, XCircle, Users, Download, Filter, Search } from 'lucide-react';
 
 const statusCards = [
-  { title: 'Scheduled', count: 1356, color: 'bg-[#8B4513]', icon: Calendar },
-  { title: 'Open', count: 176, color: 'bg-green-600', icon: Users },
-  { title: 'In Progress', count: 1, color: 'bg-orange-500', icon: Users },
-  { title: 'Closed', count: 2, color: 'bg-orange-400', icon: Users },
-  { title: 'Overdue', count: 1033, color: 'bg-red-600', icon: Users }
+  { title: 'Scheduled', count: 1356, color: '#F6F4EE', textColor: 'text-[#C72030]', iconBg: '#C72030', icon: Calendar },
+  { title: 'Open', count: 176, color: '#F6F4EE', textColor: 'text-[#C72030]', iconBg: '#C72030', icon: Clock },
+  { title: 'In Progress', count: 1, color: '#F6F4EE', textColor: 'text-[#C72030]', iconBg: '#C72030', icon: AlertCircle },
+  { title: 'Closed', count: 2, color: '#F6F4EE', textColor: 'text-[#C72030]', iconBg: '#C72030', icon: CheckCircle },
+  { title: 'Overdue', count: 1033, color: '#F6F4EE', textColor: 'text-[#C72030]', iconBg: '#C72030', icon: XCircle }
 ];
 
 const mockTaskData = [
@@ -28,7 +28,9 @@ const mockTaskData = [
     site: 'Lockated',
     location: 'Building : Ideal Landmark / Wing : A / Floor : NA / Area : NA / Room : NA',
     supplier: '',
-    graceTime: '3Hour'
+    graceTime: '3Hour',
+    duration: '2 Hours',
+    percentage: '75%'
   },
   {
     id: '17598256',
@@ -42,124 +44,197 @@ const mockTaskData = [
     site: 'Lockated',
     location: 'Building : Ideal Landmark / Wing : A / Floor : NA / Area : NA / Room : NA',
     supplier: '',
-    graceTime: '3Hour'
+    graceTime: '3Hour',
+    duration: '1.5 Hours',
+    percentage: '90%'
   }
 ];
 
 export const TaskListDashboard = () => {
-  const [dateFrom, setDateFrom] = useState('01/06/2025');
-  const [dateTo, setDateTo] = useState('30/06/2025');
+  const [dateFrom, setDateFrom] = useState('2025-06-01');
+  const [dateTo, setDateTo] = useState('2025-06-30');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
+
+  const handleViewTask = (taskId: string) => {
+    console.log('Viewing task:', taskId);
+  };
+
+  const handleDateReset = () => {
+    setDateFrom('2025-06-01');
+    setDateTo('2025-06-30');
+  };
+
+  const handleSearch = () => {
+    console.log('Searching for:', searchTerm);
+  };
+
+  const handleExport = () => {
+    console.log('Exporting tasks...');
+  };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">SCHEDULED TASK</h1>
-      </div>
+    <div className="p-6 bg-[#EDEAE3] min-h-screen">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">SCHEDULED TASK</h1>
+        </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 mb-6">
-        <Button variant="outline" className="border-b-2 border-red-500 text-red-500 bg-white">
-          List
-        </Button>
-        <Button variant="ghost" className="text-gray-600">
-          Calendar
-        </Button>
-      </div>
+        {/* Tabs */}
+        <Tabs defaultValue="list" className="w-full">
+          <TabsList className="grid w-fit grid-cols-2 bg-white">
+            <TabsTrigger 
+              value="list" 
+              className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white"
+            >
+              List
+            </TabsTrigger>
+            <TabsTrigger 
+              value="calendar"
+              className="data-[state=active]:bg-[#C72030] data-[state=active]:text-white"
+            >
+              Calendar
+            </TabsTrigger>
+          </TabsList>
 
-      {/* Date Range */}
-      <div className="flex gap-3 mb-6">
-        <Input 
-          type="date" 
-          value={dateFrom.split('/').reverse().join('-')}
-          onChange={(e) => setDateFrom(e.target.value.split('-').reverse().join('/'))}
-          className="w-40"
-        />
-        <Input 
-          type="date" 
-          value={dateTo.split('/').reverse().join('-')}
-          onChange={(e) => setDateTo(e.target.value.split('-').reverse().join('/'))}
-          className="w-40"
-        />
-        <Button className="bg-green-600 hover:bg-green-700 text-white">Apply</Button>
-        <Button variant="outline">Reset</Button>
-      </div>
-
-      {/* Status Cards */}
-      <div className="grid grid-cols-5 gap-4 mb-6">
-        {statusCards.map((card, index) => (
-          <Card key={index} className={`${card.color} text-white`}>
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <card.icon className="w-5 h-5" />
+          <TabsContent value="list" className="space-y-6 mt-6">
+            {/* Date Range Controls */}
+            <div className="flex gap-3 items-center flex-wrap">
+              <div className="flex gap-2 items-center">
+                <label className="text-sm font-medium text-gray-700">From:</label>
+                <Input 
+                  type="date" 
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-40"
+                />
               </div>
-              <div>
-                <div className="text-2xl font-bold">{card.count}</div>
-                <div className="text-sm opacity-90">{card.title}</div>
+              <div className="flex gap-2 items-center">
+                <label className="text-sm font-medium text-gray-700">To:</label>
+                <Input 
+                  type="date" 
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-40"
+                />
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              <Button 
+                onClick={handleSearch}
+                className="bg-[#C72030] hover:bg-[#A01D28] text-white"
+              >
+                Apply
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleDateReset}
+                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+              >
+                Reset
+              </Button>
+            </div>
 
-      {/* Search and Actions */}
-      <div className="flex gap-3 mb-6">
-        <Button variant="outline" className="border-[#8B4513] text-[#8B4513]">
-          <Filter className="w-4 h-4 mr-2" />
-          Filters
-        </Button>
-        <Input placeholder="Search with Task ID" className="max-w-xs" />
-        <Input placeholder="Search using checklist name or assigned to" className="max-w-xs" />
-        <Button className="bg-[#8B4513] hover:bg-[#7A3F12] text-white">Go</Button>
-        <Button className="bg-[#8B4513] hover:bg-[#7A3F12] text-white">
-          <Upload className="w-4 h-4 mr-2" />
-          Export
-        </Button>
-      </div>
+            {/* Status Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {statusCards.map((card, index) => (
+                <StatusCard
+                  key={index}
+                  title={card.title}
+                  count={card.count}
+                  color={card.color}
+                  textColor={card.textColor}
+                  iconBg={card.iconBg}
+                  icon={card.icon}
+                />
+              ))}
+            </div>
 
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead>Action</TableHead>
-              <TableHead>ID</TableHead>
-              <TableHead>Checklist</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Schedule</TableHead>
-              <TableHead>Assign to</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Schedule For</TableHead>
-              <TableHead>Assets/Services</TableHead>
-              <TableHead>Site</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Supplier</TableHead>
-              <TableHead>Grace Time</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {mockTaskData.map((task) => (
-              <TableRow key={task.id}>
-                <TableCell>
-                  <Eye className="w-4 h-4 text-gray-600 cursor-pointer" />
-                </TableCell>
-                <TableCell>{task.id}</TableCell>
-                <TableCell>{task.checklist}</TableCell>
-                <TableCell>{task.type}</TableCell>
-                <TableCell>{task.schedule}</TableCell>
-                <TableCell>{task.assignTo}</TableCell>
-                <TableCell>
-                  <Badge className="bg-green-100 text-green-800">{task.status}</Badge>
-                </TableCell>
-                <TableCell>{task.scheduleFor}</TableCell>
-                <TableCell>{task.assetsServices}</TableCell>
-                <TableCell>{task.site}</TableCell>
-                <TableCell className="max-w-xs truncate">{task.location}</TableCell>
-                <TableCell>{task.supplier}</TableCell>
-                <TableCell>{task.graceTime}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            {/* Search and Filter Controls */}
+            <div className="bg-white rounded-lg p-4 shadow-sm">
+              <div className="flex gap-3 items-center flex-wrap">
+                <Button 
+                  variant="outline" 
+                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                >
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filters
+                </Button>
+                <div className="flex gap-2 flex-1 min-w-0">
+                  <Input 
+                    placeholder="Search with Task ID" 
+                    className="max-w-xs"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  <Input 
+                    placeholder="Search using checklist name or assigned to" 
+                    className="max-w-xs"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleSearch}
+                    className="bg-[#C72030] hover:bg-[#A01D28] text-white"
+                  >
+                    <Search className="w-4 h-4 mr-2" />
+                    Go
+                  </Button>
+                  <Button 
+                    onClick={handleExport}
+                    className="bg-[#C72030] hover:bg-[#A01D28] text-white"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Selection Panel */}
+            {selectedTasks.length > 0 && (
+              <div className="bg-[#C72030] text-white rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">
+                    {selectedTasks.length} task(s) selected
+                  </span>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="border-white text-white hover:bg-white hover:text-[#C72030]"
+                      onClick={() => setSelectedTasks([])}
+                    >
+                      Clear Selection
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="border-white text-white hover:bg-white hover:text-[#C72030]"
+                    >
+                      Bulk Actions
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Task Table */}
+            <TaskTable
+              tasks={mockTaskData}
+              onViewTask={handleViewTask}
+              selectedTasks={selectedTasks}
+              onTaskSelection={setSelectedTasks}
+            />
+          </TabsContent>
+
+          <TabsContent value="calendar" className="mt-6">
+            <div className="bg-white rounded-lg p-8 text-center">
+              <Calendar className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Calendar View</h3>
+              <p className="text-gray-600">Calendar view is coming soon...</p>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

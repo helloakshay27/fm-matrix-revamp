@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { TextField, FormControl, InputLabel, MenuItem, Select as MuiSelect, SelectChangeEvent } from '@mui/material';
+import { TextField, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { X, Plus } from 'lucide-react';
 
 interface AddCustomFieldModalProps {
@@ -33,52 +32,58 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
   isItAsset = false
 }) => {
   const [fieldName, setFieldName] = useState('');
-  const [selectedSection, setSelectedSection] = useState('System Details');
+  const [selectedSection, setSelectedSection] = useState('system_details');
 
   const handleAddField = () => {
-    if (fieldName.trim()) {
-      if (isItAsset && selectedSection) {
-        onAddField(fieldName.trim(), selectedSection);
-      } else {
-        onAddField(fieldName.trim());
-      }
-      setFieldName('');
-      setSelectedSection('System Details');
-      onClose();
+    const trimmedName = fieldName.trim();
+    if (!trimmedName) return;
+    
+    console.log('Adding field:', trimmedName, 'to section:', selectedSection);
+    
+    if (isItAsset && selectedSection) {
+      onAddField(trimmedName, selectedSection);
+    } else {
+      onAddField(trimmedName);
     }
+    // Only close if field was actually added
+    setFieldName("");
+    setSelectedSection("system_details");
+    onClose();
   };
 
   const handleCancel = () => {
     setFieldName('');
-    setSelectedSection('System Details');
+    setSelectedSection('system_details');
     onClose();
   };
 
-  const handleSectionChange = (event: SelectChangeEvent) => {
-    setSelectedSection(event.target.value);
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold">Add Custom Field</DialogTitle>
-          <button onClick={onClose} className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </button>
-        </DialogHeader>
+    <Dialog open={isOpen} onClose={onClose} sx={{ width: "30rem", margin:"0 auto" }}>
+      <DialogContent 
+      sx={{width:"100%" }}
+        aria-describedby="custom-field-modal-description"
+      >
+        <div className="flex justify-between items-center mb-4">
+          <DialogTitle>Add Custom Field</DialogTitle>
+          <div id="custom-field-modal-description" className="sr-only">
+            Add a new custom field to the form with name and section
+          </div>
+        </div>
         
-        <div className="space-y-4">
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          handleAddField();
+        }} className="space-y-4">
           <div>
             <TextField
+              autoFocus
               id="fieldName"
               label="New Field Name"
               variant="outlined"
               fullWidth
               value={fieldName}
               onChange={(e) => setFieldName(e.target.value)}
-              placeholder="New Field Name"
+              placeholder="Enter field name"
               sx={fieldStyles}
               InputLabelProps={{
                 shrink: true,
@@ -88,40 +93,48 @@ export const AddCustomFieldModal: React.FC<AddCustomFieldModalProps> = ({
 
           {isItAsset && (
             <div>
-              <FormControl fullWidth variant="outlined" sx={{ minWidth: 120 }}>
+              <FormControl fullWidth variant="outlined">
                 <InputLabel id="section-select-label" shrink>
                   Section
                 </InputLabel>
-                <MuiSelect
+                <Select
                   labelId="section-select-label"
-                  label="Section"
+                  id="section-select"
                   value={selectedSection}
-                  onChange={handleSectionChange}
-                  sx={fieldStyles}
+                  onChange={(e: SelectChangeEvent) => {
+                    console.log('Section dropdown changed to:', e.target.value);
+                    setSelectedSection(e.target.value);
+                  }}
+                  label="Section"
                 >
-                  <MenuItem value="System Details">System Details</MenuItem>
-                  <MenuItem value="Hard Disk Details">Hard Disk Details</MenuItem>
-                </MuiSelect>
+                  <MenuItem value="system_details">System Details</MenuItem>
+                  <MenuItem value="hardware">Hardware Details</MenuItem>
+                </Select>
               </FormControl>
+              {/* Debug info */}
+              <div className="text-xs text-gray-500 mt-1">
+                Current selection: {selectedSection}
+              </div>
             </div>
           )}
-        </div>
 
-        <div className="flex justify-center gap-4 pt-4">
-          <button
-            onClick={handleCancel}
-            className="px-8 py-2 border border-[#C72030] text-[#C72030] rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleAddField}
-            className="px-8 py-2 bg-[#F6F4EE] text-[#C72030] rounded-md hover:bg-[#F0EBE0] transition-colors text-sm flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Field
-          </button>
-        </div>
+          <div className="flex justify-end gap-4 pt-4">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="px-4 py-2 border border-[#C72030] text-[#C72030] rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-[#F6F4EE] text-[#C72030] rounded-md hover:bg-[#F0EBE0] transition-colors text-sm flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
+            >
+              <Plus className="w-4 h-4" />
+              Add Field
+            </button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

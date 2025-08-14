@@ -292,7 +292,7 @@ export const AddRoleDialog = ({ open, onOpenChange, onSubmit }: AddRoleDialogPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Add New Role</DialogTitle>
         </DialogHeader>

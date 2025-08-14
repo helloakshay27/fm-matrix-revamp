@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X, Plus } from 'lucide-react';
+import { ArrowLeft, X, Plus, FileText, FileSpreadsheet, File, Eye, Download } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText } from '@mui/material';
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
@@ -12,6 +12,12 @@ import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
 import { fetchServicesData } from '@/store/slices/servicesSlice';
 import { fetchAMCDetails } from '@/store/slices/amcDetailsSlice';
 import { apiClient } from '@/utils/apiClient';
+import { debounce } from 'lodash';
+
+interface Service {
+  id: string | number;
+  service_name: string;
+}
 
 export const EditAMCPage = () => {
   const navigate = useNavigate();
@@ -25,6 +31,7 @@ export const EditAMCPage = () => {
   const { data: servicesData, loading: servicesLoading } = useAppSelector(state => state.services);
   const { data: amcData, loading: amcLoading, error: amcError } = useAppSelector(state => state.amcDetails);
 
+  // Form state
   const [formData, setFormData] = useState({
     details: '',
     type: 'Individual',
@@ -38,11 +45,29 @@ export const EditAMCPage = () => {
     startDate: '',
     endDate: '',
     cost: '',
+    contractName: '', // Added new field
     paymentTerms: '',
     firstService: '',
     noOfVisits: '',
     remarks: ''
   });
+
+  // Error state for validation
+  const [errors, setErrors] = useState({
+    asset_ids: '',
+    vendor: '',
+    group: '',
+    supplier: '',
+    service: '',
+    startDate: '',
+    endDate: '',
+    cost: '',
+    contractName: '', // Added new error field
+    paymentTerms: '',
+    firstService: '',
+    noOfVisits: ''
+  });
+
   const [attachments, setAttachments] = useState({
     contracts: [] as File[],
     invoices: [] as File[]
@@ -57,11 +82,40 @@ export const EditAMCPage = () => {
   const [subGroups, setSubGroups] = useState<Array<{ id: number, name: string }>>([]);
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [services, setServices] = useState<Service[]>([]);
 
   // Extract data from Redux state
-  const assets = Array.isArray((assetsData as any)?.assets) ? (assetsData as any).assets : Array.isArray(assetsData) ? assetsData : [];
+  // const assets = Array.isArray((assetsData as any)?.assets) ? (assetsData as any).assets : Array.isArray(assetsData) ? assetsData : [];
+  const [assetList, setAssetList] = useState<any[]>([]);
   const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
-  const services = Array.isArray(servicesData) ? servicesData : [];
+  const fetchAsset = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem("token"); // Get token from localStorage
+
+    try {
+      const response = await fetch(`https://${baseUrl}/pms/assets/get_assets.json`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Ensure token is a Bearer token if needed
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setAssetList(data)
+      console.log('SAC data:', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching SAC:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAsset();
+  }, []);
 
   // Fetch AMC data when component mounts
   useEffect(() => {
@@ -71,90 +125,75 @@ export const EditAMCPage = () => {
   }, [dispatch, id]);
 
   // Update form data when AMC data is loaded
-  useEffect(() => {
-    if (amcData && typeof amcData === 'object') {
-      const data = amcData as any;
-      const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
-      const isGroupType = data.resource_type === 'Pms::Asset';
 
-      // Set existing files from API response
-      if (data.amc_contracts && Array.isArray(data.amc_contracts)) {
-        const contractFiles = data.amc_contracts.flatMap((contract: any) =>
-          contract.documents ? contract.documents.map((doc: any) => ({
-            document_url: doc.document_url,
-            document_name: doc.document_name,
-            attachment_id: doc.attachment_id
-          })) : []
-        );
-        setExistingFiles(prev => ({ ...prev, contracts: contractFiles }));
-      }
+useEffect(() => {
+  if (amcData && typeof amcData === 'object') {
+    const data = amcData as any;
+    const detailType = data.resource_type === 'Pms::Asset' ? 'Asset' : 'Service';
+    const isGroupType = data.amc_details_type === 'group';
 
-      if (data.amc_invoices && Array.isArray(data.amc_invoices)) {
-        const invoiceFiles = data.amc_invoices.flatMap((invoice: any) =>
-          invoice.documents ? invoice.documents.map((doc: any) => ({
-            document_url: doc.document_url,
-            document_name: doc.document_name,
-            attachment_id: doc.attachment_id
-          })) : []
-        );
-        setExistingFiles(prev => ({ ...prev, invoices: invoiceFiles }));
-      }
-
-      // Determine the correct form values based on API response
-      const isAssetType = data.asset_id ? true : false;
-      const isServiceType = data.service_id ? true : false;
-      const isIndividualType = data.resource_type === 'Pms::Asset';
-
-      // Handle asset IDs
-      let assetIds = [];
-      if (data.asset_id) {
-        if (typeof data.asset_id === 'string') {
-          try {
-            const parsed = JSON.parse(data.asset_id);
-            assetIds = Array.isArray(parsed) ? parsed : [data.asset_id];
-          } catch {
-            assetIds = [data.asset_id];
-          }
-        } else if (Array.isArray(data.asset_id)) {
-          assetIds = data.asset_id;
-        } else {
-          assetIds = [data.asset_id];
-        }
-        assetIds = assetIds.map(id => id.toString());
-      }
-
-      const supplierId = data.supplier_id?.toString();
-      const foundSupplier = suppliers.find(supplier => supplier.id.toString() === supplierId);
-      const serviceId = data.service_id?.toString();
-      const foundService = services.find(service => service.id.toString() === serviceId);
-
-      setFormData({
-        details: detailType,
-        type: isGroupType ? 'Group' : 'Individual',
-        assetName: foundService ? serviceId : '',
-        asset_ids: assetIds,
-        vendor: foundSupplier ? supplierId : '',
-        group: isGroupType ? (data.group_id?.toString() || '') : '',
-        subgroup: data.sub_group_id || '',
-        service: '',
-        supplier: foundSupplier ? supplierId : '',
-        startDate: data.amc_start_date || '',
-        endDate: data.amc_end_date || '',
-        cost: data.amc_cost?.toString() || '',
-        paymentTerms: data.payment_term || '',
-        firstService: data.amc_first_service || '',
-        noOfVisits: data.no_of_visits?.toString() || '',
-        remarks: data.remarks || ''
-      });
-
-      // Ensure handleGroupChange is called with the group_id
-      if (isGroupType && data.group_id) {
-        handleGroupChange(data.group_id.toString());
-      }
+    let assetIds: string[] = [];
+    if (Array.isArray(data.amc_assets)) {
+      assetIds = data.amc_assets
+        .map((item: any) => item.asset_id?.toString())
+        .filter(Boolean);
     }
-  }, [amcData, assets, suppliers, services]);
+
+    const supplierId = data.supplier_id?.toString();
+    const foundSupplier = suppliers.find(
+      (supplier) => supplier.id.toString() === supplierId
+    );
+
+    const serviceId = data.service_id?.toString();
+    const foundService = services.find(
+      (service) => service.id.toString() === serviceId
+    );
+
+    setFormData({
+      details: detailType,
+      type: isGroupType ? 'Group' : 'Individual',
+      assetName: foundService
+        ? serviceId
+        : data.resource_id === 'Pms::Service'
+          ? data.resource_id
+          : '',
+      asset_ids: assetIds,
+      vendor: foundSupplier ? supplierId : '',
+      group: data.group_id ? data.group_id.toString() : formData.group,
+      subgroup: data.sub_group_id ? data.sub_group_id.toString() : formData.subgroup,
+      service: foundService
+        ? serviceId
+        : data.service_id?.toString() || formData.service,
+      supplier: foundSupplier ? supplierId : '',
+      startDate: data.amc_start_date || '',
+      endDate: data.amc_end_date || '',
+      cost: data.amc_cost?.toString() || '',
+      contractName: data.contract_name || '',
+      paymentTerms: data.payment_term || '',
+      firstService: data.amc_first_service || '',
+      noOfVisits: data.no_of_visits?.toString() || '',
+      remarks: data.remarks || ''
+    });
+
+    // Extract and flatten contract/invoice documents for preview
+    const contracts = Array.isArray(data.amc_contracts)
+      ? data.amc_contracts.flatMap((c: any) => Array.isArray(c.documents) ? c.documents : [])
+      : [];
+    const invoices = Array.isArray(data.amc_invoices)
+      ? data.amc_invoices.flatMap((c: any) => Array.isArray(c.documents) ? c.documents : [])
+      : [];
+    setExistingFiles({ contracts, invoices });
+
+    if (data.group_id) {
+      // Always load subgroups if group_id is present, for both Individual and Group types
+      handleGroupChange(data.group_id.toString(), data.sub_group_id ? data.sub_group_id.toString() : undefined);
+    }
+  }
+}, [amcData, assetList, suppliers, services]);
+
 
   const handleInputChange = (field: string, value: string) => {
+    console.log(`Updating ${field} to ${value}`);
     setFormData(prev => {
       if (field === 'details' && prev.details !== value) {
         return {
@@ -164,14 +203,11 @@ export const EditAMCPage = () => {
           asset_ids: []
         };
       }
+      // Do NOT clear group, subgroup, service, or supplier when switching type
       if (field === 'type' && prev.type !== value) {
         return {
           ...prev,
-          [field]: value,
-          group: '',
-          subgroup: '',
-          service: '',
-          supplier: ''
+          [field]: value
         };
       }
       return {
@@ -179,7 +215,9 @@ export const EditAMCPage = () => {
         [field]: value
       };
     });
+    setErrors(prev => ({ ...prev, [field]: '' }));
   };
+
 
   const handleFileUpload = (type: 'contracts' | 'invoices', files: FileList | null) => {
     if (files) {
@@ -202,7 +240,6 @@ export const EditAMCPage = () => {
   useEffect(() => {
     dispatch(fetchAssetsData({ page: 1 }));
     dispatch(fetchSuppliersData());
-    dispatch(fetchServicesData());
 
     const fetchAssetGroups = async () => {
       setLoading(true);
@@ -229,10 +266,34 @@ export const EditAMCPage = () => {
       }
     };
 
+    const fetchService = async () => {
+      try {
+        const response = await apiClient.get('/pms/services/get_services.json');
+        if (Array.isArray(response.data)) {
+          setServices(response.data);
+        } else if (response.data && Array.isArray(response.data.services)) {
+          setServices(response.data.services);
+        } else {
+          console.warn('API response is not an array:', response.data);
+          setServices([]);
+        }
+      } catch (error) {
+        console.error('Error fetching services:', error);
+        setServices([]);
+        toast({
+          title: "Error",
+          description: "Failed to fetch services.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchService();
     fetchAssetGroups();
   }, [dispatch, toast]);
 
-  const handleGroupChange = async (groupId: string) => {
+  // Accept optional subgroupId to select after loading subgroups
+  const handleGroupChange = async (groupId: string, subgroupId?: string) => {
     handleInputChange('group', groupId);
 
     if (groupId) {
@@ -252,8 +313,10 @@ export const EditAMCPage = () => {
         }
         setSubGroups(subgroups);
 
-        if (formData.subgroup && subgroups.some(sub => sub.id.toString() === formData.subgroup)) {
-          handleInputChange('subgroup', formData.subgroup);
+        // Select the intended subgroup if provided and present
+        const intendedSubgroup = subgroupId || formData.subgroup;
+        if (intendedSubgroup && subgroups.some(sub => sub.id.toString() === intendedSubgroup)) {
+          handleInputChange('subgroup', intendedSubgroup);
         }
       } catch (error) {
         console.error('Error fetching subgroups:', error);
@@ -271,52 +334,150 @@ export const EditAMCPage = () => {
     }
   };
 
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {
+      asset_ids: '',
+      vendor: '',
+      group: '',
+      supplier: '',
+      service: '',
+      startDate: '',
+      endDate: '',
+      cost: '',
+      contractName: '',
+      paymentTerms: '',
+      firstService: '',
+      noOfVisits: ''
+    };
+
+    if (formData.details === 'Asset' && formData.type === 'Individual') {
+      if (formData.asset_ids.length === 0) {
+        newErrors.asset_ids = 'Please select at least one asset.';
+        isValid = false;
+      }
+      if (!formData.vendor) {
+        newErrors.vendor = 'Please select a supplier.';
+        isValid = false;
+      }
+    } else if (formData.details === 'Service' && formData.type === 'Individual') {
+      if (!formData.assetName) {
+        newErrors.service = 'Please select a service.';
+        isValid = false;
+      }
+      if (!formData.vendor) {
+        newErrors.vendor = 'Please select a supplier.';
+        isValid = false;
+      }
+    } else if (formData.type === 'Group') {
+      if (!formData.group) {
+        newErrors.group = 'Please select a group.';
+        isValid = false;
+      }
+      if (!formData.supplier) {
+        newErrors.supplier = 'Please select a supplier.';
+        isValid = false;
+      }
+      if (formData.details === 'Service' && !formData.service) {
+        newErrors.service = 'Please select a service.';
+        isValid = false;
+      }
+    }
+
+    if (!formData.startDate) {
+      newErrors.startDate = 'Please select a start date.';
+      isValid = false;
+    }
+    if (!formData.endDate) {
+      newErrors.endDate = 'Please select an end date.';
+      isValid = false;
+    }
+    if (!formData.firstService) {
+      newErrors.firstService = 'Please select a first service date.';
+      isValid = false;
+    }
+    if (!formData.cost) {
+      newErrors.cost = 'Please enter the cost.';
+      isValid = false;
+    }
+    if (!formData.contractName) {
+      newErrors.contractName = 'Please enter the contract name.';
+      isValid = false;
+    }
+    if (!formData.paymentTerms) {
+      newErrors.paymentTerms = 'Please select payment terms.';
+      isValid = false;
+    }
+    if (!formData.noOfVisits) {
+      newErrors.noOfVisits = 'Please enter the number of visits.';
+      isValid = false;
+    } else if (!Number.isInteger(Number(formData.noOfVisits))) {
+      newErrors.noOfVisits = 'Please enter a whole number.';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
   const handleSubmit = useCallback(async (action: string) => {
     if (!id) return;
+
+    if (assetsLoading || suppliersLoading || servicesLoading || loading) {
+      toast({
+        title: 'Error',
+        description: 'Please wait for all data to load.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!validateForm()) {
+      toast({
+        title: 'Error',
+        description: 'Please fill all required fields correctly.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setUpdateLoading(true);
 
     try {
       const sendData = new FormData();
 
-      // Append form data
-      sendData.append('pms_asset_amc[amc_cost]', (parseFloat(formData.cost) || '0').toString());
-      sendData.append('pms_asset_amc[amc_start_date]', formData.startDate || '');
-      sendData.append('pms_asset_amc[amc_end_date]', formData.endDate || '');
-      sendData.append('pms_asset_amc[amc_first_service]', formData.firstService || '');
-      sendData.append('pms_asset_amc[amc_frequency]', formData.paymentTerms || '');
+      // Append common form data
+      sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
+      sendData.append('pms_asset_amc[amc_cost]', parseFloat(formData.cost).toString());
+      sendData.append('pms_asset_amc[contract_name]', formData.contractName);
+      sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
+      sendData.append('pms_asset_amc[amc_end_date]', formData.endDate);
+      sendData.append('pms_asset_amc[amc_first_service]', formData.firstService);
+      sendData.append('pms_asset_amc[amc_frequency]', formData.paymentTerms);
       sendData.append('pms_asset_amc[amc_period]', `${formData.startDate} - ${formData.endDate}`);
-      sendData.append('pms_asset_amc[no_of_visits]', (parseInt(formData.noOfVisits) || 0).toString());
-      sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms || '');
+      sendData.append('pms_asset_amc[no_of_visits]', parseInt(formData.noOfVisits).toString());
+      sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
       sendData.append('pms_asset_amc[remarks]', formData.remarks || '');
       sendData.append('pms_asset_amc[pms_site_id]', (amcData as any)?.pms_site_id || '');
-      sendData.append('pms_asset_amc[site_name]', (amcData as any)?.site_name || '');
-      sendData.append('pms_asset_amc[resource_id]', (amcData as any)?.resource_id || '');
-      sendData.append('pms_asset_amc[resource_name]', (amcData as any)?.resource_name || '');
-      sendData.append('pms_asset_amc[resource_type]', (amcData as any)?.resource_type || '');
-      sendData.append('pms_asset_amc[supplier_id]', formData.vendor || formData.supplier || '');
+      sendData.append('pms_asset_amc[type]', formData.type);
 
-      // Add supplier details
-      const selectedSupplier = suppliers.find(s => s.id.toString() === (formData.vendor || formData.supplier));
-      if (selectedSupplier) {
-        sendData.append('pms_asset_amc[amc_vendor_name]', selectedSupplier.company_name || '');
-        sendData.append('pms_asset_amc[amc_vendor_mobile]', selectedSupplier.mobile || '');
-        sendData.append('pms_asset_amc[amc_vendor_email]', selectedSupplier.email || '');
-      }
-
-      // Add asset_ids, group_id, sub_group_id, or service_id based on details and type
+      // Set resource details
       if (formData.details === 'Asset') {
-        if (formData.type === 'Individual' && formData.asset_ids.length > 0) {
-          formData.asset_ids.forEach((id, index) => {
-            sendData.append(`pms_asset_amc[asset_ids][${index}]`, id);
-          });
-        } else if (formData.type === 'Group' && formData.group) {
-          sendData.append('pms_asset_amc[group_id]', formData.group);
-          if (formData.subgroup) {
-            sendData.append('pms_asset_amc[sub_group_id]', formData.subgroup);
-          }
+        sendData.append('pms_asset_amc[resource_type]', 'Pms::Asset');
+        if (formData.type === 'Individual') {
+          sendData.append('pms_asset_amc[resource_id]', formData.asset_ids.join(','));
+        } else if (formData.type === 'Group') {
+          sendData.append('group_id', formData.group || '');
+          sendData.append('sub_group_id', formData.subgroup || '');
         }
-      } else if (formData.details === 'Service' && formData.assetName) {
-        sendData.append('pms_asset_amc[service_id]', formData.assetName);
+      } else if (formData.details === 'Service') {
+        sendData.append('pms_asset_amc[resource_type]', 'Pms::Service');
+        if (formData.type === 'Group') {
+          sendData.append('pms_asset_amc[resource_id]', formData.service);
+          sendData.append('group_id', formData.group || '');
+          sendData.append('sub_group_id', formData.subgroup || '');
+        } else if (formData.type === 'Individual') {
+          sendData.append('pms_asset_amc[resource_id]', formData.assetName || formData.service);
+        }
       }
 
       // Append attachments
@@ -327,40 +488,79 @@ export const EditAMCPage = () => {
         sendData.append('amc_invoices[content][]', file);
       });
 
-      // Add subaction to indicate save action
+      // Append existing file IDs
+      existingFiles.contracts.forEach(file => {
+        sendData.append('pms_asset_amc[existing_contract_ids][]', file.attachment_id.toString());
+      });
+      existingFiles.invoices.forEach(file => {
+        sendData.append('pms_asset_amc[existing_invoice_ids][]', file.attachment_id.toString());
+      });
+
       sendData.append('subaction', 'save');
 
-      // Debug FormData
+      // Log payload (optional debugging)
+      // for (const [key, value] of sendData.entries()) {
+      //   console.log(`${key}: ${value}`);
+      // }
 
-      // Make API call
       const response = await apiClient.put(`/pms/asset_amcs/${id}.json`, sendData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
+      const result = response?.data;
+
+      // ✅ Check backend response validity
+      if (!result?.id) {
+        toast({
+          title: 'Error',
+          description:
+            result?.message || result?.error || result?.errors?.[0] || 'Failed to update AMC: No ID returned.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // ✅ Show success and navigate
       toast({
         title: 'AMC Updated',
         description: 'AMC has been successfully updated.',
       });
 
-      // Navigate based on action
       if (action === 'updated with details') {
         navigate(`/maintenance/amc/details/${id}`);
       } else if (action === 'updated new service') {
         navigate('/maintenance/amc');
       }
-
     } catch (error: any) {
+      console.error('API Error:', error.response?.data);
       toast({
         title: 'Error',
-        description: `Failed to update AMC: ${error.response?.data?.message || error.message || 'Please try again.'}`,
+        description:
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          'Please try again.',
         variant: 'destructive',
       });
     } finally {
       setUpdateLoading(false);
     }
-  }, [id, formData, attachments, amcData, suppliers, toast, navigate]);
+  }, [
+    id,
+    formData,
+    attachments,
+    existingFiles,
+    amcData,
+    suppliers,
+    toast,
+    navigate,
+    assetsLoading,
+    suppliersLoading,
+    servicesLoading,
+    loading,
+  ]);
 
   // Responsive styles for TextField and Select
   const fieldStyles = {
@@ -412,6 +612,43 @@ export const EditAMCPage = () => {
     );
   }
 
+  const downloadAttachment = async (file) => {
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+
+      if (!token || !baseUrl) {
+        console.error('Missing token or base URL');
+        return;
+      }
+
+      const apiUrl = `https://${baseUrl}/attachfiles/${file.attachment_id}?show_file=true`;
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Download failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.document_name || `document_${file.attachment_id}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading file:', err);
+    }
+  };
+
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -424,9 +661,9 @@ export const EditAMCPage = () => {
 
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit('updated new service'); }}>
         {/* AMC Configuration */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg text-[#C72030] flex items-center">
+        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+          <CardHeader className='bg-[#F6F4EE] mb-4'>
+            <CardTitle className="text-lg text-black flex items-center">
               <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
               AMC CONFIGURATION
             </CardTitle>
@@ -498,7 +735,7 @@ export const EditAMCPage = () => {
             {formData.type === 'Individual' ? (
               <>
                 {formData.details === 'Asset' ? (
-                  <FormControl fullWidth variant="outlined">
+                  <FormControl fullWidth variant="outlined" error={!!errors.asset_ids}>
                     <InputLabel id="asset-select-label" shrink>Assets</InputLabel>
                     <MuiSelect
                       labelId="asset-select-label"
@@ -510,8 +747,8 @@ export const EditAMCPage = () => {
                         const value = e.target.value;
                         setFormData(prev => ({
                           ...prev,
-                          asset_ids: typeof value === 'string' ? value.split(',') : value
                         }));
+                        setErrors(prev => ({ ...prev, asset_ids: '' }));
                       }}
                       sx={fieldStyles}
                       disabled={true}
@@ -520,12 +757,12 @@ export const EditAMCPage = () => {
                           return <em>Select Assets...</em>;
                         }
                         return selected.map(id => {
-                          const asset = assets.find(a => a.id.toString() === id);
+                          const asset = assetList.find(a => a.id.toString() === id);
                           return asset?.name;
                         }).join(', ');
                       }}
                     >
-                      {Array.isArray(assets) && assets.map((asset) => (
+                      {Array.isArray(assetList) && assetList.map((asset) => (
                         <MenuItem key={asset.id} value={asset.id.toString()}>
                           <input
                             type="checkbox"
@@ -537,9 +774,10 @@ export const EditAMCPage = () => {
                         </MenuItem>
                       ))}
                     </MuiSelect>
+                    {errors.asset_ids && <FormHelperText>{errors.asset_ids}</FormHelperText>}
                   </FormControl>
                 ) : (
-                  <FormControl fullWidth variant="outlined">
+                  <FormControl fullWidth variant="outlined" error={!!errors.service}>
                     <InputLabel id="service-select-label" shrink>Service</InputLabel>
                     <MuiSelect
                       labelId="service-select-label"
@@ -564,11 +802,12 @@ export const EditAMCPage = () => {
                         </MenuItem>
                       ))}
                     </MuiSelect>
+                    {errors.service && <FormHelperText>{errors.service}</FormHelperText>}
                   </FormControl>
                 )}
 
                 <div>
-                  <FormControl fullWidth variant="outlined">
+                  <FormControl fullWidth variant="outlined" error={!!errors.vendor}>
                     <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
                     <MuiSelect
                       labelId="vendor-select-label"
@@ -593,6 +832,7 @@ export const EditAMCPage = () => {
                         </MenuItem>
                       ))}
                     </MuiSelect>
+                    {errors.vendor && <FormHelperText>{errors.vendor}</FormHelperText>}
                   </FormControl>
                 </div>
               </>
@@ -600,7 +840,7 @@ export const EditAMCPage = () => {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <FormControl fullWidth variant="outlined">
+                    <FormControl fullWidth variant="outlined" error={!!errors.group}>
                       <InputLabel id="group-select-label" shrink>Group</InputLabel>
                       <MuiSelect
                         labelId="group-select-label"
@@ -613,11 +853,12 @@ export const EditAMCPage = () => {
                       >
                         <MenuItem value=""><em>Select Group</em></MenuItem>
                         {Array.isArray(assetGroups) && assetGroups.map((group) => (
-                          <MenuItem key={group.id} value={group.id.toString()}>
+                          <MenuItem key={group.id} value={group.id}>
                             {group.name}
                           </MenuItem>
                         ))}
                       </MuiSelect>
+                      {errors.group && <FormHelperText>{errors.group}</FormHelperText>}
                     </FormControl>
                   </div>
 
@@ -645,28 +886,40 @@ export const EditAMCPage = () => {
 
                   {formData.details === 'Service' && (
                     <div>
-                      <FormControl fullWidth variant="outlined">
-                        <InputLabel id="group-service-select-label" shrink>Service</InputLabel>
+                      <FormControl fullWidth variant="outlined" error={!!errors.service}>
+                        <InputLabel id="service-select-label" shrink>Service</InputLabel>
                         <MuiSelect
-                          labelId="group-service-select-label"
+                          labelId="service-select-label"
                           label="Service"
                           displayEmpty
-                          value={formData.service}
-                          onChange={e => handleInputChange('service', e.target.value)}
+                          value={formData.service} // Use formData.service instead of assetName
+                          onChange={e => handleInputChange('service', e.target.value)} // Update service key
                           sx={fieldStyles}
+                          disabled={loading || servicesLoading || updateLoading}
+                          renderValue={(selected) => {
+                            if (!selected) {
+                              return <em>Select a Service...</em>;
+                            }
+                            const service = services.find(s => s.id.toString() === selected);
+                            return service ? service.service_name : selected;
+                          }}
                         >
-                          <MenuItem value=""><em>Select Service</em></MenuItem>
-                          <MenuItem value="preventive-maintenance">Preventive Maintenance</MenuItem>
-                          <MenuItem value="corrective-maintenance">Corrective Maintenance</MenuItem>
-                          <MenuItem value="emergency-service">Emergency Service</MenuItem>
-                          <MenuItem value="inspection-service">Inspection Service</MenuItem>
+                          <MenuItem value=""><em>Select a Service...</em></MenuItem>
+                          {Array.isArray(services) && services.map((service) => (
+                            <MenuItem key={service.id} value={service.id.toString()}>
+                              {service.service_name}
+                            </MenuItem>
+                          ))}
                         </MuiSelect>
+                        {errors.service && <FormHelperText>{errors.service}</FormHelperText>}
                       </FormControl>
+
+
                     </div>
                   )}
 
                   <div>
-                    <FormControl fullWidth variant="outlined">
+                    <FormControl fullWidth variant="outlined" error={!!errors.supplier}>
                       <InputLabel id="group-supplier-select-label" shrink>Supplier</InputLabel>
                       <MuiSelect
                         labelId="group-supplier-select-label"
@@ -684,6 +937,7 @@ export const EditAMCPage = () => {
                           </MenuItem>
                         ))}
                       </MuiSelect>
+                      {errors.supplier && <FormHelperText>{errors.supplier}</FormHelperText>}
                     </FormControl>
                   </div>
                 </div>
@@ -693,9 +947,9 @@ export const EditAMCPage = () => {
         </Card>
 
         {/* AMC Details */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg text-[#C72030] flex items-center">
+        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+          <CardHeader className='bg-[#F6F4EE] mb-4'>
+            <CardTitle className="text-lg text-black flex items-center">
               <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
               AMC DETAILS
             </CardTitle>
@@ -705,7 +959,7 @@ export const EditAMCPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <TextField
-                  label="Cost"
+                  label="Cost*"
                   placeholder="Enter Cost"
                   name="cost"
                   type="number"
@@ -715,35 +969,63 @@ export const EditAMCPage = () => {
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
+                  error={!!errors.cost}
+                  helperText={errors.cost}
                 />
               </div>
 
               <div>
-                <MaterialDatePicker
+                <TextField
+                  label="Contract Name*"
+                  placeholder="Enter Contract Name"
+                  name="contractName"
+                  value={formData.contractName}
+                  onChange={e => handleInputChange('contractName', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  error={!!errors.contractName}
+                  helperText={errors.contractName}
+                />
+              </div>
+
+              <div>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Start Date*"
                   value={formData.startDate}
-                  onChange={(value) => handleInputChange('startDate', value)}
-                  placeholder="Select Start Date"
-                  className="h-[28px] sm:h-[36px] md:h-[45px]"
+                  onChange={(e) => handleInputChange('startDate', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ style: { height: 46 } }}
+                  sx={{ '& .MuiInputBase-root': { height: 46 } }}
+                  error={!!errors.startDate}
+                  helperText={errors.startDate}
                 />
               </div>
 
               <div>
-                <MaterialDatePicker
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="First Service Date*"
                   value={formData.firstService}
-                  onChange={(value) => handleInputChange('firstService', value)}
-                  placeholder="Select First Service Date"
-                  className="h-[28px] sm:h-[36px] md:h-[45px]"
+                  onChange={(e) => handleInputChange('firstService', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ style: { height: 46 } }}
+                  sx={{ '& .MuiInputBase-root': { height: 46 } }}
+                  error={!!errors.firstService}
+                  helperText={errors.firstService}
                 />
               </div>
 
               <div>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel id="payment-terms-select-label" shrink>
-                    Payment Terms
-                  </InputLabel>
+                <FormControl fullWidth variant="outlined" error={!!errors.paymentTerms}>
+                  <InputLabel id="payment-terms-select-label" shrink>Payment Terms*</InputLabel>
                   <MuiSelect
                     labelId="payment-terms-select-label"
-                    label="Payment Terms"
+                    label="Payment Terms*"
                     displayEmpty
                     value={formData.paymentTerms}
                     onChange={e => handleInputChange('paymentTerms', e.target.value)}
@@ -754,31 +1036,60 @@ export const EditAMCPage = () => {
                     <MenuItem value="quarterly">Quarterly</MenuItem>
                     <MenuItem value="half-yearly">Half Yearly</MenuItem>
                     <MenuItem value="yearly">Yearly</MenuItem>
+                    <MenuItem value="full_payment" >Full Payment</MenuItem>
+                    <MenuItem value="visit_based_payment" >Visit Based Payment</MenuItem>
                   </MuiSelect>
+                  {errors.paymentTerms && <FormHelperText>{errors.paymentTerms}</FormHelperText>}
                 </FormControl>
               </div>
 
               <div>
-                <MaterialDatePicker
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="End Date*"
                   value={formData.endDate}
-                  onChange={(value) => handleInputChange('endDate', value)}
-                  placeholder="Select End Date"
-                  className="h-[28px] sm:h-[36px] md:h-[45px]"
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ style: { height: 46 }, min: formData.startDate || undefined }}
+                  sx={{ '& .MuiInputBase-root': { height: 46 } }}
+                  error={!!errors.endDate}
+                  helperText={errors.endDate || (!formData.startDate && "Please select a start date first.")}
+                  disabled={!formData.startDate || updateLoading}
                 />
               </div>
 
               <div>
                 <TextField
-                  label="No. of Visits"
-                  placeholder="Enter No. of Visit"
+                  label="No. of Visits*"
+                  placeholder="Enter No. of Visits"
                   name="noOfVisits"
-                  type="number"
+                  type="text"
                   value={formData.noOfVisits}
-                  onChange={e => handleInputChange('noOfVisits', e.target.value)}
+                  onChange={e => {
+                    const value = e.target.value;
+                    if (/^\d*$/.test(value)) {
+                      handleInputChange('noOfVisits', value);
+                    }
+                  }}
+                  onKeyDown={e => {
+                    const allowedKeys = [
+                      'Backspace',
+                      'Delete',
+                      'ArrowLeft',
+                      'ArrowRight',
+                      'Tab'
+                    ];
+                    if (!/[0-9]/.test(e.key) && !allowedKeys.includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
+                  error={!!errors.noOfVisits}
+                  helperText={errors.noOfVisits}
                 />
               </div>
 
@@ -821,9 +1132,9 @@ export const EditAMCPage = () => {
         </Card>
 
         {/* Attachments */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg text-[#C72030] flex items-center">
+        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+          <CardHeader className='bg-[#F6F4EE] mb-4'>
+            <CardTitle className="text-lg text-black flex items-center">
               <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
               ATTACHMENTS
             </CardTitle>
@@ -834,242 +1145,180 @@ export const EditAMCPage = () => {
               <div>
                 <label className="block text-sm font-medium mb-2">AMC Contracts</label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    id="contracts-upload"
-                    onChange={e => handleFileUpload('contracts', e.target.files)}
-                  />
+                  <input type="file" multiple className="hidden" id="contracts-upload" onChange={e => handleFileUpload('contracts', e.target.files)} />
                   <div className="flex items-center justify-center gap-2 mb-4">
-                    <span
-                      className="text-[#C72030] font-medium cursor-pointer"
-                      style={{ fontSize: '14px' }}
-                      onClick={() => document.getElementById('contracts-upload')?.click()}
-                    >
+                    <span className="text-[#C72030] font-medium cursor-pointer text-sm" onClick={() => document.getElementById('contracts-upload')?.click()}>
                       Choose File
                     </span>
-                    <span className="text-gray-500" style={{ fontSize: '14px' }}>
-                      {attachments.contracts.length > 0 ? `${attachments.contracts.length} new file(s) selected` : 'No new file chosen'}
+                    <span className="text-gray-500 text-sm">
+                      {attachments.contracts.length > 0 ? `${attachments.contracts.length} file(s) selected` : 'No file chosen'}
                     </span>
                   </div>
-                  <Button
-                    type="button"
-                    onClick={() => document.getElementById('contracts-upload')?.click()}
-                    className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center"
-                  >
+                  <Button type="button" onClick={() => document.getElementById('contracts-upload')?.click()} className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center">
                     <Plus className="w-4 h-4 mr-1" />
-                    Upload New Files
+                    Upload Files
                   </Button>
                 </div>
 
+                {/* New Files */}
                 {attachments.contracts.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {attachments.contracts.map((file, index) => {
-                        const isImage = file.type.startsWith('image/');
-                        const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                  <div className="flex flex-wrap gap-3 mt-3">
+                    {attachments.contracts.map((file, index) => {
+                      const isImage = file.type.startsWith('image/');
+                      const isPdf = file.type === 'application/pdf';
+                      const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                      const fileURL = URL.createObjectURL(file);
 
-                        return (
-                          <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
-                            {isImage ? (
-                              <img
-                                src={URL.createObjectURL(file)}
-                                alt={file.name}
-                                className="h-32 w-full object-contain rounded"
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center h-32 w-full">
-                                <div className="text-gray-600 text-5xl">📄</div>
-                                <div className="mt-2 text-xs break-words">{file.name}</div>
-                              </div>
-                            )}
-                            {isExcel && (
-                              <p className="text-green-700 text-xs mt-1">Excel file</p>
-                            )}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="absolute top-1 right-1"
-                              onClick={() => removeFile('contracts', index)}
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                      return (
+                        <div key={`${file.name}-${file.lastModified}`} className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm">
+                          {isImage ? (
+                            <img src={fileURL} alt={file.name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                          ) : isPdf ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                          ) : isExcel ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                              <FileSpreadsheet className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-500 bg-white mb-1">
+                              <File className="w-4 h-4" />
+                            </div>
+                          )}
+                          <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-gray-600" onClick={() => removeFile('contracts', index)}>
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
+                {/* Existing Files */}
                 {existingFiles.contracts.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {existingFiles.contracts.map((file, index) => {
-                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
-                        const isExcel = file.document_name.endsWith('.xlsx') || file.document_name.endsWith('.xls') || file.document_name.endsWith('.csv');
-
-                        return (
-                          <div key={`${file.document_name}-${file.attachment_id}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
-                            {isImage ? (
-                              <img
-                                src={file.document_url}
-                                alt={file.document_name}
-                                className="h-32 w-full object-contain rounded"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  if (e.currentTarget.nextSibling instanceof HTMLElement) {
-                                    e.currentTarget.nextSibling.style.display = 'flex';
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center h-32 w-full">
-                                <div className="text-gray-600 text-5xl">📄</div>
-                                <div className="mt-2 text-xs break-words">{file.document_name}</div>
-                              </div>
-                            )}
-                            {isExcel && (
-                              <p className="text-green-700 text-xs mt-1">Excel file</p>
-                            )}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="absolute top-1 right-1 text-red-600 hover:text-red-800"
-                              onClick={() => window.open(file.document_url, '_blank')}
-                            >
-                              View
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                  <div className="flex flex-wrap gap-3 mt-4">
+                    {existingFiles.contracts.map((doc) => {
+                      const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(doc.document_name);
+                      const isPdf = doc.document_name.endsWith('.pdf');
+                      const isExcel = doc.document_name.endsWith('.xlsx') || doc.document_name.endsWith('.xls') || doc.document_name.endsWith('.csv');
+                      return (
+                        <div key={`${doc.document_name}-${doc.attachment_id}`} className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm">
+                          {isImage ? (
+                            <img src={doc.document_url} alt={doc.document_name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                          ) : isPdf ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                          ) : isExcel ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                              <FileSpreadsheet className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-500 bg-white mb-1">
+                              <File className="w-4 h-4" />
+                            </div>
+                          )}
+                          <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{doc.document_name}</span>
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(doc)}>
+                            <Download className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
 
               {/* AMC Invoices */}
               <div>
-                <label className="block text-sm font-medium mb-2">AMC Invoice</label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center flex flex-col items-center justify-center bg-white">
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    id="invoices-upload"
-                    onChange={e => handleFileUpload('invoices', e.target.files)}
-                  />
+                <label className="block text-sm font-medium mb-2">AMC Invoices</label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
+                  <input type="file" multiple className="hidden" id="invoices-upload" onChange={e => handleFileUpload('invoices', e.target.files)} />
                   <div className="flex items-center justify-center gap-2 mb-4">
-                    <span
-                      className="text-[#C72030] font-medium cursor-pointer"
-                      style={{ fontSize: '14px' }}
-                      onClick={() => document.getElementById('invoices-upload')?.click()}
-                    >
+                    <span className="text-[#C72030] font-medium cursor-pointer text-sm" onClick={() => document.getElementById('invoices-upload')?.click()}>
                       Choose File
                     </span>
-                    <span className="text-gray-500" style={{ fontSize: '14px' }}>
-                      {attachments.invoices.length > 0 ? `${attachments.invoices.length} new file(s) selected` : 'No new file chosen'}
+                    <span className="text-gray-500 text-sm">
+                      {attachments.invoices.length > 0 ? `${attachments.invoices.length} file(s) selected` : 'No file chosen'}
                     </span>
                   </div>
-                  <Button
-                    type="button"
-                    onClick={() => document.getElementById('invoices-upload')?.click()}
-                    className="!bg-[#f6f4ee] !text-[#C72030] !border-none hover:!bg-[#f6f4ee]/90 text-sm flex items-center justify-center"
-                  >
+                  <Button type="button" onClick={() => document.getElementById('invoices-upload')?.click()} className="!bg-[#f6f4ee] !text-[#C72030] !border-none text-sm flex items-center justify-center">
                     <Plus className="w-4 h-4 mr-1" />
-                    Upload New Files
+                    Upload Files
                   </Button>
                 </div>
 
+                {/* New Files */}
                 {attachments.invoices.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">New Files to Upload:</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {attachments.invoices.map((file, index) => {
-                        const isImage = file.type.startsWith('image/');
-                        const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                  <div className="flex flex-wrap gap-3 mt-3">
+                    {attachments.invoices.map((file, index) => {
+                      const isImage = file.type.startsWith('image/');
+                      const isPdf = file.type === 'application/pdf';
+                      const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                      const fileURL = URL.createObjectURL(file);
 
-                        return (
-                          <div key={`${file.name}-${file.lastModified}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
-                            {isImage ? (
-                              <img
-                                src={URL.createObjectURL(file)}
-                                alt={file.name}
-                                className="h-32 w-full object-contain rounded"
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center h-32 w-full">
-                                <div className="text-gray-600 text-5xl">📄</div>
-                                <div className="mt-2 text-xs break-words">{file.name}</div>
-                              </div>
-                            )}
-                            {isExcel && (
-                              <p className="text-green-700 text-xs mt-1">Excel file</p>
-                            )}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="absolute top-1 right-1"
-                              onClick={() => removeFile('invoices', index)}
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                      return (
+                        <div key={`${file.name}-${file.lastModified}`} className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm">
+                          {isImage ? (
+                            <img src={fileURL} alt={file.name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                          ) : isPdf ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                          ) : isExcel ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                              <FileSpreadsheet className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-500 bg-white mb-1">
+                              <File className="w-4 h-4" />
+                            </div>
+                          )}
+                          <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(file)}>
+                            <Download className="w-3 h-3" />
+                          </Button>
+
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
+                {/* Existing Files */}
                 {existingFiles.invoices.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Existing Files:</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {existingFiles.invoices.map((file, index) => {
-                        const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
-                        const isExcel = file.document_name.endsWith('.xlsx') || file.document_name.endsWith('.xls') || file.document_name.endsWith('.csv');
+                  <div className="flex flex-wrap gap-3 mt-4">
+                    {existingFiles.invoices.map((file) => {
+                      const isImage = /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.document_name);
+                      const isPdf = file.document_name.endsWith('.pdf');
+                      const isExcel = file.document_name.endsWith('.xlsx') || file.document_name.endsWith('.xls') || file.document_name.endsWith('.csv');
 
-                        return (
-                          <div key={`${file.document_name}-${file.attachment_id}`} className="border rounded-md p-2 text-center text-sm bg-gray-50 relative">
-                            {isImage ? (
-                              <img
-                                src={file.document_url}
-                                alt={file.document_name}
-                                className="h-32 w-full object-contain rounded"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  if (e.currentTarget.nextSibling instanceof HTMLElement) {
-                                    e.currentTarget.nextSibling.style.display = 'flex';
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center h-32 w-full">
-                                <div className="text-gray-600 text-5xl">📄</div>
-                                <div className="mt-2 text-xs break-words">{file.document_name}</div>
-                              </div>
-                            )}
-                            {isExcel && (
-                              <p className="text-green-700 text-xs mt-1">Excel file</p>
-                            )}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="absolute top-1 right-1 text-red-600 hover:text-red-800"
-                              onClick={() => window.open(file.document_url, '_blank')}
-                            >
-                              View
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
+                      return (
+                        <div key={`${file.document_name}-${file.attachment_id}`} className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm">
+                          {isImage ? (
+                            <img src={file.document_url} alt={file.document_name} className="w-[40px] h-[40px] object-cover rounded border mb-1" />
+                          ) : isPdf ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                          ) : isExcel ? (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                              <FileSpreadsheet className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-500 bg-white mb-1">
+                              <File className="w-4 h-4" />
+                            </div>
+                          )}
+                          <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.document_name}</span>
+                          <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(file)}>
+                            <Download className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -1085,15 +1334,7 @@ export const EditAMCPage = () => {
             style={{ backgroundColor: '#C72030' }}
             className="text-white hover:bg-[#C72030]/90"
           >
-            {updateLoading ? 'Updating...' : 'Update & Show Details'}
-          </Button>
-          <Button
-            type="submit"
-            disabled={updateLoading}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90"
-          >
-            {updateLoading ? 'Updating...' : 'Update & Create New Service'}
+            {updateLoading ? 'Submiting...' : 'Submit'}
           </Button>
         </div>
       </form>

@@ -11,8 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Edit, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { 
   createResolutionEscalation, 
@@ -25,6 +24,8 @@ import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice'
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { useToast } from '@/hooks/use-toast';
 import ReactSelect from 'react-select';
+import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManagementAPI';
+import { API_CONFIG } from '@/config/apiConfig';
 
 const resolutionEscalationSchema = z.object({
   categoryIds: z.array(z.number()).min(1, 'At least one category is required'),
@@ -121,9 +122,9 @@ export const ResolutionEscalationTab: React.FC = () => {
   const { data: categories, loading: categoriesLoading } = useAppSelector((state) => state.helpdeskCategories);
   const { data: fmUsers, loading: fmUsersLoading } = useAppSelector((state) => state.fmUsers);
 
+  const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
   const [filteredRules, setFilteredRules] = useState(resolutionEscalations);
-  const [expandedRules, setExpandedRules] = useState<Set<number>>(new Set());
   const [editingRule, setEditingRule] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -191,11 +192,25 @@ export const ResolutionEscalationTab: React.FC = () => {
     return { days, hours, minutes };
   };
 
+  // Load user account data
+  const loadUserAccount = async () => {
+    try {
+      console.log('Loading user account data...');
+      const userAccountData = await ticketManagementAPI.getUserAccount();
+      setUserAccount(userAccountData);
+      console.log('User account loaded:', userAccountData);
+    } catch (error) {
+      console.error('Error loading user account:', error);
+      toast({ title: 'Error', description: 'Failed to load user account data', variant: 'destructive' });
+    }
+  };
+
   // Load initial data
   useEffect(() => {
     dispatch(fetchHelpdeskCategories());
     dispatch(fetchFMUsers());
     dispatch(fetchResolutionEscalations());
+    loadUserAccount();
   }, [dispatch]);
 
   // Handle success/error states
@@ -207,7 +222,9 @@ export const ResolutionEscalationTab: React.FC = () => {
       dispatch(fetchResolutionEscalations());
     }
     if (error) {
-      toast({ title: 'Error', description: error, variant: 'destructive' });
+      // Ensure error is a string for toast display
+      const errorMessage = typeof error === 'string' ? error : 'An error occurred while processing your request';
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
       dispatch(clearState());
     }
   }, [success, error, toast, reset, dispatch]);
@@ -224,9 +241,18 @@ export const ResolutionEscalationTab: React.FC = () => {
 
   const onSubmit = async (data: ResolutionEscalationFormData) => {
     try {
+      // Ensure user account is loaded to get site_id
+      if (!userAccount?.site_id) {
+        toast({ title: 'Error', description: 'Unable to determine site ID from user account. Please refresh and try again.', variant: 'destructive' });
+        return;
+      }
+
+      // Get site_id from user account API response
+      const siteId = userAccount.site_id;
+      
       const payload = {
         complaint_worker: {
-          society_id: 3584,
+          society_id: siteId,
           esc_type: 'resolution',
           of_phase: 'pms',
           of_atype: 'Pms::Site',
@@ -281,9 +307,16 @@ export const ResolutionEscalationTab: React.FC = () => {
         }
       };
 
+      console.log('Resolution escalation payload:', JSON.stringify(payload, null, 2));
+      console.log('Using site ID from user account:', siteId);
       await dispatch(createResolutionEscalation(payload));
     } catch (err) {
       console.error('Error creating resolution escalation:', err);
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to create resolution escalation. Please try again.', 
+        variant: 'destructive' 
+      });
     }
   };
 
@@ -294,11 +327,14 @@ export const ResolutionEscalationTab: React.FC = () => {
     const safeParseUsers = (escalateToUsers: any): number[] => {
       if (!escalateToUsers) return [];
       try {
+        let userArray: (string | number)[] = [];
         if (typeof escalateToUsers === 'string') {
-          return JSON.parse(escalateToUsers);
+          userArray = JSON.parse(escalateToUsers);
         } else if (Array.isArray(escalateToUsers)) {
-          return escalateToUsers;
+          userArray = escalateToUsers;
         }
+        // Convert all values to numbers, handling both string and number IDs
+        return userArray.map(id => typeof id === 'string' ? parseInt(id) : id).filter(id => !isNaN(id));
       } catch (error) {
         console.error('Error parsing escalate_to_users in edit:', error);
       }
@@ -430,6 +466,11 @@ export const ResolutionEscalationTab: React.FC = () => {
       dispatch(fetchResolutionEscalations());
     } catch (err) {
       console.error('Error updating resolution escalation:', err);
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to update resolution escalation. Please try again.', 
+        variant: 'destructive' 
+      });
     }
   };
 
@@ -439,6 +480,11 @@ export const ResolutionEscalationTab: React.FC = () => {
       toast({ title: 'Success', description: 'Resolution escalation deleted successfully' });
     } catch (err) {
       console.error('Error deleting resolution escalation:', err);
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to delete resolution escalation. Please try again.', 
+        variant: 'destructive' 
+      });
     }
   };
 
@@ -448,16 +494,6 @@ export const ResolutionEscalationTab: React.FC = () => {
 
   const handleResetFilter = () => {
     setSelectedCategoryFilter('');
-  };
-
-  const toggleRuleExpansion = (ruleId: number) => {
-    const newExpanded = new Set(expandedRules);
-    if (newExpanded.has(ruleId)) {
-      newExpanded.delete(ruleId);
-    } else {
-      newExpanded.add(ruleId);
-    }
-    setExpandedRules(newExpanded);
   };
 
   // Options for react-select
@@ -472,17 +508,20 @@ export const ResolutionEscalationTab: React.FC = () => {
       {/* Create Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Select up to 15 Categories</CardTitle>
+          <CardTitle>Select Categories</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Category Selection */}
             <div>
+              <Label className="text-sm font-medium">Select Categories</Label>
               <ReactSelect
                 isMulti
                 options={categoryOptions}
+                value={categoryOptions.filter(option => watch('categoryIds')?.includes(option.value))}
                 onChange={(selected) => {
-                  setValue('categoryIds', selected ? selected.map(s => s.value) : []);
+                  const selectedIds = selected ? selected.map(s => s.value) : [];
+                  setValue('categoryIds', selectedIds, { shouldValidate: true });
                 }}
                 className="mt-1"
                 placeholder="Select categories..."
@@ -526,8 +565,10 @@ export const ResolutionEscalationTab: React.FC = () => {
                         <ReactSelect
                           isMulti
                           options={userOptions}
+                          value={userOptions.filter(option => watch(`escalationLevels.${level}.users`)?.includes(option.value))}
                           onChange={(selected) => {
-                            setValue(`escalationLevels.${level}.users`, selected ? selected.map(s => s.value) : []);
+                            const selectedUserIds = selected ? selected.map(s => s.value) : [];
+                            setValue(`escalationLevels.${level}.users`, selectedUserIds, { shouldValidate: true });
                           }}
                           placeholder="Select up to 15 Options..."
                           isLoading={fmUsersLoading}
@@ -640,130 +681,131 @@ export const ResolutionEscalationTab: React.FC = () => {
           ) : (
             <div className="space-y-0">
               {filteredRules.map((rule, index) => {
-                const isExpanded = expandedRules.has(rule.id);
                 const categoryName = categories?.helpdesk_categories?.find(cat => cat.id === rule.category_id)?.name || 'Unknown';
                 
                 return (
                   <div key={rule.id} className="border-b last:border-b-0">
-                    <div className="flex items-center justify-between p-4 hover:bg-gray-50">
+                    <div className="flex items-center justify-between p-4 bg-gray-50">
                       <div className="flex items-center space-x-4">
                         <span className="font-semibold text-purple-600">Rule {index + 1}</span>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleRuleExpansion(rule.id)}
-                            className="p-1"
-                          >
-                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(rule)}
-                            disabled={updateLoading}
-                            className="p-1"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" disabled={deleteLoading} className="p-1 text-red-600">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete this resolution escalation rule? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(rule.id)}>
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                        <div className="flex items-center space-x-4 text-sm">
+                          <span><strong>Category Type:</strong> {categoryName}</span>
                         </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(rule)}
+                          disabled={updateLoading}
+                          className="p-1"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" disabled={deleteLoading} className="p-1 text-red-600">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete this resolution escalation rule? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(rule.id)}>
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
 
-                    <Collapsible open={isExpanded}>
-                      <CollapsibleContent>
-                        <div className="p-4 bg-gray-50 border-t">
-                          <div className="mb-4">
-                            <div className="flex items-center space-x-4 text-sm">
-                              <span><strong>Category Type:</strong> {categoryName}</span>
-                            </div>
-                          </div>
-                          
-                          <Table className="bg-white border">
-                            <TableHeader>
-                              <TableRow className="bg-gray-100">
-                                <TableHead className="font-semibold text-center w-20 border-r">Levels</TableHead>
-                                <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
-                                <TableHead className="font-semibold text-center w-32 border-r">P1</TableHead>
-                                <TableHead className="font-semibold text-center w-32 border-r">P2</TableHead>
-                                <TableHead className="font-semibold text-center w-32 border-r">P3</TableHead>
-                                <TableHead className="font-semibold text-center w-32 border-r">P4</TableHead>
-                                <TableHead className="font-semibold text-center w-32">P5</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {rule.escalations.map((escalation) => {
-                                // Safely parse escalate_to_users with error handling
-                                let escalateToUsers: number[] = [];
-                                if (escalation.escalate_to_users) {
-                                  try {
-                                    if (typeof escalation.escalate_to_users === 'string') {
-                                      escalateToUsers = JSON.parse(escalation.escalate_to_users);
-                                    } else if (Array.isArray(escalation.escalate_to_users)) {
-                                      escalateToUsers = escalation.escalate_to_users;
-                                    }
-                                  } catch (error) {
-                                    console.error('Error parsing escalate_to_users:', error);
-                                    escalateToUsers = [];
-                                  }
+                    <div className="p-4 bg-white">
+                      <Table className="border">
+                        <TableHeader>
+                          <TableRow className="bg-gray-100">
+                            <TableHead className="font-semibold text-center w-20 border-r">Levels</TableHead>
+                            <TableHead className="font-semibold text-center border-r">Escalation To</TableHead>
+                            <TableHead className="font-semibold text-center w-32 border-r">P1</TableHead>
+                            <TableHead className="font-semibold text-center w-32 border-r">P2</TableHead>
+                            <TableHead className="font-semibold text-center w-32 border-r">P3</TableHead>
+                            <TableHead className="font-semibold text-center w-32 border-r">P4</TableHead>
+                            <TableHead className="font-semibold text-center w-32">P5</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {rule.escalations.map((escalation) => {
+                            // Safely parse escalate_to_users with error handling
+                            let escalateToUsers: (string | number)[] = [];
+                            if (escalation.escalate_to_users) {
+                              try {
+                                if (typeof escalation.escalate_to_users === 'string') {
+                                  escalateToUsers = JSON.parse(escalation.escalate_to_users);
+                                } else if (Array.isArray(escalation.escalate_to_users)) {
+                                  escalateToUsers = escalation.escalate_to_users;
                                 }
-                                
-                                // Ensure escalateToUsers is an array before mapping
-                                const userNames = Array.isArray(escalateToUsers) 
-                                  ? escalateToUsers.map((userId: number) => {
-                                      const user = fmUsers?.fm_users?.find(u => u.id === userId);
-                                      return user ? `${user.firstname} ${user.lastname}` : `User ${userId}`;
-                                    }).join(', ')
-                                  : '';
+                              } catch (error) {
+                                console.error('Error parsing escalate_to_users:', error);
+                                escalateToUsers = [];
+                              }
+                            }
+                            
+                            // Ensure escalateToUsers is an array before mapping and handle both string and number IDs
+                            const userNames = Array.isArray(escalateToUsers) 
+                              ? escalateToUsers.map((userId: string | number) => {
+                                  // Convert to number for comparison, as API might return strings
+                                  const userIdNum = typeof userId === 'string' ? parseInt(userId) : userId;
+                                  const user = fmUsers?.fm_users?.find(u => u.id === userIdNum);
+                                  return user ? `${user.firstname} ${user.lastname}` : `User ${userId}`;
+                                }).join(', ')
+                              : '';
 
-                                return (
-                                  <TableRow key={escalation.id} className="border-b">
-                                    <TableCell className="font-medium text-center border-r">{escalation.name}</TableCell>
-                                    <TableCell className="text-center border-r">{userNames || '-'}</TableCell>
-                                    <TableCell className="text-center text-sm border-r">
-                                      {escalation.p1 ? `${escalation.p1} min` : '-'}
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm border-r">
-                                      {escalation.p2 ? `${escalation.p2} min` : '-'}
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm border-r">
-                                      {escalation.p3 ? `${escalation.p3} min` : '-'}
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm border-r">
-                                      {escalation.p4 ? `${escalation.p4} min` : '-'}
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm">
-                                      {escalation.p5 ? `${escalation.p5} min` : '-'}
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
+                            return (
+                              <TableRow key={escalation.id} className="border-b">
+                                <TableCell className="font-medium text-center border-r">{escalation.name}</TableCell>
+                                <TableCell className="text-center border-r">{userNames || '-'}</TableCell>
+                                <TableCell className="text-center text-sm border-r">
+                                  {escalation.p1 ? (() => {
+                                    const { days, hours, minutes } = convertFromMinutes(escalation.p1);
+                                    return `${days}d ${hours}h ${minutes}m`;
+                                  })() : '-'}
+                                </TableCell>
+                                <TableCell className="text-center text-sm border-r">
+                                  {escalation.p2 ? (() => {
+                                    const { days, hours, minutes } = convertFromMinutes(escalation.p2);
+                                    return `${days}d ${hours}h ${minutes}m`;
+                                  })() : '-'}
+                                </TableCell>
+                                <TableCell className="text-center text-sm border-r">
+                                  {escalation.p3 ? (() => {
+                                    const { days, hours, minutes } = convertFromMinutes(escalation.p3);
+                                    return `${days}d ${hours}h ${minutes}m`;
+                                  })() : '-'}
+                                </TableCell>
+                                <TableCell className="text-center text-sm border-r">
+                                  {escalation.p4 ? (() => {
+                                    const { days, hours, minutes } = convertFromMinutes(escalation.p4);
+                                    return `${days}d ${hours}h ${minutes}m`;
+                                  })() : '-'}
+                                </TableCell>
+                                <TableCell className="text-center text-sm">
+                                  {escalation.p5 ? (() => {
+                                    const { days, hours, minutes } = convertFromMinutes(escalation.p5);
+                                    return `${days}d ${hours}h ${minutes}m`;
+                                  })() : '-'}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 );
               })}

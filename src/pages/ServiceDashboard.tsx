@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, FileText, Filter, Eye, Settings, AlertCircle, Trash2, Clock, Download } from 'lucide-react';
+import { Plus, FileText, Eye, Settings, AlertCircle, X, Flag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ServiceBulkUploadModal } from '@/components/ServiceBulkUploadModal';
 import { ImportLocationsModal } from '@/components/ImportLocationsModal';
@@ -16,8 +16,11 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination";
+} from '@/components/ui/pagination';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { toast } from 'sonner';
+import axios from 'axios';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface ServiceRecord {
   id: number;
@@ -31,115 +34,447 @@ interface ServiceRecord {
   room: string;
   created_at: string;
   qr_code?: string;
+  qr_code_id?: number;
   group_name?: string;
   sub_group_name?: string;
   base_uom?: string;
   active?: boolean;
+  is_flagged?: boolean;
+  execution_type?: string;
 }
+
+interface PaginationData {
+  current_page: number;
+  total_count: number;
+  total_pages: number;
+}
+
+interface ServicesApiData {
+  pms_services: ServiceRecord[];
+  pagination: PaginationData;
+  total_services_count: number;
+  active_services_count: number;
+  inactive_services_count: number;
+}
+
+interface ServiceActionPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+  service: ServiceRecord | null;
+  onQRDownload: (serviceId: string) => void;
+}
+
+const ServiceActionPanel = React.memo(function ServiceActionPanel({ isOpen, onClose, service, onQRDownload }: ServiceActionPanelProps) {
+  if (!isOpen || !service) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Actions for {service.service_name}</h2>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+        <div className="flex flex-col gap-3">
+          <Button
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => onQRDownload(service.id.toString())}
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Download QR Code
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 const initialServiceData: ServiceRecord[] = [];
 
 export const ServiceDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { data: apiData, loading, error } = useAppSelector((state) => state.services);
+  const servicesState = useAppSelector((state) => state.services);
+  const apiData = servicesState.data as ServicesApiData | undefined;
+  const loading = servicesState.loading as boolean;
+  const error = servicesState.error as string | undefined;
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [showImportLocationsModal, setShowImportLocationsModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [activeFilter, setActiveFilter] = useState<boolean | undefined>(undefined);
   const [showActionPanel, setShowActionPanel] = useState(false);
-  const pageSize = 7;
-
-  // Use API data if available, otherwise fallback to initial data
-  const servicesData = apiData && Array.isArray(apiData) ? apiData : initialServiceData;
+  const [showServiceActionPanel, setShowServiceActionPanel] = useState(false);
+  const [selectedService, setSelectedService] = useState<ServiceRecord | null>(null);
+  const [appliedFilters, setAppliedFilters] = useState({});
+  const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [downloadedQRCodes, setDownloadedQRCodes] = useState<Set<string>>(new Set());
+  const [downloadingQR, setDownloadingQR] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchServicesData());
-  }, [dispatch]);
+    const filtersWithSearch = {
+      ...appliedFilters,
+      serviceName: (appliedFilters as any).serviceName || debouncedSearchQuery || undefined,
+    };
+    dispatch(fetchServicesData({ active: activeFilter, page: currentPage, filters: filtersWithSearch }));
+  }, [dispatch, activeFilter, currentPage, appliedFilters, debouncedSearchQuery]);
 
-  const totalPages = Math.ceil(Math.max(servicesData.length, 6) / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedServices = servicesData.slice(startIndex, startIndex + pageSize);
+  const servicesData = useMemo(
+    () => (apiData && Array.isArray(apiData.pms_services) ? apiData.pms_services : initialServiceData),
+    [apiData]
+  );
+  const paginationData: PaginationData = useMemo(
+    () => apiData?.pagination || { current_page: 1, total_count: 0, total_pages: 1 },
+    [apiData]
+  );
 
-  console.log('Service Pagination Debug:', {
-    totalItems: servicesData.length,
-    pageSize,
-    totalPages,
-    currentPage,
-    paginatedDataLength: paginatedServices.length
-  });
+  // Derived counts to avoid optional chaining on unknown
+  const totalServicesCount = apiData?.total_services_count ?? 0;
+  const activeServicesCount = apiData?.active_services_count ?? 0;
+  const inactiveServicesCount = apiData?.inactive_services_count ?? 0;
 
-  const handleStatusToggle = (id: number) => {
-    console.log('Status toggle for service ID:', id);
-    // In a real implementation, you would make an API call to update the status
-  };
-
-  const handleAddClick = () => navigate('/maintenance/service/add');
-  const handleImportClick = () => {
+  const handleAddClick = useCallback(() => navigate('/maintenance/service/add'), [navigate]);
+  const handleAddSchedule = useCallback(() => navigate('/maintenance/schedule/add?type=Service'), [navigate]);
+  const handleImportClick = useCallback(() => {
     setShowBulkUploadModal(true);
     setShowActionPanel(false);
-  }
-  const handleImportLocationsClick = () => setShowImportLocationsModal(true);
-  const handleFiltersClick = () => {
+  }, []);
+  const handleImportLocationsClick = useCallback(() => setShowImportLocationsModal(true), []);
+  const handleFiltersClick = useCallback(() => {
     setShowFilterModal(true);
     setShowActionPanel(false);
+  }, []);
 
-  }
-
-  const handleApplyFilters = filters => {
+  const handleApplyFilters = useCallback((filters: any) => {
+    setAppliedFilters(filters);
+    setSearchQuery('');
+    setCurrentPage(1);
     setShowFilterModal(false);
-    console.log('Applied filters:', filters);
-  };
+  }, []);
 
-  const handleCloseFilter = () => {
-    setShowFilterModal(false);         // Just close the modal
-    setSelectedItems([]);              // Also clear selected items
-  };
-  const handleSelectItem = (itemId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedItems(prev => [...prev, itemId]);
-    } else {
-      setSelectedItems(prev => prev.filter(id => id !== itemId));
+  const handleCloseFilter = useCallback(() => {
+    setShowFilterModal(false);
+    setSelectedItems([]);
+  }, []);
+
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  }, []);
+
+  const handleSelectItem = useCallback((itemId: string, checked: boolean) => {
+    setSelectedItems((prev) => (checked ? [...prev, itemId] : prev.filter((id) => id !== itemId)));
+  }, []);
+
+  const handleSelectAll = useCallback((checked: boolean) => {
+    setSelectedItems(checked ? servicesData.map((item) => item.id.toString()) : []);
+  }, [servicesData]);
+
+  const downloadAttachment = async (file: { attachment_id: number; document_name: string }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+
+      if (!token || !baseUrl) {
+        console.error('Missing token or baseUrl');
+        toast.error('Missing token or baseUrl');
+        return;
+      }
+
+      const apiUrl = `https://${baseUrl}/attachfiles/${file.attachment_id}?show_file=true`;
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) throw new Error('Download failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.document_name || `document_${file.attachment_id}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading file:', err);
+      toast.error('Error downloading file');
     }
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedItems(paginatedServices.map(item => item.id.toString()));
+  const handleQRDownload = useCallback(async (serviceId?: string) => {
+    if (downloadingQR) return;
+    setDownloadingQR(true);
+    let serviceIds: string[] = [];
+    if (serviceId) {
+      serviceIds = [serviceId];
     } else {
-      setSelectedItems([]);
+      serviceIds = selectedItems;
     }
-  };
-
-  const handleQRDownload = () => {
-    const selectedServices = paginatedServices.filter(service =>
-      selectedItems.includes(service.id.toString())
-    );
-
-    selectedServices.forEach((service, index) => {
-      const qrUrl = (service as any).qr_code;
-      if (qrUrl) {
+    const validServices = servicesData.filter((service) => serviceIds.includes(service.id.toString()) && service.qr_code && service.qr_code_id);
+    if (validServices.length === 0) {
+      toast.error('No valid QR codes to download');
+      setDownloadingQR(false);
+      return;
+    }
+    if (validServices.length === 1) {
+      const service = validServices[0];
+      const serviceIdStr = service.id.toString();
+      const downloadQR = async () => {
+        try {
+          const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+          const token = localStorage.getItem('token');
+          const apiUrl = `https://${baseUrl}/pms/services/service_qr_codes.pdf?service_ids=${service.id}`;
+          const response = await fetch(apiUrl, {
+            method: 'GET',
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (!response.ok) {
+            throw new Error('Failed to fetch the QR PDF');
+          }
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${service.service_name || 'service'}_${service.id}_qr.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          setDownloadedQRCodes((prev) => new Set(prev).add(serviceIdStr));
+        } catch (err) {
+          console.error('Error downloading QR PDF:', err);
+          toast.error('Error downloading QR PDF');
+        }
+      };
+      if (downloadedQRCodes.has(serviceIdStr)) {
+        const downloadPromise = new Promise<void>((resolve) => {
+          toast.custom((t) => (
+            <div className="bg-white p-5 rounded-xl shadow-none w-full max-w-sm border-0 ring-0">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-6 h-6 text-yellow-500 mt-1" />
+                <div className="flex-1 text-sm text-gray-800">
+                  <p className="font-semibold mb-1">QR Code Already Downloaded</p>
+                  <p className="text-sm text-gray-800">
+                    QR for <span className="font-medium text-gray-900">"{service.service_name}"</span> (ID: {service.id}) already downloaded. Download again?
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-500 hover:bg-red-50"
+                  onClick={() => {
+                    toast.dismiss(t);
+                    setDownloadingQR(false);
+                    resolve();
+                  }}
+                >
+                  No
+                </Button>
+                <Button
+                  className="bg-primary text-white hover:bg-primary/90"
+                  size="sm"
+                  onClick={async () => {
+                    toast.dismiss(t);
+                    await downloadQR();
+                    setDownloadingQR(false);
+                    resolve();
+                  }}
+                >
+                  Yes
+                </Button>
+              </div>
+            </div>
+          ));
+        });
+        await downloadPromise;
+      } else {
+        await downloadQR();
+        setDownloadingQR(false);
+      }
+    } else {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+        const token = localStorage.getItem('token');
+        const idsArray = validServices.map((s) => s.id);
+        const params = idsArray.map((id) => `service_ids[]=${encodeURIComponent(id)}`).join('&');
+        const apiUrl = `https://${baseUrl}/pms/services/service_qr_codes.pdf?${params}`;
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch the QR PDF');
+        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = qrUrl;
-        link.download = `${service.service_name || 'service'}_${service.id}_qr.png`;
+        link.href = url;
+        link.download = `Service_QR_Bulk_${idsArray.join('_')}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-      } else {
-        console.warn(`QR code not available for service ID ${service.id}`);
+        window.URL.revokeObjectURL(url);
+        setDownloadedQRCodes((prev) => {
+          const newSet = new Set(prev);
+          validServices.forEach((s) => newSet.add(s.id.toString()));
+          return newSet;
+        });
+      } catch (err) {
+        console.error('Error downloading QR PDF:', err);
+        toast.error('Error downloading QR PDF');
+      } finally {
+        setDownloadingQR(false);
       }
-    });
+    }
+    if (validServices.length === 1 && !downloadedQRCodes.has(validServices[0].id.toString())) {
+      setDownloadingQR(false);
+    }
+  }, [downloadingQR, selectedItems, servicesData, downloadedQRCodes]);
+
+  const handleViewService = useCallback((id: number) => navigate(`/maintenance/service/details/${id}`), [navigate]);
+
+  const handleTotalServicesClick = () => {
+    setActiveFilter(undefined);
+    setSearchQuery('');
+    setAppliedFilters({});
+    setCurrentPage(1);
   };
 
-  const handleViewService = (id: number) => navigate(`/maintenance/service/details/${id}`);
+  const handleActiveServicesClick = () => {
+    setActiveFilter(true);
+    setSearchQuery('');
+    setAppliedFilters({});
+    setCurrentPage(1);
+  };
 
-  const columns = [
+  const handleInactiveServicesClick = () => {
+    setActiveFilter(false);
+    setSearchQuery('');
+    setAppliedFilters({});
+    setCurrentPage(1);
+  };
+
+  const handleStatusToggle = async (id: number) => {
+    if (togglingIds.has(id)) return;
+
+    const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+    const token = localStorage.getItem('token');
+
+    try {
+      if (!token) {
+        toast.error('Authentication token missing. Please log in again.');
+        navigate('/login');
+        return;
+      }
+
+      if (!apiData) {
+        toast.error('No service data available');
+        return;
+      }
+
+      const service = servicesData.find((item) => item.id === id);
+      if (!service) {
+        toast.error('Service record not found');
+        return;
+      }
+
+      setTogglingIds((prev) => new Set(prev).add(id));
+
+      const updatedStatus = !service.active;
+      const updatedServicesData = servicesData.map((item) =>
+        item.id === id ? { ...item, active: updatedStatus } : item
+      );
+
+      dispatch(
+        fetchServicesData.fulfilled(
+          { ...(apiData as ServicesApiData), pms_services: updatedServicesData } as ServicesApiData,
+          'fetchServicesData',
+          { active: activeFilter, page: currentPage, filters: appliedFilters }
+        )
+      );
+      toast.dismiss();
+      toast.success(`Status ${updatedStatus ? 'Active' : 'Inactive'}`);
+
+      const url = `https://${baseUrl}/pms/services/${id}.json`;
+      const response = await axios.put(
+        url,
+        {
+          pms_service: { active: updatedStatus },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        const updatedApiData: ServicesApiData = {
+          ...(apiData as ServicesApiData),
+          pms_services: updatedServicesData,
+          active_services_count: updatedStatus
+            ? (apiData as ServicesApiData).active_services_count + 1
+            : (apiData as ServicesApiData).active_services_count - 1,
+          inactive_services_count: updatedStatus
+            ? (apiData as ServicesApiData).inactive_services_count - 1
+            : (apiData as ServicesApiData).inactive_services_count + 1,
+        };
+        dispatch(
+          fetchServicesData.fulfilled(
+            updatedApiData,
+            'fetchServicesData',
+            { active: activeFilter, page: currentPage, filters: appliedFilters }
+          )
+        );
+      } else {
+        dispatch(
+          fetchServicesData.fulfilled(
+            apiData as ServicesApiData,
+            'fetchServicesData',
+            { active: activeFilter, page: currentPage, filters: appliedFilters }
+          )
+        );
+        toast.error('Failed to update service status');
+      }
+    } catch (error: any) {
+      console.error('Error updating service status:', error);
+      dispatch(
+        fetchServicesData.fulfilled(
+          apiData as ServicesApiData,
+          'fetchServicesData',
+          { active: activeFilter, page: currentPage, filters: appliedFilters }
+        )
+      );
+      const errorMessage = error.response?.data?.message || 'Failed to update service status';
+      toast.error(errorMessage);
+    } finally {
+      setTogglingIds((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+    }
+  };
+
+  const columns = useMemo(() => ([
     { key: 'actions', label: 'Actions', sortable: false },
     { key: 'serviceName', label: 'Service Name', sortable: true },
     { key: 'id', label: 'ID', sortable: true },
     { key: 'referenceNumber', label: 'Reference Number', sortable: true },
-    { key: 'category', label: 'Category', sortable: true },
+    { key: 'executionType', label: 'Execution Type', sortable: true },
     { key: 'group', label: 'Group', sortable: true },
     { key: 'subGroup', label: 'Sub Group', sortable: true },
     { key: 'uom', label: 'UOM', sortable: true },
@@ -149,37 +484,89 @@ export const ServiceDashboard = () => {
     { key: 'floor', label: 'Floor', sortable: true },
     { key: 'room', label: 'Room', sortable: true },
     { key: 'status', label: 'Status', sortable: true },
-    { key: 'createdOn', label: 'Created On', sortable: true }
-  ];
+    { key: 'createdOn', label: 'Created On', sortable: true },
+    { key: 'category', label: 'Category', sortable: true },
+  ]), []);
 
-  const bulkActions = [
+  const bulkActions = useMemo(() => ([
     {
-      label: 'Print QR Codes',
+      label: 'Print QR',
       icon: FileText,
-      onClick: () => handleQRDownload()
-    }
-  ];
+      onClick: () => handleQRDownload(),
+      disabled: downloadingQR,
+    },
+  ]), [downloadingQR, handleQRDownload]);
 
-  const renderCell = (item: ServiceRecord, columnKey: string) => {
+  const handleSingleAmcFlag = async (serviceItem: ServiceRecord) => {
+    const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+    const token = localStorage.getItem('token');
+
+    try {
+      if (!baseUrl || !token) {
+        toast.error('Missing base URL, token, or site ID');
+        return;
+      }
+
+      const updatedFlag = !serviceItem.is_flagged;
+
+      const response = await axios.put(
+        `https://${baseUrl}/pms/services/${serviceItem.id}.json`,
+        {
+          pms_service: {
+            is_flagged: updatedFlag,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        dispatch(fetchServicesData({ active: activeFilter, page: currentPage, filters: appliedFilters }));
+        toast.dismiss();
+        toast.success(`Flag ${updatedFlag ? 'Activated' : 'Deactivated'}`);
+      } else {
+        toast.error('Failed to update service flag');
+      }
+    } catch (error) {
+      toast.error('Failed to update service flag');
+    }
+  };
+
+  const renderCell = useCallback((item: ServiceRecord, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
         return (
-          <Button variant="ghost" size="sm" onClick={() => handleViewService(item.id)}>
-            <Eye className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => handleViewService(item.id)}>
+              <Eye className="w-4 h-4" />
+            </Button>
+            <div title="Flag Service">
+              <Flag
+                className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged ? 'text-red-500 fill-red-500' : 'text-gray-600'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSingleAmcFlag(item);
+                }}
+              />
+            </div>
+          </div>
         );
       case 'serviceName':
-        return item.service_name || '-';
+        return <span>{item.service_name || '-'}</span>;
       case 'id':
         return <span className="font-medium">{item.id}</span>;
       case 'referenceNumber':
         return item.service_code || '-';
-      case 'category':
-        return '-'; // Not available in API
+      case 'executionType':
+        if (!item.execution_type) return '-';
+        return item.execution_type.charAt(0).toUpperCase() + item.execution_type.slice(1);
       case 'group':
         return item.group_name || '-';
       case 'uom':
-        return item.base_uom || '-'; // Not available in API
+        return item.base_uom || '-';
       case 'building':
         return item.building || '-';
       case 'wing':
@@ -190,313 +577,324 @@ export const ServiceDashboard = () => {
         return item.floor || '-';
       case 'room':
         return item.room || '-';
-      case 'SubGroup':
+      case 'subGroup':
         return item.sub_group_name || '-';
       case 'status':
-        const isActive = item.active === true;
         return (
-          <div className="flex items-center">
+          <div className="flex justify-center items-center h-full w-full">
             <div
-              onClick={() => handleStatusToggle(item.id)}
-              className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-400'
-                }`}
+              onClick={() => !togglingIds.has(item.id) && handleStatusToggle(item.id)}
+              className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${item.active ? 'bg-green-500' : 'bg-gray-400'} ${togglingIds.has(item.id) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
               <span
-                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'
-                  }`}
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${item.active ? 'translate-x-6' : 'translate-x-1'}`}
               />
             </div>
           </div>
         );
       case 'createdOn':
         return item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB') : '-';
+      case 'category':
+        return '-';
       default:
         return '-';
     }
-  };
+  }, [handleViewService, handleStatusToggle, handleSingleAmcFlag, togglingIds]);
 
-  const renderPaginationItems = () => {
-    const items = [];
+  const paginationItems = useMemo(() => {
+    const items: React.ReactNode[] = [];
+    const totalPages = paginationData.total_pages;
+    const current = paginationData.current_page;
     const showEllipsis = totalPages > 7;
 
     if (showEllipsis) {
-      // Show first page
+      // Always show first page
       items.push(
         <PaginationItem key={1}>
-          <PaginationLink
-            onClick={() => setCurrentPage(1)}
-            isActive={currentPage === 1}
-          >
+          <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(1)} isActive={current === 1}>
             1
           </PaginationLink>
         </PaginationItem>
       );
 
-      // Show ellipsis or pages 2-3
-      if (currentPage > 4) {
+      // Show pages 2, 3, 4 if current is 1, 2, or 3
+      if (current <= 3) {
+        for (let i = 2; i <= 4 && i < totalPages; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        if (totalPages > 5) {
+          items.push(
+            <PaginationItem key="ellipsis1">
+              <PaginationEllipsis />
+            </PaginationItem>
+          );
+        }
+      } else if (current >= totalPages - 2) {
+        // Show ellipsis before last 4 pages
         items.push(
           <PaginationItem key="ellipsis1">
             <PaginationEllipsis />
           </PaginationItem>
         );
-      } else {
-        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink
-                onClick={() => setCurrentPage(i)}
-                isActive={currentPage === i}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      // Show current page area
-      if (currentPage > 3 && currentPage < totalPages - 2) {
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          items.push(
-            <PaginationItem key={i}>
-              <PaginationLink
-                onClick={() => setCurrentPage(i)}
-                isActive={currentPage === i}
-              >
-                {i}
-              </PaginationLink>
-            </PaginationItem>
-          );
-        }
-      }
-
-      // Show ellipsis or pages before last
-      if (currentPage < totalPages - 3) {
-        items.push(
-          <PaginationItem key="ellipsis2">
-            <PaginationEllipsis />
-          </PaginationItem>
-        );
-      } else {
-        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-          if (!items.find(item => item.key === i)) {
+        for (let i = totalPages - 3; i < totalPages; i++) {
+          if (i > 1) {
             items.push(
               <PaginationItem key={i}>
-                <PaginationLink
-                  onClick={() => setCurrentPage(i)}
-                  isActive={currentPage === i}
-                >
+                <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
                   {i}
                 </PaginationLink>
               </PaginationItem>
             );
           }
         }
+      } else {
+        // Show ellipsis, current-1, current, current+1, ellipsis
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        for (let i = current - 1; i <= current + 1; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
       }
 
-      // Show last page
+      // Always show last page if more than 1 page
       if (totalPages > 1) {
         items.push(
           <PaginationItem key={totalPages}>
-            <PaginationLink
-              onClick={() => setCurrentPage(totalPages)}
-              isActive={currentPage === totalPages}
-            >
+            <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(totalPages)} isActive={current === totalPages}>
               {totalPages}
             </PaginationLink>
           </PaginationItem>
         );
       }
     } else {
-      // Show all pages if total is 7 or less
       for (let i = 1; i <= totalPages; i++) {
         items.push(
           <PaginationItem key={i}>
-            <PaginationLink
-              onClick={() => setCurrentPage(i)}
-              isActive={currentPage === i}
-            >
+            <PaginationLink className='cursor-pointer' onClick={() => setCurrentPage(i)} isActive={current === i}>
               {i}
             </PaginationLink>
           </PaginationItem>
         );
       }
     }
-
     return items;
-  };
+  }, [paginationData]);
 
-  const selectionActions = [
-    {
-      label: 'Filter',
-      icon: Filter,
-      onClick: handleFiltersClick,
-      // onClick: handleUpdateSelected,
-      variant: 'outline' as const,
-    },
-    {
-      label: 'Flag',
-      icon: AlertCircle,
-      // onClick: handleFlagSelected,
-      variant: 'outline' as const,
-    },
-    {
-      label: 'Delete',
-      icon: Trash2,
-      // onClick: () => handleBulkDelete(selectedAMCObjects),
-      variant: 'destructive' as const,
-    },
-    {
-      label: "Print",
-      icon: FileText,
-      onClick: handleQRDownload,
-      variant: 'destructive' as const,
-    }
-  ];
-  const handleActionClick = () => {
+  const handleActionClick = useCallback(() => {
     setShowActionPanel(true);
-  };
+  }, []);
 
-
-  const renderCustomActions = () => (
+  const leftActions = useMemo(() => (
     <div className="flex flex-wrap gap-3">
       <Button onClick={handleActionClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
         <Plus className="w-4 h-4" /> Action
       </Button>
+      {selectedItems.length > 0 && (
+        <Button
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+          onClick={() => handleQRDownload()}
+          disabled={downloadingQR}
+        >
+          {downloadingQR ? (
+            <svg className="animate-spin h-4 w-4 mr-2 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+          ) : (
+            <FileText className="w-4 h-4 mr-2" />
+          )}
+          {downloadingQR ? 'Print QR...' : 'Print QR'}
+        </Button>
+      )}
     </div>
-  );
+  ), [handleActionClick, selectedItems.length, downloadingQR, handleQRDownload]);
+
+  const handleExport = async () => {
+    const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+    const token = localStorage.getItem('token');
+    const siteId = localStorage.getItem('selectedSiteId');
+    try {
+      if (!baseUrl || !token) {
+        toast.error('Missing base URL, token, or site ID');
+        return;
+      }
+      let url = `https://${baseUrl}/pms/services/export.xlsx?site_id=${siteId}`;
+
+      // let url = `https://${baseUrl}/pms/services/export.xlsx`;
+      if (selectedItems.length > 0) {
+        const ids = selectedItems.join(',');
+        url += `&ids=${ids}`;
+      }
+
+      const response = await axios.get(url, {
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.data || response.data.size === 0) {
+        toast.error('Empty file received from server');
+        return;
+      }
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'services.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      toast.success('Services data exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export Services data');
+    }
+  };
 
   return (
     <div className="p-4 sm:p-6">
-      {loading && (
-        <div className="flex justify-center items-center py-8">
-          <div className="text-gray-600">Loading Services data...</div>
-        </div>
-      )}
-
-      {/* Error State */}
       {error && (
         <div className="flex justify-center items-center py-8">
           <div className="text-red-600">Error: {error}</div>
         </div>
       )}
 
-
-      {/* Enhanced Table */}
-      {!loading && (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 mb-3">
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                  {11}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Tickets</div>
-              </div>
+      <>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3">
+          <div
+            className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+            onClick={handleTotalServicesClick}
+          >
+            <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+              <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
             </div>
-
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+            <div className="flex flex-col min-w-0">
+              <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                {totalServicesCount}
               </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                  {22}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Open</div>
-              </div>
-            </div>
-
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                  {0}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">In Progress</div>
-              </div>
-            </div>
-
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                  {4}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Pending</div>
-              </div>
-            </div>
-
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12  flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate" >
-                  {2}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Closed</div>
-              </div>
+              <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Services</div>
             </div>
           </div>
 
-          {showActionPanel && (
-            <SelectionPanel
-              actions={selectionActions}
-              onAdd={handleAddClick}
-              onImport={handleImportClick}
-              onClearSelection={() => setShowActionPanel(false)}
+          <div
+            className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+            onClick={handleActiveServicesClick}
+          >
+            <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+              <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                {activeServicesCount}
+              </div>
+              <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active Services</div>
+            </div>
+          </div>
 
-            />
-          )}
-          <EnhancedTable
-            data={paginatedServices}
-            columns={columns}
-            renderCell={renderCell}
-            bulkActions={bulkActions}
-            showBulkActions={true}
-            selectable={true}
-            selectedItems={selectedItems}
-            onSelectItem={handleSelectItem}
-            onSelectAll={handleSelectAll}
-            pagination={false}
-            enableExport={true}
-            exportFileName="services"
-            onRowClick={(service) => handleViewService(service.id)}
-            getItemId={(item) => item.id.toString()}
-            storageKey="services-table"
-            leftActions={renderCustomActions()}
-            searchPlaceholder="Search..."
+          <div
+            className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+            onClick={handleInactiveServicesClick}
+          >
+            <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+              <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                {inactiveServicesCount}
+              </div>
+              <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Inactive Services</div>
+            </div>
+          </div>
+        </div>
+
+        {showActionPanel && (
+          <SelectionPanel
+            actions={[
+              { label: 'Add Schedule', icon: Plus, onClick: handleAddSchedule },
+            ]}
+            onAdd={handleAddClick}
+            onImport={handleImportClick}
+            onClearSelection={() => setShowActionPanel(false)}
           />
-        </>
+        )}
+        <EnhancedTable
+          loading={loading}
+          handleExport={handleExport}
+          data={servicesData}
+          columns={columns}
+          renderCell={renderCell}
+          bulkActions={bulkActions}
+          showBulkActions={selectedItems.length > 0}
+          selectable={true}
+          selectedItems={selectedItems}
+          onSelectItem={handleSelectItem}
+          onSelectAll={handleSelectAll}
+          pagination={false}
+          enableExport={true}
+          exportFileName="services"
+          getItemId={(item) => item.id.toString()}
+          storageKey="services-table"
+          leftActions={leftActions}
+          searchPlaceholder="Search..."
+          onSearchChange={handleSearch}
+          searchTerm={searchQuery}
+          enableSearch={true}
+          onFilterClick={handleFiltersClick}
+        />
+        <ServiceActionPanel
+          isOpen={showServiceActionPanel}
+          onClose={() => {
+            setShowServiceActionPanel(false);
+            setSelectedService(null);
+          }}
+          service={selectedService}
+          onQRDownload={handleQRDownload}
+        />
+      </>
 
-      )}
-
-      {/* Custom Pagination - Always show for debugging */}
       {!loading && (
         <div className="flex justify-center mt-6">
           <Pagination>
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                  onClick={() => setCurrentPage(Math.max(1, paginationData.current_page - 1))}
+                  className={paginationData.current_page === 1 ? 'pointer-events-none opacity-50' : ''}
                 />
               </PaginationItem>
 
-              {renderPaginationItems()}
+              {paginationItems}
 
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                  onClick={() => setCurrentPage(Math.min(paginationData.total_pages, paginationData.current_page + 1))}
+                  className={paginationData.current_page === paginationData.total_pages ? 'pointer-events-none opacity-50' : ''}
                 />
               </PaginationItem>
             </PaginationContent>

@@ -1,8 +1,15 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { SetupLayout } from '../components/SetupLayout';
+import { useLayout } from '../contexts/LayoutContext';
 
 export const SetupDashboard = () => {
+  const { setCurrentSection } = useLayout();
+
+  useEffect(() => {
+    setCurrentSection('Settings');
+  }, [setCurrentSection]);
+
   return (
     <SetupLayout>
       <div className="mb-8">

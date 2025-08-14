@@ -1,7 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Plus } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
@@ -10,6 +8,7 @@ import { CreateEmailRuleDialogNew } from '@/components/dialogs/CreateEmailRuleDi
 import { EditEmailRuleDialog } from '@/components/dialogs/EditEmailRuleDialog';
 import { EmailRule } from '@/types/emailRule';
 import { emailRuleService } from '@/services/emailRuleService';
+import { toast } from 'sonner';
 
 // Mock data
 const mockEmailRules: EmailRule[] = [
@@ -111,12 +110,18 @@ export const EmailRuleSetupPage: React.FC = () => {
     setEmailRules(emailRules.map(rule => 
       rule.id === id ? { ...rule, ...data } : rule
     ));
+    toast.success('Email rule updated successfully');
   };
 
   const handleToggleActive = (id: string) => {
-    setEmailRules(emailRules.map(rule => 
-      rule.id === id ? { ...rule, active: !rule.active } : rule
-    ));
+    setEmailRules(emailRules.map(rule => {
+      if (rule.id === id) {
+        const newStatus = !rule.active;
+        toast.success(`Email rule ${newStatus ? 'activated' : 'deactivated'} successfully`);
+        return { ...rule, active: newStatus };
+      }
+      return rule;
+    }));
   };
 
   const handleEditClick = (rule: EmailRule) => {
@@ -147,7 +152,10 @@ export const EmailRuleSetupPage: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleEditClick(rule)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEditClick(rule);
+            }}
             className="p-1 h-8 w-8"
           >
             <Edit className="w-4 h-4" />
@@ -179,10 +187,15 @@ export const EmailRuleSetupPage: React.FC = () => {
         return <span className="text-sm text-gray-600">{rule.createdBy}</span>;
       case 'active':
         return (
-          <Switch
-            checked={rule.active}
-            onCheckedChange={() => handleToggleActive(rule.id)}
-          />
+          <div
+            className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${rule.active ? 'bg-green-500' : 'bg-gray-300'}`}
+            onClick={() => handleToggleActive(rule.id)}
+            aria-label={rule.active ? 'Deactivate email rule' : 'Activate email rule'}
+          >
+            <span
+              className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${rule.active ? 'translate-x-6' : 'translate-x-1'}`}
+            />
+          </div>
         );
       default:
         return null;
@@ -191,7 +204,7 @@ export const EmailRuleSetupPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#fafafa] p-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="mx-auto">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -214,7 +227,6 @@ export const EmailRuleSetupPage: React.FC = () => {
           data={emailRules}
           columns={columns}
           renderCell={renderCell}
-          onRowClick={(rule) => handleEditClick(rule)}
           storageKey="email-rule-setup-table"
           emptyMessage="No email rules found"
           selectable={true}
@@ -241,7 +253,7 @@ export const EmailRuleSetupPage: React.FC = () => {
           }}
           onSubmit={handleEditRule}
           emailRule={editingRule}
-          onSuccess={fetchEmailRules} // Pass the refresh function
+          onSuccess={fetchEmailRules}
         />
       </div>
     </div>

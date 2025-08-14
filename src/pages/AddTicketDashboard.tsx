@@ -1,14 +1,21 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Upload, Paperclip, FileText, X } from 'lucide-react';
+import { ArrowLeft, Upload, Paperclip, X, User, Ticket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ticketManagementAPI, CategoryResponse, SubCategoryResponse, UserAccountResponse, OccupantUserResponse } from '@/services/ticketManagementAPI';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+
+interface ComplaintModeResponse {
+  id: number;
+  name: string;
+}
 
 const PRIORITY_OPTIONS = [
   { value: 'P1', label: 'P1 - Critical' },
@@ -19,9 +26,33 @@ const PRIORITY_OPTIONS = [
 ];
 
 const PROACTIVE_REACTIVE_OPTIONS = [
-  { value: 'proactive', label: 'Proactive' },
-  { value: 'reactive', label: 'Reactive' }
+  { value: 'Proactive',label: 'Proactive' },
+  { value: 'Reactive',label: 'Reactive' }
 ];
+
+// Field styles for Material-UI components
+const fieldStyles = {
+  height: '45px',
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
+    height: '45px',
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
 
 export const AddTicketDashboard = () => {
   const navigate = useNavigate();
@@ -42,12 +73,16 @@ export const AddTicketDashboard = () => {
   const [fmUsers, setFmUsers] = useState<any[]>([]);
   const [occupantUsers, setOccupantUsers] = useState<OccupantUserResponse[]>([]);
   const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
+  const [complaintModes, setComplaintModes] = useState<ComplaintModeResponse[]>([]);
+  const [isGoldenTicket, setIsGoldenTicket] = useState(false);
+  const [isFlagged, setIsFlagged] = useState(false);
   
   // Loading states
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingSubcategories, setLoadingSubcategories] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingAccount, setLoadingAccount] = useState(false);
+  const [loadingComplaintModes, setLoadingComplaintModes] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -62,7 +97,8 @@ export const AddTicketDashboard = () => {
     proactiveReactive: '',
     adminPriority: '',
     referenceNumber: '',
-    mode: ''
+    mode: '',
+    complaintMode: ''
   });
 
   // Load initial data
@@ -70,6 +106,7 @@ export const AddTicketDashboard = () => {
     loadCategories();
     loadFMUsers();
     loadOccupantUsers();
+    loadComplaintModes();
     if (onBehalfOf === 'self') {
       loadUserAccount();
     }
@@ -138,6 +175,35 @@ export const AddTicketDashboard = () => {
       setFmUsers(response.fm_users || []);
     } catch (error) {
       console.error('Error loading FM users:', error);
+    }
+  };
+
+  // Load complaint modes
+  const loadComplaintModes = async () => {
+    setLoadingComplaintModes(true);
+    try {
+      const url = getFullUrl(API_CONFIG.ENDPOINTS.COMPLAINT_MODE);
+      const options = getAuthenticatedFetchOptions('GET');
+      
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch complaint modes: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Complaint modes response:', data);
+      
+      // The API returns an array directly, not wrapped in complaint_modes property
+      setComplaintModes(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading complaint modes:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load complaint modes",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingComplaintModes(false);
     }
   };
 
@@ -243,6 +309,16 @@ export const AddTicketDashboard = () => {
       return;
     }
 
+    // Validate complaint mode is selected
+    if (!formData.complaintMode) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a complaint mode",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Validate user selection for behalf of others
     if (onBehalfOf !== 'self' && !selectedUserId) {
       toast({
@@ -255,7 +331,22 @@ export const AddTicketDashboard = () => {
 
     setIsSubmitting(true);
     try {
-      const siteId = localStorage.getItem('siteId') || '2189';
+      // Ensure user account is loaded to get site_id
+      if (!userAccount) {
+        await loadUserAccount();
+      }
+
+      // Get site_id from user account API response
+      const siteId = userAccount?.site_id?.toString();
+      
+      if (!siteId) {
+        toast({
+          title: "Error",
+          description: "Unable to determine site ID from user account. Please refresh and try again.",
+          variant: "destructive"
+        });
+        return;
+      }
       
       const ticketData = {
         of_phase: 'pms',
@@ -263,31 +354,47 @@ export const AddTicketDashboard = () => {
         on_behalf_of: onBehalfOf === 'self' ? 'admin' : onBehalfOf,
         complaint_type: ticketType,
         category_type_id: parseInt(formData.categoryType),
-        priority: formData.adminPriority,
+        priority: formData.adminPriority || '',
         society_staff_type: 'User',
-        proactive_reactive: formData.proactiveReactive,
+        proactive_reactive: formData.proactiveReactive || '',
         heading: formData.description,
-        complaint_mode_id: 75,
+        ...(formData.complaintMode && { complaint_mode_id: parseInt(formData.complaintMode) }),
         room_id: 1,
         wing_id: 1,
         area_id: 1,
         floor_id: 1,
-        // Add sel_id_user for behalf of others
-        ...(onBehalfOf !== 'self' && selectedUserId && { sel_id_user: selectedUserId }),
-        // Optional fields
-        ...(selectedUser && { id_user: parseInt(selectedUser) }),
+        // Add user parameters based on selection type
+        ...(onBehalfOf === 'self' && userAccount?.id && { id_user: userAccount.id }),
+        ...(onBehalfOf !== 'self' && selectedUserId && { 
+          sel_id_user: selectedUserId,
+          id_user: selectedUserId 
+        }),
         ...(formData.assignedTo && { assigned_to: parseInt(formData.assignedTo) }),
         ...(formData.referenceNumber && { reference_number: formData.referenceNumber }),
-        ...(formData.subCategoryType && { sub_category_id: parseInt(formData.subCategoryType) })
+        ...(formData.subCategoryType && { sub_category_id: parseInt(formData.subCategoryType) }),
+        // Add golden ticket and flagged parameters
+        is_golden_ticket: isGoldenTicket,
+        is_flagged: isFlagged
       };
 
-      console.log('Ticket payload:', ticketData);
+      console.log('Ticket payload before API call:', ticketData);
+      console.log('Using site ID from user account:', siteId);
+      console.log('User account info:', userAccount);
+      console.log('Form data:', formData);
+      console.log('Golden Ticket:', isGoldenTicket);
+      console.log('Is Flagged:', isFlagged);
 
-      await ticketManagementAPI.createTicket(ticketData, attachedFiles);
+      const response = await ticketManagementAPI.createTicket(ticketData, attachedFiles);
+      console.log('Create ticket response:', response);
+      
+      // Extract ticket number from response - common patterns are ticket_number, complaint_number, or number
+      const ticketNumber = response?.ticket_number || response?.complaint_number || response?.number || response?.complaint?.ticket_number;
       
       toast({
         title: "Success",
-        description: "Ticket created successfully!"
+        description: ticketNumber 
+          ? `Ticket created successfully - ${ticketNumber}`
+          : "Ticket created successfully!"
       });
       
       navigate('/maintenance/ticket');
@@ -322,335 +429,461 @@ export const AddTicketDashboard = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-white min-h-screen">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <Button variant="ghost" onClick={() => navigate('/maintenance/ticket')} className="mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Ticket List
-          </Button>
-          <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">
-            NEW TICKET
-          </h1>
-        </div>
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">NEW TICKET</h1>
+      </div>
 
-        {/* Ticket Details Section */}
-        <div className="p-4 rounded-lg mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center">
-              <FileText className="w-4 h-4 text-[#C72030]" />
-            </div>
-            <h2 className="text-lg font-semibold text-orange-800">TICKET DETAILS</h2>
-          </div>
-
-          {/* On Behalf Of */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Create Ticket On Behalf Of</label>
-            <RadioGroup value={onBehalfOf} onValueChange={setOnBehalfOf} className="flex flex-wrap gap-4">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="self" id="self" />
-                <label htmlFor="self">Self</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="occupant-user" id="occupant-user" />
-                <label htmlFor="occupant-user">Occupant User</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="fm-user" id="fm-user" />
-                <label htmlFor="fm-user">FM User</label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* User Selection Dropdown */}
-          {onBehalfOf !== 'self' && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select User *</label>
-              <Select value={selectedUser} onValueChange={handleUserSelection} disabled={loadingUsers}>
-                <SelectTrigger>
-                  <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select User"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {getUsersForDropdown().map(user => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Requestor Details */}
-          <h3 className="font-medium mb-3">
-            Requestor Details
-            {isFieldsReadOnly && (
-              <span className="ml-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                Auto-populated
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
+        {/* Section 1: Requestor Details */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <User size={16} color="#C72030" />
               </span>
-            )}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <Input
-                placeholder="Enter Name"
+              Requestor Details
+            </h2>
+          </div>
+          <div className="p-6 space-y-6">
+            {/* Create Ticket On Behalf Of with Name and Department in same row */}
+            <div className="grid grid-cols-3 gap-6">
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Create Ticket on Behalf of</InputLabel>
+                <MuiSelect
+                  value={onBehalfOf}
+                  onChange={(e) => setOnBehalfOf(e.target.value)}
+                  label="Create Ticket on Behalf of"
+                  notched
+                  displayEmpty
+                  sx={{ backgroundColor: '#C4B89D59' }}
+                >
+                  <MenuItem value="self">Self</MenuItem>
+                  <MenuItem value="occupant-user">Occupant User</MenuItem>
+                  <MenuItem value="fm-user">FM User</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              <TextField
+                label="Name"
+                placeholder="Anamika Singh"
                 value={formData.name}
                 onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, name: e.target.value })}
                 disabled={isFieldsReadOnly || (onBehalfOf === 'self' && loadingAccount)}
-                className={isFieldsReadOnly ? "bg-gray-50" : ""}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: {
+                    ...fieldStyles,
+                    backgroundColor: isFieldsReadOnly ? '#f9fafb' : '#fff',
+                  },
+                }}
               />
-            </div>
-            {/* <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
-              <Input
-                placeholder="Enter Contact Number"
-                value={formData.contactNumber}
-                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, contactNumber: e.target.value })}
-                disabled={isFieldsReadOnly}
-                className={isFieldsReadOnly ? "bg-gray-50" : ""}
-              />
-            </div> */}
-            {/* <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Site</label>
-              <Input
-                placeholder="Enter Site"
-                value={formData.site}
-                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, site: e.target.value })}
-                disabled={isFieldsReadOnly}
-                className={isFieldsReadOnly ? "bg-gray-50" : ""}
-              />
-            </div> */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-              <Input
-                placeholder="Enter Department"
+              <TextField
+                label="Department"
+                placeholder="Technical"
                 value={formData.department}
                 onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, department: e.target.value })}
                 disabled={isFieldsReadOnly}
-                className={isFieldsReadOnly ? "bg-gray-50" : ""}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: {
+                    ...fieldStyles,
+                    backgroundColor: isFieldsReadOnly ? '#f9fafb' : '#fff',
+                  },
+                }}
               />
             </div>
-            {/* <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-              <Input
-                placeholder="Enter Unit"
-                value={formData.unit}
-                onChange={(e) => !isFieldsReadOnly && setFormData({ ...formData, unit: e.target.value })}
-                disabled={isFieldsReadOnly}
-                className={isFieldsReadOnly ? "bg-gray-50" : ""}
-              />
-            </div> */}
-          </div>
 
-          {/* Ticket Type */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Ticket Type *</label>
-            <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex flex-wrap gap-4">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="request" id="request" />
-                <label htmlFor="request">Request</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="suggestion" id="suggestion" />
-                <label htmlFor="suggestion">Suggestion</label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="complaint" id="complaint" />
-                <label htmlFor="complaint">Complaint</label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          {/* Category and Other Fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category Type *</label>
-              <Select value={formData.categoryType} onValueChange={handleCategoryChange} disabled={loadingCategories}>
-                <SelectTrigger>
-                  <SelectValue placeholder={loadingCategories ? "Loading..." : "Select Category"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sub Category Type</label>
-              <Select 
-                value={formData.subCategoryType} 
-                onValueChange={(value) => setFormData({ ...formData, subCategoryType: value })}
-                disabled={!formData.categoryType || loadingSubcategories}
+            {/* User Selection Dropdown for behalf of others */}
+            {onBehalfOf !== 'self' && (
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder={loadingSubcategories ? "Loading..." : "Select SubCategory"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {subcategories.map((subcat) => (
-                    <SelectItem key={subcat.id} value={subcat.id.toString()}>
-                      {subcat.name}
-                    </SelectItem>
+                <InputLabel shrink>Select User</InputLabel>
+                <MuiSelect
+                  value={selectedUser}
+                  onChange={(e) => handleUserSelection(e.target.value)}
+                  label="Select User"
+                  notched
+                  displayEmpty
+                  disabled={loadingUsers}
+                >
+                  <MenuItem value="">
+                    {loadingUsers ? "Loading users..." : "Select User"}
+                  </MenuItem>
+                  {getUsersForDropdown().map(user => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.name}
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-              <Select value={formData.adminPriority} onValueChange={(value) => setFormData({ ...formData, adminPriority: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITY_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                </MuiSelect>
+              </FormControl>
+            )}
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
-              <Select value={formData.assignedTo} onValueChange={(value) => setFormData({ ...formData, assignedTo: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Assignee" />
-                </SelectTrigger>
-                <SelectContent>
+        {/* Section 2: Tickets Type */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <Ticket size={16} color="#C72030" />
+              </span>
+              Tickets Type
+            </h2>
+          </div>
+          <div className="p-6 space-y-6">
+            {/* Radio buttons for ticket type and flags */}
+            <div className="flex gap-8">
+              <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-8">
+    <div className="flex items-center space-x-2">
+      <RadioGroupItem value="request" id="request" className="text-[#C72030] border-[#C72030]" />
+      <label htmlFor="request" className="text-sm font-medium">Request</label>
+    </div>
+    <div className="flex items-center space-x-2">
+      <RadioGroupItem value="complaint" id="complaint" className="text-[#C72030] border-[#C72030]" />
+      <label htmlFor="complaint" className="text-sm font-medium">Complaint</label>
+    </div>
+    <div className="flex items-center space-x-2">
+      <RadioGroupItem value="suggestion" id="suggestion" className="text-[#C72030] border-[#C72030]" />
+      <label htmlFor="suggestion" className="text-sm font-medium">Suggestion</label>
+    </div>
+  </RadioGroup>
+            </div>
+
+               <div className="flex gap-8">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="golden"
+                    checked={isGoldenTicket}
+                    onChange={(e) => setIsGoldenTicket(e.target.checked)}
+                    className="w-3 h-3 rounded border-2 border-[#C72030] text-[#C72030] focus:ring-[#C72030]"
+                    style={{
+                      accentColor: '#C72030'
+                    }}
+                  />
+                  <label htmlFor="golden" className="text-sm font-medium">Golden Ticket</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="flagged"
+                    checked={isFlagged}
+                    onChange={(e) => setIsFlagged(e.target.checked)}
+                    className="w-3 h-3 rounded border-2 border-[#C72030] text-[#C72030]"
+                    style={{
+                      accentColor: '#C72030'
+                    }}
+                  />
+                  <label htmlFor="flagged" className="text-sm font-medium">Is Flagged</label>
+                </div>
+              </div>
+              
+              {/* Golden Ticket and Is Flagged radio buttons */}
+             
+                {/* <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="golden" id="golden" className="text-red-500 border-red-500" 
+                    checked={isGoldenTicket}
+                    onClick={() => setIsGoldenTicket(!isGoldenTicket)}
+                  />
+                  <label htmlFor="golden" className="text-sm font-medium">Golden Ticket</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="flagged" id="flagged" className="text-red-500 border-red-500"
+                    checked={isFlagged}
+                    onClick={() => setIsFlagged(!isFlagged)}
+                  />
+                  <label htmlFor="flagged" className="text-sm font-medium">Is Flagged</label>
+                </div> */}
+              
+           
+
+            {/* Form fields in exact layout as per image */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Row 1: Category Type, Sub Category Type, Assigned To, Mode */}
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Category Type</InputLabel>
+                <MuiSelect
+                  value={formData.categoryType}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  label="Category Type"
+                  notched
+                  displayEmpty
+                  disabled={loadingCategories}
+                >
+                  <MenuItem value="">Select Category Type</MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Sub Category Type</InputLabel>
+                <MuiSelect
+                  value={formData.subCategoryType}
+                  onChange={(e) => setFormData({ ...formData, subCategoryType: e.target.value })}
+                  label="Sub Category Type"
+                  notched
+                  displayEmpty
+                  disabled={loadingSubcategories || !formData.categoryType}
+                >
+                  <MenuItem value="" sx={{ fontSize: '14px' }}>
+                    {loadingSubcategories ? "Loading..." : 
+                     !formData.categoryType ? "Select Category First" : 
+                     "Select Sub Category Type"}
+                  </MenuItem>
+                  {subcategories.map((subcategory) => (
+                    <MenuItem key={subcategory.id} value={subcategory.id.toString()}>
+                      {subcategory.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Assigned To</InputLabel>
+                <MuiSelect
+                  value={formData.assignedTo}
+                  onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                  label="Assigned To"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Assigned To</MenuItem>
                   {fmUsers.map((user) => (
-                    <SelectItem key={user.id} value={user.id.toString()}>
+                    <MenuItem key={user.id} value={user.id.toString()}>
                       {user.firstname} {user.lastname}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Proactive/Reactive</label>
-              <Select value={formData.proactiveReactive} onValueChange={(value) => setFormData({ ...formData, proactiveReactive: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Type" />
-                </SelectTrigger>
-                <SelectContent>
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Mode</InputLabel>
+                <MuiSelect
+                  value={formData.complaintMode}
+                  onChange={(e) => setFormData({ ...formData, complaintMode: e.target.value })}
+                  label="Mode*"
+                  notched
+                  displayEmpty
+                  disabled={loadingComplaintModes}
+                >
+                  <MenuItem value="">
+                    {loadingComplaintModes ? "Loading..." : "Select Mode"}
+                  </MenuItem>
+                  {complaintModes.map((mode) => (
+                    <MenuItem key={mode.id} value={mode.id.toString()}>
+                      {mode.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+          
+
+            {/* Row 2: Proactive/Reactive, Admin Priority, Reference Number */}
+            
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Proactive/Reactive</InputLabel>
+                <MuiSelect
+                  value={formData.proactiveReactive}
+                  onChange={(e) => setFormData({ ...formData, proactiveReactive: e.target.value })}
+                  label="Proactive/Reactive"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Proactive/Reactive</MenuItem>
                   {PROACTIVE_REACTIVE_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                    <MenuItem key={option.value} value={option.value}>
                       {option.label}
-                    </SelectItem>
+                    </MenuItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {/* <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
-              <Input
+                </MuiSelect>
+              </FormControl>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Admin Priority</InputLabel>
+                <MuiSelect
+                  value={formData.adminPriority}
+                  onChange={(e) => setFormData({ ...formData, adminPriority: e.target.value })}
+                  label="Admin Priority"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Admin Priority</MenuItem>
+                  {PRIORITY_OPTIONS.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <TextField
+                label="Reference Number"
                 placeholder="Enter Reference Number"
                 value={formData.referenceNumber}
                 onChange={(e) => setFormData({ ...formData, referenceNumber: e.target.value })}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
               />
-            </div> */}
-          </div>
+            </div>
 
-          {/* Description */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-            <Textarea
+            {/* Description - Full width */}
+            <TextField
+              label="Descriptions"
+              placeholder="Enter description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Enter description"
-              className="min-h-[120px]"
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={3}
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: {
+                  ...fieldStyles,
+                  height: 'auto',
+                  '& .MuiOutlinedInput-root': {
+                    height: 'auto',
+                  },
+                },
+              }}
             />
           </div>
         </div>
 
-        {/* Attachment Section */}
-        <div className="p-4 rounded-lg mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center">
-              <Paperclip className="w-4 h-4 text-[#C72030]" />
-            </div>
-            <h2 className="text-lg font-semibold text-orange-800">ATTACHMENTS</h2>
+        {/* Section 3: Add Attachments */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 2C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V5.41421C14 5.149 13.8946 4.89464 13.7071 4.70711L11.2929 2.29289C11.1054 2.10536 10.851 2 10.5858 2H3Z" fill="#C72030"/>
+                  <path d="M10 2V5C10 5.55228 10.4477 6 11 6H14" fill="#E5E0D3"/>
+                </svg>
+              </span>
+              Add Attachments
+            </h2>
           </div>
-
-          <div className="border-2 border-dashed border-[#C72030] rounded-lg p-8 text-center">
-            <input
-              type="file"
-              multiple
-              onChange={handleFileUpload}
-              className="hidden"
-              id="file-upload"
-              accept=".png,.jpg,.jpeg,.pdf,.doc,.docx"
-            />
-            <label htmlFor="file-upload" className="cursor-pointer">
-              <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-2">
-                Drag & Drop or{' '}
-                <span className="text-[#C72030] underline">Choose Files</span>
-              </p>
-              <p className="text-sm text-gray-500">
-                PNG, JPG, PDF up to 10MB
-              </p>
-            </label>
-          </div>
-
-          {/* Selected Files */}
-          {attachedFiles.length > 0 && (
-            <div className="mt-4">
-              <h4 className="font-medium text-gray-700 mb-2">Selected Files:</h4>
-              <div className="space-y-2">
-                {attachedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <FileText className="w-4 h-4 text-gray-500" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
+          <div className="p-6">
+            <div className="space-y-4">
+              <input 
+                type="file" 
+                multiple 
+                onChange={handleFileUpload}
+                className="hidden"
+                id="file-upload"
+              />
+              <Button
+                type="button"
+                onClick={() => document.getElementById('file-upload')?.click()}
+                variant="outline"
+                className="border-dashed border-2 border-gray-300 hover:border-gray-400 text-gray-600 bg-white hover:bg-gray-50"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Files
+              </Button>
+              
+              {/* Display attached files */}
+              {attachedFiles.length > 0 && (
+                <div className="space-y-2">
+                  {attachedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between text-sm p-3 bg-gray-50 rounded border">
+                      <div className="flex items-center gap-2">
+                        <Paperclip className="w-4 h-4 text-gray-500" />
+                        <span>{file.name}</span>
                       </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFile(index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Submit Buttons */}
-        <div className="flex flex-col sm:flex-row justify-center gap-3">
-          <Button
-            onClick={handleSubmit}
+        {/* Action Buttons */}
+        <div className="flex gap-4 justify-center pt-6">
+          <Button 
+            type="submit"
             disabled={isSubmitting}
-            style={{ backgroundColor: '#C72030' }}
-            className="text-white hover:bg-[#C72030]/90 px-8 py-2"
+            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
           >
-            {isSubmitting ? 'Submitting...' : 'Submit'}
+            {isSubmitting ? 'Creating...' : 'Create Tickets'}
           </Button>
-          <Button
+          <Button 
+            type="button"
             variant="outline"
             onClick={() => navigate('/maintenance/ticket')}
-            className="px-8 py-2"
-            disabled={isSubmitting}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
           >
             Cancel
           </Button>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

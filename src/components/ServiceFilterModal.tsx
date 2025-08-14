@@ -3,7 +3,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X } from 'lucide-react';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, CircularProgress } from '@mui/material';
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+  CircularProgress
+} from '@mui/material';
+import { toast } from 'sonner';
 import { fetchBuildings, fetchAreas, clearAreas } from '@/store/slices/serviceFilterSlice';
 import type { RootState, AppDispatch } from '@/store/store';
 
@@ -13,11 +21,12 @@ interface ServiceFilterModalProps {
   onApply: (filters: any) => void;
 }
 
+
 export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterModalProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const serviceFilterState = useSelector((state: RootState) => state.serviceFilter);
   const { buildings = [], areas = [], loading = { buildings: false, areas: false }, error = { buildings: null, areas: null } } = serviceFilterState || {};
-  
+
   const [filters, setFilters] = useState({
     serviceName: '',
     building: '',
@@ -30,19 +39,18 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
 
   useEffect(() => {
     if (isOpen && buildings.length === 0) {
-      dispatch(fetchBuildings(1)); // Load buildings on modal open (default siteId = 1)
+      dispatch(fetchBuildings(1)); // Default siteId = 1
     }
   }, [isOpen, dispatch, buildings.length]);
 
   const handleInputChange = (field: string, value: string) => {
     setFilters(prev => {
       const updated = { ...prev, [field]: value };
-      
-      // Clear areas when building changes
+
       if (field === 'building') {
         updated.area = '';
         dispatch(clearAreas());
-        
+
         if (value) {
           const wingId = parseInt(value);
           if (!isNaN(wingId)) {
@@ -50,6 +58,7 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
           }
         }
       }
+
       return updated;
     });
   };
@@ -57,10 +66,13 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
   const handleApply = () => {
     if (filters.serviceName.trim() === '') {
       setErrors({ serviceName: true });
-    } else {
-      onApply(filters);
-      onClose();
+      toast.error("Service Name is required.");
+      return;
     }
+
+    setErrors({ serviceName: false });
+    onApply(filters);
+    handleClose();
   };
 
   const handleReset = () => {
@@ -69,7 +81,18 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
       building: '',
       area: ''
     });
+    setErrors({ serviceName: false });
     onApply({});
+  };
+
+  const handleClose = () => {
+    setFilters({
+      serviceName: '',
+      building: '',
+      area: ''
+    });
+    setErrors({ serviceName: false });
+    onClose();
   };
 
   const fieldStyles = {
@@ -99,7 +122,7 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose} modal={false}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }} modal={false}>
       <DialogContent className="max-w-2xl" aria-describedby="filter-dialog-description">
         <DialogHeader>
           <div className="flex items-center justify-between">
@@ -107,38 +130,39 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
             <Button
               variant="ghost"
               size="sm"
-              onClick={onClose}
+              onClick={handleClose}
               className="h-6 w-6 p-0"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Service Details */}
           <div>
-            <h3 className="text-[14px] text-[#C72030] font-medium mb-4 ">Service Details</h3>
+            <h3 className="text-[14px] text-[#C72030] font-medium mb-4">Service Details</h3>
             <div className="space-y-4">
-              <div>
-                <TextField
-                  label="Service Name"
-                  placeholder="Enter Service Name"
-                  name="serviceName"
-                  value={filters.serviceName}
-                  onChange={(e) => handleInputChange('serviceName', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  InputProps={{
-                    sx: fieldStyles
-                  }}
-                  error={errors.serviceName}
-                  helperText={errors.serviceName && "Service Name is required"}
-                />
-              </div>
+              <TextField
+                label="Service Name"
+                placeholder="Enter Service Name"
+                name="serviceName"
+                value={filters.serviceName}
+                onChange={(e) => {
+                  setErrors({ serviceName: false });
+                  handleInputChange('serviceName', e.target.value);
+                }}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                InputProps={{
+                  sx: fieldStyles
+                }}
+                error={errors.serviceName}
+                helperText={errors.serviceName ? "Service Name is required" : ""}
+              />
             </div>
           </div>
 
@@ -146,85 +170,82 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
           <div>
             <h3 className="font-medium mb-4 text-[14px] text-[#C72030]">Location Details</h3>
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel id="building-select-label" shrink sx={{ backgroundColor: 'white', px: 1 }}>Building</InputLabel>
-                  <MuiSelect
-                    labelId="building-select-label"
-                    label="Building"
-                    displayEmpty
-                    value={filters.building}
-                    onChange={(e) => {
-                      handleInputChange('building', e.target.value as string);
-                    }}
-                    sx={fieldStyles}
-                    MenuProps={menuProps}
-                    disabled={loading.buildings}
-                  >
-                    <MenuItem value=""><em>Building</em></MenuItem>
-                    {loading.buildings ? (
-                      <MenuItem disabled>
-                        <CircularProgress size={16} sx={{ mr: 1 }} />
-                        Loading...
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="building-select-label" shrink sx={{ backgroundColor: 'white', px: 1 }}>Building</InputLabel>
+                <MuiSelect
+                  labelId="building-select-label"
+                  label="Building"
+                  displayEmpty
+                  value={filters.building}
+                  onChange={(e) => {
+                    handleInputChange('building', e.target.value as string);
+                  }}
+                  sx={fieldStyles}
+                  MenuProps={menuProps}
+                  disabled={loading.buildings}
+                >
+                  <MenuItem value="" sx={{ backgroundColor: 'white', px: 1 }}><em>Select Building</em></MenuItem>
+                  {loading.buildings ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={16} sx={{ mr: 1 }} />
+                      Loading...
+                    </MenuItem>
+                  ) : (
+                    buildings.map((building) => (
+                      <MenuItem key={building.id} value={building.id.toString()}>
+                        {building.name}
                       </MenuItem>
-                    ) : (
-                      buildings.map((building) => (
-                        <MenuItem key={building.id} value={building.id.toString()}>
-                          {building.name}
-                        </MenuItem>
-                      ))
-                    )}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-              <div>
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel id="area-select-label" shrink sx={{ backgroundColor: 'white', px: 1 }}>Area</InputLabel>
-                  <MuiSelect
-                    labelId="area-select-label"
-                    label="Area"
-                    displayEmpty
-                    value={filters.area}
-                    onChange={(e) => {
-                      handleInputChange('area', e.target.value as string);
-                    }}
-                    sx={fieldStyles}
-                    MenuProps={menuProps}
-                    disabled={loading.areas || !filters.building}
-                  >
-                    <MenuItem value=""><em>Area</em></MenuItem>
-                    {loading.areas ? (
-                      <MenuItem disabled>
-                        <CircularProgress size={16} sx={{ mr: 1 }} />
-                        Loading...
+                    ))
+                  )}
+                </MuiSelect>
+              </FormControl>
+
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="area-select-label" shrink sx={{ backgroundColor: 'white', px: 1 }}>Area</InputLabel>
+                <MuiSelect
+                  labelId="area-select-label"
+                  label="Area"
+                  displayEmpty
+                  value={filters.area}
+                  onChange={(e) => {
+                    handleInputChange('area', e.target.value as string);
+                  }}
+                  sx={fieldStyles}
+                  MenuProps={menuProps}
+                  disabled={loading.areas || !filters.building}
+                >
+                  <MenuItem value=""><em>Area</em></MenuItem>
+                  {loading.areas ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={16} sx={{ mr: 1 }} />
+                      Loading...
+                    </MenuItem>
+                  ) : !filters.building ? (
+                    <MenuItem disabled>
+                      <em>Select a building first</em>
+                    </MenuItem>
+                  ) : (
+                    areas.map((area) => (
+                      <MenuItem key={area.areas.id} value={area.areas.id.toString()}>
+                        {area.areas.name}
                       </MenuItem>
-                    ) : !filters.building ? (
-                      <MenuItem disabled>
-                        <em>Select a building first</em>
-                      </MenuItem>
-                    ) : (
-                      areas.map((area) => (
-                        <MenuItem key={area.id} value={area.id.toString()}>
-                          {area.name}
-                        </MenuItem>
-                      ))
-                    )}
-                  </MuiSelect>
-                </FormControl>
-              </div>
+                    ))
+                  )}
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
 
           {/* Action buttons */}
           <div className="flex justify-end gap-4">
-            <Button 
+            <Button
               variant="outline"
               onClick={handleReset}
               className="border-gray-300 text-gray-700 hover:bg-gray-50"
             >
               Reset
             </Button>
-            <Button 
+            <Button
               onClick={handleApply}
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:bg-[#C72030]/90"

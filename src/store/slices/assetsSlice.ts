@@ -17,6 +17,11 @@ export interface Asset {
   area?: { id: number; name: string }
   pms_room?: { id: number; name: string } | null
   asset_type?: boolean
+  asset_group?: string; // Ensure this is included
+  asset_sub_group?: string;
+  purchase_cost?: number;
+  current_book_value?: number;
+  pms_floor?: { id: number; name: string } | null;
   // Add other asset properties as needed
 }
 
@@ -31,6 +36,9 @@ export interface AssetFilters {
   areaId?: string
   floorId?: string
   roomId?: string
+  status_eq?: string
+  breakdown_eq?: boolean
+  it_asset_eq?: boolean
 }
 
 interface AssetsState {
@@ -43,7 +51,7 @@ interface AssetsState {
   filters: AssetFilters
   // Backward compatibility for existing code
   data: Asset[]
-   totalValue?: number | string
+  totalValue?: number
 }
 
 const initialState: AssetsState = {
@@ -78,6 +86,9 @@ export const fetchAssetsData = createAsyncThunk(
     if (filters.areaId) queryParams.append('q[pms_area_id_eq]', filters.areaId)
     if (filters.floorId) queryParams.append('q[pms_floor_id_eq]', filters.floorId)
     if (filters.roomId) queryParams.append('q[pms_room_id_eq]', filters.roomId)
+    if (filters.status_eq) queryParams.append('q[status_eq]', filters.status_eq)
+    if (filters.breakdown_eq !== undefined) queryParams.append('q[breakdown_eq]', filters.breakdown_eq.toString())
+    if (filters.it_asset_eq !== undefined) queryParams.append('q[it_asset_eq]', filters.it_asset_eq.toString())
 
     const response = await apiClient.get(`/pms/assets.json?${queryParams}`)
     return { ...response.data, appliedFilters: filters }

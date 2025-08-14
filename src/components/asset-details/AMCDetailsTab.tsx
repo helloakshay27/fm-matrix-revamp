@@ -28,11 +28,12 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
             firstService: amc?.amc_first_service || '-',
             paymentTerms: amc?.payment_term || '-',
             noOfVisits: amc?.no_of_visits?.toString() || '-',
+            amc_cost: amc?.amc_cost || '-',
           };
 
           const historyData = Array.isArray(amc?.amc_visit_logs) && amc.amc_visit_logs.length > 0
             ? amc.amc_visit_logs.map((visit: any) => ({
-                srNo: visit.visit_number ?? '-',
+               
                 visitDate: visit.visit_date || '-',
                 technicianName: visit.technician_name || '-',
                 remarks: visit.remark || '-',
@@ -46,16 +47,17 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                 date: log.created_at
                   ? new Date(log.created_at).toLocaleString('en-GB')
                   : '-',
+                performedBy: log.user_name || '-',
               }))
             : [];
 
           return (
             <div key={index} className="space-y-6 border-2 rounded-lg p-6">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-red-700">
-                  <X className="w-4 h-4 text-white" />
+                <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                  <X className="w-4 h-4"style={{ color: "#C72030" }} />
                 </div>
-                <h3 className="text-lg font-semibold uppercase text-red-700">AMC Details {amcs.length > 1 ? `#${index + 1}` : ''}</h3>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A">AMC Details {amcs.length > 1 ? `#${index + 1}` : ''}</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
@@ -69,6 +71,11 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                     <span className="text-gray-500 w-24">First Service</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcData.firstService}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">AMC Cost</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcData.amc_cost || '-'}</span>
                   </div>
                 </div>
 
@@ -95,6 +102,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                     <span className="text-gray-500 w-24">No. Of Visits</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcData.noOfVisits}</span>
+                    
                   </div>
                 </div>
               </div>
@@ -104,10 +112,10 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                 {/* AMC History */}
                 <div className="bg-white rounded-lg border p-4">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-red-700">
-                      <History className="w-4 h-4 text-white" />
+                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <History className="w-4 h-4 "style={{ color: "#C72030" }} />
                     </div>
-                    <h3 className="text-base font-semibold text-red-700">AMC History</h3>
+                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Visit History</h3>
                   </div>
 
                   <Table>
@@ -116,7 +124,7 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                         <TableHead className="text-gray-600 font-medium">Sr. No.</TableHead>
                         <TableHead className="text-gray-600 font-medium">Visit Date</TableHead>
                         <TableHead className="text-gray-600 font-medium">Technician Name</TableHead>
-                        <TableHead className="text-gray-600 font-medium">Remarks</TableHead>
+                        {/* <TableHead className="text-gray-600 font-medium">Remarks</TableHead> */}
                         <TableHead className="text-gray-600 font-medium">AMC Period</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -124,10 +132,10 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                       {historyData.length > 0 ? (
                         historyData.map((row, idx) => (
                           <TableRow key={idx}>
-                            <TableCell>{row.srNo}</TableCell>
+                            <TableCell>{idx + 1}</TableCell>
                             <TableCell>{row.visitDate}</TableCell>
                             <TableCell>{row.technicianName}</TableCell>
-                            <TableCell>{row.remarks}</TableCell>
+                            {/* <TableCell>{row.remarks}</TableCell> */}
                             <TableCell>{row.amcPeriod}</TableCell>
                           </TableRow>
                         ))
@@ -145,32 +153,40 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                 {/* Logs */}
                 <div className="bg-white rounded-lg border p-4">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-red-700">
-                      <FileText className="w-4 h-4 text-white" />
+                    <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <FileText className="w-4 h-4 "style={{ color: "#C72030" }} />
                     </div>
-                    <h3 className="text-base font-semibold text-red-700">Logs</h3>
+                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A">AMC History</h3>
                   </div>
 
-                  <div className="space-y-6">
-                    {logsData.length > 0 ? (
-                      logsData.map((log, i) => (
-                        <div key={i} className="flex gap-4">
-                          <div className="flex flex-col items-center">
-                            <div className="w-3 h-3 rounded-full bg-red-700" />
-                            {i < logsData.length - 1 && (
-                              <div className="w-0.5 h-12 mt-2 bg-red-700 opacity-30" />
-                            )}
-                          </div>
-                          <div className="flex-1 pb-4">
-                            <p className="text-gray-900 text-sm mb-1">{log.text}</p>
-                            <p className="text-gray-400 text-xs">{log.date}</p>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-gray-400 text-center">No logs available.</div>
-                    )}
-                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="text-gray-600 font-medium">Sr. No.</TableHead>
+                        <TableHead className="text-gray-600 font-medium">Description</TableHead>
+                        <TableHead className="text-gray-600 font-medium">Performed By</TableHead>
+                        <TableHead className="text-gray-600 font-medium">Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {logsData.length > 0 ? (
+                        logsData.map((log, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell>{idx + 1}</TableCell>
+                            <TableCell>{log.text}</TableCell>
+                            <TableCell>{log.performedBy}</TableCell>
+                            <TableCell>{log.date}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-gray-400">
+                            No logs available.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             </div>

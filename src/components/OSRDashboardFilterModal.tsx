@@ -66,7 +66,7 @@ export const OSRDashboardFilterModal = ({ isOpen, onClose, onApply, onReset }: O
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl">
+      <DialogContent className="">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">Filter</DialogTitle>
           <DialogDescription className="sr-only">

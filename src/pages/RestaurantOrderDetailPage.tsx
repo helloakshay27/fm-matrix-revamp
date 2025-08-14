@@ -8,6 +8,22 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Pencil, X } from "lucide-react";
 import { fetchOrderDetails } from '@/store/slices/f&bSlice';
 import { useAppDispatch } from '@/store/hooks';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import axios from 'axios';
+
+interface OrderLog {
+  date: string;
+  status: string;
+  comment: string;
+  updated_by: string;
+}
+
+interface OrderLogsTableProps {
+  order: {
+    logs: OrderLog[];
+  };
+}
 
 interface OrderData {
   id: number;
@@ -85,20 +101,20 @@ export const RestaurantOrderDetailPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        setIsLoading(true);
-        const response = await dispatch(fetchOrderDetails({ baseUrl, token, id: Number(id), oid: Number(oid) })).unwrap();
-        setOrder(response);
-      } catch (error) {
-        console.error('Error fetching order details:', error);
-        setError('Failed to load order details');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchOrder = async () => {
+    try {
+      setIsLoading(true);
+      const response = await dispatch(fetchOrderDetails({ baseUrl, token, id: Number(id), oid: Number(oid) })).unwrap();
+      setOrder(response);
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      setError('Failed to load order details');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchOrder();
   }, [dispatch, baseUrl, token, id, oid]);
 
@@ -106,10 +122,26 @@ export const RestaurantOrderDetailPage = () => {
     navigate(-1);
   };
 
-  const handleSubmitStatus = () => {
-    console.log("Updating status:", selectedStatus, "Comments:", comments);
-    setIsEditStatusOpen(false);
-    setComments("");
+  const handleSubmitStatus = async () => {
+    try {
+      await axios.post(`https://${baseUrl}/crm/create_osr_log.json`, {
+        osr_log: {
+          about: "FoodOrder",
+          about_id: oid,
+          osr_status_id: selectedStatus,
+          comment: comments
+        }
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      setIsEditStatusOpen(false);
+      setComments("");
+      fetchOrder();
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   if (isLoading) {
@@ -120,39 +152,67 @@ export const RestaurantOrderDetailPage = () => {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">{error || 'Order not found'}</div>;
   }
 
+  const columns: ColumnConfig[] = [
+    {
+      key: 'date',
+      label: 'Date',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'comment',
+      label: 'Comments',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'updated_by',
+      label: 'Updated by',
+      sortable: true,
+      draggable: true,
+    },
+  ];
+
+  const renderCell = (item: OrderLog, columnKey: string) => {
+    switch (columnKey) {
+      case 'date':
+        return item.date || '';
+      case 'status':
+        return (
+          <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+            {item.status}
+          </span>
+        );
+      case 'comment':
+        return item.comment || '';
+      case 'updated_by':
+        return item.updated_by || '';
+      default:
+        return item[columnKey as keyof OrderLog]?.toString() || '';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Breadcrumb */}
-      <div className="bg-white px-6 py-2 border-b">
-        <div className="flex items-center text-sm text-gray-600">
-          <span>Restaurant</span>
-          <span className="mx-2">{'>'}</span>
-          <span>Restaurant Booking</span>
-        </div>
-      </div>
-
-      {/* Main Header */}
-      <div className="bg-white px-6 py-4 border-b">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={handleBack}
-              variant="ghost"
-              size="sm"
-              className="p-1"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-xl font-bold text-gray-900">RESTAURANT BOOKING</h1>
-          </div>
-        </div>
-      </div>
-
       <div className="p-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/vas/fnb')}
+          className="mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Order List
+        </Button>
         {/* Restaurant Header */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">{order.restaurant.name}</h2>
+        <div className="bg-white rounded-lg shadow mb-6">
+          <div className="flex items-center justify-between bg-[#F6F4EE] p-6" style={{ border: "1px solid #D9D9D9" }}>
+            <h2 className="flex items-center gap-4 text-[20px] fw-bold text-[#000]">{order.restaurant.name}</h2>
             <Button
               onClick={() => {
                 setSelectedStatus(order.status.name);
@@ -166,7 +226,19 @@ export const RestaurantOrderDetailPage = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-2 gap-8 px-6 py-[31px] bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
+            {/* Right Column - Order Details */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Order ID: {order.order_details.order_id}</h3>
+              <div className="space-y-2">
+                <div><span className="font-medium">Order Date:</span> {order.order_details.order_date}</div>
+                <div><span className="font-medium">Payment Mode:</span> {Number(order.totals.total_amount) > 0 && order.order_details.payment_mode}</div>
+                <div><span className="font-medium">Payment Status:</span> {Number(order.totals.total_amount) > 0 && order.order_details.payment_status}</div>
+                <div><span className="font-medium">Transaction ID:</span> {Number(order.totals.total_amount) > 0 && order.order_details.transaction_id}</div>
+                <div><span className="font-medium">Preferred Time:</span> {order.order_details.preferred_time}</div>
+              </div>
+            </div>
+
             {/* Left Column - Delivery Address */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Delivery Address:</h3>
@@ -176,30 +248,18 @@ export const RestaurantOrderDetailPage = () => {
                 <div className="text-gray-600">{order.delivery_address.phone}</div>
               </div>
             </div>
-
-            {/* Right Column - Order Details */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Order ID: {order.order_details.order_id}</h3>
-              <div className="space-y-2">
-                <div><span className="font-medium">Order Date:</span> {order.order_details.order_date}</div>
-                <div><span className="font-medium">Payment Mode:</span> {order.order_details.payment_mode}</div>
-                <div><span className="font-medium">Payment Status:</span> {order.order_details.payment_status}</div>
-                <div><span className="font-medium">Transaction ID:</span> {order.order_details.transaction_id}</div>
-                <div><span className="font-medium">Preferred Time:</span> {order.order_details.preferred_time}</div>
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Order Items and Pricing */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="px-6 py-[31px] bg-[#F6F7F7] rounded-lg shadow p-6 mb-6" style={{ border: "1px solid #D9D9D9" }}>
           <div className="grid grid-cols-2 gap-8">
             {/* Left Column - Item List */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Item List</h3>
               <div className="space-y-2">
                 {order.items.map((item, index) => (
-                  <div key={index} className="text-blue-600">
+                  <div key={index} className="text-[#C72030]">
                     {item.menu_name}
                     <div className="text-gray-600 text-sm">{item.quantity}Qty x 1</div>
                   </div>
@@ -208,34 +268,41 @@ export const RestaurantOrderDetailPage = () => {
             </div>
 
             {/* Right Column - Total Price */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Total Price</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Sub Total:</span>
-                  <span>{order.totals.sub_total}</span>
+            {
+              Number(order.totals.total_amount) > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Total Price</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Sub Total:</span>
+                      <span>{order.totals.sub_total}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>GST:</span>
+                      <span>{order.totals.gst}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Delivery Charge:</span>
+                      <span>{order.totals.delivery_charge}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold text-lg border-t pt-2 border-gray-400">
+                      <span>TOTAL:</span>
+                      <span>{order.totals.total_amount}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>GST:</span>
-                  <span>{order.totals.gst}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Delivery Charge:</span>
-                  <span>{order.totals.delivery_charge}</span>
-                </div>
-                <div className="flex justify-between font-semibold text-lg border-t pt-2">
-                  <span>TOTAL:</span>
-                  <span>{order.totals.total_amount}</span>
-                </div>
-              </div>
-            </div>
+              )
+            }
+
           </div>
         </div>
 
         {/* Logs Section */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-xl font-bold mb-4">Logs</h3>
-          <div className="overflow-x-auto">
+        <div className="bg-white rounded-lg shadow">
+          <div className="flex items-center justify-between bg-[#F6F4EE] p-[30px]" style={{ border: "1px solid #D9D9D9" }}>
+            <h2 className="flex items-center gap-4 text-[20px] fw-bold text-[#000]">Logs</h2>
+          </div>
+          {/* <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b">
@@ -260,6 +327,22 @@ export const RestaurantOrderDetailPage = () => {
                 ))}
               </tbody>
             </table>
+          </div> */}
+
+          <div className="overflow-x-auto px-[30px] py-[10px]">
+            <EnhancedTable
+              data={order.logs}
+              columns={columns}
+              renderCell={renderCell}
+              storageKey="order-logs-table"
+              className="w-full"
+              emptyMessage="No logs found."
+              enableSearch={true}
+              enableSelection={false}
+              hideTableExport={true}
+              hideTableSearch={true}
+              hideColumnsButton={true}
+            />
           </div>
         </div>
       </div>
@@ -287,7 +370,7 @@ export const RestaurantOrderDetailPage = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {order.available_statuses.map((status) => (
-                    <SelectItem key={status.id} value={status.name}>
+                    <SelectItem key={status.id} value={status.id.toString()}>
                       {status.name}
                     </SelectItem>
                   ))}

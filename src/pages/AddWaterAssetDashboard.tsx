@@ -1,25 +1,195 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import {
+  Activity, BarChart3, Zap, Sun, Droplet, Recycle, BarChart, Plug, Frown, Wind, ArrowDown, ArrowUp, Plus, X, ChevronUp, ChevronDown, Building
+} from 'lucide-react';
+import { MeterMeasureFields } from '@/components/asset/MeterMeasureFields';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  TextField,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  FormControlLabel,
+  Radio,
+  RadioGroup as MuiRadioGroup,
+  Checkbox as MuiCheckbox,
+  FormLabel,
+} from '@mui/material';
+import apiClient from '@/utils/apiClient';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
-export const AddWaterAssetDashboard = () => {
-  const navigate = useNavigate();
-  const [locationOpen, setLocationOpen] = useState(true);
-  const [assetOpen, setAssetOpen] = useState(true);
-  const [warrantyOpen, setWarrantyOpen] = useState(true);
-  const [meterCategoryOpen, setMeterCategoryOpen] = useState(true);
-  const [consumptionOpen, setConsumptionOpen] = useState(true);
-  const [nonConsumptionOpen, setNonConsumptionOpen] = useState(true);
-  const [attachmentsOpen, setAttachmentsOpen] = useState(true);
+function AddWaterAssetDashboard() {
+  // Asset Meter Type ID mapping based on database values (copied from AddAssetPage)
+  const getAssetMeterTypeId = (meterCategory, subCategory = null, tertiaryCategory = null) => {
+    const meterTypeMapping = {
+      "board": {
+        "ht-panel": 5,
+        "vcb": 8,
+        "transformer": 2,
+        "lt-panel": 9,
+      },
+      "dg": 1,
+      "renewable": {
+        "solar": 7,
+        "bio-methanol": 10,
+        "wind": 11,
+      },
+      "fresh-water": {
+        "source": {
+          "municipal-corporation": 12,
+          "tanker": 13,
+          "borewell": 14,
+          "rainwater": 15,
+          "jackwell": 16,
+          "pump": 3,
+        },
+        "destination": {
+          "output": 18,
+        }
+      },
+      "recycled": 6,
+      "water-distribution": {
+        "irrigation": 17,
+        "domestic": 18,
+        "flushing": 19,
+      },
+      "iex-gdam": 21,
+    };
 
+    if (tertiaryCategory && meterTypeMapping[meterCategory] &&
+      meterTypeMapping[meterCategory][subCategory] &&
+      typeof meterTypeMapping[meterCategory][subCategory] === 'object') {
+      return meterTypeMapping[meterCategory][subCategory][tertiaryCategory] || null;
+    } else if (subCategory && meterTypeMapping[meterCategory] && typeof meterTypeMapping[meterCategory] === 'object') {
+      return meterTypeMapping[meterCategory][subCategory] || null;
+    } else if (typeof meterTypeMapping[meterCategory] === 'number') {
+      return meterTypeMapping[meterCategory];
+    }
+    return null;
+  };
+
+  // Water Distribution Options (copied from AddAssetPage)
+  const getWaterDistributionOptions = () => [
+    {
+      value: "irrigation",
+      label: "Irrigation",
+      icon: Droplet,
+    },
+    {
+      value: "domestic",
+      label: "Domestic",
+      icon: Building,
+    },
+    {
+      value: "flushing",
+      label: "Flushing",
+      icon: ArrowDown,
+    },
+  ];
+
+  const { toast } = useToast();
+
+  // --- Meter Details Section State (match AddAssetPage) ---
+  const [meterCategoryType, setMeterCategoryType] = useState("");
+  const [subCategoryType, setSubCategoryType] = useState("");
+  const [tertiaryCategory, setTertiaryCategory] = useState("");
+  const [meterType, setMeterType] = useState("");
+  const [showBoardRatioOptions, setShowBoardRatioOptions] = useState(false);
+  const [showRenewableOptions, setShowRenewableOptions] = useState(false);
+  const [showFreshWaterOptions, setShowFreshWaterOptions] = useState(false);
+  const [showWaterSourceOptions, setShowWaterSourceOptions] = useState(false);
+  const [showWaterDistributionOptions, setShowWaterDistributionOptions] = useState(false);
+  const [parentMeters, setParentMeters] = useState([]);
+  const [parentMeterLoading, setParentMeterLoading] = useState(false);
+  const [selectedParentMeterId, setSelectedParentMeterId] = useState("");
+
+  // Fetch parent meters function (same as AddAssetPage, adapted for fetch)
+  const fetchParentMeters = async () => {
+    setParentMeterLoading(true);
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    }
+    try {
+      const response = await fetch(`${baseUrl}/pms/assets/get_parent_asset.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      // Transform nested array to object format
+      const transformedData = (data.assets || []).map((asset) => ({
+        id: asset[0],
+        name: asset[1],
+      }));
+      setParentMeters(transformedData);
+    } catch (error) {
+      console.error('Error fetching parent meters:', error);
+      setParentMeters([]);
+    } finally {
+      setParentMeterLoading(false);
+    }
+  };
+
+  // Fetch parent meters when Sub Meter is selected
+  useEffect(() => {
+    if (meterType === "SubMeter") {
+      fetchParentMeters();
+    } else {
+      setSelectedParentMeterId("");
+    }
+    // eslint-disable-next-line
+  }, [meterType]);
+  const [meterUnitTypes, setMeterUnitTypes] = useState([]);
+  const [loadingUnitTypes, setLoadingUnitTypes] = useState(false);
+  const [consumptionMeasureFields, setConsumptionMeasureFields] = useState([
+    {
+      id: '1',
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false,
+    },
+  ]);
+  const [nonConsumptionMeasureFields, setNonConsumptionMeasureFields] = useState([
+    {
+      id: '1',
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false,
+    },
+  ]);
+
+  // --- Meter Details Option Functions (match AddAssetPage) ---
+
+  // --- Meter Details Handlers (match AddAssetPage) ---
+
+  // --- Meter Details Section State (must be before handlers) ---
+
+  // --- Fresh water options and handlers ---
+  // Form data state (moved to the top to avoid TDZ issues)
   const [formData, setFormData] = useState({
     site: '',
     building: '',
@@ -50,30 +220,507 @@ export const AddWaterAssetDashboard = () => {
     warrantyStartDate: '',
     warrantyExpiresOn: '',
     commissioningDate: '',
-    selectedMeterCategories: []
+    selectedMeterCategories: [],
+    selectedMeterCategory: '',
+    boardSubCategory: '',
+    renewableSubCategory: '',
+    freshWaterSubCategory: '',
   });
 
+  // Location dropdown states
+  const [sites, setSites] = useState([]);
+  const [buildings, setBuildings] = useState([]);
+  const [wings, setWings] = useState([]);
+  const [areas, setAreas] = useState([]);
+  const [floors, setFloors] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState({
+    sites: false,
+    buildings: false,
+    wings: false,
+    areas: false,
+    floors: false,
+    rooms: false,
+  });
+
+  // Group/Subgroup states
+  const [groups, setGroups] = useState([]);
+  const [subgroups, setSubgroups] = useState([]);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [subgroupsLoading, setSubgroupsLoading] = useState(false);
+
+  // Fetch Sites
+  const fetchSites = async () => {
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    }
+    setLoading((prev) => ({ ...prev, sites: true }));
+    try {
+      const response = await fetch(`${baseUrl}/pms/sites.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      setSites(data.sites || []);
+    } catch (error) {
+      console.error('Error fetching sites:', error);
+      setSites([]);
+    } finally {
+      setLoading((prev) => ({ ...prev, sites: false }));
+    }
+  };
+
+  // Fetch Buildings
+  const fetchBuildings = async (siteId) => {
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    }
+    if (!siteId) {
+      setBuildings([]);
+      return;
+    }
+    setLoading((prev) => ({ ...prev, buildings: true }));
+    try {
+      const response = await fetch(`${baseUrl}/pms/sites/${siteId}/buildings.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      setBuildings(data.buildings || []);
+    } catch (error) {
+      console.error('Error fetching buildings:', error);
+      setBuildings([]);
+    } finally {
+      setLoading((prev) => ({ ...prev, buildings: false }));
+    }
+  };
+
+  // Fetch Wings
+  const fetchWings = async (buildingId) => {
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    }
+    if (!buildingId) {
+      setWings([]);
+      return;
+    }
+    setLoading((prev) => ({ ...prev, wings: true }));
+    try {
+      const response = await fetch(`${baseUrl}/pms/buildings/${buildingId}/wings.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      // Flatten if API returns [{wings: {...}}, ...]
+      let wingsArr = [];
+      if (Array.isArray(data)) {
+        if (data.length > 0 && data[0].wings) {
+          wingsArr = data.map((item) => item.wings);
+        } else {
+          wingsArr = data;
+        }
+      }
+      setWings(wingsArr);
+    } catch (error) {
+      console.error('Error fetching wings:', error);
+      setWings([]);
+    } finally {
+      setLoading((prev) => ({ ...prev, wings: false }));
+    }
+  };
+
+  // Fetch Areas
+  const fetchAreas = async (wingId) => {
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    }
+    if (!wingId) {
+      setAreas([]);
+      return;
+    }
+    setLoading((prev) => ({ ...prev, areas: true }));
+    try {
+      const response = await fetch(`${baseUrl}/pms/wings/${wingId}/areas.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      setAreas(data.areas || []);
+    } catch (error) {
+      console.error('Error fetching areas:', error);
+      setAreas([]);
+    } finally {
+      setLoading((prev) => ({ ...prev, areas: false }));
+    }
+  };
+
+  // Fetch Floors
+  const fetchFloors = async (areaId) => {
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    }
+    if (!areaId) {
+      setFloors([]);
+      return;
+    }
+    setLoading((prev) => ({ ...prev, floors: true }));
+    try {
+      const response = await fetch(`${baseUrl}/pms/areas/${areaId}/floors.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      setFloors(data.floors || []);
+    } catch (error) {
+      console.error('Error fetching floors:', error);
+      setFloors([]);
+    } finally {
+      setLoading((prev) => ({ ...prev, floors: false }));
+    }
+  };
+
+  // Fetch Rooms
+  const fetchRooms = async (floorId) => {
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    }
+    if (!floorId) {
+      setRooms([]);
+      return;
+    }
+    setLoading((prev) => ({ ...prev, rooms: true }));
+    try {
+      const response = await fetch(`${baseUrl}/pms/floors/${floorId}/rooms.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      setRooms(data || []);
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+      setRooms([]);
+    } finally {
+      setLoading((prev) => ({ ...prev, rooms: false }));
+    }
+  };
+
+  // Fetch Groups
+  const fetchGroups = async () => {
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    }
+    setGroupsLoading(true);
+    try {
+      const response = await fetch(`${baseUrl}/pms/assets/get_asset_group_sub_group.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      setGroups(data.asset_groups || []);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      setGroups([]);
+    } finally {
+      setGroupsLoading(false);
+    }
+  };
+
+  // Fetch Subgroups
+  const fetchSubgroups = async (groupId) => {
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    }
+    if (!groupId) {
+      setSubgroups([]);
+      return;
+    }
+    setSubgroupsLoading(true);
+    try {
+      const response = await fetch(`${baseUrl}/pms/assets/get_asset_group_sub_group.json?group_id=${groupId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      setSubgroups(data.asset_groups || []);
+    } catch (error) {
+      console.error('Error fetching subgroups:', error);
+      setSubgroups([]);
+    } finally {
+      setSubgroupsLoading(false);
+    }
+  };
+
+  // Initial fetch for sites and groups
+  useEffect(() => {
+    fetchSites();
+    fetchGroups();
+  }, []);
+
+  // Fetch buildings when site changes
+  useEffect(() => {
+    if (formData.site) {
+      fetchBuildings(formData.site);
+    } else {
+      setBuildings([]);
+      setFormData((f) => ({ ...f, building: '', wing: '', area: '', floor: '', room: '' }));
+    }
+  }, [formData.site]);
+
+  // Fetch wings when building changes
+  useEffect(() => {
+    if (formData.building) {
+      fetchWings(formData.building);
+    } else {
+      setWings([]);
+      setFormData((f) => ({ ...f, wing: '', area: '', floor: '', room: '' }));
+    }
+  }, [formData.building]);
+
+  // Fetch areas when wing changes
+  useEffect(() => {
+    if (formData.wing) {
+      fetchAreas(formData.wing);
+    } else {
+      setAreas([]);
+      setFormData((f) => ({ ...f, area: '', floor: '', room: '' }));
+    }
+  }, [formData.wing]);
+
+  // Fetch floors when area changes
+  useEffect(() => {
+    if (formData.area) {
+      fetchFloors(formData.area);
+    } else {
+      setFloors([]);
+      setFormData((f) => ({ ...f, floor: '', room: '' }));
+    }
+  }, [formData.area]);
+
+  // Fetch rooms when floor changes
+  useEffect(() => {
+    if (formData.floor) {
+      fetchRooms(formData.floor);
+    } else {
+      setRooms([]);
+      setFormData((f) => ({ ...f, room: '' }));
+    }
+  }, [formData.floor]);
+
+  // Fetch subgroups when group changes
+  useEffect(() => {
+    if (formData.group) {
+      fetchSubgroups(formData.group);
+    } else {
+      setSubgroups([]);
+      setFormData((f) => ({ ...f, subgroup: '' }));
+    }
+  }, [formData.group]);
+
+  const navigate = useNavigate();
+  const [locationOpen, setLocationOpen] = useState(true);
+  const [assetOpen, setAssetOpen] = useState(true);
+  const [warrantyOpen, setWarrantyOpen] = useState(true);
+  const [meterCategoryOpen, setMeterCategoryOpen] = useState(true);
+  const [consumptionOpen, setConsumptionOpen] = useState(true);
+  const [nonConsumptionOpen, setNonConsumptionOpen] = useState(true);
+  const [attachmentsOpen, setAttachmentsOpen] = useState(true);
+
+  // --- Meter Details Section State (copied from AddAssetPage) ---
+  const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
+
+  // --- Meter Details Section Helpers (copied from AddAssetPage) ---
+  const getMeterCategoryOptions = () => [
+    { value: 'board', label: 'Board', icon: BarChart3 },
+    { value: 'dg', label: 'DG', icon: Zap },
+    { value: 'renewable', label: 'Renewable', icon: Sun },
+    { value: 'fresh-water', label: 'Fresh Water', icon: Droplet },
+    { value: 'recycled', label: 'Recycled', icon: Recycle },
+    { value: 'water-distribution', label: 'Water Distribution', icon: Building },
+    { value: 'iex-gdam', label: 'IEX-GDAM', icon: BarChart },
+  ];
+  const getBoardRatioOptions = () => [
+    { value: 'ht-panel', label: 'HT Panel', icon: Plug },
+    { value: 'vcb', label: 'VCB', icon: Activity },
+    { value: 'transformer', label: 'Transformer', icon: Zap },
+    { value: 'lt-panel', label: 'LT Panel', icon: Frown },
+  ];
+  const getRenewableOptions = () => [
+    { value: 'solar', label: 'Solar', icon: Sun },
+    { value: 'bio-methanol', label: 'Bio Methanol', icon: Droplet },
+    { value: 'wind', label: 'Wind', icon: Wind },
+  ];
+  const getFreshWaterOptions = () => [
+    { value: 'source', label: 'Source', icon: ArrowDown },
+    { value: 'destination', label: 'Destination', icon: ArrowUp },
+  ];
+  const getWaterSourceOptions = () => [
+    { value: 'municipal-corporation', label: 'Municipal Corporation', icon: BarChart },
+    { value: 'tanker', label: 'Tanker', icon: Zap },
+    { value: 'borewell', label: 'Borewell', icon: ArrowDown },
+    { value: 'rainwater', label: 'Rainwater', icon: BarChart },
+    { value: 'jackwell', label: 'Jackwell', icon: ArrowUp },
+    { value: 'pump', label: 'Pump', icon: Zap },
+  ];
+  const handleMeterCategoryChange = (value) => {
+    setMeterCategoryType(value);
+    setSubCategoryType("");
+    setTertiaryCategory("");
+    setShowBoardRatioOptions(false);
+    setShowRenewableOptions(false);
+    setShowFreshWaterOptions(false);
+    setShowWaterSourceOptions(false);
+    setShowWaterDistributionOptions(false);
+    if (value === 'board') {
+      setShowBoardRatioOptions(true);
+    } else if (value === 'renewable') {
+      setShowRenewableOptions(true);
+    } else if (value === 'fresh-water') {
+      setShowFreshWaterOptions(true);
+    } else if (value === 'water-distribution') {
+      setShowWaterDistributionOptions(true);
+    }
+  };
+  const handleSubCategoryChange = (value) => {
+    setSubCategoryType(value);
+    setTertiaryCategory("");
+    setShowWaterSourceOptions(false);
+    setShowWaterDistributionOptions(false);
+    if (meterCategoryType === 'fresh-water' && value === 'source') {
+      setShowWaterSourceOptions(true);
+    }
+    if (meterCategoryType === 'water-distribution') {
+      setShowWaterDistributionOptions(true);
+    }
+  };
+  const handleTertiaryCategoryChange = (value) => {
+    setTertiaryCategory(value);
+  };
+  const handleMeterDetailsToggleChange = (checked) => {
+    setMeterDetailsToggle(checked);
+  };
+  // Add, remove, and change handlers for measure fields
+  const addMeterMeasureField = (type) => {
+    const newField = {
+      id: Date.now().toString(),
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false,
+    };
+    if (type === 'consumption') setConsumptionMeasureFields((prev) => [...prev, newField]);
+    else setNonConsumptionMeasureFields((prev) => [...prev, newField]);
+  };
+  const removeMeterMeasureField = (type, id) => {
+    if (type === 'consumption') setConsumptionMeasureFields((prev) => prev.filter((f) => f.id !== id));
+    else setNonConsumptionMeasureFields((prev) => prev.filter((f) => f.id !== id));
+  };
+  const handleMeterMeasureFieldChange = (type, id, field, value) => {
+    if (type === 'consumption') {
+      setConsumptionMeasureFields((prev) => prev.map((f) => (f.id === id ? { ...f, [field]: value } : f)));
+    } else {
+      setNonConsumptionMeasureFields((prev) => prev.map((f) => (f.id === id ? { ...f, [field]: value } : f)));
+    }
+  };
+
   const [consumptionMeasures, setConsumptionMeasures] = useState([
-    { name: '', unitType: '', min: '', max: '', alertBelowVal: '', alertAboveVal: '', multiplierFactor: '', checkPreviousReading: false }
+    {
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false,
+    },
   ]);
 
   const [nonConsumptionMeasures, setNonConsumptionMeasures] = useState([
-    { name: '', unitType: '', min: '', max: '', alertBelowVal: '', alertAboveVal: '', multiplierFactor: '', checkPreviousReading: false }
+    {
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false,
+    },
   ]);
 
   const addConsumptionMeasure = () => {
-    setConsumptionMeasures([...consumptionMeasures, { name: '', unitType: '', min: '', max: '', alertBelowVal: '', alertAboveVal: '', multiplierFactor: '', checkPreviousReading: false }]);
+    setConsumptionMeasures([
+      ...consumptionMeasures,
+      {
+        name: '',
+        unitType: '',
+        min: '',
+        max: '',
+        alertBelowVal: '',
+        alertAboveVal: '',
+        multiplierFactor: '',
+        checkPreviousReading: false,
+      },
+    ]);
   };
 
-  const removeConsumptionMeasure = (index: number) => {
+  const removeConsumptionMeasure = (index) => {
     setConsumptionMeasures(consumptionMeasures.filter((_, i) => i !== index));
   };
 
   const addNonConsumptionMeasure = () => {
-    setNonConsumptionMeasures([...nonConsumptionMeasures, { name: '', unitType: '', min: '', max: '', alertBelowVal: '', alertAboveVal: '', multiplierFactor: '', checkPreviousReading: false }]);
+    setNonConsumptionMeasures([
+      ...nonConsumptionMeasures,
+      {
+        name: '',
+        unitType: '',
+        min: '',
+        max: '',
+        alertBelowVal: '',
+        alertAboveVal: '',
+        multiplierFactor: '',
+        checkPreviousReading: false,
+      },
+    ]);
   };
 
-  const removeNonConsumptionMeasure = (index: number) => {
+  const removeNonConsumptionMeasure = (index) => {
     setNonConsumptionMeasures(nonConsumptionMeasures.filter((_, i) => i !== index));
   };
 
@@ -82,8 +729,288 @@ export const AddWaterAssetDashboard = () => {
     navigate('/utility/water');
   };
 
-  const handleSaveAndCreateNew = () => {
-    console.log('Saving and creating new asset:', formData);
+  // Helper: Check if any files are present in attachments
+  const hasFiles = () => {
+    return Object.values(attachments).some((arr) => Array.isArray(arr) && arr.length > 0);
+  };
+
+  // Helper: Build category-specific attachments for payload
+  const getCategoryAttachments = () => {
+    if (!selectedAssetCategory) return {};
+    const categoryKey = selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '');
+    return {
+      asset_image: attachments[`${categoryKey}AssetImage`] || [],
+      asset_manuals: attachments[`${categoryKey}ManualsUpload`] || [],
+      asset_insurances: attachments[`${categoryKey}InsuranceDetails`] || [],
+      asset_purchases: attachments[`${categoryKey}PurchaseInvoice`] || [],
+      asset_other_uploads: attachments[`${categoryKey}OtherDocuments`] || [],
+    };
+  };
+
+  // Main Save & Create New Asset handler (API flow matches AddAssetPage)
+  const handleSaveAndCreateNew = async () => {
+    // Build payload (map your formData fields to API keys)
+    const payload = {
+      pms_asset: {
+        name: formData.assetName,
+        asset_number: formData.assetNo,
+        model_number: formData.modelNo,
+        serial_number: formData.serialNo,
+        manufacturer: formData.manufacturer,
+        status: formData.status === 'inUse' ? 'in_use' : formData.status,
+        critical: formData.critical === 'yes' || formData.critical === true,
+        pms_site_id: formData.site,
+        pms_building_id: formData.building,
+        pms_wing_id: formData.wing,
+        pms_area_id: formData.area,
+        pms_floor_id: formData.floor,
+        pms_room_id: formData.room,
+        pms_asset_group_id: formData.group,
+        pms_asset_sub_group_id: formData.subgroup,
+        commisioning_date: formData.commissioningDate,
+        purchased_on: formData.purchasedOnDate,
+        warranty_expiry: formData.warrantyExpiresOn,
+        purchase_cost: formData.purchaseCost,
+        meter_tag_type: meterCategoryType,
+        asset_meter_type_id: (() => {
+          const meterTypeId = getAssetMeterTypeId(meterCategoryType, subCategoryType, tertiaryCategory);
+          return typeof meterTypeId === 'number' ? meterTypeId : null;
+        })(),
+        consumption_pms_asset_measures_attributes: consumptionMeasureFields.map(
+          (field) => ({
+            name: field.name,
+            meter_unit_id: field.unitType,
+            min_value: field.min,
+            max_value: field.max,
+            alert_below: field.alertBelowVal,
+            alert_above: field.alertAboveVal,
+            multiplier_factor: field.multiplierFactor,
+            active: true,
+            meter_tag: "Consumption",
+            check_previous_reading: field.checkPreviousReading || false,
+            _destroy: false,
+          })
+        ),
+        non_consumption_pms_asset_measures_attributes: nonConsumptionMeasureFields.map(
+          (field) => ({
+            name: field.name,
+            meter_unit_id: field.unitType,
+            min_value: field.min,
+            max_value: field.max,
+            alert_below: field.alertBelowVal,
+            alert_above: field.alertAboveVal,
+            multiplier_factor: field.multiplierFactor,
+            active: true,
+            meter_tag: "Non Consumption",
+            check_previous_reading: field.checkPreviousReading || false,
+            _destroy: false,
+          })
+        ),
+        ...getCategoryAttachments(),
+      },
+    };
+
+    try {
+      let response;
+      if (hasFiles()) {
+        const formDataObj = new FormData();
+        Object.entries(payload.pms_asset).forEach(([key, value]) => {
+          if (
+            ![
+              "consumption_pms_asset_measures_attributes",
+              "non_consumption_pms_asset_measures_attributes",
+            ].includes(key)
+          ) {
+            if (typeof value === "object" && value !== null && !(value instanceof File)) {
+              formDataObj.append(`pms_asset[${key}]`, JSON.stringify(value));
+            } else if (value !== undefined && value !== null) {
+              formDataObj.append(`pms_asset[${key}]`, String(value));
+            }
+          }
+        });
+        payload.pms_asset.consumption_pms_asset_measures_attributes?.forEach((measure, idx) => {
+          Object.entries(measure).forEach(([k, v]) => {
+            formDataObj.append(
+              `pms_asset[consumption_pms_asset_measures_attributes][${idx}][${k}]`,
+              String(v)
+            );
+          });
+        });
+        payload.pms_asset.non_consumption_pms_asset_measures_attributes?.forEach((measure, idx) => {
+          Object.entries(measure).forEach(([k, v]) => {
+            formDataObj.append(
+              `pms_asset[non_consumption_pms_asset_measures_attributes][${idx}][${k}]`,
+              String(v)
+            );
+          });
+        });
+        Object.entries(attachments).forEach(([key, arr]) => {
+          if (Array.isArray(arr)) {
+            arr.forEach((file) => {
+              formDataObj.append(`pms_asset[${key}][]`, file);
+            });
+          }
+        });
+        response = await apiClient.post("pms/assets.json", formDataObj, {
+          headers: { "Content-Type": "multipart/form-data" },
+          timeout: 300000,
+        });
+      } else {
+        response = await apiClient.post("pms/assets.json", payload, {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      toast({
+        title: "Asset Created Successfully",
+        description: "The asset has been created and saved.",
+        duration: 3000,
+        status: "success",
+      });
+      // No navigation or reload so user can see the response in the network tab
+      // Optionally, you can also log the response for debugging:
+      // console.log('API response:', response);
+    } catch (err) {
+      toast({
+        title: "Upload Failed",
+        description: err?.response?.data?.message || err.message || "An error occurred",
+        duration: 6000,
+        status: "error",
+      });
+      console.error("Error creating asset:", err);
+    }
+  };
+
+  // Add selectedAssetCategory state for attachment logic
+  const [selectedAssetCategory, setSelectedAssetCategory] = React.useState("");
+  // Add attachments state for file uploads (copied from AddAssetPage)
+  const [attachments, setAttachments] = React.useState({
+    landAttachments: [],
+    vehicleAttachments: [],
+    leaseholdAttachments: [],
+    buildingAttachments: [],
+    furnitureAttachments: [],
+    itEquipmentAttachments: [],
+    machineryAttachments: [],
+    toolsAttachments: [],
+    meterAttachments: [],
+    landManualsUpload: [],
+    vehicleManualsUpload: [],
+    leaseholdimprovementManualsUpload: [],
+    buildingManualsUpload: [],
+    furniturefixturesManualsUpload: [],
+    itequipmentManualsUpload: [],
+    machineryequipmentManualsUpload: [],
+    toolsinstrumentsManualsUpload: [],
+    meterManualsUpload: [],
+    landInsuranceDetails: [],
+    vehicleInsuranceDetails: [],
+    leaseholdimprovementInsuranceDetails: [],
+    buildingInsuranceDetails: [],
+    furniturefixturesInsuranceDetails: [],
+    itequipmentInsuranceDetails: [],
+    machineryequipmentInsuranceDetails: [],
+    toolsinstrumentsInsuranceDetails: [],
+    meterInsuranceDetails: [],
+    landPurchaseInvoice: [],
+    vehiclePurchaseInvoice: [],
+    leaseholdimprovementPurchaseInvoice: [],
+    buildingPurchaseInvoice: [],
+    furniturefixturesPurchaseInvoice: [],
+    itequipmentPurchaseInvoice: [],
+    machineryequipmentPurchaseInvoice: [],
+    toolsinstrumentsPurchaseInvoice: [],
+    meterPurchaseInvoice: [],
+    landOtherDocuments: [],
+    vehicleOtherDocuments: [],
+    leaseholdimprovementOtherDocuments: [],
+    buildingOtherDocuments: [],
+    furniturefixturesOtherDocuments: [],
+    itequipmentOtherDocuments: [],
+    machineryequipmentOtherDocuments: [],
+    toolsinstrumentsOtherDocuments: [],
+    meterOtherDocuments: [],
+    landAmc: [],
+    vehicleAmc: [],
+    leaseholdimprovementAmc: [],
+    buildingAmc: [],
+    furniturefixturesAmc: [],
+    itequipmentAmc: [],
+    machineryequipmentAmc: [],
+    toolsinstrumentsAmc: [],
+    meterAmc: [],
+    landAssetImage: [],
+    vehicleAssetImage: [],
+    leaseholdimprovementAssetImage: [],
+    buildingAssetImage: [],
+    furniturefixturesAssetImage: [],
+    itequipmentAssetImage: [],
+    machineryequipmentAssetImage: [],
+    toolsinstrumentsAssetImage: [],
+    meterAssetImage: [],
+  });
+
+  // File upload logic (copied and adapted from AddAssetPage)
+  const handleFileUpload = async (category, files) => {
+    if (!files) return;
+
+    const maxFileSize = 10 * 1024 * 1024; // 10MB per file
+    const maxTotalSize = 50 * 1024 * 1024; // 50MB total
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "text/plain",
+    ];
+
+    const fileArray = Array.from(files);
+    const processedFiles = [];
+    let totalSize = 0;
+
+    // Calculate current total size
+    Object.values(attachments).forEach((fileList) => {
+      if (Array.isArray(fileList)) {
+        fileList.forEach((file) => {
+          totalSize += file.size || 0;
+        });
+      }
+    });
+
+    for (const file of fileArray) {
+      if (!allowedTypes.includes(file.type)) {
+        // Optionally show error/toast here
+        continue;
+      }
+      let processedFile = file;
+      // Optionally add image compression logic here if needed
+      if (file.size > maxFileSize) {
+        // Optionally show error/toast here
+        continue;
+      }
+      if (totalSize + processedFile.size > maxTotalSize) {
+        // Optionally show error/toast here
+        continue;
+      }
+      totalSize += processedFile.size;
+      processedFiles.push(processedFile);
+    }
+
+    if (processedFiles.length > 0) {
+      setAttachments((prev) => ({
+        ...prev,
+        [category]: [...(prev[category] || []), ...processedFiles],
+      }));
+    }
+  };
+
+  const removeFile = (category, index) => {
+    setAttachments((prev) => ({
+      ...prev,
+      [category]: prev[category].filter((_, i) => i !== index),
+    }));
   };
 
   return (
@@ -98,9 +1025,9 @@ export const AddWaterAssetDashboard = () => {
           <Collapsible open={locationOpen} onOpenChange={setLocationOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
                     LOCATION DETAILS
                   </span>
                   {locationOpen ? <ChevronUp /> : <ChevronDown />}
@@ -111,77 +1038,107 @@ export const AddWaterAssetDashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div>
-                    <Label>Site*</Label>
-                    <Select value={formData.site} onValueChange={(value) => setFormData({...formData, site: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Site" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="site1">Site 1</SelectItem>
-                        <SelectItem value="site2">Site 2</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth size="small" disabled={loading.sites}>
+                      <InputLabel>Site*</InputLabel>
+                      <MuiSelect
+                        value={formData.site}
+                        label="Site*"
+                        onChange={(e) => setFormData({ ...formData, site: e.target.value })}
+                        sx={{ height: '45px' }}
+                      >
+                        {sites.map((site) => (
+                          <MenuItem key={site.id} value={site.id}>
+                            {site.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                   <div>
-                    <Label>Building</Label>
-                    <Select value={formData.building} onValueChange={(value) => setFormData({...formData, building: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Building" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="building1">Building 1</SelectItem>
-                        <SelectItem value="building2">Building 2</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth size="small" disabled={loading.buildings || !formData.site}>
+                      <InputLabel>Building</InputLabel>
+                      <MuiSelect
+                        value={formData.building}
+                        label="Building"
+                        onChange={(e) => setFormData({ ...formData, building: e.target.value })}
+                        sx={{ height: '45px' }}
+                      >
+                        {buildings.map((building) => (
+                          <MenuItem key={building.id} value={building.id}>
+                            {building.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                   <div>
-                    <Label>Wing</Label>
-                    <Select value={formData.wing} onValueChange={(value) => setFormData({...formData, wing: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Wing" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="wing1">Wing 1</SelectItem>
-                        <SelectItem value="wing2">Wing 2</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth size="small" disabled={loading.wings || !formData.building}>
+                      <InputLabel>Wing</InputLabel>
+                      <MuiSelect
+                        value={formData.wing || ''}
+                        label="Wing"
+                        onChange={(e) => setFormData({ ...formData, wing: e.target.value })}
+                        sx={{ height: '45px' }}
+                      >
+                        {wings.map((wing, idx) => (
+                          <MenuItem key={wing.id || idx} value={wing.id}>
+                            {wing.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                   <div>
-                    <Label>Area</Label>
-                    <Select value={formData.area} onValueChange={(value) => setFormData({...formData, area: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Area" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="area1">Area 1</SelectItem>
-                        <SelectItem value="area2">Area 2</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth size="small" disabled={loading.areas || !formData.wing}>
+                      <InputLabel>Area</InputLabel>
+                      <MuiSelect
+                        value={formData.area || ''}
+                        label="Area"
+                        onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                        sx={{ height: '45px' }}
+                      >
+                        {areas.map((area) => (
+                          <MenuItem key={area.id} value={area.id}>
+                            {area.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                   <div>
-                    <Label>Floor</Label>
-                    <Select value={formData.floor} onValueChange={(value) => setFormData({...formData, floor: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Floor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="floor1">Floor 1</SelectItem>
-                        <SelectItem value="floor2">Floor 2</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth size="small" disabled={loading.floors || !formData.area}>
+                      <InputLabel>Floor</InputLabel>
+                      <MuiSelect
+                        value={formData.floor || ''}
+                        label="Floor"
+                        onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
+                        sx={{ height: '45px' }}
+                      >
+                        {floors.map((floor) => (
+                          <MenuItem key={floor.id} value={floor.id}>
+                            {floor.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                 </div>
                 <div className="mt-4">
-                  <Label>Room</Label>
-                  <Select value={formData.room} onValueChange={(value) => setFormData({...formData, room: value})}>
-                    <SelectTrigger className="w-full md:w-1/5">
-                      <SelectValue placeholder="Select Room" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="room1">Room 1</SelectItem>
-                      <SelectItem value="room2">Room 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl size="small" sx={{ width: { xs: '100%', md: '20%' } }} disabled={loading.rooms || !formData.floor}>
+                    <InputLabel>Room</InputLabel>
+                    <MuiSelect
+                      value={formData.room || ''}
+                      label="Room"
+                      onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                      sx={{ height: '45px' }}
+                    >
+                      {rooms.map((room) => (
+                        <MenuItem key={room.id} value={room.id}>
+                          {room.name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
                 </div>
               </CardContent>
             </CollapsibleContent>
@@ -193,9 +1150,9 @@ export const AddWaterAssetDashboard = () => {
           <Collapsible open={assetOpen} onOpenChange={setAssetOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
                     ASSET DETAILS
                   </span>
                   {assetOpen ? <ChevronUp /> : <ChevronDown />}
@@ -206,217 +1163,256 @@ export const AddWaterAssetDashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label>Asset Name*</Label>
-                    <Input 
+                    <TextField
+                      label="Asset Name*"
                       placeholder="Enter Text"
                       value={formData.assetName}
-                      onChange={(e) => setFormData({...formData, assetName: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, assetName: e.target.value })}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
                     />
                   </div>
                   <div>
-                    <Label>Asset No.*</Label>
-                    <Input 
+                    <TextField
+                      label="Asset No.*"
                       placeholder="Enter Number"
                       value={formData.assetNo}
-                      onChange={(e) => setFormData({...formData, assetNo: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, assetNo: e.target.value })}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
                     />
                   </div>
                   <div>
-                    <Label>Equipment ID*</Label>
-                    <Input 
+                    <TextField
+                      label="Equipment ID*"
                       placeholder="Enter Number"
                       value={formData.equipmentId}
-                      onChange={(e) => setFormData({...formData, equipmentId: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, equipmentId: e.target.value })}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
                     />
                   </div>
                   <div>
-                    <Label>Model No.</Label>
-                    <Input 
+                    <TextField
+                      label="Model No."
                       placeholder="Enter Number"
                       value={formData.modelNo}
-                      onChange={(e) => setFormData({...formData, modelNo: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, modelNo: e.target.value })}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
                     />
                   </div>
                   <div>
-                    <Label>Serial No.</Label>
-                    <Input 
+                    <TextField
+                      label="Serial No."
                       placeholder="Enter Number"
                       value={formData.serialNo}
-                      onChange={(e) => setFormData({...formData, serialNo: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, serialNo: e.target.value })}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
                     />
                   </div>
                   <div>
-                    <Label>Consumer No.</Label>
-                    <Input 
+                    <TextField
+                      label="Consumer No."
                       placeholder="Enter Number"
                       value={formData.consumerNo}
-                      onChange={(e) => setFormData({...formData, consumerNo: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, consumerNo: e.target.value })}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
                     />
                   </div>
                   <div>
-                    <Label>Purchase Cost*</Label>
-                    <Input 
+                    <TextField
+                      label="Purchase Cost*"
                       placeholder="Enter Numeric value"
                       value={formData.purchaseCost}
-                      onChange={(e) => setFormData({...formData, purchaseCost: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, purchaseCost: e.target.value })}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
                     />
                   </div>
                   <div>
-                    <Label>Capacity</Label>
-                    <Input 
+                    <TextField
+                      label="Capacity"
                       placeholder="Enter Text"
                       value={formData.capacity}
-                      onChange={(e) => setFormData({...formData, capacity: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
                     />
                   </div>
                   <div>
-                    <Label>Unit</Label>
-                    <Input 
+                    <TextField
+                      label="Unit"
                       placeholder="Enter Text"
                       value={formData.unit}
-                      onChange={(e) => setFormData({...formData, unit: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <div>
-                    <Label>Group*</Label>
-                    <Select value={formData.group} onValueChange={(value) => setFormData({...formData, group: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Group" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="group1">Group 1</SelectItem>
-                        <SelectItem value="group2">Group 2</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth size="small" disabled={groupsLoading}>
+                      <InputLabel>Group*</InputLabel>
+                      <MuiSelect
+                        value={formData.group}
+                        label="Group*"
+                        onChange={(e) => setFormData({ ...formData, group: e.target.value })}
+                        sx={{ height: '45px' }}
+                      >
+                        {groups.map((group) => (
+                          <MenuItem key={group.id} value={group.id}>
+                            {group.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                   <div>
-                    <Label>Subgroup*</Label>
-                    <Select value={formData.subgroup} onValueChange={(value) => setFormData({...formData, subgroup: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select SubGroup" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="subgroup1">SubGroup 1</SelectItem>
-                        <SelectItem value="subgroup2">SubGroup 2</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormControl fullWidth size="small" disabled={subgroupsLoading || !formData.group}>
+                      <InputLabel>Subgroup*</InputLabel>
+                      <MuiSelect
+                        value={formData.subgroup}
+                        label="Subgroup*"
+                        onChange={(e) => setFormData({ ...formData, subgroup: e.target.value })}
+                        sx={{ height: '45px' }}
+                      >
+                        {subgroups.map((subgroup) => (
+                          <MenuItem key={subgroup.id} value={subgroup.id}>
+                            {subgroup.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                   <div>
-                    <Label>Purchased ON Date</Label>
-                    <Input 
+                    <TextField
+                      label="Purchased ON Date"
                       type="date"
                       value={formData.purchasedOnDate}
-                      onChange={(e) => setFormData({...formData, purchasedOnDate: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, purchasedOnDate: e.target.value })}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                      InputLabelProps={{ shrink: true }}
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <div>
-                    <Label>Expiry date</Label>
-                    <Input 
+                    <TextField
+                      label="Expiry date"
                       type="date"
                       value={formData.expiryDate}
-                      onChange={(e) => setFormData({...formData, expiryDate: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                      InputLabelProps={{ shrink: true }}
                     />
                   </div>
                   <div>
-                    <Label>Manufacturer</Label>
-                    <Input 
-                      type="date"
+                    <TextField
+                      label="Manufacturer"
                       value={formData.manufacturer}
-                      onChange={(e) => setFormData({...formData, manufacturer: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
                     />
                   </div>
                 </div>
 
                 <div className="mt-4 space-y-4">
                   <div>
-                    <Label>Location Type</Label>
-                    <RadioGroup 
-                      value={formData.locationType} 
-                      onValueChange={(value) => setFormData({...formData, locationType: value})}
-                      className="flex gap-6 mt-2"
+                    <FormLabel>Location Type</FormLabel>
+                    <MuiRadioGroup
+                      value={formData.locationType}
+                      onChange={(e) => setFormData({ ...formData, locationType: e.target.value })}
+                      row
+                      sx={{ mt: 1 }}
                     >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="common" id="common" />
-                        <Label htmlFor="common">Common Area</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="customer" id="customer" />
-                        <Label htmlFor="customer">Customer</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="na" id="na" />
-                        <Label htmlFor="na">NA</Label>
-                      </div>
-                    </RadioGroup>
+                      <FormControlLabel value="common" control={<Radio />} label="Common Area" />
+                      <FormControlLabel value="customer" control={<Radio />} label="Customer" />
+                      <FormControlLabel value="na" control={<Radio />} label="NA" />
+                    </MuiRadioGroup>
+                  </div>
+
+                  {/* <div>
+                    <FormLabel>Asset Type</FormLabel>
+                    <MuiRadioGroup
+                      value={formData.assetType}
+                      onChange={(e) => setFormData({ ...formData, assetType: e.target.value })}
+                      row
+                      sx={{ mt: 1 }}
+                    >
+                      <FormControlLabel value="parent" control={<Radio />} label="Parent" />
+                      <FormControlLabel value="sub" control={<Radio />} label="Sub" />
+                    </MuiRadioGroup>
+                  </div> */}
+
+                  <div>
+                    <FormLabel>Status</FormLabel>
+                    <MuiRadioGroup
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      row
+                      sx={{ mt: 1 }}
+                    >
+                      <FormControlLabel value="inUse" control={<Radio />} label="In Use" />
+                      <FormControlLabel value="breakdown" control={<Radio />} label="Breakdown" />
+                    </MuiRadioGroup>
                   </div>
 
                   <div>
-                    <Label>Asset Type</Label>
-                    <RadioGroup 
-                      value={formData.assetType} 
-                      onValueChange={(value) => setFormData({...formData, assetType: value})}
-                      className="flex gap-6 mt-2"
+                    <FormLabel>Critical</FormLabel>
+                    <MuiRadioGroup
+                      value={formData.critical}
+                      onChange={(e) => setFormData({ ...formData, critical: e.target.value })}
+                      row
+                      sx={{ mt: 1 }}
                     >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="parent" id="parent" />
-                        <Label htmlFor="parent">Parent</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="sub" id="sub" />
-                        <Label htmlFor="sub">Sub</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  <div>
-                    <Label>Status</Label>
-                    <RadioGroup 
-                      value={formData.status} 
-                      onValueChange={(value) => setFormData({...formData, status: value})}
-                      className="flex gap-6 mt-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="inUse" id="inUse" />
-                        <Label htmlFor="inUse">In Use</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="breakdown" id="breakdown" />
-                        <Label htmlFor="breakdown">Breakdown</Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-
-                  <div>
-                    <Label>Critical</Label>
-                    <RadioGroup 
-                      value={formData.critical} 
-                      onValueChange={(value) => setFormData({...formData, critical: value})}
-                      className="flex gap-6 mt-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="yes" id="criticalYes" />
-                        <Label htmlFor="criticalYes">Yes</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="criticalNo" />
-                        <Label htmlFor="criticalNo">No</Label>
-                      </div>
-                    </RadioGroup>
+                      <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                      <FormControlLabel value="no" control={<Radio />} label="No" />
+                    </MuiRadioGroup>
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="meterApplicable"
-                      checked={formData.meterApplicable}
-                      onCheckedChange={(checked) => setFormData({...formData, meterApplicable: checked as boolean})}
+                    <FormControlLabel
+                      control={
+                        <MuiCheckbox
+                          checked={formData.meterApplicable}
+                          onChange={(e) => setFormData({ ...formData, meterApplicable: e.target.checked })}
+                        />
+                      }
+                      label="Meter Applicable"
                     />
-                    <Label htmlFor="meterApplicable">Meter Applicable</Label>
                   </div>
                 </div>
               </CardContent>
@@ -429,9 +1425,9 @@ export const AddWaterAssetDashboard = () => {
           <Collapsible open={warrantyOpen} onOpenChange={setWarrantyOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
                     Warranty Details
                   </span>
                   {warrantyOpen ? <ChevronUp /> : <ChevronDown />}
@@ -442,49 +1438,56 @@ export const AddWaterAssetDashboard = () => {
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <Label>Under Warranty</Label>
-                    <RadioGroup 
-                      value={formData.underWarranty} 
-                      onValueChange={(value) => setFormData({...formData, underWarranty: value})}
-                      className="flex gap-6 mt-2"
+                    <FormLabel>Under Warranty</FormLabel>
+                    <MuiRadioGroup
+                      value={formData.underWarranty}
+                      onChange={(e) => setFormData({ ...formData, underWarranty: e.target.value })}
+                      row
+                      sx={{ mt: 1 }}
                     >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="yes" id="warrantyYes" />
-                        <Label htmlFor="warrantyYes">Yes</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="warrantyNo" />
-                        <Label htmlFor="warrantyNo">No</Label>
-                      </div>
-                    </RadioGroup>
+                      <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                      <FormControlLabel value="no" control={<Radio />} label="No" />
+                    </MuiRadioGroup>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <Label>Warranty Start Date</Label>
-                      <Input 
+                      <TextField
+                        label="Warranty Start Date"
                         type="date"
-                        placeholder="Select Date"
                         value={formData.warrantyStartDate}
-                        onChange={(e) => setFormData({...formData, warrantyStartDate: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, warrantyStartDate: e.target.value })}
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        InputLabelProps={{ shrink: true }}
                       />
                     </div>
                     <div>
-                      <Label>Warranty expires on</Label>
-                      <Input 
+                      <TextField
+                        label="Warranty expires on"
                         type="date"
-                        placeholder="Select Date"
                         value={formData.warrantyExpiresOn}
-                        onChange={(e) => setFormData({...formData, warrantyExpiresOn: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, warrantyExpiresOn: e.target.value })}
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        InputLabelProps={{ shrink: true }}
                       />
                     </div>
                     <div>
-                      <Label>Commissioning Date</Label>
-                      <Input 
+                      <TextField
+                        label="Commissioning Date"
                         type="date"
-                        placeholder="Select Date"
                         value={formData.commissioningDate}
-                        onChange={(e) => setFormData({...formData, commissioningDate: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, commissioningDate: e.target.value })}
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
+                        InputLabelProps={{ shrink: true }}
                       />
                     </div>
                   </div>
@@ -495,234 +1498,330 @@ export const AddWaterAssetDashboard = () => {
         </Card>
 
         {/* Meter Category Type */}
+        {/* Meter Details (copied and adapted from AddAssetPage) */}
         <Card>
           <Collapsible open={meterCategoryOpen} onOpenChange={setMeterCategoryOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
-                    Meter Category Type
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"><Activity className="w-4 h-4" /></span>
+                    METER DETAILS
                   </span>
-                  {meterCategoryOpen ? <ChevronUp /> : <ChevronDown />}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">If Applicable</span>
+                    <div className="relative inline-block w-12 h-6">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        id="meter-details-toggle"
+                        checked={meterDetailsToggle}
+                        onChange={e => handleMeterDetailsToggleChange(e.target.checked)}
+                      />
+                      <label
+                        htmlFor="meter-details-toggle"
+                        className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${meterDetailsToggle ? 'bg-green-400' : 'bg-gray-300'}`}
+                      >
+                        <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${meterDetailsToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                      </label>
+                    </div>
+                    {meterCategoryOpen ? <ChevronUp /> : <ChevronDown />}
+                  </div>
                 </CardTitle>
               </CardHeader>
             </CollapsibleTrigger>
             <CollapsibleContent>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                  {['Board', 'DG', 'Renewable', 'Fresh Water', 'Recycled', 'IEX-GDAM'].map((category) => (
-                    <div key={category} className="flex items-center space-x-2 bg-purple-100 p-3 rounded">
-                      <Checkbox 
-                        id={category}
-                        checked={formData.selectedMeterCategories.includes(category)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setFormData({
-                              ...formData, 
-                              selectedMeterCategories: [...formData.selectedMeterCategories, category]
-                            });
-                          } else {
-                            setFormData({
-                              ...formData,
-                              selectedMeterCategories: formData.selectedMeterCategories.filter(c => c !== category)
-                            });
-                          }
-                        }}
-                      />
-                      <Label htmlFor={category} className="text-sm">{category}</Label>
+                <div className={`${!meterDetailsToggle ? 'opacity-50 pointer-events-none' : ''}`}>
+                  {/* Meter Type */}
+                  <div className="mb-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <span className="text-[#C72030] font-medium text-sm sm:text-base">Meter Type</span>
+                      <div className="flex gap-6">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id="meter-type-parent"
+                            name="meter_tag_type"
+                            value="ParentMeter"
+                            checked={meterType === 'ParentMeter'}
+                            onChange={e => setMeterType(e.target.value)}
+                            disabled={!meterDetailsToggle}
+                            className="w-4 h-4 text-[#C72030] border-gray-300"
+                            style={{ accentColor: '#C72030' }}
+                          />
+                          <label htmlFor="meter-type-parent" className={`text-sm ${!meterDetailsToggle ? 'text-gray-400' : ''}`}>Parent</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id="meter-type-sub"
+                            name="meter_tag_type"
+                            value="SubMeter"
+                            checked={meterType === 'SubMeter'}
+                            onChange={e => setMeterType(e.target.value)}
+                            disabled={!meterDetailsToggle}
+                            className="w-4 h-4 text-[#C72030] border-gray-300"
+                            style={{ accentColor: '#C72030' }}
+                          />
+                          <label htmlFor="meter-type-sub" className={`text-sm ${!meterDetailsToggle ? 'text-gray-400' : ''}`}>Sub</label>
+                        </div>
+                      </div>
                     </div>
-                  ))}
+                  </div>
+                  {/* Parent Meter Dropdown - Show only when Sub Meter is selected */}
+                  {meterType === "SubMeter" && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Parent Meter <span className="text-red-500">*</span>
+                      </label>
+                      <Select
+                        value={selectedParentMeterId}
+                        onValueChange={(value) => {
+                          setSelectedParentMeterId(value);
+                          setFormData((prev) => ({ ...prev, parent_meter_id: value }));
+                        }}
+                        disabled={parentMeterLoading || !meterDetailsToggle}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            placeholder={
+                              parentMeterLoading ? "Loading..." : "Select Parent Meter"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {parentMeters.map((meter) => (
+                            <SelectItem key={meter.id} value={meter.id.toString()}>
+                              {meter.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  {/* Meter Category Type */}
+                  <div className="mb-6">
+                    <div className="rounded-lg p-4 bg-[#f6f4ee]">
+                      <h3 className="font-medium mb-4 text-sm sm:text-base text-orange-700">METER DETAILS</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
+                        {getMeterCategoryOptions().map((option) => {
+                          const IconComponent = option.icon;
+                          return (
+                            <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                              <div className="flex items-center justify-center space-x-2">
+                                <input
+                                  type="radio"
+                                  id={option.value}
+                                  name="meterCategory"
+                                  value={option.value}
+                                  checked={meterCategoryType === option.value}
+                                  onChange={e => handleMeterCategoryChange(e.target.value)}
+                                  className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                  style={{ accentColor: '#C72030' }}
+                                />
+                                <IconComponent className="w-4 h-4 text-gray-600" />
+                                <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* Board Ratio Options */}
+                      {showBoardRatioOptions && (
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                          {getBoardRatioOptions().map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                <div className="flex items-center justify-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`board-${option.value}`}
+                                    name="boardRatioCategory"
+                                    value={option.value}
+                                    checked={subCategoryType === option.value}
+                                    onChange={e => setSubCategoryType(e.target.value)}
+                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                    style={{ accentColor: '#C72030' }}
+                                  />
+                                  <IconComponent className="w-4 h-4 text-gray-600" />
+                                  <label htmlFor={`board-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {/* Renewable Options */}
+                      {showRenewableOptions && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                          {getRenewableOptions().map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                <div className="flex items-center justify-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`renewable-${option.value}`}
+                                    name="renewableCategory"
+                                    value={option.value}
+                                    checked={subCategoryType === option.value}
+                                    onChange={e => setSubCategoryType(e.target.value)}
+                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                    style={{ accentColor: '#C72030' }}
+                                  />
+                                  <IconComponent className="w-4 h-4 text-gray-600" />
+                                  <label htmlFor={`renewable-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {/* Fresh Water Options */}
+                      {showFreshWaterOptions && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
+                          {getFreshWaterOptions().map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                <div className="flex items-center justify-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`fresh-water-${option.value}`}
+                                    name="freshWaterCategory"
+                                    value={option.value}
+                                    checked={subCategoryType === option.value}
+                                    onChange={e => handleSubCategoryChange(e.target.value)}
+                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                    style={{ accentColor: '#C72030' }}
+                                  />
+                                  <IconComponent className="w-4 h-4 text-gray-600" />
+                                  <label htmlFor={`fresh-water-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {/* Water Source Options (shown when Source is selected) */}
+                      {showWaterSourceOptions && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4 mt-4">
+                          {getWaterSourceOptions().map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                <div className="flex items-center justify-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`water-source-${option.value}`}
+                                    name="waterSourceCategory"
+                                    value={option.value}
+                                    checked={tertiaryCategory === option.value}
+                                    onChange={e => handleTertiaryCategoryChange(e.target.value)}
+                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                    style={{ accentColor: '#C72030' }}
+                                  />
+                                  <IconComponent className="w-4 h-4 text-gray-600" />
+                                  <label htmlFor={`water-source-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Water Distribution Options (shown when Water Distribution is selected) */}
+                      {showWaterDistributionOptions && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                          {getWaterDistributionOptions().map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <div
+                                key={option.value}
+                                className="p-3 sm:p-4 rounded-lg text-center bg-white border"
+                              >
+                                <div className="flex items-center justify-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`water-distribution-${option.value}`}
+                                    name="waterDistributionCategory"
+                                    value={option.value}
+                                    checked={subCategoryType === option.value}
+                                    onChange={(e) => {
+                                      handleSubCategoryChange(e.target.value);
+                                    }}
+                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                    style={{ accentColor: "#C72030" }}
+                                  />
+                                  <IconComponent className="w-4 h-4 text-gray-600" />
+                                  <label
+                                    htmlFor={`water-distribution-${option.value}`}
+                                    className="text-xs sm:text-sm cursor-pointer"
+                                  >
+                                    {option.label}
+                                  </label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Meter Measure Fields - Show based on meter type selection */}
+                  {meterType === 'ParentMeter' && (
+                    <>
+                      <MeterMeasureFields
+                        title="CONSUMPTION METER MEASURE"
+                        fields={consumptionMeasureFields}
+                        showCheckPreviousReading={true}
+                        onFieldChange={(id, field, value) => handleMeterMeasureFieldChange('consumption', id, field, value)}
+                        onAddField={() => addMeterMeasureField('consumption')}
+                        onRemoveField={id => removeMeterMeasureField('consumption', id)}
+                        unitTypes={meterUnitTypes}
+                        loadingUnitTypes={loadingUnitTypes}
+                      />
+                      <MeterMeasureFields
+                        title="NON CONSUMPTION METER MEASURE"
+                        fields={nonConsumptionMeasureFields}
+                        showCheckPreviousReading={false}
+                        onFieldChange={(id, field, value) => handleMeterMeasureFieldChange('nonConsumption', id, field, value)}
+                        onAddField={() => addMeterMeasureField('nonConsumption')}
+                        onRemoveField={id => removeMeterMeasureField('nonConsumption', id)}
+                        unitTypes={meterUnitTypes}
+                        loadingUnitTypes={loadingUnitTypes}
+                      />
+                    </>
+                  )}
+                  {meterType === 'SubMeter' && (
+                    <MeterMeasureFields
+                      title="NON CONSUMPTION METER MEASURE"
+                      fields={nonConsumptionMeasureFields}
+                      showCheckPreviousReading={false}
+                      onFieldChange={(id, field, value) => handleMeterMeasureFieldChange('nonConsumption', id, field, value)}
+                      onAddField={() => addMeterMeasureField('nonConsumption')}
+                      onRemoveField={id => removeMeterMeasureField('nonConsumption', id)}
+                      unitTypes={meterUnitTypes}
+                      loadingUnitTypes={loadingUnitTypes}
+                    />
+                  )}
                 </div>
               </CardContent>
             </CollapsibleContent>
           </Collapsible>
         </Card>
 
-        {/* Consumption Asset Measure */}
-        <Card>
-          <Collapsible open={consumptionOpen} onOpenChange={setConsumptionOpen}>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
-                    CONSUMPTION ASSET MEASURE
-                  </span>
-                  {consumptionOpen ? <ChevronUp /> : <ChevronDown />}
-                </CardTitle>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent>
-                {consumptionMeasures.map((measure, index) => (
-                  <div key={index} className="space-y-4 p-4 border rounded mb-4">
-                    <div className="flex justify-end">
-                      {index > 0 && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => removeConsumptionMeasure(index)}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                      <div>
-                        <Label>Name</Label>
-                        <Input placeholder="Enter Text" />
-                      </div>
-                      <div>
-                        <Label>Unit Type</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Unit Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="kw">KW</SelectItem>
-                            <SelectItem value="kwh">KWH</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Min</Label>
-                        <Input placeholder="Enter Number" />
-                      </div>
-                      <div>
-                        <Label>Max</Label>
-                        <Input placeholder="Enter Number" />
-                      </div>
-                      <div>
-                        <Label>Alert Below Val.</Label>
-                        <Input placeholder="Enter Value" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Alert Above Val.</Label>
-                        <Input placeholder="Enter Value" />
-                      </div>
-                      <div>
-                        <Label>Multiplier Factor</Label>
-                        <Input placeholder="Enter Text" />
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id={`consumption-check-${index}`} />
-                      <Label htmlFor={`consumption-check-${index}`}>Check Previous Reading</Label>
-                    </div>
-                  </div>
-                ))}
-                <Button 
-                  variant="outline" 
-                  onClick={addConsumptionMeasure}
-                  className="bg-purple-600 text-white hover:bg-purple-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add
-                </Button>
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-
-        {/* Non Consumption Asset Measure */}
-        <Card>
-          <Collapsible open={nonConsumptionOpen} onOpenChange={setNonConsumptionOpen}>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
-                    NON CONSUMPTION ASSET MEASURE
-                  </span>
-                  {nonConsumptionOpen ? <ChevronUp /> : <ChevronDown />}
-                </CardTitle>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent>
-                {nonConsumptionMeasures.map((measure, index) => (
-                  <div key={index} className="space-y-4 p-4 border rounded mb-4">
-                    <div className="flex justify-end">
-                      {index > 0 && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => removeNonConsumptionMeasure(index)}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                      <div>
-                        <Label>Name</Label>
-                        <Input placeholder="Name" />
-                      </div>
-                      <div>
-                        <Label>Unit Type</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Unit Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="kw">KW</SelectItem>
-                            <SelectItem value="kwh">KWH</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Min</Label>
-                        <Input placeholder="Min" />
-                      </div>
-                      <div>
-                        <Label>Max</Label>
-                        <Input placeholder="Max" />
-                      </div>
-                      <div>
-                        <Label>Alert Below Val.</Label>
-                        <Input placeholder="Alert Below Value" />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Alert Above Val.</Label>
-                        <Input placeholder="Alert Above Value" />
-                      </div>
-                      <div>
-                        <Label>Multiplier Factor</Label>
-                        <Input placeholder="Multiplier Factor" />
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id={`non-consumption-check-${index}`} />
-                      <Label htmlFor={`non-consumption-check-${index}`}>Check Previous Reading</Label>
-                    </div>
-                  </div>
-                ))}
-                <Button 
-                  variant="outline" 
-                  onClick={addNonConsumptionMeasure}
-                  className="bg-purple-600 text-white hover:bg-purple-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add
-                </Button>
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
 
         {/* Attachments */}
         <Card>
           <Collapsible open={attachmentsOpen} onOpenChange={setAttachmentsOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between text-orange-600">
-                  <span className="flex items-center gap-2">
-                    <span className="bg-orange-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-black">
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
                     ATTACHMENTS
                   </span>
                   {attachmentsOpen ? <ChevronUp /> : <ChevronDown />}
@@ -731,66 +1830,198 @@ export const AddWaterAssetDashboard = () => {
             </CollapsibleTrigger>
             <CollapsibleContent>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label className="mb-2 block">Manuals Upload</Label>
-                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-purple-50">
-                      <div className="text-orange-500 mb-2">Choose File</div>
-                      <div className="text-gray-500 text-sm">No file chosen</div>
-                      <Button variant="ghost" className="mt-2 text-orange-500">
-                        <X className="w-4 h-4" />
-                      </Button>
+                <div className="p-4 sm:p-6">
+                  {/* Category-specific Asset Image */}
+                  <div className="mb-6">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-4">
+                      Asset Image
+                    </h3>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      <input
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.gif"
+                        onChange={(e) =>
+                          handleFileUpload(
+                            `${selectedAssetCategory
+                              .toLowerCase()
+                              .replace(/\s+/g, "")
+                              .replace("&", "")}AssetImage`,
+                            e.target.files
+                          )
+                        }
+                        className="hidden"
+                        id="asset-image-upload"
+                        multiple={false}
+                      />
+                      <label
+                        htmlFor="asset-image-upload"
+                        className="cursor-pointer block"
+                      >
+                        <div className="flex items-center justify-center space-x-2 mb-2">
+                          <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+                            Choose Asset Image
+                          </span>
+                          <span className="text-gray-500 text-xs sm:text-sm">
+                            {(() => {
+                              const categoryKey = `${selectedAssetCategory
+                                .toLowerCase()
+                                .replace(/\s+/g, "")
+                                .replace("&", "")}AssetImage`;
+                              return attachments[categoryKey]?.length > 0
+                                ? `${attachments[categoryKey].length} image selected`
+                                : "No image chosen";
+                            })()}
+                          </span>
+                        </div>
+                      </label>
+                      {(() => {
+                        const categoryKey = `${selectedAssetCategory
+                          .toLowerCase()
+                          .replace(/\s+/g, "")
+                          .replace("&", "")}AssetImage`;
+                        return (
+                          attachments[categoryKey]?.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {attachments[categoryKey].map((file, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between bg-gray-100 p-2 rounded text-left"
+                                >
+                                  <span className="text-xs sm:text-sm truncate">
+                                    {file.name}
+                                  </span>
+                                  <button
+                                    onClick={() => removeFile(categoryKey, index)}
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )
+                        );
+                      })()}
                       <div className="mt-2">
-                        <Button variant="ghost" className="text-orange-500">
-                          <Plus className="w-4 h-4" />
-                        </Button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            document.getElementById("asset-image-upload")?.click()
+                          }
+                          className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+                        >
+                          <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                          Upload Asset Image
+                        </button>
                       </div>
                     </div>
                   </div>
-                  <div>
-                    <Label className="mb-2 block">Insurance Details</Label>
-                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-purple-50">
-                      <div className="text-orange-500 mb-2">Choose File</div>
-                      <div className="text-gray-500 text-sm">No file chosen</div>
-                      <Button variant="ghost" className="mt-2 text-orange-500">
-                        <X className="w-4 h-4" />
-                      </Button>
-                      <div className="mt-2">
-                        <Button variant="ghost" className="text-orange-500">
-                          <Plus className="w-4 h-4" />
-                        </Button>
+
+                  {/* Common Document Sections for All Categories */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    {[
+                      {
+                        label: "Manuals Upload",
+                        id: "manuals-upload",
+                        category: `${selectedAssetCategory
+                          .toLowerCase()
+                          .replace(/\s+/g, "")
+                          .replace("&", "")}ManualsUpload`,
+                        accept: ".pdf,.doc,.docx,.txt",
+                      },
+                      {
+                        label: "Insurance Details",
+                        id: "insurance-upload",
+                        category: `${selectedAssetCategory
+                          .toLowerCase()
+                          .replace(/\s+/g, "")
+                          .replace("&", "")}InsuranceDetails`,
+                        accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
+                      },
+                      {
+                        label: "Purchase Invoice",
+                        id: "invoice-upload",
+                        category: `${selectedAssetCategory
+                          .toLowerCase()
+                          .replace(/\s+/g, "")
+                          .replace("&", "")}PurchaseInvoice`,
+                        accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
+                      },
+                      {
+                        label: "Other Documents",
+                        id: "other-upload",
+                        category: `${selectedAssetCategory
+                          .toLowerCase()
+                          .replace(/\s+/g, "")
+                          .replace("&", "")}OtherDocuments`,
+                        accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
+                      },
+                    ].map((field) => (
+                      <div key={field.id}>
+                        <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">
+                          {field.label}
+                        </label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                          <input
+                            type="file"
+                            multiple
+                            accept={field.accept}
+                            onChange={(e) =>
+                              handleFileUpload(field.category, e.target.files)
+                            }
+                            className="hidden"
+                            id={field.id}
+                          />
+                          <label
+                            htmlFor={field.id}
+                            className="cursor-pointer block"
+                          >
+                            <div className="flex items-center justify-center space-x-2 mb-2">
+                              <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+                                Choose File
+                              </span>
+                              <span className="text-gray-500 text-xs sm:text-sm">
+                                {attachments[field.category]?.length > 0
+                                  ? `${attachments[field.category].length} file(s) selected`
+                                  : "No file chosen"}
+                              </span>
+                            </div>
+                          </label>
+                          {attachments[field.category]?.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {attachments[field.category].map((file, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between bg-gray-100 p-2 rounded text-left"
+                                >
+                                  <span className="text-xs sm:text-sm truncate">
+                                    {file.name}
+                                  </span>
+                                  <button
+                                    onClick={() => removeFile(field.category, index)}
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="mt-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                document.getElementById(field.id)?.click()
+                              }
+                              className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+                            >
+                              <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                              Upload Files
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="mb-2 block">Purchase Invoice</Label>
-                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-purple-50">
-                      <div className="text-orange-500 mb-2">Choose File</div>
-                      <div className="text-gray-500 text-sm">No file chosen</div>
-                      <Button variant="ghost" className="mt-2 text-orange-500">
-                        <X className="w-4 h-4" />
-                      </Button>
-                      <div className="mt-2">
-                        <Button variant="ghost" className="text-orange-500">
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="mb-2 block">AMC</Label>
-                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center bg-purple-50">
-                      <div className="text-orange-500 mb-2">Choose File</div>
-                      <div className="text-gray-500 text-sm">No file chosen</div>
-                      <Button variant="ghost" className="mt-2 text-orange-500">
-                        <X className="w-4 h-4" />
-                      </Button>
-                      <div className="mt-2">
-                        <Button variant="ghost" className="text-orange-500">
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </CardContent>
@@ -799,22 +2030,19 @@ export const AddWaterAssetDashboard = () => {
         </Card>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-4">
-          <Button 
-            variant="outline"
-            onClick={handleSave}
-            className="bg-purple-600 text-white hover:bg-purple-700 border-purple-600"
-          >
-            Save & Show Details
-          </Button>
-          <Button 
+        <div className="flex justify-center gap-4">
+          <Button
             onClick={handleSaveAndCreateNew}
             className="bg-purple-700 text-white hover:bg-purple-800"
           >
             Save & Create New Asset
           </Button>
         </div>
+
       </div>
     </div>
   );
-};
+}
+
+export default AddWaterAssetDashboard;
+export { AddWaterAssetDashboard };

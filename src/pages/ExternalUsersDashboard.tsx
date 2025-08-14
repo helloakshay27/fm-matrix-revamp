@@ -1,0 +1,500 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { MSafeImportModal } from '@/components/MSafeImportModal';
+import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
+import { toast } from 'sonner';
+import axios from 'axios';
+
+// Define External User interface (different from FMUser)
+interface ExternalUser {
+  id: number;
+  firstname: string;
+  lastname: string;
+  gender: string;
+  mobile: string;
+  email: string;
+  company_name: string;
+  entity_id: number;
+  unit_id: number;
+  designation: string;
+  employee_id: string;
+  created_by_id: number;
+  access_level: number;
+  user_type: string;
+  lock_user_permission_status: string;
+  face_added: boolean | string;
+  app_downloaded: boolean | string;
+  lock_user_permission: { id?: number; access_level: string | number; joining_date?: string; role_name?: string; circle_name?: string; department_name?: string; status?: string; employee_id?: string | number; active?: boolean; designation?: string; lock_role_id?: number; department_id?: number; circle_id?: number };
+  line_manager_name?: string;
+  line_manager_mobile?: string;
+  department?: string;
+  circle?: string;
+  cluster?: string;
+  active?: boolean;
+  org_user_id?: string | number;
+  birth_date?: string;
+  joining_date?: string;
+  status?: string;
+  cluster_name?: string;
+  work_location?: string;
+  role_name?: string;
+  employee_type?: string;
+  created_at?: string;
+  lock_role?: { active: number };
+  report_to?: { name?: string; email?: string; mobile?: string };
+}
+
+export const ExternalUsersDashboard = () => {
+
+  const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [updatingIds, setUpdatingIds] = useState<Set<number>>(new Set());
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState<ExternalUser | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const navigate = useNavigate();
+
+
+  useEffect(() => {
+    const fetchExternalUsers = async () => {
+      setLoading(true);
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) {
+          setExternalUsers([]);
+          setLoading(false);
+          return;
+        }
+        const url = `https://${baseUrl}/pms/users/non_fte_users.json`;
+        const response = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        // If response is an array, use it directly; else try response.data or response.data.users
+        let users = Array.isArray(response.data) ? response.data : response.data?.users || [];
+        setExternalUsers(users);
+      } catch (err) {
+        setExternalUsers([]);
+        console.error('Error fetching external users:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchExternalUsers();
+  }, []);
+
+  const cardData = [
+    {
+      title: "External Users",
+      count: Array.isArray(externalUsers) ? externalUsers.length : 0,
+      icon: Users
+    },
+    {
+      title: "Active Users",
+      count: Array.isArray(externalUsers) ? externalUsers.filter(user => user.lock_user_permission_status === 'approved' || (user as any)?.status === 'approved').length : 0,
+      icon: UserCheck
+    },
+    {
+      title: "Pending Approvals",
+      count: Array.isArray(externalUsers) ? externalUsers.filter(user => user.lock_user_permission_status === 'pending' || (user as any)?.status === 'pending').length : 0,
+      icon: Clock
+    },
+    {
+      title: "Rejected Users",
+      count: Array.isArray(externalUsers) ? externalUsers.filter(user => user.lock_user_permission_status === 'rejected' || (user as any)?.status === 'rejected').length : 0,
+      icon: Shield
+    }
+  ];
+
+
+  const getStatusBadge = (status: string) => {
+    if (!status) {
+      return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
+    }
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return <Badge className="bg-green-500 text-white hover:bg-green-600">Approved</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-500 text-white hover:bg-yellow-600">Pending</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-500 text-white hover:bg-red-600">Rejected</Badge>;
+      default:
+        return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{status}</Badge>;
+    }
+  };
+
+  const getTypeBadge = (type: string) => {
+    if (!type) {
+      return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
+    }
+    switch (type.toLowerCase()) {
+      case 'external':
+        return <Badge className="bg-orange-500 text-white hover:bg-orange-600">External</Badge>;
+      case 'contractor':
+        return <Badge className="bg-purple-500 text-white hover:bg-purple-600">Contractor</Badge>;
+      case 'vendor':
+        return <Badge className="bg-blue-500 text-white hover:bg-blue-600">Vendor</Badge>;
+      default:
+        return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{type}</Badge>;
+    }
+  };
+
+  const getYesNoBadge = (value: boolean | string) => {
+    const isYes = value === true || value === 'yes' || value === 'Yes';
+    return <Badge className={isYes ? "bg-green-500 text-white hover:bg-green-600" : "bg-red-500 text-white hover:bg-red-600"}>
+      {isYes ? 'Yes' : 'No'}
+    </Badge>;
+  };
+
+  const columns: ColumnConfig[] = [
+    { key: 'name', label: 'Name', sortable: true, hideable: true },
+    { key: 'org_user_id', label: 'Emp ID', sortable: true, hideable: true },
+    { key: 'email', label: 'Email', sortable: true, hideable: true },
+    { key: 'mobile', label: 'Mobile', sortable: true, hideable: true },
+    { key: 'gender', label: 'Gender', sortable: true, hideable: true },
+    { key: 'active', label: 'Active', sortable: false, hideable: true },
+    { key: 'birth_date', label: 'Birth Date', sortable: true, hideable: true },
+    { key: 'joining_date', label: 'Joining Date', sortable: true, hideable: true },
+    { key: 'status', label: 'Status', sortable: true, hideable: true },
+    { key: 'cluster_name', label: 'Cluster', sortable: true, hideable: true },
+    { key: 'department', label: 'Department', sortable: true, hideable: true },
+    { key: 'circle_name', label: 'Circle', sortable: true, hideable: true },
+    { key: 'work_location', label: 'Work Location', sortable: true, hideable: true },
+    { key: 'company_name', label: 'Company Name', sortable: true, hideable: true },
+    { key: 'role_name', label: 'Role', sortable: true, hideable: true },
+    { key: 'employee_type', label: 'Employee Type', sortable: true, hideable: true },
+    { key: 'created_at', label: 'Created At', sortable: true, hideable: true },
+    { key: 'line_manager_name', label: 'Line Manager Name', sortable: false, hideable: true },
+    { key: 'line_manager_email', label: 'Line Manager Email', sortable: false, hideable: true },
+    { key: 'line_manager_mobile', label: 'Line Manager Mobile', sortable: false, hideable: true },
+  ];
+
+
+  const renderCell = (user: ExternalUser, columnKey: string): React.ReactNode => {
+    switch (columnKey) {
+      case 'name':
+        return `${user.firstname || ''} ${user.lastname || ''}`.trim() || '-';
+      case 'org_user_id':
+        return (user as any).org_user_id || (user as any).lock_user_permission?.employee_id || (user as any).employee_id || '-';
+      case 'email':
+        return user.email || '-';
+      case 'mobile':
+        return user.mobile || '-';
+      case 'gender':
+        return user.gender || '-';
+      case 'active': {
+        const isActive = (user as any).lock_user_permission?.active ?? ((user as any).lock_role ? (user as any).lock_role.active === 1 : !!(user as any).active);
+        const disabled = updatingIds.has(user.id);
+        return <div className="flex justify-center"><Switch checked={!!isActive} disabled={disabled} onCheckedChange={() => !disabled && handleToggleActive(user)} /></div>;
+      }
+      case 'birth_date':
+        return (user as any).birth_date || '-';
+      case 'joining_date':
+        return (user as any).lock_user_permission?.joining_date || (user as any).joining_date || '-';
+      case 'status': {
+        const statusVal = (user as any).lock_user_permission?.status || (user as any).status || (user as any).lock_user_permission_status;
+        return statusVal ? getStatusBadge(statusVal) : '-';
+      }
+      case 'cluster_name':
+        return (user as any).cluster_name || user.cluster || '-';
+      case 'department':
+        return (user as any).lock_user_permission?.department_name || (user as any).department_name || (user as any).department || '-';
+      case 'circle_name':
+        return (user as any).lock_user_permission?.circle_name || (user as any).circle_name || (user as any).circle || '-';
+      case 'work_location':
+        return (user as any).work_location || '-';
+      case 'company_name':
+        return user.company_name || '-';
+      case 'role_name':
+        return (user as any).lock_user_permission?.role_name || (user as any).role_name || (user as any).lock_role?.name || (user as any).lock_role?.display_name || '-';
+      case 'employee_type':
+        return (user as any).employee_type || '-';
+      case 'created_at': {
+        const created = (user as any).created_at;
+        if (!created) return '-';
+        try {
+          const d = new Date(created);
+            const day = String(d.getDate()).padStart(2,'0');
+            const month = String(d.getMonth()+1).padStart(2,'0');
+            const year = d.getFullYear();
+            const hours = String(d.getHours()).padStart(2,'0');
+            const minutes = String(d.getMinutes()).padStart(2,'0');
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
+        } catch { return created; }
+      }
+      case 'line_manager_name':
+        return (user as any).report_to?.name || 'NA';
+      case 'line_manager_email':
+        return (user as any).report_to?.email || 'NA';
+      case 'line_manager_mobile':
+        return (user as any).report_to?.mobile || 'NA';
+      default:
+        return '-';
+    }
+  };
+
+  const renderActions = (user: ExternalUser) => (
+    <div className="flex items-center justify-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate(`/maintenance/m-safe/external/user/${user.id}`, { state: { user } })}
+        className="h-8 w-8 p-0"
+      >
+        <Eye className="h-4 w-4" />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(user)} className="h-8 w-8 p-0">
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(externalUsers.map(user => user.id.toString()));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+
+  const handleActionClick = () => {
+    setShowActionPanel(true);
+  };
+
+  const handleExport = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    try {
+      if (!baseUrl || !token) {
+        toast.error('Missing base URL or token');
+        return;
+      }
+
+      let url = `api`;
+      if (selectedItems.length > 0) {
+        const ids = selectedItems.join(',');
+        url += `&ids=${ids}`;
+      }
+
+      const response = await axios.get(url, {
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.data || response.data.size === 0) {
+        toast.error('Empty file received from server');
+        return;
+      }
+
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'external-users.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      toast.success('External Users data exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export External Users data');
+    }
+  };
+
+  const handleImport = (file: File) => {
+    alert(`Imported file: ${file.name}`);
+  };
+
+  const handleFiltersClick = () => {
+    setIsFilterModalOpen(true);
+  };
+
+  const handleApplyFilters = (filters: { name: string; email: string; mobile: string; department: string; circle: string }) => {
+    // Apply filters to the external users data
+    console.log('Filtered External Users:', filters);
+  }
+
+  const handleToggleActive = async (user: ExternalUser) => {
+    const permission = user.lock_user_permission;
+    const previousStatus = permission?.status;
+    const activeVal: any = permission?.active;
+    const current = activeVal === true || activeVal === 1 || activeVal === '1';
+    if (!permission?.id) {
+      toast.error('Missing permission id');
+      return;
+    }
+    const newValue = !current;
+    const newStatus = newValue ? 'approved' : 'rejected';
+    // optimistic update (also reflect status change)
+    setExternalUsers(prev => prev.map(u => u.id === user.id ? { ...u, lock_user_permission: { ...u.lock_user_permission, active: newValue, status: newStatus }, status: newStatus } : u));
+    setUpdatingIds(prev => new Set(prev).add(user.id));
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      if (!baseUrl || !token) throw new Error('Missing base URL or token');
+      const url = `https://${baseUrl}/pms/users/${user.id}/update_vi_user`;
+      const payload = {
+        user: {
+          lock_user_permissions_attributes: [
+            {
+              id: permission.id,
+              active: newValue ? 1 : 0,
+              joining_date: permission.joining_date,
+              designation: permission.designation,
+              employee_id: permission.employee_id,
+              department_id: permission.department_id,
+              lock_role_id: permission.lock_role_id,
+              circle_id: permission.circle_id,
+              status: newStatus
+            }
+          ]
+        }
+      };
+      await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success(`User ${newValue ? 'activated (approved)' : 'deactivated (rejected)'} successfully`);
+    } catch (e:any) {
+      // revert on error
+      setExternalUsers(prev => prev.map(u => u.id === user.id ? { ...u, lock_user_permission: { ...u.lock_user_permission, active: current, status: previousStatus }, status: previousStatus } : u));
+      toast.error('Failed to update active status');
+      console.error('Active toggle error', e);
+    } finally {
+      setUpdatingIds(prev => { const n = new Set(prev); n.delete(user.id); return n; });
+    }
+  };
+
+  const handleDeleteClick = (user: ExternalUser) => {
+    setConfirmDeleteUser(user);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteUser) return;
+    setDeleting(true);
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      if (!baseUrl || !token) throw new Error('Missing base URL or token');
+      const url = `https://${baseUrl}/pms/users/${confirmDeleteUser.id}/delete_vi_user`;
+      await axios.delete(url, { headers: { Authorization: `Bearer ${token}` } });
+      setExternalUsers(prev => prev.filter(u => u.id !== confirmDeleteUser.id));
+      toast.success('User deleted successfully');
+    } catch (e:any) {
+      console.error('Delete user error', e);
+      toast.error('Failed to delete user');
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteUser(null);
+    }
+  };
+
+  const handleCancelDelete = () => setConfirmDeleteUser(null);
+
+  return (
+    <>
+      <div className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {cardData.map((card, index) => (
+            <div
+              key={index}
+              className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]"
+            >
+              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54] rounded-full">
+                <card.icon className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                  {card.count}
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
+                  {card.title}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {showActionPanel && (
+          <SelectionPanel
+            actions={[
+              { label: 'Import', icon: UploadIcon, onClick: () => setImportModalOpen(true) },
+            ]}
+            onClearSelection={() => setShowActionPanel(false)}
+          />
+        )}
+
+        <div className="rounded-lg">
+          <EnhancedTable
+            data={externalUsers || []}
+            leftActions={
+              <Button
+                onClick={handleActionClick}
+                className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+              >
+                <Plus className="w-4 h-4" />
+                Action
+              </Button>
+            }
+            columns={columns}
+            onFilterClick={handleFiltersClick}
+            renderCell={renderCell}
+            renderActions={renderActions}
+            onSelectAll={handleSelectAll}
+            storageKey="msafe-external-users"
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search external users..."
+            handleExport={handleExport}
+            enableExport={true}
+            exportFileName="external-users"
+            pagination={true}
+            pageSize={10}
+            loading={loading}
+            enableSearch={true}
+            onRowClick={user => console.log('Row clicked:', user)}
+          />
+        </div>
+
+        <MSafeImportModal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} onImport={handleImport} />
+        <MSafeFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
+        {confirmDeleteUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-sm">
+              <div className="p-4 border-b">
+                <h3 className="text-lg font-semibold">Confirm Deletion</h3>
+              </div>
+              <div className="p-4 space-y-2 text-sm">
+                <p>Are you sure you want to delete this user?</p>
+                <p className="font-medium">{`${confirmDeleteUser.firstname || ''} ${confirmDeleteUser.lastname || ''}`.trim() || 'User'} (ID: {confirmDeleteUser.id})</p>
+              </div>
+              <div className="p-4 flex justify-end gap-2 border-t">
+                <Button variant="outline" onClick={handleCancelDelete} disabled={deleting}>No</Button>
+                <Button className="bg-[#C72030] text-white hover:bg-[#C72030]/90" onClick={handleConfirmDelete} disabled={deleting}>
+                  {deleting ? 'Deleting...' : 'Yes'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  )
+};

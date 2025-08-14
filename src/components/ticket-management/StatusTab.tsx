@@ -23,11 +23,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { ticketManagementAPI } from '@/services/ticketManagementAPI';
+import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManagementAPI';
+import { EditStatusModal } from './modals/EditStatusModal';
 import { toast } from 'sonner';
 import { Edit, Trash2 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStatuses, createStatus, updateStatus, deleteStatus, fetchAccounts } from '@/store/slices/statusesSlice';
+import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 const statusSchema = z.object({
   name: z.string().min(1, 'Status is required'),
@@ -61,6 +63,9 @@ export const StatusTab: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [allowReopen, setAllowReopen] = useState(false);
+  const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<StatusType | null>(null);
 
   const currentSiteId =
     accounts && accounts.length > 0
@@ -79,7 +84,18 @@ export const StatusTab: React.FC = () => {
 
   useEffect(() => {
     fetchStatuses();
+    loadUserAccount();
   }, []);
+
+  const loadUserAccount = async () => {
+    try {
+      const account = await ticketManagementAPI.getUserAccount();
+      setUserAccount(account);
+    } catch (error) {
+      console.error('Error loading user account:', error);
+      toast.error('Failed to load user account');
+    }
+  };
 
   const fetchStatuses = async () => {
     setIsLoading(true);
@@ -95,6 +111,18 @@ export const StatusTab: React.FC = () => {
   };
 
   const handleSubmit = async (data: StatusFormData) => {
+    if (!userAccount?.company_id) {
+      toast.error('Unable to determine company ID. Please refresh and try again.');
+      return;
+    }
+
+    // Check if position already exists
+    const positionExists = statuses.some(status => status.position === data.position);
+    if (positionExists) {
+      toast.error('Order already exists. Please enter a different order.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const statusData = {
@@ -103,7 +131,7 @@ export const StatusTab: React.FC = () => {
         color_code: data.colorCode,
         position: data.position,
         of_phase: 'pms',
-        society_id: '15', // Default society ID
+        society_id: userAccount.company_id.toString(),
       };
 
       await ticketManagementAPI.createStatus(statusData);
@@ -121,10 +149,55 @@ export const StatusTab: React.FC = () => {
     setAllowReopen(checked === true);
   };
 
-  const handleDelete = (status: StatusType) => {
-    setStatuses(statuses.filter(s => s.id !== status.id));
-    toast.success('Status deleted successfully!');
+  const handleEdit = (status: StatusType) => {
+    setSelectedStatus(status);
+    setIsEditModalOpen(true);
   };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setSelectedStatus(null);
+  };
+
+  const handleStatusUpdated = () => {
+    fetchStatuses();
+    handleEditModalClose();
+  };
+
+  const handleDelete = async (status: StatusType) => {
+    if (!confirm('Are you sure you want to delete this status?')) {
+      return;
+    }
+    
+    try {
+      // Use apiConfig for baseURL and token
+      const url = getFullUrl('/pms/admin/modify_complaint_status.json');
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: status.id,
+          active: 0
+        }),
+      });
+
+      if (response.ok) {
+        setStatuses(statuses.filter(s => s.id !== status.id));
+        toast.success('Status deleted successfully!');
+      } else {
+        const errorData = await response.json().catch(() => null);
+        toast.error(errorData?.message || 'Failed to delete status');
+      }
+    } catch (error) {
+      console.error('Error deleting status:', error);
+      toast.error('Failed to delete status');
+    }
+  };
+
 
   const columns = [
     { key: 'position', label: 'Order', sortable: true },
@@ -157,7 +230,7 @@ export const StatusTab: React.FC = () => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center gap-2">
-      <Button variant="ghost" size="sm">
+      <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
         <Edit className="h-4 w-4" />
       </Button>
       <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
@@ -302,6 +375,13 @@ export const StatusTab: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      <EditStatusModal
+        open={isEditModalOpen}
+        onOpenChange={setIsEditModalOpen}
+        status={selectedStatus}
+        onUpdate={handleStatusUpdated}
+      />
     </div>
   );
 };

@@ -17,22 +17,47 @@ export const EditInventoryPage = () => {
   const { id } = useParams();
   const { toast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
-  
+
   const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
   const { assets = [], loading = false } = inventoryAssetsState || {};
-  
+
   const suppliersState = useSelector((state: RootState) => state.suppliers);
   const suppliers = Array.isArray(suppliersState?.data) ? suppliersState.data : [];
   const suppliersLoading = suppliersState?.loading || false;
-  
+
   const { loading: editLoading, error, fetchedInventory, updatedInventory } = useSelector((state: RootState) => state.inventoryEdit);
-  
+
   const [inventoryType, setInventoryType] = useState('spares');
   const [criticality, setCriticality] = useState('critical');
   const [taxApplicable, setTaxApplicable] = useState(false);
   const [ecoFriendly, setEcoFriendly] = useState(false);
   const [inventoryDetailsExpanded, setInventoryDetailsExpanded] = useState(true);
   const [taxDetailsExpanded, setTaxDetailsExpanded] = useState(true);
+  const [sacList, setSacList] = useState([]);
+  const fetchSAC = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`https://${baseUrl}/pms/hsns/get_hsns.json`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      setSacList(data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching SAC:', error);
+    }
+  };
+  // Fetch SAC/HSN codes on mount
+  useEffect(() => {
+    fetchSAC();
+  }, []);
 
   const [formData, setFormData] = useState({
     assetName: '',
@@ -61,7 +86,7 @@ export const EditInventoryPage = () => {
     }
     dispatch(fetchInventoryAssets());
     dispatch(fetchSuppliersData());
-    
+
     return () => {
       dispatch(resetInventoryState());
     };
@@ -95,16 +120,16 @@ export const EditInventoryPage = () => {
         cgstRate: fetchedInventory.cgst_rate?.toString() || '',
         igstRate: fetchedInventory.igst_rate?.toString() || ''
       });
-      
+
       // Handle numeric values for radio buttons
-      const inventoryTypeValue = (typeof fetchedInventory.inventory_type === 'number' && fetchedInventory.inventory_type === 2) ? 'consumable' : 
-                                 (typeof fetchedInventory.inventory_type === 'number' && fetchedInventory.inventory_type === 1) ? 'spares' : 
-                                 (typeof fetchedInventory.inventory_type === 'string') ? fetchedInventory.inventory_type : 'spares';
-      
-      const criticalityValue = (typeof fetchedInventory.criticality === 'number' && fetchedInventory.criticality === 2) ? 'non-critical' : 
-                              (typeof fetchedInventory.criticality === 'number' && fetchedInventory.criticality === 1) ? 'critical' : 
-                              (typeof fetchedInventory.criticality === 'string') ? fetchedInventory.criticality : 'critical';
-      
+      const inventoryTypeValue = (typeof fetchedInventory.inventory_type === 'number' && fetchedInventory.inventory_type === 2) ? 'consumable' :
+        (typeof fetchedInventory.inventory_type === 'number' && fetchedInventory.inventory_type === 1) ? 'spares' :
+          (typeof fetchedInventory.inventory_type === 'string') ? fetchedInventory.inventory_type : 'spares';
+
+      const criticalityValue = (typeof fetchedInventory.criticality === 'number' && fetchedInventory.criticality === 2) ? 'non-critical' :
+        (typeof fetchedInventory.criticality === 'number' && fetchedInventory.criticality === 1) ? 'critical' :
+          (typeof fetchedInventory.criticality === 'string') ? fetchedInventory.criticality : 'critical';
+
       setInventoryType(inventoryTypeValue);
       setCriticality(criticalityValue);
       setTaxApplicable(fetchedInventory.tax_applicable || false);
@@ -174,18 +199,6 @@ export const EditInventoryPage = () => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
-
-    console.log('=== INVENTORY UPDATE PAYLOAD ===');
-    console.log('Inventory ID:', id);
-    console.log('Form Data:', formData);
-    console.log('Inventory Type:', inventoryType);
-    console.log('Criticality:', criticality, '→', criticalityValue);
-    console.log('Tax Applicable:', taxApplicable);
-    console.log('Eco Friendly:', ecoFriendly);
-    console.log('Payload Data:', inventoryData);
-    console.log('Full Payload:', { pms_inventory: inventoryData });
-    console.log('API Endpoint:', `https://fm-uat-api.lockated.com/pms/inventories/${id}.json`);
-    console.log('================================');
 
     dispatch(updateInventory({ id, inventoryData }));
   };
@@ -274,7 +287,7 @@ export const EditInventoryPage = () => {
             </div>
             {inventoryDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>
-          
+
           {inventoryDetailsExpanded && (
             <div className="p-6 pt-0 space-y-6">
               {/* Inventory Type */}
@@ -585,12 +598,12 @@ export const EditInventoryPage = () => {
             </div>
             {taxDetailsExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>
-          
+
           {taxDetailsExpanded && (
             <div className="p-6 pt-0 space-y-6">
               <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="tax-applicable" 
+                <Checkbox
+                  id="tax-applicable"
                   checked={taxApplicable}
                   onCheckedChange={(checked) => setTaxApplicable(checked === true)}
                 />
@@ -611,10 +624,9 @@ export const EditInventoryPage = () => {
                         displayEmpty
                       >
                         <MenuItem value="">Select SAC/HSN Code</MenuItem>
-                        <MenuItem value="19">73021011</MenuItem>
-                        <MenuItem value="918">0</MenuItem>
-                        <MenuItem value="919">0</MenuItem>
-                        <MenuItem value="951">0</MenuItem>
+                        {Array.isArray(sacList) && sacList.length > 0 && sacList.map((sac: any) => (
+                          <MenuItem key={sac.id} value={sac.id}>{sac.code}</MenuItem>
+                        ))}
                       </MuiSelect>
                     </FormControl>
                   </div>
@@ -665,7 +677,7 @@ export const EditInventoryPage = () => {
 
         {/* Submit Button */}
         <div className="p-6">
-          <Button 
+          <Button
             onClick={handleSubmit}
             disabled={editLoading}
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"

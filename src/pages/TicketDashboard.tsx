@@ -1,212 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Eye, Filter, Ticket, Clock, AlertCircle, CheckCircle, BarChart3, TrendingUp, Download, Edit, Trash2, Settings, Upload, Flag, Star } from 'lucide-react';
 import { TicketsFilterDialog } from '@/components/TicketsFilterDialog';
+import { TicketAnalyticsFilterDialog } from '@/components/TicketAnalyticsFilterDialog';
 import { EditStatusDialog } from '@/components/EditStatusDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TicketSelector } from '@/components/TicketSelector';
 import { RecentTicketsSidebar } from '@/components/RecentTicketsSidebar';
 import { TicketSelectionPanel } from '@/components/TicketSelectionPanel';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ticketManagementAPI, TicketResponse, TicketFilters } from '@/services/ticketManagementAPI';
+import { ticketAnalyticsAPI, TicketCategoryData, TicketStatusData, TicketAgingMatrix, UnitCategorywiseData, ResponseTATData, ResolutionTATReportData, RecentTicketsResponse } from '@/services/ticketAnalyticsAPI';
+import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAPI';
+import { TicketAnalyticsCard } from '@/components/TicketAnalyticsCard';
+import { ResponseTATCard } from '@/components/ResponseTATCard';
+import { ResolutionTATCard } from '@/components/ResolutionTATCard';
+import { 
+  TicketStatusOverviewCard,
+  ProactiveReactiveCard,
+  CategoryWiseProactiveReactiveCard,
+  UnitCategoryWiseCard,
+  TicketAgingMatrixCard
+} from '@/components/ticket-analytics';
 import { useToast } from '@/hooks/use-toast';
-const ticketData = [{
-  id: '2189-11106',
-  taskNumber: 'test',
-  description: 'Test description',
-  category: 'Air Conditioner',
-  subCategory: 'test',
-  createdBy: 'Abhishek Sharma',
-  assignedTo: 'Vinayak Mane',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J1',
-  wing: 'Wings',
-  floor: '1',
-  area: '',
-  room: '',
-  priority: 'p1',
-  status: 'Pending',
-  createdOn: '16/06/2025 5:17 PM',
-  mode: 'Call'
-}, {
-  id: '2189-11105',
-  taskNumber: 'Test 1234',
-  description: 'Another test',
-  category: 'FIRE SYSTEM',
-  subCategory: 'NA',
-  createdBy: 'Vishal Vora',
-  assignedTo: 'Deepak Gupta',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J1',
-  wing: 'Wings',
-  floor: '1',
-  area: '',
-  room: '',
-  priority: 'p2',
-  status: 'Closed',
-  createdOn: '15/06/2025 3:30 PM',
-  mode: 'Email'
-}, {
-  id: '2189-11104',
-  taskNumber: 'Cleaning Request',
-  description: 'Office cleaning',
-  category: 'Cleaning',
-  subCategory: 'Office',
-  createdBy: 'John Doe',
-  assignedTo: 'Vinayak Mane',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J2',
-  wing: 'East',
-  floor: '2',
-  area: '',
-  room: '',
-  priority: 'p3',
-  status: 'Pending',
-  createdOn: '14/06/2025 10:15 AM',
-  mode: 'Web'
-}, {
-  id: '2189-11103',
-  taskNumber: 'Electrical Issue',
-  description: 'Power outage in conference room',
-  category: 'Electrical',
-  subCategory: 'Power',
-  createdBy: 'Sarah Johnson',
-  assignedTo: 'Deepak Gupta',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J1',
-  wing: 'West',
-  floor: '3',
-  area: 'Conference Room',
-  room: 'CR-301',
-  priority: 'p1',
-  status: 'In Progress',
-  createdOn: '13/06/2025 2:45 PM',
-  mode: 'App'
-}, {
-  id: '2189-11102',
-  taskNumber: 'Plumbing Fix',
-  description: 'Leaky faucet in restroom',
-  category: 'Plumbing',
-  subCategory: 'Faucet',
-  createdBy: 'Mike Wilson',
-  assignedTo: 'Vinayak Mane',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J2',
-  wing: 'North',
-  floor: '1',
-  area: 'Restroom',
-  room: 'RR-101',
-  priority: 'p2',
-  status: 'Open',
-  createdOn: '12/06/2025 11:30 AM',
-  mode: 'Call'
-}, {
-  id: '2189-11101',
-  taskNumber: 'HVAC Maintenance',
-  description: 'Routine HVAC system check',
-  category: 'HVAC',
-  subCategory: 'Maintenance',
-  createdBy: 'Lisa Chen',
-  assignedTo: 'Deepak Gupta',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J1',
-  wing: 'Central',
-  floor: '2',
-  area: 'Mechanical Room',
-  room: 'MR-201',
-  priority: 'p3',
-  status: 'Pending',
-  createdOn: '11/06/2025 9:00 AM',
-  mode: 'Web'
-}, {
-  id: '2189-11100',
-  taskNumber: 'Security Issue',
-  description: 'Broken door lock',
-  category: 'Security',
-  subCategory: 'Lock',
-  createdBy: 'Robert Davis',
-  assignedTo: 'Vinayak Mane',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J2',
-  wing: 'South',
-  floor: '3',
-  area: 'Office',
-  room: 'OF-305',
-  priority: 'p1',
-  status: 'Closed',
-  createdOn: '10/06/2025 4:20 PM',
-  mode: 'Email'
-}, {
-  id: '2189-11099',
-  taskNumber: 'Network Issue',
-  description: 'Internet connectivity problem',
-  category: 'IT',
-  subCategory: 'Network',
-  createdBy: 'Emma Brown',
-  assignedTo: 'Deepak Gupta',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J1',
-  wing: 'East',
-  floor: '1',
-  area: 'IT Room',
-  room: 'IT-101',
-  priority: 'p2',
-  status: 'In Progress',
-  createdOn: '09/06/2025 1:15 PM',
-  mode: 'App'
-}, {
-  id: '2189-11098',
-  taskNumber: 'Furniture Repair',
-  description: 'Broken office chair',
-  category: 'Furniture',
-  subCategory: 'Chair',
-  createdBy: 'David Miller',
-  assignedTo: 'Vinayak Mane',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J2',
-  wing: 'West',
-  floor: '2',
-  area: 'Workspace',
-  room: 'WS-201',
-  priority: 'p3',
-  status: 'Open',
-  createdOn: '08/06/2025 10:45 AM',
-  mode: 'Call'
-}, {
-  id: '2189-11097',
-  taskNumber: 'Lighting Fix',
-  description: 'Flickering lights in hallway',
-  category: 'Electrical',
-  subCategory: 'Lighting',
-  createdBy: 'Jennifer Taylor',
-  assignedTo: 'Deepak Gupta',
-  unit: 'Lockated',
-  site: 'Lockated',
-  building: 'J1',
-  wing: 'North',
-  floor: '2',
-  area: 'Hallway',
-  room: '',
-  priority: 'p2',
-  status: 'Pending',
-  createdOn: '07/06/2025 3:00 PM',
-  mode: 'Web'
-}];
+import { useDebounce } from '@/hooks/useDebounce';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -226,14 +49,46 @@ const SortableChartItem = ({
   } = useSortable({
     id
   });
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1
   };
-  return <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-move">
+
+  // Handle pointer down to prevent drag on button/icon clicks
+  const handlePointerDown = (e: React.PointerEvent) => {
+    const target = e.target as HTMLElement;
+    // Check if the click is on a button, icon, or download element
+    if (
+      target.closest('button') ||
+      target.closest('[data-download]') ||
+      target.closest('svg') ||
+      target.tagName === 'BUTTON' ||
+      target.tagName === 'SVG' ||
+      target.closest('.download-btn') ||
+      target.closest('[data-download-button]')
+    ) {
+      e.stopPropagation();
+      return;
+    }
+    // For other elements, proceed with drag
+    if (listeners?.onPointerDown) {
+      listeners.onPointerDown(e);
+    }
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      onPointerDown={handlePointerDown}
+      className="cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group"
+    >
       {children}
-    </div>;
+    </div>
+  );
 };
 export const TicketDashboard = () => {
   const navigate = useNavigate();
@@ -241,14 +96,88 @@ export const TicketDashboard = () => {
     toast
   } = useToast();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix']);
-  const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'categoryChart', 'agingMatrix']);
+  const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
+  const [visibleSections, setVisibleSections] = useState<string[]>(['statusChart', 'reactiveChart', 'responseTat', 'categoryWiseProactiveReactive', 'categoryChart', 'agingMatrix', 'resolutionTat']);
+  const [chartOrder, setChartOrder] = useState<string[]>(['statusChart', 'reactiveChart', 'responseTat', 'categoryWiseProactiveReactive', 'categoryChart', 'agingMatrix', 'resolutionTat']);
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalTickets, setTotalTickets] = useState(0);
+  const [initialTotalTickets, setInitialTotalTickets] = useState(0); // Store unfiltered total
   const [selectedTickets, setSelectedTickets] = useState<number[]>([]);
+
+  // Analytics data states with default dates (last year to today)
+  const getDefaultDateRange = () => {
+    const today = new Date();
+    const lastYear = new Date();
+    lastYear.setFullYear(today.getFullYear() - 1);
+
+    const formatDate = (date: Date) => {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    };
+
+    return {
+      startDate: formatDate(lastYear),
+      endDate: formatDate(today)
+    };
+  };
+
+  const [analyticsDateRange, setAnalyticsDateRange] = useState<{ startDate: string; endDate: string }>(getDefaultDateRange());
+  const [categoryAnalyticsData, setCategoryAnalyticsData] = useState<TicketCategoryData[]>([]);
+  const [categorywiseTicketsData, setCategorywiseTicketsData] = useState<TicketCategoryData[]>([]);
+  const [statusAnalyticsData, setStatusAnalyticsData] = useState<TicketStatusData | null>(null);
+  const [agingMatrixAnalyticsData, setAgingMatrixAnalyticsData] = useState<TicketAgingMatrix | null>(null);
+  const [unitCategorywiseData, setUnitCategorywiseData] = useState<UnitCategorywiseData | null>(null);
+  const [responseTATData, setResponseTATData] = useState<ResponseTATData | null>(null);
+  const [resolutionTATReportData, setResolutionTATReportData] = useState<ResolutionTATReportData | null>(null);
+  const [recentTicketsData, setRecentTicketsData] = useState<RecentTicketsResponse | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
+  // Utility function to convert DD/MM/YYYY to Date object
+  const convertDateStringToDate = (dateString: string): Date => {
+    try {
+      const [day, month, year] = dateString.split('/');
+      // Create date at noon UTC to avoid timezone issues
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0, 0);
+      console.log('convertDateStringToDate:', { input: dateString, output: date, formatted: date.toISOString() });
+      return date;
+    } catch (error) {
+      console.error('Error converting date string:', dateString, error);
+      return new Date(); // Fallback to current date
+    }
+  };
+
+  // Test case for date conversion
+  React.useEffect(() => {
+    // Test the date conversion with your example
+    const testStartDate = '28/07/2025';
+    const testEndDate = '29/07/2025';
+    const convertedStart = convertDateStringToDate(testStartDate);
+    const convertedEnd = convertDateStringToDate(testEndDate);
+
+    const formatDateForAPI = (date: Date): string => {
+      // Use UTC methods to avoid timezone issues
+      const year = date.getUTCFullYear();
+      const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+      const day = date.getUTCDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    console.log('Date Conversion Test:', {
+      input: { start: testStartDate, end: testEndDate },
+      converted: { start: convertedStart, end: convertedEnd },
+      apiFormat: {
+        start: formatDateForAPI(convertedStart),
+        end: formatDateForAPI(convertedEnd)
+      }
+    });
+  }, []);
+
   const [ticketSummary, setTicketSummary] = useState({
     total_tickets: 0,
     open_tickets: 0,
@@ -256,9 +185,13 @@ export const TicketDashboard = () => {
     closed_tickets: 0,
     complaints: 0,
     suggestions: 0,
-    requests: 0
+    requests: 0,
+    pending_tickets: 0
   });
   const [filters, setFilters] = useState<TicketFilters>({});
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300); // Reduced debounce for faster response
+  const isSearchingRef = useRef(false);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [selectedTicketForEdit, setSelectedTicketForEdit] = useState<TicketResponse | null>(null);
   const perPage = 20;
@@ -268,11 +201,74 @@ export const TicketDashboard = () => {
     coordinateGetter: sortableKeyboardCoordinates
   }));
 
+  // Fetch analytics data from API
+  const fetchAnalyticsData = useCallback(async (startDate: Date, endDate: Date) => {
+    setAnalyticsLoading(true);
+    try {
+      const [
+        categoryData,
+        statusData,
+        agingData,
+        unitCategoryData,
+        responseTATData,
+        resolutionTATData,
+        recentTickets
+      ] = await Promise.all([
+        ticketAnalyticsAPI.getTicketsCategorywiseData(startDate, endDate),
+        ticketAnalyticsAPI.getTicketStatusData(startDate, endDate),
+        ticketAnalyticsAPI.getTicketAgingMatrix(startDate, endDate),
+        ticketAnalyticsAPI.getUnitCategorywiseData(startDate, endDate),
+        ticketAnalyticsAPI.getResponseTATData(startDate, endDate),
+        ticketAnalyticsAPI.getResolutionTATReportData(startDate, endDate),
+        ticketAnalyticsAPI.getRecentTickets()
+      ]);
+
+      setCategoryAnalyticsData(categoryData);
+      setCategorywiseTicketsData(categoryData); // Set the same data for the new category-wise section
+      setStatusAnalyticsData(statusData);
+      setAgingMatrixAnalyticsData(agingData);
+      setUnitCategorywiseData(unitCategoryData);
+      setResponseTATData(responseTATData);
+      setResolutionTATReportData(resolutionTATData);
+      setRecentTicketsData(recentTickets);
+
+      // toast({
+      //   title: "Success",
+      //   description: "Analytics data updated successfully"
+      // });
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch analytics data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, [toast]);
+
+  // Handle analytics filter apply
+  const handleAnalyticsFilterApply = (filters: { startDate: string; endDate: string }) => {
+    setAnalyticsDateRange(filters);
+
+    // Convert date strings to Date objects using utility function
+    const startDate = convertDateStringToDate(filters.startDate);
+    const endDate = convertDateStringToDate(filters.endDate);
+
+    fetchAnalyticsData(startDate, endDate);
+  };
+
   // Fetch ticket summary from API
-  const fetchTicketSummary = async () => {
+  const fetchTicketSummary = useCallback(async () => {
     try {
       const summary = await ticketManagementAPI.getTicketSummary();
       setTicketSummary(summary);
+
+      // Store initial total count only if not already stored and no filters are applied
+      if (Object.keys(filters).length === 0 && initialTotalTickets === 0) {
+        setInitialTotalTickets(summary.total_tickets);
+      }
     } catch (error) {
       console.error('Error fetching ticket summary:', error);
       toast({
@@ -281,11 +277,18 @@ export const TicketDashboard = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [filters, initialTotalTickets, toast]);
 
   // Fetch tickets from API
-  const fetchTickets = async (page: number = 1) => {
-    setLoading(true);
+  const fetchTickets = useCallback(async (page: number = 1) => {
+    // Use different loading states based on whether it's a search operation
+    const isSearch = filters.search_all_fields_cont;
+    if (isSearch) {
+      setSearchLoading(true);
+    } else {
+      setLoading(true);
+    }
+    
     try {
       const response = await ticketManagementAPI.getTickets(page, perPage, filters);
       setTickets(response.complaints);
@@ -303,21 +306,80 @@ export const TicketDashboard = () => {
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      if (isSearch) {
+        setSearchLoading(false);
+      } else {
+        setLoading(false);
+      }
     }
-  };
+  }, [filters, perPage, toast]);
+
+  // Handle search input change
+  const handleSearch = useCallback((query: string) => {
+    isSearchingRef.current = true;
+    setSearchQuery(query);
+  }, []);
+
+  // Effect to handle debounced search
   useEffect(() => {
-    fetchTickets(currentPage);
-    fetchTicketSummary();
-  }, [currentPage, filters]);
+    // Skip if search query is the same as current filter
+    const currentSearch = filters.search_all_fields_cont || '';
+    const newSearch = debouncedSearchQuery.trim();
+    
+    if (currentSearch === newSearch) {
+      return; // No change needed
+    }
+    
+    // Update filters when debounced search query changes
+    setFilters(prevFilters => {
+      const newFilters = { ...prevFilters };
+      if (newSearch) {
+        newFilters.search_all_fields_cont = newSearch;
+      } else {
+        delete newFilters.search_all_fields_cont;
+      }
+      return newFilters;
+    });
+    
+    // Reset to first page when searching, but only if it's a new search
+    if (isSearchingRef.current || (newSearch && !currentSearch)) {
+      setCurrentPage(1);
+      isSearchingRef.current = false;
+    }
+  }, [debouncedSearchQuery, filters.search_all_fields_cont]);
+
+  useEffect(() => {
+    // Only fetch tickets if we're not in the middle of rapid filter changes
+    const timeoutId = setTimeout(() => {
+      fetchTickets(currentPage);
+      // Only fetch summary when filters change significantly (not during search)
+      if (!filters.search_all_fields_cont) {
+        fetchTicketSummary();
+      }
+    }, 50); // Reduced delay for faster response
+
+    return () => clearTimeout(timeoutId);
+  }, [currentPage, filters, fetchTickets, fetchTicketSummary]);
+
+  // Load analytics data with default date range on component mount
+  useEffect(() => {
+    const defaultRange = getDefaultDateRange();
+    const startDate = convertDateStringToDate(defaultRange.startDate);
+    const endDate = convertDateStringToDate(defaultRange.endDate);
+    fetchAnalyticsData(startDate, endDate);
+  }, [fetchAnalyticsData]);
 
   // Use ticket summary data from API
   const openTickets = ticketSummary.open_tickets;
   const inProgressTickets = ticketSummary.in_progress_tickets;
   const closedTickets = ticketSummary.closed_tickets;
   const totalSummaryTickets = ticketSummary.total_tickets;
+  const pendingTickets = ticketSummary.pending_tickets; // Use ticket summary for pending as it's not in analytics
+  const totalTicketsCount = initialTotalTickets || totalSummaryTickets;
+  const displayTotalTickets = totalTicketsCount.toLocaleString();
 
-  // Analytics data with updated colors matching design
+
+  // Analytics data with updated colors matching design using real API data
   const statusData = [{
     name: 'Open',
     value: openTickets,
@@ -330,7 +392,12 @@ export const TicketDashboard = () => {
     name: 'Closed',
     value: closedTickets,
     color: '#d8dcdd'
-  }];
+  }, {
+    name: 'Pending',
+    value: pendingTickets,
+    color: '#d8dcdd'
+  }
+  ];
 
   // Ticket type breakdown cards
   const ticketTypeCards = [{
@@ -368,60 +435,88 @@ export const TicketDashboard = () => {
     value: ticketSummary.requests,
     icon: Ticket,
     color: 'bg-indigo-500'
-  }];
+  }, {
+    title: 'Pending Tickets',
+    value: ticketSummary.pending_tickets,
+    icon: Ticket,
+    color: 'bg-indigo-500'
+  }
+  ];
 
-  // Calculate category data from tickets
-  const safeTickets = tickets || [];
-  const categoryData = safeTickets.reduce((acc, ticket) => {
-    const category = ticket.category_type;
-    if (category) {
-      acc[category] = (acc[category] || 0) + 1;
-    }
-    return acc;
-  }, {});
-  const categoryChartData = Object.entries(categoryData).map(([name, value]) => ({
-    name,
-    value
-  }));
-  const agingMatrixData = [{
-    priority: 'P1',
-    '0-10': 20,
-    '11-20': 3,
-    '21-30': 4,
-    '31-40': 0,
-    '41-50': Math.max(203, openTickets)
-  }, {
-    priority: 'P2',
-    '0-10': 2,
-    '11-20': 0,
-    '21-30': 0,
-    '31-40': 0,
-    '41-50': 4
-  }, {
-    priority: 'P3',
-    '0-10': 1,
-    '11-20': 0,
-    '21-30': 1,
-    '31-40': 0,
-    '41-50': 7
-  }, {
-    priority: 'P4',
-    '0-10': 1,
-    '11-20': 0,
-    '21-30': 0,
-    '31-40': 0,
-    '41-50': 5
-  }];
-  const reactiveTickets = Math.floor(safeTickets.length * 0.7);
-  const proactiveTickets = safeTickets.length - reactiveTickets;
+  // Calculate category data from API analytics data only
+  const categoryChartData = categoryAnalyticsData.length > 0
+    ? categoryAnalyticsData.map(item => ({
+      name: item.category,
+      proactive: item.proactive.Open + item.proactive.Closed,
+      reactive: item.reactive.Open + item.reactive.Closed,
+      value: item.proactive.Open + item.proactive.Closed + item.reactive.Open + item.reactive.Closed
+    }))
+    : []; // No fallback to tickets data
+
+  // Aging matrix data from API or fallback
+  const agingMatrixData = agingMatrixAnalyticsData?.response.matrix
+    ? Object.entries(agingMatrixAnalyticsData.response.matrix).map(([priority, data]) => ({
+      priority,
+      'T1': data.T1 || 0,
+      'T2': data.T2 || 0,
+      'T3': data.T3 || 0,
+      'T4': data.T4 || 0,
+      'T5': data.T5 || 0
+    }))
+    : [{
+      priority: 'P1',
+      'T1': 20,
+      'T2': 3,
+      'T3': 4,
+      'T4': 0,
+      'T5': Math.max(203, openTickets)
+    }, {
+      priority: 'P2',
+      'T1': 2,
+      'T2': 0,
+      'T3': 0,
+      'T4': 0,
+      'T5': 4
+    }, {
+      priority: 'P3',
+      'T1': 1,
+      'T2': 0,
+      'T3': 1,
+      'T4': 0,
+      'T5': 7
+    }, {
+      priority: 'P4',
+      'T1': 1,
+      'T2': 0,
+      'T3': 0,
+      'T4': 0,
+      'T5': 5
+    }];
+
+  // Proactive vs Reactive data from API analytics
+  const proactiveOpenTickets = statusAnalyticsData?.proactive_reactive.proactive.open || 0;
+  const proactiveClosedTickets = statusAnalyticsData?.proactive_reactive.proactive.closed || 0;
+  const reactiveOpenTickets = statusAnalyticsData?.proactive_reactive.reactive.open || 0;
+  const reactiveClosedTickets = statusAnalyticsData?.proactive_reactive.reactive.closed || 0;
+  const openticketanalyticsData = statusAnalyticsData?.overall.total_open || 0;
+  const closedticketanalyticsData = statusAnalyticsData?.overall.total_closed || 0;
+
   const typeData = [{
-    name: 'Open',
-    value: reactiveTickets,
+    name: 'Proactive Open',
+    value: proactiveOpenTickets,
     color: '#c6b692'
   }, {
-    name: 'Closed',
-    value: proactiveTickets,
+    name: 'Proactive Closed',
+    value: proactiveClosedTickets,
     color: '#d8dcdd'
+  }, {
+    name: 'Reactive Open',
+    value: reactiveOpenTickets,
+    color: '#f59e0b'
+  }, {
+    name: 'Reactive Closed',
+    value: reactiveClosedTickets,
+    color: '#10b981'
   }];
   const handleSelectionChange = (selectedSections: string[]) => {
     setVisibleSections(selectedSections);
@@ -457,7 +552,7 @@ export const TicketDashboard = () => {
   // Selection handlers
   const handleTicketSelection = (ticketIdString: string, isSelected: boolean) => {
     const ticketId = parseInt(ticketIdString);
-    console.log('TicketDashboard - Ticket selection changed:', ticketId, isSelected);
+    // console.log('TicketDashboard - Ticket selection changed:', ticketId, isSelected);
     setSelectedTickets(prev => {
       if (isSelected) {
         return [...prev, ticketId];
@@ -467,7 +562,7 @@ export const TicketDashboard = () => {
     });
   };
   const handleSelectAll = (isSelected: boolean) => {
-    console.log('TicketDashboard - Select all changed:', isSelected);
+    // console.log('TicketDashboard - Select all changed:', isSelected);
     if (isSelected) {
       const allTicketIds = tickets.map(ticket => ticket.id);
       setSelectedTickets(allTicketIds);
@@ -476,11 +571,11 @@ export const TicketDashboard = () => {
     }
   };
   const handleClearSelection = () => {
-    console.log('TicketDashboard - Clearing selection');
+    // console.log('TicketDashboard - Clearing selection');
     setSelectedTickets([]);
   };
   const handleGoldenTicket = async () => {
-    console.log('TicketDashboard - Golden Ticket action for tickets:', selectedTickets);
+    // console.log('TicketDashboard - Golden Ticket action for tickets:', selectedTickets);
     try {
       await ticketManagementAPI.markAsGoldenTicket(selectedTickets);
       toast({
@@ -499,7 +594,7 @@ export const TicketDashboard = () => {
     }
   };
   const handleFlag = async () => {
-    console.log('TicketDashboard - Flag action for tickets:', selectedTickets);
+    // console.log('TicketDashboard - Flag action for tickets:', selectedTickets);
     if (selectedTickets.length === 0) {
       toast({
         title: "No tickets selected",
@@ -508,7 +603,7 @@ export const TicketDashboard = () => {
       });
       return;
     }
-    
+
     try {
       await ticketManagementAPI.markAsFlagged(selectedTickets);
       toast({
@@ -528,23 +623,26 @@ export const TicketDashboard = () => {
   };
 
   const handleSingleTicketFlag = async (ticketId: number, currentFlagStatus: boolean) => {
-    console.log('TicketDashboard - Single flag action for ticket:', ticketId);
+    // console.log('TicketDashboard - Single flag action for ticket:', ticketId);
     try {
       const response = await ticketManagementAPI.markAsFlagged([ticketId]);
-      
+
       // Update the ticket locally without refetching
-      setTickets(prevTickets => 
-        prevTickets.map(ticket => 
-          ticket.id === ticketId 
+      setTickets(prevTickets =>
+        prevTickets.map(ticket =>
+          ticket.id === ticketId
             ? { ...ticket, is_flagged: !currentFlagStatus }
             : ticket
         )
       );
-      
+
       toast({
         title: "Success",
         description: response.message || "Ticket(s) flagged successfully"
       });
+
+      // Refresh the page to update the data
+      window.location.reload();
     } catch (error) {
       console.error('Single flag action failed:', error);
       toast({
@@ -556,19 +654,19 @@ export const TicketDashboard = () => {
   };
 
   const handleSingleTicketGoldenTicket = async (ticketId: number, currentGoldenStatus: boolean) => {
-    console.log('TicketDashboard - Single golden ticket action for ticket:', ticketId);
+    // console.log('TicketDashboard - Single golden ticket action for ticket:', ticketId);
     try {
       const response = await ticketManagementAPI.markAsGoldenTicket([ticketId]);
-      
+
       // Update the ticket locally without refetching
-      setTickets(prevTickets => 
-        prevTickets.map(ticket => 
-          ticket.id === ticketId 
+      setTickets(prevTickets =>
+        prevTickets.map(ticket =>
+          ticket.id === ticketId
             ? { ...ticket, is_golden_ticket: !currentGoldenStatus }
             : ticket
         )
       );
-      
+
       toast({
         title: "Success",
         description: response.message || "Golden Ticket Flagged successfully!"
@@ -611,16 +709,77 @@ export const TicketDashboard = () => {
     setIsFilterOpen(false);
   };
 
+  // Handle status card click for filtering
+  const handleStatusCardClick = (cardType: string) => {
+    console.log('Status card clicked:', cardType);
+    const newFilters: TicketFilters = {};
+
+    if (cardType === 'total') {
+      // Clear all filters to show all records
+      // console.log('Clearing all filters to show all tickets');
+      setFilters({});
+      setCurrentPage(1);
+      return;
+    }
+
+    if (cardType !== 'total') {
+      // Use the correct API parameter format for status filtering
+      if (cardType === 'open') {
+        newFilters.complaint_status_fixed_state_eq = 'Open';
+        // console.log('Setting Open filter with complaint_status_fixed_state_eq=Open');
+      } else if (cardType === 'pending') {
+        newFilters.complaint_status_fixed_state_eq = 'Pending';
+        //  console.log('Setting Pending filter with complaint_status_fixed_state_eq=Pending');
+      } else if (cardType === 'in_progress') {
+        newFilters.complaint_status_fixed_state_eq = 'In Progress';
+        //  console.log('Setting In Progress filter with complaint_status_fixed_state_eq=In Progress');
+      } else if (cardType === 'closed') {
+        newFilters.complaint_status_fixed_state_eq = 'Closed';
+        console.log('Setting Closed filter with complaint_status_fixed_state_eq=Closed');
+      }
+    }
+
+    console.log('Setting filters:', newFilters);
+    setFilters(newFilters);
+    setCurrentPage(1);
+
+    // Log what the resulting URL will look like
+    const testParams = new URLSearchParams();
+    testParams.append('page', '1');
+    testParams.append('per_page', '20');
+    if (newFilters.complaint_status_fixed_state_eq) {
+      testParams.append('q[complaint_status_fixed_state_eq]', newFilters.complaint_status_fixed_state_eq);
+    }
+    console.log('Expected API URL will be:', `/pms/admin/complaints.json?${testParams.toString()}`);
+  };
+
+  // Helper function to check if a status card is currently active
+  const isStatusCardActive = (cardType: string) => {
+    if (cardType === 'total') return false;
+
+    if (cardType === 'open') {
+      return filters.complaint_status_fixed_state_eq === 'Closed';
+    } else if (cardType === 'pending') {
+      return filters.complaint_status_fixed_state_eq === 'Pending';
+    } else if (cardType === 'in_progress') {
+      return filters.complaint_status_fixed_state_eq === 'In Progress';
+    } else if (cardType === 'closed') {
+      return filters.complaint_status_fixed_state_eq === 'Closed';
+    }
+
+    return false;
+  };
+
   // Handle drag end for chart reordering
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const {
       active,
       over
     } = event;
-    if (active.id !== over.id) {
+    if (active.id !== over?.id) {
       setChartOrder(items => {
-        const oldIndex = items.indexOf(active.id);
-        const newIndex = items.indexOf(over.id);
+        const oldIndex = items.indexOf(active.id.toString());
+        const newIndex = items.indexOf(over?.id.toString() || '');
         return arrayMove(items, oldIndex, newIndex);
       });
     }
@@ -728,26 +887,30 @@ export const TicketDashboard = () => {
   }];
   const renderCustomActions = () => (
     <div className="flex gap-3">
-      <Button 
-        onClick={() => navigate('/maintenance/ticket/add')} 
-        style={{ backgroundColor: '#C72030' }}
-        className="text-white hover:bg-[#C72030]/90"
+      <Button
+        onClick={handleAddButton}
+        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
       >
         <Plus className="w-4 h-4 mr-2" /> Add
       </Button>
     </div>
   );
 
+  const handleAddButton = () => {
+    navigate('/maintenance/ticket/add');
+  }
+
+
   const renderRightActions = () => (
     <div className="flex gap-2">
-      <Button 
-        variant="outline" 
+      <Button
+        variant="outline"
         className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
         onClick={() => setIsFilterOpen(true)}
       >
         <Filter className="w-4 h-4" />
       </Button>
-      <Button 
+      <Button
         variant="outline"
         className="border-gray-300 text-gray-600 hover:bg-gray-50"
       >
@@ -762,61 +925,68 @@ export const TicketDashboard = () => {
   };
   const TruncatedDescription = ({
     text,
-    maxLength = 50
+    maxWords = 5
   }: {
     text: string;
-    maxLength?: number;
+    maxWords?: number;
   }) => {
-    const [isExpanded, setIsExpanded] = useState(false);
     if (!text) return <span>--</span>;
-    if (text.length <= maxLength) {
-      return <span>{text}</span>;
+
+    const words = text.split(' ');
+    if (words.length <= maxWords) {
+      return <span className="ml-2">{text}</span>;
     }
-    return <div className="w-48">
-        <span className={`${isExpanded ? '' : 'line-clamp-2'}`}>
-          {isExpanded ? text : `${text.substring(0, maxLength)}...`}
-        </span>
-        <button onClick={e => {
-        e.stopPropagation();
-        setIsExpanded(!isExpanded);
-      }} className="ml-2 text-primary hover:text-primary/80 text-xs underline animate-fade-in">
-          {isExpanded ? 'Show less' : 'Show more'}
-        </button>
-      </div>;
+
+    const truncated = words.slice(0, maxWords).join(' ');
+    return <div className="w-48 max-w-[200px] group relative">
+      <span className="block line-clamp-2">
+        {`${truncated}...`}
+      </span>
+      <div className="absolute left-0 top-0 w-max max-w-xs bg-black text-white text-xs p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 pointer-events-none">
+        {text}
+      </div>
+    </div>;
   };
   const renderCell = (item, columnKey) => {
     if (columnKey === 'actions') {
       return (
-        <div className="flex items-center justify-center gap-2">
-          <div title="View ticket">
-            <Eye 
-              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
+        <div className="flex items-center justify-center gap-1 w-full h-full min-h-[40px]">
+          <div title="View ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
+            <Eye
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
               onClick={(e) => {
                 e.stopPropagation();
                 handleViewDetails(item.id);
               }}
             />
           </div>
-          <div title="Flag ticket">
-            <Flag 
-              className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${
-                item.is_flagged 
-                  ? 'text-red-500 fill-red-500' 
-                  : 'text-gray-600'
-              }`}
+          {/* <div title="Update ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
+            <Edit
+              className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/maintenance/ticket/update/${item.id}`);
+              }}
+            />
+          </div> */}
+          <div title="Flag ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
+            <Flag
+              className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged
+                ? 'text-red-500 fill-red-500'
+                : 'text-gray-600'
+                }`}
               onClick={(e) => {
                 e.stopPropagation();
                 handleSingleTicketFlag(item.id, item.is_flagged);
               }}
             />
           </div>
-          <div title="Star ticket">
-            <Star 
-              className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${
-                item.is_golden_ticket 
-                  ? 'text-yellow-500 fill-yellow-500' 
-                  : 'text-gray-600'
-              }`}
+          <div title="Star ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
+            <Star
+              className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_golden_ticket
+                ? 'text-yellow-500 fill-yellow-500'
+                : 'text-gray-600'
+                }`}
               onClick={(e) => {
                 e.stopPropagation();
                 handleSingleTicketGoldenTicket(item.id, item.is_golden_ticket);
@@ -830,7 +1000,7 @@ export const TicketDashboard = () => {
       return <TruncatedDescription text={item.heading} />;
     }
     if (columnKey === 'issue_status') {
-      return <span 
+      return <span
         className={`px-2 py-1 rounded text-xs animate-scale-in cursor-pointer hover:opacity-80 transition-opacity ${item.issue_status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : item.issue_status === 'Closed' ? 'bg-green-100 text-green-700' : item.issue_status === 'Open' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`}
         onClick={(e) => {
           e.stopPropagation();
@@ -843,8 +1013,8 @@ export const TicketDashboard = () => {
     }
     if (columnKey === 'priority') {
       return <span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-700 animate-scale-in">
-          {item.priority}
-        </span>;
+        {item.priority}
+      </span>;
     }
     if (columnKey === 'created_at') {
       return formatDate(item.created_at);
@@ -857,26 +1027,80 @@ export const TicketDashboard = () => {
     }
     return item[columnKey];
   };
+
+
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <Tabs defaultValue="tickets" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-          <TabsTrigger value="analytics" className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
-            <BarChart3 className="w-4 h-4" />
-            Analytics
-          </TabsTrigger>
-          <TabsTrigger value="tickets" className="flex items-center gap-2 data-[state=active]:bg-[#C72030] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-[#C72030] border-none">
-            <Ticket className="w-4 h-4" />
+          <TabsTrigger
+            value="tickets"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              strokeWidth={2}
+              className="lucide lucide-ticket w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+            >
+              <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z" />
+              <path d="M13 5v2" />
+              <path d="M13 17v2" />
+              <path d="M13 11v2" />
+            </svg>
             Ticket List
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="analytics"
+            className="group flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              strokeWidth={2}
+              className="lucide lucide-chart-column w-4 h-4 stroke-black group-data-[state=active]:stroke-[#C72030]"
+            >
+              <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+              <path d="M18 17V9" />
+              <path d="M13 17V5" />
+              <path d="M8 17v-3" />
+            </svg>
+            Analytics
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
-          {/* Ticket Summary Cards */}
-          
 
-          {/* Header with Ticket Selector */}
-          <div className="flex justify-end">
+        <TabsContent value="analytics" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+
+
+
+          {/* Header with Filter and Ticket Selector */}
+          <div className="flex justify-end items-center gap-2">
+
+            <Button
+              onClick={() => setIsAnalyticsFilterOpen(true)}
+              variant="outline"
+              className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
+              disabled={analyticsLoading}
+            >
+              <Filter className="w-4 h-4" />
+              {/* {analyticsDateRange.startDate && analyticsDateRange.endDate && (
+                <span className="text-sm text-gray-600">
+                  {analyticsDateRange.startDate} - {analyticsDateRange.endDate}
+                </span>
+              )} */}
+              {analyticsLoading && (
+                <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
+              )}
+            </Button>
+
             <TicketSelector onSelectionChange={handleSelectionChange} />
           </div>
 
@@ -888,210 +1112,112 @@ export const TicketDashboard = () => {
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={chartOrder} strategy={rectSortingStrategy}>
                   <div className="space-y-4 sm:space-y-6">
-                    {/* Top Row - Two Donut Charts */}
+                    {/* First Row - Ticket Status and ProActive/Reactive */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                       {chartOrder.filter(id => ['statusChart', 'reactiveChart'].includes(id)).map(chartId => {
-                      if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
-                        return <SortableChartItem key={chartId} id={chartId}>
-                              <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                  <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Tickets</h3>
-                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
-                                </div>
-                                <div className="relative flex items-center justify-center">
-                                  <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
-                                    <PieChart>
-                                      <Pie data={statusData} cx="50%" cy="50%" innerRadius={40} outerRadius={80} paddingAngle={2} dataKey="value" label={({
-                                    value,
-                                    name,
-                                    cx,
-                                    cy,
-                                    midAngle,
-                                    innerRadius,
-                                    outerRadius
-                                  }) => {
-                                    if (name === 'Open') {
-                                      return <text x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)} fill="black" textAnchor="middle" dominantBaseline="middle" fontSize="14" fontWeight="bold">
-                                                2
-                                              </text>;
-                                    }
-                                    return <text x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)} fill="black" textAnchor="middle" dominantBaseline="middle" fontSize="14" fontWeight="bold">
-                                              {value}
-                                            </text>;
-                                  }} labelLine={false}>
-                                        {statusData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                                      </Pie>
-                                      <Tooltip />
-                                    </PieChart>
-                                  </ResponsiveContainer>
-                                   <div className="absolute inset-0 flex items-center justify-center">
-                                     <div className="text-center">
-                                       <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {totalSummaryTickets}</div>
-                                     </div>
-                                   </div>
-                                </div>
-                                <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                  {statusData.map((item, index) => <div key={index} className="flex items-center gap-2">
-                                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{
-                                  backgroundColor: item.color
-                                }}></div>
-                                      <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
-                                    </div>)}
-                                </div>
-                              </div>
-                            </SortableChartItem>;
-                      }
-                      if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
-                        return <SortableChartItem key={chartId} id={chartId}>
-                              <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm">
-                                <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                  <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Reactive Proactive Ticket</h3>
-                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" />
-                                </div>
-                                <div className="relative flex items-center justify-center">
-                                  <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
-                                    <PieChart>
-                                      <Pie data={typeData} cx="50%" cy="50%" innerRadius={40} outerRadius={80} paddingAngle={2} dataKey="value" label={({
-                                    value,
-                                    name,
-                                    cx,
-                                    cy,
-                                    midAngle,
-                                    innerRadius,
-                                    outerRadius
-                                  }) => {
-                                    if (name === 'Open') {
-                                      return <text x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)} fill="black" textAnchor="middle" dominantBaseline="middle" fontSize="14" fontWeight="bold">
-                                                2
-                                              </text>;
-                                    }
-                                    return <text x={cx + (innerRadius + outerRadius) / 2 * Math.cos(-midAngle * Math.PI / 180)} y={cy + (innerRadius + outerRadius) / 2 * Math.sin(-midAngle * Math.PI / 180)} fill="black" textAnchor="middle" dominantBaseline="middle" fontSize="14" fontWeight="bold">
-                                              {value}
-                                            </text>;
-                                  }} labelLine={false}>
-                                        {typeData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                                      </Pie>
-                                      <Tooltip />
-                                    </PieChart>
-                                  </ResponsiveContainer>
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="text-center">
-                                      <div className="text-sm sm:text-lg font-semibold text-gray-700">Total : {reactiveTickets + proactiveTickets}</div>
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
-                                  {typeData.map((item, index) => <div key={index} className="flex items-center gap-2">
-                                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm" style={{
-                                  backgroundColor: item.color
-                                }}></div>
-                                      <span className="text-xs sm:text-sm font-medium text-gray-700">{item.name}</span>
-                                    </div>)}
-                                </div>
-                              </div>
-                            </SortableChartItem>;
-                      }
-                      return null;
-                    })}
+                        if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
+                          return (
+                            <SortableChartItem key={chartId} id={chartId}>
+                              <TicketStatusOverviewCard
+                                openTickets={openticketanalyticsData}
+                                closedTickets={closedticketanalyticsData}
+                              />
+                            </SortableChartItem>
+                          );
+                        }
+                        if (chartId === 'reactiveChart' && visibleSections.includes('reactiveChart')) {
+                          return (
+                            <SortableChartItem key={chartId} id={chartId}>
+                              <ProactiveReactiveCard
+                                proactiveOpenTickets={proactiveOpenTickets}
+                                proactiveClosedTickets={proactiveClosedTickets}
+                                reactiveOpenTickets={reactiveOpenTickets}
+                                reactiveClosedTickets={reactiveClosedTickets}
+                              />
+                            </SortableChartItem>
+                          );
+                        }
+                        return null;
+                      })}
                     </div>
 
-                    {/* Bottom Charts - Category and Aging Matrix */}
-                    {chartOrder.filter(id => ['categoryChart', 'agingMatrix'].includes(id)).map(chartId => {
-                    if (chartId === 'categoryChart' && visibleSections.includes('categoryChart')) {
-                      return <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
-                              <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-base sm:text-lg font-bold" style={{
-                              color: '#C72030'
-                            }}>Unit Category-wise Tickets</h3>
-                                <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{
-                              color: '#C72030'
-                            }} />
-                              </div>
-                              <div className="w-full overflow-x-auto">
-                                <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
-                                  <BarChart data={categoryChartData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--analytics-border))" />
-                                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} tick={{
-                                  fill: 'hsl(var(--analytics-text))',
-                                  fontSize: 10
-                                }} className="text-xs" />
-                                    <YAxis tick={{
-                                  fill: 'hsl(var(--analytics-text))',
-                                  fontSize: 10
-                                }} />
-                                    <Tooltip />
-                                    <Bar dataKey="value" fill="hsl(var(--chart-tan))" />
-                                  </BarChart>
-                                </ResponsiveContainer>
-                              </div>
-                            </div>
-                          </SortableChartItem>;
-                    }
-                    if (chartId === 'agingMatrix' && visibleSections.includes('agingMatrix')) {
-                      return <SortableChartItem key={chartId} id={chartId}>
-                            <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
-                              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                                <h3 className="text-base sm:text-lg font-bold" style={{
-                              color: '#C72030'
-                            }}>Tickets Ageing Matrix</h3>
-                                <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{
-                              color: '#C72030'
-                            }} />
-                              </div>
-                              
-                              <div className="space-y-4 sm:space-y-6">
-                                {/* Table - Horizontally scrollable on mobile */}
-                                <div className="overflow-x-auto -mx-3 sm:mx-0">
-                                  <div className="min-w-[500px] px-3 sm:px-0">
-                                    <table className="w-full border-collapse border border-gray-300">
-                                      <thead>
-                                        <tr style={{
-                                      backgroundColor: '#EDE4D8'
-                                    }}>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-left text-xs sm:text-sm font-medium text-black">Priority</th>
-                                          <th colSpan={5} className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">No. of Days</th>
-                                        </tr>
-                                        <tr style={{
-                                      backgroundColor: '#EDE4D8'
-                                    }}>
-                                          <th className="border border-gray-300 p-2 sm:p-3"></th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">0-10</th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">11-20</th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">21-30</th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">31-40</th>
-                                          <th className="border border-gray-300 p-2 sm:p-3 text-center text-xs sm:text-sm font-medium text-black">41-50</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {agingMatrixData.map((row, index) => <tr key={index} className="bg-white">
-                                            <td className="border border-gray-300 p-2 sm:p-3 font-medium text-black text-xs sm:text-sm">{row.priority}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['0-10']}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['11-20']}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['21-30']}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['31-40']}</td>
-                                            <td className="border border-gray-300 p-2 sm:p-3 text-center text-black text-xs sm:text-sm">{row['41-50']}</td>
-                                          </tr>)}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                </div>
+                    {/* Second Row - Response TAT */}
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                      {visibleSections.includes('responseTat') && (
+                        <SortableChartItem key="responseTat" id="responseTat">
+                          <ResponseTATCard
+                            data={responseTATData}
+                            className="h-full"
+                            dateRange={{
+                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                            }}
+                          />
+                        </SortableChartItem>
+                      )}
+                    </div>
 
-                                {/* Summary Box - Full Width Below Table */}
-                                <div className="w-full">
-                                  <div className="rounded-lg p-4 sm:p-8 text-center" style={{
-                                backgroundColor: '#EDE4D8'
-                              }}>
-                                    <div className="text-2xl sm:text-4xl font-bold text-black mb-1 sm:mb-2">569 Days</div>
-                                    <div className="text-sm sm:text-base text-black">Average Time Taken To Resolve A Ticket</div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </SortableChartItem>;
-                    }
-                    return null;
-                  })}
+                    {/* Third Row - Category Wise ProActive/Reactive (Dual-bar chart) */}
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                      {visibleSections.includes('categoryWiseProactiveReactive') && (
+                        <SortableChartItem key="categoryWiseProactiveReactive" id="categoryWiseProactiveReactive">
+                          <CategoryWiseProactiveReactiveCard
+                            data={categorywiseTicketsData}
+                            dateRange={{
+                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                            }}
+                          />
+                        </SortableChartItem>
+                      )}
+                    </div>
+
+                    {/* Fourth Row - Unit Category-wise Tickets */}
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                      {visibleSections.includes('categoryChart') && (
+                        <SortableChartItem key="categoryChart" id="categoryChart">
+                          <UnitCategoryWiseCard
+                            data={unitCategorywiseData}
+                            dateRange={{
+                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                            }}
+                          />
+                        </SortableChartItem>
+                      )}
+                    </div>
+
+                    {/* Fifth Row - Tickets Aging Matrix */}
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                      {visibleSections.includes('agingMatrix') && (
+                        <SortableChartItem key="agingMatrix" id="agingMatrix">
+                          <TicketAgingMatrixCard
+                            data={agingMatrixAnalyticsData}
+                            agingMatrixData={agingMatrixData}
+                            dateRange={{
+                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                            }}
+                          />
+                        </SortableChartItem>
+                      )}
+                    </div>
+
+                    {/* Sixth Row - Resolution TAT Report */}
+                    <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                      {visibleSections.includes('resolutionTat') && (
+                        <SortableChartItem key="resolutionTat" id="resolutionTat">
+                          <ResolutionTATCard
+                            data={resolutionTATReportData}
+                            className="bg-white border border-gray-200 rounded-lg"
+                            dateRange={{
+                              startDate: convertDateStringToDate(analyticsDateRange.startDate),
+                              endDate: convertDateStringToDate(analyticsDateRange.endDate)
+                            }}
+                          />
+                        </SortableChartItem>
+                      )}
+                    </div>
                   </div>
                 </SortableContext>
               </DndContext>
@@ -1106,45 +1232,51 @@ export const TicketDashboard = () => {
 
         <TabsContent value="tickets" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
           {/* Ticket Statistics Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {[{
-            label: 'Total Tickets',
-            value: totalTickets,
-            icon: Settings
-          }, {
-            label: 'Open',
-            value: openTickets,
-            icon: Settings
-          }, {
-            label: 'In Progress',
-            value: inProgressTickets,
-            icon: Settings
-          }, {
-            label: 'Pending',
-            value: inProgressTickets,
-            icon: Settings
-          }, {
-            label: 'Closed',
-            value: closedTickets,
-            icon: Settings
-          }].map((item, i) => {
-            const IconComponent = item.icon;
-            return <div key={i} className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee]">
-                  <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 bg-[#FBEDEC]">
-                    <IconComponent className="w-4 h-4 sm:w-6 sm:h-6" style={{
-                  color: '#C72030'
-                }} />
+              label: 'Total Tickets',
+              value: displayTotalTickets,
+              icon: Settings,
+              type: 'total',
+              clickable: true
+            }, {
+              label: 'Open',
+              value: openTickets,
+              icon: Settings,
+              type: 'open',
+              clickable: true
+            }, {
+              label: 'Closed',
+              value: closedTickets,
+              icon: Settings,
+              type: 'closed',
+              clickable: true
+            }].map((item, i) => {
+              const IconComponent = item.icon;
+              const isActive = isStatusCardActive(item.type);
+              return (
+                <div
+                  key={i}
+                  className={`flex items-center justify-center p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] gap-2 sm:gap-4 transition-all 
+          ${isActive ? "" : "bg-[#f6f4ee]"} 
+          ${item.clickable ? "cursor-pointer hover:bg-[#edeae3] hover:shadow-lg" : ""}`}
+                  onClick={() => item.clickable && handleStatusCardClick(item.type)}
+                >
+                  <div className="w-[52px] h-[36px] sm:w-[62px] sm:h-[62px] rounded-lg flex items-center justify-center flex-shrink-0 bg-[rgba(199,32,48,0.08)]">
+                    <IconComponent className="w-5 h-5 sm:w-6 sm:h-6 text-[#C72030]" />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <div className="text-lg sm:text-2xl font-bold leading-tight truncate" style={{
-                  color: '#C72030'
-                }}>{item.value}</div>
-                    <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">{item.label}</div>
+                    <div className="text-xl sm:text-2xl font-bold leading-tight truncate text-gray-600 mb-1">
+                      {item.value}
+                    </div>
+                    <div className="text-xs sm:text-sm text-gray-600 font-medium leading-tight">
+                      {item.label}
+                    </div>
                   </div>
-                </div>;
-          })}
+                </div>
+              );
+            })}
           </div>
-
 
           {/* Tickets Table */}
           <div className="overflow-x-auto animate-fade-in">
@@ -1154,21 +1286,28 @@ export const TicketDashboard = () => {
               </div>
             ) : (
               <>
-                <EnhancedTable 
-                  data={safeTickets} 
-                  columns={columns} 
-                  renderCell={renderCell} 
-                  selectable={true} 
-                  pagination={false} 
-                  enableExport={true} 
-                  exportFileName="tickets" 
-                  onRowClick={ticket => handleViewDetails(ticket.id)} 
-                  storageKey="tickets-table" 
-                  enableSelection={true} 
-                  selectedItems={selectedTickets.map(id => id.toString())} 
-                  onSelectItem={handleTicketSelection} 
-                  onSelectAll={handleSelectAll} 
-                  getItemId={ticket => ticket.id.toString()} 
+                {/* {searchLoading && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
+                    <div className="flex items-center gap-2 text-blue-600">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      <span className="text-sm">Searching tickets...</span>
+                    </div>
+                  </div>
+                )} */}
+                <EnhancedTable
+                  data={tickets || []}
+                  columns={columns}
+                  renderCell={renderCell}
+                  selectable={true}
+                  pagination={false}
+                  enableExport={true}
+                  exportFileName="tickets"
+                  storageKey="tickets-table"
+                  enableSelection={true}
+                  selectedItems={selectedTickets.map(id => id.toString())}
+                  onSelectItem={handleTicketSelection}
+                  onSelectAll={handleSelectAll}
+                  getItemId={ticket => ticket.id.toString()}
                   leftActions={
                     <div className="flex gap-3">
                       {renderCustomActions()}
@@ -1177,32 +1316,33 @@ export const TicketDashboard = () => {
                   onFilterClick={() => setIsFilterOpen(true)}
                   rightActions={null}
                   searchPlaceholder="Search Tickets"
+                  onSearchChange={handleSearch}
                   hideTableExport={false}
                   hideColumnsButton={false}
                 />
-                
+
                 {/* Custom Pagination */}
                 <div className="flex items-center justify-center mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
                   <div className="flex items-center space-x-1">
                     {/* Previous Button */}
-                    <button 
-                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
-                      disabled={currentPage === 1 || loading} 
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1 || loading || searchLoading}
                       className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                       </svg>
                     </button>
-                    
+
                     {/* Page Numbers */}
                     <div className="flex items-center space-x-1">
                       {/* First page */}
                       {currentPage > 3 && (
                         <>
-                          <button 
-                            onClick={() => setCurrentPage(1)} 
-                            disabled={loading}
+                          <button
+                            onClick={() => setCurrentPage(1)}
+                            disabled={loading || searchLoading}
                             className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
                           >
                             1
@@ -1212,7 +1352,7 @@ export const TicketDashboard = () => {
                           )}
                         </>
                       )}
-                      
+
                       {/* Current page and surrounding pages */}
                       {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
                         let pageNum;
@@ -1223,34 +1363,33 @@ export const TicketDashboard = () => {
                         } else {
                           pageNum = currentPage - 1 + i;
                         }
-                        
+
                         if (pageNum < 1 || pageNum > totalPages) return null;
-                        
+
                         return (
-                          <button 
+                          <button
                             key={pageNum}
-                            onClick={() => setCurrentPage(pageNum)} 
-                            disabled={loading}
-                            className={`w-8 h-8 flex items-center justify-center text-sm rounded disabled:opacity-50 ${
-                              currentPage === pageNum 
-                                ? 'bg-[#C72030] text-white' 
-                                : 'text-gray-700 hover:bg-gray-100'
-                            }`}
+                            onClick={() => setCurrentPage(pageNum)}
+                            disabled={loading || searchLoading}
+                            className={`w-8 h-8 flex items-center justify-center text-sm rounded disabled:opacity-50 ${currentPage === pageNum
+                              ? 'bg-[#C72030] text-white'
+                              : 'text-gray-700 hover:bg-gray-100'
+                              }`}
                           >
                             {pageNum}
                           </button>
                         );
                       })}
-                      
+
                       {/* Last page */}
                       {currentPage < totalPages - 2 && (
                         <>
                           {currentPage < totalPages - 3 && (
                             <span className="px-2 text-gray-500">...</span>
                           )}
-                          <button 
-                            onClick={() => setCurrentPage(totalPages)} 
-                            disabled={loading}
+                          <button
+                            onClick={() => setCurrentPage(totalPages)}
+                            disabled={loading || searchLoading}
                             className="w-8 h-8 flex items-center justify-center text-sm text-gray-700 hover:bg-gray-100 rounded disabled:opacity-50"
                           >
                             {totalPages}
@@ -1258,11 +1397,11 @@ export const TicketDashboard = () => {
                         </>
                       )}
                     </div>
-                    
+
                     {/* Next Button */}
-                    <button 
-                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
-                      disabled={currentPage === totalPages || loading} 
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages || loading || searchLoading}
                       className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1280,8 +1419,8 @@ export const TicketDashboard = () => {
       <TicketsFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} onApplyFilters={handleFilterApply} />
 
       {/* Edit Status Dialog */}
-      <EditStatusDialog 
-        open={isEditStatusOpen} 
+      <EditStatusDialog
+        open={isEditStatusOpen}
         onOpenChange={setIsEditStatusOpen}
         complaintId={selectedTicketForEdit?.id}
         currentStatusId={selectedTicketForEdit?.complaint_status_id}
@@ -1292,14 +1431,21 @@ export const TicketDashboard = () => {
         }}
       />
 
+      {/* Analytics Filter Dialog */}
+      <TicketAnalyticsFilterDialog
+        isOpen={isAnalyticsFilterOpen}
+        onClose={() => setIsAnalyticsFilterOpen(false)}
+        onApplyFilters={handleAnalyticsFilterApply}
+      />
+
       {/* Ticket Selection Panel */}
-      <TicketSelectionPanel 
-        selectedTickets={selectedTickets} 
-        selectedTicketObjects={tickets.filter(ticket => selectedTickets.includes(ticket.id))} 
-        onGoldenTicket={handleGoldenTicket} 
-        onFlag={handleFlag} 
-        onExport={handleExport} 
-        onClearSelection={handleClearSelection} 
+      <TicketSelectionPanel
+        selectedTickets={selectedTickets}
+        selectedTicketObjects={tickets.filter(ticket => selectedTickets.includes(ticket.id))}
+        onGoldenTicket={handleGoldenTicket}
+        onFlag={handleFlag}
+        onExport={handleExport}
+        onClearSelection={handleClearSelection}
       />
     </div>
   );

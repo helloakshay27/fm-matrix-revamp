@@ -105,7 +105,7 @@ export const EditMaterialPRDashboard = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 mx-auto">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Edit Material PR</h1>

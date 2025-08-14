@@ -1,217 +1,274 @@
-
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Plus,
+  Eye,
+  Filter,
+  BookOpen,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Download,
+  RefreshCw,
+  Settings,
+  Search,
+} from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Plus, Search, Filter, Download, Eye, Edit, Trash2 } from "lucide-react";
-import { useNavigate } from 'react-router-dom';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
-interface TrainingRecord {
-  id: string;
-  srNo: number;
-  typeOfUser: 'SSO' | 'Signin';
-  fullName: string;
-  email: string;
-  mobileNumber: string;
-  companyName: string;
-  empId: string;
-  function: string;
-  role: string;
-  cluster: string;
-  circle: string;
-  workLocation: string;
-  trainingName: string;
-  typeOfTraining: 'Internal' | 'External';
-  trainingDate: string;
-  status: 'Completed' | 'In Progress' | 'Scheduled';
-}
-
-const mockTrainingData: TrainingRecord[] = [
+// Mock data for training
+const mockTrainings = [
   {
-    id: '1',
-    srNo: 1,
-    typeOfUser: 'SSO',
-    fullName: 'John Doe',
-    email: 'john.doe@company.com',
-    mobileNumber: '+1234567890',
-    companyName: 'ABC Corp',
-    empId: 'EMP001',
-    function: 'Engineering',
-    role: 'Safety Manager',
-    cluster: 'North',
-    circle: 'Circle A',
-    workLocation: 'Office Building A',
-    trainingName: 'Fire Safety Training',
-    typeOfTraining: 'Internal',
-    trainingDate: '2025-01-15',
-    status: 'Completed'
+    id: "TRN001",
+    title: "Fire Safety Training",
+    type: "Safety",
+    status: "Completed",
+    instructor: "John Safety",
+    scheduledDate: "2024-01-15",
+    duration: "4 hours",
+    attendees: 25,
+    maxCapacity: 30,
+    location: "Training Room A",
+    completionRate: 96,
   },
   {
-    id: '2',
-    srNo: 2,
-    typeOfUser: 'Signin',
-    fullName: 'Jane Smith',
-    email: 'jane.smith@company.com',
-    mobileNumber: '+1234567891',
-    companyName: 'XYZ Ltd',
-    empId: 'EMP002',
-    function: 'Operations',
-    role: 'Safety Officer',
-    cluster: 'South',
-    circle: 'Circle B',
-    workLocation: 'Factory Unit 1',
-    trainingName: 'Emergency Response Training',
-    typeOfTraining: 'External',
-    trainingDate: '2025-01-20',
-    status: 'In Progress'
-  }
+    id: "TRN002",
+    title: "First Aid Certification",
+    type: "Medical",
+    status: "Scheduled",
+    instructor: "Dr. Sarah Medical",
+    scheduledDate: "2024-01-20",
+    duration: "8 hours",
+    attendees: 15,
+    maxCapacity: 20,
+    location: "Conference Room B",
+    completionRate: 0,
+  },
+  {
+    id: "TRN003",
+    title: "Equipment Safety Training",
+    type: "Equipment",
+    status: "In Progress",
+    instructor: "Mike Equipment",
+    scheduledDate: "2024-01-18",
+    duration: "6 hours",
+    attendees: 20,
+    maxCapacity: 25,
+    location: "Workshop Area",
+    completionRate: 45,
+  },
 ];
+
+const calculateStats = (trainings: any[]) => {
+  return {
+    total: trainings.length,
+    completed: trainings.filter(t => t.status === "Completed").length,
+    scheduled: trainings.filter(t => t.status === "Scheduled").length,
+    inProgress: trainings.filter(t => t.status === "In Progress").length,
+    cancelled: trainings.filter(t => t.status === "Cancelled").length,
+    totalAttendees: trainings.reduce((sum, t) => sum + t.attendees, 0),
+    avgCompletionRate: trainings.reduce((sum, t) => sum + t.completionRate, 0) / trainings.length,
+  };
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "Completed": return "bg-green-100 text-green-800";
+    case "Scheduled": return "bg-blue-100 text-blue-800";
+    case "In Progress": return "bg-yellow-100 text-yellow-800";
+    case "Cancelled": return "bg-red-100 text-red-800";
+    default: return "bg-gray-100 text-gray-800";
+  }
+};
 
 export const TrainingListDashboard = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [trainingData, setTrainingData] = useState<TrainingRecord[]>(mockTrainingData);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'Completed':
-        return <Badge className="bg-green-100 text-green-800">Completed</Badge>;
-      case 'In Progress':
-        return <Badge className="bg-blue-100 text-blue-800">In Progress</Badge>;
-      case 'Scheduled':
-        return <Badge className="bg-yellow-100 text-yellow-800">Scheduled</Badge>;
-      default:
-        return <Badge variant="secondary">{status}</Badge>;
-    }
+  const stats = calculateStats(mockTrainings);
+  const filteredTrainings = mockTrainings.filter(training =>
+    training.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    training.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleAddTraining = () => {
+    navigate("/safety/training-list/add");
   };
 
-  const filteredData = trainingData.filter(record =>
-    record.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    record.trainingName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    record.companyName.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleViewTraining = (trainingId: string) => {
+    navigate(`/safety/training-list/details/${trainingId}`);
+  };
+
+  const StatCard = ({ icon, label, value }: any) => (
+    <div className="bg-[#f6f4ee] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
+      <div className="w-14 h-14 bg-[#FBEDEC] rounded-full flex items-center justify-center">
+        {React.cloneElement(icon, { className: `w-6 h-6 text-[#C72030]` })}
+      </div>
+      <div>
+        <div className="text-2xl font-bold text-[#C72030]">{value}</div>
+        <div className="text-sm font-medium text-gray-600">{label}</div>
+      </div>
+    </div>
   );
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Training List</h1>
-          <p className="text-gray-600">Manage safety training records</p>
-        </div>
-        <Button 
-          onClick={() => navigate('/safety/training-list/add')}
-          className="bg-[#C72030] hover:bg-[#A01020]"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Training Record
-        </Button>
-      </div>
+    <div className="p-4 sm:p-6">
+      <Tabs defaultValue="list" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+          <TabsTrigger
+            value="list"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <BookOpen className="w-4 h-4" />
+            List
+          </TabsTrigger>
+          <TabsTrigger
+            value="analytics"
+            className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+          >
+            <Settings className="w-4 h-4" />
+            Analytics
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Filters and Search */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex gap-4 flex-wrap items-center">
-            <div className="flex-1 min-w-[300px]">
-              <div className="relative">
+        <TabsContent value="list" className="mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
+            <StatCard icon={<BookOpen />} label="Total Trainings" value={stats.total} />
+            <StatCard icon={<CheckCircle />} label="Completed" value={stats.completed} />
+            <StatCard icon={<Clock />} label="Scheduled" value={stats.scheduled} />
+            <StatCard icon={<XCircle />} label="In Progress" value={stats.inProgress} />
+            <StatCard icon={<BookOpen />} label="Total Attendees" value={stats.totalAttendees} />
+            <StatCard icon={<CheckCircle />} label="Avg Completion Rate" value={`${stats.avgCompletionRate.toFixed(1)}%`} />
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleAddTraining}
+                className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Schedule Training
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2 flex-1 max-w-md">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  placeholder="Search by name, training, or company..."
+                  placeholder="Search trainings..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
+              <Button variant="outline" size="icon">
+                <Filter className="w-4 h-4" />
+              </Button>
+              <Button variant="outline" size="icon">
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+              <Button variant="outline" size="icon">
+                <Download className="w-4 h-4" />
+              </Button>
             </div>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Filter className="w-4 h-4" />
-              Filters
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Export
-            </Button>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Training Records Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Training Records ({filteredData.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Sr No</TableHead>
-                <TableHead>Full Name</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Emp ID</TableHead>
-                <TableHead>Training Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Training Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredData.map((record) => (
-                <TableRow key={record.id}>
-                  <TableCell>{record.srNo}</TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{record.fullName}</div>
-                      <div className="text-sm text-gray-500">{record.email}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{record.companyName}</TableCell>
-                  <TableCell>{record.empId}</TableCell>
-                  <TableCell>{record.trainingName}</TableCell>
-                  <TableCell>
-                    <Badge variant={record.typeOfTraining === 'Internal' ? 'default' : 'secondary'}>
-                      {record.typeOfTraining}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{record.trainingDate}</TableCell>
-                  <TableCell>{getStatusBadge(record.status)}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => navigate(`/safety/training-list/${record.id}`)}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/safety/training-list/edit/${record.id}`)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          <div className="bg-white rounded-lg shadow-sm border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Training ID</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Instructor</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Attendees</TableHead>
+                  <TableHead>Completion Rate</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {filteredTrainings.map((training) => (
+                  <TableRow key={training.id}>
+                    <TableCell className="font-medium">{training.id}</TableCell>
+                    <TableCell>{training.title}</TableCell>
+                    <TableCell>{training.type}</TableCell>
+                    <TableCell>
+                      <Badge className={getStatusColor(training.status)}>
+                        {training.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{training.instructor}</TableCell>
+                    <TableCell>{training.scheduledDate}</TableCell>
+                    <TableCell>{training.duration}</TableCell>
+                    <TableCell>{training.attendees}/{training.maxCapacity}</TableCell>
+                    <TableCell>{training.completionRate}%</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewTraining(training.id)}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">Training Status Distribution</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Completed: {stats.completed}</span>
+                  <span>{((stats.completed / stats.total) * 100).toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Scheduled: {stats.scheduled}</span>
+                  <span>{((stats.scheduled / stats.total) * 100).toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>In Progress: {stats.inProgress}</span>
+                  <span>{((stats.inProgress / stats.total) * 100).toFixed(1)}%</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">Training Performance</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Total Attendees: {stats.totalAttendees}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Avg Completion Rate: {stats.avgCompletionRate.toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total Sessions: {stats.total}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

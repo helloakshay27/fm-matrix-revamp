@@ -97,8 +97,8 @@ export const GRNDashboard = () => {
   );
 
   const handleRowSelect = (id: number) => {
-    setSelectedRows(prev => 
-      prev.includes(id) 
+    setSelectedRows(prev =>
+      prev.includes(id)
         ? prev.filter(rowId => rowId !== id)
         : [...prev, id]
     );
@@ -113,7 +113,7 @@ export const GRNDashboard = () => {
   };
 
   const handleExport = () => {
-    const dataToExport = selectedRows.length > 0 
+    const dataToExport = selectedRows.length > 0
       ? filteredData.filter(item => selectedRows.includes(item.id))
       : filteredData;
 
@@ -165,21 +165,21 @@ export const GRNDashboard = () => {
       {/* Action Buttons */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex gap-3">
-          <Button 
+          <Button
             className="bg-[#C72030] hover:bg-[#A01020] text-white"
             onClick={() => navigate('/finance/grn-srn/add')}
           >
             <Plus className="w-4 h-4 mr-2" />
             Add New
           </Button>
-          <Button 
+          <Button
             variant="outline"
             onClick={() => setIsFilterDialogOpen(true)}
           >
             <Filter className="w-4 h-4 mr-2" />
             Filters
           </Button>
-          <Button 
+          <Button
             variant="outline"
             className="bg-[#C72030] hover:bg-[#A01020] text-white"
             onClick={handleExport}
@@ -200,13 +200,13 @@ export const GRNDashboard = () => {
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-transparent w-80"
             />
           </div>
-          <Button 
+          <Button
             className="bg-[#C72030] hover:bg-[#A01020] text-white px-4"
           >
             Search
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="px-4"
             onClick={() => setSearchQuery('')}
           >
@@ -259,9 +259,9 @@ export const GRNDashboard = () => {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1">
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       className="p-1"
                       onClick={() => navigate(`/finance/grn-srn/details/${item.id}`)}
                     >
@@ -277,15 +277,15 @@ export const GRNDashboard = () => {
                 <TableCell>{item.poDeliveryDate}</TableCell>
                 <TableCell>{item.poSentDate}</TableCell>
                 <TableCell>{item.poQty}</TableCell>
-                <TableCell>₹{item.poRate}</TableCell>
-                <TableCell className="font-medium">₹{item.poAmount}</TableCell>
+                <TableCell>{localStorage.getItem('currency')}{item.poRate}</TableCell>
+                <TableCell className="font-medium">{localStorage.getItem('currency')}{item.poAmount}</TableCell>
                 <TableCell className="text-blue-600 hover:underline cursor-pointer">
                   {item.grnNumber}
                 </TableCell>
                 <TableCell>{item.grnDate}</TableCell>
                 <TableCell>{item.grnQty}</TableCell>
-                <TableCell>₹{item.grnRate}</TableCell>
-                <TableCell className="font-medium">₹{item.grnAmount}</TableCell>
+                <TableCell>{localStorage.getItem('currency')}{item.grnRate}</TableCell>
+                <TableCell className="font-medium">{localStorage.getItem('currency')}{item.grnAmount}</TableCell>
                 <TableCell>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.grnStatus)}`}>
                     {item.grnStatus}
@@ -329,7 +329,7 @@ export const GRNDashboard = () => {
         </Pagination>
       </div>
 
-      <GRNFilterDialog 
+      <GRNFilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
       />

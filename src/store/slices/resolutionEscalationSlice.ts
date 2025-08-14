@@ -31,7 +31,11 @@ export const createResolutionEscalation = createAsyncThunk(
       const response = await apiClient.post(ENDPOINTS.CREATE_COMPLAINT_WORKER, payload)
       return response.data
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to create resolution escalation')
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          'Failed to create resolution escalation'
+      return rejectWithValue(errorMessage)
     }
   }
 )
@@ -44,7 +48,11 @@ export const fetchResolutionEscalations = createAsyncThunk(
       const response = await apiClient.get(ENDPOINTS.RESOLUTION_ESCALATION)
       return response.data
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch resolution escalation rules')
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          'Failed to fetch resolution escalation rules'
+      return rejectWithValue(errorMessage)
     }
   }
 )
@@ -54,10 +62,14 @@ export const updateResolutionEscalation = createAsyncThunk(
   'resolutionEscalation/update',
   async (payload: UpdateResolutionEscalationPayload, { rejectWithValue }) => {
     try {
-      const response = await apiClient.patch(ENDPOINTS.UPDATE_COMPLAINT_WORKER, payload)
+      const response = await apiClient.post(ENDPOINTS.UPDATE_COMPLAINT_WORKER, payload)
       return response.data
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update resolution escalation rule')
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          'Failed to update resolution escalation rule'
+      return rejectWithValue(errorMessage)
     }
   }
 )
@@ -76,7 +88,11 @@ export const deleteResolutionEscalation = createAsyncThunk(
       const response = await apiClient.post(ENDPOINTS.DELETE_COMPLAINT_WORKER, payload)
       return { id, ...response.data }
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to delete resolution escalation rule')
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          'Failed to delete resolution escalation rule'
+      return rejectWithValue(errorMessage)
     }
   }
 )

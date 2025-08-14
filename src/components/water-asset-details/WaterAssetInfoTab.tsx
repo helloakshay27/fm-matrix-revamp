@@ -73,7 +73,7 @@ export const WaterAssetInfoTab = ({ assetId }: WaterAssetInfoTabProps) => {
             <h3 className="text-lg font-semibold text-[#C72030] uppercase">QR Code</h3>
           </div>
         </div>
-        
+
         <div className="text-right">
           <div className="w-24 h-24 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mb-2">
             <div className="w-16 h-16 bg-white rounded flex items-center justify-center">
@@ -171,7 +171,7 @@ export const WaterAssetInfoTab = ({ assetId }: WaterAssetInfoTabProps) => {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600">Purchase Cost</span>
-            <span className="font-medium">: ₹80000.0</span>
+            <span className="font-medium">: {localStorage.getItem('currency')}80000.0</span>
           </div>
 
           <div className="flex justify-between">

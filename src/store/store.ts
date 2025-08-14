@@ -8,9 +8,9 @@ import { serviceDetailsReducer } from './slices/serviceDetailsSlice'
 import { departmentReducer } from './slices/departmentSlice'
 import roleReducer from './slices/roleSlice'
 import { functionReducer } from './slices/functionSlice'
-import fmUserReducer from './slices/fmUserSlice'
+import fmUserReducer, { createFmUserReducer, editFMUserReducer, fetchRolesReducer, fetchSuppliersReducer, fetchUnitsReducer, getFMUsersReducer, getUserDetailsReducer } from './slices/fmUserSlice'
 import userCountsReducer from './slices/userCountsSlice'
-import occupantUsersReducer from './slices/occupantUsersSlice'
+import occupantUsersReducer, { exportOccupantUsersReducer } from './slices/occupantUsersSlice'
 import occupantUserCountsReducer from './slices/occupantUserCountsSlice'
 import projectReducer from './slices/projectSlice'
 import siteReducer from './slices/siteSlice'
@@ -18,7 +18,7 @@ import helpdeskCategoriesReducer from './slices/helpdeskCategoriesSlice'
 import responseEscalationReducer from './slices/responseEscalationSlice'
 import resolutionEscalationReducer from './slices/resolutionEscalationSlice'
 import costApprovalReducer from './slices/costApprovalSlice'
-import { exportReportReducer, facilityBookingSetupDetailsReducer, facilityBookingsReducer, fetchBookingDetailsReducer } from './slices/facilityBookingsSlice'
+import { editFacilityBookingSetupReducer, exportReportReducer, facilityBookingSetupDetailsReducer, facilityBookingsReducer, fetchBookingDetailsReducer, filterBookingsReducer } from './slices/facilityBookingsSlice'
 import entitiesReducer from './slices/entitiesSlice'
 import facilitySetupsReducer, { fetchFacilitySetupReducer } from './slices/facilitySetupsSlice'
 import { assetsReducer } from './slices/assetsSlice'
@@ -32,7 +32,7 @@ import { inventoryAssetsReducer } from './slices/inventoryAssetsSlice'
 import inventoryEditReducer from './slices/inventoryEditSlice'
 import serviceEditReducer, { createServiceReducer, fetchServiceReducer, updateServiceReducer } from './slices/serviceSlice'
 import serviceFilterReducer from './slices/serviceFilterSlice'
-import { createMenuReducer, createRestaurantCategoryReducer, createRestaurantReducer, createRestaurantStatusReducer, createSubcategoryReducer, deleteCategoryReducer, deleteRestaurantStatusReducer, deleteSubCategoryReducer, editCategoryReducer, editRestaurantReducer, editRestaurantStatusReducer, editSubCategoryReducer, exportOrdersReducer, fetchMenuDetailsReducer, fetchMenuReducer, fetchOrderDetailsReducer, fetchRestaurantBookingsReducer, fetchRestaurantCategoryReducer, fetchRestaurantDetailsReducer, fetchRestaurantsReducer, fetchRestaurantStatusesReducer, fetchSubcategoryReducer } from './slices/f&bSlice'
+import { createMenuReducer, createRestaurantCategoryReducer, createRestaurantReducer, createRestaurantStatusReducer, createSubcategoryReducer, deleteCategoryReducer, deleteRestaurantStatusReducer, deleteSubCategoryReducer, editCategoryReducer, editRestaurantReducer, editRestaurantStatusReducer, editSubCategoryReducer, exportOrdersReducer, fetchMenuDetailsReducer, fetchMenuReducer, fetchOrderDetailsReducer, fetchRestaurantBookingsReducer, fetchRestaurantCategoryReducer, fetchRestaurantDetailsReducer, fetchRestaurantOrdersReducer, fetchRestaurantsReducer, fetchRestaurantStatusesReducer, fetchSubcategoryReducer, updateMenuReducer } from './slices/f&bSlice'
 import { fetchMasterUnitsReducer } from './slices/unitMaster'
 import { createInventoryConsumptionReducer, inventoryConsumptionReducer } from './slices/inventoryConsumptionSlice'
 import { inventoryConsumptionDetailsReducer } from './slices/inventoryConsumptionDetailsSlice'
@@ -42,6 +42,14 @@ import wingsReducer from './slices/wingsSlice'
 import floorsReducer from './slices/floorsSlice'
 import zonesReducer from './slices/zonesSlice'
 import roomsReducer from './slices/roomsSlice'
+import { addCurrencyReducer, getCurrencyReducer } from './slices/currencySlice'
+import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from './slices/eventSlice'
+import { createUserGroupReducer, fetchUserGroupsReducer } from './slices/userGroupSlice'
+import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
+import { fetchWorkOrdersReducer, getWorkOrderByIdReducer } from './slices/workOrderSlice'
+import { changePlantDetailsReducer, createMaterialPRReducer, getAddressesReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer } from './slices/materialPRSlice'
+import { createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer } from './slices/purchaseOrderSlice'
+import { createServicePRReducer, getServicePrReducer, getServicesReducer } from './slices/servicePRSlice'
 
 export const store = configureStore({
   reducer: {
@@ -74,18 +82,112 @@ export const store = configureStore({
     location: locationReducer,
     serviceLocation: serviceLocationReducer,
     attendance: attendanceReducer,
-  inventoryAssets: inventoryAssetsReducer,
-  inventoryEdit: inventoryEditReducer,
-  serviceEdit: serviceEditReducer,
-  serviceFilter: serviceFilterReducer,
-  inventoryConsumption: inventoryConsumptionReducer,
-  inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
-  ecoFriendlyList: ecoFriendlyListReducer,
-  buildings: buildingsReducer,
-  wings: wingsReducer,
-  floors: floorsReducer,
-  zones: zonesReducer,
-  rooms: roomsReducer,
+    inventoryAssets: inventoryAssetsReducer,
+    inventoryEdit: inventoryEditReducer,
+    serviceEdit: serviceEditReducer,
+    serviceFilter: serviceFilterReducer,
+    inventoryConsumption: inventoryConsumptionReducer,
+    inventoryConsumptionDetails: inventoryConsumptionDetailsReducer,
+    ecoFriendlyList: ecoFriendlyListReducer,
+    buildings: buildingsReducer,
+    wings: wingsReducer,
+    floors: floorsReducer,
+    zones: zonesReducer,
+    rooms: roomsReducer,
+
+    fetchBookingDetails: fetchBookingDetailsReducer,
+    exportReport: exportReportReducer,
+    fetchRestaurants: fetchRestaurantsReducer,
+    createRestaurant: createRestaurantReducer,
+    fetchRestaurantDetails: fetchRestaurantDetailsReducer,
+    editRestaurant: editRestaurantReducer,
+    createRestaurantStatus: createRestaurantStatusReducer,
+    fetchRestaurantStatuses: fetchRestaurantStatusesReducer,
+    createRestaurantCategory: createRestaurantCategoryReducer,
+    fetchRestaurantCategory: fetchRestaurantCategoryReducer,
+    deleteCategory: deleteCategoryReducer,
+    editCategory: editCategoryReducer,
+    createSubcategory: createSubcategoryReducer,
+    fetchSubcategory: fetchSubcategoryReducer,
+    deleteSubCategory: deleteSubCategoryReducer,
+    deleteRestaurantStatus: deleteRestaurantStatusReducer,
+    editRestaurantStatus: editRestaurantStatusReducer,
+    editSubCategory: editSubCategoryReducer,
+    fetchRestaurantBookings: fetchRestaurantBookingsReducer,
+    createMenu: createMenuReducer,
+    fetchMenu: fetchMenuReducer,
+    fetchFacilitySetup: fetchFacilitySetupReducer,
+    fetchMenuDetails: fetchMenuDetailsReducer,
+    fetchOrderDetails: fetchOrderDetailsReducer,
+    exportOrders: exportOrdersReducer,
+    editFacilityBookingSetup: editFacilityBookingSetupReducer,
+    filterBookings: filterBookingsReducer,
+
+    // Unit Master
+    fetchMasterUnits: fetchMasterUnitsReducer,
+    createInventoryConsumption: createInventoryConsumptionReducer,
+    facilityBookingSetupDetails: facilityBookingSetupDetailsReducer,
+
+    // Service Slices
+    fetchService: fetchServiceReducer,
+    createService: createServiceReducer,
+    updateService: updateServiceReducer,
+
+    // Currency
+    // addCurrency: addCurrencyReducer,
+    getCurrency: getCurrencyReducer,
+
+    fetchSuppliers: fetchSuppliersReducer,
+    fetchUnits: fetchUnitsReducer,
+    fetchRoles: fetchRolesReducer,
+
+    createFmUser: createFmUserReducer,
+
+    fetchRestaurantOrders: fetchRestaurantOrdersReducer,
+    getFMUsers: getFMUsersReducer,
+    getUserDetails: getUserDetailsReducer,
+    editFMUser: editFMUserReducer,
+    updateMenu: updateMenuReducer,
+    exportOccupantUsers: exportOccupantUsersReducer,
+
+    // Events
+    fetchEvents: fetchEventsReducer,
+    createEvent: createEventReducer,
+    fetchEventById: fetchEventByIdReducer,
+
+    // Broadcast
+    fetchBroadcasts: fetchBroadcastsReducer,
+    createBroadcast: createBroadcastReducer,
+    fetchBroadcastById: fetchBroadcastByIdReducer,
+
+    // User Groups
+    fetchUserGroups: fetchUserGroupsReducer,
+    createUserGroup: createUserGroupReducer,
+
+    // Work Order
+    fetchWorkOrders: fetchWorkOrdersReducer,
+    getWorkOrderById: getWorkOrderByIdReducer,
+
+    // Material PR
+    getSuppliers: getSuppliersReducer,
+    getPlantDetails: getPlantDetailsReducer,
+    getAddresses: getAddressesReducer,
+    getInventories: getInventoriesReducer,
+    createMaterialPR: createMaterialPRReducer,
+    getMaterialPR: getMaterialPRReducer,
+    getMaterialPRById: getMaterialPRByIdReducer,
+    changePlantDetails: changePlantDetailsReducer,
+
+    // Purchase Order
+    getPurchaseOrders: getPurchaseOrdersReducer,
+    createPurchaseOrder: createPurchaseOrderReducer,
+    getUnits: getUnitsReducer,
+    materialPRChange: materialPRChangeReducer,
+
+    // Service PR
+    getServicePr: getServicePrReducer,
+    createServicePR: createServicePRReducer,
+    getServices: getServicesReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

@@ -157,7 +157,7 @@ export const AssetGroupsPage = () => {
 
   return (
     <div className="min-h-screen bg-transparent p-3 sm:p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+      <div className="mx-auto space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">GROUPS</h1>
@@ -167,18 +167,18 @@ export const AssetGroupsPage = () => {
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
           <Button 
-            className="bg-purple-700 hover:bg-purple-800 text-white w-full sm:w-auto min-w-0 sm:min-w-[120px] text-sm px-3 py-2"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white w-full sm:w-auto min-w-0 sm:min-w-[120px] text-sm px-3 py-2 h-9 font-medium"
             onClick={() => setAddGroupOpen(true)}
           >
             <Plus className="w-4 h-4 mr-2 flex-shrink-0" />
-            <span className="truncate">Add Group</span>
+            <span className="truncate">Action Group</span>
           </Button>
           <Button 
-            className="bg-purple-700 hover:bg-purple-800 text-white w-full sm:w-auto min-w-0 sm:min-w-[140px] text-sm px-3 py-2"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white w-full sm:w-auto min-w-0 sm:min-w-[140px] text-sm px-3 py-2 h-9 font-medium"
             onClick={() => setAddSubGroupOpen(true)}
           >
             <Plus className="w-4 h-4 mr-2 flex-shrink-0" />
-            <span className="truncate">Add Subgroup</span>
+            <span className="truncate">Action Subgroup</span>
           </Button>
           <Button 
             variant="outline" 

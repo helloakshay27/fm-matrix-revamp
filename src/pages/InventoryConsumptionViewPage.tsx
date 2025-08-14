@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, X } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchInventoryConsumptionDetails } from '@/store/slices/inventoryConsumptionDetailsSlice';
 import {
@@ -24,14 +24,20 @@ import {
   DialogTitle,
   DialogContent,
   IconButton,
+  CircularProgress,
 } from '@mui/material';
-import { createInventoryConsumption } from '@/store/slices/inventoryConsumptionSlice';
+import axios from 'axios';
 import { toast } from 'sonner';
 
 const InventoryConsumptionViewPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
+
+  const searchParams = new URLSearchParams(location.search);
+  const startDate = searchParams.get('start_date') || '';
+  const endDate = searchParams.get('end_date') || '';
 
   const { inventory, consumptions, loading, error } = useSelector(
     (state: RootState) => state.inventoryConsumptionDetails
@@ -39,17 +45,25 @@ const InventoryConsumptionViewPage = () => {
 
   const [dateRange, setDateRange] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     quantity: '',
     moveType: '',
     comments: '',
   });
 
+  // Check if all required fields are filled
+  const isFormValid = formData.quantity !== '' && formData.moveType !== '';
+
   useEffect(() => {
-    if (id) {
-      dispatch(fetchInventoryConsumptionDetails(id));
+    if (id && startDate && endDate) {
+      dispatch(fetchInventoryConsumptionDetails({
+        id,
+        start_date: startDate,
+        end_date: endDate,
+      }));
     }
-  }, [dispatch, id]);
+  }, [dispatch, id, startDate, endDate]);
 
   const handleSubmit = () => {
     console.log('Submitted with date range:', dateRange);
@@ -66,42 +80,76 @@ const InventoryConsumptionViewPage = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setFormData({ quantity: '', moveType: '', comments: '' });
+    setIsSubmitting(false);
   };
 
-  const handleFormSubmit = () => {
-    if (!id) return;
-  
+  const handleFormSubmit = async () => {
+    if (!id || !isFormValid) return;
+
+    setIsSubmitting(true);
+
+    // Ensure we have a valid date range (fallback: current month start -> today)
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const fallbackStart = `${yyyy}-${mm}-01`;
+    const fallbackEnd = `${yyyy}-${mm}-${dd}`;
+    const effectiveStart = startDate || fallbackStart;
+    const effectiveEnd = endDate || fallbackEnd;
+
     const payload = {
-      resource_id: Number(id),
+      resource_id: String(id),
       move_type: String(formData.moveType),
-      quantity: formData.quantity,
+      quantity: String(formData.quantity),
       comments: formData.comments,
     };
-  
-    dispatch(
-      createInventoryConsumption({
-        baseUrl: localStorage.getItem('baseUrl'),
-        token: localStorage.getItem('token') ,
-        data: payload,
-      })
-    )
-      .unwrap()
-      .then(() => {
-        dispatch(fetchInventoryConsumptionDetails(id));
-      })
-      .then(() => {
-        toast.success('Successfully submitted');
-        handleCloseModal();
-      })
-      .catch((err) => {
-        console.error('Submit error:', err);
+
+    console.log('Payload (POST direct):', payload);
+
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      if (!baseUrl || !token) throw new Error('Missing baseUrl/token');
+
+      await axios.post(`https://${baseUrl}/pms/inventories/new_inventory_consumption_addition.json`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        }
       });
+
+      console.log('Refetching details with range:', { effectiveStart, effectiveEnd });
+      await dispatch(
+        fetchInventoryConsumptionDetails({ id, start_date: effectiveStart, end_date: effectiveEnd })
+      ).unwrap();
+      toast.success('Successfully submitted');
+      handleCloseModal();
+    } catch (err: any) {
+      console.error('Submit error:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+      });
+
+      if (err.response?.status === 500) {
+        toast.error('Server error occurred. Please try again later or contact support.');
+      } else if (err.response?.status === 404) {
+        toast.error('Resource not found. Please check the request and try again.');
+      } else {
+        toast.error(
+          err.response?.data?.message || err.message || 'An unexpected error occurred. Please try again.'
+        );
+      }
+      handleCloseModal();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-  
 
   const handleInputChange = (field: string) => (event: any) => {
     const value = field === 'moveType' ? Number(event.target.value) : event.target.value;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -113,7 +161,6 @@ const InventoryConsumptionViewPage = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header with Back Button */}
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -125,58 +172,23 @@ const InventoryConsumptionViewPage = () => {
         </Button>
       </div>
 
-      {/* Controls */}
-      <div className="flex items-center gap-4">
-        <TextField
-          label="Select Date Range"
-          placeholder="Select Date Range"
-          value={dateRange}
-          onChange={(e) => setDateRange(e.target.value)}
-          variant="outlined"
-          sx={{
-            width: '300px',
-            '& .MuiOutlinedInput-root': {
-              height: '48px',
-              borderRadius: '8px',
-              '& fieldset': { borderColor: '#D1D5DB' },
-              '&:hover fieldset': { borderColor: '#9CA3AF' },
-              '&.Mui-focused fieldset': { borderColor: '#C72030' },
-            },
-            '& .MuiInputLabel-root': {
-              color: '#9CA3AF',
-              fontSize: '14px',
-              '&.Mui-focused': { color: '#C72030' },
-            },
-          }}
-          InputProps={{
-            endAdornment: <Calendar className="w-4 h-4 text-gray-400" />,
-          }}
-        />
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="text-lg font-semibold text-gray-800">
+          Inventory Name: <span className="text-gray-900 font-bold">{inventory?.name}</span>
+        </div>
 
-        <Button
-          onClick={handleSubmit}
-          className="bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-lg px-6 py-3 h-12 font-medium"
-        >
-          Submit
-        </Button>
-
-        <Button
-          onClick={handleReset}
-          variant="outline"
-          className="border border-gray-400 text-gray-700 hover:bg-gray-50 rounded-lg px-6 py-3 h-12 font-medium"
-        >
-          Reset
-        </Button>
-
-        <Button
-          onClick={handleAddConsume}
-          className="bg-[#22C55E] text-white hover:bg-[#16A34A] rounded-lg px-6 py-3 h-12 font-medium"
-        >
-          Add/Consume
-        </Button>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-wrap">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={handleAddConsume}
+              className="bg-[#22C55E] text-white hover:bg-[#16A34A] rounded-lg px-6 py-3 h-12 font-medium"
+            >
+              Add/Consume
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Consumption History Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
@@ -238,7 +250,6 @@ const InventoryConsumptionViewPage = () => {
         </CardContent>
       </Card>
 
-      {/* Add/Consume Modal */}
       <Dialog open={isModalOpen} onClose={handleCloseModal} maxWidth="md" fullWidth>
         <div style={{ minHeight: '500px' }}>
           <DialogTitle
@@ -337,9 +348,17 @@ const InventoryConsumptionViewPage = () => {
               <div className="flex justify-end pt-4">
                 <Button
                   onClick={handleFormSubmit}
-                  className="bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-lg px-8 py-3 h-12 font-medium"
+                  disabled={!isFormValid || isSubmitting}
+                  className="bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-lg px-8 py-3 h-12 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Submit
+                  {isSubmitting ? (
+                    <div className="flex items-center gap-2">
+                      <CircularProgress size={20} className="text-white" />
+                      Submitting...
+                    </div>
+                  ) : (
+                    'Submit'
+                  )}
                 </Button>
               </div>
             </div>

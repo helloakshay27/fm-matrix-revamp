@@ -54,7 +54,7 @@ export const changeSite = createAsyncThunk(
       const response = await apiClient.get(`${ENDPOINTS.CHANGE_SITE}?site_id=${siteId}`)
       
       // Call allowed_sites API after changing site
-      const userId = 87989; // Mock user ID - in real app, this would come from auth state
+      const userId = localStorage.getItem("userId"); // Mock user ID - in real app, this would come from auth state
       const allowedSitesResponse = await apiClient.get(`${ENDPOINTS.ALLOWED_SITES}?user_id=${userId}`)
       
       // Store selected site ID in localStorage

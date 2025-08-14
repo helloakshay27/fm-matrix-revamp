@@ -1,16 +1,16 @@
-
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2 } from "lucide-react";
 import { useAppDispatch } from '@/store/hooks';
 import { useParams } from 'react-router-dom';
 import { fetchRestaurantBookings } from '@/store/slices/f&bSlice';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { EnhancedTable } from './enhanced-table/EnhancedTable';
 
 interface Schedule {
-  date: string; // e.g., "01/04/2023"
-  time: string; // e.g., "04:04 PM"
+  date: string;
+  time: string;
 }
 
 interface Booking {
@@ -18,10 +18,10 @@ interface Booking {
   user_name: string;
   guest_count: number;
   additional_requests: string;
-  booked_on: string; // e.g., "29/03/2023 04:04 PM"
+  booked_on: string;
   schedule_on: Schedule;
-  date: string; // same as schedule_on.date
-  time: string; // same as schedule_on.time
+  date: string;
+  time: string;
   status_id: number;
   status_name: string;
 }
@@ -46,7 +46,7 @@ export const RestaurantBookingsTable = () => {
       }
     };
     fetchBookings();
-  }, []);
+  }, [dispatch, id, baseUrl, token]);
 
   const handleDeleteBooking = () => {
     if (selectedBooking) {
@@ -61,73 +61,119 @@ export const RestaurantBookingsTable = () => {
     setIsDeleteDialogOpen(true);
   };
 
+  const columns: ColumnConfig[] = [
+    {
+      key: 'id',
+      label: 'Booking ID',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'user_name',
+      label: 'Name',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'booked_on',
+      label: 'Booked on',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'schedule_on',
+      label: 'Schedule on',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'guest_count',
+      label: 'Guest',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'status_name',
+      label: 'Status',
+      sortable: true,
+      draggable: true,
+    },
+    {
+      key: 'additional_requests',
+      label: 'Additional Request',
+      sortable: true,
+      draggable: true,
+    },
+  ];
+
+  const renderCell = (item: Booking, columnKey: string) => {
+    switch (columnKey) {
+      case 'id':
+        return item.id || '';
+      case 'user_name':
+        return item.user_name || '';
+      case 'booked_on':
+        return item.booked_on || '';
+      case 'schedule_on':
+        return `${item.schedule_on.date} ${item.schedule_on.time}` || '';
+      case 'guest_count':
+        return item.guest_count || '';
+      case 'status_name':
+        return (
+          <span
+            className={`px-2 py-1 rounded-full text-xs ${item.status_name === 'Confirmed'
+              ? 'bg-green-100 text-green-800'
+              : item.status_name === 'Pending'
+                ? 'bg-yellow-100 text-yellow-800'
+                : 'bg-red-100 text-red-800'
+              }`}
+          >
+            {item.status_name}
+          </span>
+        );
+      case 'additional_requests':
+        return item.additional_requests || '';
+      default:
+        return item[columnKey as keyof Booking]?.toString() || '';
+    }
+  };
+
+  const renderActions = (booking: Booking) => (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="p-1 h-8 w-8"
+      >
+        <Pencil className="w-4 h-4" />
+      </Button>
+      {/* <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => openDeleteDialog(booking)}
+        className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
+      >
+        <Trash2 className="w-4 h-4" />
+      </Button> */}
+    </div>
+  );
+
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-100">
-              <TableHead className="font-medium">Actions</TableHead>
-              <TableHead className="font-medium text-center">Booking ID</TableHead>
-              <TableHead className="font-medium text-center">Name</TableHead>
-              <TableHead className="font-medium text-center">Booked on</TableHead>
-              <TableHead className="font-medium text-center">Schedule on</TableHead>
-              <TableHead className="font-medium text-center">Guest</TableHead>
-              <TableHead className="font-medium text-center">Status</TableHead>
-              <TableHead className="font-medium text-center">Additional Request</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {bookings.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                  No bookings found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              bookings.map((booking) => (
-                <TableRow key={booking.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="p-1 h-8 w-8"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openDeleteDialog(booking)}
-                        className="p-1 h-8 w-8 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">{booking.id}</TableCell>
-                  <TableCell className="text-center">{booking.user_name}</TableCell>
-                  <TableCell className="text-center">{booking.booked_on}</TableCell>
-                  <TableCell className="text-center">{booking.schedule_on.date + ' ' + booking.schedule_on.time}</TableCell>
-                  <TableCell className="text-center">{booking.guest_count}</TableCell>
-                  <TableCell className="text-center">
-                    <span className={`px-2 py-1 rounded-full text-xs ${booking.status_name === 'Confirmed'
-                      ? 'bg-green-100 text-green-800'
-                      : booking.status_name === 'Pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
-                      }`}>
-                      {booking.status_name}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">{booking.additional_requests}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <EnhancedTable
+        data={bookings}
+        columns={columns}
+        renderCell={renderCell}
+        // renderActions={renderActions}
+        storageKey="restaurant-bookings-table"
+        className="min-w-full"
+        emptyMessage="No bookings found."
+        enableSearch={true}
+        enableSelection={false}
+        hideTableExport={true}
+        pagination={true}
+        pageSize={10}
+      />
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="max-w-md">

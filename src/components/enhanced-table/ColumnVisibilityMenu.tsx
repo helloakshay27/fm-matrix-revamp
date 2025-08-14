@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -18,33 +17,59 @@ interface ColumnVisibilityMenuProps {
   columnVisibility: Record<string, boolean>;
   onToggleVisibility: (columnKey: string) => void;
   onResetToDefaults: () => void;
+  storageKey?: string;
 }
 
 export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
   columns,
   columnVisibility,
   onToggleVisibility,
-  onResetToDefaults
+  onResetToDefaults,
+  storageKey
 }) => {
   const visibleCount = Object.values(columnVisibility).filter(Boolean).length;
   const hideableColumns = columns.filter(col => col.hideable !== false);
 
+  // Persist column visibility state whenever it changes
+  useEffect(() => {
+    if (storageKey) {
+      localStorage.setItem(`${storageKey}-columns`, JSON.stringify(columnVisibility));
+    }
+  }, [columnVisibility, storageKey]);
+
+  // Load persisted column visibility state on mount
+  useEffect(() => {
+    if (storageKey) {
+      const savedVisibility = localStorage.getItem(`${storageKey}-columns`);
+      if (savedVisibility) {
+        const parsedVisibility = JSON.parse(savedVisibility);
+        // Update each column's visibility based on saved state
+        Object.keys(parsedVisibility).forEach(key => {
+          if (columnVisibility[key] !== parsedVisibility[key]) {
+            onToggleVisibility(key);
+          }
+        });
+      }
+    }
+  }, [storageKey]);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           size="sm"
           className="h-8 flex items-center gap-2"
+          title='Columns'
         >
           <Grid3x3 className="w-4 h-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 h-[368px] overflow-y-auto">        
+      <DropdownMenuContent align="end" className="w-80 h-[368px] overflow-y-auto">
         {hideableColumns.map((column) => {
           const isVisible = columnVisibility[column.key];
           const isLastVisible = visibleCount === 1 && isVisible;
-          
+
           return (
             <DropdownMenuItem
               key={column.key}
@@ -53,6 +78,13 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
                 e.preventDefault();
                 if (!isLastVisible) {
                   onToggleVisibility(column.key);
+                  if (storageKey) {
+                    const updatedVisibility = {
+                      ...columnVisibility,
+                      [column.key]: !columnVisibility[column.key]
+                    };
+                    localStorage.setItem(`${storageKey}-columns`, JSON.stringify(updatedVisibility));
+                  }
                 }
               }}
             >
@@ -69,7 +101,7 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
             </DropdownMenuItem>
           );
         })}
-       </DropdownMenuContent>
+      </DropdownMenuContent>
     </DropdownMenu>
   );
 };

@@ -1,107 +1,409 @@
-
-import React, { useState } from 'react';
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, X, Plus } from "lucide-react";
-import { useNavigate } from 'react-router-dom';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { Upload, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+  Box,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+} from "@mui/material";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  changePlantDetails,
+  createMaterialPR,
+  getAddresses,
+  getInventories,
+  getPlantDetails,
+  getSuppliers,
+} from "@/store/slices/materialPRSlice";
+import { toast } from "sonner";
+import axios from "axios";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px", sm: "10px", md: "12px" },
   },
 };
-
 export const AddMaterialPRDashboard = () => {
-  const navigate = useNavigate();
-  const [items, setItems] = useState([{ id: 1 }]);
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
 
-  const addItem = () => {
-    setItems([...items, { id: items.length + 1 }]);
+  const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+
+  const { data } = useAppSelector(state => state.changePlantDetails)
+
+  const [suppliers, setSuppliers] = useState([]);
+  const [plantDetails, setPlantDetails] = useState([]);
+  const [addresses, setAddresses] = useState([]);
+  const [inventories, setInventories] = useState([]);
+  const [showRadio, setShowRadio] = useState(false)
+
+  const [supplierDetails, setSupplierDetails] = useState({
+    supplier: "",
+    plantDetail: "",
+    prDate: "",
+    billingAddress: "",
+    deliveryAddress: "",
+    transportation: "",
+    retention: "",
+    tds: "",
+    qc: "",
+    paymentTenure: "",
+    advanceAmount: "",
+    relatedTo: "",
+    termsConditions: "",
+  });
+
+  const [items, setItems] = useState([
+    {
+      id: 1,
+      itemDetails: "",
+      sacHsnCode: "",
+      productDescription: "",
+      each: "",
+      quantity: "",
+      expectedDate: "",
+      amount: "",
+    },
+  ]);
+
+  const [files, setFiles] = useState([]);
+
+  useEffect(() => {
+    if (data.length > 0) {
+      setShowRadio(true)
+    }
+  }, [data])
+
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        const response = await dispatch(
+          getSuppliers({ baseUrl, token })
+        ).unwrap();
+        setSuppliers(response.suppliers);
+      } catch (error) {
+        console.log(error);
+        toast.dismiss();
+        toast.error(error);
+      }
+    };
+
+    const fetchPlantDetails = async () => {
+      try {
+        const response = await dispatch(
+          getPlantDetails({ baseUrl, token })
+        ).unwrap();
+        setPlantDetails(response);
+      } catch (error) {
+        console.log(error);
+        toast.dismiss();
+        toast.error(error);
+      }
+    };
+
+    const fetchAddresses = async () => {
+      try {
+        const response = await dispatch(
+          getAddresses({ baseUrl, token })
+        ).unwrap();
+        setAddresses(response.admin_invoice_addresses);
+      } catch (error) {
+        console.log(error);
+        toast.dismiss();
+        toast.error(error);
+      }
+    };
+
+    const fetchInventories = async () => {
+      try {
+        const response = await dispatch(
+          getInventories({ baseUrl, token })
+        ).unwrap();
+        setInventories(response.inventories);
+      } catch (error) {
+        console.log(error);
+        toast.dismiss();
+        toast.error(error);
+      }
+    };
+
+    fetchSuppliers();
+    fetchPlantDetails();
+    fetchAddresses();
+    fetchInventories();
+  }, []);
+
+  const handleSupplierChange = (e) => {
+    const { name, value } = e.target;
+    setSupplierDetails((prev) => ({ ...prev, [name]: value }));
   };
 
-  const removeItem = (id: number) => {
-    setItems(items.filter(item => item.id !== id));
+  const handlePlantDetailsChange = (e) => {
+    const { name, value } = e.target;
+    setSupplierDetails((prev) => ({ ...prev, [name]: value }));
+    dispatch(changePlantDetails({ baseUrl, id: value, token }))
+  };
+
+  const handleItemChange = (id, field, value) => {
+    setItems((prevItems) =>
+      prevItems.map((item) => {
+        if (item.id === id) {
+          const updatedItem = { ...item, [field]: value };
+          if (field === "each" || field === "quantity") {
+            const rate = field === "each" ? parseFloat(value) || 0 : parseFloat(item.each) || 0;
+            const quantity = field === "quantity" ? parseFloat(value) || 0 : parseFloat(item.quantity) || 0;
+            updatedItem.amount = (rate * quantity).toFixed(2);
+          }
+          return updatedItem;
+        }
+        return item;
+      })
+    );
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
+  };
+
+  const removeFile = (indexToRemove) => {
+    setFiles((prevFiles) =>
+      prevFiles.filter((_, index) => index !== indexToRemove)
+    );
+  };
+
+  const handleDashedBorderClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const addItem = () => {
+    setItems([
+      ...items,
+      {
+        id: items.length + 1,
+        itemDetails: "",
+        sacHsnCode: "",
+        productDescription: "",
+        each: "",
+        quantity: "",
+        expectedDate: "",
+        amount: "",
+      },
+    ]);
+  };
+
+  const removeItem = (id) => {
+    setItems(items.filter((item) => item.id !== id));
+  };
+
+  const onInventoryChange = async (inventoryId, itemId) => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/${inventoryId}/hsn_code_categories.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setItems((prevItems) =>
+        prevItems.map((item) =>
+          item.id === itemId
+            ? {
+              ...item,
+              sacHsnCode: response.data.hsn?.code || "",
+              each: response.data.rate || "",
+              amount: ((parseFloat(response.data.rate) || 0) * (parseFloat(item.quantity) || 0)).toFixed(2),
+            }
+            : item
+        )
+      );
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    }
+  };
+
+  const calculateTotalAmount = () => {
+    return items
+      .reduce((total, item) => total + (parseFloat(item.amount) || 0), 0)
+      .toFixed(2);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      pms_purchase_order: {
+        pms_supplier_id: supplierDetails.supplier,
+        plant_detail_id: supplierDetails.plantDetail,
+        billing_address_id: supplierDetails.billingAddress,
+        shipping_address_id: supplierDetails.deliveryAddress,
+        po_date: supplierDetails.prDate,
+        letter_of_indent: true,
+        terms_conditions: supplierDetails.termsConditions,
+        retention: supplierDetails.retention,
+        tds: supplierDetails.tds,
+        transportation: supplierDetails.transportation,
+        quality_holding: supplierDetails.qc,
+        payment_tenure: supplierDetails.paymentTenure,
+        related_to: supplierDetails.relatedTo,
+        advance_amount: supplierDetails.advanceAmount,
+        pms_po_inventories_attributes: items.map((item) => ({
+          pms_inventory_id: item.itemDetails,
+          quantity: item.quantity,
+          rate: item.each,
+          total_value: item.amount,
+          expected_date: item.expectedDate,
+          hsn_code_name: item.sacHsnCode,
+          prod_desc: item.productDescription,
+        })),
+        attachments: files,
+      },
+    };
+
+    try {
+      await dispatch(
+        createMaterialPR({ baseUrl, token, data: payload })
+      ).unwrap();
+      toast.success("Material PR created successfully");
+      navigate("/finance/material-pr");
+    } catch (error) {
+      toast.error(error);
+    }
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Breadcrumb */}
-      <div className="mb-4 text-sm text-gray-600">
-        Material PR &gt; New Material PR
-      </div>
-
-      {/* Page Title */}
+    <div className="p-6 mx-auto">
       <h1 className="text-2xl font-bold mb-6">NEW MATERIAL PR</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Supplier Details */}
-        <div className="lg:col-span-2 space-y-6">
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-6">
           {/* Supplier Details */}
           <Card>
             <CardHeader>
-             <CardTitle className="text-[#C72030] flex items-center">
-  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-    1
-  </h2>
-  SUPPLIER DETAILS
-</CardTitle>
-
+              <CardTitle className="text-[#C72030] flex items-center">
+                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                  1
+                </h2>
+                SUPPLIER DETAILS
+              </CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Supplier*</InputLabel>
                 <MuiSelect
                   label="Supplier*"
+                  name="supplier"
+                  value={supplierDetails.supplier}
+                  onChange={handleSupplierChange}
                   displayEmpty
                   sx={fieldStyles}
                 >
-                  <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                  <MenuItem value="abc">ABC</MenuItem>
-                  <MenuItem value="godrej">Godrej</MenuItem>
-                  <MenuItem value="lt">L&T</MenuItem>
+                  <MenuItem value="">
+                    <em>Select Supplier</em>
+                  </MenuItem>
+                  {suppliers.map((supplier) => (
+                    <MenuItem key={supplier.id} value={supplier.id}>
+                      {supplier.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
-              
+
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Plant Detail</InputLabel>
+                <InputLabel shrink>Plant Detail*</InputLabel>
                 <MuiSelect
-                  label="Plant Detail"
+                  label="Plant Detail*"
+                  name="plantDetail"
+                  value={supplierDetails.plantDetail}
+                  onChange={handlePlantDetailsChange}
                   displayEmpty
                   sx={fieldStyles}
                 >
-                  <MenuItem value=""><em>Select Plant Detail</em></MenuItem>
-                  <MenuItem value="plant1">Plant 1</MenuItem>
+                  <MenuItem value="">
+                    <em>Select Plant Detail</em>
+                  </MenuItem>
+                  {plantDetails.map((plantDetail) => (
+                    <MenuItem key={plantDetail.id} value={plantDetail.id}>
+                      {plantDetail.plant_name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
-              
+
+              <TextField
+                label="PR Date*"
+                type="date"
+                name="prDate"
+                value={supplierDetails.prDate}
+                onChange={handleSupplierChange}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Billing Address*</InputLabel>
                 <MuiSelect
                   label="Billing Address*"
+                  name="billingAddress"
+                  value={supplierDetails.billingAddress}
+                  onChange={handleSupplierChange}
                   displayEmpty
                   sx={fieldStyles}
                 >
-                  <MenuItem value=""><em>Select Billing Address</em></MenuItem>
-                  <MenuItem value="address1">Address 1</MenuItem>
+                  <MenuItem value="">
+                    <em>Select Billing Address</em>
+                  </MenuItem>
+                  {addresses.map((address) => (
+                    <MenuItem key={address.id} value={address.id}>
+                      {address.title}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
-              
+
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Delivery Address*</InputLabel>
                 <MuiSelect
                   label="Delivery Address*"
+                  name="deliveryAddress"
+                  value={supplierDetails.deliveryAddress}
+                  onChange={handleSupplierChange}
                   displayEmpty
                   sx={fieldStyles}
                 >
-                  <MenuItem value=""><em>Select Delivery Address</em></MenuItem>
-                  <MenuItem value="address1">Address 1</MenuItem>
+                  <MenuItem value="">
+                    <em>Select Delivery Address</em>
+                  </MenuItem>
+                  {addresses.map((address) => (
+                    <MenuItem key={address.id} value={address.id}>
+                      {address.title}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
-              
+
               <TextField
-                label="Reference#"
+                label="Transportation"
+                name="transportation"
+                value={supplierDetails.transportation}
+                onChange={handleSupplierChange}
                 placeholder="Enter Number"
                 fullWidth
                 variant="outlined"
@@ -109,9 +411,12 @@ export const AddMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
               />
-              
+
               <TextField
-                label="TDS%"
+                label="Retention(%)"
+                name="retention"
+                value={supplierDetails.retention}
+                onChange={handleSupplierChange}
                 placeholder="Enter Number"
                 fullWidth
                 variant="outlined"
@@ -119,9 +424,12 @@ export const AddMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
               />
-              
+
               <TextField
-                label="Payment Terms(In Days)"
+                label="TDS(%)"
+                name="tds"
+                value={supplierDetails.tds}
+                onChange={handleSupplierChange}
                 placeholder="Enter Number"
                 fullWidth
                 variant="outlined"
@@ -129,9 +437,38 @@ export const AddMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
               />
-              
+
+              <TextField
+                label="QC(%)"
+                name="qc"
+                value={supplierDetails.qc}
+                onChange={handleSupplierChange}
+                placeholder="Enter number"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="Payment Tenure(In Days)"
+                name="paymentTenure"
+                value={supplierDetails.paymentTenure}
+                onChange={handleSupplierChange}
+                placeholder="Enter Number"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
               <TextField
                 label="Advance Amount"
+                name="advanceAmount"
+                value={supplierDetails.advanceAmount}
+                onChange={handleSupplierChange}
                 placeholder="Enter Number"
                 fullWidth
                 variant="outlined"
@@ -139,66 +476,123 @@ export const AddMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
               />
-              
-              <div className="md:col-span-2">
-                <TextField
-                  label="Terms & Conditions*"
-                  placeholder=""
-                  fullWidth
-                  variant="outlined"
-                  multiline
-                  minRows={4}
-                  InputLabelProps={{ shrink: true }}
-                  sx={{ mt: 1 }}
-                />
-              </div>
+
+              <TextField
+                label="Related To*"
+                name="relatedTo"
+                value={supplierDetails.relatedTo}
+                onChange={handleSupplierChange}
+                placeholder="Related To"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="Terms & Conditions*"
+                name="termsConditions"
+                value={supplierDetails.termsConditions}
+                onChange={handleSupplierChange}
+                placeholder=""
+                fullWidth
+                variant="outlined"
+                multiline
+                minRows={4}
+                InputLabelProps={{ shrink: true }}
+                sx={{ mt: 1 }}
+              />
+
+              {
+                showRadio && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "start",
+                    }}
+                  >
+                    <FormLabel component="legend" sx={{ minWidth: "80px", fontSize: "14px" }}>
+                      Apply WBS
+                    </FormLabel>
+                    <RadioGroup
+                      row
+                    >
+                      <FormControlLabel value="individual" control={<Radio />} label="Individual" />
+                      <FormControlLabel value="overall" control={<Radio />} label="All Items" />
+                    </RadioGroup>
+                  </Box>
+                )
+              }
             </CardContent>
           </Card>
 
-          {/* Item Details */}
           <Card>
             <CardHeader>
               <CardTitle className="text-orange-600 flex items-center justify-between">
                 <div className="flex items-center text-[#C72030]">
-  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-    2
-  </h2>
-  ITEM DETAILS
-</div>
+                  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                    2
+                  </h2>
+                  ITEM DETAILS
+                </div>
 
-                <Button onClick={addItem} size="sm" className="bg-purple-600 hover:bg-purple-700">
+                <Button
+                  onClick={addItem}
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700"
+                  type="button"
+                >
                   Add Item
                 </Button>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {items.map((item) => (
-                <div key={item.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg relative">
+                <div
+                  key={item.id}
+                  className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg relative"
+                >
                   {items.length > 1 && (
                     <Button
                       onClick={() => removeItem(item.id)}
                       size="sm"
-                      variant="ghost"
-                      className="absolute top-2 right-2 p-1 h-8 w-8"
+                      className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-full"
                     >
                       <X className="w-4 h-4" />
                     </Button>
                   )}
-                  
+
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                     <InputLabel shrink>Item Details*</InputLabel>
                     <MuiSelect
                       label="Item Details*"
+                      value={item.itemDetails}
+                      onChange={(e) => {
+                        handleItemChange(item.id, "itemDetails", e.target.value);
+                        onInventoryChange(e.target.value, item.id);
+                      }}
                       displayEmpty
                       sx={fieldStyles}
                     >
-                      <MenuItem value=""><em>Select Inventory</em></MenuItem>
-                      <MenuItem value="item1">Item 1</MenuItem>
+                      <MenuItem value="">
+                        <em>Select Inventory</em>
+                      </MenuItem>
+                      {inventories.map((inventory) => (
+                        <MenuItem key={inventory.id} value={inventory.id}>
+                          {inventory.name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
-                  
+
                   <TextField
                     label="SAC/HSN Code"
+                    value={item.sacHsnCode}
+                    onChange={(e) =>
+                      handleItemChange(item.id, "sacHsnCode", e.target.value)
+                    }
                     placeholder="Enter Code"
                     fullWidth
                     variant="outlined"
@@ -206,9 +600,17 @@ export const AddMaterialPRDashboard = () => {
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
                   />
-                  
+
                   <TextField
                     label="Product Description*"
+                    value={item.productDescription}
+                    onChange={(e) =>
+                      handleItemChange(
+                        item.id,
+                        "productDescription",
+                        e.target.value
+                      )
+                    }
                     placeholder="Product Description"
                     fullWidth
                     variant="outlined"
@@ -216,9 +618,13 @@ export const AddMaterialPRDashboard = () => {
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
                   />
-                  
+
                   <TextField
-                    label="Each"
+                    label="Rate"
+                    value={item.each}
+                    onChange={(e) =>
+                      handleItemChange(item.id, "each", e.target.value)
+                    }
                     placeholder="Enter Number"
                     fullWidth
                     variant="outlined"
@@ -226,9 +632,13 @@ export const AddMaterialPRDashboard = () => {
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
                   />
-                  
+
                   <TextField
                     label="Quantity*"
+                    value={item.quantity}
+                    onChange={(e) =>
+                      handleItemChange(item.id, "quantity", e.target.value)
+                    }
                     placeholder="Enter Number"
                     fullWidth
                     variant="outlined"
@@ -236,25 +646,29 @@ export const AddMaterialPRDashboard = () => {
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
                   />
-                  
+
                   <TextField
                     label="Expected Date*"
                     type="date"
-                    defaultValue="2025-06-14"
+                    value={item.expectedDate}
+                    onChange={(e) =>
+                      handleItemChange(item.id, "expectedDate", e.target.value)
+                    }
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
                   />
-                  
+
                   <TextField
                     label="Amount*"
-                    placeholder="Enter Number"
+                    value={item.amount}
+                    placeholder="Calculated Amount"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
                     sx={{ mt: 1 }}
                   />
                 </div>
@@ -262,65 +676,82 @@ export const AddMaterialPRDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Attachments */}
+          <div className="flex items-center justify-end">
+            <Button className="bg-[#C72030] hover:bg-[#C72030] text-white">
+              Total Amount: {calculateTotalAmount()}
+            </Button>
+          </div>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-[#C72030] flex items-center">
-  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-    3
-  </h2>
-  ATTACHMENTS
-</CardTitle>
-
+                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                  3
+                </h2>
+                ATTACHMENTS
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center">
+              <div
+                className="border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center cursor-pointer"
+                onClick={handleDashedBorderClick}
+              >
                 <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                 <div className="text-sm text-gray-600">
-                  <span className="font-medium">Drag & Drop or</span>
-                  <button className="text-blue-600 hover:underline ml-1">Choose Files</button>
-                  <span className="ml-1">No file chosen</span>
+                  <span className="font-medium">
+                    Drag & Drop or Click to Upload
+                  </span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="file-upload"
+                    ref={fileInputRef}
+                  />
+                  <span className="ml-1">
+                    {files.length > 0
+                      ? `${files.length} image(s) selected`
+                      : "No images chosen"}
+                  </span>
                 </div>
               </div>
+
+              {files.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-10 gap-4 my-6">
+                  {files.map((file, index) => (
+                    <div key={index} className="relative w-24 h-24">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                      <Button
+                        onClick={() => removeFile(index)}
+                        size="sm"
+                        className="absolute -top-2 -right-2 p-1 h-7 w-7 rounded-full bg-red-500 hover:bg-red-600"
+                      >
+                        <X className="w-4 h-4 text-white" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
-        </div>
 
-        {/* Right Column - Summary */}
-        <div className="space-y-4">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>PR Date:</span>
-                <span className="font-medium">14/06/2025</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Transportation:</span>
-                <span className="text-blue-600">Enter Number</span>
-              </div>
-              <div className="flex justify-between">
-                <span>OC(%):</span>
-                <span className="text-blue-600">Enter Number</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Related To:</span>
-                <span className="text-blue-600">Related To</span>
-              </div>
-            </div>
+          <div className="flex items-center justify-center">
+            <Button
+              type="submit"
+              size="lg"
+              className="bg-[#C72030] hover:bg-[#C72030] text-white"
+            >
+              Submit
+            </Button>
           </div>
-
-          <div className="bg-white p-4 rounded-lg border">
-            <h3 className="font-medium mb-2">Total Amount: ₹</h3>
-          </div>
-
-          <Button 
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-            onClick={() => navigate('/finance/material-pr')}
-          >
-            Submit
-          </Button>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

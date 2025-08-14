@@ -4,17 +4,19 @@ import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 export interface Asset {
   id: string;
   name: string;
-  serialNumber: string;
+  serialNumber: number;
   assetNumber: string;
   status: 'in_use' | 'in_storage' | 'breakdown' | 'disposed';
   siteName: string;
   building: { name: string } | null;
   wing: { name: string } | null;
+  floor: { name: string } | null;
   area: { name: string } | null;
   pmsRoom: { name: string } | null;
   assetGroup: string;
   assetSubGroup: string;
   assetType?: boolean;
+  category?: string;
 }
 
 export interface AssetResponse {
@@ -40,11 +42,13 @@ export interface AssetResponse {
     site_name: string;
     building: { name: string } | null;
     wing: { name: string } | null;
+    floor: { name: string } | null;
     area: { name: string } | null;
     pms_room: { name: string } | null;
     asset_group: string;
     asset_sub_group: string;
     asset_type?: boolean;
+    category?: string;
   }>;
 }
 
@@ -63,7 +67,7 @@ export const useAssets = (page: number = 1) => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [stats, setStats] = useState<AssetStats>({
     total: 0,
-    totalValue: '₹0.00',
+    totalValue: `${localStorage.getItem('currency')}0.00`,
     nonItAssets: 0,
     itAssets: 0,
     inUse: 0,
@@ -88,11 +92,13 @@ export const useAssets = (page: number = 1) => {
     siteName: apiAsset.site_name,
     building: apiAsset.building,
     wing: apiAsset.wing,
+    floor: apiAsset.floor,
     area: apiAsset.area,
     pmsRoom: apiAsset.pms_room,
     assetGroup: apiAsset.asset_group,
     assetSubGroup: apiAsset.asset_sub_group,
     assetType: apiAsset.asset_type,
+    category: apiAsset.asset_type_category,
   });
 
   const formatStatusLabel = (status: string): string => {
@@ -114,7 +120,7 @@ export const useAssets = (page: number = 1) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch(
         `${API_CONFIG.BASE_URL}/pms/assets.json?page=${page}`,
         {
@@ -130,7 +136,7 @@ export const useAssets = (page: number = 1) => {
       }
 
       const data: AssetResponse = await response.json();
-      
+
       // Map assets data
       const mappedAssets = data.assets?.map(mapAssetData) || [];
       setAssets(mappedAssets);
@@ -145,7 +151,7 @@ export const useAssets = (page: number = 1) => {
       // Set stats
       setStats({
         total: data.total_count || 0,
-        totalValue: data.total_value || '₹0.00',
+        totalValue: data.total_value || `${localStorage.getItem('currency')}0.00`,
         nonItAssets: data.non_it_assets || 0,
         itAssets: data.it_assets || 0,
         inUse: data.in_use_count || 0,
