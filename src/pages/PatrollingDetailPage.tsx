@@ -668,8 +668,7 @@ export const PatrollingDetailPage: React.FC = () => {
                         <TableHead>Name</TableHead>
                         <TableHead>Frequency</TableHead>
                         <TableHead>Start Time</TableHead>
-                        <TableHead>Start Date</TableHead>
-                        <TableHead>End Date</TableHead>
+                        <TableHead>End Time</TableHead>
                       
                         <TableHead>Status</TableHead>
                         <TableHead>Created</TableHead>
@@ -682,8 +681,7 @@ export const PatrollingDetailPage: React.FC = () => {
                             <TableCell className="font-medium">{schedule.name}</TableCell>
                             <TableCell className="capitalize">{schedule.frequency_type}</TableCell>
                             <TableCell>{formatTime(schedule.start_time)}</TableCell>
-                            <TableCell>{formatDate(schedule.start_date)}</TableCell>
-                            <TableCell>{schedule.end_date ? formatDate(schedule.end_date) : formatDate(schedule.end_date)}</TableCell>
+                            <TableCell>{formatTime(schedule.end_time)}</TableCell>
                             
                             <TableCell>
                               <Badge variant={schedule.active ? "default" : "secondary"}>

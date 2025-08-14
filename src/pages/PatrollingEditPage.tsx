@@ -366,7 +366,7 @@ export const PatrollingEditPage: React.FC = () => {
                     id: s.id.toString(),
                     name: s.name,
                     start: new Date(s.start_time).toTimeString().slice(0, 5),
-                    end: '', // Need to calculate end time
+                    end: new Date(s.end_time).toTimeString().slice(0, 5),
                     assignee: s.assigned_guard_id.toString(),
                     supervisor: s.supervisor_id.toString(),
                     scheduleId: s.id.toString()
