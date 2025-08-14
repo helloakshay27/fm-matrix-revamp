@@ -352,7 +352,6 @@ export const VisitorsDashboard = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Visitors Dashboard</h1>
       <div className="mb-6">
         <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
