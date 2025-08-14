@@ -15,6 +15,7 @@ import ProjectFilterModal from "./Projects/ProjectFilterModel";
 import AddIssueModal from "./Issues/AddIssueModal";
 import { filterProjects } from "../../redux/slices/projectSlice";
 import { fetchMyTasks, filterTask, fetchTasks } from "../../redux/slices/taskSlice";
+import { fetchSpirints } from "../../redux/slices/spirintSlice";
 import { useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
 import IssueFilter from "./Issues/Modal/Filter";
@@ -77,6 +78,30 @@ const TaskActions = ({
         setSelectedStatus(STATUS_OPTIONS_MAP[addType]?.[0] || "All");
     }, [addType]);
 
+    // Auto-refresh logic for Sprint-Gantt on page load/refresh
+    useEffect(() => {
+        if (addType === "Sprint-Gantt") {
+            // Check if there's a saved sprint status
+            const savedSprintStatus = localStorage.getItem("sprintStatus");
+            if (savedSprintStatus) {
+                // Convert saved status back to display format
+                const statusLabel = savedSprintStatus.replace("_", " ");
+                const capitalizedStatus = statusLabel.split(' ').map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(' ');
+                setSelectedStatus(capitalizedStatus);
+                
+                // Apply the filter
+                const filters = { "q[status_eq]": savedSprintStatus };
+                dispatch(fetchSpirints({ token, filters })).unwrap().catch(console.error);
+            } else {
+                // Default behavior - fetch all sprints
+                setSelectedStatus("All");
+                dispatch(fetchSpirints({ token })).unwrap().catch(console.error);
+            }
+        }
+    }, [addType, dispatch, token]);
+
     // Clear localStorage on mount
     useEffect(() => {
         localStorage.removeItem("taskFilters");
@@ -85,6 +110,7 @@ const TaskActions = ({
         localStorage.removeItem("projectStatus");
         localStorage.removeItem("issueStatus");
         localStorage.removeItem("taskStatus");
+        localStorage.removeItem("sprintStatus");
     }, []);
 
     const filter = useMemo(
@@ -161,6 +187,17 @@ const TaskActions = ({
                     localStorage.removeItem("issueStatus");
                 }
                 dispatch(filterIssue({ token, filter: filters })).unwrap();
+            } else if (addType === "Sprint-Gantt") {
+                // Handle Sprint-Gantt status filtering
+                if (status !== "All") {
+                    localStorage.setItem("sprintStatus", formattedStatus);
+                    // Filter sprints by status
+                    filters["q[status_eq]"] = formattedStatus;
+                } else {
+                    localStorage.removeItem("sprintStatus");
+                }
+                // Fetch sprints with the filter
+                dispatch(fetchSpirints({ token, filters })).unwrap();
             } else {
                 if (status !== "All") {
                     filters["q[status_eq]"] = formattedStatus;
@@ -174,7 +211,7 @@ const TaskActions = ({
             setSelectedStatus(status);
             setIsStatusOpen(false);
         },
-        [dispatch, addType, mid]
+        [dispatch, addType, mid, token]
     );
 
     const handleAddClick = useCallback(() => {
@@ -348,7 +385,7 @@ const TaskActions = ({
                                 <Filter size={18} className={`${filter ? "text-[#C72030]" : "text-gray-600"}`} />
                             </div>
                         )}
-                    {addType !== "Milestone" && addType !== "templates" && addType !== "archived" && addType !== "Sprint-Gantt" && renderStatusDropdown()}
+                    {addType !== "Milestone" && addType !== "templates" && addType !== "archived" && renderStatusDropdown()}
 
                     {addType !== "templates" && addType !== "archived" && (
                         <button

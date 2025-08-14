@@ -32,9 +32,13 @@ const createApiSlice = (name, fetchThunk) => createSlice({
     },
 });
 
-export const fetchSpirints = createAsyncThunk('fetchSpirints', async ({ token }) => {
+export const fetchSpirints = createAsyncThunk('fetchSpirints', async ({ token, filters = {} }) => {
     try {
-        const response = await axios.get(`${baseURL}/sprints.json`, {
+        // Build query parameters from filters
+        const queryParams = new URLSearchParams(filters).toString();
+        const url = queryParams ? `${baseURL}/sprints.json?${queryParams}` : `${baseURL}/sprints.json`;
+        
+        const response = await axios.get(url, {
             headers: {
                 Authorization: `Bearer ${token}`,
             }
