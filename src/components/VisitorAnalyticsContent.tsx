@@ -277,13 +277,6 @@ export const VisitorAnalyticsContent = () => {
         <VisitorSelector />
       </div>
 
-      {dateRange.startDate && dateRange.endDate && (
-        <div className="text-right">
-          <span className="text-sm text-gray-600">
-            {dateRange.startDate} - {dateRange.endDate}
-          </span>
-        </div>
-      )}
 
       {/* Main Analytics Layout with Drag and Drop */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
