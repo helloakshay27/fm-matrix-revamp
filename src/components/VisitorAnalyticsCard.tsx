@@ -50,21 +50,60 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
         ];
 
         return (
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={purposeData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="purpose" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={100}
-                  fontSize={10}
-                />
-                <YAxis fontSize={12} />
-                <Tooltip />
-                <Bar dataKey="count" fill="#C72030" />
-              </BarChart>
+          <div className="w-full overflow-x-auto">
+            <ResponsiveContainer width="100%" height={300} className="min-w-[400px]">
+              {purposeData.length > 0 ? (
+                <BarChart 
+                  data={purposeData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
+                  <XAxis 
+                    dataKey="purpose" 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={80} 
+                    tick={{
+                      fill: '#374151',
+                      fontSize: 10
+                    }} 
+                    className="text-xs" 
+                  />
+                  <YAxis tick={{
+                    fill: '#374151',
+                    fontSize: 10
+                  }} />
+                  <Tooltip 
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                            <p className="font-semibold text-gray-800 mb-2">{label}</p>
+                            <div className="space-y-1">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[#C72030] font-medium">Count:</span>
+                                <span className="text-gray-700">{payload[0]?.value || 0}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-[#C72030] font-medium">Percentage:</span>
+                                <span className="text-gray-700">{payload[0]?.payload?.percentage || 0}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar dataKey="count" fill="#C72030" name="Count" />
+                </BarChart>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center py-8 text-gray-500">
+                    No purpose-wise data available for the selected date range
+                  </div>
+                </div>
+              )}
             </ResponsiveContainer>
           </div>
         );
