@@ -17,9 +17,9 @@ export const addCurrency = createAsyncThunk("addCurrency", async ({ data, baseUr
     }
 })
 
-export const getCurrency = createAsyncThunk("getCurrency", async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
+export const getCurrency = createAsyncThunk("getCurrency", async ({ baseUrl, token, currency }: { baseUrl: string, token: string, currency: string }, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`https://${baseUrl}/system_constants.json?q[description_eq]=Currency&q[name_eq]=Oman`, {
+        const response = await axios.get(`https://${baseUrl}/system_constants.json?q[description_eq]=Currency&q[name_eq]=${currency}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },

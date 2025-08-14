@@ -350,7 +350,7 @@ export const PatrollingDetailPage: React.FC = () => {
                     <Clock className="w-8 h-8 text-blue-600" />
                     <div>
                       <p className="text-sm text-gray-600">Duration</p>
-                      <p className="text-xl font-semibold">{patrolling.estimated_duration_minutes} min</p>
+                      <p className="text-xl font-semibold">{patrolling.grace_period_minutes} min</p>
                     </div>
                   </div>
                 </CardContent>

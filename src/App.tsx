@@ -619,12 +619,17 @@ function App() {
   const [baseUrl, setBaseUrl] = useState(localStorage.getItem('baseUrl'));
   const [token, setToken] = useState(localStorage.getItem('token'));
 
+  const hostname = window.location.hostname;
+
+  // Check if it's Oman site
+  const isOmanSite = hostname.includes('oig.gophygital.work');
+
   useEffect(() => {
     if (!baseUrl || !token) return;
 
     const fetchCurrency = async () => {
       try {
-        const response = await dispatch(getCurrency({ baseUrl, token })).unwrap();
+        const response = await dispatch(getCurrency({ baseUrl, token, currency: isOmanSite ? "Oman" : "Indian Rupees" })).unwrap();
         localStorage.setItem('currency', response[0].value);
       } catch (error) {
         console.log(error);
