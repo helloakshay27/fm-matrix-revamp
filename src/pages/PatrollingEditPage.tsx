@@ -648,30 +648,47 @@ export const PatrollingEditPage: React.FC = () => {
                     "endDate": endDate,
                     "gracePeriod": grace
                 },
-                "questions": questions.filter(q => q.task.trim() !== '').map(q => ({
-                    "id": q.id ? parseInt(q.id) : Date.now(),
-                    "task": q.task,
-                    "inputType": q.inputType,
-                    "mandatory": q.mandatory,
-                    ...(q.inputType === 'multiple_choice' && q.options && q.options.length > 0 && { "options": q.options })
-                })),
-                "schedules": shifts.filter(s => s.name.trim() !== '').map(s => ({
-                    "id": s.id ? parseInt(s.id) : Date.now(),
-                    "name": s.name,
-                    "startTime": s.start,
-                    "endTime": s.end,
-                    "assigned_guard_id": s.assignee ? parseInt(s.assignee) : null,
-                    "supervisor_id": s.supervisor ? parseInt(s.supervisor) : null,
-                    "schedule_id": parseInt(s.scheduleId) || Date.now()
-                })),
+                "questions": questions.filter(q => q.task.trim() !== '').map(q => {
+                    const questionData: any = {
+                        "task": q.task,
+                        "inputType": q.inputType,
+                        "mandatory": q.mandatory,
+                        ...(q.inputType === 'multiple_choice' && q.options && q.options.length > 0 && { "options": q.options })
+                    };
+                    
+                    // Only include ID if it's an existing question (not a Date.now() timestamp)
+                    const parsedId = parseInt(q.id);
+                    if (!isNaN(parsedId) && parsedId < Date.now() - 1000000000000) {
+                        questionData.id = parsedId;
+                    }
+                    
+                    return questionData;
+                }),
+                "schedules": shifts.filter(s => s.name.trim() !== '').map(s => {
+                    const scheduleData: any = {
+                        "name": s.name,
+                        "startTime": s.start,
+                        "endTime": s.end,
+                        "assigned_guard_id": s.assignee ? parseInt(s.assignee) : null,
+                        "supervisor_id": s.supervisor ? parseInt(s.supervisor) : null
+                    };
+                    
+                    // Only include ID if it's an existing schedule (not a Date.now() timestamp)
+                    const parsedId = parseInt(s.id);
+                    if (!isNaN(parsedId) && parsedId < Date.now() - 1000000000000) {
+                        scheduleData.id = parsedId;
+                        scheduleData.schedule_id = parsedId;
+                    }
+                    
+                    return scheduleData;
+                }),
                 "checkpoints": checkpoints.filter(c => c.name.trim() !== '').map(c => {
                     const validScheduleIds = c.scheduleIds.filter(scheduleId => {
                         const correspondingShift = shifts.find(s => s.scheduleId === scheduleId);
                         return correspondingShift && correspondingShift.name.trim() !== '';
                     });
 
-                    return {
-                        "id": c.id ? parseInt(c.id) : Date.now(),
+                    const checkpointData: any = {
                         "name": c.name,
                         "description": c.description,
                         "building_id": c.buildingId?.toString() || "",
@@ -679,8 +696,27 @@ export const PatrollingEditPage: React.FC = () => {
                         "floor_id": c.floorId?.toString() || "",
                         "area_id": c.areaId?.toString() || "",
                         "room_id": c.roomId?.toString() || "",
-                        "schedule_ids": validScheduleIds.map(id => parseInt(id)).filter(id => !isNaN(id))
+                        "schedule_ids": validScheduleIds.map(scheduleId => {
+                            // Map schedule IDs to the actual schedule IDs from shifts
+                            const shift = shifts.find(s => s.scheduleId === scheduleId);
+                            if (shift) {
+                                const parsedId = parseInt(shift.id);
+                                // Only use real IDs, not timestamps
+                                if (!isNaN(parsedId) && parsedId < Date.now() - 1000000000000) {
+                                    return parsedId;
+                                }
+                            }
+                            return null;
+                        }).filter(id => id !== null)
                     };
+                    
+                    // Only include ID if it's an existing checkpoint (not a Date.now() timestamp)
+                    const parsedId = parseInt(c.id);
+                    if (!isNaN(parsedId) && parsedId < Date.now() - 1000000000000) {
+                        checkpointData.id = parsedId;
+                    }
+                    
+                    return checkpointData;
                 })
             }
         };
