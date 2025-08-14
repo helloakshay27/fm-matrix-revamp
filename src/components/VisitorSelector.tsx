@@ -56,7 +56,7 @@ export function VisitorSelector({ onSelectionChange }: VisitorSelectorProps) {
       <PopoverTrigger asChild>
         <Button 
           variant="outline" 
-          className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 w-full justify-between"
+          className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 justify-between min-w-[180px]"
         >
           Visitor Selector ({selectedCount})
           <ChevronDown className="ml-2 h-4 w-4" />

@@ -67,18 +67,31 @@ export const VisitorAnalyticsContent = () => {
     <div className="h-full flex">
       {/* Main Analytics Section */}
       <div className="flex-1 overflow-auto p-6 space-y-6">
-        {/* Header */}
+        {/* Header with Filter and Selector */}
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-bold text-[#C72030]">Visitor Analytics</h2>
-          {dateRange.startDate && dateRange.endDate && (
+          <div className="flex justify-end items-center gap-2">
+            <Button
+              onClick={() => setIsFilterOpen(true)}
+              variant="outline"
+              className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
+              disabled={isLoading}
+            >
+              <Filter className="w-4 h-4" />
+              {isLoading && (
+                <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
+              )}
+            </Button>
+            <VisitorSelector />
+          </div>
+        </div>
+        {dateRange.startDate && dateRange.endDate && (
+          <div className="text-right">
             <span className="text-sm text-gray-600">
               {dateRange.startDate} - {dateRange.endDate}
             </span>
-          )}
-          {isLoading && (
-            <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -188,9 +201,6 @@ export const VisitorAnalyticsContent = () => {
 
       {/* Recent Visitors Sidebar */}
       <div className="w-80 flex-shrink-0">
-        <div className="p-4">
-          <VisitorSelector />
-        </div>
         <RecentVisitorsSidebar />
       </div>
     </div>
