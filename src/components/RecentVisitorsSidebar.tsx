@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Star, MessageSquare, Flag, ChevronRight, Building2, User, Globe, Clock, MapPin } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { AddCommentModal } from './AddCommentModal';
+import { useNavigate } from 'react-router-dom';
 
 interface RecentVisitor {
   id: string;
@@ -12,76 +14,104 @@ interface RecentVisitor {
   location: string;
   phoneNumber: string;
   avatar: string;
+  visitDuration?: string;
+  approvedBy?: string;
 }
 
-export const RecentVisitorsSidebar: React.FC = () => {
-  const [commentModal, setCommentModal] = useState({ isOpen: false, visitorId: '' });
-  const [flaggedVisitors, setFlaggedVisitors] = useState<Set<string>>(new Set());
-  const [goldenVisitors, setGoldenVisitors] = useState<Set<string>>(new Set());
+export function RecentVisitorsSidebar() {
+  const [commentModal, setCommentModal] = useState<{
+    isOpen: boolean;
+    visitorId: string;
+  }>({
+    isOpen: false,
+    visitorId: ''
+  });
+  
+  // Initialize state from localStorage
+  const [flaggedVisitors, setFlaggedVisitors] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('flaggedVisitors');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+  
+  const [goldenVisitors, setGoldenVisitors] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('goldenVisitors');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+  
   const [recentVisitors, setRecentVisitors] = useState<RecentVisitor[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Save to localStorage whenever state changes
+  useEffect(() => {
+    localStorage.setItem('flaggedVisitors', JSON.stringify(Array.from(flaggedVisitors)));
+  }, [flaggedVisitors]);
+
+  useEffect(() => {
+    localStorage.setItem('goldenVisitors', JSON.stringify(Array.from(goldenVisitors)));
+  }, [goldenVisitors]);
+
   const fetchRecentVisitors = async () => {
-    // Mock recent visitors data - in real app this would come from API
-    const mockData: RecentVisitor[] = [
-      {
-        id: 'V001',
-        visitorName: 'John Smith',
-        purpose: 'Meeting',
-        host: 'Sarah Johnson',
-        status: 'Approved',
-        checkinTime: '10:30 AM',
-        location: 'Reception',
-        phoneNumber: '+1 234-567-8900',
-        avatar: '/placeholder.svg'
-      },
-      {
-        id: 'V002',
-        visitorName: 'Emily Davis',
-        purpose: 'Interview',
-        host: 'Michael Brown',
-        status: 'Pending',
-        checkinTime: '11:15 AM',
-        location: 'Main Gate',
-        phoneNumber: '+1 234-567-8901',
-        avatar: '/placeholder.svg'
-      },
-      {
-        id: 'V003',
-        visitorName: 'Robert Wilson',
-        purpose: 'Delivery',
-        host: 'Lisa Anderson',
-        status: 'Checked In',
-        checkinTime: '09:45 AM',
-        location: 'Side Entrance',
-        phoneNumber: '+1 234-567-8902',
-        avatar: '/placeholder.svg'
-      },
-      {
-        id: 'V004',
-        visitorName: 'Maria Garcia',
-        purpose: 'Maintenance',
-        host: 'David Miller',
-        status: 'Approved',
-        checkinTime: '12:00 PM',
-        location: 'Reception',
-        phoneNumber: '+1 234-567-8903',
-        avatar: '/placeholder.svg'
-      },
-      {
-        id: 'V005',
-        visitorName: 'James Taylor',
-        purpose: 'Personal',
-        host: 'Jennifer Wilson',
-        status: 'Rejected',
-        checkinTime: '02:30 PM',
-        location: 'Main Gate',
-        phoneNumber: '+1 234-567-8904',
-        avatar: '/placeholder.svg'
-      }
-    ];
-    
-    setRecentVisitors(mockData);
+    try {
+      setLoading(true);
+      
+      // Mock data - replace with actual API call when available
+      const mockVisitors: RecentVisitor[] = [
+        {
+          id: '2189-11132',
+          visitorName: 'John Smith',
+          purpose: 'Business Meeting',
+          host: 'Sarah Johnson',
+          status: 'Approved',
+          checkinTime: '23/02/25, 10:30 AM',
+          location: 'Mumbai Office',
+          phoneNumber: '+91 9876543210',
+          avatar: '/placeholder.svg',
+          visitDuration: '2.5 hrs',
+          approvedBy: 'Reception Team'
+        },
+        {
+          id: '2189-11131',
+          visitorName: 'Mike Chen',
+          purpose: 'Personal Visit',
+          host: 'David Wilson',
+          status: 'Pending',
+          checkinTime: '23/02/25, 09:45 AM',
+          location: 'Delhi Office',
+          phoneNumber: '+91 8765432109',
+          avatar: '/placeholder.svg',
+          visitDuration: '1.5 hrs',
+          approvedBy: 'Security'
+        },
+        {
+          id: '2189-11130',
+          visitorName: 'Emma Davis',
+          purpose: 'Delivery',
+          host: 'IT Department',
+          status: 'Approved',
+          checkinTime: '22/02/25, 02:15 PM',
+          location: 'Bangalore Office',
+          phoneNumber: '+91 7654321098',
+          avatar: '/placeholder.svg',
+          visitDuration: '30 mins',
+          approvedBy: 'Admin Team'
+        }
+      ];
+      
+      setRecentVisitors(mockVisitors);
+    } catch (error) {
+      console.error('Error fetching recent visitors:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -89,170 +119,233 @@ export const RecentVisitorsSidebar: React.FC = () => {
   }, []);
 
   const handleAddComment = (visitorId: string) => {
-    setCommentModal({ isOpen: true, visitorId });
+    setCommentModal({
+      isOpen: true,
+      visitorId
+    });
   };
 
   const handleFlag = async (visitorId: string) => {
     try {
-      const newFlaggedVisitors = new Set(flaggedVisitors);
-      if (flaggedVisitors.has(visitorId)) {
-        newFlaggedVisitors.delete(visitorId);
-      } else {
-        newFlaggedVisitors.add(visitorId);
-      }
-      setFlaggedVisitors(newFlaggedVisitors);
-      // In real app, make API call here
-      console.log(`Visitor ${visitorId} flag toggled`);
+      // Update local state first for immediate UI feedback
+      setFlaggedVisitors(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(visitorId)) {
+          newSet.delete(visitorId);
+        } else {
+          newSet.add(visitorId);
+        }
+        return newSet;
+      });
+
+      // TODO: Make API call when visitor flagging endpoint is available
+      // await apiClient.post(`/visitors/mark_as_flagged?ids=[${visitorId}]`);
+      
+      console.log(`Visitor ${visitorId} flagged/unflagged successfully`);
+      
     } catch (error) {
-      console.error('Error toggling visitor flag:', error);
+      console.error('Error flagging visitor:', error);
+      
+      // Revert state on error
+      setFlaggedVisitors(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(visitorId)) {
+          newSet.delete(visitorId);
+        } else {
+          newSet.add(visitorId);
+        }
+        return newSet;
+      });
     }
   };
 
   const handleGoldenVisitor = async (visitorId: string) => {
     try {
-      const newGoldenVisitors = new Set(goldenVisitors);
-      if (goldenVisitors.has(visitorId)) {
-        newGoldenVisitors.delete(visitorId);
-      } else {
-        newGoldenVisitors.add(visitorId);
-      }
-      setGoldenVisitors(newGoldenVisitors);
-      // In real app, make API call here
-      console.log(`Visitor ${visitorId} golden status toggled`);
+      // Update local state first for immediate UI feedback
+      setGoldenVisitors(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(visitorId)) {
+          newSet.delete(visitorId);
+        } else {
+          newSet.add(visitorId);
+        }
+        return newSet;
+      });
+
+      // TODO: Make API call when visitor golden marking endpoint is available
+      // await apiClient.post(`/visitors/mark_as_golden?ids=[${visitorId}]`);
+      
+      console.log(`Visitor ${visitorId} marked/unmarked as golden visitor successfully`);
+      
     } catch (error) {
-      console.error('Error toggling visitor golden status:', error);
+      console.error('Error marking as golden visitor:', error);
+      
+      // Revert state on error
+      setGoldenVisitors(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(visitorId)) {
+          newSet.delete(visitorId);
+        } else {
+          newSet.add(visitorId);
+        }
+        return newSet;
+      });
     }
   };
 
   const handleViewDetails = (visitorId: string) => {
-    navigate(`/visitors/${visitorId}`);
+    navigate(`/security/visitor/details/${visitorId}`);
   };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'approved':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-300 text-green-800';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-orange-300 text-orange-800';
       case 'rejected':
-        return 'bg-red-100 text-red-800';
-      case 'checked in':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-red-300 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-300 text-gray-800';
     }
   };
 
   return (
-    <div className="w-80 bg-white border-l border-gray-200 h-full overflow-hidden flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 bg-gray-50">
-        <h2 className="text-lg font-semibold text-[#C72030]">Recent Visitors</h2>
+    <>
+      <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-red-600 mb-2">
+            Recent Visitors
+          </h2>
+        </div>
+        
+        {/* Visitors List */}
+        <div className="flex-1 overflow-y-auto space-y-4">
+          {loading ? (
+            <div className="text-center py-4 text-gray-500">Loading...</div>
+          ) : (
+            recentVisitors.map((visitor, index) => (
+              <div 
+                key={`${visitor.id}-${index}`} 
+                className="bg-[#C4B89D]/20 rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60" 
+                style={{ borderWidth: '0.6px' }}
+              >
+                {/* Header with ID, Star, and Status */}
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-semibold text-gray-800 text-sm">{visitor.id}</span>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => handleGoldenVisitor(visitor.id)}>
+                      <Star className={`h-5 w-5 ${goldenVisitors.has(visitor.id) ? 'text-yellow-600 fill-yellow-600' : 'text-gray-400 fill-gray-200'} cursor-pointer hover:opacity-80`} />
+                    </button>
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(visitor.status)}`}>
+                      {visitor.status}
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Title and Visit Duration */}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900 text-base">{visitor.visitorName}</h3>
+                  {visitor.visitDuration && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-medium text-gray-700">Duration :</span>
+                      <span className="text-sm font-bold text-blue-600">"{visitor.visitDuration}"</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Details */}
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <Building2 className="h-4 w-4 text-red-500" />
+                    <span className="text-sm font-medium text-gray-700 min-w-[100px]">Purpose</span>
+                    <span className="text-sm text-gray-700">:</span>
+                    <span className="text-sm text-gray-900">{visitor.purpose}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <User className="h-4 w-4 text-red-500" />
+                    <span className="text-sm font-medium text-gray-700 min-w-[100px]">Host</span>
+                    <span className="text-sm text-gray-700">:</span>
+                    <span className="text-sm text-gray-900">{visitor.host}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-4 w-4 text-red-500" />
+                    <span className="text-sm font-medium text-gray-700 min-w-[100px]">Location</span>
+                    <span className="text-sm text-gray-700">:</span>
+                    <span className="text-sm text-gray-900">{visitor.location}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-4 w-4 text-red-500" />
+                    <span className="text-sm font-medium text-gray-700 min-w-[100px]">Check-in Time</span>
+                    <span className="text-sm text-gray-700">:</span>
+                    <span className="text-sm text-gray-900">{visitor.checkinTime}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <Globe className="h-4 w-4 text-red-500" />
+                    <span className="text-sm font-medium text-gray-700 min-w-[100px]">Phone</span>
+                    <span className="text-sm text-gray-700">:</span>
+                    <span className="text-sm text-gray-900">{visitor.phoneNumber}</span>
+                  </div>
+                  
+                  {visitor.approvedBy && (
+                    <div className="text-sm text-gray-600 ml-7">
+                      (Approved By {visitor.approvedBy})
+                    </div>
+                  )}
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-6">
+                    <button 
+                      className="flex items-center gap-2 text-black text-sm font-medium hover:opacity-80" 
+                      onClick={() => handleAddComment(visitor.id)}
+                    >
+                      <MessageSquare className="h-4 w-4 text-red-500" />
+                      Add Comment
+                    </button>
+                    
+                    <button 
+                      type="button"
+                      className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 transition-all duration-200 ${flaggedVisitors.has(visitor.id) ? 'opacity-60' : ''}`} 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleFlag(visitor.id);
+                      }}
+                    >
+                      <Flag className={`h-4 w-4 transition-colors duration-200 ${flaggedVisitors.has(visitor.id) ? 'text-red-600 fill-red-600' : 'text-red-500'}`} />
+                      Flag Issue
+                    </button>
+                  </div>
+                  
+                  <button 
+                    className="text-blue-600 text-sm font-medium underline hover:text-blue-800" 
+                    onClick={() => handleViewDetails(visitor.id)}
+                  >
+                    View Detail&gt;&gt;
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
-      {/* Visitors List */}
-      <div className="flex-1 overflow-y-auto">
-        {recentVisitors.map((visitor) => (
-          <div key={visitor.id} className="p-4 border-b border-gray-100 hover:bg-gray-50">
-            {/* Visitor Header */}
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                  <img 
-                    src={visitor.avatar} 
-                    alt={visitor.visitorName}
-                    className="w-full h-full rounded-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = '/placeholder.svg';
-                    }}
-                  />
-                </div>
-                <div>
-                  <div className="font-medium text-sm text-gray-900">
-                    {visitor.id}
-                  </div>
-                  <div className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(visitor.status)}`}>
-                    {visitor.status}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Visitor Details */}
-            <div className="space-y-1 mb-3">
-              <div className="text-sm font-medium text-gray-900">
-                {visitor.visitorName}
-              </div>
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Purpose:</span>
-                <span className="font-medium">{visitor.purpose}</span>
-              </div>
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Host:</span>
-                <span className="font-medium">{visitor.host}</span>
-              </div>
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Location:</span>
-                <span className="font-medium">{visitor.location}</span>
-              </div>
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Check-in:</span>
-                <span className="font-medium">{visitor.checkinTime}</span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleAddComment(visitor.id)}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-xs py-1.5 px-2 rounded font-medium transition-colors"
-                >
-                  Add Comment
-                </button>
-                <button
-                  onClick={() => handleFlag(visitor.id)}
-                  className={`flex-1 text-xs py-1.5 px-2 rounded font-medium transition-colors ${
-                    flaggedVisitors.has(visitor.id)
-                      ? 'bg-red-500 hover:bg-red-600 text-white'
-                      : 'bg-red-100 hover:bg-red-200 text-red-700'
-                  }`}
-                >
-                  {flaggedVisitors.has(visitor.id) ? 'Unflag' : 'Flag Issue'}
-                </button>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleGoldenVisitor(visitor.id)}
-                  className={`flex-1 text-xs py-1.5 px-2 rounded font-medium transition-colors ${
-                    goldenVisitors.has(visitor.id)
-                      ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                      : 'bg-yellow-100 hover:bg-yellow-200 text-yellow-700'
-                  }`}
-                >
-                  {goldenVisitors.has(visitor.id) ? 'Remove Golden' : 'Mark Golden'}
-                </button>
-                <button
-                  onClick={() => handleViewDetails(visitor.id)}
-                  className="flex-1 bg-gray-500 hover:bg-gray-600 text-white text-xs py-1.5 px-2 rounded font-medium transition-colors"
-                >
-                  View Detail
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Comment Modal */}
-      <AddCommentModal
-        isOpen={commentModal.isOpen}
-        onClose={() => setCommentModal({ isOpen: false, visitorId: '' })}
-        itemId={commentModal.visitorId}
-        title="Add Comment to Visitor"
-        itemType="ticket"
+      <AddCommentModal 
+        isOpen={commentModal.isOpen} 
+        onClose={() => setCommentModal({
+          isOpen: false,
+          visitorId: ''
+        })} 
+        itemId={commentModal.visitorId} 
+        itemType="ticket" 
       />
-    </div>
+    </>
   );
-};
+}
