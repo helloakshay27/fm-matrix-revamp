@@ -3,6 +3,7 @@ import { Star, MessageSquare, Flag, ChevronRight, Building2, User, Globe, Clock,
 import { Button } from '@/components/ui/button';
 import { AddCommentModal } from './AddCommentModal';
 import { useNavigate } from 'react-router-dom';
+import { VisitorSelector } from './VisitorSelector';
 
 interface RecentVisitor {
   id: string;
@@ -213,6 +214,11 @@ export function RecentVisitorsSidebar() {
   return (
     <>
       <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col">
+        {/* Visitor Selector */}
+        <div className="mb-4">
+          <VisitorSelector />
+        </div>
+        
         {/* Header */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-red-600 mb-2">
