@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { hostWiseGuestAPI, HostWiseGuestResponse } from '@/services/hostWiseGuestAPI';
+import { useToast } from '@/hooks/use-toast';
 
 interface VisitorAnalyticsCardProps {
   title: string;
@@ -23,6 +25,33 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
   dateRange
 }) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [hostWiseData, setHostWiseData] = useState<HostWiseGuestResponse | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (type === 'purposeWise' && dateRange) {
+      fetchHostWiseData();
+    }
+  }, [type, dateRange]);
+
+  const fetchHostWiseData = async () => {
+    if (!dateRange) return;
+    
+    try {
+      const fromDate = `${dateRange.startDate.getMonth() + 1}/${dateRange.startDate.getDate()}/${dateRange.startDate.getFullYear()}`;
+      const toDate = `${dateRange.endDate.getMonth() + 1}/${dateRange.endDate.getDate()}/${dateRange.endDate.getFullYear()}`;
+      
+      const response = await hostWiseGuestAPI.getHostWiseGuestCount(fromDate, toDate);
+      setHostWiseData(response);
+    } catch (error) {
+      console.error('Error fetching host-wise data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch host-wise guest data",
+        variant: "destructive"
+      });
+    }
+  };
 
   const handleDownload = async () => {
     if (!dateRange) return;
@@ -41,13 +70,14 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
   const renderContent = () => {
     switch (type) {
       case 'purposeWise':
-        const purposeData = data || [
-          { purpose: 'Meeting', count: 45, percentage: 45 },
-          { purpose: 'Personal', count: 20, percentage: 20 },
-          { purpose: 'Delivery', count: 15, percentage: 15 },
-          { purpose: 'Maintenance', count: 12, percentage: 12 },
-          { purpose: 'Others', count: 8, percentage: 8 }
-        ];
+        const hostWiseVisitors = hostWiseData?.host_wise_guest_count?.visitorsByHost || {};
+        const totalVisitors = Object.values(hostWiseVisitors).reduce((sum: number, count: number) => sum + count, 0);
+        
+        const purposeData = Object.entries(hostWiseVisitors).map(([host, count]) => ({
+          purpose: host || 'Unknown Host',
+          count: count as number,
+          percentage: totalVisitors > 0 ? Math.round(((count as number) / totalVisitors) * 100) : 0
+        }));
 
         return (
           <div className="w-full overflow-x-auto">
