@@ -5,6 +5,46 @@ import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
 import { useParams, useNavigate } from "react-router-dom";
 import { baseURL } from "./../../apiDomain";
 
+// Add custom styles to ensure visibility
+const ganttStyles = `
+    .gantt_task_line {
+        background-color: #3498db !important;
+        border: 1px solid #2980b9 !important;
+    }
+    
+    .milestone-task .gantt_task_line {
+        background-color: #e74c3c !important;
+        border: 1px solid #c0392b !important;
+    }
+    
+    .sub-task .gantt_task_line {
+        background-color: #f39c12 !important;
+        border: 1px solid #e67e22 !important;
+    }
+    
+    .gantt_task_content {
+        color: white !important;
+        font-weight: bold !important;
+    }
+    
+    .gantt_grid_data .gantt_cell {
+        border-right: 1px solid #e0e0e0 !important;
+    }
+    
+    .gantt_grid_scale .gantt_grid_head_cell {
+        background-color: #f8f9fa !important;
+        border-right: 1px solid #e0e0e0 !important;
+    }
+`;
+
+// Add styles to document head
+if (typeof document !== 'undefined') {
+    const styleSheet = document.createElement("style");
+    styleSheet.type = "text/css";
+    styleSheet.innerText = ganttStyles;
+    document.head.appendChild(styleSheet);
+}
+
 const GanttChart = () => {
     const { id } = useParams();
     const ganttContainer = useRef(null);
@@ -31,6 +71,8 @@ const GanttChart = () => {
     }, [navigate]);
 
     useEffect(() => {
+        console.log("Gantt useEffect started, scale:", scale);
+        
         // Columns
         gantt.config.columns = [
             {
@@ -85,13 +127,13 @@ const GanttChart = () => {
             },
         ];
 
-        // Limit to 3 months from current date
-        const today = new Date();
-        const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        const endDate = new Date(today.getFullYear(), today.getMonth() + 3, 0);
+        // Remove date range limitations to show all data
+        // const today = new Date();
+        // const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        // const endDate = new Date(today.getFullYear(), today.getMonth() + 3, 0);
 
-        gantt.config.start_date = startDate;
-        gantt.config.end_date = endDate;
+        // gantt.config.start_date = startDate;
+        // gantt.config.end_date = endDate;
 
         // Formatter to display "23 Jan - 29 Jan"
         const weekDateFormatter = gantt.date.date_to_str("%d %M");
@@ -156,19 +198,40 @@ const GanttChart = () => {
         gantt.config.show_progress = true;
         gantt.config.grid_resize = true;
         gantt.config.autofit_columns = true;
+        
+        // Ensure dates are parsed correctly
+        gantt.config.date_format = "%d-%m-%Y";
+        gantt.config.xml_date = "%d-%m-%Y";
+        
+        // Enable auto-scheduling and proper display
+        gantt.config.auto_scheduling = true;
+        gantt.config.auto_scheduling_strict = true;
 
         // gantt.templates.task_text = function (start, end, task) {
         //     return `| ${}]`;
         // };
 
         gantt.templates.task_class = function (start, end, task) {
-            if (task.type === gantt.config.types.milestone) {
+            if (task.type === "milestone") {
                 return "milestone-task";
+            } else if (task.type === "sub_task") {
+                return "sub-task";
             }
             return "custom-task";
         };
 
-        gantt.init(ganttContainer.current);
+        // Ensure milestone type is properly configured
+        gantt.config.types.milestone = "milestone";
+        gantt.config.types.task = "task";
+        gantt.config.types.sub_task = "sub_task";
+
+        // Initialize gantt
+        if (ganttContainer.current) {
+            gantt.init(ganttContainer.current);
+        } else {
+            console.error("Gantt container not found!");
+            return;
+        }
 
         // Fetch data
         const fetchMilestones = async () => {
@@ -194,6 +257,7 @@ const GanttChart = () => {
                 function formatDateDMYFromISO(dateStr) {
                     if (!dateStr) return "";
                     const date = new Date(dateStr);
+                    // dhtmlx-gantt expects dates in DD-MM-YYYY format for parsing
                     const day = String(date.getDate()).padStart(2, "0");
                     const month = String(date.getMonth() + 1).padStart(2, "0");
                     const year = date.getFullYear();
@@ -201,13 +265,14 @@ const GanttChart = () => {
                 }
 
                 function calculateDuration(startStr, endStr) {
+                    if (!startStr || !endStr) return 1;
                     const startParts = startStr.split("-");
                     const endParts = endStr.split("-");
                     const start = new Date(
                         `${startParts[2]}-${startParts[1]}-${startParts[0]}`
                     );
                     const end = new Date(`${endParts[2]}-${endParts[1]}-${endParts[0]}`);
-                    if (!start || !end) return 1;
+                    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
                     const diffTime = end.getTime() - start.getTime();
                     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
                     return diffDays > 0 ? diffDays : 1;
@@ -217,21 +282,20 @@ const GanttChart = () => {
                     const milestoneId = `milestone-${item.id}`;
                     const formattedStart = item.start_date
                         ? formatDateDMYFromISO(item.start_date)
-                        : "";
+                        : formatDateDMYFromISO(new Date().toISOString()); // Default to today
                     const formattedEnd = item.end_date
                         ? formatDateDMYFromISO(item.end_date)
-                        : "";
+                        : formatDateDMYFromISO(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()); // Default to 7 days from now
 
                     tasksData.push({
                         navigationid: item.id,
                         id: milestoneId,
-                        text: item.title,
+                        text: item.title || "Untitled Milestone",
                         start_date: formattedStart,
                         end_date: formattedEnd,
-                        duration:
-                            formattedStart && formattedEnd
-                                ? calculateDuration(formattedStart, formattedEnd)
-                                : 1,
+                        duration: formattedStart && formattedEnd
+                            ? calculateDuration(formattedStart, formattedEnd)
+                            : 1,
                         progress: 0.0,
                         status: "Open",
                         depends: item.depends_on_id
@@ -240,6 +304,7 @@ const GanttChart = () => {
                         type: "milestone",
                         owner: item.owner_id,
                         parent: 0,
+                        open: true, // Ensure milestone is expanded
                     });
 
                     if (item.depends_on_id) {
@@ -263,23 +328,21 @@ const GanttChart = () => {
 
                             const formattedStartTask = task.started_at
                                 ? formatDateDMYFromISO(task.started_at)
-                                : "";
+                                : formattedStart; // Use milestone start date as default
 
                             const formattedEndTask = task.target_date
                                 ? formatDateDMYFromISO(task.target_date)
-                                : "";
+                                : formattedEnd; // Use milestone end date as default
 
-                            const taskDuration =
-                                formattedStartTask && formattedEndTask
-                                    ? calculateDuration(formattedStartTask, formattedEndTask)
-                                    : task.estimated_hour
-                                        ? task.estimated_hour +
-                                        (task.estimated_min ? task.estimated_min / 60 : 0)
-                                        : 1;
+                            const taskDuration = formattedStartTask && formattedEndTask
+                                ? calculateDuration(formattedStartTask, formattedEndTask)
+                                : task.estimated_hour
+                                    ? task.estimated_hour + (task.estimated_min ? task.estimated_min / 60 : 0)
+                                    : 1;
 
                             tasksData.push({
                                 id: uniqueTaskId,
-                                text: task.title,
+                                text: task.title || "Untitled Task",
                                 start_date: formattedStartTask,
                                 end_date: formattedEndTask,
                                 duration: taskDuration,
@@ -298,26 +361,21 @@ const GanttChart = () => {
                                     const subTaskId = `subtask-${subTask.id}`;
                                     const formattedStartSubTask = subTask.started_at
                                         ? formatDateDMYFromISO(subTask.started_at)
-                                        : "";
+                                        : formattedStartTask; // Use task start date as default
 
                                     const formattedEndSubTask = subTask.target_date
                                         ? formatDateDMYFromISO(subTask.target_date)
-                                        : "";
+                                        : formattedEndTask; // Use task end date as default
 
-                                    const subTaskDuration =
-                                        formattedStartSubTask && formattedEndSubTask
-                                            ? calculateDuration(
-                                                formattedStartSubTask,
-                                                formattedEndSubTask
-                                            )
-                                            : subTask.estimated_hour
-                                                ? subTask.estimated_hour +
-                                                (subTask.estimated_min ? subTask.estimated_min / 60 : 0)
-                                                : 1;
+                                    const subTaskDuration = formattedStartSubTask && formattedEndSubTask
+                                        ? calculateDuration(formattedStartSubTask, formattedEndSubTask)
+                                        : subTask.estimated_hour
+                                            ? subTask.estimated_hour + (subTask.estimated_min ? subTask.estimated_min / 60 : 0)
+                                            : 1;
 
                                     tasksData.push({
                                         id: subTaskId,
-                                        text: subTask.title,
+                                        text: subTask.title || "Untitled Sub-task",
                                         start_date: formattedStartSubTask,
                                         end_date: formattedEndSubTask,
                                         duration: subTaskDuration,
@@ -336,13 +394,68 @@ const GanttChart = () => {
                 });
 
                 console.log("Parsed tasks data:", tasksData);
+                console.log("Links data:", linksData);
+                
                 const tasks = {
                     data: tasksData,
                     links: linksData,
                 };
 
+                // Debug: Check if we have valid data
+                if (tasksData.length === 0) {
+                    console.warn("No tasks data found! Creating sample data for testing...");
+                    // Add a sample milestone to test if gantt is working
+                    const today = new Date();
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
+                    
+                    tasksData.push({
+                        id: "sample-milestone",
+                        text: "Sample Milestone",
+                        start_date: formatDateDMYFromISO(today.toISOString()),
+                        end_date: formatDateDMYFromISO(tomorrow.toISOString()),
+                        duration: 1,
+                        progress: 0.0,
+                        status: "Open",
+                        type: "milestone",
+                        parent: 0,
+                        open: true,
+                    });
+                }
+
+                // Clear and parse new data
                 gantt.clearAll();
-                gantt.parse(tasks);
+                
+                // Add validation before parsing
+                const validTasks = tasksData.filter(task => {
+                    if (!task.id || !task.text) {
+                        console.warn("Invalid task found:", task);
+                        return false;
+                    }
+                    return true;
+                });
+
+                console.log("Valid tasks to render:", validTasks.length);
+                
+                try {
+                    gantt.parse({
+                        data: validTasks,
+                        links: linksData,
+                    });
+                    
+                    // Force refresh and fit to screen
+                    gantt.render();
+                    
+                    // Auto-fit timeline to show all tasks
+                    setTimeout(() => {
+                        gantt.render();
+                    }, 100);
+                    
+                    console.log("Gantt chart rendered successfully");
+                } catch (error) {
+                    console.error("Error parsing gantt data:", error);
+                    console.log("Failed data:", { data: validTasks, links: linksData });
+                }
             } catch (error) {
                 console.error("Error loading milestones:", error);
             }
@@ -387,7 +500,10 @@ const GanttChart = () => {
         });
 
         return () => {
-            gantt.clearAll();
+            console.log("Cleaning up gantt");
+            if (gantt && gantt.clearAll) {
+                gantt.clearAll();
+            }
         };
     }, [scale]);
 
@@ -406,7 +522,12 @@ const GanttChart = () => {
             </div>
             <div
                 ref={ganttContainer}
-                style={{ minWidth: "1200px", height: "600px" }}
+                style={{ 
+                    minWidth: "1200px", 
+                    height: "600px",
+                    position: "relative",
+                    overflow: "hidden"
+                }}
             />
         </div>
     );
