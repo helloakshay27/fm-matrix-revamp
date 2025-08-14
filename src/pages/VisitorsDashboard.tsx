@@ -620,7 +620,7 @@ export const VisitorsDashboard = () => {
             </Tabs>
           </TabsContent>
 
-          <TabsContent value="analytics" className="bg-white rounded-lg border border-gray-200 mt-4 p-6">
+          <TabsContent value="analytics" className="mt-4">
             <VisitorAnalyticsContent />
           </TabsContent>
         </Tabs>
