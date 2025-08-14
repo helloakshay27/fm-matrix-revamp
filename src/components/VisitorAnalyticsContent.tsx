@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
 import { VisitorAnalyticsCard } from './VisitorAnalyticsCard';
@@ -6,6 +6,8 @@ import { VisitorAnalyticsFilterDialog } from './VisitorAnalyticsFilterDialog';
 import { RecentVisitorsSidebar } from './RecentVisitorsSidebar';
 import { VisitorSelector } from './VisitorSelector';
 import { VisitorStatusOverviewCard } from './VisitorStatusOverviewCard';
+import { visitorComparisonAPI, VisitorComparisonResponse } from '@/services/visitorComparisonAPI';
+import { useToast } from '@/hooks/use-toast';
 import {
   DndContext,
   closestCenter,
@@ -70,6 +72,8 @@ export const VisitorAnalyticsContent = () => {
     endDate: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [visitorComparisonData, setVisitorComparisonData] = useState<VisitorComparisonResponse | null>(null);
+  const { toast } = useToast();
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -106,11 +110,28 @@ export const VisitorAnalyticsContent = () => {
     }
   };
 
+  const fetchVisitorComparison = async (fromDate: string, toDate: string) => {
+    try {
+      setIsLoading(true);
+      const data = await visitorComparisonAPI.getVisitorComparison(fromDate, toDate);
+      setVisitorComparisonData(data);
+    } catch (error) {
+      console.error('Error fetching visitor comparison:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch visitor comparison data",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleFilterApply = (newDateRange: { startDate: string; endDate: string }) => {
     setDateRange(newDateRange);
-    setIsLoading(true);
-    // Simulate loading
-    setTimeout(() => setIsLoading(false), 1000);
+    if (newDateRange.startDate && newDateRange.endDate) {
+      fetchVisitorComparison(newDateRange.startDate, newDateRange.endDate);
+    }
   };
 
   // Mock data - in real app this would come from API
@@ -141,11 +162,28 @@ export const VisitorAnalyticsContent = () => {
     { hour: '17:00', visitors: 18 }
   ];
 
-  const statusWiseData = [
-    { name: 'Approved', value: 85, color: '#22C55E' },
-    { name: 'Pending', value: 10, color: '#F59E0B' },
-    { name: 'Rejected', value: 5, color: '#EF4444' }
-  ];
+  // Status wise data from API
+  const getStatusWiseData = () => {
+    if (!visitorComparisonData?.comparison) {
+      return [
+        { name: 'Support Staff', value: 0, color: '#22C55E' },
+        { name: 'Guest Visitors', value: 0, color: '#00B4D8' }
+      ];
+    }
+
+    return [
+      { 
+        name: 'Support Staff', 
+        value: visitorComparisonData.comparison.supportStaffVisitors, 
+        color: '#22C55E' 
+      },
+      { 
+        name: 'Guest Visitors', 
+        value: visitorComparisonData.comparison.guestVisitors, 
+        color: '#00B4D8' 
+      }
+    ];
+  };
 
   const locationWiseData = [
     { location: 'Reception', count: 85 },
@@ -186,8 +224,8 @@ export const VisitorAnalyticsContent = () => {
       case 'statusWise':
         return (
           <VisitorAnalyticsCard
-            title="Status Wise Distribution"
-            data={statusWiseData}
+            title="Visitor Type Distribution"
+            data={getStatusWiseData()}
             type="statusWise"
             className="bg-white border border-gray-200 rounded-lg shadow-sm"
             dateRange={commonDateRange}
