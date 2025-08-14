@@ -44,7 +44,7 @@ const muiFieldStyles = {
 };
 
 
-export const LoginPage = () => {
+export const LoginPage = ({ setBaseUrl, setToken }) => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
@@ -126,6 +126,7 @@ export const LoginPage = () => {
   const handleOrganizationSelect = (org: Organization) => {
     localStorage.setItem("selectedOrg", org.name)
     localStorage.setItem("baseUrl", `${org.sub_domain}.${org.domain}`);
+    setBaseUrl(`${org.sub_domain}.${org.domain}`);
     setSelectedOrganization(org);
     // Save the base URL in the format: sub_domain.domain
     const baseUrl = `${org.sub_domain}.${org.domain}`;
@@ -165,6 +166,7 @@ export const LoginPage = () => {
         lastname: response.lastname
       });
       saveToken(response.access_token);
+      setToken(response.access_token);
       saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id.toString());
       toast.success("Login Successful", {
