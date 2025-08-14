@@ -66,27 +66,17 @@ export const VisitorAnalyticsContent = () => {
     <div className="h-full flex">
       {/* Main Analytics Section */}
       <div className="flex-1 overflow-auto p-6 space-y-6">
-        {/* Header with Filter */}
+        {/* Header */}
         <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={() => setIsFilterOpen(true)}
-              variant="outline"
-              className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
-              disabled={isLoading}
-            >
-              <Filter className="w-4 h-4" />
-              Filter Analytics
-            </Button>
-            {dateRange.startDate && dateRange.endDate && (
-              <span className="text-sm text-gray-600">
-                {dateRange.startDate} - {dateRange.endDate}
-              </span>
-            )}
-            {isLoading && (
-              <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
-            )}
-          </div>
+          <h2 className="text-xl font-bold text-[#C72030]">Visitor Analytics</h2>
+          {dateRange.startDate && dateRange.endDate && (
+            <span className="text-sm text-gray-600">
+              {dateRange.startDate} - {dateRange.endDate}
+            </span>
+          )}
+          {isLoading && (
+            <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
+          )}
         </div>
 
         {/* Summary Cards */}
