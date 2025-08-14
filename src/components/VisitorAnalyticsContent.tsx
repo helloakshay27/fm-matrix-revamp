@@ -93,7 +93,7 @@ export const VisitorAnalyticsContent = () => {
     { id: 'purpose-wise', type: 'purposeWise' },
     { id: 'status-wise', type: 'statusWise' },
     { id: 'hourly-trend', type: 'hourlyTrend' },
-    { id: 'location-wise', type: 'locationWise' },
+    
     { id: 'visitor-summary', type: 'summary' }
   ]);
 
@@ -185,13 +185,6 @@ export const VisitorAnalyticsContent = () => {
     ];
   };
 
-  const locationWiseData = [
-    { location: 'Reception', count: 85 },
-    { location: 'Main Gate', count: 62 },
-    { location: 'Side Entrance', count: 45 },
-    { location: 'Parking', count: 35 },
-    { location: 'Emergency Exit', count: 18 }
-  ];
 
   // Render card function
   const renderCard = (item: { id: string; type: string }) => {
@@ -234,16 +227,6 @@ export const VisitorAnalyticsContent = () => {
             title="Hourly Visitor Trend"
             data={hourlyTrendData}
             type="hourlyTrend"
-            className="bg-white border border-gray-200 rounded-lg shadow-sm"
-            dateRange={commonDateRange}
-          />
-        );
-      case 'locationWise':
-        return (
-          <VisitorAnalyticsCard
-            title="Location Wise Visitors"
-            data={locationWiseData}
-            type="locationWise"
             className="bg-white border border-gray-200 rounded-lg shadow-sm"
             dateRange={commonDateRange}
           />
