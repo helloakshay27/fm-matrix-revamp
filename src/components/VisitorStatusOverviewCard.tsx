@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download } from 'lucide-react';
 import { visitorSummaryAPI } from '@/services/visitorSummaryAPI';
+import { visitorDownloadAPI } from '@/services/visitorDownloadAPI';
 import { useToast } from '@/hooks/use-toast';
 
 interface VisitorStatusOverviewCardProps {
@@ -35,8 +36,16 @@ export const VisitorStatusOverviewCard: React.FC<VisitorStatusOverviewCardProps>
     
     setIsLoading(true);
     try {
-      const fromDate = `${dateRange.startDate.getMonth() + 1}/${dateRange.startDate.getDate()}/${dateRange.startDate.getFullYear()}`;
-      const toDate = `${dateRange.endDate.getMonth() + 1}/${dateRange.endDate.getDate()}/${dateRange.endDate.getFullYear()}`;
+      // Format dates as DD/MM/YYYY to match API expectation
+      const formatDate = (date: Date): string => {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      };
+
+      const fromDate = formatDate(dateRange.startDate);
+      const toDate = formatDate(dateRange.endDate);
       
       const response = await visitorSummaryAPI.getVisitorSummary(fromDate, toDate);
       
@@ -59,9 +68,43 @@ export const VisitorStatusOverviewCard: React.FC<VisitorStatusOverviewCardProps>
     }
   };
 
-  const handleDownload = (type: string) => {
-    console.log(`Downloading ${type} visitors data`);
-    // TODO: Implement download functionality
+  const handleDownload = async (type: string) => {
+    if (!dateRange) {
+      toast({
+        title: "Error",
+        description: "Please select a date range first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      switch (type) {
+        case 'total':
+          await visitorDownloadAPI.downloadTotalVisitorsData(dateRange.startDate, dateRange.endDate);
+          break;
+        case 'expected':
+          await visitorDownloadAPI.downloadExpectedVisitorsData(dateRange.startDate, dateRange.endDate);
+          break;
+        case 'unexpected':
+          await visitorDownloadAPI.downloadUnexpectedVisitorsData(dateRange.startDate, dateRange.endDate);
+          break;
+        default:
+          throw new Error('Unknown download type');
+      }
+      
+      toast({
+        title: "Success",
+        description: `${type.charAt(0).toUpperCase() + type.slice(1)} visitors data downloaded successfully`
+      });
+    } catch (error) {
+      console.error(`Error downloading ${type} visitors data:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to download ${type} visitors data`,
+        variant: "destructive"
+      });
+    }
   };
 
   return (
