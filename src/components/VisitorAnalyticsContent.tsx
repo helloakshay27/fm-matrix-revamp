@@ -6,6 +6,62 @@ import { VisitorAnalyticsFilterDialog } from './VisitorAnalyticsFilterDialog';
 import { RecentVisitorsSidebar } from './RecentVisitorsSidebar';
 import { VisitorSelector } from './VisitorSelector';
 import { VisitorStatusOverviewCard } from './VisitorStatusOverviewCard';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// Sortable Card Wrapper Component
+interface SortableCardProps {
+  id: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+const SortableCard: React.FC<SortableCardProps> = ({ id, children, className }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isDragging ? 'grabbing' : 'grab',
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`touch-none ${className}`}
+    >
+      {children}
+    </div>
+  );
+};
 
 export const VisitorAnalyticsContent = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -14,6 +70,41 @@ export const VisitorAnalyticsContent = () => {
     endDate: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Card items with unique IDs for drag and drop
+  const [cardItems, setCardItems] = useState([
+    { id: 'visitor-status-overview', type: 'overview' },
+    { id: 'purpose-wise', type: 'purposeWise' },
+    { id: 'status-wise', type: 'statusWise' },
+    { id: 'hourly-trend', type: 'hourlyTrend' },
+    { id: 'location-wise', type: 'locationWise' },
+    { id: 'visitor-summary', type: 'summary' }
+  ]);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setCardItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   const handleFilterApply = (newDateRange: { startDate: string; endDate: string }) => {
     setDateRange(newDateRange);
@@ -64,6 +155,89 @@ export const VisitorAnalyticsContent = () => {
     { location: 'Emergency Exit', count: 18 }
   ];
 
+  // Render card function
+  const renderCard = (item: { id: string; type: string }) => {
+    const commonDateRange = dateRange.startDate ? {
+      startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
+      endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
+    } : undefined;
+
+    switch (item.type) {
+      case 'overview':
+        return (
+          <VisitorStatusOverviewCard
+            totalVisitors={visitorStats.totalVisitors}
+            approvedVisitors={visitorStats.approvedVisitors}
+            pendingVisitors={visitorStats.pendingVisitors}
+            rejectedVisitors={visitorStats.rejectedVisitors}
+            className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-all duration-200"
+          />
+        );
+      case 'purposeWise':
+        return (
+          <VisitorAnalyticsCard
+            title="Purpose Wise Visitors"
+            data={purposeWiseData}
+            type="purposeWise"
+            className="bg-white border border-gray-200 rounded-lg shadow-sm"
+            dateRange={commonDateRange}
+          />
+        );
+      case 'statusWise':
+        return (
+          <VisitorAnalyticsCard
+            title="Status Wise Distribution"
+            data={statusWiseData}
+            type="statusWise"
+            className="bg-white border border-gray-200 rounded-lg shadow-sm"
+            dateRange={commonDateRange}
+          />
+        );
+      case 'hourlyTrend':
+        return (
+          <VisitorAnalyticsCard
+            title="Hourly Visitor Trend"
+            data={hourlyTrendData}
+            type="hourlyTrend"
+            className="bg-white border border-gray-200 rounded-lg shadow-sm"
+            dateRange={commonDateRange}
+          />
+        );
+      case 'locationWise':
+        return (
+          <VisitorAnalyticsCard
+            title="Location Wise Visitors"
+            data={locationWiseData}
+            type="locationWise"
+            className="bg-white border border-gray-200 rounded-lg shadow-sm"
+            dateRange={commonDateRange}
+          />
+        );
+      case 'summary':
+        return (
+          <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-lg transition-all duration-200">
+            <h3 className="text-lg font-bold text-[#C72030] mb-4">Visitor Summary</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="text-xl font-bold text-blue-600">4.2 hrs</div>
+                <div className="text-sm text-blue-700 font-medium">Average Visit Duration</div>
+              </div>
+              <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="text-xl font-bold text-purple-600">92%</div>
+                <div className="text-sm text-purple-700 font-medium">Check-in Success Rate</div>
+              </div>
+              <div className="text-center p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                <div className="text-xl font-bold text-indigo-600">35</div>
+                <div className="text-sm text-indigo-700 font-medium">Peak Hour Visitors</div>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
       {/* Header with Filter and Visitor Selector */}
@@ -90,95 +264,32 @@ export const VisitorAnalyticsContent = () => {
         </div>
       )}
 
-      {/* Main Analytics Layout */}
+      {/* Main Analytics Layout with Drag and Drop */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
-        {/* Left Section - Charts */}
-        <div className="xl:col-span-8 space-y-4 sm:space-y-6">
-          {/* Summary Cards */}
-          <VisitorStatusOverviewCard
-            totalVisitors={visitorStats.totalVisitors}
-            approvedVisitors={visitorStats.approvedVisitors}
-            pendingVisitors={visitorStats.pendingVisitors}
-            rejectedVisitors={visitorStats.rejectedVisitors}
-            className="bg-white border border-gray-200 rounded-lg shadow-sm"
-          />
-
-          {/* Analytics Charts */}
-          <div className="space-y-4 sm:space-y-6">
-            {/* First Row - Purpose Wise and Status Wise */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              <VisitorAnalyticsCard
-                title="Purpose Wise Visitors"
-                data={purposeWiseData}
-                type="purposeWise"
-                className="bg-white border border-gray-200 rounded-lg shadow-sm"
-                dateRange={dateRange.startDate ? {
-                  startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
-                  endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
-                } : undefined}
-              />
-
-              <VisitorAnalyticsCard
-                title="Status Wise Distribution"
-                data={statusWiseData}
-                type="statusWise"
-                className="bg-white border border-gray-200 rounded-lg shadow-sm"
-                dateRange={dateRange.startDate ? {
-                  startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
-                  endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
-                } : undefined}
-              />
-            </div>
-
-            {/* Second Row - Hourly Trend */}
-            <div className="grid grid-cols-1 gap-4 sm:gap-6">
-              <VisitorAnalyticsCard
-                title="Hourly Visitor Trend"
-                data={hourlyTrendData}
-                type="hourlyTrend"
-                className="bg-white border border-gray-200 rounded-lg shadow-sm"
-                dateRange={dateRange.startDate ? {
-                  startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
-                  endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
-                } : undefined}
-              />
-            </div>
-
-            {/* Third Row - Location Wise */}
-            <div className="grid grid-cols-1 gap-4 sm:gap-6">
-              <VisitorAnalyticsCard
-                title="Location Wise Visitors"
-                data={locationWiseData}
-                type="locationWise"
-                className="bg-white border border-gray-200 rounded-lg shadow-sm"
-                dateRange={dateRange.startDate ? {
-                  startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
-                  endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
-                } : undefined}
-              />
-            </div>
-
-            {/* Fourth Row - Visitor Summary */}
-            <div className="grid grid-cols-1 gap-4 sm:gap-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-[#C72030] mb-4">Visitor Summary</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="text-xl font-bold text-blue-600">4.2 hrs</div>
-                    <div className="text-sm text-blue-700 font-medium">Average Visit Duration</div>
-                  </div>
-                  <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
-                    <div className="text-xl font-bold text-purple-600">92%</div>
-                    <div className="text-sm text-purple-700 font-medium">Check-in Success Rate</div>
-                  </div>
-                  <div className="text-center p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-                    <div className="text-xl font-bold text-indigo-600">35</div>
-                    <div className="text-sm text-indigo-700 font-medium">Peak Hour Visitors</div>
-                  </div>
-                </div>
+        {/* Left Section - Sortable Charts */}
+        <div className="xl:col-span-8">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={cardItems.map(item => item.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-4 sm:space-y-6">
+                {cardItems.map((item) => (
+                  <SortableCard
+                    key={item.id}
+                    id={item.id}
+                    className="w-full"
+                  >
+                    {renderCard(item)}
+                  </SortableCard>
+                ))}
               </div>
-            </div>
-          </div>
+            </SortableContext>
+          </DndContext>
         </div>
 
         {/* Right Sidebar - Recent Visitors */}
