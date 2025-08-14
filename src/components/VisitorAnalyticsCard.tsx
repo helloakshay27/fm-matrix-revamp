@@ -152,18 +152,15 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
   };
 
   return (
-    <Card className={`${className}`}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-        <CardTitle className="text-lg font-bold text-[#C72030]">{title}</CardTitle>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleDownload}
-          disabled={isDownloading}
-          className="text-[#C72030] hover:text-[#C72030]/80"
-        >
-          <Download className="w-4 h-4" />
-        </Button>
+    <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${className}`}>
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">{title}</CardTitle>
+          <Download
+            className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors"
+            onClick={handleDownload}
+          />
+        </div>
       </CardHeader>
       <CardContent>
         {renderContent()}
