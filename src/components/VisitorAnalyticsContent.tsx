@@ -249,6 +249,8 @@ export const VisitorAnalyticsContent = () => {
           />
         );
       case 'summary':
+        return null; // Visitor Summary card commented out
+        /*
         return (
           <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-lg transition-all duration-200">
             <h3 className="text-lg font-bold text-[#C72030] mb-4">Visitor Summary</h3>
@@ -268,6 +270,7 @@ export const VisitorAnalyticsContent = () => {
             </div>
           </div>
         );
+        */
       default:
         return null;
     }
