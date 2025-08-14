@@ -107,19 +107,19 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
 
         return (
           <div className="relative flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
                   data={statusData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
+                  innerRadius={50}
+                  outerRadius={100}
                   paddingAngle={2}
                   dataKey="value"
                   label={({ value, cx, cy, midAngle, innerRadius, outerRadius }) => {
                     const RADIAN = Math.PI / 180;
-                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.7;
                     const x = cx + radius * Math.cos(-midAngle * RADIAN);
                     const y = cy + radius * Math.sin(-midAngle * RADIAN);
                     return (
@@ -127,10 +127,12 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
                         x={x}
                         y={y}
                         fill="white"
-                        textAnchor={x > cx ? 'start' : 'end'}
+                        textAnchor="middle"
                         dominantBaseline="central"
-                        fontSize="14"
+                        fontSize="16"
                         fontWeight="bold"
+                        stroke="rgba(0,0,0,0.3)"
+                        strokeWidth="0.5"
                       >
                         {value}
                       </text>
