@@ -204,10 +204,7 @@ export const VisitorAnalyticsContent = () => {
       case 'overview':
         return (
           <VisitorStatusOverviewCard
-            totalVisitors={visitorStats.totalVisitors}
-            approvedVisitors={visitorStats.approvedVisitors}
-            pendingVisitors={visitorStats.pendingVisitors}
-            rejectedVisitors={visitorStats.rejectedVisitors}
+            dateRange={commonDateRange}
             className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-all duration-200"
           />
         );
