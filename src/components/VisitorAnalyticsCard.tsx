@@ -147,7 +147,9 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
             </ResponsiveContainer>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-lg font-semibold text-gray-700">Total: {statusTotal}</div>
+                <div className="text-lg font-semibold text-gray-700">
+                  Total: {statusTotal.toLocaleString()}
+                </div>
               </div>
             </div>
             <div className="absolute -bottom-2 left-0 right-0 flex justify-center gap-6">
