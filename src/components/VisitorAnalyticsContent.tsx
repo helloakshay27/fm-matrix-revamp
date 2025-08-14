@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Filter } from 'lucide-react';
 import { VisitorAnalyticsCard } from './VisitorAnalyticsCard';
 import { VisitorAnalyticsFilterDialog } from './VisitorAnalyticsFilterDialog';
 import { RecentVisitorsSidebar } from './RecentVisitorsSidebar';
 
 export const VisitorAnalyticsContent = () => {
-  const [activeTab, setActiveTab] = useState('analytics');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [dateRange, setDateRange] = useState({
     startDate: '',
@@ -65,161 +63,142 @@ export const VisitorAnalyticsContent = () => {
   ];
 
   return (
-    <div className="h-full flex flex-col">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-        <div className="flex-shrink-0 border-b border-gray-200 bg-white px-6 py-4">
-          <TabsList className="grid w-full max-w-md grid-cols-2 bg-gray-100">
-            <TabsTrigger 
-              value="analytics" 
-              className="data-[state=active]:bg-white data-[state=active]:text-[#C72030] data-[state=active]:shadow-sm"
+    <div className="h-full flex">
+      {/* Main Analytics Section */}
+      <div className="flex-1 overflow-auto p-6 space-y-6">
+        {/* Header with Filter */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={() => setIsFilterOpen(true)}
+              variant="outline"
+              className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
+              disabled={isLoading}
             >
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger 
-              value="recent-visitors" 
-              className="data-[state=active]:bg-white data-[state=active]:text-[#C72030] data-[state=active]:shadow-sm"
-            >
-              Recent Visitors
-            </TabsTrigger>
-          </TabsList>
+              <Filter className="w-4 h-4" />
+              Filter Analytics
+            </Button>
+            {dateRange.startDate && dateRange.endDate && (
+              <span className="text-sm text-gray-600">
+                {dateRange.startDate} - {dateRange.endDate}
+              </span>
+            )}
+            {isLoading && (
+              <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
+            )}
+          </div>
         </div>
 
-        <div className="flex-1 flex overflow-hidden">
-          <TabsContent value="analytics" className="flex-1 overflow-auto p-6 space-y-6 mt-0">
-            {/* Header with Filter */}
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <Button
-                  onClick={() => setIsFilterOpen(true)}
-                  variant="outline"
-                  className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
-                  disabled={isLoading}
-                >
-                  <Filter className="w-4 h-4" />
-                  Filter Analytics
-                </Button>
-                {dateRange.startDate && dateRange.endDate && (
-                  <span className="text-sm text-gray-600">
-                    {dateRange.startDate} - {dateRange.endDate}
-                  </span>
-                )}
-                {isLoading && (
-                  <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
-                )}
-              </div>
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-[#C72030]">{visitorStats.totalVisitors}</div>
+              <div className="text-sm text-gray-600 font-medium">Total Visitors</div>
             </div>
-
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-[#C72030]">{visitorStats.totalVisitors}</div>
-                  <div className="text-sm text-gray-600 font-medium">Total Visitors</div>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{visitorStats.approvedVisitors}</div>
-                  <div className="text-sm text-gray-600 font-medium">Approved</div>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">{visitorStats.pendingVisitors}</div>
-                  <div className="text-sm text-gray-600 font-medium">Pending</div>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">{visitorStats.rejectedVisitors}</div>
-                  <div className="text-sm text-gray-600 font-medium">Rejected</div>
-                </div>
-              </div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{visitorStats.approvedVisitors}</div>
+              <div className="text-sm text-gray-600 font-medium">Approved</div>
             </div>
-
-            {/* Analytics Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Purpose Wise Chart */}
-              <VisitorAnalyticsCard
-                title="Purpose Wise Visitors"
-                data={purposeWiseData}
-                type="purposeWise"
-                className="bg-white border border-gray-200 rounded-lg shadow-sm"
-                dateRange={dateRange.startDate ? {
-                  startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
-                  endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
-                } : undefined}
-              />
-
-              {/* Status Wise Chart */}
-              <VisitorAnalyticsCard
-                title="Status Wise Distribution"
-                data={statusWiseData}
-                type="statusWise"
-                className="bg-white border border-gray-200 rounded-lg shadow-sm"
-                dateRange={dateRange.startDate ? {
-                  startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
-                  endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
-                } : undefined}
-              />
-
-              {/* Hourly Trend Chart */}
-              <VisitorAnalyticsCard
-                title="Hourly Visitor Trend"
-                data={hourlyTrendData}
-                type="hourlyTrend"
-                className="bg-white border border-gray-200 rounded-lg shadow-sm"
-                dateRange={dateRange.startDate ? {
-                  startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
-                  endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
-                } : undefined}
-              />
-
-              {/* Location Wise Chart */}
-              <VisitorAnalyticsCard
-                title="Location Wise Visitors"
-                data={locationWiseData}
-                type="locationWise"
-                className="bg-white border border-gray-200 rounded-lg shadow-sm"
-                dateRange={dateRange.startDate ? {
-                  startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
-                  endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
-                } : undefined}
-              />
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">{visitorStats.pendingVisitors}</div>
+              <div className="text-sm text-gray-600 font-medium">Pending</div>
             </div>
-
-            {/* Additional Analytics Section */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-[#C72030] mb-4">Visitor Summary</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="text-xl font-bold text-blue-600">4.2 hrs</div>
-                  <div className="text-sm text-blue-700 font-medium">Average Visit Duration</div>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
-                  <div className="text-xl font-bold text-purple-600">92%</div>
-                  <div className="text-sm text-purple-700 font-medium">Check-in Success Rate</div>
-                </div>
-                <div className="text-center p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-                  <div className="text-xl font-bold text-indigo-600">35</div>
-                  <div className="text-sm text-indigo-700 font-medium">Peak Hour Visitors</div>
-                </div>
-              </div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">{visitorStats.rejectedVisitors}</div>
+              <div className="text-sm text-gray-600 font-medium">Rejected</div>
             </div>
-
-            {/* Filter Dialog */}
-            <VisitorAnalyticsFilterDialog
-              isOpen={isFilterOpen}
-              onClose={() => setIsFilterOpen(false)}
-              onApplyFilter={handleFilterApply}
-            />
-          </TabsContent>
-
-          <TabsContent value="recent-visitors" className="flex-1 overflow-hidden mt-0">
-            <RecentVisitorsSidebar />
-          </TabsContent>
+          </div>
         </div>
-      </Tabs>
+
+        {/* Analytics Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Purpose Wise Chart */}
+          <VisitorAnalyticsCard
+            title="Purpose Wise Visitors"
+            data={purposeWiseData}
+            type="purposeWise"
+            className="bg-white border border-gray-200 rounded-lg shadow-sm"
+            dateRange={dateRange.startDate ? {
+              startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
+              endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
+            } : undefined}
+          />
+
+          {/* Status Wise Chart */}
+          <VisitorAnalyticsCard
+            title="Status Wise Distribution"
+            data={statusWiseData}
+            type="statusWise"
+            className="bg-white border border-gray-200 rounded-lg shadow-sm"
+            dateRange={dateRange.startDate ? {
+              startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
+              endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
+            } : undefined}
+          />
+
+          {/* Hourly Trend Chart */}
+          <VisitorAnalyticsCard
+            title="Hourly Visitor Trend"
+            data={hourlyTrendData}
+            type="hourlyTrend"
+            className="bg-white border border-gray-200 rounded-lg shadow-sm"
+            dateRange={dateRange.startDate ? {
+              startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
+              endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
+            } : undefined}
+          />
+
+          {/* Location Wise Chart */}
+          <VisitorAnalyticsCard
+            title="Location Wise Visitors"
+            data={locationWiseData}
+            type="locationWise"
+            className="bg-white border border-gray-200 rounded-lg shadow-sm"
+            dateRange={dateRange.startDate ? {
+              startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
+              endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
+            } : undefined}
+          />
+        </div>
+
+        {/* Additional Analytics Section */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-[#C72030] mb-4">Visitor Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="text-xl font-bold text-blue-600">4.2 hrs</div>
+              <div className="text-sm text-blue-700 font-medium">Average Visit Duration</div>
+            </div>
+            <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="text-xl font-bold text-purple-600">92%</div>
+              <div className="text-sm text-purple-700 font-medium">Check-in Success Rate</div>
+            </div>
+            <div className="text-center p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+              <div className="text-xl font-bold text-indigo-600">35</div>
+              <div className="text-sm text-indigo-700 font-medium">Peak Hour Visitors</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Dialog */}
+        <VisitorAnalyticsFilterDialog
+          isOpen={isFilterOpen}
+          onClose={() => setIsFilterOpen(false)}
+          onApplyFilter={handleFilterApply}
+        />
+      </div>
+
+      {/* Recent Visitors Sidebar */}
+      <div className="w-80 flex-shrink-0">
+        <RecentVisitorsSidebar />
+      </div>
     </div>
   );
 };
