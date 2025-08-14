@@ -419,7 +419,7 @@ export const PatrollingDetailPage: React.FC = () => {
                       {patrolling.active ? 'Active' : 'Inactive'}
                     </Badge>
                   </div>
-                  <div><strong>Created:</strong> {formatDateTime(patrolling.created_at)}</div>
+                  <div><strong>Created on:</strong> {formatDateTime(patrolling.created_at)}</div>
                 </div>
               </CardContent>
             </Card>
@@ -445,7 +445,7 @@ export const PatrollingDetailPage: React.FC = () => {
                         {patrolling.checklist.active ? 'Active' : 'Inactive'}
                       </Badge>
                     </div>
-                    <div><strong>Created:</strong> {formatDateTime(patrolling.checklist.created_at)}</div>
+                    <div><strong>Created on:</strong> {formatDateTime(patrolling.checklist.created_at)}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -589,7 +589,7 @@ export const PatrollingDetailPage: React.FC = () => {
                         <TableHead>Type</TableHead>
                         <TableHead>Mandatory</TableHead>
                         <TableHead>Options</TableHead>
-                        <TableHead>Created</TableHead>
+                        <TableHead>Created on</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody className="bg-white">
@@ -671,7 +671,7 @@ export const PatrollingDetailPage: React.FC = () => {
                         <TableHead>End Time</TableHead>
                       
                         <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
+                        <TableHead>Created on</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody className="bg-white">
