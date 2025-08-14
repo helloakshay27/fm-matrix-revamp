@@ -4,6 +4,7 @@ import { Filter } from 'lucide-react';
 import { VisitorAnalyticsCard } from './VisitorAnalyticsCard';
 import { VisitorAnalyticsFilterDialog } from './VisitorAnalyticsFilterDialog';
 import { RecentVisitorsSidebar } from './RecentVisitorsSidebar';
+import { VisitorSelector } from './VisitorSelector';
 
 export const VisitorAnalyticsContent = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -187,6 +188,9 @@ export const VisitorAnalyticsContent = () => {
 
       {/* Recent Visitors Sidebar */}
       <div className="w-80 flex-shrink-0">
+        <div className="p-4">
+          <VisitorSelector />
+        </div>
         <RecentVisitorsSidebar />
       </div>
     </div>
