@@ -5,6 +5,7 @@ import { VisitorAnalyticsCard } from './VisitorAnalyticsCard';
 import { VisitorAnalyticsFilterDialog } from './VisitorAnalyticsFilterDialog';
 import { RecentVisitorsSidebar } from './RecentVisitorsSidebar';
 import { VisitorSelector } from './VisitorSelector';
+import { VisitorStatusOverviewCard } from './VisitorStatusOverviewCard';
 
 export const VisitorAnalyticsContent = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -94,32 +95,13 @@ export const VisitorAnalyticsContent = () => {
         {/* Left Section - Charts */}
         <div className="xl:col-span-8 space-y-4 sm:space-y-6">
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-[#C72030]">{visitorStats.totalVisitors}</div>
-                <div className="text-sm text-gray-600 font-medium">Total Visitors</div>
-              </div>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{visitorStats.approvedVisitors}</div>
-                <div className="text-sm text-gray-600 font-medium">Approved</div>
-              </div>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">{visitorStats.pendingVisitors}</div>
-                <div className="text-sm text-gray-600 font-medium">Pending</div>
-              </div>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-red-600">{visitorStats.rejectedVisitors}</div>
-                <div className="text-sm text-gray-600 font-medium">Rejected</div>
-              </div>
-            </div>
-          </div>
+          <VisitorStatusOverviewCard
+            totalVisitors={visitorStats.totalVisitors}
+            approvedVisitors={visitorStats.approvedVisitors}
+            pendingVisitors={visitorStats.pendingVisitors}
+            rejectedVisitors={visitorStats.rejectedVisitors}
+            className="bg-white border border-gray-200 rounded-lg shadow-sm"
+          />
 
           {/* Analytics Charts */}
           <div className="space-y-4 sm:space-y-6">
