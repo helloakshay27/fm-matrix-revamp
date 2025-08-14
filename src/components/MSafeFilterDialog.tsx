@@ -1,27 +1,27 @@
-
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import IconButton from '@mui/material/IconButton';
+import TextField from '@mui/material/TextField';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import Stack from '@mui/material/Stack';
 import { X } from 'lucide-react';
 
 interface MSafeFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onApplyFilters: (filters: { name: string; email: string }) => void;
+  onApplyFilters: (filters: { name: string; email: string; mobile: string }) => void;
 }
 
 export const MSafeFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeFilterDialogProps) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-
-  // Common field styles matching ticket page design
-  const commonFieldStyles = "h-10 rounded-md border border-[hsl(var(--analytics-border))] bg-white";
+  const [mobile, setMobile] = useState('');
 
   const handleSubmit = () => {
-    const filters = { name, email };
-    console.log('Applying M Safe filters:', filters);
+    const filters = { name, email, mobile };
     onApplyFilters(filters);
     onClose();
   };
@@ -29,69 +29,63 @@ export const MSafeFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeFilt
   const handleReset = () => {
     setName('');
     setEmail('');
+    setMobile('');
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white">
-        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
-          <DialogTitle className="text-xl font-bold text-[hsl(var(--analytics-text))]">Filter</DialogTitle>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="w-4 h-4" />
-          </Button>
-        </DialogHeader>
-
-        <div className="space-y-6 py-4">
-          <div className="space-y-4">
-            {/* Name Filter */}
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium text-[hsl(var(--analytics-text))]">
-                Name
-              </Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Enter Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={commonFieldStyles}
-              />
-            </div>
-
-            {/* Email Filter */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-[hsl(var(--analytics-text))]">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={commonFieldStyles}
-              />
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2 pt-4">
-            <Button 
-              onClick={handleSubmit}
-              className="bg-purple-700 hover:bg-purple-800 text-white flex-1"
-            >
-              Apply
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleReset}
-              className="text-[hsl(var(--analytics-text))] border-[hsl(var(--analytics-border))] flex-1"
-            >
-              Reset
-            </Button>
-          </div>
-        </div>
+    <Dialog open={isOpen} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontWeight: 700, fontSize: 20, borderBottom: '1px solid #eee', pb: 1.5 }}>
+        Filter
+        <IconButton onClick={onClose} size="small">
+          <X className="w-4 h-4" />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent sx={{ pt: 3, pb: 2 }}>
+        <Stack spacing={3} sx={{ mt: 2 }}>
+          <TextField
+            label="Name"
+            variant="outlined"
+            size="small"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            fullWidth
+            InputLabelProps={{ shrink: Boolean(name) || undefined }}
+          />
+          <TextField
+            label="Email"
+            variant="outlined"
+            size="small"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            fullWidth
+            InputLabelProps={{ shrink: Boolean(email) || undefined }}
+          />
+          <TextField
+            label="Mobile Number"
+            variant="outlined"
+            size="small"
+            value={mobile}
+            onChange={e => setMobile(e.target.value)}
+            fullWidth
+            InputLabelProps={{ shrink: Boolean(mobile) || undefined }}
+          />
+        </Stack>
       </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2, pt: 0 }}>
+        <Button
+          variant="outline"
+          onClick={handleReset}
+          className="border-gray-300 text-gray-700 hover:bg-gray-50"
+        >
+          Reset
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          className="bg-red-500 hover:bg-red-600 text-white"
+        >
+          Apply
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };

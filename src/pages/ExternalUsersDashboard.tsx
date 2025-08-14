@@ -3,12 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
-import { fetchFMUsers, FMUser } from '@/store/slices/fmUserSlice';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { MSafeImportModal } from '@/components/MSafeImportModal';
@@ -35,125 +32,93 @@ interface ExternalUser {
   lock_user_permission_status: string;
   face_added: boolean | string;
   app_downloaded: boolean | string;
-  lock_user_permission: { access_level: number };
+  lock_user_permission: { id?: number; access_level: string | number; joining_date?: string; role_name?: string; circle_name?: string; department_name?: string; status?: string; employee_id?: string | number; active?: boolean; designation?: string; lock_role_id?: number; department_id?: number; circle_id?: number };
   line_manager_name?: string;
   line_manager_mobile?: string;
   department?: string;
   circle?: string;
   cluster?: string;
+  active?: boolean;
+  org_user_id?: string | number;
+  birth_date?: string;
+  joining_date?: string;
+  status?: string;
+  cluster_name?: string;
+  work_location?: string;
+  role_name?: string;
+  employee_type?: string;
+  created_at?: string;
+  lock_role?: { active: number };
+  report_to?: { name?: string; email?: string; mobile?: string };
 }
 
 export const ExternalUsersDashboard = () => {
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
 
-  // Dummy External User data (25 records) in state
-  const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([
-    {
-      id: 1, firstname: 'Anand', lastname: 'Pawar', gender: 'Male', mobile: '8355857800', email: 'anandpawar54136@gmail.com', company_name: 'External Vendor A', entity_id: 1, unit_id: 1, designation: 'Shift Engineer', employee_id: 'EXT001', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 3 }, department: 'FM', line_manager_name: 'Manager A', line_manager_mobile: '9876543210'
-    },
-    {
-      id: 2, firstname: 'Tapish', lastname: 'Choudhary', gender: 'Male', mobile: '7701944124', email: 'taapish@gmail.com', company_name: 'External Vendor B', entity_id: 2, unit_id: 2, designation: 'Security Guard', employee_id: 'EXT002', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'pending', face_added: false, app_downloaded: false, lock_user_permission: { access_level: 3 }, department: 'Security', circle: 'North', cluster: 'Zone 1'
-    },
-    {
-      id: 3, firstname: 'Amrit', lastname: 'Gupta', gender: 'Male', mobile: '9006485383', email: 'amritkumargupta900@gmail.com', company_name: 'Cleaning Services Ltd', entity_id: 3, unit_id: 3, designation: 'Cleaner', employee_id: 'EXT003', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: false, lock_user_permission: { access_level: 3 }, department: 'Housekeeping', circle: 'South', cluster: 'Zone 2'
-    },
-    {
-      id: 4, firstname: 'Moiz', lastname: 'Tuv', gender: 'Male', mobile: '7411874016', email: '7411874016@gmail.com', company_name: 'Maintenance Corp', entity_id: 4, unit_id: 4, designation: 'Technician', employee_id: 'EXT004', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'pending', face_added: false, app_downloaded: true, lock_user_permission: { access_level: 3 }, department: 'Maintenance', line_manager_name: 'Manager B', line_manager_mobile: '9876543211'
-    },
-    {
-      id: 5, firstname: 'Maruf', lastname: 'Khan', gender: 'Male', mobile: '8808632149', email: '8808632149@gmail.com', company_name: 'Security Solutions', entity_id: 5, unit_id: 5, designation: 'Security Officer', employee_id: 'EXT005', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 3 }, department: 'Security', circle: 'East', cluster: 'Zone 3'
-    },
-    {
-      id: 6, firstname: 'Shivam', lastname: 'Kumar', gender: 'Male', mobile: '9997888699', email: 'shivam.kumar@godrejproperties.com', company_name: 'Godrej Properties', entity_id: 6, unit_id: 6, designation: 'Manager', employee_id: 'EXT006', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: false, lock_user_permission: { access_level: 2 }, department: 'Management', circle: 'West', cluster: 'Zone 4'
-    },
-    {
-      id: 7, firstname: 'Firasat', lastname: 'Khan', gender: 'Male', mobile: '7897365833', email: 'firasatalkhan786@gmail.com', company_name: 'Landscaping Inc', entity_id: 7, unit_id: 7, designation: 'Gardener', employee_id: 'EXT007', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: false, lock_user_permission: { access_level: 3 }, department: 'Landscaping', line_manager_name: 'Manager C', line_manager_mobile: '9876543212'
-    },
-    {
-      id: 8, firstname: 'Vineet', lastname: 'Chauhan', gender: 'Male', mobile: '8209305825', email: 'vineet.chauhan@godrejproperties.com', company_name: 'Godrej Properties', entity_id: 8, unit_id: 8, designation: 'Supervisor', employee_id: 'EXT008', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'pending', face_added: false, app_downloaded: true, lock_user_permission: { access_level: 2 }, department: 'Operations', circle: 'Central', cluster: 'Zone 5'
-    },
-    {
-      id: 9, firstname: 'Avinash', lastname: 'Kamble', gender: 'Male', mobile: '9833842276', email: '9833842276@gmail.com', company_name: 'Transport Services', entity_id: 9, unit_id: 9, designation: 'Driver', employee_id: 'EXT009', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 3 }, department: 'Transport', circle: 'North', cluster: 'Zone 6'
-    },
-    {
-      id: 10, firstname: 'Parveen', lastname: 'Kumar', gender: 'Male', mobile: '9785669937', email: '9785669937@gmail.com', company_name: 'Catering Services', entity_id: 10, unit_id: 10, designation: 'Cook', employee_id: 'EXT010', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: false, lock_user_permission: { access_level: 3 }, department: 'Catering', line_manager_name: 'Manager D', line_manager_mobile: '9876543213'
-    },
-    {
-      id: 11, firstname: 'Rajesh', lastname: 'Singh', gender: 'Male', mobile: '8855443322', email: 'rajesh.singh@vendor.com', company_name: 'IT Services Ltd', entity_id: 11, unit_id: 11, designation: 'IT Support', employee_id: 'EXT011', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 2 }, department: 'IT', circle: 'North', cluster: 'Zone 7', line_manager_name: 'Manager E', line_manager_mobile: '9876543214'
-    },
-    {
-      id: 12, firstname: 'Priya', lastname: 'Sharma', gender: 'Female', mobile: '7766554433', email: 'priya.sharma@cleaning.com', company_name: 'CleanTech Solutions', entity_id: 12, unit_id: 12, designation: 'Cleaning Supervisor', employee_id: 'EXT012', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'pending', face_added: false, app_downloaded: true, lock_user_permission: { access_level: 3 }, department: 'Housekeeping', circle: 'South', cluster: 'Zone 8'
-    },
-    {
-      id: 13, firstname: 'Suresh', lastname: 'Kumar', gender: 'Male', mobile: '9988776655', email: 'suresh.kumar@security.com', company_name: 'Elite Security', entity_id: 13, unit_id: 13, designation: 'Security Head', employee_id: 'EXT013', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: false, lock_user_permission: { access_level: 2 }, department: 'Security', circle: 'East', cluster: 'Zone 9', line_manager_name: 'Manager F', line_manager_mobile: '9876543215'
-    },
-    {
-      id: 14, firstname: 'Meera', lastname: 'Patel', gender: 'Female', mobile: '8877665544', email: 'meera.patel@catering.com', company_name: 'Royal Catering', entity_id: 14, unit_id: 14, designation: 'Chef', employee_id: 'EXT014', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: false, lock_user_permission: { access_level: 3 }, department: 'Catering', circle: 'West', cluster: 'Zone 10'
-    },
-    {
-      id: 15, firstname: 'Arjun', lastname: 'Verma', gender: 'Male', mobile: '7799886655', email: 'arjun.verma@transport.com', company_name: 'Swift Transport', entity_id: 15, unit_id: 15, designation: 'Fleet Manager', employee_id: 'EXT015', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 2 }, department: 'Transport', circle: 'Central', cluster: 'Zone 11', line_manager_name: 'Manager G', line_manager_mobile: '9876543216'
-    },
-    {
-      id: 16, firstname: 'Kavita', lastname: 'Reddy', gender: 'Female', mobile: '6688997755', email: 'kavita.reddy@landscaping.com', company_name: 'Green Gardens', entity_id: 16, unit_id: 16, designation: 'Landscape Designer', employee_id: 'EXT016', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'pending', face_added: false, app_downloaded: true, lock_user_permission: { access_level: 3 }, department: 'Landscaping', circle: 'North', cluster: 'Zone 12'
-    },
-    {
-      id: 17, firstname: 'Vikram', lastname: 'Joshi', gender: 'Male', mobile: '5577889966', email: 'vikram.joshi@maintenance.com', company_name: 'TechFix Solutions', entity_id: 17, unit_id: 17, designation: 'Maintenance Lead', employee_id: 'EXT017', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: false, lock_user_permission: { access_level: 2 }, department: 'Maintenance', circle: 'South', cluster: 'Zone 13', line_manager_name: 'Manager H', line_manager_mobile: '9876543217'
-    },
-    {
-      id: 18, firstname: 'Sunita', lastname: 'Gupta', gender: 'Female', mobile: '4466778899', email: 'sunita.gupta@admin.com', company_name: 'Admin Pro Services', entity_id: 18, unit_id: 18, designation: 'Admin Executive', employee_id: 'EXT018', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: false, lock_user_permission: { access_level: 3 }, department: 'Administration', circle: 'East', cluster: 'Zone 14'
-    },
-    {
-      id: 19, firstname: 'Manoj', lastname: 'Tiwari', gender: 'Male', mobile: '3355667788', email: 'manoj.tiwari@logistics.com', company_name: 'LogiMove Corp', entity_id: 19, unit_id: 19, designation: 'Logistics Coordinator', employee_id: 'EXT019', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'pending', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 2 }, department: 'Logistics', circle: 'West', cluster: 'Zone 15', line_manager_name: 'Manager I', line_manager_mobile: '9876543218'
-    },
-    {
-      id: 20, firstname: 'Asha', lastname: 'Nair', gender: 'Female', mobile: '2244556677', email: 'asha.nair@hospitality.com', company_name: 'Hospitality Plus', entity_id: 20, unit_id: 20, designation: 'Guest Relations', employee_id: 'EXT020', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 3 }, department: 'Hospitality', circle: 'Central', cluster: 'Zone 16'
-    },
-    {
-      id: 21, firstname: 'Rohit', lastname: 'Agarwal', gender: 'Male', mobile: '1133445566', email: 'rohit.agarwal@finance.com', company_name: 'FinanceGuru Ltd', entity_id: 21, unit_id: 21, designation: 'Accounts Assistant', employee_id: 'EXT021', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'approved', face_added: false, app_downloaded: true, lock_user_permission: { access_level: 2 }, department: 'Finance', circle: 'North', cluster: 'Zone 17', line_manager_name: 'Manager J', line_manager_mobile: '9876543219'
-    },
-    {
-      id: 22, firstname: 'Deepika', lastname: 'Sinha', gender: 'Female', mobile: '9911223344', email: 'deepika.sinha@hr.com', company_name: 'HR Solutions Inc', entity_id: 22, unit_id: 22, designation: 'HR Coordinator', employee_id: 'EXT022', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'pending', face_added: true, app_downloaded: false, lock_user_permission: { access_level: 3 }, department: 'Human Resources', circle: 'South', cluster: 'Zone 18'
-    },
-    {
-      id: 23, firstname: 'Amit', lastname: 'Chopra', gender: 'Male', mobile: '8822334455', email: 'amit.chopra@marketing.com', company_name: 'MarketPro Agency', entity_id: 23, unit_id: 23, designation: 'Marketing Executive', employee_id: 'EXT023', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: false, lock_user_permission: { access_level: 2 }, department: 'Marketing', circle: 'East', cluster: 'Zone 19'
-    },
-    {
-      id: 24, firstname: 'Pooja', lastname: 'Malhotra', gender: 'Female', mobile: '7733445566', email: 'pooja.malhotra@legal.com', company_name: 'Legal Advisors LLC', entity_id: 24, unit_id: 24, designation: 'Legal Assistant', employee_id: 'EXT024', created_by_id: 1, access_level: 3, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: true, lock_user_permission: { access_level: 3 }, department: 'Legal', circle: 'West', cluster: 'Zone 20', line_manager_name: 'Manager K', line_manager_mobile: '9876543220'
-    },
-    {
-      id: 25, firstname: 'Sanjay', lastname: 'Mishra', gender: 'Male', mobile: '6644556677', email: 'sanjay.mishra@procurement.com', company_name: 'ProcureTech Solutions', entity_id: 25, unit_id: 25, designation: 'Procurement Officer', employee_id: 'EXT025', created_by_id: 1, access_level: 2, user_type: 'external', lock_user_permission_status: 'approved', face_added: true, app_downloaded: false, lock_user_permission: { access_level: 2 }, department: 'Procurement', circle: 'Central', cluster: 'Zone 21'
-    },
-  ]);
-  const loading = false;
+  const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [updatingIds, setUpdatingIds] = useState<Set<number>>(new Set());
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState<ExternalUser | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const navigate = useNavigate();
 
-  const cardData = [{
-    title: "External Users",
-    count: externalUsers?.length || 10,
-    icon: Users
-  }, {
-    title: "Active Users",
-    count: externalUsers?.filter(user => user.lock_user_permission_status === 'approved').length || 5,
-    icon: UserCheck
-  }, {
-    title: "Pending Approvals",
-    count: externalUsers?.filter(user => user.lock_user_permission_status === 'pending').length || 3,
-    icon: Clock
-  }, {
-    title: "Rejected Users",
-    count: externalUsers?.filter(user => user.lock_user_permission_status === 'rejected').length || 2,
-    icon: Shield
-  }];
 
   useEffect(() => {
-    dispatch(fetchFMUsers());
-  }, [dispatch]);
+    const fetchExternalUsers = async () => {
+      setLoading(true);
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) {
+          setExternalUsers([]);
+          setLoading(false);
+          return;
+        }
+        const url = `https://${baseUrl}/pms/users/non_fte_users.json`;
+        const response = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        // If response is an array, use it directly; else try response.data or response.data.users
+        let users = Array.isArray(response.data) ? response.data : response.data?.users || [];
+        setExternalUsers(users);
+      } catch (err) {
+        setExternalUsers([]);
+        console.error('Error fetching external users:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchExternalUsers();
+  }, []);
+
+  const cardData = [
+    {
+      title: "External Users",
+      count: Array.isArray(externalUsers) ? externalUsers.length : 0,
+      icon: Users
+    },
+    {
+      title: "Active Users",
+      count: Array.isArray(externalUsers) ? externalUsers.filter(user => user.lock_user_permission_status === 'approved' || (user as any)?.status === 'approved').length : 0,
+      icon: UserCheck
+    },
+    {
+      title: "Pending Approvals",
+      count: Array.isArray(externalUsers) ? externalUsers.filter(user => user.lock_user_permission_status === 'pending' || (user as any)?.status === 'pending').length : 0,
+      icon: Clock
+    },
+    {
+      title: "Rejected Users",
+      count: Array.isArray(externalUsers) ? externalUsers.filter(user => user.lock_user_permission_status === 'rejected' || (user as any)?.status === 'rejected').length : 0,
+      icon: Shield
+    }
+  ];
+
 
   const getStatusBadge = (status: string) => {
     if (!status) {
@@ -194,150 +159,90 @@ export const ExternalUsersDashboard = () => {
     </Badge>;
   };
 
-  const columns: ColumnConfig[] = [{
-    key: 'active',
-    label: 'Active',
-    sortable: false,
-    hideable: true
-  }, {
-    key: 'id',
-    label: 'ID',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'user_name',
-    label: 'User Name',
-    sortable: true,
-    hideable: false
-  }, {
-    key: 'gender',
-    label: 'Gender',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'mobile',
-    label: 'Mobile Number',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'email',
-    label: 'Email',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'company_name',
-    label: 'Vendor Company Name',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'department',
-    label: 'Department',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'circle',
-    label: 'Circle',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'cluster',
-    label: 'Cluster',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'designation',
-    label: 'Role',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'employee_id',
-    label: 'Employee ID',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'line_manager_name',
-    label: 'Line Manager Name',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'line_manager_mobile',
-    label: 'Line Manager Mobile',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'access_level',
-    label: 'Access Level',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'user_type',
-    label: 'Type',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'lock_user_permission_status',
-    label: 'Status',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'face_added',
-    label: 'Face Recognition',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'app_downloaded',
-    label: 'App Downloaded',
-    sortable: true,
-    hideable: true
-  }];
+  const columns: ColumnConfig[] = [
+    { key: 'name', label: 'Name', sortable: true, hideable: true },
+    { key: 'org_user_id', label: 'Emp ID', sortable: true, hideable: true },
+    { key: 'email', label: 'Email', sortable: true, hideable: true },
+    { key: 'mobile', label: 'Mobile', sortable: true, hideable: true },
+    { key: 'gender', label: 'Gender', sortable: true, hideable: true },
+    { key: 'active', label: 'Active', sortable: false, hideable: true },
+    { key: 'birth_date', label: 'Birth Date', sortable: true, hideable: true },
+    { key: 'joining_date', label: 'Joining Date', sortable: true, hideable: true },
+    { key: 'status', label: 'Status', sortable: true, hideable: true },
+    { key: 'cluster_name', label: 'Cluster', sortable: true, hideable: true },
+    { key: 'department', label: 'Department', sortable: true, hideable: true },
+    { key: 'circle_name', label: 'Circle', sortable: true, hideable: true },
+    { key: 'work_location', label: 'Work Location', sortable: true, hideable: true },
+    { key: 'company_name', label: 'Company Name', sortable: true, hideable: true },
+    { key: 'role_name', label: 'Role', sortable: true, hideable: true },
+    { key: 'employee_type', label: 'Employee Type', sortable: true, hideable: true },
+    { key: 'created_at', label: 'Created At', sortable: true, hideable: true },
+    { key: 'line_manager_name', label: 'Line Manager Name', sortable: false, hideable: true },
+    { key: 'line_manager_email', label: 'Line Manager Email', sortable: false, hideable: true },
+    { key: 'line_manager_mobile', label: 'Line Manager Mobile', sortable: false, hideable: true },
+  ];
 
-  // Toggle active status handler (local state update for dummy data)
-  const handleToggleActive = (user: ExternalUser) => {
-    setExternalUsers(prevUsers =>
-      prevUsers.map(u =>
-        u.id === user.id
-          ? { ...u, lock_user_permission_status: u.lock_user_permission_status === 'approved' ? 'pending' : 'approved' }
-          : u
-      )
-    );
-  };
 
   const renderCell = (user: ExternalUser, columnKey: string): React.ReactNode => {
     switch (columnKey) {
-      case 'active':
-        return <div className="flex justify-center">
-          <Switch
-            checked={user.lock_user_permission_status === 'approved'}
-            onCheckedChange={() => handleToggleActive(user)}
-          />
-        </div>;
-      case 'user_name':
-        return `${user.firstname} ${user.lastname}`;
-      case 'company_name':
-        return user.company_name || 'N/A';
+      case 'name':
+        return `${user.firstname || ''} ${user.lastname || ''}`.trim() || '-';
+      case 'org_user_id':
+        return (user as any).org_user_id || (user as any).lock_user_permission?.employee_id || (user as any).employee_id || '-';
+      case 'email':
+        return user.email || '-';
+      case 'mobile':
+        return user.mobile || '-';
+      case 'gender':
+        return user.gender || '-';
+      case 'active': {
+        const isActive = (user as any).lock_user_permission?.active ?? ((user as any).lock_role ? (user as any).lock_role.active === 1 : !!(user as any).active);
+        const disabled = updatingIds.has(user.id);
+        return <div className="flex justify-center"><Switch checked={!!isActive} disabled={disabled} onCheckedChange={() => !disabled && handleToggleActive(user)} /></div>;
+      }
+      case 'birth_date':
+        return (user as any).birth_date || '-';
+      case 'joining_date':
+        return (user as any).lock_user_permission?.joining_date || (user as any).joining_date || '-';
+      case 'status': {
+        const statusVal = (user as any).lock_user_permission?.status || (user as any).status || (user as any).lock_user_permission_status;
+        return statusVal ? getStatusBadge(statusVal) : '-';
+      }
+      case 'cluster_name':
+        return (user as any).cluster_name || user.cluster || '-';
       case 'department':
-        return user.department || 'N/A';
-      case 'circle':
-        return user.circle || 'N/A';
-      case 'cluster':
-        return user.cluster || 'N/A';
+        return (user as any).lock_user_permission?.department_name || (user as any).department_name || (user as any).department || '-';
+      case 'circle_name':
+        return (user as any).lock_user_permission?.circle_name || (user as any).circle_name || (user as any).circle || '-';
+      case 'work_location':
+        return (user as any).work_location || '-';
+      case 'company_name':
+        return user.company_name || '-';
+      case 'role_name':
+        return (user as any).lock_user_permission?.role_name || (user as any).role_name || (user as any).lock_role?.name || (user as any).lock_role?.display_name || '-';
+      case 'employee_type':
+        return (user as any).employee_type || '-';
+      case 'created_at': {
+        const created = (user as any).created_at;
+        if (!created) return '-';
+        try {
+          const d = new Date(created);
+            const day = String(d.getDate()).padStart(2,'0');
+            const month = String(d.getMonth()+1).padStart(2,'0');
+            const year = d.getFullYear();
+            const hours = String(d.getHours()).padStart(2,'0');
+            const minutes = String(d.getMinutes()).padStart(2,'0');
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
+        } catch { return created; }
+      }
       case 'line_manager_name':
-        return user.line_manager_name || 'N/A';
+        return (user as any).report_to?.name || 'NA';
+      case 'line_manager_email':
+        return (user as any).report_to?.email || 'NA';
       case 'line_manager_mobile':
-        return user.line_manager_mobile || 'N/A';
-      case 'access_level':
-        return (user.lock_user_permission?.access_level || 'N/A').toString();
-      case 'user_type':
-        return getTypeBadge(user.user_type);
-      case 'lock_user_permission_status':
-        return getStatusBadge(user.lock_user_permission_status);
-      case 'face_added':
-        return getYesNoBadge(user.face_added);
-      case 'app_downloaded':
-        return getYesNoBadge(user.app_downloaded);
+        return (user as any).report_to?.mobile || 'NA';
       default:
-        const value = user[columnKey as keyof ExternalUser];
-        return value?.toString() || '';
+        return '-';
     }
   };
 
@@ -351,7 +256,7 @@ export const ExternalUsersDashboard = () => {
       >
         <Eye className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => { }} className="h-8 w-8 p-0">
+      <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(user)} className="h-8 w-8 p-0">
         <Trash2 className="h-4 w-4" />
       </Button>
     </div>
@@ -365,9 +270,6 @@ export const ExternalUsersDashboard = () => {
     }
   };
 
-  const handleRefresh = () => {
-    dispatch(fetchFMUsers());
-  };
 
   const handleActionClick = () => {
     setShowActionPanel(true);
@@ -432,6 +334,80 @@ export const ExternalUsersDashboard = () => {
     console.log('Filtered External Users:', filters);
   }
 
+  const handleToggleActive = async (user: ExternalUser) => {
+    const permission = user.lock_user_permission;
+    const previousStatus = permission?.status;
+    const activeVal: any = permission?.active;
+    const current = activeVal === true || activeVal === 1 || activeVal === '1';
+    if (!permission?.id) {
+      toast.error('Missing permission id');
+      return;
+    }
+    const newValue = !current;
+    const newStatus = newValue ? 'approved' : 'rejected';
+    // optimistic update (also reflect status change)
+    setExternalUsers(prev => prev.map(u => u.id === user.id ? { ...u, lock_user_permission: { ...u.lock_user_permission, active: newValue, status: newStatus }, status: newStatus } : u));
+    setUpdatingIds(prev => new Set(prev).add(user.id));
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      if (!baseUrl || !token) throw new Error('Missing base URL or token');
+      const url = `https://${baseUrl}/pms/users/${user.id}/update_vi_user`;
+      const payload = {
+        user: {
+          lock_user_permissions_attributes: [
+            {
+              id: permission.id,
+              active: newValue ? 1 : 0,
+              joining_date: permission.joining_date,
+              designation: permission.designation,
+              employee_id: permission.employee_id,
+              department_id: permission.department_id,
+              lock_role_id: permission.lock_role_id,
+              circle_id: permission.circle_id,
+              status: newStatus
+            }
+          ]
+        }
+      };
+      await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success(`User ${newValue ? 'activated (approved)' : 'deactivated (rejected)'} successfully`);
+    } catch (e:any) {
+      // revert on error
+      setExternalUsers(prev => prev.map(u => u.id === user.id ? { ...u, lock_user_permission: { ...u.lock_user_permission, active: current, status: previousStatus }, status: previousStatus } : u));
+      toast.error('Failed to update active status');
+      console.error('Active toggle error', e);
+    } finally {
+      setUpdatingIds(prev => { const n = new Set(prev); n.delete(user.id); return n; });
+    }
+  };
+
+  const handleDeleteClick = (user: ExternalUser) => {
+    setConfirmDeleteUser(user);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteUser) return;
+    setDeleting(true);
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      if (!baseUrl || !token) throw new Error('Missing base URL or token');
+      const url = `https://${baseUrl}/pms/users/${confirmDeleteUser.id}/delete_vi_user`;
+      await axios.delete(url, { headers: { Authorization: `Bearer ${token}` } });
+      setExternalUsers(prev => prev.filter(u => u.id !== confirmDeleteUser.id));
+      toast.success('User deleted successfully');
+    } catch (e:any) {
+      console.error('Delete user error', e);
+      toast.error('Failed to delete user');
+    } finally {
+      setDeleting(false);
+      setConfirmDeleteUser(null);
+    }
+  };
+
+  const handleCancelDelete = () => setConfirmDeleteUser(null);
+
   return (
     <>
       <div className="p-6">
@@ -466,8 +442,8 @@ export const ExternalUsersDashboard = () => {
         )}
 
         <div className="rounded-lg">
-          <EnhancedTable 
-            data={externalUsers || []} 
+          <EnhancedTable
+            data={externalUsers || []}
             leftActions={
               <Button
                 onClick={handleActionClick}
@@ -476,29 +452,48 @@ export const ExternalUsersDashboard = () => {
                 <Plus className="w-4 h-4" />
                 Action
               </Button>
-            } 
-            columns={columns} 
+            }
+            columns={columns}
             onFilterClick={handleFiltersClick}
-            renderCell={renderCell} 
-            renderActions={renderActions} 
-            onSelectAll={handleSelectAll} 
-            storageKey="msafe-external-users" 
-            searchTerm={searchTerm} 
-            onSearchChange={setSearchTerm} 
-            searchPlaceholder="Search external users..." 
-            handleExport={handleExport} 
-            enableExport={true} 
-            exportFileName="external-users" 
-            pagination={true} 
-            pageSize={10} 
-            loading={loading} 
-            enableSearch={true} 
-            onRowClick={user => console.log('Row clicked:', user)} 
+            renderCell={renderCell}
+            renderActions={renderActions}
+            onSelectAll={handleSelectAll}
+            storageKey="msafe-external-users"
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search external users..."
+            handleExport={handleExport}
+            enableExport={true}
+            exportFileName="external-users"
+            pagination={true}
+            pageSize={10}
+            loading={loading}
+            enableSearch={true}
+            onRowClick={user => console.log('Row clicked:', user)}
           />
         </div>
 
         <MSafeImportModal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} onImport={handleImport} />
         <MSafeFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
+        {confirmDeleteUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-sm">
+              <div className="p-4 border-b">
+                <h3 className="text-lg font-semibold">Confirm Deletion</h3>
+              </div>
+              <div className="p-4 space-y-2 text-sm">
+                <p>Are you sure you want to delete this user?</p>
+                <p className="font-medium">{`${confirmDeleteUser.firstname || ''} ${confirmDeleteUser.lastname || ''}`.trim() || 'User'} (ID: {confirmDeleteUser.id})</p>
+              </div>
+              <div className="p-4 flex justify-end gap-2 border-t">
+                <Button variant="outline" onClick={handleCancelDelete} disabled={deleting}>No</Button>
+                <Button className="bg-[#C72030] text-white hover:bg-[#C72030]/90" onClick={handleConfirmDelete} disabled={deleting}>
+                  {deleting ? 'Deleting...' : 'Yes'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )
