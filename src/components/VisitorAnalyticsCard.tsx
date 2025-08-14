@@ -103,18 +103,40 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
           { name: 'Rejected', value: 5, color: '#EF4444' }
         ];
 
+        const statusTotal = statusData.reduce((sum, item) => sum + item.value, 0);
+
         return (
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="relative flex items-center justify-center">
+            <ResponsiveContainer width="100%" height={200}>
               <PieChart>
                 <Pie
                   data={statusData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={120}
-                  paddingAngle={5}
+                  innerRadius={40}
+                  outerRadius={80}
+                  paddingAngle={2}
                   dataKey="value"
+                  label={({ value, cx, cy, midAngle, innerRadius, outerRadius }) => {
+                    const RADIAN = Math.PI / 180;
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                    return (
+                      <text
+                        x={x}
+                        y={y}
+                        fill="white"
+                        textAnchor={x > cx ? 'start' : 'end'}
+                        dominantBaseline="central"
+                        fontSize="14"
+                        fontWeight="bold"
+                      >
+                        {value}
+                      </text>
+                    );
+                  }}
+                  labelLine={false}
                 >
                   {statusData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -123,6 +145,22 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-lg font-semibold text-gray-700">Total: {statusTotal}</div>
+              </div>
+            </div>
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-6">
+              {statusData.map((item, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div 
+                    className="w-4 h-4 rounded-sm"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
         );
 
