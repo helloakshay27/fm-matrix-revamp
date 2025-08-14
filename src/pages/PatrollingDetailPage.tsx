@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { toast } from 'sonner';
+import { DeletePatrollingModal } from '@/components/DeletePatrollingModal';
 
 // Type definitions matching the API response
 interface ChecklistData {
@@ -108,6 +109,7 @@ export const PatrollingDetailPage: React.FC = () => {
   const [patrolling, setPatrolling] = useState<PatrollingDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('patrol-information');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -201,8 +203,12 @@ export const PatrollingDetailPage: React.FC = () => {
     navigate(`/security/patrolling/edit/${id}`);
   };
 
-  const handleDelete = async () => {
-    if (!id || !confirm('Are you sure you want to delete this patrolling?')) return;
+  const handleDelete = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!id) return;
     
     try {
       const baseUrl = API_CONFIG.BASE_URL;
@@ -231,6 +237,7 @@ export const PatrollingDetailPage: React.FC = () => {
         duration: 3000,
       });
       
+      setIsDeleteModalOpen(false);
       navigate('/security/patrolling');
     } catch (error: any) {
       console.error('Error deleting patrolling:', error);
@@ -900,6 +907,16 @@ export const PatrollingDetailPage: React.FC = () => {
 
         </Tabs>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {id && (
+        <DeletePatrollingModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onConfirm={handleDeleteConfirm}
+          patrollingId={parseInt(id)}
+        />
+      )}
     </div>
   );
 };

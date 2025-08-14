@@ -272,32 +272,32 @@ export const PatrollingCreatePage: React.FC = () => {
   const navigate = useNavigate();
   useEffect(() => { document.title = 'Create Patrolling'; }, []);
 
-  type Question = { 
-    id: string; 
-    task: string; 
-    inputType: string; 
-    mandatory: boolean; 
+  type Question = {
+    id: string;
+    task: string;
+    inputType: string;
+    mandatory: boolean;
     options?: string[];
     optionsText?: string; // Store raw input text for options
   };
-  type Shift = { 
-    id: string; 
-    name: string; 
-    start: string; 
-    end: string; 
-    assignee: string; 
+  type Shift = {
+    id: string;
+    name: string;
+    start: string;
+    end: string;
+    assignee: string;
     supervisor: string;
     scheduleId: string;
   };
-  type Checkpoint = { 
-    id: string; 
+  type Checkpoint = {
+    id: string;
     name: string;
     description: string;
-    buildingId: number | null; 
-    wingId: number | null; 
-    floorId: number | null; 
-    areaId: number | null; 
-    roomId: number | null; 
+    buildingId: number | null;
+    wingId: number | null;
+    floorId: number | null;
+    areaId: number | null;
+    roomId: number | null;
     scheduleIds: string[];
   };
 
@@ -322,33 +322,33 @@ export const PatrollingCreatePage: React.FC = () => {
     endDate: false,
   });
 
-  const [questions, setQuestions] = useState<Question[]>([{ 
-    id: `q-${Date.now()}`, 
-    task: '', 
-    inputType: '', 
+  const [questions, setQuestions] = useState<Question[]>([{
+    id: `q-${Date.now()}`,
+    task: '',
+    inputType: '',
     mandatory: false,
     options: [],
     optionsText: ''
   }]);
-  const [shifts, setShifts] = useState<Shift[]>([{ 
-    id: `s-${Date.now()}`, 
-    name: '', 
-    start: '', 
-    end: '', 
-    assignee: '', 
+  const [shifts, setShifts] = useState<Shift[]>([{
+    id: `s-${Date.now()}`,
+    name: '',
+    start: '',
+    end: '',
+    assignee: '',
     supervisor: '',
     scheduleId: Date.now().toString()
   }]);
   const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([
-    { 
-      id: `c-${Date.now()}`, 
+    {
+      id: `c-${Date.now()}`,
       name: '',
       description: '',
-      buildingId: null, 
-      wingId: null, 
-      floorId: null, 
-      areaId: null, 
-      roomId: null, 
+      buildingId: null,
+      wingId: null,
+      floorId: null,
+      areaId: null,
+      roomId: null,
       scheduleIds: []
     },
   ]);
@@ -406,12 +406,7 @@ export const PatrollingCreatePage: React.FC = () => {
     }
   };
 
-  const handleGraceChange = (value: string) => {
-    setGrace(value);
-    if (value.trim() !== '') {
-      setErrors(prev => ({ ...prev, grace: false }));
-    }
-  };
+
 
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
@@ -422,49 +417,49 @@ export const PatrollingCreatePage: React.FC = () => {
 
   // Update functions
   const updateQuestion = (index: number, field: keyof Question, value: any) => {
-    setQuestions(prev => prev.map((item, i) => 
+    setQuestions(prev => prev.map((item, i) =>
       i === index ? { ...item, [field]: value } : item
     ));
   };
 
   const updateShift = (index: number, field: keyof Shift, value: any) => {
-    setShifts(prev => prev.map((item, i) => 
+    setShifts(prev => prev.map((item, i) =>
       i === index ? { ...item, [field]: value } : item
     ));
   };
 
   const updateCheckpoint = (index: number, field: keyof Checkpoint, value: any) => {
-    setCheckpoints(prev => prev.map((item, i) => 
+    setCheckpoints(prev => prev.map((item, i) =>
       i === index ? { ...item, [field]: value } : item
     ));
   };
 
-  const addQuestion = () => setQuestions(prev => [...prev, { 
-    id: Date.now().toString(), 
-    task: '', 
-    inputType: '', 
+  const addQuestion = () => setQuestions(prev => [...prev, {
+    id: Date.now().toString(),
+    task: '',
+    inputType: '',
     mandatory: false,
     options: [],
     optionsText: ''
   }]);
-  const addShift = () => setShifts(prev => [...prev, { 
-    id: Date.now().toString(), 
-    name: '', 
-    start: '', 
-    end: '', 
-    assignee: '', 
+  const addShift = () => setShifts(prev => [...prev, {
+    id: Date.now().toString(),
+    name: '',
+    start: '',
+    end: '',
+    assignee: '',
     supervisor: '',
     scheduleId: Date.now().toString()
   }]);
-  const addCheckpoint = () => setCheckpoints(prev => [...prev, { 
-    id: Date.now().toString(), 
+  const addCheckpoint = () => setCheckpoints(prev => [...prev, {
+    id: Date.now().toString(),
     name: '',
     description: '',
-    buildingId: null, 
-    wingId: null, 
-    floorId: null, 
-    areaId: null, 
-    roomId: null, 
+    buildingId: null,
+    wingId: null,
+    floorId: null,
+    areaId: null,
+    roomId: null,
     scheduleIds: []
   }]);
 
@@ -475,7 +470,7 @@ export const PatrollingCreatePage: React.FC = () => {
     if (shiftToRemove) {
       // Remove the shift
       setShifts(prev => prev.filter((_, i) => i !== idx));
-      
+
       // Clean up references to this shift in all checkpoints
       setCheckpoints(prev => prev.map(checkpoint => ({
         ...checkpoint,
@@ -492,9 +487,9 @@ export const PatrollingCreatePage: React.FC = () => {
     floorId: number | null;
     roomId: number | null;
   }) => {
-    setCheckpoints(prev => prev.map((item, i) => 
-      i === checkpointIndex ? { 
-        ...item, 
+    setCheckpoints(prev => prev.map((item, i) =>
+      i === checkpointIndex ? {
+        ...item,
         buildingId: location.buildingId,
         wingId: location.wingId,
         floorId: location.floorId,
@@ -516,6 +511,7 @@ export const PatrollingCreatePage: React.FC = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
+    // Basic field validation
     const hasPatrolNameError = patrolName.trim() === '';
     const hasDescriptionError = description.trim() === '';
     const hasEstimatedDurationError = estimatedDuration.trim() === '';
@@ -534,12 +530,11 @@ export const PatrollingCreatePage: React.FC = () => {
       const errorFields = [];
       if (hasPatrolNameError) errorFields.push('Patrol Name');
       if (hasDescriptionError) errorFields.push('Description');
-      if (hasEstimatedDurationError) errorFields.push('Grace Period');
+      if (hasEstimatedDurationError) errorFields.push('Estimated Duration');
       if (hasStartDateError) errorFields.push('Start Date');
       if (hasEndDateError) errorFields.push('End Date');
-      
 
-      toast.info(`Please fill in the following required fields: ${errorFields.join(', ')}`, {
+      toast.error(`Please fill in the following required fields: ${errorFields.join(', ')}`, {
         duration: 5000,
       });
 
@@ -547,7 +542,7 @@ export const PatrollingCreatePage: React.FC = () => {
       return;
     }
 
-    // Validate that end date is after start date
+    // Validity validation
     if (new Date(endDate) <= new Date(startDate)) {
       toast.error('End date must be after start date', {
         duration: 5000,
@@ -556,15 +551,146 @@ export const PatrollingCreatePage: React.FC = () => {
       return;
     }
 
+
+
+    const estimatedDurationNum = parseInt(estimatedDuration);
+    if (isNaN(estimatedDurationNum) || estimatedDurationNum <= 0) {
+      toast.error('Estimated duration must be a valid positive number', {
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Questions validation
+    const validQuestions = questions.filter(q => q.task.trim() !== '');
+    if (validQuestions.length === 0) {
+      toast.error('At least one question is required', {
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Validate question input types
+    const questionsWithoutInputType = validQuestions.filter(q => !q.inputType || q.inputType.trim() === '');
+    if (questionsWithoutInputType.length > 0) {
+      toast.error('All questions must have an input type selected', {
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     // Validate multiple choice questions have at least 2 options
-    const invalidMultipleChoiceQuestions = questions.filter(q => 
-      q.task.trim() !== '' && 
-      q.inputType === 'multiple_choice' && 
+    const invalidMultipleChoiceQuestions = validQuestions.filter(q =>
+      q.inputType === 'multiple_choice' &&
       (!q.options || q.options.length < 2)
     );
 
     if (invalidMultipleChoiceQuestions.length > 0) {
       toast.error('Multiple choice questions must have at least 2 options', {
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Shifts/Schedules validation
+    const validShifts = shifts.filter(s => s.name.trim() !== '');
+    if (validShifts.length === 0) {
+      toast.error('At least one schedule is required', {
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Validate shift times
+    const shiftsWithoutStartTime = validShifts.filter(s => !s.start || s.start.trim() === '');
+    if (shiftsWithoutStartTime.length > 0) {
+      toast.error('All schedules must have a start time', {
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Validate shift assignees
+    const shiftsWithoutAssignee = validShifts.filter(s => !s.assignee || s.assignee.trim() === '');
+    if (shiftsWithoutAssignee.length > 0) {
+      toast.error('All schedules must have an assignee', {
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Validate shift supervisors
+    const shiftsWithoutSupervisor = validShifts.filter(s => !s.supervisor || s.supervisor.trim() === '');
+    if (shiftsWithoutSupervisor.length > 0) {
+      toast.error('All schedules must have a supervisor', {
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Checkpoints validation
+    const validCheckpoints = checkpoints.filter(c => c.name.trim() !== '');
+    if (validCheckpoints.length === 0) {
+      toast.error('At least one checkpoint is required', {
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Validate checkpoint descriptions
+    const checkpointsWithoutDescription = validCheckpoints.filter(c => !c.description || c.description.trim() === '');
+    if (checkpointsWithoutDescription.length > 0) {
+      toast.error('All checkpoints must have a description', {
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Validate checkpoint locations
+    const checkpointsWithoutLocation = validCheckpoints.filter(c => {
+      const hasBuilding = c.buildingId && c.buildingId > 0;
+      const hasWing = c.wingId && c.wingId > 0;
+      const hasArea = c.areaId && c.areaId > 0;
+      const hasFloor = c.floorId && c.floorId > 0;
+      return !(hasBuilding && hasWing && hasArea && hasFloor);
+    });
+    if (checkpointsWithoutLocation.length > 0) {
+      toast.error('All checkpoints must have Building, Wing, Area, and Floor selected', {
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Validate checkpoint schedule assignments
+    const checkpointsWithoutSchedules = validCheckpoints.filter(c =>
+      !c.scheduleIds || c.scheduleIds.length === 0
+    );
+    if (checkpointsWithoutSchedules.length > 0) {
+      toast.error('All checkpoints must be assigned to at least one schedule', {
+        duration: 5000,
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Validate that assigned schedules exist and are valid
+    const allScheduleIds = validShifts.map(s => s.scheduleId);
+    const checkpointsWithInvalidSchedules = validCheckpoints.filter(c =>
+      c.scheduleIds.some(scheduleId => !allScheduleIds.includes(scheduleId))
+    );
+    if (checkpointsWithInvalidSchedules.length > 0) {
+      toast.error('Some checkpoints are assigned to invalid schedules. Please reassign them.', {
         duration: 5000,
       });
       setIsSubmitting(false);
@@ -578,7 +704,6 @@ export const PatrollingCreatePage: React.FC = () => {
       estimatedDuration: false,
       startDate: false,
       endDate: false,
-      grace: false,
     });
 
     // Build the payload structure to match API
@@ -586,13 +711,10 @@ export const PatrollingCreatePage: React.FC = () => {
       "patrolling": {
         "name": patrolName,
         "description": description,
-        "estimated_duration_minutes": parseInt(estimatedDuration) || 0,
         "auto_ticket": autoTicket,
-        "validity": {
-          "startDate": startDate,
-          "endDate": endDate,
-          "gracePeriod": grace
-        },
+        "validity_start_date": startDate,
+        "validity_end_date": endDate,
+        "grace_period_minutes": parseInt(estimatedDuration) || 0,
         "questions": questions.filter(q => q.task.trim() !== '').map(q => ({
           "task": q.task,
           "inputType": q.inputType,
@@ -604,8 +726,8 @@ export const PatrollingCreatePage: React.FC = () => {
           const supervisorUser = fmUsers.find(u => u.id.toString() === s.supervisor);
           return {
             "name": s.name,
-            "startTime": s.start,
-            "endTime": s.end,
+            "start_time": s.start,
+            "end_time": s.end,
             "assigned_guard_id": s.assignee ? parseInt(s.assignee) : null,
             "supervisor_id": s.supervisor ? parseInt(s.supervisor) : null,
             "schedule_id": parseInt(s.scheduleId) || Date.now()
@@ -648,19 +770,19 @@ export const PatrollingCreatePage: React.FC = () => {
       // without hardcoding URLs or tokens
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
-      
+
       console.log('🔧 API Configuration Check:', {
         baseUrl: baseUrl ? 'Present' : 'Missing',
         token: token ? 'Present' : 'Missing',
         baseUrlValue: baseUrl,
         tokenLength: token?.length || 0
       });
-      
+
       if (!baseUrl || !token) {
         const missingItems = [];
         if (!baseUrl) missingItems.push('Base URL');
         if (!token) missingItems.push('Authentication Token');
-        
+
         throw new Error(`API configuration is missing: ${missingItems.join(', ')}. Please ensure you are logged in.`);
       }
 
@@ -686,7 +808,7 @@ export const PatrollingCreatePage: React.FC = () => {
 
       const result = await response.json();
       console.log('✅ API Response:', result);
-      
+
       toast.success('Patrolling created successfully!', {
         duration: 3000,
       });
@@ -748,16 +870,16 @@ export const PatrollingCreatePage: React.FC = () => {
                 disabled={isSubmitting}
               />
             </div>
-             <div>
-            <TextField
-              label={
-                <>
-                  Description<span className="text-red-500">*</span>
-                </>
-              }
-              value={description}
-              onChange={(e) => handleDescriptionChange(e.target.value)}
-             fullWidth
+            <div>
+              <TextField
+                label={
+                  <>
+                    Description<span className="text-red-500">*</span>
+                  </>
+                }
+                value={description}
+                onChange={(e) => handleDescriptionChange(e.target.value)}
+                fullWidth
                 variant="outlined"
                 error={errors.description}
                 helperText={errors.description ? 'Patrol Description is required' : ''}
@@ -770,13 +892,13 @@ export const PatrollingCreatePage: React.FC = () => {
                   sx: fieldStyles,
                 }}
                 disabled={isSubmitting}
-            />
+              />
+            </div>
+
           </div>
-          
-          </div>
-          
+
           {/* Description on second row - full width */}
-         
+
         </div>
       </Section>
 
@@ -835,33 +957,33 @@ export const PatrollingCreatePage: React.FC = () => {
             />
           </div>
 
-            <div>
-              <TextField
-                type="number"
-                label={
-                  <>
-                    Grace Period (minutes)<span className="text-red-500">*</span>
-                  </>
-                }
-                placeholder="Enter grace period in minutes"
-                value={estimatedDuration}
-                onChange={(e) => handleEstimatedDurationChange(e.target.value)}
-                fullWidth
-                variant="outlined"
-                error={errors.estimatedDuration}
-                helperText={errors.estimatedDuration ? 'Grace Period is required' : ''}
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
-                disabled={isSubmitting}
-              />
-            </div>
-      
+          <div>
+            <TextField
+              type="number"
+              label={
+                <>
+                  Grace Period (minutes)<span className="text-red-500">*</span>
+                </>
+              }
+              placeholder="Enter grace period in minutes"
+              value={estimatedDuration}
+              onChange={(e) => handleEstimatedDurationChange(e.target.value)}
+              fullWidth
+              variant="outlined"
+              error={errors.estimatedDuration}
+              helperText={errors.estimatedDuration ? 'Grace Period is required' : ''}
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+              disabled={isSubmitting}
+            />
+          </div>
+
         </div>
       </Section>
 
@@ -924,7 +1046,7 @@ export const PatrollingCreatePage: React.FC = () => {
                   </FormControl>
                 </div>
               </div>
-              
+
               {/* Options for multiple choice */}
               {q.inputType === 'multiple_choice' && (
                 <div className="mt-4">
@@ -944,7 +1066,7 @@ export const PatrollingCreatePage: React.FC = () => {
                             .split(',')
                             .map(opt => opt.trim())
                             .filter(opt => opt !== '');
-                          
+
                           // Update both raw text and parsed options
                           updateQuestion(idx, 'optionsText', inputValue);
                           updateQuestion(idx, 'options', optionsArray);
@@ -968,12 +1090,12 @@ export const PatrollingCreatePage: React.FC = () => {
                           fontSize: '14px',
                         }}
                       />
-                      
+
                       {/* Help text and examples */}
                       <div className="mt-1 text-xs text-gray-600">
                         Enter options separated by commas. At least 2 options required for multiple choice.
                       </div>
-                      
+
                       {/* Show examples when field is empty */}
                       {(!q.options || q.options.length === 0) && (
                         <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
@@ -984,7 +1106,7 @@ export const PatrollingCreatePage: React.FC = () => {
                           </div>
                         </div>
                       )}
-                      
+
                       {/* Show parsed options preview */}
                       {q.options && q.options.length > 0 && (
                         <div className="mt-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs">
@@ -1247,7 +1369,7 @@ export const PatrollingCreatePage: React.FC = () => {
                     roomId: c.roomId,
                   }}
                 />
-                
+
                 {/* Schedule Selection - Only show if there are named shifts */}
                 {shifts.some(s => s.name.trim() !== '') && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1294,7 +1416,7 @@ export const PatrollingCreatePage: React.FC = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Message when no shifts are available */}
                 {!shifts.some(s => s.name.trim() !== '') && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1317,8 +1439,8 @@ export const PatrollingCreatePage: React.FC = () => {
       </Section>
 
       <div className="flex items-center gap-3 justify-center pt-2">
-        <Button 
-          variant="destructive" 
+        <Button
+          variant="destructive"
           className="px-8"
           onClick={handleSubmit}
           disabled={isSubmitting}
@@ -1332,9 +1454,9 @@ export const PatrollingCreatePage: React.FC = () => {
             'Submit'
           )}
         </Button>
-        <Button 
-          variant="outline" 
-          className="px-8" 
+        <Button
+          variant="outline"
+          className="px-8"
           onClick={() => navigate('/security/patrolling')}
           disabled={isSubmitting}
         >
