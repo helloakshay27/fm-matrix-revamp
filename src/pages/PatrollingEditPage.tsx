@@ -299,7 +299,6 @@ export const PatrollingEditPage: React.FC = () => {
         estimatedDuration: false,
         startDate: false,
         endDate: false,
-        grace: false,
     });
 
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -385,7 +384,7 @@ export const PatrollingEditPage: React.FC = () => {
                     roomId: c.room_id,
                     scheduleIds: c.schedule_ids.map((id: number) => id.toString())
                 }));
-                
+
                 setCheckpoints(checkpointsData);
 
                 // Fetch dependent location data for existing checkpoints
@@ -481,12 +480,7 @@ export const PatrollingEditPage: React.FC = () => {
         }
     };
 
-    const handleGraceChange = (value: string) => {
-        setGrace(value);
-        if (value.trim() !== '') {
-            setErrors(prev => ({ ...prev, grace: false }));
-        }
-    };
+
 
     const fieldStyles = {
         height: { xs: 28, sm: 36, md: 45 },
@@ -580,6 +574,7 @@ export const PatrollingEditPage: React.FC = () => {
         if (isSubmitting) return;
         setIsSubmitting(true);
 
+        // Basic field validation
         const hasPatrolNameError = patrolName.trim() === '';
         const hasDescriptionError = description.trim() === '';
         const hasEstimatedDurationError = estimatedDuration.trim() === '';
@@ -594,7 +589,6 @@ export const PatrollingEditPage: React.FC = () => {
                 estimatedDuration: hasEstimatedDurationError,
                 startDate: hasStartDateError,
                 endDate: hasEndDateError,
-                grace: hasGraceError,
             });
 
             const errorFields = [];
@@ -604,7 +598,7 @@ export const PatrollingEditPage: React.FC = () => {
             if (hasStartDateError) errorFields.push('Start Date');
             if (hasEndDateError) errorFields.push('End Date');
 
-            toast.info(`Please fill in the following required fields: ${errorFields.join(', ')}`, {
+            toast.error(`Please fill in the following required fields: ${errorFields.join(', ')}`, {
                 duration: 5000,
             });
 
@@ -612,7 +606,7 @@ export const PatrollingEditPage: React.FC = () => {
             return;
         }
 
-        // Validate that end date is after start date
+        // Validity validation
         if (new Date(endDate) <= new Date(startDate)) {
             toast.error('End date must be after start date', {
                 duration: 5000,
@@ -621,9 +615,38 @@ export const PatrollingEditPage: React.FC = () => {
             return;
         }
 
+
+        const estimatedDurationNum = parseInt(estimatedDuration);
+        if (isNaN(estimatedDurationNum) || estimatedDurationNum <= 0) {
+            toast.error('Estimated duration must be a valid positive number', {
+                duration: 5000,
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
+        // Questions validation
+        const validQuestions = questions.filter(q => q.task.trim() !== '');
+        if (validQuestions.length === 0) {
+            toast.error('At least one question is required', {
+                duration: 5000,
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
+        // Validate question input types
+        const questionsWithoutInputType = validQuestions.filter(q => !q.inputType || q.inputType.trim() === '');
+        if (questionsWithoutInputType.length > 0) {
+            toast.error('All questions must have an input type selected', {
+                duration: 5000,
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
         // Validate multiple choice questions have at least 2 options
-        const invalidMultipleChoiceQuestions = questions.filter(q =>
-            q.task.trim() !== '' &&
+        const invalidMultipleChoiceQuestions = validQuestions.filter(q =>
             q.inputType === 'multiple_choice' &&
             (!q.options || q.options.length < 2)
         );
@@ -636,18 +659,101 @@ export const PatrollingEditPage: React.FC = () => {
             return;
         }
 
+        // Shifts/Schedules validation
+        const validShifts = shifts.filter(s => s.name.trim() !== '');
+        if (validShifts.length === 0) {
+            toast.error('At least one schedule is required', {
+                duration: 5000,
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
+        // Validate shift times
+        const shiftsWithoutStartTime = validShifts.filter(s => !s.start || s.start.trim() === '');
+        if (shiftsWithoutStartTime.length > 0) {
+            toast.error('All schedules must have a start time', {
+                duration: 5000,
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
+        // Validate shift assignees
+        const shiftsWithoutAssignee = validShifts.filter(s => !s.assignee || s.assignee.trim() === '');
+        if (shiftsWithoutAssignee.length > 0) {
+            toast.error('All schedules must have an assignee', {
+                duration: 5000,
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
+        // Validate shift supervisors
+        const shiftsWithoutSupervisor = validShifts.filter(s => !s.supervisor || s.supervisor.trim() === '');
+        if (shiftsWithoutSupervisor.length > 0) {
+            toast.error('All schedules must have a supervisor', {
+                duration: 5000,
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
+        // Checkpoints validation
+        const validCheckpoints = checkpoints.filter(c => c.name.trim() !== '');
+        if (validCheckpoints.length === 0) {
+            toast.error('At least one checkpoint is required', {
+                duration: 5000,
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
+        // Validate checkpoint descriptions
+        const checkpointsWithoutDescription = validCheckpoints.filter(c => !c.description || c.description.trim() === '');
+        if (checkpointsWithoutDescription.length > 0) {
+            toast.error('All checkpoints must have a description', {
+                duration: 5000,
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
+
+        // Validate checkpoint schedule assignments
+        const checkpointsWithoutSchedules = validCheckpoints.filter(c =>
+            !c.scheduleIds || c.scheduleIds.length === 0
+        );
+        if (checkpointsWithoutSchedules.length > 0) {
+            toast.error('All checkpoints must be assigned to at least one schedule', {
+                duration: 5000,
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
+        // Validate that assigned schedules exist and are valid
+        const allScheduleIds = validShifts.map(s => s.scheduleId);
+        const checkpointsWithInvalidSchedules = validCheckpoints.filter(c =>
+            c.scheduleIds.some(scheduleId => !allScheduleIds.includes(scheduleId))
+        );
+        if (checkpointsWithInvalidSchedules.length > 0) {
+            toast.error('Some checkpoints are assigned to invalid schedules. Please reassign them.', {
+                duration: 5000,
+            });
+            setIsSubmitting(false);
+            return;
+        }
+
         // Build the payload structure to match API
         const payload = {
             "patrolling": {
                 "name": patrolName,
                 "description": description,
-                "estimated_duration_minutes": parseInt(estimatedDuration) || 0,
                 "auto_ticket": autoTicket,
-                "validity": {
-                    "startDate": startDate,
-                    "endDate": endDate,
-                    "gracePeriod": grace
-                },
+                "validity_start_date": startDate,
+                "validity_end_date": endDate,
+                "grace_period_minutes": parseInt(estimatedDuration) || 0,
                 "questions": questions.filter(q => q.task.trim() !== '').map(q => {
                     const questionData: any = {
                         "task": q.task,
@@ -655,31 +761,31 @@ export const PatrollingEditPage: React.FC = () => {
                         "mandatory": q.mandatory,
                         ...(q.inputType === 'multiple_choice' && q.options && q.options.length > 0 && { "options": q.options })
                     };
-                    
+
                     // Only include ID if it's an existing question (not a Date.now() timestamp)
                     const parsedId = parseInt(q.id);
                     if (!isNaN(parsedId) && parsedId < Date.now() - 1000000000000) {
                         questionData.id = parsedId;
                     }
-                    
+
                     return questionData;
                 }),
                 "schedules": shifts.filter(s => s.name.trim() !== '').map(s => {
                     const scheduleData: any = {
                         "name": s.name,
-                        "startTime": s.start,
-                        "endTime": s.end,
+                        "start_time": s.start,
+                        "end_time": s.end,
                         "assigned_guard_id": s.assignee ? parseInt(s.assignee) : null,
                         "supervisor_id": s.supervisor ? parseInt(s.supervisor) : null
                     };
-                    
+
                     // Only include ID if it's an existing schedule (not a Date.now() timestamp)
                     const parsedId = parseInt(s.id);
                     if (!isNaN(parsedId) && parsedId < Date.now() - 1000000000000) {
                         scheduleData.id = parsedId;
                         scheduleData.schedule_id = parsedId;
                     }
-                    
+
                     return scheduleData;
                 }),
                 "checkpoints": checkpoints.filter(c => c.name.trim() !== '').map(c => {
@@ -709,13 +815,13 @@ export const PatrollingEditPage: React.FC = () => {
                             return null;
                         }).filter(id => id !== null)
                     };
-                    
+
                     // Only include ID if it's an existing checkpoint (not a Date.now() timestamp)
                     const parsedId = parseInt(c.id);
                     if (!isNaN(parsedId) && parsedId < Date.now() - 1000000000000) {
                         checkpointData.id = parsedId;
                     }
-                    
+
                     return checkpointData;
                 })
             }
