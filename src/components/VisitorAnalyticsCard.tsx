@@ -150,7 +150,7 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
                 <div className="text-lg font-semibold text-gray-700">Total: {statusTotal}</div>
               </div>
             </div>
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-6">
+            <div className="absolute -bottom-2 left-0 right-0 flex justify-center gap-6">
               {statusData.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
                   <div 
