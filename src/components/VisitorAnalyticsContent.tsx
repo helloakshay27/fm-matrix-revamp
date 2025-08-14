@@ -67,23 +67,9 @@ export const VisitorAnalyticsContent = () => {
     <div className="h-full flex">
       {/* Main Analytics Section */}
       <div className="flex-1 overflow-auto p-6 space-y-6">
-        {/* Header with Filter and Selector */}
+        {/* Header */}
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-bold text-[#C72030]">Visitor Analytics</h2>
-          <div className="flex justify-end items-center gap-2">
-            <Button
-              onClick={() => setIsFilterOpen(true)}
-              variant="outline"
-              className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
-              disabled={isLoading}
-            >
-              <Filter className="w-4 h-4" />
-              {isLoading && (
-                <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
-              )}
-            </Button>
-            <VisitorSelector />
-          </div>
         </div>
         {dateRange.startDate && dateRange.endDate && (
           <div className="text-right">
@@ -201,6 +187,22 @@ export const VisitorAnalyticsContent = () => {
 
       {/* Recent Visitors Sidebar */}
       <div className="w-80 flex-shrink-0">
+        <div className="p-4 bg-white border-b border-gray-200">
+          <div className="flex justify-end items-center gap-2">
+            <Button
+              onClick={() => setIsFilterOpen(true)}
+              variant="outline"
+              className="flex items-center gap-2 bg-white border-gray-300 hover:bg-gray-50"
+              disabled={isLoading}
+            >
+              <Filter className="w-4 h-4" />
+              {isLoading && (
+                <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
+              )}
+            </Button>
+            <VisitorSelector />
+          </div>
+        </div>
         <RecentVisitorsSidebar />
       </div>
     </div>
