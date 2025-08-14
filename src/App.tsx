@@ -600,7 +600,7 @@ import { isAuthenticated } from '@/utils/auth';
 import { BookingDetailsPage } from './pages/BookingDetailsPage';
 import { RestaurantOrdersTable } from './components/RestaurantOrdersTable';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getCurrency } from './store/slices/currencySlice';
 import { EditBookingSetupPage } from "./pages/setup/EditBookingSetupPage";
 import { MobileAdminOrdersPage } from "./pages/MobileAdminOrdersPage";
@@ -616,21 +616,24 @@ const queryClient = new QueryClient();
 
 function App() {
   const dispatch = useAppDispatch();
-  const baseUrl = localStorage.getItem('baseUrl');
-  const token = localStorage.getItem('token');
+  const [baseUrl, setBaseUrl] = useState(localStorage.getItem('baseUrl'));
+  const [token, setToken] = useState(localStorage.getItem('token'));
 
   useEffect(() => {
+    if (!baseUrl || !token) return;
+
     const fetchCurrency = async () => {
       try {
         const response = await dispatch(getCurrency({ baseUrl, token })).unwrap();
-        localStorage.setItem('currency', response[0].value)
+        localStorage.setItem('currency', response[0].value);
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
-    }
+    };
 
     fetchCurrency();
-  }, [])
+  }, [baseUrl, token]);
+
 
   return (
     <Provider store={store}>
@@ -646,7 +649,7 @@ function App() {
                   isAuthenticated() ? (
                     <Navigate to="/" replace />
                   ) : (
-                    <LoginPage />
+                    <LoginPage setBaseUrl={setBaseUrl} setToken={setToken} />
                   )
                 }
               />
