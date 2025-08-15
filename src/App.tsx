@@ -80,6 +80,7 @@ import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
 import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
 import UtilityEVConsumptionDashboard from './pages/UtilityEVConsumptionDashboard';
 import UtilityDailyReadingsDashboard from './pages/UtilityDailyReadingsDashboard';
+import EditMeasurementPage from './pages/EditMeasurementPage';
 import UtilitySolarGeneratorDashboard from './pages/UtilitySolarGeneratorDashboard';
 import { UtilityRequestDashboard } from './pages/UtilityRequestDashboard';
 import { UtilityRequestDetailsPage } from './pages/UtilityRequestDetailsPage';
@@ -823,6 +824,7 @@ function App() {
                 <Route path="/utility/stp/add-asset" element={<AddSTPAssetDashboard />} />
                 <Route path="/utility/ev-consumption" element={<UtilityEVConsumptionDashboard />} />
                 <Route path="/utility/daily-readings" element={<UtilityDailyReadingsDashboard />} />
+                <Route path="/utility/daily-readings/edit/:id" element={<EditMeasurementPage />} />
                 <Route path="/utility/solar-generator" element={<UtilitySolarGeneratorDashboard />} />
                 <Route path="/utility/utility-request" element={<UtilityRequestDashboard />} />
                 <Route path="/utility/utility-request/details/:id" element={<UtilityRequestDetailsPage />} />

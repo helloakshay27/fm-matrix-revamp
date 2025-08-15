@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -213,6 +214,7 @@ const columns: ColumnConfig[] = [
 ];
 
 export default function UtilityDailyReadingsDashboard() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -239,7 +241,7 @@ export default function UtilityDailyReadingsDashboard() {
   };
 
   const handleEdit = (item: any) => {
-    console.log('Edit item:', item);
+    navigate(`/utility/daily-readings/edit/${item.id}`);
   };
 
   const renderCell = (item: any, columnKey: string) => {
