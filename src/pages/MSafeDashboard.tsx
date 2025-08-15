@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
 
@@ -15,7 +15,10 @@ import { MSafeImportModal } from '@/components/MSafeImportModal';
 import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 
+
+interface ApiPagination { current_page: number; total_pages: number; total_count: number }
 
 export const MSafeDashboard = () => {
   const navigate = useNavigate();
@@ -29,6 +32,8 @@ export const MSafeDashboard = () => {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<ApiPagination>({ current_page: 1, total_pages: 1, total_count: 0 });
 
 
   const cardData = [
@@ -61,19 +66,34 @@ export const MSafeDashboard = () => {
       try {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
-        const url = `https://${baseUrl}/pms/users/fte_users.json`;
-        const response = await axios.get(url, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setFmUsers(Array.isArray(response.data) ? response.data : response.data?.users || []);
+        if (!baseUrl || !token) {
+          setFmUsers([]);
+          setLoading(false);
+          return;
+        }
+        const url = `https://${baseUrl}/pms/users/fte_users.json?page=${page}`;
+        const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        const data = response.data;
+        const users = Array.isArray(data.users) ? data.users : (Array.isArray(data) ? data : data.users || []);
+        setFmUsers(users);
+        if (data.pagination) {
+          setPagination({
+            current_page: data.pagination.current_page,
+            total_pages: data.pagination.total_pages,
+            total_count: data.pagination.total_count,
+          });
+        } else {
+          setPagination({ current_page: page, total_pages: 1, total_count: users.length });
+        }
       } catch (err) {
         console.error('Error fetching users:', err);
+        setFmUsers([]);
       } finally {
         setLoading(false);
       }
     };
     fetchUsers();
-  }, []);
+  }, [page]);
   const getStatusBadge = (status: string) => {
     if (!status) {
       return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
@@ -230,6 +250,46 @@ export const MSafeDashboard = () => {
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > pagination.total_pages || newPage === page) return;
+    setPage(newPage);
+  };
+
+  const paginationItems = useMemo(() => {
+    const items: React.ReactNode[] = [];
+    const totalPages = pagination.total_pages;
+    const current = pagination.current_page;
+    if (totalPages <= 1) return items;
+    const pushPage = (p: number) => {
+      items.push(
+        <PaginationItem key={p}>
+          <PaginationLink className='cursor-pointer' isActive={current === p} onClick={() => handlePageChange(p)}>
+            {p}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    };
+    const pushEllipsis = (key: string) => items.push(<PaginationItem key={key}><PaginationEllipsis /></PaginationItem>);
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pushPage(i);
+    } else {
+      pushPage(1);
+      if (current <= 3) {
+        for (let i = 2; i <= 4; i++) pushPage(i);
+        pushEllipsis('e1');
+      } else if (current >= totalPages - 2) {
+        pushEllipsis('e1');
+        for (let i = totalPages - 3; i < totalPages; i++) pushPage(i);
+      } else {
+        pushEllipsis('e1');
+        for (let i = current - 1; i <= current + 1; i++) pushPage(i);
+        pushEllipsis('e2');
+      }
+      pushPage(totalPages);
+    }
+    return items;
+  }, [pagination]);
+
 
   const handleRefresh = () => {
     dispatch(fetchFMUsers());
@@ -342,7 +402,23 @@ export const MSafeDashboard = () => {
               Action
             </Button>
           } columns={columns} onFilterClick={handleFiltersClick}
-            renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} enableExport={true} exportFileName="fm-users" pagination={true} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
+            renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} enableExport={true} exportFileName="fm-users" pagination={false} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
+          {!loading && pagination.total_pages > 1 && (
+            <div className="flex flex-col items-center gap-2 mt-6">
+              <div className="text-sm text-gray-600">Page {pagination.current_page} of {pagination.total_pages} | Total {pagination.total_count}</div>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious className='cursor-pointer' onClick={() => handlePageChange(page - 1)} />
+                  </PaginationItem>
+                  {paginationItems}
+                  <PaginationItem>
+                    <PaginationNext className='cursor-pointer' onClick={() => handlePageChange(page + 1)} />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </div>
 
         <MSafeImportModal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} onImport={handleImport} />

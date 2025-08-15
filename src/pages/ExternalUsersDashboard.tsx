@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
+import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2, Plus, UploadIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import { MSafeImportModal } from '@/components/MSafeImportModal';
 import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 
 // Define External User interface (different from FMUser)
 interface ExternalUser {
@@ -52,6 +53,8 @@ interface ExternalUser {
   report_to?: { name?: string; email?: string; mobile?: string };
 }
 
+interface ApiPagination { current_page: number; total_pages: number; total_count: number }
+
 export const ExternalUsersDashboard = () => {
 
   const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
@@ -65,7 +68,10 @@ export const ExternalUsersDashboard = () => {
   const [updatingIds, setUpdatingIds] = useState<Set<number>>(new Set());
   const [confirmDeleteUser, setConfirmDeleteUser] = useState<ExternalUser | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<ApiPagination>({ current_page: 1, total_pages: 1, total_count: 0 });
   const navigate = useNavigate();
+  const pageSize = 25; // backend default (adjust if needed)
 
 
   useEffect(() => {
@@ -79,13 +85,22 @@ export const ExternalUsersDashboard = () => {
           setLoading(false);
           return;
         }
-        const url = `https://${baseUrl}/pms/users/non_fte_users.json`;
+        const url = `https://${baseUrl}/pms/users/non_fte_users.json?page=${page}`;
         const response = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        // If response is an array, use it directly; else try response.data or response.data.users
-        let users = Array.isArray(response.data) ? response.data : response.data?.users || [];
+        let users = Array.isArray(response.data.users) ? response.data.users : (response.data.users || []);
         setExternalUsers(users);
+        if (response.data.pagination) {
+          setPagination({
+            current_page: response.data.pagination.current_page,
+            total_pages: response.data.pagination.total_pages,
+            total_count: response.data.pagination.total_count,
+          });
+        } else {
+          // fallback if pagination not returned
+          setPagination({ current_page: page, total_pages: 1, total_count: users.length });
+        }
       } catch (err) {
         setExternalUsers([]);
         console.error('Error fetching external users:', err);
@@ -94,7 +109,7 @@ export const ExternalUsersDashboard = () => {
       }
     };
     fetchExternalUsers();
-  }, []);
+  }, [page]);
 
   const cardData = [
     {
@@ -408,6 +423,47 @@ export const ExternalUsersDashboard = () => {
 
   const handleCancelDelete = () => setConfirmDeleteUser(null);
 
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > pagination.total_pages || newPage === page) return;
+    setPage(newPage);
+  };
+
+  // New pagination items (ServiceDashboard style)
+  const paginationItems = useMemo(() => {
+    const items: React.ReactNode[] = [];
+    const totalPages = pagination.total_pages;
+    const current = pagination.current_page;
+    if (totalPages <= 1) return items;
+    const pushPage = (p: number) => {
+      items.push(
+        <PaginationItem key={p}>
+          <PaginationLink className='cursor-pointer' isActive={current === p} onClick={() => handlePageChange(p)}>
+            {p}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    };
+    const pushEllipsis = (key: string) => items.push(<PaginationItem key={key}><PaginationEllipsis /></PaginationItem>);
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pushPage(i);
+    } else {
+      pushPage(1);
+      if (current <= 3) {
+        for (let i = 2; i <= 4; i++) pushPage(i);
+        pushEllipsis('e1');
+      } else if (current >= totalPages - 2) {
+        pushEllipsis('e1');
+        for (let i = totalPages - 3; i < totalPages; i++) pushPage(i);
+      } else {
+        pushEllipsis('e1');
+        for (let i = current - 1; i <= current + 1; i++) pushPage(i);
+        pushEllipsis('e2');
+      }
+      pushPage(totalPages);
+    }
+    return items;
+  }, [pagination]);
+
   return (
     <>
       <div className="p-6">
@@ -465,12 +521,28 @@ export const ExternalUsersDashboard = () => {
             handleExport={handleExport}
             enableExport={true}
             exportFileName="external-users"
-            pagination={true}
-            pageSize={10}
+            pagination={false}
+            pageSize={pageSize}
             loading={loading}
             enableSearch={true}
             onRowClick={user => console.log('Row clicked:', user)}
           />
+          {!loading && pagination.total_pages > 1 && (
+            <div className="flex flex-col items-center gap-2 mt-6">
+              <div className="text-sm text-gray-600">Page {pagination.current_page} of {pagination.total_pages} | Total {pagination.total_count}</div>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious className='cursor-pointer' onClick={() => handlePageChange(page - 1)} />
+                  </PaginationItem>
+                  {paginationItems}
+                  <PaginationItem>
+                    <PaginationNext className='cursor-pointer' onClick={() => handlePageChange(page + 1)} />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </div>
 
         <MSafeImportModal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} onImport={handleImport} />
