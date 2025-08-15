@@ -12,6 +12,7 @@ import { MSafeImportModal } from '@/components/MSafeImportModal';
 import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 
 // Define External User interface (different from FMUser)
@@ -60,6 +61,7 @@ export const ExternalUsersDashboard = () => {
   const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 500); // debounce like ServiceDashboard
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -85,10 +87,13 @@ export const ExternalUsersDashboard = () => {
           setLoading(false);
           return;
         }
-        const url = `https://${baseUrl}/pms/users/non_fte_users.json?page=${page}`;
-        const response = await axios.get(url, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        let url = `https://${baseUrl}/pms/users/non_fte_users.json?page=${page}`;
+        const emailQuery = debouncedSearch.trim();
+        if (emailQuery) {
+          // server-side search by email only (q[email_cont])
+            url += `&q[email_cont]=${encodeURIComponent(emailQuery)}`;
+        }
+        const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         let users = Array.isArray(response.data.users) ? response.data.users : (response.data.users || []);
         setExternalUsers(users);
         if (response.data.pagination) {
@@ -98,7 +103,6 @@ export const ExternalUsersDashboard = () => {
             total_count: response.data.pagination.total_count,
           });
         } else {
-          // fallback if pagination not returned
           setPagination({ current_page: page, total_pages: 1, total_count: users.length });
         }
       } catch (err) {
@@ -109,7 +113,12 @@ export const ExternalUsersDashboard = () => {
       }
     };
     fetchExternalUsers();
-  }, [page]);
+  }, [page, debouncedSearch]);
+
+  // Reset to first page when new search applied
+  useEffect(() => {
+    if (debouncedSearch && page !== 1) setPage(1);
+  }, [debouncedSearch]);
 
   const cardData = [
     {

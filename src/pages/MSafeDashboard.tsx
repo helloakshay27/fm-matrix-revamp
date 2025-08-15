@@ -16,6 +16,7 @@ import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
+import { useDebounce } from '@/hooks/useDebounce';
 
 
 interface ApiPagination { current_page: number; total_pages: number; total_count: number }
@@ -27,6 +28,7 @@ export const MSafeDashboard = () => {
   const [fmUsers, setFmUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 500);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -71,7 +73,11 @@ export const MSafeDashboard = () => {
           setLoading(false);
           return;
         }
-        const url = `https://${baseUrl}/pms/users/fte_users.json?page=${page}`;
+        let url = `https://${baseUrl}/pms/users/fte_users.json?page=${page}`;
+        const emailQuery = debouncedSearch.trim();
+        if (emailQuery) {
+          url += `&q[email_cont]=${encodeURIComponent(emailQuery)}`;
+        }
         const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const data = response.data;
         const users = Array.isArray(data.users) ? data.users : (Array.isArray(data) ? data : data.users || []);
@@ -93,7 +99,11 @@ export const MSafeDashboard = () => {
       }
     };
     fetchUsers();
-  }, [page]);
+  }, [page, debouncedSearch]);
+
+  useEffect(() => {
+    if (debouncedSearch && page !== 1) setPage(1);
+  }, [debouncedSearch]);
   const getStatusBadge = (status: string) => {
     if (!status) {
       return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
