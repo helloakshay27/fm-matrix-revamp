@@ -98,14 +98,8 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
   const renderContent = () => {
     switch (type) {
       case 'purposeWise':
-        // Use API data if we've made an API call, otherwise use provided data or fallback
-        const purposeData = hasApiData ? hostWiseData : (data || [
-          { purpose: 'Meeting', count: 45, percentage: 45 },
-          { purpose: 'Personal', count: 20, percentage: 20 },
-          { purpose: 'Delivery', count: 15, percentage: 15 },
-          { purpose: 'Maintenance', count: 12, percentage: 12 },
-          { purpose: 'Others', count: 8, percentage: 8 }
-        ]);
+        // Only show data if we have actual API data
+        const purposeData = hasApiData ? hostWiseData : [];
 
         return (
           <div className="w-full overflow-x-auto">
