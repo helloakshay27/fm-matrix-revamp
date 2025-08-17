@@ -35,6 +35,15 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
         case 'purposeWise':
           await visitorDownloadAPI.downloadComparisonData(dateRange.startDate, dateRange.endDate);
           break;
+        case 'statusWise':
+          await visitorDownloadAPI.downloadTotalVisitorsData(dateRange.startDate, dateRange.endDate);
+          break;
+        case 'hourlyTrend':
+          await visitorDownloadAPI.downloadExpectedVisitorsData(dateRange.startDate, dateRange.endDate);
+          break;
+        case 'locationWise':
+          await visitorDownloadAPI.downloadUnexpectedVisitorsData(dateRange.startDate, dateRange.endDate);
+          break;
         default:
           console.log(`Download not implemented for ${type} type`);
       }
