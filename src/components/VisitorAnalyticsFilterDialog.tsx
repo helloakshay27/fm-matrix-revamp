@@ -16,14 +16,12 @@ export const VisitorAnalyticsFilterDialog: React.FC<VisitorAnalyticsFilterDialog
   onClose,
   onApplyFilter
 }) => {
-  // Set default dates: one year ago to current date
+  // Set default dates: current date as default
   const getDefaultDates = () => {
     const today = new Date();
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(today.getFullYear() - 1);
     
     return {
-      start: oneYearAgo.toISOString().split('T')[0],
+      start: today.toISOString().split('T')[0],
       end: today.toISOString().split('T')[0]
     };
   };
@@ -31,7 +29,7 @@ export const VisitorAnalyticsFilterDialog: React.FC<VisitorAnalyticsFilterDialog
   const defaultDates = getDefaultDates();
   const [startDate, setStartDate] = useState(defaultDates.start);
   const [endDate, setEndDate] = useState(defaultDates.end);
-  const [quickFilter, setQuickFilter] = useState('');
+  const [quickFilter, setQuickFilter] = useState('today'); // Default to 'today'
 
   const handleQuickFilter = (value: string) => {
     setQuickFilter(value);
@@ -83,7 +81,7 @@ export const VisitorAnalyticsFilterDialog: React.FC<VisitorAnalyticsFilterDialog
     const resetDates = getDefaultDates();
     setStartDate(resetDates.start);
     setEndDate(resetDates.end);
-    setQuickFilter('');
+    setQuickFilter('today'); // Reset to today instead of empty
   };
 
   return (
