@@ -236,9 +236,6 @@ export function RecentVisitorsSidebar() {
                 <div className="flex items-center justify-between mb-3">
                   <span className="font-semibold text-gray-800 text-sm">{visitor.id}</span>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => handleGoldenVisitor(visitor.id)}>
-                      <Star className={`h-5 w-5 ${goldenVisitors.has(visitor.id) ? 'text-yellow-600 fill-yellow-600' : 'text-gray-400 fill-gray-200'} cursor-pointer hover:opacity-80`} />
-                    </button>
                     <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(visitor.status)}`}>
                       {visitor.status}
                     </span>
