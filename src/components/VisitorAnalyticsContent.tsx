@@ -92,8 +92,6 @@ export const VisitorAnalyticsContent = () => {
     { id: 'visitor-status-overview', type: 'overview' },
     { id: 'purpose-wise', type: 'purposeWise' },
     { id: 'status-wise', type: 'statusWise' },
-    { id: 'hourly-trend', type: 'hourlyTrend' },
-    
     { id: 'visitor-summary', type: 'summary' }
   ]);
 
@@ -217,16 +215,6 @@ export const VisitorAnalyticsContent = () => {
             title="Visitor Type Distribution"
             data={getStatusWiseData()}
             type="statusWise"
-            className="bg-white border border-gray-200 rounded-lg shadow-sm"
-            dateRange={commonDateRange}
-          />
-        );
-      case 'hourlyTrend':
-        return (
-          <VisitorAnalyticsCard
-            title="Hourly Visitor Trend"
-            data={hourlyTrendData}
-            type="hourlyTrend"
             className="bg-white border border-gray-200 rounded-lg shadow-sm"
             dateRange={commonDateRange}
           />

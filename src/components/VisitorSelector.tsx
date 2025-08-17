@@ -10,7 +10,6 @@ import {
 const visitorOptions = [
   { id: 'purpose-wise', label: 'Purpose Wise Visitors', checked: true, chartSection: 'purposeWise' },
   { id: 'status-wise', label: 'Status Wise Distribution', checked: true, chartSection: 'statusWise' },
-  { id: 'hourly-trend', label: 'Hourly Visitor Trend', checked: true, chartSection: 'hourlyTrend' },
   { id: 'location-wise', label: 'Location Wise Visitors', checked: true, chartSection: 'locationWise' },
   { id: 'visitor-summary', label: 'Visitor Summary Stats', checked: true, chartSection: 'visitorSummary' },
 ];

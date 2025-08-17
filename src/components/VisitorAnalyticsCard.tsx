@@ -8,7 +8,7 @@ import { visitorHostWiseAPI } from '@/services/visitorHostWiseAPI';
 interface VisitorAnalyticsCardProps {
   title: string;
   data: any;
-  type: 'purposeWise' | 'hourlyTrend' | 'statusWise' | 'locationWise';
+  type: 'purposeWise' | 'statusWise' | 'locationWise';
   className?: string;
   dateRange?: {
     startDate: Date;
@@ -81,9 +81,6 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
           break;
         case 'statusWise':
           await visitorDownloadAPI.downloadTotalVisitorsData(dateRange.startDate, dateRange.endDate);
-          break;
-        case 'hourlyTrend':
-          await visitorDownloadAPI.downloadExpectedVisitorsData(dateRange.startDate, dateRange.endDate);
           break;
         case 'locationWise':
           await visitorDownloadAPI.downloadUnexpectedVisitorsData(dateRange.startDate, dateRange.endDate);
@@ -174,33 +171,6 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
                 )}
               </ResponsiveContainer>
             )}
-          </div>
-        );
-
-      case 'hourlyTrend':
-        const hourlyData = data || [
-          { hour: '9:00', visitors: 15 },
-          { hour: '10:00', visitors: 25 },
-          { hour: '11:00', visitors: 30 },
-          { hour: '12:00', visitors: 20 },
-          { hour: '13:00', visitors: 10 },
-          { hour: '14:00', visitors: 35 },
-          { hour: '15:00', visitors: 28 },
-          { hour: '16:00', visitors: 22 },
-          { hour: '17:00', visitors: 18 }
-        ];
-
-        return (
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={hourlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" fontSize={10} />
-                <YAxis fontSize={12} />
-                <Tooltip />
-                <Bar dataKey="visitors" fill="#00B4D8" />
-              </BarChart>
-            </ResponsiveContainer>
           </div>
         );
 
