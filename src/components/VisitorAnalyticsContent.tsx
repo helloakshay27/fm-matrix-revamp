@@ -67,26 +67,13 @@ const SortableCard: React.FC<SortableCardProps> = ({ id, children, className }) 
 
 export const VisitorAnalyticsContent = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
-  // Initialize with default date range (current date)
-  const getDefaultDateRange = () => {
-    const today = new Date();
-    return {
-      startDate: today.toLocaleDateString('en-GB'),
-      endDate: today.toLocaleDateString('en-GB')
-    };
-  };
-  
-  const [dateRange, setDateRange] = useState(getDefaultDateRange());
+  const [dateRange, setDateRange] = useState({
+    startDate: '',
+    endDate: ''
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [visitorComparisonData, setVisitorComparisonData] = useState<VisitorComparisonResponse | null>(null);
   const { toast } = useToast();
-
-  // Auto-fetch data on component mount with default date range
-  useEffect(() => {
-    const defaultRange = getDefaultDateRange();
-    fetchVisitorComparison(defaultRange.startDate, defaultRange.endDate);
-  }, []);
 
   // Drag and drop sensors
   const sensors = useSensors(
