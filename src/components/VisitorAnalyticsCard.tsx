@@ -29,8 +29,15 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
     
     setIsDownloading(true);
     try {
-      // Implement download logic for visitor analytics
-      console.log(`Downloading ${type} data for range:`, dateRange);
+      const { visitorDownloadAPI } = await import('@/services/visitorDownloadAPI');
+      
+      switch (type) {
+        case 'purposeWise':
+          await visitorDownloadAPI.downloadComparisonData(dateRange.startDate, dateRange.endDate);
+          break;
+        default:
+          console.log(`Download not implemented for ${type} type`);
+      }
     } catch (error) {
       console.error('Error downloading data:', error);
     } finally {
