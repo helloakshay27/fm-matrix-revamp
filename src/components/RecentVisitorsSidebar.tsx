@@ -311,18 +311,6 @@ export function RecentVisitorsSidebar() {
                       Add Comment
                     </button>
                     
-                    <button 
-                      type="button"
-                      className={`flex items-center gap-2 text-black text-sm font-medium hover:opacity-80 transition-all duration-200 ${flaggedVisitors.has(visitor.id) ? 'opacity-60' : ''}`} 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleFlag(visitor.id);
-                      }}
-                    >
-                      <Flag className={`h-4 w-4 transition-colors duration-200 ${flaggedVisitors.has(visitor.id) ? 'text-red-600 fill-red-600' : 'text-red-500'}`} />
-                      Flag Issue
-                    </button>
                   </div>
                   
                   <button 
