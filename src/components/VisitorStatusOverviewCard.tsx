@@ -111,7 +111,7 @@ export const VisitorStatusOverviewCard: React.FC<VisitorStatusOverviewCardProps>
     <Card className={`shadow-sm hover:shadow-lg transition-all duration-200 ${className}`}>
       <CardHeader className="pb-4">
         <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">
-          Visitors Status
+          Visitors Summary
         </CardTitle>
       </CardHeader>
       <CardContent>
