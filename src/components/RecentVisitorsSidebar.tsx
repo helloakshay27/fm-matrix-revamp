@@ -313,12 +313,6 @@ export function RecentVisitorsSidebar() {
                     
                   </div>
                   
-                  <button 
-                    className="text-blue-600 text-sm font-medium underline hover:text-blue-800" 
-                    onClick={() => handleViewDetails(visitor.id)}
-                  >
-                    View Detail&gt;&gt;
-                  </button>
                 </div>
               </div>
             ))
