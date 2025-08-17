@@ -204,7 +204,7 @@ export const VisitorAnalyticsContent = () => {
       case 'purposeWise':
         return (
           <VisitorAnalyticsCard
-            title="Purpose Wise Visitors"
+            title="Host Wise Visitors"
             data={purposeWiseData}
             type="purposeWise"
             className="bg-white border border-gray-200 rounded-lg shadow-sm"
