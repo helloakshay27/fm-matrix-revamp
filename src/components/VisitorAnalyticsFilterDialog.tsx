@@ -96,22 +96,6 @@ export const VisitorAnalyticsFilterDialog: React.FC<VisitorAnalyticsFilterDialog
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="quickFilter">Quick Filters</Label>
-            <Select value={quickFilter} onValueChange={handleQuickFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a quick filter" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="yesterday">Yesterday</SelectItem>
-                <SelectItem value="last7days">Last 7 Days</SelectItem>
-                <SelectItem value="last30days">Last 30 Days</SelectItem>
-                <SelectItem value="thisMonth">This Month</SelectItem>
-                <SelectItem value="lastMonth">Last Month</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
