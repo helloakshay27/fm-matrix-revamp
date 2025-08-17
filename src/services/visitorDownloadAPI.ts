@@ -126,7 +126,7 @@ export const visitorDownloadAPI = {
   },
 
   downloadComparisonData: async (fromDate: Date, toDate: Date): Promise<void> => {
-    const endpoint = '/pms/visitors/comparison_downloads.json';
+    const endpoint = '/pms/visitors/host_wise_visitors_downloads.json';
     
     const formatDate = (date: Date): string => {
       const day = date.getDate().toString().padStart(2, '0');
@@ -138,6 +138,7 @@ export const visitorDownloadAPI = {
     const params = new URLSearchParams({
       from_date: formatDate(fromDate),
       to_date: formatDate(toDate),
+      access_token: API_CONFIG.TOKEN,
     });
 
     const url = `${API_CONFIG.BASE_URL}${endpoint}?${params.toString()}`;
@@ -158,7 +159,7 @@ export const visitorDownloadAPI = {
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = downloadUrl;
-    link.download = `visitor_comparison_${formatDate(fromDate)}_to_${formatDate(toDate)}.xlsx`;
+    link.download = `host_wise_visitors_${formatDate(fromDate)}_to_${formatDate(toDate)}.xlsx`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
