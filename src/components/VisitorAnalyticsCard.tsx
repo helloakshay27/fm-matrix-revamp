@@ -26,6 +26,7 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [hostWiseData, setHostWiseData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasApiData, setHasApiData] = useState(false);
 
   useEffect(() => {
     if (type === 'purposeWise' && dateRange) {
@@ -57,9 +58,11 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
       });
 
       setHostWiseData(chartData);
+      setHasApiData(true);
     } catch (error) {
       console.error('Error fetching host-wise data:', error);
       setHostWiseData([]);
+      setHasApiData(true); // Still mark as having API data to avoid fallback
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +101,8 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
   const renderContent = () => {
     switch (type) {
       case 'purposeWise':
-        const purposeData = hostWiseData.length > 0 ? hostWiseData : (data || [
+        // Use API data if we've made an API call, otherwise use provided data or fallback
+        const purposeData = hasApiData ? hostWiseData : (data || [
           { purpose: 'Meeting', count: 45, percentage: 45 },
           { purpose: 'Personal', count: 20, percentage: 20 },
           { purpose: 'Delivery', count: 15, percentage: 15 },
