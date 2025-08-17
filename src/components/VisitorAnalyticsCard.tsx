@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { visitorHostWiseAPI } from '@/services/visitorHostWiseAPI';
 
 interface VisitorAnalyticsCardProps {
   title: string;
@@ -23,6 +24,46 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
   dateRange
 }) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [hostWiseData, setHostWiseData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (type === 'purposeWise' && dateRange) {
+      fetchHostWiseData();
+    }
+  }, [type, dateRange]);
+
+  const fetchHostWiseData = async () => {
+    if (!dateRange) return;
+    
+    setIsLoading(true);
+    try {
+      const fromDate = `${dateRange.startDate.getDate()}/${dateRange.startDate.getMonth() + 1}/${dateRange.startDate.getFullYear()}`;
+      const toDate = `${dateRange.endDate.getDate()}/${dateRange.endDate.getMonth() + 1}/${dateRange.endDate.getFullYear()}`;
+      
+      const response = await visitorHostWiseAPI.getHostWiseVisitors(fromDate, toDate);
+      
+      // Transform the API response to chart data
+      const chartData = Object.entries(response.host_wise_guest_count.visitorsByHost).map(([host, count]) => ({
+        purpose: host || 'Unknown Host',
+        count: count as number,
+        percentage: 0 // Will be calculated after we have total
+      }));
+
+      // Calculate percentages
+      const total = chartData.reduce((sum, item) => sum + item.count, 0);
+      chartData.forEach(item => {
+        item.percentage = total > 0 ? Math.round((item.count / total) * 100) : 0;
+      });
+
+      setHostWiseData(chartData);
+    } catch (error) {
+      console.error('Error fetching host-wise data:', error);
+      setHostWiseData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDownload = async () => {
     if (!dateRange) return;
@@ -57,18 +98,25 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
   const renderContent = () => {
     switch (type) {
       case 'purposeWise':
-        const purposeData = data || [
+        const purposeData = hostWiseData.length > 0 ? hostWiseData : (data || [
           { purpose: 'Meeting', count: 45, percentage: 45 },
           { purpose: 'Personal', count: 20, percentage: 20 },
           { purpose: 'Delivery', count: 15, percentage: 15 },
           { purpose: 'Maintenance', count: 12, percentage: 12 },
           { purpose: 'Others', count: 8, percentage: 8 }
-        ];
+        ]);
 
         return (
           <div className="w-full overflow-x-auto">
-            <ResponsiveContainer width="100%" height={300} className="min-w-[400px]">
-              {purposeData.length > 0 ? (
+            {isLoading && type === 'purposeWise' ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <div className="text-center py-8 text-gray-500">
+                  Loading host-wise visitor data...
+                </div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300} className="min-w-[400px]">
+                {purposeData.length > 0 ? (
                 <BarChart 
                   data={purposeData}
                   margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
@@ -113,14 +161,15 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
                   />
                   <Bar dataKey="count" fill="#C72030" name="Count" />
                 </BarChart>
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center py-8 text-gray-500">
-                    No purpose-wise data available for the selected date range
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center py-8 text-gray-500">
+                      {type === 'purposeWise' ? 'No host-wise data available for the selected date range' : 'No purpose-wise data available for the selected date range'}
+                    </div>
                   </div>
-                </div>
-              )}
-            </ResponsiveContainer>
+                )}
+              </ResponsiveContainer>
+            )}
           </div>
         );
 
