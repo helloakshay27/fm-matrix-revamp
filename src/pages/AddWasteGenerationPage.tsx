@@ -73,7 +73,7 @@ const AddWasteGenerationPage = () => {
       title: "Success",
       description: "Waste generation record saved successfully"
     });
-    navigate('/maintenance/audit/waste/generation');
+    navigate('/maintenance/waste/generation');
   };
 
   const handleBack = () => {
