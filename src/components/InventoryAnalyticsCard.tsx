@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 interface InventoryAnalyticsCardProps {
   title: string;
   data: any;
-  type?: 'itemsStatus' | 'categoryWise' | 'greenConsumption' | 'consumptionReportGreen' | 'consumptionReportNonGreen' | 'currentMinimumStockNonGreen' | 'currentMinimumStockGreen';
+  type?: 'itemsStatus' | 'categoryWise' | 'greenConsumption' | 'consumptionReportGreen' | 'consumptionReportNonGreen' | 'inventoryConsumptionNonGreen' | 'currentMinimumStockNonGreen' | 'currentMinimumStockGreen' | 'inventoryCostOverMonth' | 'inventoryConsumptionOverSite';
   className?: string;
   dateRange?: {
     startDate: Date;
@@ -23,6 +23,9 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   className = '',
   dateRange
 }) => {
+  if (type === 'consumptionReportNonGreen') {
+    console.log('[DEBUG] InventoryAnalyticsCard data for consumptionReportNonGreen:', data);
+  }
   const [downloadLoading, setDownloadLoading] = useState(false);
 
   // Helper to format date as YYYY-MM-DD
@@ -37,19 +40,48 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
       return;
     }
 
-    const formattedStart = formatDate(dateRange.startDate);
-    const formattedEnd = formatDate(dateRange.endDate);
-
     setDownloadLoading(true);
     try {
       switch (type) {
+        case 'greenConsumption':
+          await inventoryAnalyticsDownloadAPI.downloadGreenConsumptionExcel(dateRange.startDate, dateRange.endDate);
+          toast.success('Green Consumption Excel downloaded successfully');
+          break;
+        case 'consumptionReportGreen':
+          await inventoryAnalyticsDownloadAPI.downloadConsumptionReportGreenExcel(dateRange.startDate, dateRange.endDate);
+          toast.success('Consumption Report Green Excel downloaded successfully');
+          break;
+        case 'consumptionReportNonGreen':
+          await inventoryAnalyticsDownloadAPI.downloadConsumptionReportNonGreenExcel(dateRange.startDate, dateRange.endDate);
+          toast.success('Consumption Report Non-Green Excel downloaded successfully');
+          break;
         case 'itemsStatus':
-          await inventoryAnalyticsDownloadAPI.downloadItemsStatusData(formattedStart, formattedEnd);
+          await inventoryAnalyticsDownloadAPI.downloadItemsStatusData(dateRange.startDate, dateRange.endDate);
           toast.success('Items status data downloaded successfully');
           break;
         case 'categoryWise':
-          await inventoryAnalyticsDownloadAPI.downloadCategoryWiseData(formattedStart, formattedEnd);
+          await inventoryAnalyticsDownloadAPI.downloadCategoryWiseData(dateRange.startDate, dateRange.endDate);
           toast.success('Category wise data downloaded successfully');
+          break;
+        case 'inventoryCostOverMonth':
+          await inventoryAnalyticsDownloadAPI.downloadInventoryCostOverMonthExcel(dateRange.startDate, dateRange.endDate);
+          toast.success('Inventory Cost Over Month Excel downloaded successfully');
+          break;
+        case 'inventoryConsumptionOverSite':
+          await inventoryAnalyticsDownloadAPI.downloadInventoryConsumptionOverSiteExcel(dateRange.startDate, dateRange.endDate);
+          toast.success('Inventory Consumption Over Site Excel downloaded successfully');
+          break;
+        case 'currentMinimumStockGreen':
+          await inventoryAnalyticsDownloadAPI.downloadCurrentMinimumStockGreenExcel(dateRange.startDate, dateRange.endDate);
+          toast.success('Current Minimum Stock Green Excel downloaded successfully');
+          break;
+        case 'currentMinimumStockNonGreen':
+          await inventoryAnalyticsDownloadAPI.downloadCurrentMinimumStockNonGreenExcel(dateRange.startDate, dateRange.endDate);
+          toast.success('Current Minimum Stock Non-Green Excel downloaded successfully');
+          break;
+        case 'inventoryConsumptionNonGreen':
+          await inventoryAnalyticsDownloadAPI.downloadInventoryConsumptionNonGreenExcel(dateRange.startDate, dateRange.endDate);
+          toast.success('Inventory Consumption Non-Green Excel downloaded successfully');
           break;
         default:
           toast.error('Download not available for this data type');
@@ -84,6 +116,132 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
 
   const renderContent = () => {
     switch (type) {
+      case 'inventoryConsumptionOverSite': {
+        // Render each site as a small box with consumption value, compact UI
+        if (!data.response || typeof data.response !== 'object') {
+          return <div>No site consumption data available</div>;
+        }
+        const sites = Object.entries(data.response);
+        return (
+          <div className="flex flex-wrap gap-2 min-h-[60px]">
+            {sites.map(([site, value]: [string, any], idx: number) => (
+              <div
+                key={site}
+                className="bg-[#f6f4ee] rounded shadow p-2 min-w-[70px] flex flex-col items-center h-[60px] justify-center"
+                style={{ fontSize: '0.85rem' }}
+              >
+                <div className="font-semibold text-[#C72030] text-xs">{site}</div>
+                <div className="font-bold text-gray-800 text-base mt-1">{value}</div>
+              </div>
+            ))}
+          </div>
+        );
+      }
+      case 'inventoryCostOverMonth': {
+        // Render each month as a small box with cost value, and reduce card height
+        if (!data.response || typeof data.response !== 'object') {
+          return <div>No cost data available</div>;
+        }
+        const months = Object.entries(data.response);
+        return (
+          <div className="flex flex-wrap gap-2 min-h-[60px]">
+            {months.map(([month, value]: [string, any], idx: number) => (
+              <div
+                key={month}
+                className="bg-[#f6f4ee] rounded shadow p-2 min-w-[70px] flex flex-col items-center h-[60px] justify-center"
+                style={{ fontSize: '0.85rem' }}
+              >
+                <div className="font-semibold text-[#C72030] text-xs">{month}</div>
+                <div className="font-bold text-gray-800 text-base mt-1">₹{value.trend_over_month}</div>
+              </div>
+            ))}
+          </div>
+        );
+      }
+      case 'inventoryConsumptionNonGreen': {
+        if (!data.response || !Array.isArray(data.response)) {
+          return <div>No consumption data available</div>;
+        }
+        return (
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Product</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Unit</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Opening</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Addition</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Consumption</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Cost/Unit</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Total Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.response.map((row: any, index: number) => (
+                  <tr key={index} className="border-t">
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.date}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.unit}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.opening}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.addition}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.consumption}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.current_stock}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.cost_per_unit}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.cost}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {data.info?.info && (
+              <div className="mt-4 text-xs text-gray-500">{data.info.info}</div>
+            )}
+          </div>
+        );
+      }
+      case 'consumptionReportNonGreen': {
+        if (!data.response || !Array.isArray(data.response)) {
+          return <div>No consumption data available</div>;
+        }
+        return (
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Product</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Unit</th>
+                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Opening</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Addition</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Consumption</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Cost/Unit</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Total Cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.response.map((row: any, index: number) => (
+                  <tr key={index} className="border-t">
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.date}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.unit}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.opening}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.addition}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.consumption}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.current_stock}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.cost_per_unit}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.cost}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {data.info?.info && (
+              <div className="mt-4 text-xs text-gray-500">{data.info.info}</div>
+            )}
+          </div>
+        );
+      }
 
       case 'itemsStatus': {
         // Convert status data to chart format
@@ -196,14 +354,14 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
               <thead>
                 <tr className="bg-gray-50">
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Product</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Product</th>
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Unit</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Opening</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Addition</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Consumption</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Current Stock</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Cost/Unit</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Total Cost</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Opening</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Addition</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Consumption</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Cost/Unit</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Total Cost</th>
                 </tr>
               </thead>
               <tbody>
@@ -259,49 +417,43 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
       }
 
       case 'currentMinimumStockNonGreen':
-      case 'currentMinimumStockGreen':
+      case 'currentMinimumStockGreen': {
+        // Render table for minimum stock, using the provided API response
         if (!data.response || !Array.isArray(data.response)) {
-          return <div>No stock data available</div>;
+          return <div>No minimum stock data available</div>;
         }
-
+        // Each item in response is an object with a single key (product name)
+        const rows = data.response.map((item: any) => {
+          const product = Object.keys(item)[0];
+          const stock = item[product];
+          return { product, ...stock };
+        });
         return (
           <div className="overflow-x-auto">
             <table className="min-w-full table-auto">
               <thead>
                 <tr className="bg-gray-50">
                   <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Product</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Current Stock</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Minimum Stock</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Status</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
+                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Minimum Stock</th>
                 </tr>
               </thead>
               <tbody>
-                {data.response.map((item: any, index: number) => {
-                  const productName = Object.keys(item)[0];
-                  const productData = item[productName];
-                  const isLowStock = productData.Current_Stock < parseInt(productData.Minimum_Stock);
-                  
-                  return (
-                    <tr key={index} className="border-t">
-                      <td className="px-4 py-2 text-sm text-gray-600">{productName}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{productData.Current_Stock}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{productData.Minimum_Stock}</td>
-                      <td className="px-4 py-2 text-sm">
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          isLowStock 
-                            ? 'bg-red-100 text-red-700' 
-                            : 'bg-green-100 text-green-700'
-                        }`}>
-                          {isLowStock ? 'Low Stock' : 'Normal'}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {rows.map((row: any, index: number) => (
+                  <tr key={index} className="border-t">
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.Current_Stock}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600">{row.Minimum_Stock}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
+            {data.info?.info && (
+              <div className="mt-4 text-xs text-gray-500">{data.info.info}</div>
+            )}
           </div>
         );
+      }
 
       default:
         return <div>Chart type not supported</div>;
@@ -309,7 +461,7 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   };
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 p-6 shadow-sm ${className}`}>
+  <div className={`bg-white rounded-lg border border-gray-200 p-4 shadow-sm min-h-[120px] ${className}`}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
         <Button

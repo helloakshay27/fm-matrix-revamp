@@ -1,3 +1,45 @@
+// Inventory Consumption Over Site API response type
+export interface InventoryConsumptionOverSiteData {
+  success: number;
+  message: string;
+  response: Record<string, number>;
+  info?: {
+    formula?: string;
+    info?: string;
+  };
+}
+
+// Duplicate inventoryAnalyticsAPI declaration removed. Use the full implementation below.
+// Inventory Cost Over Month API response type
+export interface InventoryCostOverMonthData {
+  success: number;
+  message: string;
+  response: Record<string, { trend_over_month: number }>;
+  info?: {
+    formula?: string;
+    info?: string;
+  };
+}
+// Inventory Consumption Non-Green API response type
+export interface InventoryConsumptionNonGreenData {
+  success: number;
+  message: string;
+  response: Array<{
+    date: string;
+    product: string;
+    unit: string;
+    opening: number;
+    addition: number;
+    consumption: number;
+    current_stock: number;
+    cost_per_unit: number;
+    cost: number;
+  }>;
+  info?: {
+    formula?: string;
+    info?: string;
+  };
+}
 import { API_CONFIG } from '@/config/apiConfig';
 
 // Types for inventory analytics API responses
@@ -214,6 +256,36 @@ const getBaseUrl = (): string => {
 
 // Inventory Analytics API
 export const inventoryAnalyticsAPI = {
+  // Get inventory cost over month data
+  async getInventoryCostOverMonth(fromDate: Date, toDate: Date): Promise<InventoryCostOverMonthData> {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+
+    const url = `${getBaseUrl()}/pms/inventories/card_inventory_cost_over_month.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
+  // Get inventory consumption non-green data
+  async getInventoryConsumptionNonGreen(fromDate: Date, toDate: Date): Promise<InventoryConsumptionNonGreenData> {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+
+    const url = `${getBaseUrl()}/pms/inventories/get_inventory_consumption_non_green.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  },
   // Get items status data (active/inactive/critical)
   async getItemsStatus(fromDate: Date, toDate: Date): Promise<ItemsStatusData> {
     const siteId = getCurrentSiteId();
@@ -394,5 +466,22 @@ export const inventoryAnalyticsAPI = {
     );
     if (!response.ok) throw new Error('Failed to fetch maintenance due items data');
     return response.json();
+  },
+
+  // Get inventory consumption over site data
+  async getInventoryConsumptionOverSite(fromDate: Date, toDate: Date): Promise<InventoryConsumptionOverSiteData> {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const accessToken = getAccessToken();
+
+    const url = `${getBaseUrl()}/pms/inventories/inventory_consumption_over_site.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
   }
 };
+// Duplicate declaration removed. See above for the full implementation.

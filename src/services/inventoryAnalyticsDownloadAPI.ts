@@ -7,9 +7,7 @@ const formatDateForAPI = (date: Date): string => {
 
 // Utility function to get current site ID
 const getCurrentSiteId = (): string => {
-  return localStorage.getItem('selectedSiteId') || 
-         new URLSearchParams(window.location.search).get('site_id') || 
-         '7';
+  return localStorage.getItem('selectedSiteId')
 };
 
 // Utility function to get access token
@@ -19,6 +17,102 @@ const getAccessToken = (): string => {
 
 // Download functionality for inventory analytics
 export const inventoryAnalyticsDownloadAPI = {
+  // Download Inventory Cost Over Month Excel file
+  downloadInventoryCostOverMonthExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const accessToken = getAccessToken();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/month_wise_inventory_consumption_excel.json`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to download inventory cost over month excel: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `inventory-cost-over-month-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading inventory cost over month excel:', error);
+      throw error;
+    }
+  },
+  // Download Inventory Consumption Over Site Excel file
+  downloadInventoryConsumptionOverSiteExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const accessToken = getAccessToken();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/inventory_consumption_over_site_excel.json`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to download inventory consumption over site excel: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `inventory-consumption-over-site-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading inventory consumption over site excel:', error);
+      throw error;
+    }
+  },
+  // Download Consumption Report Non-Green Excel file
+  downloadConsumptionReportNonGreenExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const accessToken = getAccessToken();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/inventory_consumption_report_non_green_excel_data.json`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to download consumption report non-green excel: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `consumption-report-non-green-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading consumption report non-green excel:', error);
+      throw error;
+    }
+  },
   // Download items status data
   downloadItemsStatusData: async (fromDate: Date, toDate: Date): Promise<void> => {
     const siteId = getCurrentSiteId();
@@ -102,6 +196,168 @@ export const inventoryAnalyticsDownloadAPI = {
       throw error;
     }
   },
+
+  // Download Green Consumption Excel file
+  downloadGreenConsumptionExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const accessToken = getAccessToken();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/inventory_consumption_green_excel_data.json`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to download green consumption excel: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `green-consumption-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading green consumption excel:', error);
+      throw error;
+    }
+  },
+
+  // Download Consumption Report Green Excel file
+  downloadConsumptionReportGreenExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const accessToken = getAccessToken();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/get_inventory_consumption_report_green_excel_data.json`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to download consumption report green excel: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `consumption-report-green-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading consumption report green excel:', error);
+      throw error;
+    }
+  },
+  // Download Current Minimum Stock Green Excel file
+  downloadCurrentMinimumStockGreenExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const accessToken = getAccessToken();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/get_inventory_current_and_minimum_stock_green_excel_data.json`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to download current minimum stock green excel: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `current-minimum-stock-green-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading current minimum stock green excel:', error);
+      throw error;
+    }
+  },
+  // Download Current Minimum Stock Non-Green Excel file
+  downloadCurrentMinimumStockNonGreenExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const accessToken = getAccessToken();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/inventory_current_and_minimum_stock_non_green_excel_data.json`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to download current minimum stock non-green excel: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `current-minimum-stock-non-green-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading current minimum stock non-green excel:', error);
+      throw error;
+    }
+  },
+  // Download Inventory Consumption Non-Green Excel file
+  downloadInventoryConsumptionNonGreenExcel: async (fromDate: Date, toDate: Date): Promise<void> => {
+    const siteId = getCurrentSiteId();
+    const accessToken = getAccessToken();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    const endpoint = `${API_CONFIG.BASE_URL}/pms/inventories/inventory_consumption_non_green_excel_data.json`;
+    const url = `${endpoint}?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${accessToken}`;
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to download inventory consumption non-green excel: ${response.status}`);
+      }
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `inventory-consumption-non-green-${fromDateStr}-to-${toDateStr}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading inventory consumption non-green excel:', error);
+      throw error;
+    }
+  }
 };
 
 // Helper function to convert items status data to CSV
