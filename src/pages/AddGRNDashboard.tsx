@@ -1,155 +1,491 @@
-
-import React, { useState } from 'react';
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+  CircularProgress,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAppDispatch } from "@/store/hooks";
+import {
+  createGRN,
+  fetchItemDetails,
+  fetchSupplierDetails,
+  getPurchaseOrdersList,
+} from "@/store/slices/grnSlice";
+import { getInventories, getSuppliers } from "@/store/slices/materialPRSlice";
+
+// Define interfaces for type safety
+interface GRNDetails {
+  purchaseOrder: number;
+  supplier: string;
+  invoiceNumber: string;
+  relatedTo: string;
+  invoiceAmount: string;
+  paymentMode: string;
+  invoiceDate: string;
+  postingDate: string;
+  otherExpense: string;
+  loadingExpense: string;
+  adjustmentAmount: string;
+  notes: string;
+}
+
+interface InventoryItem {
+  inventoryType: string;
+  expectedQuantity: string;
+  receivedQuantity: string;
+  approvedQuantity: string;
+  rejectedQuantity: string;
+  rate: string;
+  cgstRate: string;
+  cgstAmount: string;
+  sgstRate: string;
+  sgstAmount: string;
+  igstRate: string;
+  igstAmount: string;
+  tcsRate: string;
+  tcsAmount: string;
+  totalTaxes: string;
+  amount: string;
+  totalAmount: string;
+  batch: string[];
+}
+
+interface Supplier {
+  id: string;
+  name: string;
+}
+
+interface Inventory {
+  id: string;
+  name: string;
+}
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
-  '& .MuiInputBase-input, & .MuiSelect-select': {
-    padding: { xs: '8px', sm: '10px', md: '12px' },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px", sm: "10px", md: "12px" },
   },
 };
 
 export const AddGRNDashboard = () => {
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
   const navigate = useNavigate();
 
-  const [grnDetails, setGrnDetails] = useState({
-    purchaseOrder: '',
-    supplier: '',
-    invoiceNumber: '',
-    relatedTo: '',
-    invoiceAmount: '',
-    paymentMode: '',
-    invoiceDate: '',
-    postingDate: '',
-    otherExpense: '',
-    loadingExpense: '',
-    adjustmentAmount: '',
-    notes: ''
+  const [grnDetails, setGrnDetails] = useState<GRNDetails>({
+    purchaseOrder: 0,
+    supplier: "",
+    invoiceNumber: "",
+    relatedTo: "",
+    invoiceAmount: "",
+    paymentMode: "",
+    invoiceDate: "",
+    postingDate: "",
+    otherExpense: "",
+    loadingExpense: "",
+    adjustmentAmount: "",
+    notes: "",
   });
 
-  const [inventoryDetails, setInventoryDetails] = useState({
-    inventoryType: '',
-    expectedQuantity: '',
-    receivedQuantity: '',
-    approvedQuantity: '',
-    rejectedQuantity: '',
-    rate: '',
-    cgstRate: '',
-    cgstAmount: '',
-    sgstRate: '',
-    sgstAmount: '',
-    igstRate: '',
-    igstAmount: '',
-    tcsRate: '',
-    tcsAmount: '',
-    totalTaxes: '',
-    amount: '',
-    totalAmount: ''
-  });
+  const [inventoryDetails, setInventoryDetails] = useState<InventoryItem[]>([
+    {
+      inventoryType: "",
+      expectedQuantity: "",
+      receivedQuantity: "",
+      approvedQuantity: "",
+      rejectedQuantity: "",
+      rate: "",
+      cgstRate: "",
+      cgstAmount: "",
+      sgstRate: "",
+      sgstAmount: "",
+      igstRate: "",
+      igstAmount: "",
+      tcsRate: "",
+      tcsAmount: "",
+      totalTaxes: "",
+      amount: "",
+      totalAmount: "",
+      batch: [],
+    },
+  ]);
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<[string, number][]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [inventories, setInventories] = useState<Inventory[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Calculate amounts automatically
-  const calculateAmounts = () => {
-    const rate = parseFloat(inventoryDetails.rate) || 0;
-    const approvedQty = parseFloat(inventoryDetails.approvedQuantity) || 0;
-    const cgstAmount = parseFloat(inventoryDetails.cgstAmount) || 0;
-    const sgstAmount = parseFloat(inventoryDetails.sgstAmount) || 0;
-    const igstAmount = parseFloat(inventoryDetails.igstAmount) || 0;
-    const tcsAmount = parseFloat(inventoryDetails.tcsAmount) || 0;
-    
-    const amount = rate * approvedQty;
-    const totalTaxes = cgstAmount + sgstAmount + igstAmount + tcsAmount;
-    const totalAmount = amount + totalTaxes;
-    
-    setInventoryDetails(prev => ({
-      ...prev,
-      amount: amount.toFixed(2),
-      totalTaxes: totalTaxes.toFixed(2),
-      totalAmount: totalAmount.toFixed(2)
-    }));
+  console.log(purchaseOrders);
+
+  useEffect(() => {
+    const fetchPO = async () => {
+      try {
+        const response = await dispatch(
+          getPurchaseOrdersList({ baseUrl, token })
+        ).unwrap();
+        setPurchaseOrders(response.p_orders);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to fetch purchase orders. Please try again.");
+      }
+    };
+
+    const fetchSupp = async () => {
+      try {
+        const response = await dispatch(
+          getSuppliers({ baseUrl, token })
+        ).unwrap();
+        setSuppliers(response.suppliers);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to fetch suppliers. Please try again.");
+      }
+    };
+
+    const fetchInv = async () => {
+      try {
+        const response = await dispatch(
+          getInventories({ baseUrl, token })
+        ).unwrap();
+        setInventories(response.inventories);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to fetch inventories. Please try again.");
+      }
+    };
+
+    fetchSupp();
+    fetchInv();
+    fetchPO();
+  }, [dispatch, baseUrl, token]);
+
+  const fetchSuppliers = async (id: number) => {
+    try {
+      const response = await dispatch(
+        fetchSupplierDetails({
+          baseUrl,
+          token,
+          id,
+        })
+      ).unwrap();
+
+      setGrnDetails((prev) => ({
+        ...prev,
+        supplier: response.id,
+      }));
+    } catch (error: any) {
+      toast.dismiss();
+      toast.error(error.message || "Failed to fetch supplier details.");
+    }
   };
 
-  React.useEffect(() => {
-    calculateAmounts();
-  }, [inventoryDetails.rate, inventoryDetails.approvedQuantity, inventoryDetails.cgstAmount, inventoryDetails.sgstAmount, inventoryDetails.igstAmount, inventoryDetails.tcsAmount]);
+  const calculateInventoryTaxes = (item: InventoryItem): InventoryItem => {
+    const rate = parseFloat(item.rate) || 0;
+    const approvedQty = parseFloat(item.approvedQuantity) || 0;
+    const cgstRate = parseFloat(item.cgstRate) || 0;
+    const sgstRate = parseFloat(item.sgstRate) || 0;
+    const igstRate = parseFloat(item.igstRate) || 0;
+    const tcsRate = parseFloat(item.tcsRate) || 0;
+
+    // Calculate Amount (rate × approved quantity)
+    const amount = rate;
+
+    // Calculate Tax Amounts (rate * qty * %)
+    const cgstAmount = (amount * cgstRate) / 100;
+    const sgstAmount = (amount * sgstRate) / 100;
+    const igstAmount = (amount * igstRate) / 100;
+    const tcsAmount = (amount * tcsRate) / 100;
+
+    // Sum of all taxes
+    const totalTaxes = cgstAmount + sgstAmount + igstAmount + tcsAmount;
+
+    // Total payable
+    const totalAmount = amount + totalTaxes;
+
+    return {
+      ...item,
+      amount: amount.toFixed(2),
+      cgstAmount: cgstAmount.toFixed(2),
+      sgstAmount: sgstAmount.toFixed(2),
+      igstAmount: igstAmount.toFixed(2),
+      tcsAmount: tcsAmount.toFixed(2),
+      totalTaxes: totalTaxes.toFixed(2),
+      totalAmount: totalAmount.toFixed(2),
+    };
+  };
+
+  const fetchItem = async (id: number) => {
+    try {
+      const response = await dispatch(
+        fetchItemDetails({
+          baseUrl,
+          token,
+          id,
+        })
+      ).unwrap();
+
+      const updatedInventoryDetails = response.pms_po_inventories.map((item: any) => {
+        const inventoryItem = {
+          ...item,
+          inventoryType: item.inventory.id,
+          rate: item.rate || "",
+          cgstRate: item.cgst_rate || "",
+          cgstAmount: "",
+          sgstRate: item.sgst_rate || "",
+          sgstAmount: "",
+          igstRate: item.igst_rate || "",
+          igstAmount: "",
+          tcsRate: item.tcs_rate || "",
+          tcsAmount: "",
+          totalTaxes: "",
+          amount: "",
+          totalAmount: "",
+          expectedQuantity: item.expected_quantity || "",
+          receivedQuantity: item.received_quantity || "",
+          approvedQuantity: item.approved_quantity || "",
+          rejectedQuantity: item.rejected_quantity || "",
+          batch: item.batch || [],
+        };
+        return calculateInventoryTaxes(inventoryItem);
+      });
+
+      setInventoryDetails(updatedInventoryDetails);
+    } catch (error: any) {
+      toast.dismiss();
+      toast.error(error.message || "Failed to fetch item details.");
+    }
+  };
+
+  const handleInventoryChange = (
+    index: number,
+    field: keyof InventoryItem,
+    value: string,
+    batchIndex?: number
+  ) => {
+    setInventoryDetails((prev) => {
+      const newDetails = [...prev];
+      if (field === "batch" && batchIndex !== undefined) {
+        const newBatch = [...newDetails[index].batch];
+        newBatch[batchIndex] = value;
+        newDetails[index] = { ...newDetails[index], batch: newBatch };
+      } else {
+        newDetails[index] = { ...newDetails[index], [field]: value };
+        newDetails[index] = calculateInventoryTaxes(newDetails[index]);
+      }
+      return newDetails;
+    });
+  };
+
+  const addBatchField = (index: number) => {
+    setInventoryDetails((prev) => {
+      const newDetails = [...prev];
+      newDetails[index] = {
+        ...newDetails[index],
+        batch: [...newDetails[index].batch, ""],
+      };
+      return newDetails;
+    });
+  };
+
+  const removeBatchField = (inventoryIndex: number, batchIndex: number) => {
+    setInventoryDetails((prev) => {
+      const newDetails = [...prev];
+      newDetails[inventoryIndex] = {
+        ...newDetails[inventoryIndex],
+        batch: newDetails[inventoryIndex].batch.filter((_, i) => i !== batchIndex),
+      };
+      return newDetails;
+    });
+    toast.success("Batch field removed successfully");
+  };
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const ALLOWED_TYPES = [
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "image/jpeg",
+    "image/png",
+  ];
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedFiles(prev => [...prev, ...files]);
-    toast.success(`${files.length} file(s) uploaded successfully`);
+    if (!e.target.files || e.target.files.length === 0) {
+      toast.error("No files selected.");
+      return;
+    }
+    const files = Array.from(e.target.files);
+    const validFiles = files.filter((file: File) => {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        toast.error(`File ${file.name} has an unsupported type.`);
+        return false;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`File ${file.name} exceeds the 5MB size limit.`);
+        return false;
+      }
+      if (selectedFiles.some((existing: File) => existing.name === file.name)) {
+        toast.error(`File ${file.name} is already uploaded.`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length > 0) {
+      setSelectedFiles((prev: File[]) => [...prev, ...validFiles]);
+      toast.success(`${validFiles.length} file(s) uploaded successfully`);
+    }
+
+    e.target.value = "";
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
-    setSelectedFiles(prev => [...prev, ...files]);
-    toast.success(`${files.length} file(s) uploaded via drag & drop`);
+    const validFiles = files.filter((file: File) => {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        toast.error(`File ${file.name} has an unsupported type.`);
+        return false;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`File ${file.name} exceeds the 5MB size limit.`);
+        return false;
+      }
+      if (selectedFiles.some((existing: File) => existing.name === file.name)) {
+        toast.error(`File ${file.name} is already uploaded.`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length > 0) {
+      setSelectedFiles((prev: File[]) => [...prev, ...validFiles]);
+      toast.success(`${validFiles.length} file(s) uploaded via drag & drop`);
+    }
   };
 
   const removeFile = (index: number) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-    toast.success('File removed successfully');
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+    toast.success("File removed successfully");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     // Validation
     if (!grnDetails.purchaseOrder) {
-      toast.error('Please select a Purchase Order');
+      toast.error("Please select a Purchase Order");
       return;
     }
     if (!grnDetails.supplier) {
-      toast.error('Please select a Supplier');
+      toast.error("Please select a Supplier");
       return;
     }
     if (!grnDetails.invoiceNumber) {
-      toast.error('Please enter Invoice Number');
+      toast.error("Please enter Invoice Number");
       return;
     }
-    if (!inventoryDetails.expectedQuantity) {
-      toast.error('Please enter Expected Quantity');
+    if (!grnDetails.invoiceDate || !grnDetails.postingDate) {
+      toast.error("Please provide valid Invoice and Posting Dates");
       return;
     }
-    if (!inventoryDetails.receivedQuantity) {
-      toast.error('Please enter Received Quantity');
-      return;
-    }
-    if (!inventoryDetails.approvedQuantity) {
-      toast.error('Please enter Approved Quantity');
-      return;
+    for (const [index, item] of inventoryDetails.entries()) {
+      if (
+        !item.expectedQuantity ||
+        isNaN(parseFloat(item.expectedQuantity)) ||
+        parseFloat(item.expectedQuantity) < 0
+      ) {
+        toast.error(
+          `Please enter a valid Expected Quantity for inventory item ${index + 1}`
+        );
+        return;
+      }
+      if (
+        !item.receivedQuantity ||
+        isNaN(parseFloat(item.receivedQuantity)) ||
+        parseFloat(item.receivedQuantity) < 0
+      ) {
+        toast.error(
+          `Please enter a valid Received Quantity for inventory item ${index + 1}`
+        );
+        return;
+      }
+      if (
+        !item.approvedQuantity ||
+        isNaN(parseFloat(item.approvedQuantity)) ||
+        parseFloat(item.approvedQuantity) < 0
+      ) {
+        toast.error(
+          `Please enter a valid Approved Quantity for inventory item ${index + 1}`
+        );
+        return;
+      }
     }
     if (selectedFiles.length === 0) {
-      toast.error('Please upload at least one attachment');
+      toast.error("Please upload at least one attachment");
       return;
     }
 
-    // Log form data for debugging
-    console.log('GRN Details:', grnDetails);
-    console.log('Inventory Details:', inventoryDetails);
-    console.log('Attachments:', selectedFiles.map(file => ({ name: file.name, size: file.size, type: file.type })));
-    
-    toast.success('GRN submitted successfully!');
-    navigate('/finance/grn-srn');
+    const payload = {
+      pms_grn: {
+        pms_purchase_order_id: grnDetails.purchaseOrder,
+        supplier_id: grnDetails.supplier,
+        invoice_no: grnDetails.invoiceNumber,
+        related_to: grnDetails.relatedTo,
+        invoice_amount: grnDetails.invoiceAmount,
+        payment_mode: grnDetails.paymentMode,
+        bill_date: grnDetails.invoiceDate,
+        posting_date: grnDetails.postingDate,
+        other_expenses: grnDetails.otherExpense,
+        loading_expense: grnDetails.loadingExpense,
+        adj_amount: grnDetails.adjustmentAmount,
+        notes: grnDetails.notes,
+        pms_grn_inventories_attributes: inventoryDetails.map((item) => ({
+          pms_inventory_id: item.inventoryType,
+          quantity: item.expectedQuantity,
+          unit: item.receivedQuantity,
+          approved_qty: item.approvedQuantity,
+          rejected_qty: item.rejectedQuantity,
+          rate: item.rate,
+          cgst_rate: item.cgstRate,
+          cgst_amount: item.cgstAmount,
+          sgst_rate: item.sgstRate,
+          sgst_amount: item.sgstAmount,
+          igst_rate: item.igstRate,
+          igst_amount: item.igstAmount,
+          tcs_rate: item.tcsRate,
+          tcs_amount: item.tcsAmount,
+          taxable_value: item.totalTaxes,
+          total_value: item.amount,
+          pms_products_attributes: item.batch.map(batch => ({ batch_no: batch })),
+        })),
+      },
+      attachments: selectedFiles,
+    };
+
+    setIsSubmitting(true);
+    try {
+      await dispatch(createGRN({ data: payload, baseUrl, token })).unwrap();
+      toast.success("GRN submitted successfully!");
+      navigate("/finance/grn-srn");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to submit GRN. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="p-6">
-      {/* Breadcrumb */}
-      <div className="mb-4 text-sm text-gray-600">
-        Finance &gt; GRN / SRN &gt; Add New GRN
-      </div>
-
-      {/* Page Title */}
-      <h1 className="text-2xl font-bold mb-6">GRN</h1>
+      <h1 className="text-2xl font-bold mb-6">Add GRN</h1>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* GRN Details Section */}
@@ -158,7 +494,9 @@ export const AddGRNDashboard = () => {
             <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
               <span className="text-white text-sm">1</span>
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">GRN DETAILS</h2>
+            <h2 className="text-lg font-semibold text-[#C72030]">
+              GRN DETAILS
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -167,14 +505,26 @@ export const AddGRNDashboard = () => {
               <MuiSelect
                 label="Purchase Order*"
                 value={grnDetails.purchaseOrder}
-                onChange={(e) => setGrnDetails({...grnDetails, purchaseOrder: e.target.value})}
+                onChange={(e) => {
+                  const poId = Number(e.target.value);
+                  setGrnDetails({
+                    ...grnDetails,
+                    purchaseOrder: poId,
+                  });
+                  fetchSuppliers(poId);
+                  fetchItem(poId);
+                }}
                 displayEmpty
                 sx={fieldStyles}
               >
-                <MenuItem value=""><em>Select Purchase Order</em></MenuItem>
-                <MenuItem value="PO001">PO001 - ABC Supplier</MenuItem>
-                <MenuItem value="PO002">PO002 - XYZ Corporation</MenuItem>
-                <MenuItem value="PO003">PO003 - ACHLA Corporation</MenuItem>
+                <MenuItem value={0}>
+                  <em>Select Purchase Order</em>
+                </MenuItem>
+                {purchaseOrders.map((option) => (
+                  <MenuItem key={option[1]} value={option[1]}>
+                    {option[0]}
+                  </MenuItem>
+                ))}
               </MuiSelect>
             </FormControl>
 
@@ -183,14 +533,20 @@ export const AddGRNDashboard = () => {
               <MuiSelect
                 label="Supplier*"
                 value={grnDetails.supplier}
-                onChange={(e) => setGrnDetails({...grnDetails, supplier: e.target.value})}
+                onChange={(e) =>
+                  setGrnDetails({ ...grnDetails, supplier: e.target.value })
+                }
                 displayEmpty
                 sx={fieldStyles}
               >
-                <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                <MenuItem value="ABC">ABC Supplier</MenuItem>
-                <MenuItem value="XYZ Corporation">XYZ Corporation</MenuItem>
-                <MenuItem value="ACHLA Corporation">ACHLA Corporation</MenuItem>
+                <MenuItem value="">
+                  <em>Select Supplier</em>
+                </MenuItem>
+                {suppliers.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>
+                    {option.name}
+                  </MenuItem>
+                ))}
               </MuiSelect>
             </FormControl>
 
@@ -198,7 +554,9 @@ export const AddGRNDashboard = () => {
               label="Invoice Number*"
               placeholder="Enter Number"
               value={grnDetails.invoiceNumber}
-              onChange={(e) => setGrnDetails({...grnDetails, invoiceNumber: e.target.value})}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, invoiceNumber: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -210,7 +568,9 @@ export const AddGRNDashboard = () => {
               label="Related To"
               placeholder="Enter Text"
               value={grnDetails.relatedTo}
-              onChange={(e) => setGrnDetails({...grnDetails, relatedTo: e.target.value})}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, relatedTo: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -223,7 +583,9 @@ export const AddGRNDashboard = () => {
               type="number"
               placeholder="Enter Number"
               value={grnDetails.invoiceAmount}
-              onChange={(e) => setGrnDetails({...grnDetails, invoiceAmount: e.target.value})}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, invoiceAmount: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -236,25 +598,27 @@ export const AddGRNDashboard = () => {
               <MuiSelect
                 label="Payment Mode"
                 value={grnDetails.paymentMode}
-                onChange={(e) => setGrnDetails({...grnDetails, paymentMode: e.target.value})}
+                onChange={(e) =>
+                  setGrnDetails({ ...grnDetails, paymentMode: e.target.value })
+                }
                 displayEmpty
                 sx={fieldStyles}
               >
-                <MenuItem value=""><em>Select Payment Mode</em></MenuItem>
-                <MenuItem value="cash">Cash</MenuItem>
-                <MenuItem value="cheque">Cheque</MenuItem>
-                <MenuItem value="bank-transfer">Bank Transfer</MenuItem>
-                <MenuItem value="card">Card</MenuItem>
-                <MenuItem value="upi">UPI</MenuItem>
+                <MenuItem value="">
+                  <em>Select Payment Mode</em>
+                </MenuItem>
+                <MenuItem value="1">Cheque</MenuItem>
+                <MenuItem value="2">RTGS</MenuItem>
               </MuiSelect>
             </FormControl>
 
             <TextField
               label="Invoice Date*"
               type="date"
-              placeholder="Enter Date"
               value={grnDetails.invoiceDate}
-              onChange={(e) => setGrnDetails({...grnDetails, invoiceDate: e.target.value})}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, invoiceDate: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -265,9 +629,10 @@ export const AddGRNDashboard = () => {
             <TextField
               label="Posting Date*"
               type="date"
-              placeholder="20/06/2025"
               value={grnDetails.postingDate}
-              onChange={(e) => setGrnDetails({...grnDetails, postingDate: e.target.value})}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, postingDate: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -280,7 +645,9 @@ export const AddGRNDashboard = () => {
               type="number"
               placeholder="Other Expense"
               value={grnDetails.otherExpense}
-              onChange={(e) => setGrnDetails({...grnDetails, otherExpense: e.target.value})}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, otherExpense: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -293,7 +660,9 @@ export const AddGRNDashboard = () => {
               type="number"
               placeholder="Enter Number"
               value={grnDetails.loadingExpense}
-              onChange={(e) => setGrnDetails({...grnDetails, loadingExpense: e.target.value})}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, loadingExpense: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -306,7 +675,12 @@ export const AddGRNDashboard = () => {
               type="number"
               placeholder="Enter Number"
               value={grnDetails.adjustmentAmount}
-              onChange={(e) => setGrnDetails({...grnDetails, adjustmentAmount: e.target.value})}
+              onChange={(e) =>
+                setGrnDetails({
+                  ...grnDetails,
+                  adjustmentAmount: e.target.value,
+                })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -319,11 +693,13 @@ export const AddGRNDashboard = () => {
             <TextField
               label="Notes"
               value={grnDetails.notes}
-              onChange={(e) => setGrnDetails({...grnDetails, notes: e.target.value})}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, notes: e.target.value })
+              }
               fullWidth
               variant="outlined"
               multiline
-              minRows={4}
+              rows={4}
               placeholder="Enter any additional notes..."
               InputLabelProps={{ shrink: true }}
               sx={{ mt: 1 }}
@@ -332,257 +708,344 @@ export const AddGRNDashboard = () => {
         </div>
 
         {/* Inventory Details Section */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">2</span>
+        {inventoryDetails.map((item, index) => (
+          <div key={index} className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between gap-2 mb-6">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm">2</span>
+                </div>
+                <h2 className="text-lg font-semibold text-[#C72030]">
+                  INVENTORY DETAILS {index + 1}
+                </h2>
+              </div>
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">INVENTORY DETAILS</h2>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Inventory Type</InputLabel>
-              <MuiSelect
-                label="Inventory Type"
-                value={inventoryDetails.inventoryType}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, inventoryType: e.target.value})}
-                displayEmpty
-                sx={fieldStyles}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Inventory Type</InputLabel>
+                <MuiSelect
+                  label="Inventory Type"
+                  value={item.inventoryType}
+                  onChange={(e) =>
+                    handleInventoryChange(
+                      index,
+                      "inventoryType",
+                      e.target.value
+                    )
+                  }
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select</em>
+                  </MenuItem>
+                  {inventories.map((inventory) => (
+                    <MenuItem key={inventory.id} value={inventory.id}>
+                      {inventory.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              <TextField
+                label="Expected Quantity*"
+                type="number"
+                placeholder="Expected Quantity"
+                value={item.expectedQuantity}
+                onChange={(e) =>
+                  handleInventoryChange(
+                    index,
+                    "expectedQuantity",
+                    e.target.value
+                  )
+                }
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="Received Quantity*"
+                type="number"
+                placeholder="Received Quantity"
+                value={item.receivedQuantity}
+                onChange={(e) =>
+                  handleInventoryChange(
+                    index,
+                    "receivedQuantity",
+                    e.target.value
+                  )
+                }
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="Approved Quantity*"
+                type="number"
+                placeholder="Approved Quantity"
+                value={item.approvedQuantity}
+                onChange={(e) =>
+                  handleInventoryChange(
+                    index,
+                    "approvedQuantity",
+                    e.target.value
+                  )
+                }
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="Rejected Quantity"
+                type="number"
+                placeholder="Rejected Quantity"
+                value={item.rejectedQuantity}
+                onChange={(e) =>
+                  handleInventoryChange(
+                    index,
+                    "rejectedQuantity",
+                    e.target.value
+                  )
+                }
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="Rate"
+                type="number"
+                placeholder="Enter Number"
+                value={item.rate}
+                onChange={(e) =>
+                  handleInventoryChange(index, "rate", e.target.value)
+                }
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="CGST Rate"
+                type="number"
+                placeholder="Enter Number"
+                value={item.cgstRate}
+                onChange={(e) =>
+                  handleInventoryChange(index, "cgstRate", e.target.value)
+                }
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="CGST Amount"
+                type="number"
+                placeholder="Enter Number"
+                value={item.cgstAmount}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="SGST Rate"
+                type="number"
+                placeholder="Enter Number"
+                value={item.sgstRate}
+                onChange={(e) =>
+                  handleInventoryChange(index, "sgstRate", e.target.value)
+                }
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="SGST Amount"
+                type="number"
+                placeholder="Enter Number"
+                value={item.sgstAmount}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="IGST Rate"
+                type="number"
+                placeholder="Enter Number"
+                value={item.igstRate}
+                onChange={(e) =>
+                  handleInventoryChange(index, "igstRate", e.target.value)
+                }
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="IGST Amount"
+                type="number"
+                placeholder="Enter Number"
+                value={item.igstAmount}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="TCS Rate"
+                type="number"
+                placeholder="Enter Number"
+                value={item.tcsRate}
+                onChange={(e) =>
+                  handleInventoryChange(index, "tcsRate", e.target.value)
+                }
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="TCS Amount"
+                type="number"
+                placeholder="Enter Number"
+                value={item.tcsAmount}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="Total Taxes"
+                type="number"
+                placeholder="Total Amount"
+                value={item.totalTaxes}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="Amount"
+                type="number"
+                placeholder="Enter Number"
+                value={item.amount}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="Total Amount"
+                type="number"
+                placeholder="Total Amount"
+                value={item.totalAmount}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
+                sx={{ mt: 1 }}
+              />
+            </div>
+
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-md font-semibold">Batch Numbers</h3>
+              </div>
+              {item.batch.map((batch, batchIndex) => (
+                <div key={batchIndex} className="flex items-center gap-4 mb-2">
+                  <TextField
+                    label={`Batch ${batchIndex + 1}`}
+                    type="text"
+                    placeholder="Enter Batch Number"
+                    value={batch}
+                    onChange={(e) =>
+                      handleInventoryChange(index, "batch", e.target.value, batchIndex)
+                    }
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeBatchField(index, batchIndex)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                className="bg-[#C72030] hover:bg-[#A01020] text-white mt-4"
+                onClick={() => addBatchField(index)}
               >
-                <MenuItem value=""><em>Select</em></MenuItem>
-                <MenuItem value="power-supply">12V / 5 Amp Power Supply SM...</MenuItem>
-                <MenuItem value="carpet-brush">Carpet Brush</MenuItem>
-                <MenuItem value="cruet-set">Cruet Set</MenuItem>
-                <MenuItem value="laptop">Laptop</MenuItem>
-                <MenuItem value="office-supplies">Office Supplies</MenuItem>
-              </MuiSelect>
-            </FormControl>
-
-            <TextField
-              label="Expected Quantity*"
-              type="number"
-              placeholder="Expected Quantity"
-              value={inventoryDetails.expectedQuantity}
-              onChange={(e) => setInventoryDetails({...inventoryDetails, expectedQuantity: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="Received Quantity*"
-              type="number"
-              placeholder="Received Quantity"
-              value={inventoryDetails.receivedQuantity}
-              onChange={(e) => setInventoryDetails({...inventoryDetails, receivedQuantity: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="Approved Quantity*"
-              type="number"
-              placeholder="Approved Quantity"
-              value={inventoryDetails.approvedQuantity}
-              onChange={(e) => setInventoryDetails({...inventoryDetails, approvedQuantity: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="Rejected Quantity"
-              type="number"
-              placeholder="Rejected Quantity"
-              value={inventoryDetails.rejectedQuantity}
-              onChange={(e) => setInventoryDetails({...inventoryDetails, rejectedQuantity: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="Rate"
-              type="number"
-              placeholder="Enter Number"
-              value={inventoryDetails.rate}
-              onChange={(e) => setInventoryDetails({...inventoryDetails, rate: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="CGST Rate"
-              type="number"
-              placeholder="Enter Number"
-              value={inventoryDetails.cgstRate}
-              onChange={(e) => setInventoryDetails({...inventoryDetails, cgstRate: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="CGST Amount"
-              type="number"
-              placeholder="Enter Number"
-              value={inventoryDetails.cgstAmount}
-              onChange={(e) => setInventoryDetails({...inventoryDetails, cgstAmount: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="SGST Rate"
-              type="number"
-              placeholder="Enter Number"
-              value={inventoryDetails.sgstRate}
-              onChange={(e) => setInventoryDetails({...inventoryDetails, sgstRate: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="SGST Amount"
-              type="number"
-              placeholder="Enter Number"
-              value={inventoryDetails.sgstAmount}
-              onChange={(e) => setInventoryDetails({...inventoryDetails, sgstAmount: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="IGST Rate"
-              type="number"
-              placeholder="Enter Number"
-              value={inventoryDetails.igstRate}
-              onChange={(e) => setInventoryDetails({...inventoryDetails, igstRate: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="IGST Amount"
-              type="number"
-              placeholder="Enter Number"
-              value={inventoryDetails.igstAmount}
-              onChange={(e) => setInventoryDetails({...inventoryDetails, igstAmount: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="TCS Rate"
-              type="number"
-              placeholder="Enter Number"
-              value={inventoryDetails.tcsRate}
-              onChange={(e) => setInventoryDetails({...inventoryDetails, tcsRate: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="TCS Amount"
-              type="number"
-              placeholder="Enter Number"
-              value={inventoryDetails.tcsAmount}
-              onChange={(e) => setInventoryDetails({...inventoryDetails, tcsAmount: e.target.value})}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="Total Taxes"
-              type="number"
-              placeholder="Total Amount"
-              value={inventoryDetails.totalTaxes}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ 
-                sx: { ...fieldStyles, backgroundColor: '#f5f5f5' },
-                readOnly: true 
-              }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="Amount"
-              type="number"
-              placeholder="Enter Number"
-              value={inventoryDetails.amount}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ 
-                sx: { ...fieldStyles, backgroundColor: '#f5f5f5' },
-                readOnly: true 
-              }}
-              sx={{ mt: 1 }}
-            />
-
-            <TextField
-              label="Total Amount"
-              type="number"
-              placeholder="Total Amount"
-              value={inventoryDetails.totalAmount}
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ 
-                sx: { ...fieldStyles, backgroundColor: '#f5f5f5' },
-                readOnly: true 
-              }}
-              sx={{ mt: 1 }}
-            />
+                Add Batch
+              </Button>
+            </div>
           </div>
-
-          <div className="flex gap-3 mt-6">
-            <Button type="button" variant="outline">
-              Add Batch
-            </Button>
-            <Button type="button" variant="ghost" className="text-gray-400">
-              ✕
-            </Button>
-          </div>
-        </div>
+        ))}
 
         {/* Attachments Section */}
         <div className="bg-white rounded-lg shadow p-6">
@@ -590,18 +1053,23 @@ export const AddGRNDashboard = () => {
             <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
               <span className="text-white text-sm">3</span>
             </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">ATTACHMENTS*</h2>
+            <h2 className="text-lg font-semibold text-[#C72030]">
+              ATTACHMENTS*
+            </h2>
           </div>
 
-          <div 
+          <div
             className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center cursor-pointer hover:border-orange-400 transition-colors"
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            onClick={() => document.getElementById('file-upload')?.click()}
+            onClick={() => document.getElementById("file-upload")?.click()}
           >
             <p className="text-gray-600 mb-2">
               <span className="font-medium">Drag & Drop</span> or{" "}
-              <button type="button" className="text-[#C72030] underline">Choose File</button> No file chosen
+              <button type="button" className="text-[#C72030] underline">
+                Choose File
+              </button>{" "}
+              No file chosen
             </p>
           </div>
 
@@ -619,10 +1087,15 @@ export const AddGRNDashboard = () => {
               <h4 className="text-sm font-medium mb-2">Uploaded Files:</h4>
               <div className="space-y-2">
                 {selectedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between bg-gray-50 p-3 rounded"
+                  >
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-700">{file.name}</span>
-                      <span className="text-xs text-gray-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                      <span className="text-xs text-gray-500">
+                        ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
                     </div>
                     <Button
                       type="button"
@@ -643,13 +1116,20 @@ export const AddGRNDashboard = () => {
         {/* Submit Section */}
         <div className="flex justify-end items-center gap-4">
           <div className="bg-[#C72030] text-white px-4 py-2 rounded text-right">
-            Total Amount- {inventoryDetails.totalAmount || '0.00'}
+            Total Amount -{" "}
+            {inventoryDetails
+              .reduce(
+                (sum, item) => sum + parseFloat(item.totalAmount || "0"),
+                0
+              )
+              .toFixed(2)}
           </div>
-          <Button 
+          <Button
             type="submit"
             className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
+            disabled={isSubmitting}
           >
-            Submit
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Submit"}
           </Button>
         </div>
       </form>

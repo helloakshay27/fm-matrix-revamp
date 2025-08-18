@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
+// Removed custom ResponsiveDatePicker in favor of simple MUI date input
 
 export const EditInventoryPage = () => {
   const navigate = useNavigate();
@@ -79,6 +79,21 @@ export const EditInventoryPage = () => {
     igstRate: ''
   });
 
+  // Helper: convert an incoming ISO / zoned date string to YYYY-MM-DD for <input type="date">
+  const formatDateForInput = (isoString: string): string => {
+    if (!isoString) return '';
+    try {
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return '';
+      // Adjust to local date (strip timezone influence)
+      const tzOffset = d.getTimezoneOffset();
+      const local = new Date(d.getTime() - tzOffset * 60000);
+      return local.toISOString().slice(0, 10); // YYYY-MM-DD
+    } catch {
+      return '';
+    }
+  };
+
   useEffect(() => {
     console.log('Dispatching fetchInventoryAssets...');
     if (id) {
@@ -101,6 +116,7 @@ export const EditInventoryPage = () => {
   // Populate form with fetched inventory data
   useEffect(() => {
     if (fetchedInventory) {
+      const normalizedExpiry = fetchedInventory.expiry_date ? formatDateForInput(fetchedInventory.expiry_date) : '';
       setFormData({
         assetName: fetchedInventory.asset_id?.toString() || '',
         inventoryName: fetchedInventory.name || '',
@@ -109,7 +125,8 @@ export const EditInventoryPage = () => {
         quantity: fetchedInventory.quantity?.toString() || '',
         cost: fetchedInventory.cost?.toString() || '',
         unit: fetchedInventory.unit || '',
-        expiryDate: fetchedInventory.expiry_date || '',
+        // Store only the date part (YYYY-MM-DD) for the date input field
+        expiryDate: normalizedExpiry,
         category: fetchedInventory.category || '',
         vendor: fetchedInventory.vendor_id?.toString() || '',
         maxStockLevel: fetchedInventory.max_stock_level?.toString() || '',
@@ -171,11 +188,10 @@ export const EditInventoryPage = () => {
   const handleSubmit = () => {
     if (!id) return;
 
-    // Format expiry date to match required format: "YYYY-MM-DDT00:00:00.000+05:30"
+    // Format expiry date without unintended timezone shifts: input already YYYY-MM-DD
     const formatExpiryDate = (dateString: string) => {
       if (!dateString) return null;
-      const date = new Date(dateString);
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}T00:00:00.000+05:30`;
+      return `${dateString}T00:00:00.000+05:30`;
     };
 
     // Map criticality: 0 for Non-Critical, 1 for Critical
@@ -484,11 +500,15 @@ export const EditInventoryPage = () => {
                 </div>
 
                 <div>
-                  <ResponsiveDatePicker
-                    value={formData.expiryDate ? new Date(formData.expiryDate) : undefined}
-                    onChange={(date) => handleInputChange('expiryDate', date ? date.toISOString().split('T')[0] : '')}
-                    placeholder="Expiry Date"
-                    className="w-full h-7 sm:h-9 md:h-[45px] rounded-[4px]"
+                  <TextField
+                    label="Expiry Date"
+                    type="date"
+                    value={formData.expiryDate}
+                    onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 

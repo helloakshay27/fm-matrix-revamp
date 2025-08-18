@@ -1161,7 +1161,7 @@ export const PatrollingCreatePage: React.FC = () => {
         </div>
       </Section>
 
-      <Section title="Schedule Setup" icon={<Clock className="w-3.5 h-3.5" />}>
+      <Section title="Shift Type Setup" icon={<Clock className="w-3.5 h-3.5" />}>
         <div className="space-y-4">
           {shifts.map((s, idx) => (
             <div key={s.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, QrCode, Edit, Loader2, Box } from 'lucide-react';
+import { ArrowLeft, QrCode, Edit, Loader2, Box, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { apiClient } from '@/utils/apiClient';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -14,6 +14,10 @@ export const InventoryDetailsPage = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('inventory-detail');
   const [downloading, setDownloading] = useState(false);
+  const [feeds, setFeeds] = useState<any[]>([]);
+  const [feedsLoading, setFeedsLoading] = useState(false);
+  const [feedsError, setFeedsError] = useState<string | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     const fetchInventoryDetails = async () => {
@@ -31,6 +35,34 @@ export const InventoryDetailsPage = () => {
     };
     fetchInventoryDetails();
   }, [id]);
+
+  // Fetch feeds immediately on page load (once) instead of waiting for history tab
+  useEffect(() => {
+    if (!id || feedsLoading || feeds.length > 0) return;
+    const fetchFeeds = async () => {
+      try {
+        setFeedsLoading(true);
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) {
+          setFeedsError('Missing base URL or token');
+          return;
+        }
+        const resp = await fetch(`https://${baseUrl}/pms/inventories/${id}/feeds.json`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!resp.ok) throw new Error('Failed to fetch history');
+        const data = await resp.json();
+        setFeeds(Array.isArray(data) ? data : []);
+      } catch (e:any) {
+        console.error('Feeds fetch error', e);
+        setFeedsError('Failed to load history');
+      } finally {
+        setFeedsLoading(false);
+      }
+    };
+    fetchFeeds();
+  }, [id, feedsLoading, feeds.length]);
 
   const handleBack = () => {
     navigate('/maintenance/inventory');
@@ -56,14 +88,67 @@ export const InventoryDetailsPage = () => {
     if (!dateString) return '—';
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-GB', {
+      return date.toLocaleString('en-GB', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
     } catch {
       return '—';
     }
+  };
+
+  // Parse Ruby style changed_attr string into key/from/to objects
+  const parseChangedAttr = (raw: string): { key: string; from: string; to: string }[] => {
+    if (!raw || typeof raw !== 'string') return [];
+    const result: { key: string; from: string; to: string }[] = [];
+    try {
+      // Pattern captures key and bracket content
+      const regex = /"([^"]+)"=>\[(.*?)\]/g;
+      let match;
+      while ((match = regex.exec(raw)) !== null) {
+        const key = match[1];
+        const content = match[2];
+        const idx = content.lastIndexOf(',');
+        let from = content;
+        let to = '';
+        if (idx !== -1) {
+          from = content.slice(0, idx).trim();
+          to = content.slice(idx + 1).trim();
+        }
+        // Clean potential surrounding quotes or nil
+        const clean = (v: string) => v.replace(/^"|"$/g, '').replace(/ nil$/i, '—').replace(/^nil$/i, '—');
+        result.push({ key, from: clean(from), to: clean(to) });
+      }
+    } catch (e) {
+      console.warn('Failed to parse changed_attr', e);
+    }
+    return result;
+  };
+
+  const toggleRow = (rowId: number) => {
+    setExpandedRows(prev => ({ ...prev, [rowId]: !prev[rowId] }));
+  };
+
+  const relativeTime = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      const diffMs = Date.now() - date.getTime();
+      const sec = Math.floor(diffMs / 1000);
+      if (sec < 60) return sec + 's ago';
+      const min = Math.floor(sec / 60);
+      if (min < 60) return min + 'm ago';
+      const hr = Math.floor(min / 60);
+      if (hr < 24) return hr + 'h ago';
+      const day = Math.floor(hr / 24);
+      if (day < 30) return day + 'd ago';
+      const mon = Math.floor(day / 30);
+      if (mon < 12) return mon + 'mo ago';
+      const yr = Math.floor(mon / 12);
+      return yr + 'y ago';
+    } catch { return ''; }
   };
 
   const handleDownload = async () => {
@@ -274,8 +359,84 @@ export const InventoryDetailsPage = () => {
                 </div>
                 <h2 className="text-lg font-[700]">HISTORY</h2>
               </div>
-              <div className="p-4 text-gray-600 text-sm">
-                No history available.
+              <div className="p-4">
+                {feedsLoading && (
+                  <div className="text-gray-600 text-sm">Loading history...</div>
+                )}
+                {feedsError && (
+                  <div className="text-red-600 text-sm">{feedsError}</div>
+                )}
+                {!feedsLoading && !feedsError && feeds.length === 0 && (
+                  <div className="text-gray-600 text-sm">No history available.</div>
+                )}
+                {!feedsLoading && !feedsError && feeds.length > 0 && (
+                  <div className="rounded-md border border-gray-200 shadow-sm">
+                    <div className="max-h-[520px] overflow-y-auto relative">
+                      <table className="min-w-full text-sm">
+                        <thead className="sticky top-0 z-10 bg-gray-100/95 backdrop-blur-sm">
+                          <tr className="text-xs uppercase tracking-wide text-gray-600">
+                            <th className="px-4 py-3 text-left font-semibold">Date / Time</th>
+                            <th className="px-4 py-3 text-left font-semibold">Changed By</th>
+                            <th className="px-4 py-3 text-left font-semibold">Log Type</th>
+                            <th className="px-4 py-3 text-left font-semibold w-2/3">Changes</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {feeds.map((feed, idx) => {
+                            const changes = parseChangedAttr(feed.changed_attr);
+                            const expanded = expandedRows[feed.id];
+                            const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/70';
+                            return (
+                              <tr
+                                key={feed.id}
+                                className={`${rowBg} hover:bg-[#f6f4ee] transition-colors`}
+                              >
+                                <td className="px-4 py-3 align-top whitespace-nowrap text-gray-800">
+                                  <div className="flex flex-col">
+                                    <span title={feed.created_at}>{formatDateTime(feed.created_at)}</span>
+                                    <span className="text-[10px] text-gray-500">{relativeTime(feed.created_at)}</span>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 align-top whitespace-nowrap text-gray-700 font-medium">{feed.changed_by || '—'}</td>
+                                <td className="px-4 py-3 align-top">
+                                  <span className="inline-block px-2 py-1 rounded-full text-[11px] font-semibold bg-[#C72030]/10 text-[#C72030] whitespace-nowrap leading-none">
+                                    {feed.log_type?.replace('Pms::', '') || '—'}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 align-top">
+                                  {changes.length === 0 && (
+                                    <span className="text-gray-400">—</span>
+                                  )}
+                                  {changes.length > 0 && (
+                                    <div className="flex flex-col gap-1">
+                                      {(expanded ? changes : changes.slice(0,3)).map(c => (
+                                        <div key={c.key} className="flex items-start flex-wrap gap-1 text-[12px] bg-gray-100 rounded px-2 py-1">
+                                          <span className="font-semibold text-gray-700">{c.key}</span>
+                                          <span className="text-gray-400 line-through">{c.from}</span>
+                                          <ArrowRight className="w-3 h-3 text-gray-400 mt-0.5" />
+                                          <span className="text-green-700 font-semibold">{c.to}</span>
+                                        </div>
+                                      ))}
+                                      {changes.length > 3 && (
+                                        <button
+                                          onClick={() => toggleRow(feed.id)}
+                                          className="flex items-center gap-1 self-start text-[11px] text-[#C72030] hover:underline mt-1"
+                                        >
+                                          {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                          {expanded ? 'Show less' : `Show ${changes.length - 3} more`}
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>
