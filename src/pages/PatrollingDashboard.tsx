@@ -1,114 +1,86 @@
-import React, { useState } from 'react';
-import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { BulkUploadModal } from '@/components/BulkUploadModal';
 import { ExportModal } from '@/components/ExportModal';
-import { PatrollingFilterModal } from '@/components/PatrollingFilterModal';
+import { PatrollingFilterModal, PatrollingFilters } from '@/components/PatrollingFilterModal';
 import { AddPatrollingModal } from '@/components/AddPatrollingModal';
 import { EditPatrollingModal } from '@/components/EditPatrollingModal';
 import { DeletePatrollingModal } from '@/components/DeletePatrollingModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
-const patrollingData = [{
-  id: 1,
-  patrolName: 'Lobby Patrol',
-  shiftType: 'Day',
-  numCheckpoints: 8,
-  validity: '15/04/2024 - 30/04/2024',
-  graceTime: '15 min',
-  status: true
-}, {
-  id: 2,
-  patrolName: 'Night Perimeter',
-  shiftType: 'Night',
-  numCheckpoints: 12,
-  validity: '22/02/2024 -',
-  graceTime: '10 min',
-  status: true
-}, {
-  id: 3,
-  patrolName: 'Parking Deck',
-  shiftType: 'Day',
-  numCheckpoints: 6,
-  validity: '01/05/2024 - 31/05/2024',
-  graceTime: '5 min',
-  status: false
-}, {
-  id: 4,
-  patrolName: 'Server Room',
-  shiftType: 'General',
-  numCheckpoints: 4,
-  validity: 'Ongoing',
-  graceTime: '10 min',
-  status: true
-}, {
-  id: 5,
-  patrolName: 'Warehouse Loop',
-  shiftType: 'Night',
-  numCheckpoints: 10,
-  validity: '01/06/2024 - 30/06/2024',
-  graceTime: '20 min',
-  status: true
-}, {
-  id: 6,
-  patrolName: 'Reception Rounds',
-  shiftType: 'General',
-  numCheckpoints: 5,
-  validity: 'Ongoing',
-  graceTime: '10 min',
-  status: true
-}, {
-  id: 7,
-  patrolName: 'Roof Access',
-  shiftType: 'Day',
-  numCheckpoints: 3,
-  validity: '15/03/2024 - 15/09/2024',
-  graceTime: '5 min',
-  status: false
-}, {
-  id: 8,
-  patrolName: 'Utilities Check',
-  shiftType: 'Night',
-  numCheckpoints: 7,
-  validity: 'Ongoing',
-  graceTime: '15 min',
-  status: true
-}, {
-  id: 9,
-  patrolName: 'Perimeter East',
-  shiftType: 'Day',
-  numCheckpoints: 9,
-  validity: 'Ongoing',
-  graceTime: '10 min',
-  status: true
-}, {
-  id: 10,
-  patrolName: 'Perimeter West',
-  shiftType: 'Night',
-  numCheckpoints: 9,
-  validity: 'Ongoing',
-  graceTime: '10 min',
-  status: true
-}, {
-  id: 11,
-  patrolName: 'CCTV Hub',
-  shiftType: 'General',
-  numCheckpoints: 2,
-  validity: '01/04/2024 - 01/10/2024',
-  graceTime: '5 min',
-  status: false
-}, {
-  id: 12,
-  patrolName: 'Loading Bay',
-  shiftType: 'Day',
-  numCheckpoints: 6,
-  validity: 'Ongoing',
-  graceTime: '15 min',
-  status: true
-}];
+import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { toast } from 'sonner';
+import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
+import { useDebounce } from '@/hooks/useDebounce';
 
+// Type definitions for the API response
+interface PatrollingItem {
+  id: number;
+  name: string;
+  description: string;
+  estimated_duration_minutes: number;
+  auto_ticket: boolean;
+  validity_start_date: string;
+  validity_end_date: string;
+  grace_period_minutes: number;
+  active: boolean;
+  resource_type: string;
+  resource_id: number;
+  created_by_id: number;
+  created_at: string;
+  updated_at: string;
+  questions: Array<{
+    id: number;
+    task: string;
+    type: string;
+    mandatory: boolean;
+    options: string[];
+  }>;
+  schedules: Array<{
+    id: number;
+    name: string;
+    frequency_type: string;
+    start_time: string;
+    start_date: string;
+    end_date: string | null;
+    assigned_guard_id: number;
+    supervisor_id: number;
+    active: boolean;
+  }>;
+  checkpoints: Array<{
+    id: number;
+    name: string;
+    description: string;
+    order_sequence: number;
+    building_id: number | null;
+    wing_id: number | null;
+    floor_id: number | null;
+    room_id: number | null;
+    estimated_time_minutes: number;
+    schedule_ids: number[];
+  }>;
+  summary: {
+    questions_count: number;
+    schedules_count: number;
+    checkpoints_count: number;
+  };
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: PatrollingItem[];
+  pagination: {
+    current_page: number;
+    per_page: number;
+    total_pages: number;
+    total_count: number;
+    has_next_page: boolean;
+    has_prev_page: boolean;
+  };
+}
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [{
   key: 'actions',
@@ -117,31 +89,25 @@ const columns: ColumnConfig[] = [{
   hideable: false,
   draggable: false
 }, {
-  key: 'patrolName',
+  key: 'name',
   label: 'Patrol Name',
   sortable: true,
   hideable: true,
   draggable: true
 }, {
-  key: 'shiftType',
-  label: 'Shift Type',
-  sortable: true,
-  hideable: true,
-  draggable: true
-}, {
-  key: 'numCheckpoints',
+  key: 'checkpoints',
   label: 'No. of Checkpoints',
   sortable: true,
   hideable: true,
   draggable: true
 }, {
-  key: 'validity',
-  label: 'Validity',
+  key: 'shift_type',
+  label: 'Shift Type',
   sortable: true,
   hideable: true,
   draggable: true
 }, {
-  key: 'graceTime',
+  key: 'grace_time',
   label: 'Grace Time',
   sortable: true,
   hideable: true,
@@ -165,63 +131,229 @@ export const PatrollingDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
-  const filteredData = patrollingData.filter((p) =>
-    [p.patrolName, p.shiftType, String(p.numCheckpoints), p.validity, p.graceTime]
-      .join(' ')
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
-  const totalRecords = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalRecords / perPage));
-  const startIndex = (currentPage - 1) * perPage;
-  const endIndex = startIndex + perPage;
-  const displayedData = filteredData.slice(startIndex, endIndex);
+  const debouncedSearchQuery = useDebounce(searchTerm, 1000);
+  const [appliedFilters, setAppliedFilters] = useState<PatrollingFilters>({});
+  const [patrollingData, setPatrollingData] = useState<PatrollingItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    per_page: 10,
+    total_pages: 1,
+    total_count: 0,
+    has_next_page: false,
+    has_prev_page: false
+  });
+
+  // Fetch patrolling data from API
+  const fetchPatrollingData = async (page = 1, per_page = 10, search = '', filters: PatrollingFilters = {}) => {
+    setLoading(true);
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+
+      if (!baseUrl || !token) {
+        throw new Error('API configuration is missing');
+      }
+
+      // Build API URL with parameters
+      let apiUrl = getFullUrl(`/patrolling/setup.json?page=${page}&per_page=${per_page}`);
+
+      // Add search parameter
+      if (search.trim()) {
+        apiUrl += `&q[search_all_fields_cont]=${encodeURIComponent(search.trim())}`;
+      }
+
+      // Add filter parameters based on the API structure you provided
+      if (filters.buildingId) {
+        apiUrl += `&q[patrolling_checkpoints_building_id_eq]=${filters.buildingId}`;
+      }
+
+      if (filters.wingId) {
+        apiUrl += `&q[patrolling_checkpoints_wing_id_eq]=${filters.wingId}`;
+      }
+
+      if (filters.areaId) {
+        apiUrl += `&q[patrolling_checkpoints_area_id_eq]=${filters.areaId}`;
+      }
+
+      if (filters.floorId) {
+        apiUrl += `&q[patrolling_checkpoints_floor_id_eq]=${filters.floorId}`;
+      }
+
+      if (filters.roomId) {
+        apiUrl += `&q[patrolling_checkpoints_room_id_eq]=${filters.roomId}`;
+      }
+
+      // Handle status filter
+      if (filters.status) {
+        const isActive = filters.status === 'active';
+        apiUrl += `&q[active_eq]=${isActive}`;
+      }
+
+      console.log('🔗 API URL with filters:', apiUrl);
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result: ApiResponse = await response.json();
+
+      if (result.success) {
+        setPatrollingData(result.data);
+        setPagination(result.pagination);
+      } else {
+        throw new Error('Failed to fetch patrolling data');
+      }
+    } catch (error: any) {
+      console.error('Error fetching patrolling data:', error);
+      toast.error(`Failed to load patrolling data: ${error.message}`, {
+        duration: 5000,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data on component mount and when page/perPage/filters change
+  useEffect(() => {
+    console.log('Effect triggered - debouncedSearchQuery:', debouncedSearchQuery); // Debug log
+    fetchPatrollingData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+  }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
+
+  // Handle filter application
+  const handleApplyFilters = (filters: PatrollingFilters) => {
+    console.log('📊 Applying filters:', filters);
+    setAppliedFilters(filters);
+    setCurrentPage(1); // Reset to first page when applying filters
+  };  // Handle search
+  const handleSearch = (term: string) => {
+    console.log('Search query:', term); // Debug log
+    setSearchTerm(term);
+    setCurrentPage(1); // Reset to first page when searching
+    // Force immediate search if query is empty (for clear search)
+    if (!term.trim()) {
+      fetchPatrollingData(1, perPage, '', appliedFilters);
+    }
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle per page change
+  const handlePerPageChange = (newPerPage: number) => {
+    setPerPage(newPerPage);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  // Helper function to get shift type (frequency type)
+  const getShiftType = (schedules: PatrollingItem['schedules']) => {
+    if (schedules.length === 0) return 'No shifts';
+    // Get unique frequency types
+    const frequencies = [...new Set(schedules.map(s => s.frequency_type))];
+    if (frequencies.length === 1) {
+      return frequencies[0].charAt(0).toUpperCase() + frequencies[0].slice(1);
+    }
+    return `${frequencies[0]} +${frequencies.length - 1} more`;
+  };
+
+  const totalRecords = pagination.total_count;
+  const totalPages = pagination.total_pages;
+  // Use API data directly instead of client-side filtering
+  const displayedData = patrollingData;
 
   // Render row function for enhanced table
-  const renderRow = (patrol: any) => ({
+  const renderRow = (patrol: PatrollingItem) => ({
     actions: <div className="flex items-center gap-2">
-        <button onClick={() => handleView(patrol.id)} className="p-1 text-blue-600 hover:bg-blue-50 rounded" title="View">
-          <Eye className="w-4 h-4" />
-        </button>
-        <button onClick={() => handleEdit(patrol.id)} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Edit">
-          <Edit className="w-4 h-4" />
-        </button>
-        <button onClick={() => handleDelete(patrol.id)} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Delete">
-          <Trash2 className="w-4 h-4" />
-        </button>
-      </div>,
-    patrolName: patrol.patrolName,
-    shiftType: patrol.shiftType,
-    numCheckpoints: patrol.numCheckpoints,
-    validity: patrol.validity || '--',
-    graceTime: patrol.graceTime || '--',
-    status: <input type="checkbox" checked={patrol.status} className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" readOnly />
+      <button onClick={() => handleView(patrol.id)} className="p-1 text-blue-600 hover:bg-blue-50 rounded" title="View">
+        <Eye className="w-4 h-4" />
+      </button>
+      <button onClick={() => handleEdit(patrol.id)} className="p-1 text-green-600 hover:bg-green-50 rounded" title="Edit">
+        <Edit className="w-4 h-4" />
+      </button>
+      <button onClick={() => handleDelete(patrol.id)} className="p-1 text-red-600 hover:bg-red-50 rounded" title="Delete">
+        <Trash2 className="w-4 h-4" />
+      </button>
+    </div>,
+    name: <div className="font-medium">{patrol.name}</div>,
+    checkpoints: <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+      {patrol.checkpoints.length}
+    </span>,
+    shift_type: <div className="text-sm text-gray-600">{getShiftType(patrol.schedules)}</div>,
+    grace_time: <span className="text-sm text-gray-600">{patrol.grace_period_minutes} min</span>,
+    status: <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${patrol.active
+      ? 'bg-green-100 text-green-800'
+      : 'bg-red-100 text-red-800'
+      }`}>
+      {patrol.active ? 'Active' : 'Inactive'}
+    </span>
   });
-  const handlePrintQR = () => {
-    console.log('Print QR clicked');
-    window.print();
-  };
-  const handlePrintAllQR = () => {
-    console.log('Print All QR clicked');
-    window.print();
-  };
   const handleView = (id: number) => {
     console.log('View patrolling:', id);
     navigate(`/security/patrolling/details/${id}`);
   };
+
   const handleEdit = (id: number) => {
     console.log('Edit patrolling:', id);
-    setSelectedPatrollingId(id);
-    setIsEditModalOpen(true);
+    navigate(`/security/patrolling/edit/${id}`);
   };
+
   const handleDelete = (id: number) => {
     console.log('Delete patrolling:', id);
     setSelectedPatrollingId(id);
     setIsDeleteModalOpen(true);
   };
-  const handleDeleteConfirm = () => {
-    console.log('Confirmed delete for patrolling:', selectedPatrollingId);
-    // Here you would typically make an API call to delete the record
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedPatrollingId) return;
+
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+
+      if (!baseUrl || !token) {
+        throw new Error('API configuration is missing');
+      }
+
+      const apiUrl = getFullUrl(`/patrolling/setup/${selectedPatrollingId}.json`);
+
+      const response = await fetch(apiUrl, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      toast.success('Patrolling deleted successfully!', {
+        duration: 3000,
+      });
+
+      // Refresh the data
+      fetchPatrollingData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
+      setIsDeleteModalOpen(false);
+      setSelectedPatrollingId(null);
+    } catch (error: any) {
+      console.error('Error deleting patrolling:', error);
+      toast.error(`Failed to delete patrolling: ${error.message}`, {
+        duration: 5000,
+      });
+    }
   };
   return (
     <div className="p-6 space-y-6">
@@ -229,59 +361,58 @@ export const PatrollingDashboard = () => {
         <h1 className="text-2xl font-bold">Patrolling List</h1>
       </header>
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button variant="outline" onClick={() => navigate('/security/patrolling/create')}>
-          <Plus className="w-4 h-4 mr-2" /> New
-        </Button>
-
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              placeholder="Search Tickets"
-              className="h-10 w-64 rounded-md border border-gray-300 bg-white px-3 text-sm"
-            />
-          </div>
-          <Button variant="outline" onClick={() => setIsFilterOpen(true)} aria-label="Filter">
-            <Filter className="w-4 h-4" />
-          </Button>
+      {loading && (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+          <span className="ml-2 text-gray-600">Loading patrolling data...</span>
         </div>
-      </div>
-
-      <EnhancedTable
-        data={displayedData}
-        columns={columns}
-        renderRow={renderRow}
-        storageKey="patrolling-list-table"
-        hideTableExport={true}
-        hideTableSearch={true}
-      />
-
-      <TicketPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalRecords={totalRecords}
-        perPage={perPage}
-        isLoading={false}
-        onPageChange={setCurrentPage}
-        onPerPageChange={(v) => { setPerPage(v); setCurrentPage(1); }}
-      />
-
-      <AddPatrollingModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
-      <PatrollingFilterModal isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
-      {selectedPatrollingId !== null && (
-        <EditPatrollingModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          patrollingId={selectedPatrollingId}
-        />
       )}
+
+      {!loading && (
+        <>
+          <EnhancedTaskTable
+            data={displayedData}
+            columns={columns}
+            renderRow={renderRow}
+            storageKey="patrolling-dashboard-v3"
+            hideTableExport={true}
+            hideTableSearch={false}
+            enableSearch={true}
+
+            searchTerm={searchTerm}
+            onSearchChange={handleSearch}
+            onFilterClick={() => setIsFilterOpen(true)}
+            leftActions={(
+              <Button className='bg-primary text-primary-foreground hover:bg-primary/90'  onClick={() => navigate('/security/patrolling/create')}>
+                <Plus className="w-4 h-4 mr-2" /> Add
+              </Button>
+            )}
+          />
+
+          <TicketPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalRecords={totalRecords}
+            perPage={perPage}
+            isLoading={loading}
+            onPageChange={handlePageChange}
+            onPerPageChange={handlePerPageChange}
+          />
+        </>
+      )}
+
+      <PatrollingFilterModal
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApply={handleApplyFilters}
+      />
       {selectedPatrollingId !== null && (
         <DeletePatrollingModal
           isOpen={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setSelectedPatrollingId(null);
+          }}
           onConfirm={handleDeleteConfirm}
           patrollingId={selectedPatrollingId}
         />

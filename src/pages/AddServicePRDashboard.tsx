@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Settings, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,10 +12,12 @@ import {
   RadioGroup,
   Radio,
   FormControlLabel,
+  Autocomplete,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import {
   changePlantDetails,
+  fetchWBS,
   getAddresses,
   getPlantDetails,
   getSuppliers,
@@ -24,18 +26,29 @@ import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createServicePR, getServices } from "@/store/slices/servicePRSlice";
 
-export const AddServicePRDashboard: React.FC = () => {
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px", sm: "10px", md: "12px" },
+  },
+};
+
+export const AddServicePRDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
   const navigate = useNavigate();
 
-  const { data } = useAppSelector(state => state.changePlantDetails)
+  const { data } = useAppSelector((state) => state.changePlantDetails);
 
   const [suppliers, setSuppliers] = useState([]);
   const [plantDetails, setPlantDetails] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [services, setServices] = useState([]);
+  const [wbsSelection, setWbsSelection] = useState("");
+  const [overallWbs, setOverallWbs] = useState("");
+  const [wbsCodes, setWbsCodes] = useState([]);
+  const [showRadio, setShowRadio] = useState(false);
 
   const [formData, setFormData] = useState({
     contractor: "",
@@ -74,11 +87,11 @@ export const AddServicePRDashboard: React.FC = () => {
       taxAmount: "",
       amount: "",
       totalAmount: "",
+      wbsCode: "",
     },
   ]);
 
-  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const [showRadio, setShowRadio] = useState(false)
+  const [attachedFiles, setAttachedFiles] = useState([]);
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -139,7 +152,28 @@ export const AddServicePRDashboard: React.FC = () => {
     fetchServices();
   }, []);
 
-  const handleInputChange = (field: string, value: string | Date) => {
+  useEffect(() => {
+    if (data.length > 0) {
+      setShowRadio(true);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (showRadio) {
+      const fetchData = async () => {
+        try {
+          const response = await dispatch(fetchWBS({ baseUrl, token })).unwrap();
+          setWbsCodes(response.wbs);
+        } catch (error) {
+          console.log(error);
+          toast.error(error);
+        }
+      };
+      fetchData();
+    }
+  }, [showRadio, dispatch, baseUrl, token]);
+
+  const handleInputChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -158,11 +192,7 @@ export const AddServicePRDashboard: React.FC = () => {
     };
   };
 
-  const handleDetailsChange = (
-    id: number,
-    field: string,
-    value: string | Date
-  ) => {
+  const handleDetailsChange = (id, field, value) => {
     setDetailsForms((prev) =>
       prev.map((form) =>
         form.id === id
@@ -171,12 +201,6 @@ export const AddServicePRDashboard: React.FC = () => {
       )
     );
   };
-
-  useEffect(() => {
-    if (data.length > 0) {
-      setShowRadio(true)
-    }
-  }, [data])
 
   const addNewDetailsForm = () => {
     const newId = Math.max(...detailsForms.map((form) => form.id)) + 1;
@@ -199,11 +223,12 @@ export const AddServicePRDashboard: React.FC = () => {
       taxAmount: "",
       amount: "",
       totalAmount: "",
+      wbsCode: "",
     };
     setDetailsForms((prev) => [...prev, newForm]);
   };
 
-  const removeDetailsForm = (id: number) => {
+  const removeDetailsForm = (id) => {
     if (detailsForms.length > 1) {
       setDetailsForms((prev) => prev.filter((form) => form.id !== id));
     }
@@ -212,10 +237,10 @@ export const AddServicePRDashboard: React.FC = () => {
   const handlePlantDetailsChange = (e) => {
     const { value } = e.target;
     setFormData((prev) => ({ ...prev, plantDetail: value }));
-    dispatch(changePlantDetails({ baseUrl, id: value, token }))
+    dispatch(changePlantDetails({ baseUrl, id: value, token }));
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event) => {
     const files = event.target.files;
     if (files) {
       const newFiles = Array.from(files);
@@ -223,7 +248,7 @@ export const AddServicePRDashboard: React.FC = () => {
     }
   };
 
-  const removeFile = (indexToRemove: number) => {
+  const removeFile = (indexToRemove) => {
     setAttachedFiles((prev) =>
       prev.filter((_, index) => index !== indexToRemove)
     );
@@ -251,6 +276,7 @@ export const AddServicePRDashboard: React.FC = () => {
         subject: formData.subject,
         description: formData.description,
         term_condition: formData.termsConditions,
+        ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
         pms_wo_inventories_attributes: detailsForms.map((item) => ({
           pms_service_id: item.service,
           prod_desc: item.productDescription,
@@ -258,7 +284,17 @@ export const AddServicePRDashboard: React.FC = () => {
           unit: item.uom,
           expected_date: item.expectedDate,
           rate: item.rate,
+          cgst_rate: item.cgstRate,
+          cgst_amount: item.cgstAmt,
+          sgst_rate: item.sgstRate,
+          sgst_amount: item.sgstAmt,
+          igst_rate: item.igstRate,
+          igst_amount: item.igstAmt,
+          tcs_rate: item.tcsRate,
+          tcs_amount: item.tcsAmt,
+          tax_amount: item.taxAmount,
           total_value: item.totalAmount,
+          ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },
       attachments: attachedFiles,
@@ -267,7 +303,7 @@ export const AddServicePRDashboard: React.FC = () => {
     try {
       await dispatch(createServicePR({ data: payload, baseUrl, token })).unwrap();
       toast.success("Service PR created successfully");
-      navigate('/finance/service-pr')
+      navigate("/finance/service-pr");
     } catch (error) {
       console.log(error);
       toast.error(error);
@@ -276,7 +312,6 @@ export const AddServicePRDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Form Content */}
       <div className="p-6 max-w-7xl mx-auto">
         {/* Work Order Details Section Card */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -293,36 +328,14 @@ export const AddServicePRDashboard: React.FC = () => {
 
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* First Row */}
-              <FormControl
-                fullWidth
-                variant="outlined"
-                sx={{
-                  mt: 1,
-                }}
-              >
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Select Contractor*</InputLabel>
                 <MuiSelect
                   label="Select Contractor*"
                   value={formData.contractor}
-                  onChange={(e) =>
-                    handleInputChange("contractor", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange("contractor", e.target.value)}
                   displayEmpty
-                  sx={{
-                    height: {
-                      xs: 28,
-                      sm: 36,
-                      md: 45,
-                    },
-                    "& .MuiInputBase-input, & .MuiSelect-select": {
-                      padding: {
-                        xs: "8px",
-                        sm: "10px",
-                        md: "12px",
-                      },
-                    },
-                  }}
+                  sx={fieldStyles}
                 >
                   <MenuItem value="">
                     <em>Select Contractor</em>
@@ -335,33 +348,14 @@ export const AddServicePRDashboard: React.FC = () => {
                 </MuiSelect>
               </FormControl>
 
-              <FormControl
-                fullWidth
-                variant="outlined"
-                sx={{
-                  mt: 1,
-                }}
-              >
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Plant Detail*</InputLabel>
                 <MuiSelect
                   label="Plant Detail*"
                   value={formData.plantDetail}
                   onChange={handlePlantDetailsChange}
                   displayEmpty
-                  sx={{
-                    height: {
-                      xs: 28,
-                      sm: 36,
-                      md: 45,
-                    },
-                    "& .MuiInputBase-input, & .MuiSelect-select": {
-                      padding: {
-                        xs: "8px",
-                        sm: "10px",
-                        md: "12px",
-                      },
-                    },
-                  }}
+                  sx={fieldStyles}
                 >
                   <MenuItem value="">
                     <em>Select Plant Id</em>
@@ -387,34 +381,11 @@ export const AddServicePRDashboard: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 type="date"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                sx={{
-                  mt: 1,
-                  "& .MuiInputBase-input": {
-                    padding: {
-                      xs: "8px",
-                      sm: "10px",
-                      md: "12px",
-                    },
-                  },
-                  height: {
-                    xs: 28,
-                    sm: 36,
-                    md: 45,
-                  },
-                }}
+                InputLabelProps={{ shrink: true }}
+                sx={fieldStyles}
               />
 
-              {/* Second Row */}
-              <FormControl
-                fullWidth
-                variant="outlined"
-                sx={{
-                  mt: 1,
-                }}
-              >
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Select Billing Address*</InputLabel>
                 <MuiSelect
                   label="Select Billing Address*"
@@ -423,20 +394,7 @@ export const AddServicePRDashboard: React.FC = () => {
                     handleInputChange("billingAddress", e.target.value)
                   }
                   displayEmpty
-                  sx={{
-                    height: {
-                      xs: 28,
-                      sm: 36,
-                      md: 45,
-                    },
-                    "& .MuiInputBase-input, & .MuiSelect-select": {
-                      padding: {
-                        xs: "8px",
-                        sm: "10px",
-                        md: "12px",
-                      },
-                    },
-                  }}
+                  sx={fieldStyles}
                 >
                   <MenuItem value="">
                     <em>Select Billing Address</em>
@@ -457,28 +415,9 @@ export const AddServicePRDashboard: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 type="number"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                inputProps={{
-                  min: 0,
-                  max: 100,
-                }}
-                sx={{
-                  mt: 1,
-                  "& .MuiInputBase-input": {
-                    padding: {
-                      xs: "8px",
-                      sm: "10px",
-                      md: "12px",
-                    },
-                  },
-                  height: {
-                    xs: 28,
-                    sm: 36,
-                    md: 45,
-                  },
-                }}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: 0, max: 100 }}
+                sx={fieldStyles}
               />
 
               <TextField
@@ -489,31 +428,11 @@ export const AddServicePRDashboard: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 type="number"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                inputProps={{
-                  min: 0,
-                  max: 100,
-                }}
-                sx={{
-                  mt: 1,
-                  "& .MuiInputBase-input": {
-                    padding: {
-                      xs: "8px",
-                      sm: "10px",
-                      md: "12px",
-                    },
-                  },
-                  height: {
-                    xs: 28,
-                    sm: 36,
-                    md: 45,
-                  },
-                }}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: 0, max: 100 }}
+                sx={fieldStyles}
               />
 
-              {/* Third Row */}
               <TextField
                 label="QC(%)"
                 placeholder="QC"
@@ -522,139 +441,110 @@ export const AddServicePRDashboard: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 type="number"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                inputProps={{
-                  min: 0,
-                  max: 100,
-                }}
-                sx={{
-                  mt: 1,
-                  "& .MuiInputBase-input": {
-                    padding: {
-                      xs: "8px",
-                      sm: "10px",
-                      md: "12px",
-                    },
-                  },
-                  height: {
-                    xs: 28,
-                    sm: 36,
-                    md: 45,
-                  },
-                }}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: 0, max: 100 }}
+                sx={fieldStyles}
               />
 
               <TextField
                 label="Payment Tenure(In Days)"
                 placeholder="Payment Tenure"
                 value={formData.paymentTenure}
-                onChange={(e) =>
-                  handleInputChange("paymentTenure", e.target.value)
-                }
+                onChange={(e) => handleInputChange("paymentTenure", e.target.value)}
                 fullWidth
                 variant="outlined"
                 type="number"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                inputProps={{
-                  min: 0,
-                }}
-                sx={{
-                  mt: 1,
-                  "& .MuiInputBase-input": {
-                    padding: {
-                      xs: "8px",
-                      sm: "10px",
-                      md: "12px",
-                    },
-                  },
-                  height: {
-                    xs: 28,
-                    sm: 36,
-                    md: 45,
-                  },
-                }}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: 0 }}
+                sx={fieldStyles}
               />
 
               <TextField
                 label="Advance Amount"
                 placeholder="Advance Amount"
                 value={formData.advanceAmount}
-                onChange={(e) =>
-                  handleInputChange("advanceAmount", e.target.value)
-                }
+                onChange={(e) => handleInputChange("advanceAmount", e.target.value)}
                 fullWidth
                 variant="outlined"
                 type="number"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                inputProps={{
-                  min: 0,
-                }}
-                sx={{
-                  mt: 1,
-                  "& .MuiInputBase-input": {
-                    padding: {
-                      xs: "8px",
-                      sm: "10px",
-                      md: "12px",
-                    },
-                  },
-                  height: {
-                    xs: 28,
-                    sm: 36,
-                    md: 45,
-                  },
-                }}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: 0 }}
+                sx={fieldStyles}
               />
 
-              {/* Full Width Field */}
-              <div className="md:col-span-3">
-                <TextField
-                  label="Related To*"
-                  placeholder="Related To"
-                  value={formData.relatedTo}
-                  onChange={(e) =>
-                    handleInputChange("relatedTo", e.target.value)
-                  }
-                  fullWidth
-                  variant="outlined"
-                  multiline
-                  rows={4}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={{
-                    mt: 1,
-                  }}
-                />
+              <TextField
+                label="Related To*"
+                placeholder="Related To"
+                value={formData.relatedTo}
+                onChange={(e) => handleInputChange("relatedTo", e.target.value)}
+                fullWidth
+                variant="outlined"
+                multiline
+                rows={4}
+                InputLabelProps={{ shrink: true }}
+                sx={{ mt: 1 }}
+              />
 
-                {
-                  showRadio && (
-                    <Box
+              {showRadio && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "start",
+                    mt: 2,
+                  }}
+                >
+                  <FormLabel
+                    component="legend"
+                    sx={{ minWidth: "80px", fontSize: "14px" }}
+                  >
+                    Apply WBS
+                  </FormLabel>
+                  <RadioGroup
+                    row
+                    value={wbsSelection}
+                    onChange={(e) => setWbsSelection(e.target.value)}
+                  >
+                    <FormControlLabel
+                      value="individual"
+                      control={<Radio />}
+                      label="Individual"
+                    />
+                    <FormControlLabel
+                      value="overall"
+                      control={<Radio />}
+                      label="All Items"
+                    />
+                  </RadioGroup>
+                </Box>
+              )}
+
+              {wbsSelection === "overall" && (
+                <Autocomplete
+                  options={wbsCodes}
+                  getOptionLabel={(wbs) => wbs.wbs_code}
+                  value={wbsCodes.find((wbs) => wbs.id === overallWbs) || null}
+                  onChange={(event, newValue) => {
+                    setOverallWbs(newValue ? newValue.id : "");
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="WBS Code*"
+                      variant="outlined"
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 4,
+                        height: { xs: 28, sm: 36 },
+                        "& .MuiInputBase-input, & .MuiSelect-select": {
+                          padding: { xs: "8px", sm: "10px" },
+                        },
                       }}
-                    >
-                      <FormLabel component="legend" sx={{ minWidth: "80px" }}>
-                        Apply WBS
-                      </FormLabel>
-                      <RadioGroup
-                        row
-                      >
-                        <FormControlLabel value="individual" control={<Radio />} label="Individual" />
-                        <FormControlLabel value="overall" control={<Radio />} label="All Items" />
-                      </RadioGroup>
-                    </Box>
-                  )
-                }
-              </div>
+                      InputLabelProps={{ shrink: true }}
+                      placeholder="Search WBS Code"
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -692,40 +582,16 @@ export const AddServicePRDashboard: React.FC = () => {
                   )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* First Row */}
-                  <FormControl
-                    fullWidth
-                    variant="outlined"
-                    sx={{
-                      mt: 1,
-                    }}
-                  >
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                     <InputLabel shrink>Select Service*</InputLabel>
                     <MuiSelect
                       label="Select Service*"
                       value={detailsData.service}
                       onChange={(e) =>
-                        handleDetailsChange(
-                          detailsData.id,
-                          "service",
-                          e.target.value
-                        )
+                        handleDetailsChange(detailsData.id, "service", e.target.value)
                       }
                       displayEmpty
-                      sx={{
-                        height: {
-                          xs: 28,
-                          sm: 36,
-                          md: 45,
-                        },
-                        "& .MuiInputBase-input, & .MuiSelect-select": {
-                          padding: {
-                            xs: "8px",
-                            sm: "10px",
-                            md: "12px",
-                          },
-                        },
-                      }}
+                      sx={fieldStyles}
                     >
                       <MenuItem value="">
                         <em>Select Service</em>
@@ -750,24 +616,8 @@ export const AddServicePRDashboard: React.FC = () => {
                     }
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
                   <TextField
@@ -783,27 +633,10 @@ export const AddServicePRDashboard: React.FC = () => {
                     fullWidth
                     variant="outlined"
                     type="number"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
-                  {/* Second Row */}
                   <TextField
                     label="UOM"
                     value={detailsData.uom}
@@ -812,24 +645,8 @@ export const AddServicePRDashboard: React.FC = () => {
                     }
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
                   <TextField
@@ -849,386 +666,154 @@ export const AddServicePRDashboard: React.FC = () => {
                     fullWidth
                     variant="outlined"
                     type="date"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
                   <TextField
                     label="Rate*"
                     value={detailsData.rate}
                     onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "rate",
-                        e.target.value
-                      )
+                      handleDetailsChange(detailsData.id, "rate", e.target.value)
                     }
                     fullWidth
                     variant="outlined"
                     type="number"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
-                  {/* Third Row */}
                   <TextField
                     label="CGST Rate"
                     value={detailsData.cgstRate}
                     onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "cgstRate",
-                        e.target.value
-                      )
+                      handleDetailsChange(detailsData.id, "cgstRate", e.target.value)
                     }
                     fullWidth
                     variant="outlined"
                     type="number"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
                   <TextField
                     label="CGST Amt"
                     value={detailsData.cgstAmt}
                     onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "cgstAmt",
-                        e.target.value
-                      )
+                      handleDetailsChange(detailsData.id, "cgstAmt", e.target.value)
                     }
                     fullWidth
                     variant="outlined"
                     type="number"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
                   <TextField
                     label="SGST Rate"
                     value={detailsData.sgstRate}
                     onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "sgstRate",
-                        e.target.value
-                      )
+                      handleDetailsChange(detailsData.id, "sgstRate", e.target.value)
                     }
                     fullWidth
                     variant="outlined"
                     type="number"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
-                  {/* Fourth Row */}
                   <TextField
                     label="SGST Amt"
                     value={detailsData.sgstAmt}
                     onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "sgstAmt",
-                        e.target.value
-                      )
+                      handleDetailsChange(detailsData.id, "sgstAmt", e.target.value)
                     }
                     fullWidth
                     variant="outlined"
                     type="number"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
                   <TextField
                     label="IGST Rate"
                     value={detailsData.igstRate}
                     onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "igstRate",
-                        e.target.value
-                      )
+                      handleDetailsChange(detailsData.id, "igstRate", e.target.value)
                     }
                     fullWidth
                     variant="outlined"
                     type="number"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
                   <TextField
                     label="IGST Amt"
                     value={detailsData.igstAmt}
                     onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "igstAmt",
-                        e.target.value
-                      )
+                      handleDetailsChange(detailsData.id, "igstAmt", e.target.value)
                     }
                     fullWidth
                     variant="outlined"
                     type="number"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
-                  {/* Fifth Row */}
                   <TextField
                     label="TCS Rate"
                     value={detailsData.tcsRate}
                     onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "tcsRate",
-                        e.target.value
-                      )
+                      handleDetailsChange(detailsData.id, "tcsRate", e.target.value)
                     }
                     fullWidth
                     variant="outlined"
                     type="number"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
                   <TextField
                     label="TCS Amt"
                     value={detailsData.tcsAmt}
                     onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "tcsAmt",
-                        e.target.value
-                      )
+                      handleDetailsChange(detailsData.id, "tcsAmt", e.target.value)
                     }
                     fullWidth
                     variant="outlined"
                     type="number"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
                   <TextField
                     label="Tax Amount"
                     value={detailsData.taxAmount}
                     onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "taxAmount",
-                        e.target.value
-                      )
+                      handleDetailsChange(detailsData.id, "taxAmount", e.target.value)
                     }
                     fullWidth
                     variant="outlined"
                     type="number"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
-                      },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
 
-                  {/* Sixth Row */}
                   <TextField
                     label="Amount"
                     value={detailsData.amount}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      readOnly: true,
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ readOnly: true }}
                     sx={{
                       mt: 1,
                       "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
+                        padding: { xs: "8px", sm: "10px", md: "12px" },
                         backgroundColor: "#f5f5f5",
                       },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
+                      height: { xs: 28, sm: 36, md: 45 },
                     }}
                   />
 
@@ -1237,34 +822,48 @@ export const AddServicePRDashboard: React.FC = () => {
                     value={detailsData.totalAmount}
                     fullWidth
                     variant="outlined"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    InputProps={{
-                      readOnly: true,
-                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ readOnly: true }}
                     sx={{
                       mt: 1,
                       "& .MuiInputBase-input": {
-                        padding: {
-                          xs: "8px",
-                          sm: "10px",
-                          md: "12px",
-                        },
+                        padding: { xs: "8px", sm: "10px", md: "12px" },
                         backgroundColor: "#f5f5f5",
                       },
-                      height: {
-                        xs: 28,
-                        sm: 36,
-                        md: 45,
-                      },
+                      height: { xs: 28, sm: 36, md: 45 },
                     }}
                   />
+
+                  {wbsSelection === "individual" && (
+                    <Autocomplete
+                      options={wbsCodes}
+                      getOptionLabel={(wbs) => wbs.wbs_code}
+                      value={wbsCodes.find((wbs) => wbs.id === detailsData.wbsCode) || null}
+                      onChange={(event, newValue) => {
+                        setOverallWbs(newValue ? newValue.id : "");
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="WBS Code*"
+                          variant="outlined"
+                          sx={{
+                            height: { xs: 28, sm: 36 },
+                            "& .MuiInputBase-input, & .MuiSelect-select": {
+                              padding: { xs: "8px", sm: "10px" },
+                            },
+                          }}
+                          InputLabelProps={{ shrink: true }}
+                          placeholder="Search WBS Code"
+                        />
+                      )}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                    />
+                  )}
                 </div>
               </div>
             ))}
 
-            {/* Add Items Button inside details card */}
             <div className="mt-6 pt-6 border-t border-gray-200">
               <Button
                 className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
@@ -1276,14 +875,12 @@ export const AddServicePRDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Total Amount Display - Outside the card */}
         <div className="flex items-center justify-end mt-4">
           <Button className="bg-[#C72030] hover:bg-[#C72030] text-white">
             Total Amount: {grandTotal}
           </Button>
         </div>
 
-        {/* Details Section Card */}
         <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center gap-2">
@@ -1296,121 +893,62 @@ export const AddServicePRDashboard: React.FC = () => {
 
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <TextField
-                  label="Kind Attention"
-                  placeholder="Kind Attention"
-                  fullWidth
-                  variant="outlined"
-                  onChange={(e) =>
-                    handleInputChange("kindAttention", e.target.value)
-                  }
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={{
-                    mt: 1,
-                    "& .MuiInputBase-input": {
-                      padding: {
-                        xs: "8px",
-                        sm: "10px",
-                        md: "12px",
-                      },
-                    },
-                    height: {
-                      xs: 28,
-                      sm: 36,
-                      md: 45,
-                    },
-                  }}
-                />
-              </div>
+              <TextField
+                label="Kind Attention"
+                placeholder="Kind Attention"
+                fullWidth
+                variant="outlined"
+                onChange={(e) => handleInputChange("kindAttention", e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={fieldStyles}
+              />
 
-              <div>
-                <TextField
-                  label="Subject"
-                  placeholder="Subject"
-                  fullWidth
-                  variant="outlined"
-                  onChange={(e) =>
-                    handleInputChange("subject", e.target.value)
-                  }
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={{
-                    mt: 1,
-                    "& .MuiInputBase-input": {
-                      padding: {
-                        xs: "8px",
-                        sm: "10px",
-                        md: "12px",
-                      },
-                    },
-                    height: {
-                      xs: 28,
-                      sm: 36,
-                      md: 45,
-                    },
-                  }}
-                />
-              </div>
-            </div>
+              <TextField
+                label="Subject"
+                placeholder="Subject"
+                fullWidth
+                variant="outlined"
+                onChange={(e) => handleInputChange("subject", e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={fieldStyles}
+              />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div>
-                <TextField
-                  label="Description"
-                  placeholder="Enter description here..."
-                  fullWidth
-                  variant="outlined"
-                  onChange={(e) =>
-                    handleInputChange("description", e.target.value)
-                  }
-                  multiline
-                  rows={6}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={{
-                    mt: 1,
-                  }}
-                />
-              </div>
+              <TextField
+                label="Description"
+                placeholder="Enter description here..."
+                fullWidth
+                variant="outlined"
+                onChange={(e) => handleInputChange("description", e.target.value)}
+                multiline
+                rows={6}
+                InputLabelProps={{ shrink: true }}
+                sx={{ mt: 1 }}
+              />
 
-              <div>
-                <TextField
-                  label="Terms & Conditions"
-                  placeholder="Enter terms and conditions here..."
-                  fullWidth
-                  variant="outlined"
-                  onChange={(e) =>
-                    handleInputChange("termsConditions", e.target.value)
-                  }
-                  multiline
-                  rows={6}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={{
-                    mt: 1,
-                  }}
-                />
-              </div>
+              <TextField
+                label="Terms & Conditions"
+                placeholder="Enter terms and conditions here..."
+                fullWidth
+                variant="outlined"
+                onChange={(e) =>
+                  handleInputChange("termsConditions", e.target.value)
+                }
+                multiline
+                rows={6}
+                InputLabelProps={{ shrink: true }}
+                sx={{ mt: 1 }}
+              />
             </div>
           </div>
         </div>
 
-        {/* Attachments Section Card */}
         <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                 <Settings className="w-4 h-4 text-white" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">
-                ATTACHMENTS
-              </h2>
+              <h2 className="text-lg font-semibold text-foreground">ATTACHMENTS</h2>
             </div>
           </div>
 
@@ -1435,7 +973,6 @@ export const AddServicePRDashboard: React.FC = () => {
               </div>
             </label>
 
-            {/* File Preview Section */}
             {attachedFiles.length > 0 && (
               <div className="mt-6">
                 <h3 className="text-md font-medium text-foreground mb-4">
@@ -1447,7 +984,6 @@ export const AddServicePRDashboard: React.FC = () => {
                       key={index}
                       className="relative border border-gray-200 rounded-lg overflow-hidden"
                     >
-                      {/* Remove Button - Top Right */}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -1456,7 +992,6 @@ export const AddServicePRDashboard: React.FC = () => {
                       >
                         <X className="h-3 w-3" />
                       </Button>
-
                       {file.type.startsWith("image/") ? (
                         <img
                           src={URL.createObjectURL(file)}
@@ -1471,10 +1006,7 @@ export const AddServicePRDashboard: React.FC = () => {
                         </div>
                       )}
                       <div className="p-2">
-                        <p
-                          className="text-xs text-gray-600 truncate"
-                          title={file.name}
-                        >
+                        <p className="text-xs text-gray-600 truncate" title={file.name}>
                           {file.name}
                         </p>
                       </div>
@@ -1486,7 +1018,6 @@ export const AddServicePRDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex gap-4 mt-8">
           <Button
             onClick={handleSubmit}
@@ -1494,11 +1025,7 @@ export const AddServicePRDashboard: React.FC = () => {
           >
             Save Work Order
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate(-1)}
-            className="px-8"
-          >
+          <Button variant="outline" onClick={() => navigate(-1)} className="px-8">
             Cancel
           </Button>
         </div>

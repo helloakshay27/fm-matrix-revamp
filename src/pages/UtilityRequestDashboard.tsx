@@ -322,7 +322,7 @@ export const UtilityRequestDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
-        <Button 
+        <Button
           onClick={handleAdd}
           className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
         >
@@ -332,7 +332,7 @@ export const UtilityRequestDashboard = () => {
       </div>
 
       {/* Search */}
-      <div className="flex justify-between items-center">
+      {/* <div className="flex justify-between items-center">
         <div></div>
         <div className="flex items-center space-x-2">
           <div className="relative">
@@ -350,10 +350,10 @@ export const UtilityRequestDashboard = () => {
             Go!
           </Button>
         </div>
-      </div>
+      </div> */}
 
       {/* Enhanced Data Table */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div>
         <EnhancedTable
           data={filteredData}
           columns={columns}

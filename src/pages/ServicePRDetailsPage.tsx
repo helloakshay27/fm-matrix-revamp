@@ -298,16 +298,29 @@ export const ServicePRDetailsPage = () => {
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
 
       {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+      <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
         <div className="flex flex-col">
           <h1 className="font-work-sans font-bold text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">
             SERVICE PR DETAILS
           </h1>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-700">Admin Approval:</span>
-            <span className={`px-3 py-1 rounded text-xs font-medium ${getStatusColor(servicePRData.adminApproval)}`}>
-              {servicePRData.adminApproval}
-            </span>
+            {/* {
+                servicePR?.approvals?.map(level => (
+                  <div className='space-y-3'>
+                    <div className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md font-medium w-max">
+                      {`${level.name} approved : ${level.status_label}`}
+                    </div>
+                    {
+                      level.approved_by && level.approval_date &&
+                      <div className='ms-2'>
+                        {
+                          `${level.approved_by} (${level.approval_date})`
+                        }
+                      </div>
+                    }
+                  </div>
+                ))
+              } */}
           </div>
         </div>
 
@@ -583,7 +596,7 @@ export const ServicePRDetailsPage = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Attachments</h3>
         <div className='flex items-center gap-4 flex-wrap'>
           {
-            servicePR.attachments.map(attachment => (
+            servicePR.attachments?.map(attachment => (
               <img src={attachment.url} alt="" height={100} width={100} />
             ))
           }

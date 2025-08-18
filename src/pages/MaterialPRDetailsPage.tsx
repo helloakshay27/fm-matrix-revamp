@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate, useParams } from 'react-router-dom';
-import { Edit, Copy, Printer, Rss, Home, ChevronRight, Download } from 'lucide-react';
+import { Copy, Printer, Rss, Download } from 'lucide-react';
 import { useAppDispatch } from '@/store/hooks';
 import { getMaterialPRById } from '@/store/slices/materialPRSlice';
 import { format } from 'date-fns';
@@ -261,12 +261,9 @@ export const MaterialPRDetailsPage = () => {
   };
   return <div className="p-6 mx-auto max-w-7xl">
     {/* Header */}
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex items-center justify-between">
       <div className="flex items-center gap-4">
         <h1 className="text-2xl font-semibold">Material PR Details</h1>
-        <div className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md font-medium">
-          {prData?.adminApproval}
-        </div>
       </div>
 
       {/* Action Buttons */}
@@ -284,6 +281,26 @@ export const MaterialPRDetailsPage = () => {
           Print
         </Button>
       </div>
+    </div>
+
+    <div className='flex items-start gap-4 my-6'>
+      {
+        pr?.approval_levels?.map(level => (
+          <div className='space-y-3'>
+            <div className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md font-medium w-max">
+              {`${level.name} approved : ${level.status_label}`}
+            </div>
+            {
+              level.approved_by && level.approval_date &&
+              <div className='ms-2'>
+                {
+                  `${level.approved_by} (${level.approval_date})`
+                }
+              </div>
+            }
+          </div>
+        ))
+      }
     </div>
 
     <div className="space-y-6">

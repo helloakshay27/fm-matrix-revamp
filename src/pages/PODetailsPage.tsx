@@ -1,16 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Printer, Copy, Rss } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { getMaterialPRById } from '@/store/slices/materialPRSlice';
 import { numberToIndianCurrencyWords } from '@/utils/amountToText';
+import { approvePO } from '@/store/slices/purchaseOrderSlice';
 
 export const PODetailsPage = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+
+  const levelId = searchParams.get("level_id");
+  const userId = searchParams.get("user_id");
+
+  const shouldShowButtons = Boolean(levelId && userId);
 
   const navigate = useNavigate();
   const { id } = useParams();
@@ -50,63 +59,40 @@ export const PODetailsPage = () => {
     retention: "-",
     qc: "-"
   };
-  const orderDetails = {
-    referenceNo: "121249",
-    id: "10712",
-    address: "MUMBAI MH - INDIA",
-    email: "rajnish.patil@loclated.com",
-    pan: "NA",
-    phone: "7234013238"
-  };
-  const items = [{
-    sNo: 1,
-    itemDetails: "Carpet Brush",
-    sacHsnCode: "NA",
-    expectedDate: "23/04/25",
-    quantity: "10.0",
-    unit: "",
-    rate: "70.00",
-    wbsCode: "",
-    cgstRate: "9.00",
-    cgstAmount: "63.00",
-    sgstRate: "9.00",
-    sgstAmount: "63.00",
-    igstRate: "0.00",
-    igstAmount: "0.00",
-    ugstRate: "0.00",
-    ugstAmount: "0.00",
-    tdsRate: "0.00",
-    tdsAmount: "0.00",
-    taxAmount: "",
-    totalAmount: "826.00"
-  }, {
-    sNo: 2,
-    itemDetails: "Chair Set",
-    sacHsnCode: "NA",
-    expectedDate: "23/04/25",
-    quantity: "10.0",
-    unit: "",
-    rate: "190.00",
-    wbsCode: "",
-    cgstRate: "9.00",
-    cgstAmount: "117.00",
-    sgstRate: "9.00",
-    sgstAmount: "117.00",
-    igstRate: "0.00",
-    igstAmount: "0.00",
-    ugstRate: "0.00",
-    ugstAmount: "0.00",
-    tdsRate: "0.00",
-    tdsAmount: "0.00",
-    taxAmount: "",
-    totalAmount: "1534.00"
-  }];
+
   const handlePrint = () => {
     window.print();
   };
   const handleFeeds = () => {
     navigate(`/finance/po/feeds/${id}`);
   };
+
+  const handleApprove = async () => {
+    const payload = {
+      pms_purchase_order: {
+        id: Number(id),
+        pms_pr_inventories_attributes: poDetails.pms_po_inventories.map((item) => ({
+          id: item.id,
+          rate: item.rate,
+          total_value: item.total_value,
+          approved_qty: item.quantity,
+          transfer_qty: item.transfer_qty
+        })),
+      },
+      level_id: Number(levelId),
+      user_id: Number(userId),
+      approve: true
+    }
+    try {
+      await dispatch(approvePO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      toast.success('PO approved successfully');
+      navigate(`/finance/pending-approvals`)
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    }
+  };
+
   return <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
     {/* Header */}
     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
@@ -487,5 +473,14 @@ export const PODetailsPage = () => {
         </table>
       </div>
     </div>
+
+    {
+      shouldShowButtons && (
+        <div className='flex items-center justify-center gap-4'>
+          <button className='bg-green-600 text-white py-2 px-4 rounded-md' onClick={handleApprove}>Approve</button>
+          <button className='bg-[#C72030] text-white py-2 px-4 rounded-md'>Reject</button>
+        </div>
+      )
+    }
   </div>;
 };

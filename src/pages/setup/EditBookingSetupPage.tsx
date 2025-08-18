@@ -99,7 +99,7 @@ export const EditBookingSetupPage = () => {
         isBookable: true,
         isRequest: false,
         active: "",
-        department: "",
+        department: null,
         appKey: "",
         postpaid: false,
         prepaid: false,
@@ -410,10 +410,12 @@ export const EditBookingSetupPage = () => {
             );
             formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
             formDataToSend.append("facility_setup[active]", formData.active);
-            formDataToSend.append(
-                "facility_setup[department_id]",
-                formData.department
-            );
+            if (formData.department) {
+                formDataToSend.append(
+                    "facility_setup[department_id]",
+                    formData.department
+                );
+            }
             formDataToSend.append("facility_setup[app_key]", formData.appKey);
             formDataToSend.append(
                 "facility_setup[postpaid]",

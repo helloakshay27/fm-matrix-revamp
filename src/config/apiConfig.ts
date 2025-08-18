@@ -150,6 +150,8 @@ export const API_CONFIG = {
     ITEM_TYPES: '/item_movement_types/movement_types.json',
     // Performance export endpoint
     PERFORMANCE_EXPORT: '/pms/custom_forms', // Base path, will append /{customFormCode}/export_performance
+    // Patrolling endpoints
+    PATROLLING_SETUP: '/patrolling/setup',
     
   },
 } as const
