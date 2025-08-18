@@ -1011,7 +1011,11 @@ export const PatrollingCreatePage: React.FC = () => {
                 </div>
                 <div>
                   <TextField
-                    label="Task"
+                    label={
+                      <>
+                        Task<span className="text-red-500">*</span>
+                      </>
+                    }
                     placeholder="Enter Task"
                     value={q.task}
                     onChange={(e) => updateQuestion(idx, 'task', e.target.value)}
@@ -1030,11 +1034,11 @@ export const PatrollingCreatePage: React.FC = () => {
                 </div>
                 <div>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Input Type</InputLabel>
+                    <InputLabel shrink>Input Type<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={q.inputType}
                       onChange={(e) => updateQuestion(idx, 'inputType', String(e.target.value))}
-                      label="Input Type"
+                      label="Input Type*"
                       notched
                       displayEmpty
                       disabled={isSubmitting}
@@ -1176,7 +1180,11 @@ export const PatrollingCreatePage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <TextField
-                    label="Schedule Name"
+                    label={
+                      <>
+                        Schedule Name<span className="text-red-500">*</span>
+                      </>
+                    }
                     placeholder="Enter Schedule Name"
                     value={s.name}
                     onChange={(e) => updateShift(idx, 'name', e.target.value)}
@@ -1196,7 +1204,11 @@ export const PatrollingCreatePage: React.FC = () => {
                 <div>
                   <TextField
                     type="time"
-                    label="Start Time"
+                    label={
+                      <>
+                        Start Time<span className="text-red-500">*</span>
+                      </>
+                    }
                     value={s.start}
                     onChange={(e) => updateShift(idx, 'start', e.target.value)}
                     fullWidth
@@ -1233,11 +1245,11 @@ export const PatrollingCreatePage: React.FC = () => {
                 </div>
                 <div>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Assignee</InputLabel>
+                    <InputLabel shrink>Assignee<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={s.assignee}
                       onChange={(e) => updateShift(idx, 'assignee', String(e.target.value))}
-                      label="Assignee"
+                      label="Assignee*"
                       notched
                       displayEmpty
                       disabled={isSubmitting || loadingUsers}
@@ -1260,11 +1272,11 @@ export const PatrollingCreatePage: React.FC = () => {
                 </div>
                 <div>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                    <InputLabel shrink>Supervisor</InputLabel>
+                    <InputLabel shrink>Supervisor<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={s.supervisor}
                       onChange={(e) => updateShift(idx, 'supervisor', String(e.target.value))}
-                      label="Supervisor"
+                      label="Supervisor*"
                       notched
                       displayEmpty
                       disabled={isSubmitting || loadingUsers}
@@ -1317,7 +1329,11 @@ export const PatrollingCreatePage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <TextField
-                      label="Checkpoint Name"
+                      label={
+                        <>
+                          Checkpoint Name<span className="text-red-500">*</span>
+                        </>
+                      }
                       placeholder="Enter checkpoint name"
                       value={c.name}
                       onChange={(e) => updateCheckpoint(idx, 'name', e.target.value)}
@@ -1336,7 +1352,11 @@ export const PatrollingCreatePage: React.FC = () => {
                   </div>
                   <div>
                     <TextField
-                      label="Description"
+                      label={
+                        <>
+                          Description<span className="text-red-500">*</span>
+                        </>
+                      }
                       placeholder="Enter checkpoint description"
                       value={c.description}
                       onChange={(e) => updateCheckpoint(idx, 'description', e.target.value)}
