@@ -67,6 +67,7 @@ export const IncidentSetupDashboard = () => {
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [subSubCategories, setSubSubCategories] = useState([]);
+  console.log(subSubCategories)
   const [subSubSubCategories, setSubSubSubCategories] = useState([{
     id: 1,
     category: 'risks',
@@ -193,7 +194,9 @@ export const IncidentSetupDashboard = () => {
             return {
               id: item.id,
               category: parentCat ? parentCat.name : '',
+              categoryId: parentCat ? parentCat.id : '',
               subCategory: parentSub ? parentSub.name : '',
+              subCategoryId: parentSub ? parentSub.id : '',
               subSubCategory: item.name
             };
           });
@@ -1972,7 +1975,7 @@ export const IncidentSetupDashboard = () => {
                           <SelectValue placeholder="Select Sub Sub Category" />
                         </SelectTrigger>
                         <SelectContent className="bg-white z-50">
-                          {subSubCategories.filter(subsub => subsub.category === selectedParentCategory && subsub.subCategory === selectedSubCategory).map(subSubCategory => (
+                          {subSubCategories.filter(subsub => subsub.categoryId === selectedParentCategory && subsub.subCategoryId === selectedSubCategory).map(subSubCategory => (
                             <SelectItem key={subSubCategory.id} value={subSubCategory.subSubCategory}>
                               {subSubCategory.subSubCategory}
                             </SelectItem>
