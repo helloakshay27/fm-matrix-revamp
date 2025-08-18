@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Recycle, Building, Trash2, MapPin } from 'lucide-react';
+
 // Field styles for Material-UI components
 const fieldStyles = {
   height: '45px',
@@ -27,11 +28,11 @@ const fieldStyles = {
     },
   },
 };
+
 const AddWasteGenerationPage = () => {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  
   const [formData, setFormData] = useState({
     building: '',
     wing: '',
@@ -46,15 +47,18 @@ const AddWasteGenerationPage = () => {
     generatedUnit: '',
     recycledUnit: '0'
   });
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleGoBack = () => {
     navigate(-1);
   };
+
   const handleSave = () => {
     if (!formData.building || !formData.vendor || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit) {
       toast({
@@ -71,9 +75,11 @@ const AddWasteGenerationPage = () => {
     });
     navigate('/maintenance/audit/waste/generation');
   };
+
   const handleBack = () => {
     navigate('/maintenance/audit/waste/generation');
   };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -82,17 +88,18 @@ const AddWasteGenerationPage = () => {
       </div>
 
       <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
-        {/* Section 1: Location Details */}
+        {/* Waste Generation Details */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-3 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
               <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <MapPin size={16} color="#C72030" />
+                <Recycle size={16} color="#C72030" />
               </span>
-              Location Details
+              WASTE GENERATION DETAILS
             </h2>
           </div>
           <div className="p-6 space-y-6">
+            {/* Location Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <FormControl
                 fullWidth
@@ -171,20 +178,8 @@ const AddWasteGenerationPage = () => {
                 }}
               />
             </div>
-          </div>
-        </div>
 
-        {/* Section 2: Waste Details */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <Recycle size={16} color="#C72030" />
-              </span>
-              Waste Details
-            </h2>
-          </div>
-          <div className="p-6 space-y-6">
+            {/* Waste Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <FormControl
                 fullWidth
@@ -269,20 +264,8 @@ const AddWasteGenerationPage = () => {
                 </MuiSelect>
               </FormControl>
             </div>
-          </div>
-        </div>
 
-        {/* Section 3: Organization Details */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-3 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                <Building size={16} color="#C72030" />
-              </span>
-              Organization Details
-            </h2>
-          </div>
-          <div className="p-6 space-y-6">
+            {/* Organization Details Section */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <FormControl
                 fullWidth
@@ -383,4 +366,5 @@ const AddWasteGenerationPage = () => {
     </div>
   );
 };
+
 export default AddWasteGenerationPage;
