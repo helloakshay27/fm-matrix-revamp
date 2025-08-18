@@ -16,6 +16,7 @@ import {
   Settings,
   Download,
   BarChart3,
+  Pencil,
 } from "lucide-react";
 import { BulkUploadDialog } from "@/components/BulkUploadDialog";
 import { InventoryFilterDialog } from "@/components/InventoryFilterDialog";
@@ -175,16 +176,18 @@ export const InventoryDashboard = () => {
   const [activeTab, setActiveTab] = useState<string>("list");
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [dateRange, setDateRange] = useState({
-    startDate: new Date('2020-07-10'),
-    endDate: new Date('2025-08-18'),
+  // Updated default range per request: 01/07/2025 - 15/08/2025 (DD/MM/YYYY)
+  startDate: new Date(2025, 6, 1), // 01 July 2025
+  endDate: new Date(2025, 7, 15), // 15 August 2025
   });
   const [inventory, setInventory] = useState([]);
 
   // Analytics state
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsDateRange, setAnalyticsDateRange] = useState({
-    startDate: '01/01/2020',
-    endDate: '01/01/2025',
+  // String form (DD/MM/YYYY) aligned with new default dateRange
+  startDate: '01/07/2025',
+  endDate: '15/08/2025',
   });
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<any>({
@@ -473,9 +476,9 @@ export const InventoryDashboard = () => {
       toast.error('Item not found');
       return;
     }
-  
+
     const newStatus = item.active === "Active" ? false : true;
-  
+
     try {
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
@@ -483,7 +486,7 @@ export const InventoryDashboard = () => {
         toast.error('Missing base URL or token');
         return;
       }
-  
+
       const response = await axios.put(
         `https://${baseUrl}/pms/inventories/${itemId}.json`,
         { pms_inventory: { active: newStatus } }, // Changed 'inventory' to 'pms_inventory'
@@ -493,7 +496,7 @@ export const InventoryDashboard = () => {
           },
         }
       );
-  
+
       if (response.data && typeof response.data.active === 'boolean') {
         toast.success(`Item ${newStatus ? 'activated' : 'deactivated'} successfully`);
         // Refresh inventory data
@@ -511,7 +514,6 @@ export const InventoryDashboard = () => {
     { key: "actions", label: "Actions", sortable: false },
     { key: "name", label: "Name", sortable: true },
     { key: "id", label: "ID", sortable: true },
-    { key: "referenceNumber", label: "Reference Number", sortable: true },
     { key: "code", label: "Code", sortable: true },
     { key: "serialNumber", label: "Serial Number", sortable: true },
     { key: "type", label: "Type", sortable: true },
@@ -528,6 +530,8 @@ export const InventoryDashboard = () => {
     { key: "maxStockLevel", label: "Max Stock", sortable: true },
     { key: "minStockLevel", label: "Min Stock", sortable: true },
     { key: "minOrderLevel", label: "Min Order", sortable: true },
+    { key: "referenceNumber", label: "Reference Number", sortable: true },
+
   ];
 
   const bulkActions = [
@@ -542,16 +546,26 @@ export const InventoryDashboard = () => {
 
   const renderCell = (item: any, columnKey: string) => {
     if (columnKey === "actions") {
-      const itemId =
-        typeof item.id === "string" ? item.id : String(item.id || "");
+      const itemId = typeof item.id === "string" ? item.id : String(item.id || "");
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center w-full gap-2" onClick={(e)=>e.stopPropagation()}>
           <Button
             variant="ghost"
             size="sm"
+            className="h-6 w-6 p-0 flex items-center justify-center"
             onClick={() => handleViewItem(itemId)}
+            title="View"
           >
             <Eye className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 flex items-center justify-center"
+            onClick={() => navigate(`/maintenance/inventory/edit/${itemId}`)}
+            title="Edit"
+          >
+            <Pencil className="w-4 h-4" />
           </Button>
           {item.greenProduct && (
             <img
@@ -559,8 +573,7 @@ export const InventoryDashboard = () => {
               alt="Green Product"
               className="w-4 h-4"
               style={{
-                filter:
-                  "invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)",
+                filter: "invert(46%) sepia(66%) saturate(319%) hue-rotate(67deg) brightness(95%) contrast(85%)",
               }}
             />
           )}
@@ -570,11 +583,10 @@ export const InventoryDashboard = () => {
     if (columnKey === "criticality") {
       return (
         <span
-          className={`px-2 py-1 rounded text-xs ${
-            item.criticality === "Critical"
+          className={`px-2 py-1 rounded text-xs ${item.criticality === "Critical"
               ? "bg-red-100 text-red-700"
               : "bg-gray-100 text-gray-700"
-          }`}
+            }`}
         >
           {item.criticality}
         </span>
@@ -582,17 +594,15 @@ export const InventoryDashboard = () => {
     }
     if (columnKey === "active") {
       return (
-        <div className="flex items-center">
+        <div className="flex items-center justify-center w-full" onClick={(e) => e.stopPropagation()}>
           <div
-            className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${
-              item.active === "Active" ? 'bg-green-500' : 'bg-gray-300'
-            }`}
+            className={`relative inline-flex items-center h-6 w-12 rounded-full cursor-pointer transition-colors ${item.active === "Active" ? 'bg-green-500' : 'bg-gray-300'
+              }`}
             onClick={() => handleStatusToggle(item.id)}
           >
             <span
-              className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                item.active === "Active" ? 'translate-x-6' : 'translate-x-1'
-              }`}
+              className={`inline-block w-5 h-5 transform bg-white rounded-full shadow transition-transform ${item.active === "Active" ? 'translate-x-6' : 'translate-x-1'
+                }`}
             />
           </div>
         </div>
@@ -609,7 +619,7 @@ export const InventoryDashboard = () => {
     return item[columnKey];
   };
 
-  
+
 
   const handlePageChange = (page: number) => {
     setLocalCurrentPage(page);
@@ -633,6 +643,7 @@ export const InventoryDashboard = () => {
           <PaginationLink
             onClick={() => handlePageChange(1)}
             isActive={currentPage === 1}
+            className="cursor-pointer"
           >
             1
           </PaginationLink>
@@ -653,6 +664,7 @@ export const InventoryDashboard = () => {
           <PaginationLink
             onClick={() => handlePageChange(i)}
             isActive={currentPage === i}
+            className="cursor-pointer"
           >
             {i}
           </PaginationLink>
@@ -673,6 +685,7 @@ export const InventoryDashboard = () => {
           <PaginationLink
             onClick={() => handlePageChange(totalPages)}
             isActive={currentPage === totalPages}
+            className="cursor-pointer"
           >
             {totalPages}
           </PaginationLink>
@@ -898,17 +911,18 @@ export const InventoryDashboard = () => {
     Array.isArray(analyticsData.categoryData.category_counts)
   )
     ? analyticsData.categoryData.category_counts.map(
-        ({ group_name, item_count }) => ({
-          name: group_name,
-          value: item_count,
-        })
-      )
+      ({ group_name, item_count }) => ({
+        name: group_name,
+        value: item_count,
+      })
+    )
     : [];
 
   const resetFilters = () => {
     setDateRange({
-      startDate: new Date('2020-01-01'),
-      endDate: new Date('2025-01-01'),
+  // Reset to updated default range
+  startDate: new Date(2025, 6, 1),
+  endDate: new Date(2025, 7, 15),
     });
     setSelectedItems([]);
     setShowFilter(false);

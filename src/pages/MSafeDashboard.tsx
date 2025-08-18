@@ -12,7 +12,8 @@ import { fetchFMUsers, FMUser } from '@/store/slices/fmUserSlice';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { MSafeImportModal } from '@/components/MSafeImportModal';
-import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
+// Replacing basic filter dialog with advanced FMUserFilterDialog
+import { FMUserFilterDialog } from '@/components/FMUserFilterDialog';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
@@ -34,6 +35,7 @@ export const MSafeDashboard = () => {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [filters, setFilters] = useState({ firstname: '', lastname: '', email: '', mobile: '', cluster: '', circle: '', department: '', role: '', report_to_id: '' });
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<ApiPagination>({ current_page: 1, total_pages: 1, total_count: 0 });
 
@@ -74,9 +76,25 @@ export const MSafeDashboard = () => {
           return;
         }
         let url = `https://${baseUrl}/pms/users/fte_users.json?page=${page}`;
-        const emailQuery = debouncedSearch.trim();
-        if (emailQuery) {
-          url += `&q[email_cont]=${encodeURIComponent(emailQuery)}`;
+        const hasFilters = Object.values(filters).some(v => v && v !== '');
+        if (hasFilters) {
+          const params: string[] = [];
+          if (filters.firstname) params.push(`q[firstname_cont]=${encodeURIComponent(filters.firstname.trim())}`);
+          if (filters.lastname) params.push(`q[lastname_cont]=${encodeURIComponent(filters.lastname.trim())}`);
+          if (filters.email) params.push(`q[email_cont]=${encodeURIComponent(filters.email)}`);
+            // prefer explicit mobile param
+          if (filters.mobile) params.push(`q[mobile_cont]=${encodeURIComponent(filters.mobile)}`);
+          if (filters.cluster) params.push(`q[company_cluster_cluster_name_cont]=${encodeURIComponent(filters.cluster)}`);
+          if (filters.circle) params.push(`q[lock_user_permissions_circle_name_cont]=${encodeURIComponent(filters.circle)}`);
+          if (filters.department) params.push(`q[lock_user_permissions_pms_department_department_name_cont]=${encodeURIComponent(filters.department)}`);
+          if (filters.role) params.push(`q[lock_user_permissions_lock_role_name_cont]=${encodeURIComponent(filters.role)}`);
+          if (filters.report_to_id) params.push(`q[report_to_id_eq]=${encodeURIComponent(filters.report_to_id)}`);
+          if (params.length) url += `&${params.join('&')}`;
+        } else {
+          const emailQuery = debouncedSearch.trim();
+          if (emailQuery) {
+            url += `&q[email_cont]=${encodeURIComponent(emailQuery)}`;
+          }
         }
         const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const data = response.data;
@@ -99,11 +117,11 @@ export const MSafeDashboard = () => {
       }
     };
     fetchUsers();
-  }, [page, debouncedSearch]);
+  }, [page, debouncedSearch, filters]);
 
   useEffect(() => {
-    if (debouncedSearch && page !== 1) setPage(1);
-  }, [debouncedSearch]);
+    if ((debouncedSearch || Object.values(filters).some(v => v && v !== '')) && page !== 1) setPage(1);
+  }, [debouncedSearch, filters, page]);
   const getStatusBadge = (status: string) => {
     if (!status) {
       return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
@@ -363,10 +381,19 @@ export const MSafeDashboard = () => {
     setIsFilterModalOpen(true);
   };
 
-  const handleApplyFilters = (filters: { name: string; email: string; mobile: string }) => {
-
-    console.log('Filtered Users:');
-  }
+  const handleApplyFilters = (newFilters: { firstname: string; lastname: string; email: string; mobile: string; cluster?: string; circle?: string; department?: string; role?: string; report_to_id?: string | number }) => {
+    setFilters({
+      firstname: newFilters.firstname || '',
+      lastname: newFilters.lastname || '',
+      email: newFilters.email || '',
+      mobile: newFilters.mobile || '',
+      cluster: newFilters.cluster || '',
+      circle: newFilters.circle || '',
+      department: newFilters.department || '',
+      role: newFilters.role || '',
+      report_to_id: newFilters.report_to_id ? String(newFilters.report_to_id) : ''
+    });
+  };
 
 
   return (
@@ -432,7 +459,7 @@ export const MSafeDashboard = () => {
         </div>
 
         <MSafeImportModal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} onImport={handleImport} />
-        <MSafeFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
+  <FMUserFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
       </div>;
     </>
   )

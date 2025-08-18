@@ -378,8 +378,7 @@ export const InventoryDetailsPage = () => {
                             <th className="px-4 py-3 text-left font-semibold">Date / Time</th>
                             <th className="px-4 py-3 text-left font-semibold">Changed By</th>
                             <th className="px-4 py-3 text-left font-semibold">Log Type</th>
-                            <th className="px-4 py-3 text-left font-semibold w-1/2">Changes</th>
-                            <th className="px-4 py-3 text-left font-semibold">Link</th>
+                            <th className="px-4 py-3 text-left font-semibold w-2/3">Changes</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -400,7 +399,7 @@ export const InventoryDetailsPage = () => {
                                 </td>
                                 <td className="px-4 py-3 align-top whitespace-nowrap text-gray-700 font-medium">{feed.changed_by || '—'}</td>
                                 <td className="px-4 py-3 align-top">
-                                  <span className="inline-block px-2 py-1 rounded-full text-[11px] font-semibold bg-[#C72030]/10 text-[#C72030]">
+                                  <span className="inline-block px-2 py-1 rounded-full text-[11px] font-semibold bg-[#C72030]/10 text-[#C72030] whitespace-nowrap leading-none">
                                     {feed.log_type?.replace('Pms::', '') || '—'}
                                   </span>
                                 </td>
@@ -428,20 +427,6 @@ export const InventoryDetailsPage = () => {
                                         </button>
                                       )}
                                     </div>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 align-top">
-                                  {feed.url ? (
-                                    <a
-                                      href={feed.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="inline-block text-[#C72030] text-xs font-semibold hover:underline"
-                                    >
-                                      Open
-                                    </a>
-                                  ) : (
-                                    <span className="text-gray-400">—</span>
                                   )}
                                 </td>
                               </tr>
