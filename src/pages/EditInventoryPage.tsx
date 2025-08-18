@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
+// Removed custom ResponsiveDatePicker in favor of simple MUI date input
 
 export const EditInventoryPage = () => {
   const navigate = useNavigate();
@@ -484,11 +484,15 @@ export const EditInventoryPage = () => {
                 </div>
 
                 <div>
-                  <ResponsiveDatePicker
-                    value={formData.expiryDate ? new Date(formData.expiryDate) : undefined}
-                    onChange={(date) => handleInputChange('expiryDate', date ? date.toISOString().split('T')[0] : '')}
-                    placeholder="Expiry Date"
-                    className="w-full h-7 sm:h-9 md:h-[45px] rounded-[4px]"
+                  <TextField
+                    label="Expiry Date"
+                    type="date"
+                    value={formData.expiryDate}
+                    onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
                   />
                 </div>
 

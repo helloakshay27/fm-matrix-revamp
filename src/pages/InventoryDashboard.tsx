@@ -598,6 +598,14 @@ export const InventoryDashboard = () => {
         </div>
       );
     }
+    if (columnKey === "type") {
+      const raw = item.type;
+      const code = typeof raw === 'number' ? raw : parseInt(raw, 10);
+      let label = '-';
+      if (code === 1) label = 'sparse';
+      else if (code === 2) label = 'consumable';
+      return <span className="capitalize">{label}</span>;
+    }
     return item[columnKey];
   };
 
