@@ -730,7 +730,7 @@ export const PatrollingDetailPage: React.FC = () => {
                         <TableHead>Location</TableHead>
                         <TableHead>Assigned Schedules</TableHead>
                         <TableHead>QR Code</TableHead>
-                        <TableHead>Created</TableHead>
+                        <TableHead>Created On</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody className="bg-white">

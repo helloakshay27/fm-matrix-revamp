@@ -709,7 +709,7 @@ export const ScheduleListDashboard = () => {
       }
 
       axios.get(
-        `https://oig-api.gophygital.work/pms/custom_forms.json?page=${tablePage}&access_token=${token}`
+        `${API_CONFIG.BASE_URL}/pms/custom_forms.json?page=${tablePage}&access_token=${token}`
       )
         .then(res => {
           if (!isMounted) return;

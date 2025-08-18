@@ -98,6 +98,35 @@ const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: nu
     throw error;
   }
 };
+import { VisitorAnalyticsContent } from '@/components/VisitorAnalyticsContent';
+
+const getVisitorsOut = async (siteId: number, page: number = 1, perPage: number = 20) => {
+  try {
+    const url = getFullUrl('/pms/admin/visitors/visitors_out.json');
+    const options = getAuthenticatedFetchOptions();
+    
+    // Add query parameters
+    const urlWithParams = new URL(url);
+    urlWithParams.searchParams.append('site_id', siteId.toString());
+    urlWithParams.searchParams.append('page', page.toString());
+    urlWithParams.searchParams.append('per_page', perPage.toString());
+    
+    console.log('🚀 Fetching visitors out from:', urlWithParams.toString());
+    
+    const response = await fetch(urlWithParams.toString(), options);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch visitors out: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log('✅ Visitors out response received:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Error fetching visitors out:', error);
+    throw error;
+  }
+};
 
 export const VisitorsDashboard = () => {
   const [selectedPerson, setSelectedPerson] = useState('');
@@ -117,9 +146,11 @@ export const VisitorsDashboard = () => {
   // API State
   const [unexpectedVisitors, setUnexpectedVisitors] = useState<any[]>([]);
   const [expectedVisitors, setExpectedVisitors] = useState<any[]>([]);
+  const [visitorsOutData, setVisitorsOutData] = useState<any[]>([]);
   const [visitorHistoryData, setVisitorHistoryData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [expectedLoading, setExpectedLoading] = useState(false);
+  const [visitorsOutLoading, setVisitorsOutLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -128,6 +159,12 @@ export const VisitorsDashboard = () => {
     perPage: 20
   });
   const [expectedPagination, setExpectedPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalEntries: 0,
+    perPage: 20
+  });
+  const [visitorsOutPagination, setVisitorsOutPagination] = useState({
     currentPage: 1,
     totalPages: 1,
     totalEntries: 0,
@@ -233,11 +270,37 @@ export const VisitorsDashboard = () => {
     }
   };
 
+  // Fetch visitors out
+  const fetchVisitorsOut = async (page: number = 1) => {
+    setVisitorsOutLoading(true);
+    try {
+      const data = await getVisitorsOut(2189, page); // Replace 2189 with your actual site ID
+      // Flatten checked_in_at to checked_in_at.formatted for table display
+      const mapped = (data.visitors || []).map((v: any) => ({
+        ...v,
+        checked_in_at: v.checked_in_at?.formatted || '',
+      }));
+      setVisitorsOutData(mapped);
+      setVisitorsOutPagination({
+        currentPage: data.pagination?.current_page || 1,
+        totalPages: data.pagination?.total_pages || 1,
+        totalEntries: data.pagination?.total_entries || data.visitors?.length || 0,
+        perPage: data.pagination?.per_page || 20
+      });
+    } catch (error) {
+      console.error('Error fetching visitors out:', error);
+    } finally {
+      setVisitorsOutLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
       fetchUnexpectedVisitors();
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
       fetchExpectedVisitors();
+    } else if (visitorSubTab === 'visitor-out') {
+      fetchVisitorsOut();
     } else if (visitorSubTab === 'history') {
       fetchVisitorHistory();
     }
@@ -256,6 +319,8 @@ export const VisitorsDashboard = () => {
       fetchUnexpectedVisitors();
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
       fetchExpectedVisitors();
+    } else if (visitorSubTab === 'visitor-out') {
+      fetchVisitorsOut();
     } else if (visitorSubTab === 'history') {
       fetchVisitorHistory();
     }
@@ -269,6 +334,8 @@ export const VisitorsDashboard = () => {
       fetchUnexpectedVisitors();
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
       fetchExpectedVisitors();
+    } else if (visitorSubTab === 'visitor-out') {
+      fetchVisitorsOut();
     } else if (visitorSubTab === 'history') {
       fetchVisitorHistory();
     }
@@ -304,12 +371,12 @@ export const VisitorsDashboard = () => {
 
   // Column configuration for visitor out table
   const visitorOutColumns: ColumnConfig[] = [
-    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
-    { key: 'visitorName', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
-    { key: 'host', label: 'Host', sortable: true, hideable: true, draggable: true },
-    { key: 'purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
-    { key: 'location', label: 'Location', sortable: true, hideable: true, draggable: true },
-    { key: 'checkedInAt', label: 'Checked In At', sortable: true, hideable: true, draggable: true },
+    { key: 'visitor_image', label: 'Visitor Image', sortable: false, hideable: true, draggable: true },
+    { key: 'guest_name', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
+    { key: 'primary_host', label: 'Host', sortable: true, hideable: true, draggable: true },
+    { key: 'visit_purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+    { key: 'guest_from', label: 'Location', sortable: true, hideable: true, draggable: true },
+    { key: 'checked_in_at', label: 'Checked In At', sortable: true, hideable: true, draggable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
     { key: 'checkOut', label: 'Check Out', sortable: false, hideable: false, draggable: false }
   ];
@@ -492,6 +559,67 @@ default:
   }
  };
 
+ const renderVisitorOutCell = (visitor: any, columnKey: string) => {
+  switch (columnKey) {
+    case 'visitor_image':
+      return (
+        <div className="flex justify-center">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+            {visitor.visitor_image && visitor.visitor_image !== 'person.png' ? (
+              <img 
+                src={visitor.visitor_image.startsWith('http') ? visitor.visitor_image : '/placeholder.svg'} 
+                alt={visitor.guest_name || 'Visitor'}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/placeholder.svg';
+                }}
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    case 'guest_name':
+      return visitor.guest_name || '--';
+    case 'primary_host':
+      return visitor.primary_host || '--';
+    case 'visit_purpose':
+      return visitor.visit_purpose || '--';
+    case 'guest_from':
+      return visitor.guest_from || '--';
+    case 'checked_in_at':
+      return visitor.checked_in_at || '--';
+    case 'status':
+      return (
+        <Badge className={`${
+          visitor.status === 'Approved' ? 'bg-green-100 text-green-800' : 
+          visitor.status === 'Pending' ? 'bg-orange-100 text-orange-800' : 
+          'bg-red-100 text-red-800'
+        }`}>
+          {visitor.status}
+        </Badge>
+      );
+    case 'checkOut':
+      return (
+        <Button 
+          onClick={() => handleCheckOut(visitor.id)}
+          className="bg-[#F97316] hover:bg-[#F97316]/90 text-white px-3 py-1 text-sm rounded"
+        >
+          Check Out
+        </Button>
+      );
+    default:
+      const value = visitor[columnKey as keyof typeof visitor];
+      return value ? String(value) : '--';
+  }
+};
+
  const renderVisitorHistoryCell = (visitor: any, columnKey: string) => {
   switch (columnKey) {
     case 'id':
@@ -600,6 +728,8 @@ default:
   const handleRefresh = () => {
     if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
       fetchUnexpectedVisitors(pagination.currentPage);
+    } else if (visitorSubTab === 'visitor-out') {
+      fetchVisitorsOut(visitorsOutPagination.currentPage);
     } else if (visitorSubTab === 'history') {
       fetchVisitorHistory(historyPagination.currentPage);
     }
@@ -681,7 +811,6 @@ default:
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Visitors Dashboard</h1>
       <div className="mb-6">
         <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
           <div className="mb-4">
@@ -818,7 +947,7 @@ default:
                   
                   {activeVisitorType === 'expected' && (
                     <EnhancedTable
-                      data={expectedVisitorDataWithIndex}
+                      data={expectedVisitors}
                       columns={expectedVisitorColumns}
                       renderRow={renderExpectedVisitorRow}
                       enableSearch={true}
@@ -849,12 +978,16 @@ default:
               {/* Visitor Out tab content */}
               <TabsContent value="visitor-out" className="p-4 min-h-[400px]">
                 <EnhancedTable
-                  data={visitorOutDataWithIndex}
+                  data={visitorsOutData}
                   columns={visitorOutColumns}
-                  renderRow={renderVisitorOutRow}
+                  renderCell={renderVisitorOutCell}
                   enableSearch={true}
                   enableSelection={false}
                   enableExport={true}
+                  enablePagination={true}
+                  pagination={visitorsOutPagination}
+                  onPageChange={fetchVisitorsOut}
+                  loading={visitorsOutLoading}
                   storageKey="visitor-out-table"
                   emptyMessage="No visitors to check out"
                   exportFileName="visitor-out"
@@ -911,10 +1044,8 @@ default:
             </Tabs>
           </TabsContent>
 
-          <TabsContent value="analytics" className="bg-white rounded-lg border border-gray-200 mt-4 p-6">
-            <div className="text-center text-gray-500 py-16">
-              Analytics content will be displayed here
-            </div>
+          <TabsContent value="analytics" className="mt-4">
+            <VisitorAnalyticsContent />
           </TabsContent>
         </Tabs>
       </div>

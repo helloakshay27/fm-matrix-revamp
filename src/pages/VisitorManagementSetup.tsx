@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
+import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown';
 
 interface VisitorGateData {
   id: number;
@@ -25,6 +26,18 @@ export const VisitorManagementSetup = () => {
   const navigate = useNavigate();
   const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
+  const [visibleColumns, setVisibleColumns] = useState({
+    actions: true,
+    id: true,
+    society: true,
+    tower: true,
+    gateName: true,
+    gateDevice: true,
+    userName: true,
+    status: true,
+    active: true,
+    createdBy: true
+  });
   const [activeTab, setActiveTab] = useState<'smartsecure' | 'quikgate'>('smartsecure');
 
   useEffect(() => {
@@ -169,6 +182,27 @@ export const VisitorManagementSetup = () => {
     navigate('/security/visitor-management/add-gate');
   };
 
+  const handleColumnToggle = (columnKey: string, visible: boolean) => {
+    setVisibleColumns(prev => ({
+      ...prev,
+      [columnKey]: visible
+    }));
+  };
+
+  // Column definitions for visibility control
+  const columns = [
+    { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
+    { key: 'id', label: 'ID', visible: visibleColumns.id },
+    { key: 'society', label: 'Society', visible: visibleColumns.society },
+    { key: 'tower', label: 'Tower', visible: visibleColumns.tower },
+    { key: 'gateName', label: 'Gate Name', visible: visibleColumns.gateName },
+    { key: 'gateDevice', label: 'Gate Device', visible: visibleColumns.gateDevice },
+    { key: 'userName', label: 'User Name', visible: visibleColumns.userName },
+    { key: 'status', label: 'Status', visible: visibleColumns.status },
+    { key: 'active', label: 'Active', visible: visibleColumns.active },
+    { key: 'createdBy', label: 'Created By', visible: visibleColumns.createdBy }
+  ];
+
   return (
     <div className="p-6 min-h-screen">
       {/* Action Bar */}
@@ -191,12 +225,10 @@ export const VisitorManagementSetup = () => {
               className="pl-10 w-80"
             />
           </div>
-          <Button variant="outline" size="icon" className="border-gray-300">
-            <RefreshCw className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="icon" className="border-gray-300">
-            <Grid3X3 className="w-4 h-4" />
-          </Button>
+          <ColumnVisibilityDropdown
+            columns={columns}
+            onColumnToggle={handleColumnToggle}
+          />
         </div>
       </div>
 
@@ -205,23 +237,23 @@ export const VisitorManagementSetup = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-[#f6f4ee]">
-              <TableHead className="w-20">Actions</TableHead>
-              <TableHead className="w-16">ID</TableHead>
-              <TableHead className="min-w-[300px]">Society</TableHead>
-              <TableHead className="w-32">Tower</TableHead>
-              <TableHead className="w-32">Gate Name</TableHead>
-              <TableHead className="w-40">Gate Device</TableHead>
-              <TableHead className="w-40">User Name</TableHead>
-              <TableHead className="w-24 text-center">Status</TableHead>
-              <TableHead className="w-24 text-center">Active</TableHead>
-              <TableHead className="w-40">Created By</TableHead>
+              {visibleColumns.actions && <TableHead className="w-20">Actions</TableHead>}
+              {visibleColumns.id && <TableHead className="w-16">ID</TableHead>}
+              {visibleColumns.society && <TableHead className="min-w-[300px]">Society</TableHead>}
+              {visibleColumns.tower && <TableHead className="w-32">Tower</TableHead>}
+              {visibleColumns.gateName && <TableHead className="w-32">Gate Name</TableHead>}
+              {visibleColumns.gateDevice && <TableHead className="w-40">Gate Device</TableHead>}
+              {visibleColumns.userName && <TableHead className="w-40">User Name</TableHead>}
+              {visibleColumns.status && <TableHead className="w-24 text-center">Status</TableHead>}
+              {visibleColumns.active && <TableHead className="w-24 text-center">Active</TableHead>}
+              {visibleColumns.createdBy && <TableHead className="w-40">Created By</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredData.map((item) => (
               <TableRow key={item.id} className="hover:bg-gray-50">
-                <TableCell>
-                  <div className="flex gap-2">
+                {visibleColumns.actions && (
+                  <TableCell>
                     <button
                       onClick={() => handleEdit(item.id)}
                       className="p-1 hover:bg-gray-100 rounded"
@@ -229,57 +261,39 @@ export const VisitorManagementSetup = () => {
                     >
                       <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
                     </button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <button
-                          className="p-1 hover:bg-gray-100 rounded"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
-                        </button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the visitor gate entry.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(item.id)}>
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </TableCell>
-                <TableCell className="font-medium">{item.id}</TableCell>
-                <TableCell className="max-w-[300px]">
-                  <div className="truncate" title={item.society}>
-                    {item.society}
-                  </div>
-                </TableCell>
-                <TableCell>{item.tower || '--'}</TableCell>
-                <TableCell>{item.gateName}</TableCell>
-                <TableCell className="font-mono text-sm">{item.gateDevice}</TableCell>
-                <TableCell>{item.userName}</TableCell>
-                <TableCell className="text-center">
-                  <Switch
-                    checked={item.status}
-                    onCheckedChange={() => handleStatusToggle(item.id, 'status')}
-                    className="data-[state=checked]:bg-green-500"
-                  />
-                </TableCell>
-                <TableCell className="text-center">
-                  <span className={`px-2 py-1 text-xs font-medium ${
-                    item.active ? 'text-green-700' : 'text-gray-500'
-                  }`}>
-                    {item.active ? 'Yes' : 'No'}
-                  </span>
-                </TableCell>
-                <TableCell>{item.createdBy}</TableCell>
+                  </TableCell>
+                )}
+                {visibleColumns.id && <TableCell className="font-medium">{item.id}</TableCell>}
+                {visibleColumns.society && (
+                  <TableCell className="max-w-[300px]">
+                    <div className="truncate" title={item.society}>
+                      {item.society}
+                    </div>
+                  </TableCell>
+                )}
+                {visibleColumns.tower && <TableCell>{item.tower || '--'}</TableCell>}
+                {visibleColumns.gateName && <TableCell>{item.gateName}</TableCell>}
+                {visibleColumns.gateDevice && <TableCell className="font-mono text-sm">{item.gateDevice}</TableCell>}
+                {visibleColumns.userName && <TableCell>{item.userName}</TableCell>}
+                {visibleColumns.status && (
+                  <TableCell className="text-center">
+                    <Switch
+                      checked={item.status}
+                      onCheckedChange={() => handleStatusToggle(item.id, 'status')}
+                      className="data-[state=checked]:bg-green-500"
+                    />
+                  </TableCell>
+                )}
+                {visibleColumns.active && (
+                  <TableCell className="text-center">
+                    <span className={`px-2 py-1 text-xs font-medium ${
+                      item.active ? 'text-green-700' : 'text-gray-500'
+                    }`}>
+                      {item.active ? 'Yes' : 'No'}
+                    </span>
+                  </TableCell>
+                )}
+                {visibleColumns.createdBy && <TableCell>{item.createdBy}</TableCell>}
               </TableRow>
             ))}
           </TableBody>

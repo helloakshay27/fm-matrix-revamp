@@ -19,6 +19,63 @@ export const getGRN = createAsyncThunk(
     }
 )
 
+export const fetchSupplierDetails = createAsyncThunk(
+    "fetchSupplierDetails",
+    async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/pms/purchase_orders/${id}/supplier.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to get suppliers'
+            return rejectWithValue(message)
+        }
+    }
+)
+
+export const fetchItemDetails = createAsyncThunk(
+    "fetchItemDetails",
+    async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/pms/purchase_orders/${id}/pms_po_inventories.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to get suppliers'
+            return rejectWithValue(message)
+        }
+    }
+)
+
+export const createGRN = createAsyncThunk(
+    'createGRN',
+    async ({ data, baseUrl, token }: { data: any, baseUrl: string, token: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(`https://${baseUrl}/pms/grns.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to create GRN'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const getGRNSlice = createApiSlice("getGRN", getGRN);
+const fetchSupplierDetailsSlice = createApiSlice("fetchSupplierDetails", fetchSupplierDetails);
+const fetchItemDetailsSlice = createApiSlice("fetchItemDetails", fetchItemDetails);
+const createGRNSlice = createApiSlice("createGRN", createGRN);
 
 export const getGRNReducer = getGRNSlice.reducer
+export const fetchSupplierDetailsReducer = fetchSupplierDetailsSlice.reducer
+export const fetchItemDetailsReducer = fetchItemDetailsSlice.reducer
+export const createGRNReducer = createGRNSlice.reducer

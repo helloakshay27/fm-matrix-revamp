@@ -13,6 +13,9 @@ import { Switch } from '@/components/ui/switch';
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
+import { EditMoveInOutModal } from '@/components/EditMoveInOutModal';
+import { EditWorkTypeModal } from '@/components/EditWorkTypeModal';
+import { EditVisitorCommentModal } from '@/components/EditVisitorCommentModal';
 
 interface VisitingPurposeData {
   id: string;
@@ -22,15 +25,52 @@ interface VisitingPurposeData {
   createdBy: string;
 }
 
+interface MoveInOutData {
+  id: string;
+  purpose: string;
+  status: boolean;
+  createdOn: string;
+  createdBy: string;
+}
+
+interface WorkTypeData {
+  id: string;
+  staffType: string;
+  workType: string;
+  status: boolean;
+  createdOn: string;
+  createdBy: string;
+}
+
+interface VisitorCommentData {
+  id: string;
+  comment: string;
+  status: boolean;
+  createdOn: string;
+  createdBy: string;
+}
+
 export const VisitingPurposePage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { setCurrentSection } = useLayout();
+  const [activeTab, setActiveTab] = useState('Visit Purpose');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMoveInOutModalOpen, setIsMoveInOutModalOpen] = useState(false);
   const [isWorkTypeModalOpen, setIsWorkTypeModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingPurpose, setEditingPurpose] = useState<VisitingPurposeData | null>(null);
+  const [editingPurposes, setEditingPurposes] = useState<string[]>(['']);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  
+  // Edit modal states for different types
+  const [isEditMoveInOutModalOpen, setIsEditMoveInOutModalOpen] = useState(false);
+  const [editingMoveInOut, setEditingMoveInOut] = useState<MoveInOutData | null>(null);
+  const [isEditWorkTypeModalOpen, setIsEditWorkTypeModalOpen] = useState(false);
+  const [editingWorkType, setEditingWorkType] = useState<WorkTypeData | null>(null);
+  const [isEditVisitorCommentModalOpen, setIsEditVisitorCommentModalOpen] = useState(false);
+  const [editingVisitorComment, setEditingVisitorComment] = useState<VisitorCommentData | null>(null);
   const [formData, setFormData] = useState({
     site: '',
     purpose: '',
@@ -52,7 +92,7 @@ export const VisitingPurposePage = () => {
     active: true
   });
 
-  // Sample data matching the image structure
+  // Sample data for Visit Purpose
   const samplePurposes: VisitingPurposeData[] = [
     {
       id: '1',
@@ -84,20 +124,121 @@ export const VisitingPurposePage = () => {
     }
   ];
 
-  const [filteredPurposes, setFilteredPurposes] = useState<VisitingPurposeData[]>(samplePurposes);
+  // Sample data for Move In/Out
+  const sampleMoveInOut: MoveInOutData[] = [
+    {
+      id: '1',
+      purpose: 'Equipment Installation',
+      status: true,
+      createdOn: '15/01/2025 10:30 AM',
+      createdBy: 'John D'
+    },
+    {
+      id: '2',
+      purpose: 'Furniture Movement',
+      status: true,
+      createdOn: '15/01/2025 10:25 AM',
+      createdBy: 'Sarah M'
+    },
+    {
+      id: '3',
+      purpose: 'Office Relocation',
+      status: false,
+      createdOn: '15/01/2025 10:20 AM',
+      createdBy: 'Mike R'
+    }
+  ];
+
+  // Sample data for Work Type
+  const sampleWorkTypes: WorkTypeData[] = [
+    {
+      id: '1',
+      staffType: 'Permanent Staff',
+      workType: 'Development',
+      status: true,
+      createdOn: '15/01/2025 09:45 AM',
+      createdBy: 'Admin'
+    },
+    {
+      id: '2',
+      staffType: 'Contract Staff',
+      workType: 'Testing',
+      status: true,
+      createdOn: '15/01/2025 09:40 AM',
+      createdBy: 'Admin'
+    },
+    {
+      id: '3',
+      staffType: 'Vendor Staff',
+      workType: 'Maintenance',
+      status: true,
+      createdOn: '15/01/2025 09:35 AM',
+      createdBy: 'Admin'
+    }
+  ];
+
+  // Sample data for Visitor Comments
+  const sampleComments: VisitorCommentData[] = [
+    {
+      id: '1',
+      comment: 'Please ensure proper ID verification',
+      status: true,
+      createdOn: '15/01/2025 08:30 AM',
+      createdBy: 'Security Team'
+    },
+    {
+      id: '2',
+      comment: 'VIP guest - special attention required',
+      status: true,
+      createdOn: '15/01/2025 08:25 AM',
+      createdBy: 'Reception'
+    },
+    {
+      id: '3',
+      comment: 'Regular visitor - standard process',
+      status: false,
+      createdOn: '15/01/2025 08:20 AM',
+      createdBy: 'Front Desk'
+    }
+  ];
+
   const [purposes, setPurposes] = useState<VisitingPurposeData[]>(samplePurposes);
+  const [moveInOutData, setMoveInOutData] = useState<MoveInOutData[]>(sampleMoveInOut);
+  const [workTypeData, setWorkTypeData] = useState<WorkTypeData[]>(sampleWorkTypes);
+  const [commentsData, setCommentsData] = useState<VisitorCommentData[]>(sampleComments);
 
   useEffect(() => {
     setCurrentSection('Settings');
   }, [setCurrentSection]);
 
-  useEffect(() => {
-    const filtered = purposes.filter(purpose =>
-      purpose.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      purpose.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredPurposes(filtered);
-  }, [searchTerm, purposes]);
+  // Filter functions for each tab data
+  const getFilteredData = () => {
+    switch (activeTab) {
+      case 'Visit Purpose':
+        return purposes.filter(item =>
+          item.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      case 'Move In/Out':
+        return moveInOutData.filter(item =>
+          item.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      case 'Work Type':
+        return workTypeData.filter(item =>
+          item.workType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.staffType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      case 'Visitor Comment':
+        return commentsData.filter(item =>
+          item.comment.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      default:
+        return [];
+    }
+  };
 
   const handleAddPurpose = () => {
     setIsAddModalOpen(true);
@@ -253,10 +394,51 @@ export const VisitingPurposePage = () => {
   };
 
   const handleEdit = (purposeId: string) => {
+    const purpose = purposes.find(p => p.id === purposeId);
+    if (purpose) {
+      setEditingPurpose(purpose);
+      // Split the purpose string by pipe separator or use single purpose
+      const purposeArray = purpose.purpose.includes('|') 
+        ? purpose.purpose.split('|') 
+        : [purpose.purpose];
+      setEditingPurposes(purposeArray);
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setEditingPurpose(null);
+    setEditingPurposes(['']);
+  };
+
+  const handleEditSubmit = () => {
+    if (!editingPurpose) return;
+
+    const validPurposes = editingPurposes.filter(p => p.trim());
+    
+    if (validPurposes.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please enter at least one purpose",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setPurposes(prev => 
+      prev.map(p => 
+        p.id === editingPurpose.id 
+          ? { ...p, purpose: validPurposes.join('|'), status: editingPurpose.status }
+          : p
+      )
+    );
+
     toast({
-      title: "Edit Purpose",
-      description: `Editing purpose ID: ${purposeId}`,
+      title: "Success",
+      description: "Purpose updated successfully",
     });
+    handleEditModalClose();
   };
 
   const handleDelete = (purposeId: string) => {
@@ -267,138 +449,307 @@ export const VisitingPurposePage = () => {
     });
   };
 
+  const handleTabClick = (tab: string) => {
+    setActiveTab(tab);
+  };
+
+  // Edit handlers for different types
+  const handleEditMoveInOut = (itemId: string) => {
+    const item = moveInOutData.find(m => m.id === itemId);
+    if (item) {
+      setEditingMoveInOut(item);
+      setIsEditMoveInOutModalOpen(true);
+    }
+  };
+
+  const handleEditWorkType = (itemId: string) => {
+    const item = workTypeData.find(w => w.id === itemId);
+    if (item) {
+      setEditingWorkType(item);
+      setIsEditWorkTypeModalOpen(true);
+    }
+  };
+
+  const handleEditVisitorComment = (itemId: string) => {
+    const item = commentsData.find(c => c.id === itemId);
+    if (item) {
+      setEditingVisitorComment(item);
+      setIsEditVisitorCommentModalOpen(true);
+    }
+  };
+
+  // Update handlers for different types
+  const handleUpdateMoveInOut = (updatedData: MoveInOutData) => {
+    setMoveInOutData(prev => 
+      prev.map(item => 
+        item.id === updatedData.id ? updatedData : item
+      )
+    );
+  };
+
+  const handleUpdateWorkType = (updatedData: WorkTypeData) => {
+    setWorkTypeData(prev => 
+      prev.map(item => 
+        item.id === updatedData.id ? updatedData : item
+      )
+    );
+  };
+
+  const handleUpdateVisitorComment = (updatedData: VisitorCommentData) => {
+    setCommentsData(prev => 
+      prev.map(item => 
+        item.id === updatedData.id ? updatedData : item
+      )
+    );
+  };
+
+  // Helper functions for editing purposes
+  const addEditPurpose = () => {
+    setEditingPurposes([...editingPurposes, '']);
+  };
+
+  const removeEditPurpose = (index: number) => {
+    if (editingPurposes.length > 1) {
+      const newPurposes = editingPurposes.filter((_, i) => i !== index);
+      setEditingPurposes(newPurposes);
+    }
+  };
+
+  const updateEditPurpose = (index: number, value: string) => {
+    const newPurposes = [...editingPurposes];
+    newPurposes[index] = value;
+    setEditingPurposes(newPurposes);
+  };
+
   return (
     <>
-      <div className="p-6 min-h-screen">
-        {/* Action Buttons Bar */}
-        <div className="flex items-center gap-3 mb-6">
-          <Button 
-            onClick={handleAddPurpose}
-            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Purpose
-          </Button>
-          
-          <Button 
-            onClick={handleMoveInOut}
-            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Move In/Out
-          </Button>
-          
-          <Button 
-            onClick={handleWorkType}
-            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Work Type
-          </Button>
-          
-          <Button 
-            onClick={handleVisitorCategory}
-            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Visitor Comment
-          </Button>
+      <div className="p-6 bg-gray-50 min-h-screen">
+        <div className="mb-6">
+          <div className="bg-white rounded-lg border border-gray-200">
+            {/* Tab Navigation */}
+            <div className="flex border-b border-gray-200">
+              {['Visit Purpose', 'Move In/Out', 'Work Type', 'Visitor Comment'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => handleTabClick(tab)}
+                  className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab
+                      ? 'border-primary text-primary bg-primary/5'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
 
-          <div className="flex-1"></div>
+            {/* Action Buttons Bar */}
+            <div className="flex items-center gap-3 p-6 border-b border-gray-200">
+              {activeTab === 'Visit Purpose' && (
+                <Button 
+                  onClick={handleAddPurpose}
+                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Purpose
+                </Button>
+              )}
+              
+              {activeTab === 'Move In/Out' && (
+                <Button 
+                  onClick={handleMoveInOut}
+                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Move In/Out
+                </Button>
+              )}
+              
+              {activeTab === 'Work Type' && (
+                <Button 
+                  onClick={handleWorkType}
+                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Work Type
+                </Button>
+              )}
+              
+              {activeTab === 'Visitor Comment' && (
+                <Button 
+                  onClick={handleVisitorCategory}
+                  className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Visitor Comment
+                </Button>
+              )}
 
-        </div>
+              <div className="flex-1"></div>
 
-        {/* Table */}
-        <div className="bg-white rounded-lg border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#f6f4ee]">
-                <TableHead className="w-20">Action</TableHead>
-                <TableHead className="min-w-[200px]">Purpose</TableHead>
-                <TableHead className="w-32 text-center">Status</TableHead>
-                <TableHead className="w-20">Action</TableHead>
-                <TableHead className="min-w-[200px]">Purpose</TableHead>
-                <TableHead className="w-32 text-center">Status</TableHead>
-                <TableHead className="w-20">Action</TableHead>
-                <TableHead className="min-w-[200px]">Purpose</TableHead>
-                <TableHead className="w-32 text-center">Status</TableHead>
-                <TableHead className="w-20">Action</TableHead>
-                <TableHead className="min-w-[200px]">Purpose</TableHead>
-                <TableHead className="w-32 text-center">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow className="hover:bg-gray-50">
-                {/* Vendor */}
-                <TableCell>
-                  <button
-                    onClick={() => handleEdit('1')}
-                    className="p-1 hover:bg-gray-100 rounded"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                  </button>
-                </TableCell>
-                <TableCell className="font-medium">Vendor</TableCell>
-                <TableCell className="text-center">
-                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                    Active
-                  </span>
-                </TableCell>
+            </div>
 
-                {/* Meeting */}
-                <TableCell>
-                  <button
-                    onClick={() => handleEdit('2')}
-                    className="p-1 hover:bg-gray-100 rounded"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                  </button>
-                </TableCell>
-                <TableCell className="font-medium">Meeting</TableCell>
-                <TableCell className="text-center">
-                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                    Active
-                  </span>
-                </TableCell>
+            {/* Tables for each tab */}
+            <div className="overflow-hidden">
+              {activeTab === 'Visit Purpose' && (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-[#f6f4ee]">
+                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[200px]">Purpose</TableHead>
+                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getFilteredData().map((item) => (
+                      <TableRow key={item.id} className="hover:bg-gray-50">
+                        <TableCell className="px-4 py-3">
+                          <button
+                            onClick={() => handleEdit(item.id)}
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                          </button>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
+                        <TableCell className="px-4 py-3 text-center">
+                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                            item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {item.status ? 'Active' : 'Inactive'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
 
-                {/* Personal */}
-                <TableCell>
-                  <button
-                    onClick={() => handleEdit('3')}
-                    className="p-1 hover:bg-gray-100 rounded"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                  </button>
-                </TableCell>
-                <TableCell className="font-medium">Personal</TableCell>
-                <TableCell className="text-center">
-                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                    Active
-                  </span>
-                </TableCell>
+              {activeTab === 'Move In/Out' && (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-[#f6f4ee]">
+                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[200px]">Move In/Out Purpose</TableHead>
+                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getFilteredData().map((item) => (
+                      <TableRow key={item.id} className="hover:bg-gray-50">
+                         <TableCell className="px-4 py-3">
+                           <button
+                             onClick={() => handleEditMoveInOut(item.id)}
+                             className="p-1 hover:bg-gray-100 rounded"
+                             title="Edit"
+                           >
+                             <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                           </button>
+                         </TableCell>
+                        <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
+                        <TableCell className="px-4 py-3 text-center">
+                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                            item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {item.status ? 'Active' : 'Inactive'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
 
-                {/* Courier */}
-                <TableCell>
-                  <button
-                    onClick={() => handleEdit('4')}
-                    className="p-1 hover:bg-gray-100 rounded"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                  </button>
-                </TableCell>
-                <TableCell className="font-medium">Courier</TableCell>
-                <TableCell className="text-center">
-                  <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                    Active
-                  </span>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+              {activeTab === 'Work Type' && (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-[#f6f4ee]">
+                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[150px]">Staff Type</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[150px]">Work Type</TableHead>
+                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getFilteredData().map((item) => (
+                      <TableRow key={item.id} className="hover:bg-gray-50">
+                         <TableCell className="px-4 py-3">
+                           <button
+                             onClick={() => handleEditWorkType(item.id)}
+                             className="p-1 hover:bg-gray-100 rounded"
+                             title="Edit"
+                           >
+                             <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                           </button>
+                         </TableCell>
+                        <TableCell className="px-4 py-3 font-medium">{item.staffType}</TableCell>
+                        <TableCell className="px-4 py-3 font-medium">{item.workType}</TableCell>
+                        <TableCell className="px-4 py-3 text-center">
+                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                            item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {item.status ? 'Active' : 'Inactive'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+
+              {activeTab === 'Visitor Comment' && (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-[#f6f4ee]">
+                      <TableHead className="px-4 py-3 w-20">Action</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[300px]">Comment</TableHead>
+                      <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
+                      <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getFilteredData().map((item) => (
+                      <TableRow key={item.id} className="hover:bg-gray-50">
+                         <TableCell className="px-4 py-3">
+                           <button
+                             onClick={() => handleEditVisitorComment(item.id)}
+                             className="p-1 hover:bg-gray-100 rounded"
+                             title="Edit"
+                           >
+                             <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                           </button>
+                         </TableCell>
+                        <TableCell className="px-4 py-3 font-medium">{item.comment}</TableCell>
+                        <TableCell className="px-4 py-3 text-center">
+                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                            item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {item.status ? 'Active' : 'Inactive'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          </div>
         </div>
 
       </div>
@@ -434,30 +785,73 @@ export const VisitingPurposePage = () => {
               </Select>
             </div>
 
-            {/* Purpose Input */}
-            <div className="space-y-2">
-              <Label>Enter purpose</Label>
-              <TextField
-                placeholder="enter purpose"
-                value={formData.purpose}
-                onChange={(e) => setFormData({...formData, purpose: e.target.value})}
-                fullWidth
-                variant="outlined"
-                size="small"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: '#d1d5db',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#C72030',
-                    },
-                  },
-                }}
-              />
+            {/* Multiple Users Purpose Input */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Enter Purpose</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const currentPurposes = formData.purpose ? formData.purpose.split('|') : [''];
+                    setFormData({...formData, purpose: [...currentPurposes, ''].join('|')});
+                  }}
+                  className="text-primary border-primary hover:bg-primary/10"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                {(formData.purpose ? formData.purpose.split('|') : ['']).map((purpose, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <TextField
+                        placeholder="Enter purpose"
+                        value={purpose}
+                        onChange={(e) => {
+                          const purposes = formData.purpose ? formData.purpose.split('|') : [''];
+                          purposes[index] = e.target.value;
+                          setFormData({...formData, purpose: purposes.join('|')});
+                        }}
+                        fullWidth
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '& fieldset': {
+                              borderColor: '#d1d5db',
+                            },
+                            '&:hover fieldset': {
+                              borderColor: '#C72030',
+                            },
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#C72030',
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                    {(formData.purpose ? formData.purpose.split('|') : ['']).length > 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const purposes = formData.purpose ? formData.purpose.split('|') : [''];
+                          purposes.splice(index, 1);
+                          setFormData({...formData, purpose: purposes.join('|')});
+                        }}
+                        className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Active Checkbox */}
@@ -514,30 +908,73 @@ export const VisitingPurposePage = () => {
               </Select>
             </div>
 
-            {/* Move In/Out Purpose Input */}
-            <div className="space-y-2">
-              <Label>Enter move in/ out purpose</Label>
-              <TextField
-                placeholder="enter purpose"
-                value={moveInOutFormData.purpose}
-                onChange={(e) => setMoveInOutFormData({...moveInOutFormData, purpose: e.target.value})}
-                fullWidth
-                variant="outlined"
-                size="small"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: '#d1d5db',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#C72030',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#C72030',
-                    },
-                  },
-                }}
-              />
+            {/* Multiple Move In/Out Purpose Input */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Enter move in/ out purpose</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const currentPurposes = moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : [''];
+                    setMoveInOutFormData({...moveInOutFormData, purpose: [...currentPurposes, ''].join('|')});
+                  }}
+                  className="text-primary border-primary hover:bg-primary/10"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                {(moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : ['']).map((purpose, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <TextField
+                        placeholder="Enter purpose"
+                        value={purpose}
+                        onChange={(e) => {
+                          const purposes = moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : [''];
+                          purposes[index] = e.target.value;
+                          setMoveInOutFormData({...moveInOutFormData, purpose: purposes.join('|')});
+                        }}
+                        fullWidth
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '& fieldset': {
+                              borderColor: '#d1d5db',
+                            },
+                            '&:hover fieldset': {
+                              borderColor: '#C72030',
+                            },
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#C72030',
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                    {(moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : ['']).length > 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const purposes = moveInOutFormData.purpose ? moveInOutFormData.purpose.split('|') : [''];
+                          purposes.splice(index, 1);
+                          setMoveInOutFormData({...moveInOutFormData, purpose: purposes.join('|')});
+                        }}
+                        className="text-destructive border-destructive hover:bg-destructive/10"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Active Checkbox */}
@@ -724,6 +1161,128 @@ export const VisitingPurposePage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Purpose Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-md bg-white z-50">
+          <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
+            <DialogTitle className="text-lg font-semibold">Edit Purpose</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleEditModalClose}
+              className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Multiple Purpose Input */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Enter Purpose</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addEditPurpose}
+                  className="text-primary border-primary hover:bg-primary/10"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                {editingPurposes.map((purpose, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <TextField
+                        placeholder="Enter purpose"
+                        value={purpose}
+                        onChange={(e) => updateEditPurpose(index, e.target.value)}
+                        fullWidth
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '& fieldset': {
+                              borderColor: '#d1d5db',
+                            },
+                            '&:hover fieldset': {
+                              borderColor: '#C72030',
+                            },
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#C72030',
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                    {editingPurposes.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeEditPurpose(index)}
+                        className="text-destructive border-destructive hover:bg-destructive/10 flex-shrink-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Active Checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="editActive"
+                checked={editingPurpose?.status || false}
+                onCheckedChange={(checked) => editingPurpose && setEditingPurpose({...editingPurpose, status: checked as boolean})}
+              />
+              <Label htmlFor="editActive" className="text-black">Active</Label>
+            </div>
+
+            {/* Update Button */}
+            <div className="flex justify-start pt-4">
+              <Button 
+                onClick={handleEditSubmit}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
+                disabled={editingPurposes.every(p => !p.trim())}
+              >
+                UPDATE
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Move In/Out Modal */}
+      <EditMoveInOutModal
+        isOpen={isEditMoveInOutModalOpen}
+        onClose={() => setIsEditMoveInOutModalOpen(false)}
+        moveInOutData={editingMoveInOut}
+        onUpdate={handleUpdateMoveInOut}
+      />
+
+      {/* Edit Work Type Modal */}
+      <EditWorkTypeModal
+        isOpen={isEditWorkTypeModalOpen}
+        onClose={() => setIsEditWorkTypeModalOpen(false)}
+        workTypeData={editingWorkType}
+        onUpdate={handleUpdateWorkType}
+      />
+
+      {/* Edit Visitor Comment Modal */}
+      <EditVisitorCommentModal
+        isOpen={isEditVisitorCommentModalOpen}
+        onClose={() => setIsEditVisitorCommentModalOpen(false)}
+        commentData={editingVisitorComment}
+        onUpdate={handleUpdateVisitorComment}
+      />
     </>
   );
 };
