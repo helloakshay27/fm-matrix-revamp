@@ -61,7 +61,7 @@ export const ExternalUsersDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500); // debounce like ServiceDashboard
-  const [filters, setFilters] = useState({ name: '', email: '', mobile: '', cluster: '', circle: '', department: '', role: '', report_to_id: '' });
+  const [filters, setFilters] = useState({ firstname: '', lastname: '', email: '', mobile: '', cluster: '', circle: '', department: '', role: '', report_to_id: '' });
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -92,13 +92,14 @@ export const ExternalUsersDashboard = () => {
         const hasFilters = Object.values(filters).some(v => v && v !== '');
         if (hasFilters) {
           const filterParams = [];
-          if (filters.name) filterParams.push(`q[firstname_or_lastname_cont]=${encodeURIComponent(filters.name)}`);
+          if (filters.firstname) filterParams.push(`q[firstname_cont]=${encodeURIComponent(filters.firstname.trim())}`);
+          if (filters.lastname) filterParams.push(`q[lastname_cont]=${encodeURIComponent(filters.lastname.trim())}`);
           if (filters.email) filterParams.push(`q[email_cont]=${encodeURIComponent(filters.email)}`);
           if (filters.mobile) filterParams.push(`q[mobile_cont]=${encodeURIComponent(filters.mobile)}`);
-          if (filters.cluster) filterParams.push(`q[company_cluster_id_eq]=${encodeURIComponent(filters.cluster)}`);
-          if (filters.circle) filterParams.push(`q[lock_user_permissions_circle_id_eq]=${encodeURIComponent(filters.circle)}`);
-          if (filters.department) filterParams.push(`q[lock_user_permissions_department_id_eq]=${encodeURIComponent(filters.department)}`);
-          if (filters.role) filterParams.push(`q[lock_user_permissions_lock_role_id_eq]=${encodeURIComponent(filters.role)}`);
+          if (filters.cluster) filterParams.push(`q[company_cluster_cluster_name_cont]=${encodeURIComponent(filters.cluster)}`);
+          if (filters.circle) filterParams.push(`q[lock_user_permissions_circle_name_cont]=${encodeURIComponent(filters.circle)}`);
+          if (filters.department) filterParams.push(`q[lock_user_permissions_pms_department_department_name_cont]=${encodeURIComponent(filters.department)}`);
+          if (filters.role) filterParams.push(`q[lock_user_permissions_lock_role_name_cont]=${encodeURIComponent(filters.role)}`);
           if (filters.report_to_id) filterParams.push(`q[report_to_id_eq]=${encodeURIComponent(filters.report_to_id)}`);
           url += `&${filterParams.join('&')}`;
         } else {
@@ -368,9 +369,10 @@ export const ExternalUsersDashboard = () => {
     setIsFilterModalOpen(true);
   };
 
-  const handleApplyFilters = (newFilters: { name: string; email: string; mobile: string; cluster?: string; circle?: string; department?: string; role?: string; report_to_id?: string | number }) => {
+  const handleApplyFilters = (newFilters: { firstname: string; lastname: string; email: string; mobile: string; cluster?: string; circle?: string; department?: string; role?: string; report_to_id?: string | number }) => {
     setFilters({
-      name: newFilters.name || '',
+      firstname: newFilters.firstname || '',
+      lastname: newFilters.lastname || '',
       email: newFilters.email || '',
       mobile: newFilters.mobile || '',
       cluster: newFilters.cluster || '',
