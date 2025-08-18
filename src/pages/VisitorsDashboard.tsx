@@ -98,6 +98,7 @@ const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: nu
     throw error;
   }
 };
+import { VisitorAnalyticsContent } from '@/components/VisitorAnalyticsContent';
 
 export const VisitorsDashboard = () => {
   const [selectedPerson, setSelectedPerson] = useState('');
@@ -681,7 +682,6 @@ default:
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Visitors Dashboard</h1>
       <div className="mb-6">
         <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
           <div className="mb-4">
@@ -911,10 +911,8 @@ default:
             </Tabs>
           </TabsContent>
 
-          <TabsContent value="analytics" className="bg-white rounded-lg border border-gray-200 mt-4 p-6">
-            <div className="text-center text-gray-500 py-16">
-              Analytics content will be displayed here
-            </div>
+          <TabsContent value="analytics" className="mt-4">
+            <VisitorAnalyticsContent />
           </TabsContent>
         </Tabs>
       </div>

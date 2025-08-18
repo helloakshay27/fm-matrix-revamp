@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { TextField } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
@@ -18,7 +19,7 @@ export const EditSupportStaffPage = () => {
     days: '',
     hours: '',
     minutes: '',
-    selectedIcons: [] as string[]
+    selectedIcon: '' as string
   });
 
   const iconOptions = [
@@ -54,13 +55,13 @@ export const EditSupportStaffPage = () => {
     setTimeout(() => {
       // Pre-populate with sample data based on ID
       const sampleData = {
-        '1': { categoryName: 'DTDC', days: '2', hours: '4', minutes: '30', selectedIcons: ['1'] },
-        '2': { categoryName: 'Swiggy/Instamrt', days: '0', hours: '1', minutes: '15', selectedIcons: ['2'] },
-        '3': { categoryName: 'OLA', days: '0', hours: '0', minutes: '30', selectedIcons: ['7'] },
-        '4': { categoryName: 'Flipkart', days: '1', hours: '0', minutes: '0', selectedIcons: ['1'] },
-        '5': { categoryName: 'Amazon', days: '2', hours: '0', minutes: '0', selectedIcons: ['1'] },
-        '6': { categoryName: 'UBER', days: '0', hours: '0', minutes: '20', selectedIcons: ['7'] },
-        '7': { categoryName: 'Zomato', days: '0', hours: '1', minutes: '0', selectedIcons: ['16'] }
+        '1': { categoryName: 'DTDC', days: '2', hours: '4', minutes: '30', selectedIcon: '1' },
+        '2': { categoryName: 'Swiggy/Instamrt', days: '0', hours: '1', minutes: '15', selectedIcon: '2' },
+        '3': { categoryName: 'OLA', days: '0', hours: '0', minutes: '30', selectedIcon: '7' },
+        '4': { categoryName: 'Flipkart', days: '1', hours: '0', minutes: '0', selectedIcon: '1' },
+        '5': { categoryName: 'Amazon', days: '2', hours: '0', minutes: '0', selectedIcon: '1' },
+        '6': { categoryName: 'UBER', days: '0', hours: '0', minutes: '20', selectedIcon: '7' },
+        '7': { categoryName: 'Zomato', days: '0', hours: '1', minutes: '0', selectedIcon: '16' }
       };
       
       if (id && sampleData[id as keyof typeof sampleData]) {
@@ -123,59 +124,133 @@ export const EditSupportStaffPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Category Name Input */}
-          <div className="space-y-2">
-            <Label htmlFor="categoryName">Category Name</Label>
-            <Input
-              id="categoryName"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Category Name Input */}
+            <TextField
+              label="Category Name"
               placeholder="Enter Category Name"
               value={formData.categoryName}
               onChange={(e) => setFormData({...formData, categoryName: e.target.value})}
-              className="w-full"
+              fullWidth
+              variant="outlined"
               required
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: {
+                  backgroundColor: '#fff',
+                  borderRadius: '4px',
+                  '& fieldset': {
+                    borderColor: '#ddd',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#C72030',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#C72030',
+                  },
+                },
+              }}
             />
-          </div>
 
-          {/* Time Inputs */}
-          <div className="space-y-2">
-            <Label>Estimated Time</Label>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="days" className="text-sm text-gray-600">Days</Label>
-                <Input
-                  id="days"
-                  placeholder="Days"
-                  value={formData.days}
-                  onChange={(e) => setFormData({...formData, days: e.target.value})}
-                  type="number"
-                  min="0"
-                />
-              </div>
-              <div>
-                <Label htmlFor="hours" className="text-sm text-gray-600">Hours</Label>
-                <Input
-                  id="hours"
-                  placeholder="Hrs"
-                  value={formData.hours}
-                  onChange={(e) => setFormData({...formData, hours: e.target.value})}
-                  type="number"
-                  min="0"
-                  max="23"
-                />
-              </div>
-              <div>
-                <Label htmlFor="minutes" className="text-sm text-gray-600">Minutes</Label>
-                <Input
-                  id="minutes"
-                  placeholder="Min"
-                  value={formData.minutes}
-                  onChange={(e) => setFormData({...formData, minutes: e.target.value})}
-                  type="number"
-                  min="0"
-                  max="59"
-                />
-              </div>
-            </div>
+            {/* Days Input */}
+            <TextField
+              label="Days"
+              placeholder="Days"
+              value={formData.days}
+              onChange={(e) => setFormData({...formData, days: e.target.value})}
+              fullWidth
+              variant="outlined"
+              type="number"
+              inputProps={{ min: "0" }}
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: {
+                  backgroundColor: '#fff',
+                  borderRadius: '4px',
+                  '& fieldset': {
+                    borderColor: '#ddd',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#C72030',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#C72030',
+                  },
+                },
+              }}
+            />
+
+            {/* Hours Input */}
+            <TextField
+              label="Hours"
+              placeholder="Hrs"
+              value={formData.hours}
+              onChange={(e) => setFormData({...formData, hours: e.target.value})}
+              fullWidth
+              variant="outlined"
+              type="number"
+              inputProps={{ min: "0", max: "23" }}
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: {
+                  backgroundColor: '#fff',
+                  borderRadius: '4px',
+                  '& fieldset': {
+                    borderColor: '#ddd',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#C72030',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#C72030',
+                  },
+                },
+              }}
+            />
+
+            {/* Minutes Input */}
+            <TextField
+              label="Minutes"
+              placeholder="Min"
+              value={formData.minutes}
+              onChange={(e) => setFormData({...formData, minutes: e.target.value})}
+              fullWidth
+              variant="outlined"
+              type="number"
+              inputProps={{ min: "0", max: "59" }}
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: {
+                  backgroundColor: '#fff',
+                  borderRadius: '4px',
+                  '& fieldset': {
+                    borderColor: '#ddd',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#C72030',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#C72030',
+                  },
+                },
+              }}
+            />
           </div>
 
           {/* Icon Selection Grid */}
@@ -187,15 +262,12 @@ export const EditSupportStaffPage = () => {
                   key={option.id}
                   className="flex items-center gap-2 p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer"
                   onClick={() => {
-                    const updatedIcons = formData.selectedIcons.includes(option.id)
-                      ? formData.selectedIcons.filter(id => id !== option.id)
-                      : [...formData.selectedIcons, option.id];
-                    setFormData({...formData, selectedIcons: updatedIcons});
+                    setFormData({...formData, selectedIcon: option.id});
                   }}
                 >
                   <input
                     type="radio"
-                    checked={formData.selectedIcons.includes(option.id)}
+                    checked={formData.selectedIcon === option.id}
                     onChange={() => {}}
                     className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
                     style={{

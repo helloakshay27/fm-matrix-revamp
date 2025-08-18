@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
+import { TicketPagination } from '@/components/TicketPagination';
+import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 
 interface SupportStaffData {
   id: string;
@@ -25,12 +27,22 @@ export const SupportStaffPage = () => {
   const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [visibleColumns, setVisibleColumns] = useState({
+    sNo: true,
+    actions: true,
+    name: true,
+    estimatedTime: true,
+    createdOn: true,
+    createdBy: true
+  });
   const [formData, setFormData] = useState({
     categoryName: '',
     days: '',
     hours: '',
     minutes: '',
-    selectedIcons: [] as string[]
+    selectedIcon: '' as string
   });
 
   // Field styles for Material-UI components
@@ -131,6 +143,13 @@ export const SupportStaffPage = () => {
 
   const [filteredStaff, setFilteredStaff] = useState<SupportStaffData[]>(sampleStaff);
 
+  // Pagination calculations
+  const totalRecords = filteredStaff.length;
+  const totalPages = Math.ceil(totalRecords / perPage);
+  const startIndex = (currentPage - 1) * perPage;
+  const endIndex = startIndex + perPage;
+  const currentPageData = filteredStaff.slice(startIndex, endIndex);
+
   useEffect(() => {
     setCurrentSection('Settings');
   }, [setCurrentSection]);
@@ -141,7 +160,17 @@ export const SupportStaffPage = () => {
       staff.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredStaff(filtered);
+    setCurrentPage(1); // Reset to first page when filtering
   }, [searchTerm]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePerPageChange = (newPerPage: number) => {
+    setPerPage(newPerPage);
+    setCurrentPage(1); // Reset to first page when changing per page
+  };
 
   const iconOptions = [
     { id: '1', icon: '📦', name: 'Delivery' },
@@ -177,7 +206,7 @@ export const SupportStaffPage = () => {
       days: '',
       hours: '',
       minutes: '',
-      selectedIcons: []
+      selectedIcon: ''
     });
   };
 
@@ -210,6 +239,33 @@ export const SupportStaffPage = () => {
     });
   };
 
+  const handleRefresh = () => {
+    setSearchTerm('');
+    setCurrentPage(1);
+    setFilteredStaff(sampleStaff);
+    toast({
+      title: "Refreshed",
+      description: "Data has been refreshed successfully",
+    });
+  };
+
+  const handleColumnToggle = (columnKey: string, visible: boolean) => {
+    setVisibleColumns(prev => ({
+      ...prev,
+      [columnKey]: visible
+    }));
+  };
+
+  // Column definitions for visibility control
+  const columns = [
+    { key: 'sNo', label: 'S.No.', visible: visibleColumns.sNo },
+    { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
+    { key: 'name', label: 'Name', visible: visibleColumns.name },
+    { key: 'estimatedTime', label: 'Estimated Time', visible: visibleColumns.estimatedTime },
+    { key: 'createdOn', label: 'Created On', visible: visibleColumns.createdOn },
+    { key: 'createdBy', label: 'Created By', visible: visibleColumns.createdBy }
+  ];
+
   return (
     <>
       <div className="p-6 min-h-screen">
@@ -233,12 +289,10 @@ export const SupportStaffPage = () => {
               className="pl-10 w-80"
             />
           </div>
-          <Button variant="outline" size="icon" className="border-gray-300">
-            <RefreshCw className="w-4 h-4" />
-          </Button>
-          <Button variant="outline" size="icon" className="border-gray-300">
-            <Grid3X3 className="w-4 h-4" />
-          </Button>
+          <ColumnVisibilityDropdown
+            columns={columns}
+            onColumnToggle={handleColumnToggle}
+          />
         </div>
       </div>
 
@@ -247,22 +301,24 @@ export const SupportStaffPage = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-[#f6f4ee]">
-              <TableHead className="w-20">S.No.</TableHead>
-              <TableHead className="w-20">Actions</TableHead>
-              <TableHead className="min-w-[200px]">Name</TableHead>
-              <TableHead className="w-40">Estimated time</TableHead>
-              <TableHead className="w-48">Created On</TableHead>
-              <TableHead className="w-40">Created By</TableHead>
+              {visibleColumns.sNo && <TableHead className="w-20">S.No.</TableHead>}
+              {visibleColumns.actions && <TableHead className="w-20">Actions</TableHead>}
+              {visibleColumns.name && <TableHead className="min-w-[200px]">Name</TableHead>}
+              {visibleColumns.estimatedTime && <TableHead className="w-40">Estimated time</TableHead>}
+              {visibleColumns.createdOn && <TableHead className="w-48">Created On</TableHead>}
+              {visibleColumns.createdBy && <TableHead className="w-40">Created By</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredStaff.map((staff) => (
+            {currentPageData.map((staff) => (
               <TableRow key={staff.id} className="hover:bg-gray-50">
-                <TableCell className="font-medium">
-                  {staff.sNo}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
+                {visibleColumns.sNo && (
+                  <TableCell className="font-medium">
+                    {staff.sNo}
+                  </TableCell>
+                )}
+                {visibleColumns.actions && (
+                  <TableCell>
                     <button
                       onClick={() => handleEdit(staff.id)}
                       className="p-1 hover:bg-gray-100 rounded"
@@ -270,33 +326,37 @@ export const SupportStaffPage = () => {
                     >
                       <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
                     </button>
-                    <button
-                      onClick={() => handleDelete(staff.id)}
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
-                    </button>
-                  </div>
-                </TableCell>
-                <TableCell className="font-medium">
-                  {staff.name}
-                </TableCell>
-                <TableCell className="text-gray-500">
-                  {staff.estimatedTime || '--'}
-                </TableCell>
-                <TableCell>{staff.createdOn}</TableCell>
-                <TableCell>{staff.createdBy}</TableCell>
+                  </TableCell>
+                )}
+                {visibleColumns.name && (
+                  <TableCell className="font-medium">
+                    {staff.name}
+                  </TableCell>
+                )}
+                {visibleColumns.estimatedTime && (
+                  <TableCell className="text-gray-500">
+                    {staff.estimatedTime || '--'}
+                  </TableCell>
+                )}
+                {visibleColumns.createdOn && <TableCell>{staff.createdOn}</TableCell>}
+                {visibleColumns.createdBy && <TableCell>{staff.createdBy}</TableCell>}
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
 
-      {/* Showing results count */}
-      <div className="mt-4 text-sm text-gray-600">
-        Showing 1 to {filteredStaff.length} of {filteredStaff.length} rows
-      </div>
+      {/* Pagination */}
+      <TicketPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalRecords={totalRecords}
+        perPage={perPage}
+        isLoading={false}
+        onPageChange={handlePageChange}
+        onPerPageChange={handlePerPageChange}
+      />
+
       </div>
 
       {/* Add Modal */}
@@ -315,45 +375,77 @@ export const SupportStaffPage = () => {
           </DialogHeader>
           
           <div className="space-y-6">
-            {/* Category Name Input */}
-            <div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Category Name Input */}
               <TextField
+                label="Category Name"
                 placeholder="Enter Category Name"
                 value={formData.categoryName}
                 onChange={(e) => setFormData({...formData, categoryName: e.target.value})}
                 fullWidth
                 variant="outlined"
-                size="small"
-                sx={fieldStyles}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
               />
-            </div>
 
-
-            {/* Time Inputs */}
-            <div className="grid grid-cols-3 gap-4">
+              {/* Days Input */}
               <TextField
+                label="Days"
                 placeholder="Days"
                 value={formData.days}
                 onChange={(e) => setFormData({...formData, days: e.target.value})}
+                fullWidth
                 variant="outlined"
-                size="small"
-                sx={fieldStyles}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
               />
+
+              {/* Hours Input */}
               <TextField
+                label="Hours"
                 placeholder="Hrs"
                 value={formData.hours}
                 onChange={(e) => setFormData({...formData, hours: e.target.value})}
+                fullWidth
                 variant="outlined"
-                size="small"
-                sx={fieldStyles}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
               />
+
+              {/* Minutes Input */}
               <TextField
+                label="Minutes"
                 placeholder="Min"
                 value={formData.minutes}
                 onChange={(e) => setFormData({...formData, minutes: e.target.value})}
+                fullWidth
                 variant="outlined"
-                size="small"
-                sx={fieldStyles}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
               />
             </div>
 
@@ -364,15 +456,12 @@ export const SupportStaffPage = () => {
                   key={option.id}
                   className="flex items-center gap-2 p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer"
                   onClick={() => {
-                    const updatedIcons = formData.selectedIcons.includes(option.id)
-                      ? formData.selectedIcons.filter(id => id !== option.id)
-                      : [...formData.selectedIcons, option.id];
-                    setFormData({...formData, selectedIcons: updatedIcons});
+                    setFormData({...formData, selectedIcon: option.id});
                   }}
                 >
                   <input
                     type="radio"
-                    checked={formData.selectedIcons.includes(option.id)}
+                    checked={formData.selectedIcon === option.id}
                     onChange={() => {}}
                     className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
                     style={{
