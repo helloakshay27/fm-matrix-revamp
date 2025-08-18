@@ -273,6 +273,38 @@ const InventoryConsumptionDashboard = () => {
     navigate(`/maintenance/inventory-consumption/view/${item.id}?start_date=${start}&end_date=${end}`);
   };
 
+  // Add small '(Consumed)' label beneath the Amount header (without changing EnhancedTable)
+  useEffect(() => {
+    if (!expandedMonth) return;
+    let tries = 0;
+    const maxTries = 12; // ~1.2s total
+    const attempt = () => {
+      const monthSection = document.getElementById(`month-${expandedMonth}`);
+      if (!monthSection) return false;
+      const headers = monthSection.querySelectorAll('thead th');
+      for (const th of Array.from(headers)) {
+        const text = th.textContent?.trim() || '';
+        if (text.startsWith('Amount') && !th.querySelector('.consumed-sub-label')) {
+          const sub = document.createElement('div');
+          sub.className = 'consumed-sub-label text-[10px] text-gray-500 leading-none';
+          sub.textContent = '(Consumed)';
+          th.appendChild(sub);
+          return true;
+        }
+      }
+      return false;
+    };
+    // Try immediately and then retry until table header present
+    if (attempt()) return;
+    const interval = setInterval(() => {
+      tries++;
+      if (attempt() || tries >= maxTries) {
+        clearInterval(interval);
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [expandedMonth, monthData]);
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}

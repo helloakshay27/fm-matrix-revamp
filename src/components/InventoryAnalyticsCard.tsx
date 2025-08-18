@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LabelList } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { inventoryAnalyticsDownloadAPI } from '@/services/inventoryAnalyticsDownloadAPI';
@@ -138,23 +138,73 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         );
       }
       case 'inventoryCostOverMonth': {
-        // Render each month as a small box with cost value, and reduce card height
-        if (!data.response || typeof data.response !== 'object') {
-          return <div>No cost data available</div>;
-        }
-        const months = Object.entries(data.response);
-        return (
-          <div className="flex flex-wrap gap-2 min-h-[60px]">
-            {months.map(([month, value]: [string, any], idx: number) => (
-              <div
-                key={month}
-                className="bg-[#f6f4ee] rounded shadow p-2 min-w-[70px] flex flex-col items-center h-[60px] justify-center"
-                style={{ fontSize: '0.85rem' }}
-              >
-                <div className="font-semibold text-[#C72030] text-xs">{month}</div>
-                <div className="font-bold text-gray-800 text-base mt-1">₹{value.trend_over_month}</div>
+        // Bar chart view (improved UI)
+        if (!data.response || typeof data.response !== 'object') return <div>No cost data available</div>;
+
+        const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const raw = Object.entries(data.response).map(([month, value]: [string, any]) => ({
+          month,
+          cost: Number(typeof value === 'object' && value ? (value.trend_over_month ?? value.cost ?? 0) : value) || 0
+        })).sort((a, b) => monthOrder.indexOf(a.month) - monthOrder.indexOf(b.month));
+
+        const hasNonZero = raw.some(r => r.cost > 0);
+        const dataPoints = hasNonZero ? raw.filter(r => r.cost > 0) : raw; // if all zero keep all for context
+        const currency = localStorage.getItem('currency') || '₹';
+        const total = dataPoints.reduce((s, d) => s + d.cost, 0);
+        const max = Math.max(...dataPoints.map(d => d.cost), 0);
+        const yDomain = [0, max === 0 ? 10 : max * 1.15];
+        const short = dataPoints.length > 6; // use short month names if many
+        const chartData = dataPoints.map(d => ({ ...d, label: short ? d.month.slice(0, 3) : d.month }));
+
+        const formatNumber = (v: number) => {
+          if (v >= 1_000_000) return (v / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+          if (v >= 1_000) return (v / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+          return v.toString();
+        };
+
+        const CustomTooltip: React.FC<any> = ({ active, payload, label }) => {
+          if (active && payload && payload.length) {
+            return (
+              <div className="bg-white border border-gray-200 rounded px-3 py-2 shadow-sm text-xs">
+                <div className="font-semibold text-gray-700 mb-1">{label}</div>
+                <div className="text-gray-600">Cost: <span className="font-medium text-gray-900">{currency}{payload[0].value}</span></div>
               </div>
-            ))}
+            );
+          }
+          return null;
+        };
+
+        return (
+          <div className="w-full space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm text-gray-600 flex items-center gap-2">
+                <span className="w-3 h-3 rounded-sm bg-gradient-to-r from-[#C72030] to-[#E84A4A]"></span>
+                <span className="font-medium text-gray-700">Monthly Cost</span>
+              </div>
+              <div className="text-sm font-semibold text-gray-800">Total: <span className="text-[#C72030]">{currency}{total}</span></div>
+            </div>
+            <div className="w-full h-[260px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 40 }} barCategoryGap={20}>
+                  <defs>
+                    <linearGradient id="invCostBar" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#E84A4A" />
+                      <stop offset="100%" stopColor="#C72030" />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 12 }} interval={0} tickLine={false} />
+                  <YAxis domain={yDomain} tickFormatter={(v) => `${currency}${formatNumber(v)}`} tick={{ fontSize: 11 }} width={70} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="cost" fill="url(#invCostBar)" radius={[4, 4, 0, 0]} maxBarSize={50}>
+                    <LabelList dataKey="cost" position="top" formatter={(v: number) => v ? `${currency}${formatNumber(v)}` : ''} className="text-[10px] fill-gray-800 font-medium" />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            {!hasNonZero && (
+              <div className="text-xs text-gray-500 italic">No cost recorded in the selected period.</div>
+            )}
           </div>
         );
       }
@@ -204,40 +254,43 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         if (!data.response || !Array.isArray(data.response)) {
           return <div>No consumption data available</div>;
         }
+        // Scroll container similar to greenConsumption (≈5 rows visible)
         return (
           <div className="overflow-x-auto">
-            <table className="min-w-full table-auto">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Product</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Unit</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Opening</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Addition</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Consumption</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Cost/Unit</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Total Cost</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.response.map((row: any, index: number) => (
-                  <tr key={index} className="border-t">
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.date}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.unit}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.opening}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.addition}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.consumption}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.current_stock}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.cost_per_unit}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.cost}</td>
+            <div className="max-h-[270px] overflow-y-auto rounded border border-gray-200">
+              <table className="min-w-full table-auto">
+                <thead className="sticky top-0 bg-gray-50 z-10 shadow-sm">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Product</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Unit</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Opening</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Addition</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Consumption</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Cost/Unit</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Total Cost</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {data.response.map((row: any, index: number) => (
+                    <tr key={index} className="border-t hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-2 text-sm text-gray-600 whitespace-nowrap">{row.date}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.unit}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.opening}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.addition}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.consumption}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.current_stock}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.cost_per_unit}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.cost}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             {data.info?.info && (
-              <div className="mt-4 text-xs text-gray-500">{data.info.info}</div>
+              <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
             )}
           </div>
         );
@@ -278,7 +331,6 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         return (
           <div className="flex flex-col items-center justify-center w-full h-full">
             <div className="p-6 w-full flex flex-col items-center">
-              <div className="text-2xl font-bold text-gray-800 mb-2">Total Items: {total}</div>
               <div className="flex flex-col md:flex-row items-center justify-center gap-8 w-full">
                 <ResponsiveContainer width={170} height={170}>
                   <PieChart>
@@ -311,8 +363,11 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
                     </div>
                   ))}
                 </div>
+
               </div>
+
             </div>
+            <div className="text-2xl font-bold text-gray-800 mb-2">Total Items: {total}</div>
           </div>
         );
       }
@@ -348,41 +403,43 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         if (!data.response || !Array.isArray(data.response)) {
           return <div>No consumption data available</div>;
         }
+        // Approx row height (~44px) * 5 + header (~48px) => ~268px. Use max-h to allow shrink when fewer rows.
         return (
           <div className="overflow-x-auto">
-            <table className="min-w-full table-auto">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Product</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Unit</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Opening</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Addition</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Consumption</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Cost/Unit</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Total Cost</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.response.map((row: any, index: number) => (
-                  <tr key={index} className="border-t">
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.date}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.unit}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.opening}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.addition}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.consumption}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.current_stock}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.cost_per_unit}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.cost}</td>
+            <div className="max-h-[270px] overflow-y-auto rounded border border-gray-200">
+              <table className="min-w-full table-auto">
+                <thead className="sticky top-0 bg-gray-50 z-10 shadow-sm">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Date</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Product</th>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Unit</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Opening</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Addition</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Consumption</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Cost/Unit</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Total Cost</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {/* Info section */}
+                </thead>
+                <tbody>
+                  {data.response.map((row: any, index: number) => (
+                    <tr key={index} className="border-t hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-2 text-sm text-gray-600 whitespace-nowrap">{row.date}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.unit}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.opening}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.addition}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.consumption}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.current_stock}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.cost_per_unit}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.cost}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             {data.info?.info && (
-              <div className="mt-4 text-xs text-gray-500">{data.info.info}</div>
+              <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
             )}
           </div>
         );
@@ -428,28 +485,31 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
           const stock = item[product];
           return { product, ...stock };
         });
+        // Scroll container: 5 rows (~44px each) + header ~48px => ~268px
         return (
           <div className="overflow-x-auto">
-            <table className="min-w-full table-auto">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Product</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
-                  <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Minimum Stock</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row: any, index: number) => (
-                  <tr key={index} className="border-t">
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.Current_Stock}</td>
-                    <td className="px-4 py-2 text-sm text-gray-600">{row.Minimum_Stock}</td>
+            <div className="max-h-[270px] overflow-y-auto rounded border border-gray-200">
+              <table className="min-w-full table-auto">
+                <thead className="sticky top-0 bg-gray-50 z-10 shadow-sm">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Product</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
+                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Minimum Stock</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((row: any, index: number) => (
+                    <tr key={index} className="border-t hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.Current_Stock}</td>
+                      <td className="px-4 py-2 text-sm text-gray-600">{row.Minimum_Stock}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             {data.info?.info && (
-              <div className="mt-4 text-xs text-gray-500">{data.info.info}</div>
+              <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
             )}
           </div>
         );
@@ -461,8 +521,8 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   };
 
   return (
-  <div className={`bg-white rounded-lg border border-gray-200 p-4 shadow-sm min-h-[120px] ${className}`}>
-      <div className="flex items-center justify-between mb-4">
+    <div className={`bg-white rounded-lg border border-gray-200 p-4 shadow-sm h-[420px] flex flex-col ${className}`}>
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
         <Button
           variant="outline"
@@ -473,7 +533,11 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
           <Download className="w-4 h-4" />
         </Button>
       </div>
-      {renderContent()}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="h-full overflow-y-auto pr-1 custom-scrollbar">
+          {renderContent()}
+        </div>
+      </div>
     </div>
   );
 };
