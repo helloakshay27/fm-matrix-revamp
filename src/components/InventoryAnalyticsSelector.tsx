@@ -1,9 +1,17 @@
+// ...existing code...
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CheckSquare, Square, ChevronDown, Package, Leaf, Activity, FileText, AlertTriangle, BarChart, Database } from 'lucide-react';
-
 const inventoryAnalyticsOptions = [
+  {
+    id: 'inventory_consumption_over_site',
+    label: 'Inventory Consumption Over Site',
+    checked: false,
+    endpoint: 'inventory_consumption_over_site.json',
+    icon: BarChart
+  },
+
   { 
     id: 'items_status', 
     label: 'Items Status', 
@@ -52,6 +60,20 @@ const inventoryAnalyticsOptions = [
     checked: false, 
     endpoint: 'current_minimum_stock_green.json',
     icon: Database 
+  },
+    {
+    id: 'inventory_cost_over_month',
+    label: 'Inventory Cost Over Month',
+    checked: false,
+    endpoint: 'card_inventory_cost_over_month.json',
+    icon: BarChart
+  },
+  {
+    id: 'inventory_consumption_non_green',
+    label: 'Inventory Consumption Non-Green',
+    checked: false,
+    endpoint: 'get_inventory_consumption_non_green.json',
+    icon: FileText
   },
 ];
 

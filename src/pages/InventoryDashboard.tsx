@@ -165,14 +165,12 @@ export const InventoryDashboard = () => {
     "statusChart",
     "criticalityChart",
     "categoryChart",
-    "agingMatrix",
   ]);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([
     "statusChart",
     "criticalityChart",
     "categoryChart",
-    "agingMatrix",
   ]);
   const [activeTab, setActiveTab] = useState<string>("list");
   const [showDateFilter, setShowDateFilter] = useState(false);
@@ -192,12 +190,51 @@ export const InventoryDashboard = () => {
   const [analyticsData, setAnalyticsData] = useState<any>({
     statusData: null,
     categoryData: null,
+    inventoryCostOverMonth: null,
   });
   const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>([
     'items_status',
     'category_wise',
     'green_consumption',
   ]);
+  // Fetch analytics data when selected options or date range changes
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      setAnalyticsLoading(true);
+      const newData: any = {};
+      const fromDate = dateRange.startDate;
+      const toDate = dateRange.endDate;
+      try {
+        if (selectedAnalyticsOptions.includes('items_status')) {
+          newData.statusData = await inventoryAnalyticsAPI.getItemsStatus(fromDate, toDate);
+        }
+        if (selectedAnalyticsOptions.includes('category_wise')) {
+          newData.categoryData = await inventoryAnalyticsAPI.getCategoryWise(fromDate, toDate);
+        }
+        if (selectedAnalyticsOptions.includes('green_consumption')) {
+          newData.greenConsumption = await inventoryAnalyticsAPI.getGreenConsumption(fromDate, toDate);
+        }
+        if (selectedAnalyticsOptions.includes('inventory_cost_over_month')) {
+          try {
+            const costOverMonthResp = await inventoryAnalyticsAPI.getInventoryCostOverMonth(fromDate, toDate);
+            console.log('[DEBUG] inventory_cost_over_month API response:', costOverMonthResp);
+            newData.inventoryCostOverMonth = costOverMonthResp;
+          } catch (err) {
+            console.error('[DEBUG] Error fetching inventory_cost_over_month:', err);
+            newData.inventoryCostOverMonth = null;
+          }
+        }
+        // Add other analytics fetches as needed
+      } catch (err) {
+        toast.error('Failed to fetch analytics data');
+        console.error('[DEBUG] General analytics fetch error:', err);
+      } finally {
+        setAnalyticsData((prev: any) => ({ ...prev, ...newData }));
+        setAnalyticsLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, [selectedAnalyticsOptions, dateRange]);
   const [visibleAnalyticsSections, setVisibleAnalyticsSections] = useState<string[]>([
     'itemsStatus',
     'categoryWise',
@@ -665,6 +702,17 @@ export const InventoryDashboard = () => {
 
       const results: any = {};
 
+      // Always fetch inventory_cost_over_month if selected
+      if (selectedAnalyticsOptions.includes('inventory_cost_over_month')) {
+        try {
+          const costOverMonthResp = await inventoryAnalyticsAPI.getInventoryCostOverMonth(fromDate, toDate);
+          results.inventoryCostOverMonth = costOverMonthResp;
+        } catch (err) {
+          console.error('[DEBUG] Error fetching inventory_cost_over_month:', err);
+          results.inventoryCostOverMonth = null;
+        }
+      }
+
       if (selectedAnalyticsOptions.includes('items_status')) {
         const statusResponse = await inventoryAnalyticsAPI.getItemsStatus(
           fromDate,
@@ -688,6 +736,13 @@ export const InventoryDashboard = () => {
         );
       }
 
+      if (selectedAnalyticsOptions.includes('inventory_consumption_over_site')) {
+        results.inventoryConsumptionOverSite = await inventoryAnalyticsAPI.getInventoryConsumptionOverSite(
+          fromDate,
+          toDate
+        );
+      }
+
       if (selectedAnalyticsOptions.includes('consumption_report_green')) {
         results.consumptionReportGreen =
           await inventoryAnalyticsAPI.getConsumptionReportGreen(fromDate, toDate);
@@ -696,6 +751,13 @@ export const InventoryDashboard = () => {
       if (selectedAnalyticsOptions.includes('consumption_report_non_green')) {
         results.consumptionReportNonGreen =
           await inventoryAnalyticsAPI.getConsumptionReportNonGreen(
+            fromDate,
+            toDate
+          );
+      }
+      if (selectedAnalyticsOptions.includes('inventory_consumption_non_green')) {
+        results.inventoryConsumptionNonGreen =
+          await inventoryAnalyticsAPI.getInventoryConsumptionNonGreen(
             fromDate,
             toDate
           );
@@ -896,6 +958,15 @@ export const InventoryDashboard = () => {
                     dateRange={dateRange}
                   />
                 )}
+              {selectedAnalyticsOptions.includes('inventory_consumption_non_green') &&
+                analyticsData.inventoryConsumptionNonGreen && (
+                  <InventoryAnalyticsCard
+                    title="Inventory Consumption Non-Green"
+                    data={analyticsData.inventoryConsumptionNonGreen}
+                    type="inventoryConsumptionNonGreen"
+                    dateRange={dateRange}
+                  />
+                )}
               {selectedAnalyticsOptions.includes('current_minimum_stock_green') &&
                 analyticsData.minimumStockGreen && (
                   <InventoryAnalyticsCard
@@ -913,6 +984,30 @@ export const InventoryDashboard = () => {
                     title="Current Minimum Stock Non-Green"
                     data={analyticsData.minimumStockNonGreen}
                     type="currentMinimumStockNonGreen"
+                    dateRange={dateRange}
+                  />
+                )}
+              {/* ...other analytics cards rendering... */}
+              {selectedAnalyticsOptions.includes('inventory_cost_over_month') && (
+                analyticsData.inventoryCostOverMonth ? (
+                  <InventoryAnalyticsCard
+                    title="Inventory Cost Over Month"
+                    data={analyticsData.inventoryCostOverMonth}
+                    type="inventoryCostOverMonth"
+                    dateRange={dateRange}
+                  />
+                ) : (
+                  <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded mb-4">
+                    No data available for Inventory Cost Over Month.
+                  </div>
+                )
+              )}
+              {selectedAnalyticsOptions.includes('inventory_consumption_over_site') &&
+                analyticsData.inventoryConsumptionOverSite && (
+                  <InventoryAnalyticsCard
+                    title="Inventory Consumption Over Site"
+                    data={analyticsData.inventoryConsumptionOverSite}
+                    type="inventoryConsumptionOverSite"
                     dateRange={dateRange}
                   />
                 )}

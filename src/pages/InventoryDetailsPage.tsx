@@ -130,9 +130,9 @@ export const InventoryDetailsPage = () => {
             <Edit className="w-4 h-4 mr-2" />
             Edit
           </Button>
-          <Button onClick={handleFeeds} className="bg-[#C72030] text-white hover:bg-[#C72030]/90">
+          {/* <Button onClick={handleFeeds} className="bg-[#C72030] text-white hover:bg-[#C72030]/90">
             Feeds
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -331,37 +331,41 @@ export const InventoryDetailsPage = () => {
                 <div className="space-y-3">
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Name</span>
-                    <span>: CCTV</span>
+                    <span>: {inventoryData?.asset_name || inventoryData?.name || '—'}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Group</span>
-                    <span>: CCTV</span>
+                    <span>: {inventoryData?.pms_asset_group || inventoryData?.group || '—'}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">SubGroup</span>
-                    <span>: CCTV Camera</span>
+                    <span>: {inventoryData?.pms_asset_sub_group || inventoryData?.sub_group || '—'}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Site</span>
-                    <span>: Sai Radhe, Bund Garden</span>
+                    <span>: {inventoryData?.site || '—'}</span>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <div className="flex text-sm">
+                    <span className="text-gray-600 w-24">Building</span>
+                    <span>: {inventoryData?.building || '—'}</span>
+                  </div>
+                  <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Wing</span>
-                    <span>: -</span>
+                    <span>: {inventoryData?.wing || '—'}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Floor</span>
-                    <span>: -</span>
+                    <span>: {inventoryData?.floor || '—'}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Area</span>
-                    <span>: -</span>
+                    <span>: {inventoryData?.area || '—'}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Room</span>
-                    <span>: -</span>
+                    <span>: {inventoryData?.room || '—'}</span>
                   </div>
                 </div>
               </div>
