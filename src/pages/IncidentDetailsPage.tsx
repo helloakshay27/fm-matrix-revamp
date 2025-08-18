@@ -330,7 +330,7 @@ Reported By: ${incident.created_by}
                       {injury.injury_type || injury.injuryType || '-'}
                     </TableCell>
                     <TableCell>
-                      {injury.who_got_injured_name || injury.whoGotInjured || '-'}
+                      {injury.who_got_injured || '-'}
                     </TableCell>
                     <TableCell>
                       {injury.name || '-'}
@@ -403,13 +403,19 @@ Reported By: ${incident.created_by}
 
       <UpdateIncidentModal
         isOpen={showUpdateModal}
-        onClose={() => setShowUpdateModal(false)}
+        onClose={() => {
+          setShowUpdateModal(false);
+          fetchIncidentDetails(); // Refresh the incident details to show updated data
+        }}
         incidentId={incident.id.toString()}
       />
 
       <AddInjuryModal
         isOpen={showInjuryModal}
-        onClose={() => setShowInjuryModal(false)}
+        onClose={() => {
+          setShowInjuryModal(false);
+          fetchIncidentDetails(); // Refresh the incident details to show updated data
+        }}
         incidentId={incident.id.toString()}
       />
     </div>
