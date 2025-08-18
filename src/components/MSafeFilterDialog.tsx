@@ -12,16 +12,20 @@ import { X } from 'lucide-react';
 interface MSafeFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onApplyFilters: (filters: { name: string; email: string; mobile: string }) => void;
+  onApplyFilters: (filters: { name: string; email: string; mobile: string; cluster?: string; circle?: string; department?: string; role?: string }) => void;
 }
 
 export const MSafeFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeFilterDialogProps) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
+  const [cluster, setCluster] = useState('');
+  const [circle, setCircle] = useState('');
+  const [department, setDepartment] = useState('');
+  const [role, setRole] = useState('');
 
   const handleSubmit = () => {
-    const filters = { name, email, mobile };
+    const filters = { name, email, mobile, cluster, circle, department, role };
     onApplyFilters(filters);
     onClose();
   };
@@ -30,6 +34,10 @@ export const MSafeFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeFilt
     setName('');
     setEmail('');
     setMobile('');
+    setCluster('');
+    setCircle('');
+    setDepartment('');
+    setRole('');
   };
 
   return (
@@ -68,6 +76,42 @@ export const MSafeFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeFilt
             onChange={e => setMobile(e.target.value)}
             fullWidth
             InputLabelProps={{ shrink: Boolean(mobile) || undefined }}
+          />
+          <TextField
+            label="Cluster"
+            variant="outlined"
+            size="small"
+            value={cluster}
+            onChange={e => setCluster(e.target.value)}
+            fullWidth
+            InputLabelProps={{ shrink: Boolean(cluster) || undefined }}
+          />
+          <TextField
+            label="Circle"
+            variant="outlined"
+            size="small"
+            value={circle}
+            onChange={e => setCircle(e.target.value)}
+            fullWidth
+            InputLabelProps={{ shrink: Boolean(circle) || undefined }}
+          />
+          <TextField
+            label="Department"
+            variant="outlined"
+            size="small"
+            value={department}
+            onChange={e => setDepartment(e.target.value)}
+            fullWidth
+            InputLabelProps={{ shrink: Boolean(department) || undefined }}
+          />
+          <TextField
+            label="Role"
+            variant="outlined"
+            size="small"
+            value={role}
+            onChange={e => setRole(e.target.value)}
+            fullWidth
+            InputLabelProps={{ shrink: Boolean(role) || undefined }}
           />
         </Stack>
       </DialogContent>

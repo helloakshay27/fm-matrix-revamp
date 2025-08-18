@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2, Plus, UploadIcon, ChevronLeft, ChevronRight } from 'lucide-react';
-
+import { Users, UserCheck, Clock, Shield, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -9,11 +8,11 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { MSafeImportModal } from '@/components/MSafeImportModal';
-import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
+import { ExternalFilterDialog } from './ExternalFilterDialog';
 
 // Define External User interface (different from FMUser)
 interface ExternalUser {
@@ -62,6 +61,7 @@ export const ExternalUsersDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500); // debounce like ServiceDashboard
+  const [filters, setFilters] = useState({ name: '', email: '', mobile: '', cluster: '', circle: '', department: '', role: '', report_to_id: '' });
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -88,10 +88,25 @@ export const ExternalUsersDashboard = () => {
           return;
         }
         let url = `https://${baseUrl}/pms/users/non_fte_users.json?page=${page}`;
-        const emailQuery = debouncedSearch.trim();
-        if (emailQuery) {
-          // server-side search by email only (q[email_cont])
+        // If any filter is applied, use the correct param for each filter
+        const hasFilters = Object.values(filters).some(v => v && v !== '');
+        if (hasFilters) {
+          const filterParams = [];
+          if (filters.name) filterParams.push(`q[firstname_or_lastname_cont]=${encodeURIComponent(filters.name)}`);
+          if (filters.email) filterParams.push(`q[email_cont]=${encodeURIComponent(filters.email)}`);
+          if (filters.mobile) filterParams.push(`q[mobile_cont]=${encodeURIComponent(filters.mobile)}`);
+          if (filters.cluster) filterParams.push(`q[company_cluster_id_eq]=${encodeURIComponent(filters.cluster)}`);
+          if (filters.circle) filterParams.push(`q[lock_user_permissions_circle_id_eq]=${encodeURIComponent(filters.circle)}`);
+          if (filters.department) filterParams.push(`q[lock_user_permissions_department_id_eq]=${encodeURIComponent(filters.department)}`);
+          if (filters.role) filterParams.push(`q[lock_user_permissions_lock_role_id_eq]=${encodeURIComponent(filters.role)}`);
+          if (filters.report_to_id) filterParams.push(`q[report_to_id_eq]=${encodeURIComponent(filters.report_to_id)}`);
+          url += `&${filterParams.join('&')}`;
+        } else {
+          // Only search by email if no filters
+          const emailQuery = debouncedSearch.trim();
+          if (emailQuery) {
             url += `&q[email_cont]=${encodeURIComponent(emailQuery)}`;
+          }
         }
         const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         let users = Array.isArray(response.data.users) ? response.data.users : (response.data.users || []);
@@ -113,12 +128,12 @@ export const ExternalUsersDashboard = () => {
       }
     };
     fetchExternalUsers();
-  }, [page, debouncedSearch]);
+  }, [page, debouncedSearch, filters]);
 
-  // Reset to first page when new search applied
+  // Reset to first page when new search or filters applied
   useEffect(() => {
-    if (debouncedSearch && page !== 1) setPage(1);
-  }, [debouncedSearch]);
+    if ((debouncedSearch || Object.values(filters).some(v => v && v !== '')) && page !== 1) setPage(1);
+  }, [debouncedSearch, filters, page]);
 
   const cardData = [
     {
@@ -353,13 +368,21 @@ export const ExternalUsersDashboard = () => {
     setIsFilterModalOpen(true);
   };
 
-  const handleApplyFilters = (filters: { name: string; email: string; mobile: string; department: string; circle: string }) => {
-    // Apply filters to the external users data
-    console.log('Filtered External Users:', filters);
+  const handleApplyFilters = (newFilters: { name: string; email: string; mobile: string; cluster?: string; circle?: string; department?: string; role?: string; report_to_id?: string | number }) => {
+    setFilters({
+      name: newFilters.name || '',
+      email: newFilters.email || '',
+      mobile: newFilters.mobile || '',
+      cluster: newFilters.cluster || '',
+      circle: newFilters.circle || '',
+      department: newFilters.department || '',
+      role: newFilters.role || '',
+      report_to_id: newFilters.report_to_id ? String(newFilters.report_to_id) : ''
+    });
   }
 
   const handleToggleActive = async (user: ExternalUser) => {
-    const permission = user.lock_user_permission;
+    const permission = user.lock_user_permission;     
     const previousStatus = permission?.status;
     const activeVal: any = permission?.active;
     const current = activeVal === true || activeVal === 1 || activeVal === '1';
@@ -420,6 +443,10 @@ export const ExternalUsersDashboard = () => {
       const url = `https://${baseUrl}/pms/users/${confirmDeleteUser.id}/delete_vi_user`;
       await axios.delete(url, { headers: { Authorization: `Bearer ${token}` } });
       setExternalUsers(prev => prev.filter(u => u.id !== confirmDeleteUser.id));
+      setPagination(prev => ({
+        ...prev,
+        total_count: Math.max(0, prev.total_count - 1)
+      }));
       toast.success('User deleted successfully');
     } catch (e:any) {
       console.error('Delete user error', e);
@@ -476,7 +503,7 @@ export const ExternalUsersDashboard = () => {
   return (
     <>
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {cardData.map((card, index) => (
             <div
               key={index}
@@ -495,7 +522,7 @@ export const ExternalUsersDashboard = () => {
               </div>
             </div>
           ))}
-        </div>
+        </div> */}
 
         {showActionPanel && (
           <SelectionPanel
@@ -526,7 +553,7 @@ export const ExternalUsersDashboard = () => {
             storageKey="msafe-external-users"
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            searchPlaceholder="Search external users..."
+            searchPlaceholder="Search..."
             handleExport={handleExport}
             enableExport={true}
             exportFileName="external-users"
@@ -555,7 +582,7 @@ export const ExternalUsersDashboard = () => {
         </div>
 
         <MSafeImportModal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} onImport={handleImport} />
-        <MSafeFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
+        <ExternalFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
         {confirmDeleteUser && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div className="bg-white rounded-lg shadow-lg w-full max-w-sm">
