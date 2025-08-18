@@ -137,7 +137,7 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
     }
 
     try {
-      await axios.post(
+      const response = await axios.post(
         `https://${baseUrl}/pms/asset_amcs/${amcId}/add_visit_log.json`,
         form,
         {
@@ -147,11 +147,17 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
           },
         }
       );
-      toast.success('Visit added successfully');
-      setFormData({ vendor: '', startDate: '', technician: '', remarks: '' });
-      setAttachment(null);
-      dispatch(fetchAMCDetails(amcId));
-      handleClose();
+      const respData = response?.data;
+      if (respData && typeof respData.error === 'string' && respData.error.trim()) {
+        // Treat presence of error key as failure signal even if HTTP status is 200
+        toast.error(respData.error.trim());
+      } else {
+        toast.success('Visit added successfully');
+        setFormData({ vendor: '', startDate: '', technician: '', remarks: '' });
+        setAttachment(null);
+        dispatch(fetchAMCDetails(amcId));
+        handleClose();
+      }
     } catch (error: any) {
       console.error(error);
       // Try to show error message from API response
