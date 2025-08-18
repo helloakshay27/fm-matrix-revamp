@@ -267,10 +267,12 @@ export const AddBookingSetupPage = () => {
       );
 
       // Find department ID from selected department name
-      formDataToSend.append(
-        "facility_setup[department_id]",
-        formData.department
-      );
+      if (formData.department) {
+        formDataToSend.append(
+          "facility_setup[department_id]",
+          formData.department
+        );
+      }
 
       formDataToSend.append("facility_setup[app_key]", formData.appKey);
       formDataToSend.append(
@@ -1352,7 +1354,7 @@ export const AddBookingSetupPage = () => {
                   6
                 </div>
                 <h3 className="text-lg font-semibold text-[#C72030]">
-                  DESCRIPTION
+                  DESCRIPTION*
                 </h3>
               </div>
               <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
@@ -1375,7 +1377,7 @@ export const AddBookingSetupPage = () => {
                     7
                   </div>
                   <h3 className="text-lg font-semibold text-[#C72030]">
-                    TERMS & CONDITIONS
+                    TERMS & CONDITIONS*
                   </h3>
                 </div>
                 <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
@@ -1399,7 +1401,7 @@ export const AddBookingSetupPage = () => {
                     8
                   </div>
                   <h3 className="text-lg font-semibold text-[#C72030]">
-                    CANCELLATION POLICY
+                    CANCELLATION POLICY*
                   </h3>
                 </div>
                 <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>

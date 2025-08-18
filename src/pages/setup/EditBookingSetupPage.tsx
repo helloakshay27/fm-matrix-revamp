@@ -1461,7 +1461,7 @@ export const EditBookingSetupPage = () => {
                                     6
                                 </div>
                                 <h3 className="text-lg font-semibold text-[#C72030]">
-                                    DESCRIPTION
+                                    DESCRIPTION*
                                 </h3>
                             </div>
                             <div
@@ -1488,7 +1488,7 @@ export const EditBookingSetupPage = () => {
                                         7
                                     </div>
                                     <h3 className="text-lg font-semibold text-[#C72030]">
-                                        TERMS & CONDITIONS
+                                        TERMS & CONDITIONS*
                                     </h3>
                                 </div>
                                 <div
@@ -1517,7 +1517,7 @@ export const EditBookingSetupPage = () => {
                                         8
                                     </div>
                                     <h3 className="text-lg font-semibold text-[#C72030]">
-                                        CANCELLATION POLICY
+                                        CANCELLATION POLICY*
                                     </h3>
                                 </div>
                                 <div

@@ -1,20 +1,19 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Download, Upload, Filter, Eye, Edit, Trash2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Plus, Download, Upload, Eye, Edit, Trash2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { WasteGenerationFilterDialog } from '../components/WasteGenerationFilterDialog';
 import { WasteGenerationBulkDialog } from '../components/WasteGenerationBulkDialog';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 
 const UtilityWasteGenerationDashboard = () => {
-  console.log('UtilityWasteGenerationDashboard component loaded successfully');
   const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+
   const handleAdd = () => navigate('/maintenance/waste/generation/add');
   const handleImport = () => setIsImportOpen(true);
   const handleUpdate = () => setIsUpdateOpen(true);
@@ -222,7 +221,7 @@ const UtilityWasteGenerationDashboard = () => {
   }];
 
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
+    // { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     { key: 'id', label: 'ID', sortable: true, draggable: true },
     { key: 'location', label: 'Location', sortable: true, draggable: true },
     { key: 'vendor', label: 'Vendor', sortable: true, draggable: true },
@@ -237,7 +236,6 @@ const UtilityWasteGenerationDashboard = () => {
     { key: 'createdBy', label: 'Created By', sortable: true, draggable: true },
     { key: 'createdOn', label: 'Created On', sortable: true, draggable: true }
   ];
-
 
   const renderCell = (item: any, columnKey: string) => {
     if (columnKey === 'actions') {
@@ -258,81 +256,74 @@ const UtilityWasteGenerationDashboard = () => {
     return item[columnKey];
   };
   
-  return <>
-      <div className="flex-1 space-y-4 p-4  sm:p-5 md:p-3 pt-6">
+  // Filter data based on search term
+  const filteredData = wasteGenerationData.filter(item => {
+    const searchTermLower = searchTerm.toLowerCase();
+    return (
+      item.location.toLowerCase().includes(searchTermLower) ||
+      item.vendor.toLowerCase().includes(searchTermLower) ||
+      item.commodity.toLowerCase().includes(searchTermLower) ||
+      item.category.toLowerCase().includes(searchTermLower)
+    );
+  });
+
+  return (
+    <>
+      <div className="flex-1 space-y-4 p-4 sm:p-5 md:p-3 pt-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
           <div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Waste Generation List</h2>
-            <p className="text-muted-foreground text-sm sm:text-base">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ml-3">Waste Generation List</h2>
+            {/* <p className="text-muted-foreground text-sm sm:text-base">
               Manage waste generation records and tracking
-            </p>
+            </p> */}
           </div>
         </div>
 
         {/* Main Card */}
-<Card className="bg-transparent border-none">
-          <CardHeader>
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-              <CardTitle className="text-base sm:text-lg font-semibold">
-                WASTE GENERATION LIST
-              </CardTitle>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-2">
-                <Button onClick={handleAdd} style={{
-                backgroundColor: '#C72030'
-              }} className="hover:bg-[#A01B26] text-white">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add
-                </Button>
-                <Button onClick={handleImport} variant="outline" style={{
-                borderColor: '#C72030',
-                color: '#C72030'
-              }} className="hover:bg-[#C72030] hover:text-white">
-                  <Download className="mr-2 h-4 w-4" />
-                  Import
-                </Button>
-                <Button onClick={handleUpdate} variant="outline" style={{
-                borderColor: '#C72030',
-                color: '#C72030'
-              }} className="hover:bg-[#C72030] hover:text-white">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Update
-                </Button>
-                <Button onClick={handleFilters} variant="outline" style={{
-                borderColor: '#C72030',
-                color: '#C72030'
-              }} className="hover:bg-[#C72030] hover:text-white">
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filters
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-
-          {/* Enhanced Table */}
-          <CardContent>
+        {/* <Card className="border"> */}
+          <CardContent className="p-4">
             <EnhancedTable
-              data={wasteGenerationData}
+              data={filteredData}
               columns={columns}
-              selectable={true}
+              // selectable={true}
               renderCell={renderCell}
               storageKey="waste-generation-table"
               enableExport={true}
               exportFileName="waste-generation-data"
               pagination={true}
               pageSize={10}
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              searchPlaceholder="Search by location, vendor, etc..."
+              onFilterClick={handleFilters}
+              leftActions={
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button onClick={handleAdd} style={{ backgroundColor: '#C72030' }} className="hover:bg-[#A01B26] text-white">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add
+                  </Button>
+                  {/* <Button onClick={handleImport} variant="outline" style={{ borderColor: '#C72030', color: '#C72030' }} className="hover:bg-[#C72030] hover:text-white">
+                    <Download className="mr-2 h-4 w-4" />
+                    Import
+                  </Button>
+                  <Button onClick={handleUpdate} variant="outline" style={{ borderColor: '#C72030', color: '#C72030' }} className="hover:bg-[#C72030] hover:text-white">
+                    <Upload className="mr-2 h-4 w-4" />
+                    Update
+                  </Button> */}
+                </div>
+              }
             />
           </CardContent>
-        </Card>
+        {/* </Card> */}
       </div>
 
       {/* Dialogs */}
       <WasteGenerationFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
       <WasteGenerationBulkDialog isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} type="import" />
       <WasteGenerationBulkDialog isOpen={isUpdateOpen} onClose={() => setIsUpdateOpen(false)} type="update" />
-    </>;
+    </>
+  );
 };
 
 export default UtilityWasteGenerationDashboard;

@@ -30,7 +30,8 @@ const UtilitySTPDashboard = () => {
   const mockData: any[] = [];
 
   const handleAdd = () => {
-    navigate('/utility/stp/add-asset');
+    // navigate('/utility/stp/add-asset');
+    navigate('/utility/water/add-asset');
   };
 
   const handleInActiveAssets = () => {
@@ -39,9 +40,9 @@ const UtilitySTPDashboard = () => {
 
   const handleExportAll = () => {
     // Create and download CSV file
-    const csvContent = "data:text/csv;charset=utf-8," + 
+    const csvContent = "data:text/csv;charset=utf-8," +
       "Asset Name,Asset ID,Asset Code,Asset No.,Asset Status,Equipment Id,Site,Building,Wing,Floor,Area,Room,Meter Type,Asset Type\n";
-    
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -49,7 +50,7 @@ const UtilitySTPDashboard = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     console.log('Exporting all STP assets data...');
   };
 
@@ -93,42 +94,42 @@ const UtilitySTPDashboard = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4">
-          <Button 
+          <Button
             onClick={handleAdd}
             className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
             <Plus className="w-4 h-4" />
             Add
           </Button>
-          <Button 
+          <Button
             onClick={() => setIsImportOpen(true)}
             className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
             <Upload className="w-4 h-4" />
             Import
           </Button>
-          <Button 
+          <Button
             onClick={() => setIsUpdateOpen(true)}
             className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
             <RefreshCw className="w-4 h-4" />
             Update
           </Button>
-          <Button 
+          <Button
             onClick={handleExportAll}
             className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
             <Download className="w-4 h-4" />
             Export All
           </Button>
-          <Button 
+          <Button
             onClick={handlePrintQR}
             className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
             <QrCode className="w-4 h-4" />
             Print QR
           </Button>
-          <Button 
+          <Button
             onClick={handleInActiveAssets}
             className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
@@ -138,19 +139,19 @@ const UtilitySTPDashboard = () => {
 
         {/* Search and Filter */}
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <Button 
+          <Button
             onClick={() => setIsFilterOpen(true)}
             className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-lg px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
           >
             <Filter className="w-4 h-4" />
             Filters
           </Button>
-          
+
           <div className="flex gap-2 items-center">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input 
-                placeholder="Search..." 
+              <Input
+                placeholder="Search..."
                 className="pl-10 w-64 h-10 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -161,7 +162,7 @@ const UtilitySTPDashboard = () => {
                 }}
               />
             </div>
-            <Button 
+            <Button
               onClick={handleSearch}
               className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-6 py-2 h-10 text-sm font-medium border-0"
             >
@@ -218,7 +219,7 @@ const UtilitySTPDashboard = () => {
                     <TableCell>{item.assetCode}</TableCell>
                     <TableCell>{item.assetNo}</TableCell>
                     <TableCell>
-                      <Badge 
+                      <Badge
                         variant={item.status === 'In Use' ? 'default' : 'destructive'}
                         className={item.status === 'In Use' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
                       >
@@ -243,19 +244,19 @@ const UtilitySTPDashboard = () => {
       </div>
 
       {/* Dialogs */}
-      <BulkUploadDialog 
-        open={isImportOpen} 
+      <BulkUploadDialog
+        open={isImportOpen}
         onOpenChange={setIsImportOpen}
         title="Import STP Assets"
       />
-      <BulkUploadDialog 
-        open={isUpdateOpen} 
+      <BulkUploadDialog
+        open={isUpdateOpen}
         onOpenChange={setIsUpdateOpen}
         title="Update STP Assets"
       />
-      <UtilitySTPFilterDialog 
-        isOpen={isFilterOpen} 
-        onClose={() => setIsFilterOpen(false)} 
+      <UtilitySTPFilterDialog
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
       />
     </>
   );

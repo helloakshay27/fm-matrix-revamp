@@ -445,8 +445,10 @@ useEffect(() => {
     try {
       const sendData = new FormData();
 
-      // Append common form data
-      sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
+  // Append common form data
+  // Use the correct supplier field: 'vendor' is used for Individual type forms, 'supplier' for Group type
+  const supplierIdForSubmit = formData.type === 'Group' ? formData.supplier : formData.vendor;
+  sendData.append('pms_asset_amc[supplier_id]', supplierIdForSubmit);
       sendData.append('pms_asset_amc[amc_cost]', parseFloat(formData.cost).toString());
       sendData.append('pms_asset_amc[contract_name]', formData.contractName);
       sendData.append('pms_asset_amc[amc_start_date]', formData.startDate);
