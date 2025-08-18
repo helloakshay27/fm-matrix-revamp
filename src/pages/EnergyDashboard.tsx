@@ -42,7 +42,7 @@ const mockEnergyData = [
     efficiency: 85,
   },
   {
-    id: "EN002", 
+    id: "EN002",
     location: "Building B - HVAC",
     meterType: "Electric",
     currentReading: 2150.8,
@@ -57,7 +57,7 @@ const mockEnergyData = [
   {
     id: "EN003",
     location: "Parking Garage",
-    meterType: "Electric", 
+    meterType: "Electric",
     currentReading: 850.2,
     previousReading: 820.0,
     consumption: 30.2,
@@ -107,7 +107,8 @@ export const EnergyDashboard = () => {
   );
 
   const handleAddReading = () => {
-    navigate("/utility/energy/add");
+    // navigate("/utility/energy/add-asset");
+    navigate('/utility/water/add-asset');
   };
 
   const handleViewDetails = (energyId: string) => {
