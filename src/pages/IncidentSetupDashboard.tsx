@@ -1,3 +1,5 @@
+
+// ...existing code...
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +55,8 @@ export const IncidentSetupDashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState('Category');
   const [selectedParentCategory, setSelectedParentCategory] = useState('');
   const [selectedSubCategory, setSelectedSubCategory] = useState('');
+  // Track selected Sub Sub Category (id) for creating Sub Sub Sub Category
+  const [selectedSubSubCategory, setSelectedSubSubCategory] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [editFormData, setEditFormData] = useState({
@@ -119,12 +123,42 @@ export const IncidentSetupDashboard = () => {
   const [secondarySubCategories, setSecondarySubCategories] = useState([]);
   const [selectedSecondaryCategory, setSelectedSecondaryCategory] = useState('');
   const [selectedSecondarySubCategory, setSelectedSecondarySubCategory] = useState('');
-  const [secondarySubSubCategories, setSecondarySubSubCategories] = useState([{
-    id: 1,
-    secondaryCategory: 'latest',
-    secondarySubCategory: 'test',
-    secondarySubSubCategory: 'test'
-  }]);
+  const [secondarySubSubCategories, setSecondarySubSubCategories] = useState([]);
+  // Fetch Secondary Sub Sub Categories from API
+  const fetchSecondarySubSubCategories = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        // Use API data for parent lookups
+        const allSecondaryCategories = (result.data || []).filter(item => item.tag_type === 'IncidenceSecondaryCategory');
+        const allSecondarySubCategories = (result.data || []).filter(item => item.tag_type === 'IncidenceSecondarySubCategory');
+        const subSubCats = (result.data || [])
+          .filter(item => item.tag_type === 'IncidenceSecondarySubSubCategory')
+          .map(item => {
+            const subCat = allSecondarySubCategories.find(sub => sub.id === item.parent_id);
+            const cat = subCat ? allSecondaryCategories.find(cat => cat.id === subCat.parent_id) : null;
+            return {
+              id: item.id,
+              secondaryCategory: cat?.name || '',
+              secondarySubCategory: subCat?.name || '',
+              secondarySubSubCategory: item.name
+            };
+          });
+        setSecondarySubSubCategories(subSubCats);
+      } else {
+        setSecondarySubSubCategories([]);
+        console.error('Failed to fetch secondary sub sub categories');
+      }
+    } catch (error) {
+      setSecondarySubSubCategories([]);
+      console.error('Error fetching secondary sub sub categories:', error);
+    }
+  };
   const [secondarySubSubSubCategories, setSecondarySubSubSubCategories] = useState([{
     id: 1,
     secondaryCategory: '',
@@ -132,6 +166,45 @@ export const IncidentSetupDashboard = () => {
     secondarySubSubCategory: '',
     secondarySubSubSubCategory: 'test'
   }]);
+
+  // Fetch Secondary Sub Sub Sub Categories from API (Secondary hierarchy)
+  const fetchSecondarySubSubSubCategories = async () => {
+    try {
+      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        // Use API data for parent lookups in the Secondary hierarchy
+        const allSecondaryCategories = (result.data || []).filter(item => item.tag_type === 'IncidenceSecondaryCategory');
+        const allSecondarySubCategories = (result.data || []).filter(item => item.tag_type === 'IncidenceSecondarySubCategory');
+        const allSecondarySubSubCategories = (result.data || []).filter(item => item.tag_type === 'IncidenceSecondarySubSubCategory');
+        const subSubSubCats = (result.data || [])
+          .filter(item => item.tag_type === 'IncidenceSecondarySubSubSubCategory')
+          .map(item => {
+            const subSubCat = allSecondarySubSubCategories.find(subsub => subsub.id === item.parent_id);
+            const subCat = subSubCat ? allSecondarySubCategories.find(sub => sub.id === subSubCat.parent_id) : null;
+            const cat = subCat ? allSecondaryCategories.find(cat => cat.id === subCat.parent_id) : null;
+            return {
+              id: item.id,
+              secondaryCategory: cat?.name || '',
+              secondarySubCategory: subCat?.name || '',
+              secondarySubSubCategory: subSubCat?.name || '',
+              secondarySubSubSubCategory: item.name
+            };
+          });
+        setSecondarySubSubSubCategories(subSubSubCats);
+      } else {
+        setSecondarySubSubSubCategories([]);
+        console.error('Failed to fetch secondary sub sub sub categories');
+      }
+    } catch (error) {
+      setSecondarySubSubSubCategories([]);
+      console.error('Error fetching secondary sub sub sub categories:', error);
+    }
+  };
   const [selectedSecondarySubSubCategory, setSelectedSecondarySubSubCategory] = useState('');
   const [whoGotInjured, setWhoGotInjured] = useState([]);
   const [propertyDamageCategories, setPropertyDamageCategories] = useState([]);
@@ -419,6 +492,20 @@ export const IncidentSetupDashboard = () => {
       fetchSubCategories();
       fetchSubSubCategories();
       fetchSubSubSubCategories();
+    } else if (selectedCategory === 'Secondary Category') {
+      fetchSecondaryCategories();
+    } else if (selectedCategory === 'Secondary Sub Category') {
+      fetchSecondaryCategories();
+      fetchSecondarySubCategories();
+    } else if (selectedCategory === 'Secondary Sub Sub Category') {
+      fetchSecondaryCategories();
+      fetchSecondarySubCategories();
+      fetchSecondarySubSubCategories();
+    } else if (selectedCategory === 'Secondary Sub Sub Sub Category') {
+      fetchSecondaryCategories();
+      fetchSecondarySubCategories();
+      fetchSecondarySubSubCategories();
+      fetchSecondarySubSubSubCategories();
     } else if (selectedCategory === 'Who got injured') {
       fetchWhoGotInjured();
     } else if (selectedCategory === 'Property Damage Category') {
@@ -427,11 +514,6 @@ export const IncidentSetupDashboard = () => {
       fetchIncidenceStatuses();
     } else if (selectedCategory === 'Incidence level') {
       fetchIncidenceLevels();
-    } else if (selectedCategory === 'Secondary Category') {
-      fetchSecondaryCategories();
-    } else if (selectedCategory === 'Secondary Sub Category') {
-      fetchSecondaryCategories();
-      fetchSecondarySubCategories();
     } else if (selectedCategory === 'RCA Category') {
       fetchRCACategories();
     } else if (selectedCategory === 'Escalations') {
@@ -552,6 +634,40 @@ export const IncidentSetupDashboard = () => {
         } catch (error) {
           console.error('Error adding sub sub category:', error);
           alert('An error occurred while adding the sub sub category.');
+        }
+      }
+    } else if (selectedCategory === 'Sub Sub Sub Category') {
+      // Use selectedParentCategory as category_id and selectedSubSubCategory (id) as parent_id
+      if (selectedParentCategory && selectedSubCategory && selectedSubSubCategory && categoryName.trim()) {
+        try {
+          const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              incidence_tag: {
+                tag_type: 'IncidenceSubSubSubCategory',
+                active: true,
+                parent_id: selectedSubSubCategory,
+                name: categoryName
+              },
+              category_id: selectedParentCategory
+            })
+          });
+          if (response.ok) {
+            await fetchSubSubSubCategories();
+            setCategoryName('');
+            setSelectedSubSubCategory('');
+          } else {
+            const errorText = await response.text();
+            console.error('Failed to add sub sub sub category:', response.status, errorText);
+            alert('Failed to add sub sub sub category. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error adding sub sub sub category:', error);
+          alert('An error occurred while adding the sub sub sub category.');
         }
       }
     } else if (selectedCategory === 'Incidence status') {
@@ -729,23 +845,88 @@ export const IncidentSetupDashboard = () => {
         }
       }
     } else if (selectedCategory === 'Secondary Sub Sub Category') {
-      if (selectedSecondaryCategory && selectedSecondarySubCategory) {
-        setSecondarySubSubCategories([...secondarySubSubCategories, {
-          id: newId,
-          secondaryCategory: selectedSecondaryCategory,
-          secondarySubCategory: selectedSecondarySubCategory,
-          secondarySubSubCategory: categoryName
-        }]);
+      // POST API integration for Secondary Sub Sub Category
+      // Find selected secondary sub category object to get its id and parent_id
+      const parentSecondaryCategoryObj = secondaryCategories.find(cat => cat.name === selectedSecondaryCategory);
+      const parentSecondarySubCategoryObj = secondarySubCategories.find(sub => sub.secondarySubCategory === selectedSecondarySubCategory && sub.secondaryCategory === selectedSecondaryCategory);
+      if (parentSecondaryCategoryObj && parentSecondarySubCategoryObj && categoryName.trim()) {
+        try {
+          const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              incidence_tag: {
+                tag_type: 'IncidenceSecondarySubSubCategory',
+                active: '1',
+                parent_id: parentSecondarySubCategoryObj.id,
+                name: categoryName
+              },
+              category_id: parentSecondaryCategoryObj.id
+            })
+          });
+          if (response.ok) {
+            await fetchSecondarySubSubCategories();
+            setCategoryName('');
+          } else {
+            const errorText = await response.text();
+            console.error('Failed to add secondary sub sub category:', response.status, errorText);
+            alert('Failed to add secondary sub sub category. Please try again.');
+          }
+        } catch (error) {
+          console.error('Error adding secondary sub sub category:', error);
+          alert('An error occurred while adding the secondary sub sub category.');
+        }
       }
     } else if (selectedCategory === 'Secondary Sub Sub Sub Category') {
-      if (selectedSecondaryCategory && selectedSecondarySubCategory && selectedSecondarySubSubCategory) {
-        setSecondarySubSubSubCategories([...secondarySubSubSubCategories, {
-          id: newId,
-          secondaryCategory: selectedSecondaryCategory,
-          secondarySubCategory: selectedSecondarySubCategory,
-          secondarySubSubCategory: selectedSecondarySubSubCategory,
-          secondarySubSubSubCategory: categoryName
-        }]);
+      // POST API integration for Secondary Sub Sub Sub Category
+      const parentSecondaryCategoryObj = secondaryCategories.find(cat => cat.name === selectedSecondaryCategory);
+      const parentSecondarySubCategoryObj = secondarySubCategories.find(sub => sub.secondarySubCategory === selectedSecondarySubCategory && sub.secondaryCategory === selectedSecondaryCategory);
+      const parentSecondarySubSubCategoryObj = secondarySubSubCategories.find(subsub => subsub.secondarySubSubCategory === selectedSecondarySubSubCategory && subsub.secondaryCategory === selectedSecondaryCategory && subsub.secondarySubCategory === selectedSecondarySubCategory);
+      if (parentSecondaryCategoryObj && parentSecondarySubCategoryObj && parentSecondarySubSubCategoryObj && categoryName.trim()) {
+        try {
+          const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              incidence_tag: {
+                tag_type: 'IncidenceSecondarySubSubSubCategory',
+                active: '1',
+                parent_id: parentSecondarySubSubCategoryObj.id,
+                name: categoryName
+              },
+              category_id: parentSecondaryCategoryObj.id
+            })
+          });
+          if (response.ok) {
+            // Always refresh all related lists and dropdowns after POST
+            try {
+              await fetchSecondarySubCategories();
+              await fetchSecondarySubSubCategories();
+              await fetchSecondarySubSubSubCategories();
+            } catch (fetchError) {
+              console.error('Error fetching updated secondary sub sub sub categories after POST:', fetchError);
+            }
+            setCategoryName('');
+            setSelectedSecondarySubSubCategory('');
+            setSelectedSecondarySubCategory('');
+            // Optionally reset selectedSecondaryCategory as well if you want to clear all
+            // setSelectedSecondaryCategory('');
+          } else {
+            const errorText = await response.text();
+            console.error('Failed to add secondary sub sub sub category:', response.status, errorText);
+            alert('Failed to add secondary sub sub sub category. Please try again.');
+          }
+        } catch (error) {
+          // Only show alert if the POST itself fails
+          console.error('Error adding secondary sub sub sub category:', error);
+          alert('An error occurred while adding the secondary sub sub sub category.');
+        }
       }
     } else if (selectedCategory === 'Who got injured') {
       // API integration for InjuredType
@@ -855,7 +1036,7 @@ export const IncidentSetupDashboard = () => {
     //     if (response.ok) {
     //       const result = await response.json();
     //       const propertyDamageTypes = result.data
-    //         .filter(item => item.tag_type === 'PropertyDamageCategory')
+    //         .filter item => item.tag_type === 'PropertyDamageCategory'
     //         .map(({ id, name }) => ({ id, name }));
     //       setPropertyDamageCategories(propertyDamageTypes);
     //     } else {
@@ -1605,7 +1786,7 @@ export const IncidentSetupDashboard = () => {
                       </label>
                       <Select
                         value={editFormData.subCategory}
-                        onValueChange={value => setEditFormData({ ...editFormData, subCategory: value, subSubCategory: '' })}
+                        onValueChange={(value) => { setSelectedSubCategory(value); setSelectedSubSubCategory(''); }}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select Sub Category" />
@@ -1931,7 +2112,11 @@ export const IncidentSetupDashboard = () => {
                         <InputLabel>Select Category</InputLabel>
                         <MuiSelect
                           value={selectedParentCategory}
-                          onChange={e => setSelectedParentCategory(e.target.value)}
+                          onChange={e => {
+                            setSelectedParentCategory(e.target.value as any);
+                            setSelectedSubCategory('');
+                            setSelectedSubSubCategory('');
+                          }}
                           label="Select Category"
                         >
                           {categories.map(category => (
@@ -1948,7 +2133,7 @@ export const IncidentSetupDashboard = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Sub Category
                       </label>
-                      <Select value={selectedSubCategory} onValueChange={setSelectedSubCategory}>
+                      <Select value={selectedSubCategory} onValueChange={(value) => { setSelectedSubCategory(value); setSelectedSubSubCategory(''); }}>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select Sub Category" />
                         </SelectTrigger>
@@ -1968,18 +2153,20 @@ export const IncidentSetupDashboard = () => {
                         Sub Sub Category
                       </label>
                       <Select
-                        value={editFormData.subSubCategory}
-                        onValueChange={value => setEditFormData({ ...editFormData, subSubCategory: value })}
+                        value={selectedSubSubCategory}
+                        onValueChange={setSelectedSubSubCategory}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select Sub Sub Category" />
                         </SelectTrigger>
                         <SelectContent className="bg-white z-50">
-                          {subSubCategories.filter(subsub => subsub.categoryId === selectedParentCategory && subsub.subCategoryId === selectedSubCategory).map(subSubCategory => (
-                            <SelectItem key={subSubCategory.id} value={subSubCategory.subSubCategory}>
-                              {subSubCategory.subSubCategory}
-                            </SelectItem>
-                          ))}
+                          {subSubCategories
+                            .filter(subsub => String(subsub.categoryId) === String(selectedParentCategory) && String(subsub.subCategoryId) === String(selectedSubCategory))
+                            .map(subSubCategory => (
+                              <SelectItem key={subSubCategory.id} value={String(subSubCategory.id)}>
+                                {subSubCategory.subSubCategory}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </div>

@@ -12,7 +12,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 export const EditIncidentDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
     incidentDate: '2025-01-29',
     incidentTime: '15:21',
@@ -84,7 +84,7 @@ export const EditIncidentDetailsPage = () => {
                 />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label>Location*</Label>
               <Input
@@ -93,7 +93,7 @@ export const EditIncidentDetailsPage = () => {
                 placeholder="Enter incident location"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Description*</Label>
               <Textarea
@@ -129,7 +129,7 @@ export const EditIncidentDetailsPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Severity Level*</Label>
                 <Select value={formData.severity} onValueChange={(value) => handleInputChange('severity', value)}>
@@ -169,7 +169,7 @@ export const EditIncidentDetailsPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Priority</Label>
                 <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
@@ -184,7 +184,7 @@ export const EditIncidentDetailsPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Assigned To</Label>
                 <Select value={formData.assignedTo} onValueChange={(value) => handleInputChange('assignedTo', value)}>
@@ -217,7 +217,7 @@ export const EditIncidentDetailsPage = () => {
                   placeholder="Name of person reporting"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Witness Name</Label>
                 <Input
@@ -250,7 +250,7 @@ export const EditIncidentDetailsPage = () => {
                   </div>
                 </RadioGroup>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Property Damage*</Label>
                 <RadioGroup value={formData.propertyDamage} onValueChange={(value) => handleInputChange('propertyDamage', value)}>
@@ -265,7 +265,7 @@ export const EditIncidentDetailsPage = () => {
                 </RadioGroup>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label>Immediate Action Taken</Label>
               <Textarea
@@ -293,7 +293,7 @@ export const EditIncidentDetailsPage = () => {
                 className="min-h-[80px]"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label>Preventive Measures</Label>
               <Textarea
