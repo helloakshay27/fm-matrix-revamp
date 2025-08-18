@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -213,6 +214,7 @@ const columns: ColumnConfig[] = [
 ];
 
 export default function UtilityDailyReadingsDashboard() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -239,7 +241,7 @@ export default function UtilityDailyReadingsDashboard() {
   };
 
   const handleEdit = (item: any) => {
-    console.log('Edit item:', item);
+    navigate(`/utility/daily-readings/edit/${item.id}`);
   };
 
   const renderCell = (item: any, columnKey: string) => {
@@ -292,19 +294,19 @@ export default function UtilityDailyReadingsDashboard() {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
-        <Button 
+        <Button
           className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
         >
           <Upload className="w-4 h-4" />
           Import
         </Button>
-        <Button 
+        <Button
           className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
         >
           <Download className="w-4 h-4" />
           Export
         </Button>
-        <Button 
+        <Button
           className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
         >
           <Filter className="w-4 h-4" />
@@ -313,7 +315,7 @@ export default function UtilityDailyReadingsDashboard() {
       </div>
 
       {/* Search */}
-      <div className="flex justify-between items-center">
+      {/* <div className="flex justify-between items-center">
         <div></div>
         <div className="flex items-center space-x-2">
           <div className="relative">
@@ -331,10 +333,10 @@ export default function UtilityDailyReadingsDashboard() {
             Go!
           </Button>
         </div>
-      </div>
+      </div> */}
 
       {/* Enhanced Data Table */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div>
         <EnhancedTable
           data={filteredData}
           columns={columns}

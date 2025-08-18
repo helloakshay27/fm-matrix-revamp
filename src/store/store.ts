@@ -47,9 +47,11 @@ import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from '.
 import { createUserGroupReducer, fetchUserGroupsReducer } from './slices/userGroupSlice'
 import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
 import { fetchWorkOrdersReducer, getWorkOrderByIdReducer } from './slices/workOrderSlice'
-import { changePlantDetailsReducer, createMaterialPRReducer, getAddressesReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer } from './slices/materialPRSlice'
-import { createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer } from './slices/purchaseOrderSlice'
+import { changePlantDetailsReducer, createMaterialPRReducer, fetchWBSReducer, getAddressesReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer } from './slices/materialPRSlice'
+import { approvePOReducer, createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer } from './slices/purchaseOrderSlice'
 import { createServicePRReducer, getServicePrReducer, getServicesReducer } from './slices/servicePRSlice'
+import { fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
+import { getGRNReducer } from './slices/grnSlice'
 
 export const store = configureStore({
   reducer: {
@@ -177,17 +179,25 @@ export const store = configureStore({
     getMaterialPR: getMaterialPRReducer,
     getMaterialPRById: getMaterialPRByIdReducer,
     changePlantDetails: changePlantDetailsReducer,
+    fetchWBS: fetchWBSReducer,
 
     // Purchase Order
     getPurchaseOrders: getPurchaseOrdersReducer,
     createPurchaseOrder: createPurchaseOrderReducer,
     getUnits: getUnitsReducer,
     materialPRChange: materialPRChangeReducer,
+    approvePO: approvePOReducer,
 
     // Service PR
     getServicePr: getServicePrReducer,
     createServicePR: createServicePRReducer,
     getServices: getServicesReducer,
+
+    // Pending Approval
+    fetchPendingApprovals: fetchPendingApprovalsReducer,
+
+    // GRN
+    getGRN: getGRNReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

@@ -118,7 +118,7 @@ export const getMaterialPRById = createAsyncThunk(
 
             return respones.data
         } catch (error) {
-            const message = error.response?.data?.error || error.error || 'Failed to create material PR'
+            const message = error.response?.data?.error || error.error || 'Failed to fetch data.'
             return rejectWithValue(message)
         }
     }
@@ -141,6 +141,23 @@ export const changePlantDetails = createAsyncThunk(
     }
 )
 
+export const fetchWBS = createAsyncThunk(
+    'fetchWBS',
+    async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/wbs_costs.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to fetch WBS'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const getSuppliersSlice = createApiSlice("getSuppliers", getSuppliers);
 const getPlantDetailsSlice = createApiSlice("getPlantDetails", getPlantDetails);
 const getAddressesSlice = createApiSlice("getAddresses", getAddresses);
@@ -149,6 +166,7 @@ const createMaterialPRSlice = createApiSlice("createMaterialPR", createMaterialP
 const getMaterialPRSlice = createApiSlice("getMaterialPR", getMaterialPR);
 const getMaterialPRByIdSlice = createApiSlice("getMaterialPRById", getMaterialPRById);
 const changePlantDetailsSlice = createApiSlice("changePlantDetails", changePlantDetails);
+const fetchWBSSlice = createApiSlice("fetchWBS", fetchWBS);
 
 export const getSuppliersReducer = getSuppliersSlice.reducer
 export const getPlantDetailsReducer = getPlantDetailsSlice.reducer
@@ -158,3 +176,4 @@ export const createMaterialPRReducer = createMaterialPRSlice.reducer
 export const getMaterialPRReducer = getMaterialPRSlice.reducer
 export const getMaterialPRByIdReducer = getMaterialPRByIdSlice.reducer
 export const changePlantDetailsReducer = changePlantDetailsSlice.reducer
+export const fetchWBSReducer = fetchWBSSlice.reducer

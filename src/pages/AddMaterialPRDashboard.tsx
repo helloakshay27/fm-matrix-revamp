@@ -14,11 +14,13 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Autocomplete,
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   changePlantDetails,
   createMaterialPR,
+  fetchWBS,
   getAddresses,
   getInventories,
   getPlantDetails,
@@ -33,6 +35,7 @@ const fieldStyles = {
     padding: { xs: "8px", sm: "10px", md: "12px" },
   },
 };
+
 export const AddMaterialPRDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
@@ -41,13 +44,29 @@ export const AddMaterialPRDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
-  const { data } = useAppSelector(state => state.changePlantDetails)
+  const { data } = useAppSelector((state) => state.changePlantDetails);
 
   const [suppliers, setSuppliers] = useState([]);
   const [plantDetails, setPlantDetails] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [inventories, setInventories] = useState([]);
-  const [showRadio, setShowRadio] = useState(false)
+  const [showRadio, setShowRadio] = useState(false);
+  const [wbsSelection, setWbsSelection] = useState("");
+  const [wbsCodes, setWbsCodes] = useState([]);
+  const [overallWbs, setOverallWbs] = useState("");
+  const [items, setItems] = useState([
+    {
+      id: 1,
+      itemDetails: "",
+      sacHsnCode: "",
+      productDescription: "",
+      each: "",
+      quantity: "",
+      expectedDate: "",
+      amount: "",
+      wbsCode: "",
+    },
+  ]);
 
   const [supplierDetails, setSupplierDetails] = useState({
     supplier: "",
@@ -63,28 +82,32 @@ export const AddMaterialPRDashboard = () => {
     advanceAmount: "",
     relatedTo: "",
     termsConditions: "",
+    wbsCode: "",
   });
-
-  const [items, setItems] = useState([
-    {
-      id: 1,
-      itemDetails: "",
-      sacHsnCode: "",
-      productDescription: "",
-      each: "",
-      quantity: "",
-      expectedDate: "",
-      amount: "",
-    },
-  ]);
 
   const [files, setFiles] = useState([]);
 
   useEffect(() => {
     if (data.length > 0) {
-      setShowRadio(true)
+      setShowRadio(true);
     }
-  }, [data])
+  }, [data]);
+
+  useEffect(() => {
+    if (showRadio) {
+      const fetchData = async () => {
+        try {
+          const response = await dispatch(fetchWBS({ baseUrl, token })).unwrap();
+          setWbsCodes(response.wbs);
+        } catch (error) {
+          console.log(error)
+          toast.error(error)
+        }
+      }
+
+      fetchData()
+    }
+  }, [showRadio])
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -153,7 +176,7 @@ export const AddMaterialPRDashboard = () => {
   const handlePlantDetailsChange = (e) => {
     const { name, value } = e.target;
     setSupplierDetails((prev) => ({ ...prev, [name]: value }));
-    dispatch(changePlantDetails({ baseUrl, id: value, token }))
+    dispatch(changePlantDetails({ baseUrl, id: value, token }));
   };
 
   const handleItemChange = (id, field, value) => {
@@ -200,6 +223,7 @@ export const AddMaterialPRDashboard = () => {
         quantity: "",
         expectedDate: "",
         amount: "",
+        wbsCode: "",
       },
     ]);
   };
@@ -261,6 +285,7 @@ export const AddMaterialPRDashboard = () => {
         payment_tenure: supplierDetails.paymentTenure,
         related_to: supplierDetails.relatedTo,
         advance_amount: supplierDetails.advanceAmount,
+        ...(wbsSelection === "all" && { wbs_code: supplierDetails.wbsCode }),
         pms_po_inventories_attributes: items.map((item) => ({
           pms_inventory_id: item.itemDetails,
           quantity: item.quantity,
@@ -269,6 +294,7 @@ export const AddMaterialPRDashboard = () => {
           expected_date: item.expectedDate,
           hsn_code_name: item.sacHsnCode,
           prod_desc: item.productDescription,
+          ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
         attachments: files,
       },
@@ -504,27 +530,55 @@ export const AddMaterialPRDashboard = () => {
                 sx={{ mt: 1 }}
               />
 
-              {
-                showRadio && (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "start",
-                    }}
+              {showRadio && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "start",
+                  }}
+                >
+                  <FormLabel component="legend" sx={{ minWidth: "80px", fontSize: "14px" }}>
+                    Apply WBS
+                  </FormLabel>
+                  <RadioGroup
+                    row
+                    value={wbsSelection}
+                    onChange={(e) => setWbsSelection(e.target.value)}
                   >
-                    <FormLabel component="legend" sx={{ minWidth: "80px", fontSize: "14px" }}>
-                      Apply WBS
-                    </FormLabel>
-                    <RadioGroup
-                      row
-                    >
-                      <FormControlLabel value="individual" control={<Radio />} label="Individual" />
-                      <FormControlLabel value="overall" control={<Radio />} label="All Items" />
-                    </RadioGroup>
-                  </Box>
-                )
-              }
+                    <FormControlLabel value="individual" control={<Radio />} label="Individual" />
+                    <FormControlLabel value="overall" control={<Radio />} label="All Items" />
+                  </RadioGroup>
+
+                </Box>
+              )}
+
+              {wbsSelection === "overall" && (
+                <Autocomplete
+                  options={wbsCodes}
+                  getOptionLabel={(wbs) => wbs.wbs_code}
+                  value={wbsCodes.find((wbs) => wbs.id === overallWbs) || null}
+                  onChange={(event, newValue) => {
+                    setOverallWbs(newValue ? newValue.id : "");
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="WBS Code*"
+                      variant="outlined"
+                      sx={{
+                        height: { xs: 28, sm: 36 },
+                        "& .MuiInputBase-input, & .MuiSelect-select": {
+                          padding: { xs: "8px", sm: "10px" },
+                        },
+                      }}
+                      InputLabelProps={{ shrink: true }}
+                      placeholder="Search WBS Code"
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -537,7 +591,6 @@ export const AddMaterialPRDashboard = () => {
                   </h2>
                   ITEM DETAILS
                 </div>
-
                 <Button
                   onClick={addItem}
                   size="sm"
@@ -605,11 +658,7 @@ export const AddMaterialPRDashboard = () => {
                     label="Product Description*"
                     value={item.productDescription}
                     onChange={(e) =>
-                      handleItemChange(
-                        item.id,
-                        "productDescription",
-                        e.target.value
-                      )
+                      handleItemChange(item.id, "productDescription", e.target.value)
                     }
                     placeholder="Product Description"
                     fullWidth
@@ -671,6 +720,33 @@ export const AddMaterialPRDashboard = () => {
                     InputProps={{ sx: fieldStyles, readOnly: true }}
                     sx={{ mt: 1 }}
                   />
+
+                  {wbsSelection === "individual" && (
+                    <Autocomplete
+                      options={wbsCodes}
+                      getOptionLabel={(wbs) => wbs.wbs_code}
+                      value={wbsCodes.find((wbs) => wbs.id === item.wbsCode) || null}
+                      onChange={(event, newValue) => {
+                        setOverallWbs(newValue ? newValue.id : "");
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="WBS Code*"
+                          variant="outlined"
+                          sx={{
+                            height: { xs: 28, sm: 36 },
+                            "& .MuiInputBase-input, & .MuiSelect-select": {
+                              padding: { xs: "8px", sm: "10px" },
+                            },
+                          }}
+                          InputLabelProps={{ shrink: true }}
+                          placeholder="Search WBS Code"
+                        />
+                      )}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                    />
+                  )}
                 </div>
               ))}
             </CardContent>

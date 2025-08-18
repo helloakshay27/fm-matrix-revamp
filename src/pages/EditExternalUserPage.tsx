@@ -1,388 +1,458 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, User, Save } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { 
-  TextField, 
-  Select, 
-  MenuItem, 
-  FormControl, 
-  InputLabel, 
-  RadioGroup, 
-  FormControlLabel, 
-  Radio,
-  Checkbox,
-  FormGroup 
-} from '@mui/material';
+import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete, CircularProgress } from '@mui/material';
 import { toast } from 'sonner';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import axios from 'axios';
 
 export const EditExternalUserPage = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Get user data from location state or fallback to dummy data
+
+  // Keep only required fields
   const initialUser = location.state?.user || {
     id: Number(userId),
-    firstname: 'External',
-    lastname: 'User',
-    gender: 'Male',
-    mobile: '9999999999',
-    email: 'external@example.com',
-    company_name: 'External Company',
-    designation: 'External Role',
-    employee_id: 'EXT999',
-    user_type: 'external',
-    lock_user_permission_status: 'approved',
-    face_added: true,
-    app_downloaded: true,
-    department: 'External Dept',
-    circle: 'External Circle',
-    cluster: 'External Cluster',
-    line_manager_name: 'External Manager',
-    line_manager_mobile: '8888888888'
+    firstname: '',
+    lastname: '',
+    email: '',
+    mobile: '',
+    gender: '',
+    // renamed to report_to_id for payload requirement
+    report_to_id: '',
+    department_id: '',
+    circle_id: '',
+  company_cluster_id: '',
+    work_location: '', // added explicit work_location field to sync with dropdown storing name
+    role_id: ''
   };
 
-  const [formData, setFormData] = useState(initialUser);
-  const [emailPreference, setEmailPreference] = useState('All Emails');
-  const [dailyReport, setDailyReport] = useState(false);
+  const [formData, setFormData] = useState<any>(initialUser);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [originalUser, setOriginalUser] = useState<any>(null); // full fetched user for extra fields
+  const [saving, setSaving] = useState(false);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [roles, setRoles] = useState<any[]>([]);
+  const [circles, setCircles] = useState<any[]>([]);
+  const [workLocations, setWorkLocations] = useState<any[]>([]);
+  const [clusters, setClusters] = useState<any[]>([]);
+  // line manager async search states
+  const [lmQuery, setLmQuery] = useState('');
+  const [lmOptions, setLmOptions] = useState<any[]>([]);
+  const [lmLoading, setLmLoading] = useState(false);
+  const [selectedLineManager, setSelectedLineManager] = useState<any>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  // Normalize gender coming from API (M/F/male/female) to lowercase 'male' | 'female'
+  const normalizeGender = (g: string) => {
+    if (!g) return '';
+    const lower = g.toLowerCase();
+    if (lower === 'm') return 'male';
+    if (lower === 'f') return 'female';
+    if (lower === 'male' || lower === 'female') return lower;
+    return g; // fallback
   };
 
-  const handleSubmit = () => {
-    // Here you would typically save the data to your backend
-    console.log('Saving external user data:', formData);
-    toast.success('External user updated successfully!');
-    navigate(`/maintenance/m-safe/external/user/${userId}`, { state: { user: formData } });
+  const handleChange = (field: string, value: any) => {
+    setFormData((prev: any) => ({ ...prev, [field]: value }));
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
-  const handleCancel = () => {
-    navigate(`/maintenance/m-safe/external/user/${userId}`, { state: { user: initialUser } });
+  const handleSubmit = async () => {
+    if (!userId) return;
+    setSaving(true);
+    try {
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token');
+  if (!baseUrl || !token) throw new Error('Missing base URL or token');
+      const permission = originalUser?.lock_user_permission || {};
+      const payload = {
+        user: {
+          firstname: formData.firstname || '',
+          lastname: formData.lastname || '',
+          email: formData.email || '',
+          mobile: formData.mobile || '',
+          gender: (formData.gender || '').toLowerCase(),
+          // send the selected work location NAME (stored in formData.work_location)
+          work_location: formData.work_location || null,
+          role_id: formData.role_id || permission.lock_role_id || null,
+          report_to_id: formData.report_to_id || selectedLineManager?.id || null,
+          company_cluster_id: formData.company_cluster_id || null,
+
+          lock_user_permissions_attributes: permission?.id ? [
+            {
+              id: permission.id,
+              department_id: formData.department_id || null,
+              lock_role_id: formData.role_id || null,
+              circle_id: formData.circle_id || null,
+
+            }
+          ] : []
+        }
+      };
+      const url = `https://${baseUrl}/pms/users/${userId}/update_vi_user`;
+      await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success('External user updated');
+      navigate(`/maintenance/m-safe/external/user/${userId}`, { state: { user: { ...originalUser, ...formData } } });
+    } catch (e: any) {
+      console.error('Update external user error', e);
+      const respData = e?.response?.data;
+      let errors: string[] = [];
+      if (respData) {
+        if (Array.isArray(respData.errors)) {
+          errors = respData.errors;
+        } else if (respData.error) {
+          errors = [respData.error];
+        } else if (respData.errors && typeof respData.errors === 'object') {
+          Object.entries(respData.errors).forEach(([k, v]) => {
+            if (Array.isArray(v)) v.forEach(msg => errors.push(`${k} ${msg}`));
+          });
+        }
+      }
+      const emailErr = errors.find(er => /email/i.test(er) && /(taken|exists|already)/i.test(er));
+      if (emailErr) setFieldErrors(prev => ({ ...prev, email: emailErr }));
+      if (errors.length) {
+        toast.error(errors[0]);
+      } else {
+        toast.error('Failed to update user');
+      }
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handleCancel = () => navigate(`/maintenance/m-safe/external/user/${userId}`, { state: { user: location.state?.user || initialUser } });
+
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!userId) return;
+      setLoading(true); setError(null);
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) { setError('Missing base URL or token'); setLoading(false); return; }
+        const url = `https://${baseUrl}/pms/users/${userId}/user_show.json`;
+        const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        const data = resp.data?.user || resp.data;
+        setFormData((prev: any) => ({
+          ...prev,
+          firstname: data.firstname || '',
+          lastname: data.lastname || '',
+          email: data.email || '',
+          mobile: data.mobile || '',
+          gender: normalizeGender(data.gender || ''),
+          report_to_id: data.report_to?.id || data.report_to_id || '',
+          department_id: data.lock_user_permission?.department_id || '',
+          circle_id: data.lock_user_permission?.circle_id || data.circle_id || '',
+          cluster_name: data.cluster_name || '',
+          // if API returns an object, pick its name; else keep string
+          work_location: (typeof data.work_location === 'object' && data.work_location !== null) ? (data.work_location.name || data.work_location.work_location_name || '') : (data.work_location || ''),
+          role_id: data.lock_user_permission?.lock_role_id || data.lock_role_id || ''
+        }));
+        setOriginalUser(data);
+        // Inject existing line manager into Autocomplete options so it displays even before any search
+        const existingManager = data.report_to || (data.report_to_id ? { id: data.report_to_id, email: data.report_to_email, name: data.report_to_name } : null);
+        if (existingManager && existingManager.id) {
+          setSelectedLineManager(existingManager);
+          setLmOptions(prev => prev.some(o=>o.id===existingManager.id) ? prev : [existingManager, ...prev]);
+        }
+      } catch (e: any) {
+        console.error('Fetch external user (edit) error', e);
+        setError('Failed to load user');
+      } finally { setLoading(false); }
+    };
+    fetchUser();
+  }, [userId]);
+
+  console.log('formData', formData);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const companyId = formData.company_id || 15; // fallback
+        const url = `https://${baseUrl}/pms/users/get_departments.json?company_id=${companyId}`;
+        const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        const list = resp.data?.departments || [];
+        setDepartments(list);
+      } catch (e) {
+        console.error('Fetch departments error', e);
+      }
+    };
+    fetchDepartments();
+  }, []);
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const companyIdForRoles = formData.company_id; // use provided company 145 as default
+        const url = `https://${baseUrl}/pms/users/get_lock_roles.json?company_id=${companyIdForRoles}`;
+        const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        const list = resp.data?.lock_roles || [];
+        setRoles(list);
+      } catch (e) {
+        console.error('Fetch roles error', e);
+      }
+    };
+    fetchRoles();
+  }, []);
+
+  useEffect(() => {
+    const fetchCircles = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const companyId = formData.company_id || 15;
+        const url = `https://${baseUrl}/pms/users/get_circles.json?company_id=${companyId}`;
+        const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        setCircles(resp.data?.circles || []);
+      } catch (e) { console.error('Fetch circles error', e); }
+    };
+    fetchCircles();
+  }, []);
+
+  useEffect(() => {
+    const fetchClusters = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const companyId = formData.company_id || 145; // given API uses 145
+        const url = `https://${baseUrl}/pms/users/get_clusters.json?company_id=${companyId}`;
+        const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        setClusters(resp.data?.clusters || []);
+      } catch (e) { console.error('Fetch clusters error', e); }
+    };
+    fetchClusters();
+  }, []);
+
+  useEffect(() => {
+    const fetchWorkLocations = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const companyId = formData.company_id || 15;
+        const url = `https://${baseUrl}/pms/users/get_work_locations.json?company_id=${companyId}`;
+        const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        setWorkLocations(resp.data?.work_locations || []);
+      } catch (e) { console.error('Fetch work locations error', e); }
+    };
+    fetchWorkLocations();
+  }, []);
+
+  // Debounced Line Manager search
+  useEffect(() => {
+    if (lmQuery.length < 4) { setLmOptions([]); return; }
+    let active = true;
+    const handler = setTimeout(async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        setLmLoading(true);
+        const companyId = formData.company_id || 15; // fallback if not provided
+        // encode query param for email substring search
+        const url = `https://${baseUrl}/pms/users/company_wise_users.json?company_id=${companyId}&q[email_cont]=${encodeURIComponent(lmQuery)}`;
+        const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (!active) return;
+        const users = resp.data?.users || [];
+        setLmOptions(users);
+      } catch (e) {
+        console.error('Line manager search error', e);
+        if (active) setLmOptions([]);
+      } finally {
+        if (active) setLmLoading(false);
+      }
+    }, 400); // 400ms debounce
+    return () => { active = false; clearTimeout(handler); };
+  }, [lmQuery, formData.company_id]);
+
+  console.log('formData', formData.company_id);
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center mb-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/maintenance/m-safe/external')} className="p-1 hover:bg-gray-100 mr-2"><ArrowLeft className="w-4 h-4" /></Button>
+        </div>
+        <div className="text-gray-500">Loading user...</div>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center mb-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/maintenance/m-safe/external')} className="p-1 hover:bg-gray-100 mr-2"><ArrowLeft className="w-4 h-4" /></Button>
+        </div>
+        <div className="text-red-500 text-sm">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={handleCancel}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Edit External User
-            </h1>
-            <p className="text-gray-600">{formData.firstname} {formData.lastname}</p>
-          </div>
-        </div>
-        <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={handleCancel}
-          >
-            Cancel
-          </Button>
-          <Button 
-            className="bg-orange-600 hover:bg-orange-700 text-white"
-            onClick={handleSubmit}
-          >
-            <Save className="h-4 w-4 mr-2" />
-            Save Changes
+      {/* Page Header */}
+      <div className="mb-6">
+        <div className="flex items-center mb-2">
+          <Button variant="ghost" size="sm" onClick={handleCancel} className="p-1 hover:bg-gray-100 mr-2">
+            <ArrowLeft className="w-4 h-4" />
           </Button>
         </div>
+        <h1 className="text-2xl font-bold text-[#1A1A1A]">EDIT EXTERNAL USER - ID: {userId}</h1>
       </div>
 
-      {/* Edit Form */}
-      <div className="bg-white rounded-lg border p-6">
-        <h3 className="text-lg font-semibold mb-6">External User Information</h3>
-        
-        <div className="flex gap-8 mb-8">
-          {/* Profile Picture Section */}
-          <div className="flex-shrink-0">
-            <div className="w-48 h-48 bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
-              <div className="w-32 h-32 bg-orange-400 rounded-full flex items-center justify-center">
-                <User className="h-16 w-16 text-orange-600" />
-              </div>
-            </div>
-            <div className="mt-4 text-center">
-              <Button variant="outline" size="sm">
-                Change Photo
-              </Button>
-            </div>
+      {/* Card 1: Basic Details (combined with Contact & Personal) */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg text-[#C72030] flex items-center">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+            BASIC DETAILS
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <TextField label="First Name" value={formData.firstname} onChange={e => handleChange('firstname', e.target.value)} size="small" fullWidth />
+            <TextField label="Last Name" value={formData.lastname} onChange={e => handleChange('lastname', e.target.value)} size="small" fullWidth />
+            <TextField label="Email" type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} size="small" fullWidth error={!!fieldErrors.email} helperText={fieldErrors.email || ''} />
+            <TextField label="Mobile" type="number" value={formData.mobile} onChange={e => handleChange('mobile', e.target.value)} size="small" fullWidth />
+            <FormControl fullWidth size="small">
+              <InputLabel>Gender</InputLabel>
+              <Select value={formData.gender} label="Gender" onChange={e => handleChange('gender', e.target.value)}>
+                <MenuItem value="male">Male</MenuItem>
+                <MenuItem value="female">Female</MenuItem>
+              </Select>
+            </FormControl>
+            {/* Line Manager Async Search */}
+            <Autocomplete
+              fullWidth
+              size="small"
+              loading={lmLoading}
+              options={lmOptions}
+              isOptionEqualToValue={(option:any, value:any) => option.id === value.id}
+              getOptionLabel={(option: any) => option?.email || ''}
+              value={selectedLineManager || (formData.report_to_id && lmOptions.find(o=>o.id===formData.report_to_id)) || null}
+              onChange={(_, val: any) => {
+                setSelectedLineManager(val || null);
+                handleChange('report_to_id', val ? val.id : '');
+                if (val) {
+                  setLmOptions(prev => {
+                    if (prev.some(p=>p.id===val.id)) return prev; return [val, ...prev];
+                  });
+                }
+              }}
+              onInputChange={(_, val, reason) => {
+                if (reason === 'input') setLmQuery(val);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Line Manager (search by email)"
+                  placeholder="Type at least 4 characters"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {lmLoading ? <CircularProgress color="inherit" size={16} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    )
+                  }}
+                />
+              )}
+              renderOption={(props, option:any) => (
+                <li {...props} key={option.id}>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{option.email}</span>
+                    {option.name && <span className="text-xs text-gray-500">{option.name}</span>}
+                  </div>
+                </li>
+              )}
+              noOptionsText={lmQuery.length < 4 ? 'Type 4+ chars to search' : 'No results'}
+            />
+            <FormControl fullWidth size="small">
+              <InputLabel>Department</InputLabel>
+              <Select value={formData.department_id} label="Department" onChange={e => handleChange('department_id', e.target.value)}>
+                <MenuItem value="">Select</MenuItem>
+                {departments.map((d: any) => (
+                  <MenuItem key={d.id} value={d.id}>{d.department_name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </div>
-          
-          {/* Form Fields */}
-          <div className="flex-1 space-y-6">
-            {/* Basic Information */}
-            <div>
-              <h4 className="text-md font-medium text-gray-700 mb-4">Basic Information</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextField
-                  label="First Name"
-                  value={formData.firstname || ''}
-                  onChange={(e) => handleInputChange('firstname', e.target.value)}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Last Name"
-                  value={formData.lastname || ''}
-                  onChange={(e) => handleInputChange('lastname', e.target.value)}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <FormControl fullWidth size="small">
-                  <InputLabel>Gender</InputLabel>
-                  <Select
-                    value={formData.gender || 'Male'}
-                    onChange={(e) => handleInputChange('gender', e.target.value)}
-                    label="Gender"
-                  >
-                    <MenuItem value="Male">Male</MenuItem>
-                    <MenuItem value="Female">Female</MenuItem>
-                    <MenuItem value="Other">Other</MenuItem>
-                  </Select>
-                </FormControl>
-                <TextField
-                  label="Mobile"
-                  value={formData.mobile || ''}
-                  onChange={(e) => handleInputChange('mobile', e.target.value)}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Email"
-                  type="email"
-                  value={formData.email || ''}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Employee ID"
-                  value={formData.employee_id || ''}
-                  onChange={(e) => handleInputChange('employee_id', e.target.value)}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-              </div>
-            </div>
+        </CardContent>
+      </Card>
 
-            {/* User Type Selection */}
-            <div>
-              <FormControl component="fieldset">
-                <label className="text-sm font-medium text-gray-700 mb-2 block">User Type</label>
-                <RadioGroup
-                  value={formData.user_type || 'external'}
-                  onChange={(e) => handleInputChange('user_type', e.target.value)}
-                  row
-                  sx={{ gap: 3 }}
-                >
-                  <FormControlLabel value="external" control={<Radio />} label="External" />
-                  <FormControlLabel value="contractor" control={<Radio />} label="Contractor" />
-                  <FormControlLabel value="vendor" control={<Radio />} label="Vendor" />
-                </RadioGroup>
-              </FormControl>
-            </div>
-
-            {/* Company & Department Information */}
-            <div>
-              <h4 className="text-md font-medium text-gray-700 mb-4">Company & Department Information</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextField
-                  label="Vendor Company Name"
-                  value={formData.company_name || ''}
-                  onChange={(e) => handleInputChange('company_name', e.target.value)}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Department"
-                  value={formData.department || ''}
-                  onChange={(e) => handleInputChange('department', e.target.value)}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Designation"
-                  value={formData.designation || ''}
-                  onChange={(e) => handleInputChange('designation', e.target.value)}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Circle"
-                  value={formData.circle || ''}
-                  onChange={(e) => handleInputChange('circle', e.target.value)}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Cluster"
-                  value={formData.cluster || ''}
-                  onChange={(e) => handleInputChange('cluster', e.target.value)}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <FormControl fullWidth size="small">
-                  <InputLabel>Entity Name</InputLabel>
-                  <Select
-                    value={formData.entity_id || ''}
-                    onChange={(e) => handleInputChange('entity_id', e.target.value)}
-                    label="Entity Name"
-                  >
-                    <MenuItem value={1}>Entity 1</MenuItem>
-                    <MenuItem value={2}>Entity 2</MenuItem>
-                    <MenuItem value={3}>Entity 3</MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-            </div>
-
-            {/* Management Information */}
-            <div>
-              <h4 className="text-md font-medium text-gray-700 mb-4">Management Information</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextField
-                  label="Line Manager Name"
-                  value={formData.line_manager_name || ''}
-                  onChange={(e) => handleInputChange('line_manager_name', e.target.value)}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Line Manager Mobile"
-                  value={formData.line_manager_mobile || ''}
-                  onChange={(e) => handleInputChange('line_manager_mobile', e.target.value)}
-                  variant="outlined"
-                  fullWidth
-                  size="small"
-                />
-                <FormControl fullWidth size="small">
-                  <InputLabel>Access Level</InputLabel>
-                  <Select
-                    value={formData.access_level || 3}
-                    onChange={(e) => handleInputChange('access_level', e.target.value)}
-                    label="Access Level"
-                  >
-                    <MenuItem value={1}>Level 1 - Site</MenuItem>
-                    <MenuItem value={2}>Level 2 - Building</MenuItem>
-                    <MenuItem value={3}>Level 3 - Floor</MenuItem>
-                  </Select>
-                </FormControl>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Status</InputLabel>
-                  <Select
-                    value={formData.lock_user_permission_status || 'approved'}
-                    onChange={(e) => handleInputChange('lock_user_permission_status', e.target.value)}
-                    label="Status"
-                  >
-                    <MenuItem value="approved">Approved</MenuItem>
-                    <MenuItem value="pending">Pending</MenuItem>
-                    <MenuItem value="rejected">Rejected</MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-            </div>
-
-            {/* App & System Access */}
-            <div>
-              <h4 className="text-md font-medium text-gray-700 mb-4">App & System Access</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormControl fullWidth size="small">
-                  <InputLabel>Face Recognition</InputLabel>
-                  <Select
-                    value={formData.face_added ? 'yes' : 'no'}
-                    onChange={(e) => handleInputChange('face_added', e.target.value === 'yes')}
-                    label="Face Recognition"
-                  >
-                    <MenuItem value="yes">Yes</MenuItem>
-                    <MenuItem value="no">No</MenuItem>
-                  </Select>
-                </FormControl>
-                <FormControl fullWidth size="small">
-                  <InputLabel>App Downloaded</InputLabel>
-                  <Select
-                    value={formData.app_downloaded ? 'yes' : 'no'}
-                    onChange={(e) => handleInputChange('app_downloaded', e.target.value === 'yes')}
-                    label="App Downloaded"
-                  >
-                    <MenuItem value="yes">Yes</MenuItem>
-                    <MenuItem value="no">No</MenuItem>
-                  </Select>
-                </FormControl>
-              </div>
-            </div>
-
-            {/* Email Preferences */}
-            <div>
-              <h4 className="text-md font-medium text-gray-700 mb-4">Email Preferences</h4>
-              <div className="space-y-4">
-                <FormControl fullWidth size="small">
-                  <InputLabel>Email Preference</InputLabel>
-                  <Select
-                    value={emailPreference}
-                    onChange={(e) => setEmailPreference(e.target.value)}
-                    label="Email Preference"
-                  >
-                    <MenuItem value="All Emails">All Emails</MenuItem>
-                    <MenuItem value="Important Only">Important Only</MenuItem>
-                    <MenuItem value="None">None</MenuItem>
-                  </Select>
-                </FormControl>
-                
-                <FormGroup>
-                  <FormControlLabel 
-                    control={
-                      <Checkbox 
-                        checked={dailyReport}
-                        onChange={(e) => setDailyReport(e.target.checked)}
-                      />
-                    } 
-                    label="Daily Helpdesk Report Email" 
-                  />
-                </FormGroup>
-              </div>
-            </div>
+      {/* Card 2: Organizational */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg text-[#C72030] flex items-center">
+            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+            ORGANIZATIONAL
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <FormControl fullWidth size="small">
+              <InputLabel>Circle</InputLabel>
+              <Select value={formData.circle_id} label="Circle" onChange={e => handleChange('circle_id', e.target.value)}>
+                <MenuItem value="">Select</MenuItem>
+                {circles.map((c: any) => (
+                  <MenuItem key={c.id} value={c.id}>{c.circle_name || c.name || `Circle ${c.id}`}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth size="small">
+              <InputLabel>Cluster</InputLabel>
+              <Select value={formData.cluster_name} label="Cluster" onChange={e => handleChange('company_cluster_id', e.target.value)}>
+                <MenuItem value="">Select</MenuItem>
+                {clusters.map((cl: any) => (
+                  <MenuItem key={cl.company_cluster_id} value={cl.company_cluster_id}>{cl.cluster_name || `Cluster ${cl.company_cluster_id}`}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth size="small">
+              <InputLabel>Work Location</InputLabel>
+              <Select value={formData.work_location} label="Work Location" onChange={e => handleChange('work_location', e.target.value)}>
+                <MenuItem value="">Select</MenuItem>
+                {workLocations.map((w: any) => (
+                  <MenuItem key={w.id} value={w.name}>{w.name || w.work_location_name || `Location ${w.id}`}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth size="small">
+              <InputLabel>Role</InputLabel>
+              <Select value={formData.role_id} label="Role" onChange={e => handleChange('role_id', e.target.value)}>
+                <MenuItem value="">Select</MenuItem>
+                {roles.map((r: any) => (
+                  <MenuItem key={r.id} value={r.id}>{r.name || r.display_name || `Role ${r.id}`}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </div>
-        </div>
-        
-        {/* Save Button */}
-        <div className="flex justify-center pt-6 border-t">
-          <div className="flex gap-3">
-            <Button 
-              variant="outline"
-              onClick={handleCancel}
-              className="px-8 py-2"
-            >
-              Cancel
-            </Button>
-            <Button 
-              className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-2"
-              onClick={handleSubmit}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              Save Changes
-            </Button>
-          </div>
-        </div>
+        </CardContent>
+      </Card>
+
+      {/* Actions */}
+      <div className="flex gap-4 flex-wrap justify-center pt-4">
+        <Button onClick={handleCancel} variant="outline" className="px-8 py-2" disabled={saving}>Cancel</Button>
+        <Button onClick={handleSubmit} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90 px-8 py-2" disabled={saving}>
+          <Save className="h-4 w-4 mr-2" />
+          {saving ? 'Saving...' : 'Save Changes'}
+        </Button>
       </div>
     </div>
   );

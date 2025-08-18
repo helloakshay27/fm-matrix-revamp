@@ -206,14 +206,14 @@ const UtilityConsumptionDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
-        <Button 
+        <Button
           onClick={handleGenerateNew}
           className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
         >
           <Plus className="w-4 h-4" />
           Generate New
         </Button>
-        <Button 
+        <Button
           onClick={() => setIsFilterModalOpen(true)}
           className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
         >
@@ -223,28 +223,10 @@ const UtilityConsumptionDashboard = () => {
       </div>
 
       {/* Search */}
-      <div className="flex justify-between items-center">
-        <div></div>
-        <div className="flex items-center space-x-2">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Search calculations..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64 h-10 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
-            />
-          </div>
-          <Button 
-            className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-6 py-2 h-10 text-sm font-medium border-0"
-          >
-            Go!
-          </Button>
-        </div>
-      </div>
+
 
       {/* Enhanced Data Table */}
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div >
         <EnhancedTable
           data={filteredData}
           columns={columns}
@@ -281,7 +263,7 @@ const UtilityConsumptionDashboard = () => {
               </Button>
             </div>
           </DialogHeader>
-          
+
           <div className="px-6 py-6">
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="space-y-2">
@@ -293,7 +275,7 @@ const UtilityConsumptionDashboard = () => {
                   className="h-10 rounded-md border-gray-300"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Meter No.</label>
                 <Input
@@ -303,7 +285,7 @@ const UtilityConsumptionDashboard = () => {
                   className="h-10 rounded-md border-gray-300"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Reading Type</label>
                 <Select value={filters.readingType} onValueChange={(value) => setFilters(prev => ({ ...prev, readingType: value }))}>
@@ -318,7 +300,7 @@ const UtilityConsumptionDashboard = () => {
                 </Select>
               </div>
             </div>
-            
+
             <div className="flex justify-end gap-3">
               <Button
                 onClick={handleResetFilters}

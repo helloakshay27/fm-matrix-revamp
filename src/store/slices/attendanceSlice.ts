@@ -23,7 +23,7 @@ export const fetchAttendanceData = createAsyncThunk(
       const response = await apiClient.get(url);
 
       // Map API response to our AttendanceRecord interface
-      const mappedData: AttendanceRecord[] = response.data.map((item: any, index: number) => ({
+      const mappedData: AttendanceRecord[] = response.data.users.map((item: any, index: number) => ({
         id: index + 1, // Keep this for table row identification
         user_id: item.id || index + 1, // Use actual user ID from API, fallback to index
         name: item.full_name || '-',

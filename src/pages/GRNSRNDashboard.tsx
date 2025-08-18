@@ -1,174 +1,41 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Plus, Filter, Eye, Edit } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plus, Eye, Edit } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { GRNFilterDialog } from "@/components/GRNFilterDialog";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { useAppDispatch } from '@/store/hooks';
+import { getGRN } from '@/store/slices/grnSlice';
 
 export const GRNSRNDashboard = () => {
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem('token');
+  const baseUrl = localStorage.getItem('baseUrl');
+
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
+  const [grn, setGrn] = useState([])
 
-  const grnData = [
-    {
-      id: 6407,
-      inventory: "64 Size",
-      supplier: "Check",
-      invoiceNumber: "NA",
-      referenceNo: "11051T",
-      poNumber: "NA",
-      poReferenceNumber: "11051T",
-      approvedStatus: "Approved",
-      lastApprovedBy: "PSIR_1",
-      poAmount: 100.0,
-      totalGrnAmount: 100.0,
-      payableAmount: 100.0,
-      retentionAmount: 0.0,
-      tdsAmount: 0.0,
-      qcAmount: 0.0,
-      invoiceDate: "27/03/22"
-    },
-    {
-      id: 6406,
-      inventory: "64 Size",
-      supplier: "Check",
-      invoiceNumber: "NA",
-      referenceNo: "11051T",
-      poNumber: "NA",
-      poReferenceNumber: "11051T",
-      approvedStatus: "Approved",
-      lastApprovedBy: "PSIR_1",
-      poAmount: 100.0,
-      totalGrnAmount: 100.0,
-      payableAmount: 100.0,
-      retentionAmount: 0.0,
-      tdsAmount: 0.0,
-      qcAmount: 0.0,
-      invoiceDate: "27/03/22"
-    },
-    {
-      id: 6405,
-      inventory: "64 Size",
-      supplier: "ABC",
-      invoiceNumber: "NA",
-      referenceNo: "11051S",
-      poNumber: "NA",
-      poReferenceNumber: "11051S",
-      approvedStatus: "Approved",
-      lastApprovedBy: "PSIR_1",
-      poAmount: 1000000.0,
-      totalGrnAmount: 1000000.0,
-      payableAmount: 1000000.0,
-      retentionAmount: 0.0,
-      tdsAmount: 0.0,
-      qcAmount: 0.0,
-      invoiceDate: "27/03/22"
-    },
-    {
-      id: 6404,
-      inventory: "64 Size",
-      supplier: "1St Printing N Design",
-      invoiceNumber: "101",
-      referenceNo: "11055C",
-      poNumber: "NA",
-      poReferenceNumber: "11055C",
-      approvedStatus: "Approved",
-      lastApprovedBy: "PSIR_1",
-      poAmount: 10150000.0,
-      totalGrnAmount: 10150000.0,
-      payableAmount: 10150000.0,
-      retentionAmount: 0.0,
-      tdsAmount: 0.0,
-      qcAmount: 0.0,
-      invoiceDate: "27/03/22"
-    },
-    {
-      id: 6403,
-      inventory: "64 Size",
-      supplier: "test gst",
-      invoiceNumber: "101",
-      referenceNo: "11052D",
-      poNumber: "NA",
-      poReferenceNumber: "11052D",
-      approvedStatus: "Approved",
-      lastApprovedBy: "PSIR_1",
-      poAmount: 100.0,
-      totalGrnAmount: 20.0,
-      payableAmount: 20.0,
-      retentionAmount: 0.0,
-      tdsAmount: 0.0,
-      qcAmount: 0.0,
-      invoiceDate: "26/03/22"
-    },
-    {
-      id: 964,
-      inventory: "ABC",
-      supplier: "A C Manufacture",
-      invoiceNumber: "NA",
-      referenceNo: "10211",
-      poNumber: "NA",
-      poReferenceNumber: "10211",
-      approvedStatus: "Approved",
-      lastApprovedBy: "PSIR_1",
-      poAmount: 1090.0,
-      totalGrnAmount: 0.0,
-      payableAmount: 0.0,
-      retentionAmount: 0.0,
-      tdsAmount: 0.0,
-      qcAmount: 0.0,
-      invoiceDate: "28/06/22"
-    },
-    {
-      id: 961,
-      inventory: "BA4",
-      supplier: "A C Manufacture",
-      invoiceNumber: "64",
-      referenceNo: "10233",
-      poNumber: "NA",
-      poReferenceNumber: "10233",
-      approvedStatus: "Pending",
-      lastApprovedBy: "",
-      poAmount: 52000.0,
-      totalGrnAmount: 880.0,
-      payableAmount: 82.0,
-      retentionAmount: 0.0,
-      tdsAmount: 0.0,
-      qcAmount: 0.0,
-      invoiceDate: "13/06/22"
-    },
-    {
-      id: 608,
-      inventory: "BA4",
-      supplier: "Havells Corp",
-      invoiceNumber: "NA",
-      referenceNo: "10225",
-      poNumber: "NA",
-      poReferenceNumber: "10225",
-      approvedStatus: "Pending",
-      lastApprovedBy: "",
-      poAmount: 520.0,
-      totalGrnAmount: 520.0,
-      payableAmount: 520.0,
-      retentionAmount: 0.0,
-      tdsAmount: 0.0,
-      qcAmount: 0.0,
-      invoiceDate: "08/09/22"
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await dispatch(getGRN({ baseUrl, token })).unwrap();
+        setGrn(response.grns)
+      } catch (error) {
+        console.log(error)
+        toast.error(error)
+      }
     }
-  ];
 
+    fetchData()
+  }, [])
+
+  // Function to get status color based on approvedStatus
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch (status?.toLowerCase()) {
       case 'approved':
         return 'bg-green-500 text-white';
       case 'pending':
@@ -180,11 +47,46 @@ export const GRNSRNDashboard = () => {
     }
   };
 
-  const filteredData = grnData.filter(item =>
-    item.inventory.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.supplier.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.referenceNo.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Separate renderCell function
+  const renderCell = (item, columnKey: string) => {
+    switch (columnKey) {
+      case 'approved_status':
+        return (
+          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.approved_status)}`}>
+            {item.approved_status}
+          </span>
+        );
+      case 'po_amount':
+      case 'total_grn_amount':
+      case 'payable_amount':
+      case 'retention_amount':
+      case 'tds_amount':
+      case 'qc_amount':
+        return item[columnKey];
+      default:
+        return item[columnKey];
+    }
+  };
+
+  // Define column configuration for EnhancedTable
+  const columns: ColumnConfig[] = [
+    { key: 'id', label: 'ID', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'inventories_name', label: 'Inventory', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'supplier_name', label: 'Supplier', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'invoice_no', label: 'Invoice Number', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'reference_number', label: 'Reference No.', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'po_number', label: 'P.O. Number', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'po_reference_number', label: 'P.O Reference Number', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'approved_status', label: 'Approved Status', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'last_approved_by', label: 'Last Approved By', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'po_amount', label: 'PO Amount', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'total_grn_amount', label: 'Total GRN Amount', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'payable_amount', label: 'Payable Amount', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'retention_amount', label: 'Retention Amount', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'tds_amount', label: 'TDS Amount', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'qc_amount', label: 'QC Amount', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'invoice_date', label: 'Invoice Date', sortable: true, draggable: true, defaultVisible: true },
+  ];
 
   const handleAddNew = () => {
     navigate('/finance/grn-srn/add');
@@ -202,165 +104,67 @@ export const GRNSRNDashboard = () => {
     navigate(`/finance/grn-srn/edit/${id}`);
   };
 
+  // Render actions for each row
+  const renderActions = (item) => (
+    <div className="flex gap-1">
+      <Button
+        size="sm"
+        variant="ghost"
+        className="p-1"
+        onClick={() => handleEdit(item.id)}
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="p-1"
+        onClick={() => handleView(item.id)}
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+
+  // Left actions (Add and Filter buttons)
+  const leftActions = (
+    <div className="flex gap-3">
+      <Button
+        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+        onClick={handleAddNew}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add
+      </Button>
+    </div>
+  );
+
   return (
     <div className="p-6">
       {/* Page Title */}
       <h1 className="text-2xl font-bold mb-6">GRN LIST</h1>
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex gap-3">
-          <Button 
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-            onClick={handleAddNew}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
-          <Button 
-            variant="outline"
-            onClick={handleFilter}
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </Button>
-        </div>
+      {/* Enhanced Table */}
+      <EnhancedTable
+        data={grn}
+        columns={columns}
+        renderCell={renderCell} // Pass the renderCell function
+        renderActions={renderActions}
+        onRowClick={(item) => handleView(item.id)} // Optional: Click row to view details
+        storageKey="grn-srn-table"
+        searchTerm={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search..."
+        enableExport={true}
+        exportFileName="grn_srn_export"
+        pagination={true}
+        pageSize={5}
+        enableSearch={true}
+        leftActions={leftActions}
+        onFilterClick={handleFilter}
+      />
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search by Inventory Name"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-80"
-            />
-          </div>
-          <Button 
-            className="bg-[#C72030] hover:bg-[#A01020] text-white px-6"
-          >
-            Go!
-          </Button>
-          <Button 
-            variant="outline" 
-            className="px-6"
-            onClick={() => setSearchQuery('')}
-          >
-            Reset
-          </Button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Action</TableHead>
-              <TableHead className="font-semibold">View</TableHead>
-              <TableHead className="font-semibold">ID</TableHead>
-              <TableHead className="font-semibold">Inventory</TableHead>
-              <TableHead className="font-semibold">Supplier</TableHead>
-              <TableHead className="font-semibold">Invoice Number</TableHead>
-              <TableHead className="font-semibold">Reference No.</TableHead>
-              <TableHead className="font-semibold">P.O. Number</TableHead>
-              <TableHead className="font-semibold">P.O Reference Number</TableHead>
-              <TableHead className="font-semibold">Approved Status</TableHead>
-              <TableHead className="font-semibold">Last Approved By</TableHead>
-              <TableHead className="font-semibold">PO Amount</TableHead>
-              <TableHead className="font-semibold">Total GRN Amount</TableHead>
-              <TableHead className="font-semibold">Payable Amount</TableHead>
-              <TableHead className="font-semibold">Retention Amount</TableHead>
-              <TableHead className="font-semibold">TDS Amount</TableHead>
-              <TableHead className="font-semibold">QC Amount</TableHead>
-              <TableHead className="font-semibold">Invoice Date</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredData.map((item) => (
-              <TableRow key={item.id} className="hover:bg-gray-50">
-                <TableCell>
-                  <div className="flex gap-1">
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="p-1"
-                      onClick={() => handleEdit(item.id)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="p-1"
-                    onClick={() => handleView(item.id)}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-                <TableCell className="font-medium">{item.id}</TableCell>
-                <TableCell>{item.inventory}</TableCell>
-                <TableCell>{item.supplier}</TableCell>
-                <TableCell>{item.invoiceNumber}</TableCell>
-                <TableCell>{item.referenceNo}</TableCell>
-                <TableCell>{item.poNumber}</TableCell>
-                <TableCell>{item.poReferenceNumber}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.approvedStatus)}`}>
-                    {item.approvedStatus}
-                  </span>
-                </TableCell>
-                <TableCell>{item.lastApprovedBy}</TableCell>
-                <TableCell>{item.poAmount.toFixed(1)}</TableCell>
-                <TableCell>{item.totalGrnAmount.toFixed(1)}</TableCell>
-                <TableCell>{item.payableAmount.toFixed(1)}</TableCell>
-                <TableCell>{item.retentionAmount.toFixed(1)}</TableCell>
-                <TableCell>{item.tdsAmount.toFixed(1)}</TableCell>
-                <TableCell>{item.qcAmount.toFixed(1)}</TableCell>
-                <TableCell>{item.invoiceDate}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-center mt-6">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious href="#" />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#" isActive>1</PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">2</PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">3</PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">4</PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">5</PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationLink href="#">6</PaginationLink>
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext href="#" />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
-
-      <GRNFilterDialog 
+      <GRNFilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
       />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
 
@@ -15,127 +15,95 @@ import { MSafeImportModal } from '@/components/MSafeImportModal';
 import { MSafeFilterDialog } from '@/components/MSafeFilterDialog';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
+import { useDebounce } from '@/hooks/useDebounce';
 
+
+interface ApiPagination { current_page: number; total_pages: number; total_count: number }
 
 export const MSafeDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  // const {
-  //   data: fmUsersData,
-  //   loading,
-  //   error
-  // } = useAppSelector(state => state.fmUsers);
-  // const fm_users = fmUsersData?.fm_users || [];
 
-  // Dummy FMUser data (25 records) in state
-  const [fmUsers, setFmUsers] = useState<FMUser[]>([
-    {
-      id: 1, firstname: 'John', lastname: 'Doe', gender: 'Male', mobile: '1234567890', email: 'john@example.com', company_name: 'Acme Corp', entity_id: 1, unit_id: 1, designation: 'Manager', employee_id: 'EMP001', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '1' }
-    },
-    {
-      id: 2, firstname: 'Jane', lastname: 'Smith', gender: 'Female', mobile: '2345678901', email: 'jane@example.com', company_name: 'Beta Ltd', entity_id: 2, unit_id: 2, designation: 'Engineer', employee_id: 'EMP002', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'pending', face_added: false, app_downloaded: 'no', lock_user_permission: { access_level: '2' }
-    },
-    {
-      id: 3, firstname: 'Alice', lastname: 'Brown', gender: 'Female', mobile: '3456789012', email: 'alice@example.com', company_name: 'Gamma Inc', entity_id: 3, unit_id: 3, designation: 'Technician', employee_id: 'EMP003', created_by_id: 1, user_type: 'company', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'no', lock_user_permission: { access_level: '3' }
-    },
-    {
-      id: 4, firstname: 'Bob', lastname: 'White', gender: 'Male', mobile: '4567890123', email: 'bob@example.com', company_name: 'Delta LLC', entity_id: 4, unit_id: 4, designation: 'Supervisor', employee_id: 'EMP004', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'pending', face_added: false, app_downloaded: 'yes', lock_user_permission: { access_level: '2' }
-    },
-    {
-      id: 5, firstname: 'Charlie', lastname: 'Green', gender: 'Male', mobile: '5678901234', email: 'charlie@example.com', company_name: 'Epsilon GmbH', entity_id: 5, unit_id: 5, designation: 'Operator', employee_id: 'EMP005', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '1' }
-    },
-    {
-      id: 6, firstname: 'Diana', lastname: 'King', gender: 'Female', mobile: '6789012345', email: 'diana@example.com', company_name: 'Zeta AG', entity_id: 6, unit_id: 6, designation: 'Clerk', employee_id: 'EMP006', created_by_id: 1, user_type: 'company', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: 'no', lock_user_permission: { access_level: '2' }
-    },
-    {
-      id: 7, firstname: 'Eve', lastname: 'Black', gender: 'Female', mobile: '7890123456', email: 'eve@example.com', company_name: 'Eta Pvt', entity_id: 7, unit_id: 7, designation: 'Lead', employee_id: 'EMP007', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'no', lock_user_permission: { access_level: '3' }
-    },
-    {
-      id: 8, firstname: 'Frank', lastname: 'Gray', gender: 'Male', mobile: '8901234567', email: 'frank@example.com', company_name: 'Theta Ltd', entity_id: 8, unit_id: 8, designation: 'Staff', employee_id: 'EMP008', created_by_id: 1, user_type: 'company', lock_user_permission_status: 'pending', face_added: false, app_downloaded: 'yes', lock_user_permission: { access_level: '1' }
-    },
-    {
-      id: 9, firstname: 'Grace', lastname: 'Hill', gender: 'Female', mobile: '9012345678', email: 'grace@example.com', company_name: 'Iota Inc', entity_id: 9, unit_id: 9, designation: 'Admin', employee_id: 'EMP009', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '2' }
-    },
-    {
-      id: 10, firstname: 'Henry', lastname: 'Stone', gender: 'Male', mobile: '0123456789', email: 'henry@example.com', company_name: 'Kappa LLC', entity_id: 10, unit_id: 10, designation: 'Support', employee_id: 'EMP010', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: 'no', lock_user_permission: { access_level: '3' }
-    },
-    {
-      id: 11, firstname: 'Iris', lastname: 'Wilson', gender: 'Female', mobile: '1122334455', email: 'iris@example.com', company_name: 'Lambda Corp', entity_id: 11, unit_id: 11, designation: 'Analyst', employee_id: 'EMP011', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '2' }
-    },
-    {
-      id: 12, firstname: 'Jack', lastname: 'Davis', gender: 'Male', mobile: '2233445566', email: 'jack@example.com', company_name: 'Mu Systems', entity_id: 12, unit_id: 12, designation: 'Developer', employee_id: 'EMP012', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'pending', face_added: false, app_downloaded: 'yes', lock_user_permission: { access_level: '1' }
-    },
-    {
-      id: 13, firstname: 'Kate', lastname: 'Miller', gender: 'Female', mobile: '3344556677', email: 'kate@example.com', company_name: 'Nu Technologies', entity_id: 13, unit_id: 13, designation: 'Coordinator', employee_id: 'EMP013', created_by_id: 1, user_type: 'company', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'no', lock_user_permission: { access_level: '3' }
-    },
-    {
-      id: 14, firstname: 'Leo', lastname: 'Garcia', gender: 'Male', mobile: '4455667788', email: 'leo@example.com', company_name: 'Xi Solutions', entity_id: 14, unit_id: 14, designation: 'Specialist', employee_id: 'EMP014', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: 'no', lock_user_permission: { access_level: '2' }
-    },
-    {
-      id: 15, firstname: 'Mia', lastname: 'Rodriguez', gender: 'Female', mobile: '5566778899', email: 'mia@example.com', company_name: 'Omicron Ltd', entity_id: 15, unit_id: 15, designation: 'Consultant', employee_id: 'EMP015', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '1' }
-    },
-    {
-      id: 16, firstname: 'Noah', lastname: 'Martinez', gender: 'Male', mobile: '6677889900', email: 'noah@example.com', company_name: 'Pi Enterprises', entity_id: 16, unit_id: 16, designation: 'Assistant', employee_id: 'EMP016', created_by_id: 1, user_type: 'company', lock_user_permission_status: 'pending', face_added: false, app_downloaded: 'yes', lock_user_permission: { access_level: '3' }
-    },
-    {
-      id: 17, firstname: 'Olivia', lastname: 'Anderson', gender: 'Female', mobile: '7788990011', email: 'olivia@example.com', company_name: 'Rho Industries', entity_id: 17, unit_id: 17, designation: 'Executive', employee_id: 'EMP017', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'no', lock_user_permission: { access_level: '2' }
-    },
-    {
-      id: 18, firstname: 'Paul', lastname: 'Taylor', gender: 'Male', mobile: '8899001122', email: 'paul@example.com', company_name: 'Sigma Group', entity_id: 18, unit_id: 18, designation: 'Officer', employee_id: 'EMP018', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: 'no', lock_user_permission: { access_level: '1' }
-    },
-    {
-      id: 19, firstname: 'Quinn', lastname: 'Thomas', gender: 'Male', mobile: '9900112233', email: 'quinn@example.com', company_name: 'Tau Ventures', entity_id: 19, unit_id: 19, designation: 'Coordinator', employee_id: 'EMP019', created_by_id: 1, user_type: 'company', lock_user_permission_status: 'pending', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '3' }
-    },
-    {
-      id: 20, firstname: 'Ruby', lastname: 'Jackson', gender: 'Female', mobile: '1011223344', email: 'ruby@example.com', company_name: 'Upsilon Co', entity_id: 20, unit_id: 20, designation: 'Manager', employee_id: 'EMP020', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '2' }
-    },
-    {
-      id: 21, firstname: 'Sam', lastname: 'White', gender: 'Male', mobile: '1112233445', email: 'sam@example.com', company_name: 'Phi Labs', entity_id: 21, unit_id: 21, designation: 'Technician', employee_id: 'EMP021', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'approved', face_added: false, app_downloaded: 'yes', lock_user_permission: { access_level: '1' }
-    },
-    {
-      id: 22, firstname: 'Tina', lastname: 'Harris', gender: 'Female', mobile: '1213344556', email: 'tina@example.com', company_name: 'Chi Systems', entity_id: 22, unit_id: 22, designation: 'Analyst', employee_id: 'EMP022', created_by_id: 1, user_type: 'company', lock_user_permission_status: 'pending', face_added: true, app_downloaded: 'no', lock_user_permission: { access_level: '3' }
-    },
-    {
-      id: 23, firstname: 'Uma', lastname: 'Clark', gender: 'Female', mobile: '1314455667', email: 'uma@example.com', company_name: 'Psi Corp', entity_id: 23, unit_id: 23, designation: 'Supervisor', employee_id: 'EMP023', created_by_id: 1, user_type: 'admin', lock_user_permission_status: 'rejected', face_added: false, app_downloaded: 'no', lock_user_permission: { access_level: '2' }
-    },
-    {
-      id: 24, firstname: 'Victor', lastname: 'Lewis', gender: 'Male', mobile: '1415566778', email: 'victor@example.com', company_name: 'Omega Tech', entity_id: 24, unit_id: 24, designation: 'Lead', employee_id: 'EMP024', created_by_id: 1, user_type: 'site', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'yes', lock_user_permission: { access_level: '1' }
-    },
-    {
-      id: 25, firstname: 'Wendy', lastname: 'Walker', gender: 'Female', mobile: '1516677889', email: 'wendy@example.com', company_name: 'Alpha Solutions', entity_id: 25, unit_id: 25, designation: 'Specialist', employee_id: 'EMP025', created_by_id: 1, user_type: 'company', lock_user_permission_status: 'approved', face_added: true, app_downloaded: 'no', lock_user_permission: { access_level: '3' }
-    },
-  ]);
-  const loading = false;
+  const [fmUsers, setFmUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 500);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<ApiPagination>({ current_page: 1, total_pages: 1, total_count: 0 });
 
 
-  const cardData = [{
-    title: "User Management",
-    count: fmUsers?.length || 25,
-    icon: Users
-  }, {
-    title: "Active Users",
-    count: fmUsers?.filter(user => user.lock_user_permission_status === 'approved').length || 18,
-    icon: UserCheck
-  }, {
-    title: "Pending Approvals",
-    count: fmUsers?.filter(user => user.lock_user_permission_status === 'pending').length || 7,
-    icon: Clock
-  }, {
-    title: "System Settings",
-    count: 12,
-    icon: Settings
-  }];
+  const cardData = [
+    {
+      title: "User Management",
+      count: fmUsers?.length || 0,
+      icon: Users
+    },
+    {
+      title: "Active Users",
+      count: fmUsers?.filter(user => user.status === 'approved').length || 0,
+      icon: UserCheck
+    },
+    {
+      title: "Pending Approvals",
+      count: fmUsers?.filter(user => user.status === 'pending').length || 0,
+      icon: Clock
+    },
+    {
+      title: "System Settings",
+      count: 12,
+      icon: Settings
+    }
+  ];
 
 
   useEffect(() => {
-    dispatch(fetchFMUsers());
-  }, [dispatch]);
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) {
+          setFmUsers([]);
+          setLoading(false);
+          return;
+        }
+        let url = `https://${baseUrl}/pms/users/fte_users.json?page=${page}`;
+        const emailQuery = debouncedSearch.trim();
+        if (emailQuery) {
+          url += `&q[email_cont]=${encodeURIComponent(emailQuery)}`;
+        }
+        const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        const data = response.data;
+        const users = Array.isArray(data.users) ? data.users : (Array.isArray(data) ? data : data.users || []);
+        setFmUsers(users);
+        if (data.pagination) {
+          setPagination({
+            current_page: data.pagination.current_page,
+            total_pages: data.pagination.total_pages,
+            total_count: data.pagination.total_count,
+          });
+        } else {
+          setPagination({ current_page: page, total_pages: 1, total_count: users.length });
+        }
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        setFmUsers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, [page, debouncedSearch]);
+
+  useEffect(() => {
+    if (debouncedSearch && page !== 1) setPage(1);
+  }, [debouncedSearch]);
   const getStatusBadge = (status: string) => {
     if (!status) {
       return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
@@ -172,129 +140,102 @@ export const MSafeDashboard = () => {
       {isYes ? 'Yes' : 'No'}
     </Badge>;
   };
-  const columns: ColumnConfig[] = [{
-    key: 'active',
-    label: 'Active',
-    sortable: false,
-    hideable: true
-  }, {
-    key: 'id',
-    label: 'ID',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'user_name',
-    label: 'User Name',
-    sortable: true,
-    hideable: false
-  }, {
-    key: 'gender',
-    label: 'Gender',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'mobile',
-    label: 'Mobile Number',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'email',
-    label: 'Email',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'company_name',
-    label: 'Vendor Company Name',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'entity_id',
-    label: 'Entity Name',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'unit_id',
-    label: 'Unit',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'designation',
-    label: 'Role',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'employee_id',
-    label: 'Employee ID',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'created_by_id',
-    label: 'Created By',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'access_level',
-    label: 'Access Level',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'user_type',
-    label: 'Type',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'lock_user_permission_status',
-    label: 'Status',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'face_added',
-    label: 'Face Recognition',
-    sortable: true,
-    hideable: true
-  }, {
-    key: 'app_downloaded',
-    label: 'App Downloaded',
-    sortable: true,
-    hideable: true
-  }];
-  // Toggle active status handler (local state update for dummy data)
-  const handleToggleActive = (user: FMUser) => {
+  const columns: ColumnConfig[] = [
+    { key: 'name', label: 'Name', sortable: true, hideable: true },
+    { key: 'org_user_id', label: 'Emp ID', sortable: true, hideable: true },
+    { key: 'email', label: 'Email', sortable: true, hideable: true },
+    { key: 'mobile', label: 'Mobile', sortable: true, hideable: true },
+    { key: 'gender', label: 'Gender', sortable: true, hideable: true },
+    { key: 'active', label: 'Active', sortable: true, hideable: true },
+    { key: 'birth_date', label: 'Birth Date', sortable: true, hideable: true },
+    { key: 'joining_date', label: 'Joining Date', sortable: true, hideable: true },
+    { key: 'status', label: 'Status', sortable: true, hideable: true },
+    { key: 'cluster_name', label: 'Cluster', sortable: true, hideable: true },
+    { key: 'department_name', label: 'Department', sortable: true, hideable: true },
+    { key: 'circle_name', label: 'Circle', sortable: true, hideable: true },
+    { key: 'work_location', label: 'Work Location', sortable: true, hideable: true },
+    { key: 'company_name', label: 'Company Name', sortable: true, hideable: true },
+    { key: 'role_name', label: 'Role', sortable: true, hideable: true },
+    { key: 'employee_type', label: 'Employee Type', sortable: true, hideable: true },
+    { key: 'created_at', label: 'Created At', sortable: true, hideable: true },
+    { key: 'line_manager_name', label: 'Line Manager Name', sortable: false, hideable: true },
+    { key: 'line_manager_email', label: 'Line Manager Email', sortable: false, hideable: true },
+    { key: 'line_manager_mobile', label: 'Line Manager Mobile', sortable: false, hideable: true },
+  ];
+
+  const handleToggleActive = (user: any) => {
     setFmUsers(prevUsers =>
       prevUsers.map(u =>
         u.id === user.id
-          ? { ...u, lock_user_permission_status: u.lock_user_permission_status === 'approved' ? 'pending' : 'approved' }
+          ? { ...u, active: !u.active }
           : u
       )
     );
   };
 
-  const renderCell = (user: FMUser, columnKey: string): React.ReactNode => {
+  const renderCell = (user: any, columnKey: string): React.ReactNode => {
     switch (columnKey) {
-      case 'active':
-        return <div className="flex justify-center">
-          <Switch
-            checked={user.lock_user_permission_status === 'approved'}
-            onCheckedChange={() => handleToggleActive(user)}
-          />
-        </div>;
-      case 'user_name':
-        return `${user.firstname} ${user.lastname}`;
+      case 'name':
+        return `${user.firstname || ''} ${user.lastname || ''}`.trim() || '-';
+      case 'org_user_id':
+        return user.org_user_id || user.lock_user_permission?.employee_id || user.employee_id || '-';
+      case 'email':
+        return user.email || '-';
+      case 'mobile':
+        return user.mobile || '-';
+      case 'gender':
+        return user.gender || '-';
+      case 'active': {
+        const isActive = user.lock_role && typeof user.lock_role.active !== 'undefined' ? user.lock_role.active === 1 : !!user.active;
+        return (
+          <div className="flex justify-center">
+            <Switch checked={isActive} />
+          </div>
+        );
+      }
+      case 'birth_date':
+        return user.birth_date || '-';
+      case 'joining_date':
+        return user.lock_user_permission?.joining_date || user.joining_date || '-';
+      case 'status': {
+        const statusVal = user.lock_user_permission?.status || user.status;
+        return statusVal ? getStatusBadge(statusVal) : '-';
+      }
+      case 'cluster_name':
+        return user.cluster_name || '-';
+      case 'department_name':
+        return user.lock_user_permission?.department_name || user.department_name || '-';
+      case 'circle_name':
+        return user.lock_user_permission?.circle_name || user.circle_name || '-';
+      case 'work_location':
+        return user.work_location || '-';
       case 'company_name':
-        return user.company_name || 'N/A';
-      case 'access_level':
-        return (user.lock_user_permission?.access_level || 'N/A').toString();
-      case 'user_type':
-        return getTypeBadge(user.user_type);
-      case 'lock_user_permission_status':
-        return getStatusBadge(user.lock_user_permission_status);
-      case 'face_added':
-        return getYesNoBadge(user.face_added);
-      case 'app_downloaded':
-        return getYesNoBadge(user.app_downloaded);
+        return user.company_name || '-';
+      case 'role_name':
+        return user.lock_user_permission?.role_name || user.role_name || user.lock_role?.name || user.lock_role?.display_name || '-';
+      case 'employee_type':
+        return user.employee_type || '-';
+      case 'created_at':
+        if (!user.created_at) return '-';
+        try {
+          const date = new Date(user.created_at);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          return `${day}/${month}/${year} ${hours}:${minutes}`;
+        } catch {
+          return user.created_at;
+        }
+      case 'line_manager_name':
+        return user.report_to?.name || 'NA';
+      case 'line_manager_email':
+        return user.report_to?.email || 'NA';
+      case 'line_manager_mobile':
+        return user.report_to?.mobile || 'NA';
       default:
-        const value = user[columnKey as keyof FMUser];
-        return value?.toString() || '';
+        return '-';
     }
   };
   const renderActions = (user: FMUser) =>
@@ -308,19 +249,56 @@ export const MSafeDashboard = () => {
       >
         <Eye className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => { }} className="h-8 w-8 p-0">
-        <Trash2 className="h-4 w-4" />
-      </Button>
     </div>
   )
 
-    const handleSelectAll = (checked: boolean) => {
+  const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedItems(fmUsers.map(user => user.id.toString()));
     } else {
       setSelectedItems([]);
     }
   };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > pagination.total_pages || newPage === page) return;
+    setPage(newPage);
+  };
+
+  const paginationItems = useMemo(() => {
+    const items: React.ReactNode[] = [];
+    const totalPages = pagination.total_pages;
+    const current = pagination.current_page;
+    if (totalPages <= 1) return items;
+    const pushPage = (p: number) => {
+      items.push(
+        <PaginationItem key={p}>
+          <PaginationLink className='cursor-pointer' isActive={current === p} onClick={() => handlePageChange(p)}>
+            {p}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    };
+    const pushEllipsis = (key: string) => items.push(<PaginationItem key={key}><PaginationEllipsis /></PaginationItem>);
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pushPage(i);
+    } else {
+      pushPage(1);
+      if (current <= 3) {
+        for (let i = 2; i <= 4; i++) pushPage(i);
+        pushEllipsis('e1');
+      } else if (current >= totalPages - 2) {
+        pushEllipsis('e1');
+        for (let i = totalPages - 3; i < totalPages; i++) pushPage(i);
+      } else {
+        pushEllipsis('e1');
+        for (let i = current - 1; i <= current + 1; i++) pushPage(i);
+        pushEllipsis('e2');
+      }
+      pushPage(totalPages);
+    }
+    return items;
+  }, [pagination]);
 
 
   const handleRefresh = () => {
@@ -386,13 +364,7 @@ export const MSafeDashboard = () => {
   };
 
   const handleApplyFilters = (filters: { name: string; email: string; mobile: string }) => {
-    // Apply filters to the fm_users data
-    // const filteredUsers = fm_users.filter(user => {
-    //   return (!filters.name || user.user_name.toLowerCase().includes(filters.name.toLowerCase())) &&
-    //     (!filters.email || user.email.toLowerCase().includes(filters.email.toLowerCase())) &&
-    //     (!filters.mobile || user.mobile.includes(filters.mobile));
-    // });
-    // Update the state or dispatch an action with the filtered users
+
     console.log('Filtered Users:');
   }
 
@@ -400,7 +372,7 @@ export const MSafeDashboard = () => {
   return (
     <>
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {cardData.map((card, index) => (
             <div
               key={index}
@@ -419,7 +391,7 @@ export const MSafeDashboard = () => {
               </div>
             </div>
           ))}
-        </div>
+        </div> */}
 
         {showActionPanel && (
           <SelectionPanel
@@ -440,7 +412,23 @@ export const MSafeDashboard = () => {
               Action
             </Button>
           } columns={columns} onFilterClick={handleFiltersClick}
-            renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} enableExport={true} exportFileName="fm-users" pagination={true} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
+            renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} enableExport={true} exportFileName="fm-users" pagination={false} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
+          {!loading && pagination.total_pages > 1 && (
+            <div className="flex flex-col items-center gap-2 mt-6">
+              <div className="text-sm text-gray-600">Page {pagination.current_page} of {pagination.total_pages} | Total {pagination.total_count}</div>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious className='cursor-pointer' onClick={() => handlePageChange(page - 1)} />
+                  </PaginationItem>
+                  {paginationItems}
+                  <PaginationItem>
+                    <PaginationNext className='cursor-pointer' onClick={() => handlePageChange(page + 1)} />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </div>
 
         <MSafeImportModal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} onImport={handleImport} />

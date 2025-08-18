@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Activity, BarChart3, Zap, Sun, Droplet, Recycle, BarChart, Plug, Frown, Wind, ArrowDown, ArrowUp, Plus, X, ChevronUp, ChevronDown, Building
+} from 'lucide-react';
+import { MeterMeasureFields } from '@/components/asset/MeterMeasureFields';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
 import {
   TextField,
   MenuItem,
@@ -16,8 +20,175 @@ import {
   Checkbox as MuiCheckbox,
   FormLabel,
 } from '@mui/material';
+import apiClient from '@/utils/apiClient';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
-export const AddWaterAssetDashboard = () => {
+function AddWaterAssetDashboard() {
+  // Asset Meter Type ID mapping based on database values (copied from AddAssetPage)
+  const getAssetMeterTypeId = (meterCategory, subCategory = null, tertiaryCategory = null) => {
+    const meterTypeMapping = {
+      "board": {
+        "ht-panel": 5,
+        "vcb": 8,
+        "transformer": 2,
+        "lt-panel": 9,
+      },
+      "dg": 1,
+      "renewable": {
+        "solar": 7,
+        "bio-methanol": 10,
+        "wind": 11,
+      },
+      "fresh-water": {
+        "source": {
+          "municipal-corporation": 12,
+          "tanker": 13,
+          "borewell": 14,
+          "rainwater": 15,
+          "jackwell": 16,
+          "pump": 3,
+        },
+        "destination": {
+          "output": 18,
+        }
+      },
+      "recycled": 6,
+      "water-distribution": {
+        "irrigation": 17,
+        "domestic": 18,
+        "flushing": 19,
+      },
+      "iex-gdam": 21,
+    };
+
+    if (tertiaryCategory && meterTypeMapping[meterCategory] &&
+      meterTypeMapping[meterCategory][subCategory] &&
+      typeof meterTypeMapping[meterCategory][subCategory] === 'object') {
+      return meterTypeMapping[meterCategory][subCategory][tertiaryCategory] || null;
+    } else if (subCategory && meterTypeMapping[meterCategory] && typeof meterTypeMapping[meterCategory] === 'object') {
+      return meterTypeMapping[meterCategory][subCategory] || null;
+    } else if (typeof meterTypeMapping[meterCategory] === 'number') {
+      return meterTypeMapping[meterCategory];
+    }
+    return null;
+  };
+
+  // Water Distribution Options (copied from AddAssetPage)
+  const getWaterDistributionOptions = () => [
+    {
+      value: "irrigation",
+      label: "Irrigation",
+      icon: Droplet,
+    },
+    {
+      value: "domestic",
+      label: "Domestic",
+      icon: Building,
+    },
+    {
+      value: "flushing",
+      label: "Flushing",
+      icon: ArrowDown,
+    },
+  ];
+
+  const { toast } = useToast();
+
+  // --- Meter Details Section State (match AddAssetPage) ---
+  const [meterCategoryType, setMeterCategoryType] = useState("");
+  const [subCategoryType, setSubCategoryType] = useState("");
+  const [tertiaryCategory, setTertiaryCategory] = useState("");
+  const [meterType, setMeterType] = useState("");
+  const [showBoardRatioOptions, setShowBoardRatioOptions] = useState(false);
+  const [showRenewableOptions, setShowRenewableOptions] = useState(false);
+  const [showFreshWaterOptions, setShowFreshWaterOptions] = useState(false);
+  const [showWaterSourceOptions, setShowWaterSourceOptions] = useState(false);
+  const [showWaterDistributionOptions, setShowWaterDistributionOptions] = useState(false);
+  const [parentMeters, setParentMeters] = useState([]);
+  const [parentMeterLoading, setParentMeterLoading] = useState(false);
+  const [selectedParentMeterId, setSelectedParentMeterId] = useState("");
+
+  // Fetch parent meters function (same as AddAssetPage, adapted for fetch)
+  const fetchParentMeters = async () => {
+    setParentMeterLoading(true);
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    }
+    try {
+      const response = await fetch(`${baseUrl}/pms/assets/get_parent_asset.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await response.json();
+      // Transform nested array to object format
+      const transformedData = (data.assets || []).map((asset) => ({
+        id: asset[0],
+        name: asset[1],
+      }));
+      setParentMeters(transformedData);
+    } catch (error) {
+      console.error('Error fetching parent meters:', error);
+      setParentMeters([]);
+    } finally {
+      setParentMeterLoading(false);
+    }
+  };
+
+  // Fetch parent meters when Sub Meter is selected
+  useEffect(() => {
+    if (meterType === "SubMeter") {
+      fetchParentMeters();
+    } else {
+      setSelectedParentMeterId("");
+    }
+    // eslint-disable-next-line
+  }, [meterType]);
+  const [meterUnitTypes, setMeterUnitTypes] = useState([]);
+  const [loadingUnitTypes, setLoadingUnitTypes] = useState(false);
+  const [consumptionMeasureFields, setConsumptionMeasureFields] = useState([
+    {
+      id: '1',
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false,
+    },
+  ]);
+  const [nonConsumptionMeasureFields, setNonConsumptionMeasureFields] = useState([
+    {
+      id: '1',
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false,
+    },
+  ]);
+
+  // --- Meter Details Option Functions (match AddAssetPage) ---
+
+  // --- Meter Details Handlers (match AddAssetPage) ---
+
+  // --- Meter Details Section State (must be before handlers) ---
+
+  // --- Fresh water options and handlers ---
   // Form data state (moved to the top to avoid TDZ issues)
   const [formData, setFormData] = useState({
     site: '',
@@ -386,6 +557,107 @@ export const AddWaterAssetDashboard = () => {
   const [nonConsumptionOpen, setNonConsumptionOpen] = useState(true);
   const [attachmentsOpen, setAttachmentsOpen] = useState(true);
 
+  // --- Meter Details Section State (copied from AddAssetPage) ---
+  const [meterDetailsToggle, setMeterDetailsToggle] = useState(false);
+
+  // --- Meter Details Section Helpers (copied from AddAssetPage) ---
+  const getMeterCategoryOptions = () => [
+    { value: 'board', label: 'Board', icon: BarChart3 },
+    { value: 'dg', label: 'DG', icon: Zap },
+    { value: 'renewable', label: 'Renewable', icon: Sun },
+    { value: 'fresh-water', label: 'Fresh Water', icon: Droplet },
+    { value: 'recycled', label: 'Recycled', icon: Recycle },
+    { value: 'water-distribution', label: 'Water Distribution', icon: Building },
+    { value: 'iex-gdam', label: 'IEX-GDAM', icon: BarChart },
+  ];
+  const getBoardRatioOptions = () => [
+    { value: 'ht-panel', label: 'HT Panel', icon: Plug },
+    { value: 'vcb', label: 'VCB', icon: Activity },
+    { value: 'transformer', label: 'Transformer', icon: Zap },
+    { value: 'lt-panel', label: 'LT Panel', icon: Frown },
+  ];
+  const getRenewableOptions = () => [
+    { value: 'solar', label: 'Solar', icon: Sun },
+    { value: 'bio-methanol', label: 'Bio Methanol', icon: Droplet },
+    { value: 'wind', label: 'Wind', icon: Wind },
+  ];
+  const getFreshWaterOptions = () => [
+    { value: 'source', label: 'Source', icon: ArrowDown },
+    { value: 'destination', label: 'Destination', icon: ArrowUp },
+  ];
+  const getWaterSourceOptions = () => [
+    { value: 'municipal-corporation', label: 'Municipal Corporation', icon: BarChart },
+    { value: 'tanker', label: 'Tanker', icon: Zap },
+    { value: 'borewell', label: 'Borewell', icon: ArrowDown },
+    { value: 'rainwater', label: 'Rainwater', icon: BarChart },
+    { value: 'jackwell', label: 'Jackwell', icon: ArrowUp },
+    { value: 'pump', label: 'Pump', icon: Zap },
+  ];
+  const handleMeterCategoryChange = (value) => {
+    setMeterCategoryType(value);
+    setSubCategoryType("");
+    setTertiaryCategory("");
+    setShowBoardRatioOptions(false);
+    setShowRenewableOptions(false);
+    setShowFreshWaterOptions(false);
+    setShowWaterSourceOptions(false);
+    setShowWaterDistributionOptions(false);
+    if (value === 'board') {
+      setShowBoardRatioOptions(true);
+    } else if (value === 'renewable') {
+      setShowRenewableOptions(true);
+    } else if (value === 'fresh-water') {
+      setShowFreshWaterOptions(true);
+    } else if (value === 'water-distribution') {
+      setShowWaterDistributionOptions(true);
+    }
+  };
+  const handleSubCategoryChange = (value) => {
+    setSubCategoryType(value);
+    setTertiaryCategory("");
+    setShowWaterSourceOptions(false);
+    setShowWaterDistributionOptions(false);
+    if (meterCategoryType === 'fresh-water' && value === 'source') {
+      setShowWaterSourceOptions(true);
+    }
+    if (meterCategoryType === 'water-distribution') {
+      setShowWaterDistributionOptions(true);
+    }
+  };
+  const handleTertiaryCategoryChange = (value) => {
+    setTertiaryCategory(value);
+  };
+  const handleMeterDetailsToggleChange = (checked) => {
+    setMeterDetailsToggle(checked);
+  };
+  // Add, remove, and change handlers for measure fields
+  const addMeterMeasureField = (type) => {
+    const newField = {
+      id: Date.now().toString(),
+      name: '',
+      unitType: '',
+      min: '',
+      max: '',
+      alertBelowVal: '',
+      alertAboveVal: '',
+      multiplierFactor: '',
+      checkPreviousReading: false,
+    };
+    if (type === 'consumption') setConsumptionMeasureFields((prev) => [...prev, newField]);
+    else setNonConsumptionMeasureFields((prev) => [...prev, newField]);
+  };
+  const removeMeterMeasureField = (type, id) => {
+    if (type === 'consumption') setConsumptionMeasureFields((prev) => prev.filter((f) => f.id !== id));
+    else setNonConsumptionMeasureFields((prev) => prev.filter((f) => f.id !== id));
+  };
+  const handleMeterMeasureFieldChange = (type, id, field, value) => {
+    if (type === 'consumption') {
+      setConsumptionMeasureFields((prev) => prev.map((f) => (f.id === id ? { ...f, [field]: value } : f)));
+    } else {
+      setNonConsumptionMeasureFields((prev) => prev.map((f) => (f.id === id ? { ...f, [field]: value } : f)));
+    }
+  };
+
   const [consumptionMeasures, setConsumptionMeasures] = useState([
     {
       name: '',
@@ -457,8 +729,288 @@ export const AddWaterAssetDashboard = () => {
     navigate('/utility/water');
   };
 
-  const handleSaveAndCreateNew = () => {
-    console.log('Saving and creating new asset:', formData);
+  // Helper: Check if any files are present in attachments
+  const hasFiles = () => {
+    return Object.values(attachments).some((arr) => Array.isArray(arr) && arr.length > 0);
+  };
+
+  // Helper: Build category-specific attachments for payload
+  const getCategoryAttachments = () => {
+    if (!selectedAssetCategory) return {};
+    const categoryKey = selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '');
+    return {
+      asset_image: attachments[`${categoryKey}AssetImage`] || [],
+      asset_manuals: attachments[`${categoryKey}ManualsUpload`] || [],
+      asset_insurances: attachments[`${categoryKey}InsuranceDetails`] || [],
+      asset_purchases: attachments[`${categoryKey}PurchaseInvoice`] || [],
+      asset_other_uploads: attachments[`${categoryKey}OtherDocuments`] || [],
+    };
+  };
+
+  // Main Save & Create New Asset handler (API flow matches AddAssetPage)
+  const handleSaveAndCreateNew = async () => {
+    // Build payload (map your formData fields to API keys)
+    const payload = {
+      pms_asset: {
+        name: formData.assetName,
+        asset_number: formData.assetNo,
+        model_number: formData.modelNo,
+        serial_number: formData.serialNo,
+        manufacturer: formData.manufacturer,
+        status: formData.status === 'inUse' ? 'in_use' : formData.status,
+        critical: formData.critical === 'yes' || formData.critical === true,
+        pms_site_id: formData.site,
+        pms_building_id: formData.building,
+        pms_wing_id: formData.wing,
+        pms_area_id: formData.area,
+        pms_floor_id: formData.floor,
+        pms_room_id: formData.room,
+        pms_asset_group_id: formData.group,
+        pms_asset_sub_group_id: formData.subgroup,
+        commisioning_date: formData.commissioningDate,
+        purchased_on: formData.purchasedOnDate,
+        warranty_expiry: formData.warrantyExpiresOn,
+        purchase_cost: formData.purchaseCost,
+        meter_tag_type: meterCategoryType,
+        asset_meter_type_id: (() => {
+          const meterTypeId = getAssetMeterTypeId(meterCategoryType, subCategoryType, tertiaryCategory);
+          return typeof meterTypeId === 'number' ? meterTypeId : null;
+        })(),
+        consumption_pms_asset_measures_attributes: consumptionMeasureFields.map(
+          (field) => ({
+            name: field.name,
+            meter_unit_id: field.unitType,
+            min_value: field.min,
+            max_value: field.max,
+            alert_below: field.alertBelowVal,
+            alert_above: field.alertAboveVal,
+            multiplier_factor: field.multiplierFactor,
+            active: true,
+            meter_tag: "Consumption",
+            check_previous_reading: field.checkPreviousReading || false,
+            _destroy: false,
+          })
+        ),
+        non_consumption_pms_asset_measures_attributes: nonConsumptionMeasureFields.map(
+          (field) => ({
+            name: field.name,
+            meter_unit_id: field.unitType,
+            min_value: field.min,
+            max_value: field.max,
+            alert_below: field.alertBelowVal,
+            alert_above: field.alertAboveVal,
+            multiplier_factor: field.multiplierFactor,
+            active: true,
+            meter_tag: "Non Consumption",
+            check_previous_reading: field.checkPreviousReading || false,
+            _destroy: false,
+          })
+        ),
+        ...getCategoryAttachments(),
+      },
+    };
+
+    try {
+      let response;
+      if (hasFiles()) {
+        const formDataObj = new FormData();
+        Object.entries(payload.pms_asset).forEach(([key, value]) => {
+          if (
+            ![
+              "consumption_pms_asset_measures_attributes",
+              "non_consumption_pms_asset_measures_attributes",
+            ].includes(key)
+          ) {
+            if (typeof value === "object" && value !== null && !(value instanceof File)) {
+              formDataObj.append(`pms_asset[${key}]`, JSON.stringify(value));
+            } else if (value !== undefined && value !== null) {
+              formDataObj.append(`pms_asset[${key}]`, String(value));
+            }
+          }
+        });
+        payload.pms_asset.consumption_pms_asset_measures_attributes?.forEach((measure, idx) => {
+          Object.entries(measure).forEach(([k, v]) => {
+            formDataObj.append(
+              `pms_asset[consumption_pms_asset_measures_attributes][${idx}][${k}]`,
+              String(v)
+            );
+          });
+        });
+        payload.pms_asset.non_consumption_pms_asset_measures_attributes?.forEach((measure, idx) => {
+          Object.entries(measure).forEach(([k, v]) => {
+            formDataObj.append(
+              `pms_asset[non_consumption_pms_asset_measures_attributes][${idx}][${k}]`,
+              String(v)
+            );
+          });
+        });
+        Object.entries(attachments).forEach(([key, arr]) => {
+          if (Array.isArray(arr)) {
+            arr.forEach((file) => {
+              formDataObj.append(`pms_asset[${key}][]`, file);
+            });
+          }
+        });
+        response = await apiClient.post("pms/assets.json", formDataObj, {
+          headers: { "Content-Type": "multipart/form-data" },
+          timeout: 300000,
+        });
+      } else {
+        response = await apiClient.post("pms/assets.json", payload, {
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      toast({
+        title: "Asset Created Successfully",
+        description: "The asset has been created and saved.",
+        duration: 3000,
+        status: "success",
+      });
+      // No navigation or reload so user can see the response in the network tab
+      // Optionally, you can also log the response for debugging:
+      // console.log('API response:', response);
+    } catch (err) {
+      toast({
+        title: "Upload Failed",
+        description: err?.response?.data?.message || err.message || "An error occurred",
+        duration: 6000,
+        status: "error",
+      });
+      console.error("Error creating asset:", err);
+    }
+  };
+
+  // Add selectedAssetCategory state for attachment logic
+  const [selectedAssetCategory, setSelectedAssetCategory] = React.useState("");
+  // Add attachments state for file uploads (copied from AddAssetPage)
+  const [attachments, setAttachments] = React.useState({
+    landAttachments: [],
+    vehicleAttachments: [],
+    leaseholdAttachments: [],
+    buildingAttachments: [],
+    furnitureAttachments: [],
+    itEquipmentAttachments: [],
+    machineryAttachments: [],
+    toolsAttachments: [],
+    meterAttachments: [],
+    landManualsUpload: [],
+    vehicleManualsUpload: [],
+    leaseholdimprovementManualsUpload: [],
+    buildingManualsUpload: [],
+    furniturefixturesManualsUpload: [],
+    itequipmentManualsUpload: [],
+    machineryequipmentManualsUpload: [],
+    toolsinstrumentsManualsUpload: [],
+    meterManualsUpload: [],
+    landInsuranceDetails: [],
+    vehicleInsuranceDetails: [],
+    leaseholdimprovementInsuranceDetails: [],
+    buildingInsuranceDetails: [],
+    furniturefixturesInsuranceDetails: [],
+    itequipmentInsuranceDetails: [],
+    machineryequipmentInsuranceDetails: [],
+    toolsinstrumentsInsuranceDetails: [],
+    meterInsuranceDetails: [],
+    landPurchaseInvoice: [],
+    vehiclePurchaseInvoice: [],
+    leaseholdimprovementPurchaseInvoice: [],
+    buildingPurchaseInvoice: [],
+    furniturefixturesPurchaseInvoice: [],
+    itequipmentPurchaseInvoice: [],
+    machineryequipmentPurchaseInvoice: [],
+    toolsinstrumentsPurchaseInvoice: [],
+    meterPurchaseInvoice: [],
+    landOtherDocuments: [],
+    vehicleOtherDocuments: [],
+    leaseholdimprovementOtherDocuments: [],
+    buildingOtherDocuments: [],
+    furniturefixturesOtherDocuments: [],
+    itequipmentOtherDocuments: [],
+    machineryequipmentOtherDocuments: [],
+    toolsinstrumentsOtherDocuments: [],
+    meterOtherDocuments: [],
+    landAmc: [],
+    vehicleAmc: [],
+    leaseholdimprovementAmc: [],
+    buildingAmc: [],
+    furniturefixturesAmc: [],
+    itequipmentAmc: [],
+    machineryequipmentAmc: [],
+    toolsinstrumentsAmc: [],
+    meterAmc: [],
+    landAssetImage: [],
+    vehicleAssetImage: [],
+    leaseholdimprovementAssetImage: [],
+    buildingAssetImage: [],
+    furniturefixturesAssetImage: [],
+    itequipmentAssetImage: [],
+    machineryequipmentAssetImage: [],
+    toolsinstrumentsAssetImage: [],
+    meterAssetImage: [],
+  });
+
+  // File upload logic (copied and adapted from AddAssetPage)
+  const handleFileUpload = async (category, files) => {
+    if (!files) return;
+
+    const maxFileSize = 10 * 1024 * 1024; // 10MB per file
+    const maxTotalSize = 50 * 1024 * 1024; // 50MB total
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "text/plain",
+    ];
+
+    const fileArray = Array.from(files);
+    const processedFiles = [];
+    let totalSize = 0;
+
+    // Calculate current total size
+    Object.values(attachments).forEach((fileList) => {
+      if (Array.isArray(fileList)) {
+        fileList.forEach((file) => {
+          totalSize += file.size || 0;
+        });
+      }
+    });
+
+    for (const file of fileArray) {
+      if (!allowedTypes.includes(file.type)) {
+        // Optionally show error/toast here
+        continue;
+      }
+      let processedFile = file;
+      // Optionally add image compression logic here if needed
+      if (file.size > maxFileSize) {
+        // Optionally show error/toast here
+        continue;
+      }
+      if (totalSize + processedFile.size > maxTotalSize) {
+        // Optionally show error/toast here
+        continue;
+      }
+      totalSize += processedFile.size;
+      processedFiles.push(processedFile);
+    }
+
+    if (processedFiles.length > 0) {
+      setAttachments((prev) => ({
+        ...prev,
+        [category]: [...(prev[category] || []), ...processedFiles],
+      }));
+    }
+  };
+
+  const removeFile = (category, index) => {
+    setAttachments((prev) => ({
+      ...prev,
+      [category]: prev[category].filter((_, i) => i !== index),
+    }));
   };
 
   return (
@@ -812,7 +1364,7 @@ export const AddWaterAssetDashboard = () => {
                     </MuiRadioGroup>
                   </div>
 
-                  <div>
+                  {/* <div>
                     <FormLabel>Asset Type</FormLabel>
                     <MuiRadioGroup
                       value={formData.assetType}
@@ -823,7 +1375,7 @@ export const AddWaterAssetDashboard = () => {
                       <FormControlLabel value="parent" control={<Radio />} label="Parent" />
                       <FormControlLabel value="sub" control={<Radio />} label="Sub" />
                     </MuiRadioGroup>
-                  </div>
+                  </div> */}
 
                   <div>
                     <FormLabel>Status</FormLabel>
@@ -946,464 +1498,321 @@ export const AddWaterAssetDashboard = () => {
         </Card>
 
         {/* Meter Category Type */}
+        {/* Meter Details (copied and adapted from AddAssetPage) */}
         <Card>
           <Collapsible open={meterCategoryOpen} onOpenChange={setMeterCategoryOpen}>
             <CollapsibleTrigger asChild>
               <CardHeader className="cursor-pointer hover:bg-gray-50">
                 <CardTitle className="flex items-center justify-between">
                   <span className="flex items-center gap-2 text-black">
-                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">9</span>
-                    Meter Category Type
+                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"><Activity className="w-4 h-4" /></span>
+                    METER DETAILS
                   </span>
-                  {meterCategoryOpen ? <ChevronUp /> : <ChevronDown />}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">If Applicable</span>
+                    <div className="relative inline-block w-12 h-6">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        id="meter-details-toggle"
+                        checked={meterDetailsToggle}
+                        onChange={e => handleMeterDetailsToggleChange(e.target.checked)}
+                      />
+                      <label
+                        htmlFor="meter-details-toggle"
+                        className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${meterDetailsToggle ? 'bg-green-400' : 'bg-gray-300'}`}
+                      >
+                        <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${meterDetailsToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                      </label>
+                    </div>
+                    {meterCategoryOpen ? <ChevronUp /> : <ChevronDown />}
+                  </div>
                 </CardTitle>
               </CardHeader>
             </CollapsibleTrigger>
             <CollapsibleContent>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                  {['Board', 'DG', 'Renewable', 'Fresh Water', 'Recycled', 'IEX-GDAM'].map((category) => (
-                    <div key={category} className="flex items-center space-x-2 p-3 rounded" style={{ backgroundColor: '#f6f4ee' }}>
-                      <FormControlLabel
-                        control={
-                          <Radio
-                            checked={formData.selectedMeterCategory === category}
-                            onChange={() =>
-                              setFormData({
-                                ...formData,
-                                selectedMeterCategory: category,
-                                boardSubCategory: '',
-                                renewableSubCategory: '',
-                                freshWaterSubCategory: '',
-                              })
+                <div className={`${!meterDetailsToggle ? 'opacity-50 pointer-events-none' : ''}`}>
+                  {/* Meter Type */}
+                  <div className="mb-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <span className="text-[#C72030] font-medium text-sm sm:text-base">Meter Type</span>
+                      <div className="flex gap-6">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id="meter-type-parent"
+                            name="meter_tag_type"
+                            value="ParentMeter"
+                            checked={meterType === 'ParentMeter'}
+                            onChange={e => setMeterType(e.target.value)}
+                            disabled={!meterDetailsToggle}
+                            className="w-4 h-4 text-[#C72030] border-gray-300"
+                            style={{ accentColor: '#C72030' }}
+                          />
+                          <label htmlFor="meter-type-parent" className={`text-sm ${!meterDetailsToggle ? 'text-gray-400' : ''}`}>Parent</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id="meter-type-sub"
+                            name="meter_tag_type"
+                            value="SubMeter"
+                            checked={meterType === 'SubMeter'}
+                            onChange={e => setMeterType(e.target.value)}
+                            disabled={!meterDetailsToggle}
+                            className="w-4 h-4 text-[#C72030] border-gray-300"
+                            style={{ accentColor: '#C72030' }}
+                          />
+                          <label htmlFor="meter-type-sub" className={`text-sm ${!meterDetailsToggle ? 'text-gray-400' : ''}`}>Sub</label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Parent Meter Dropdown - Show only when Sub Meter is selected */}
+                  {meterType === "SubMeter" && (
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Parent Meter <span className="text-red-500">*</span>
+                      </label>
+                      <Select
+                        value={selectedParentMeterId}
+                        onValueChange={(value) => {
+                          setSelectedParentMeterId(value);
+                          setFormData((prev) => ({ ...prev, parent_meter_id: value }));
+                        }}
+                        disabled={parentMeterLoading || !meterDetailsToggle}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue
+                            placeholder={
+                              parentMeterLoading ? "Loading..." : "Select Parent Meter"
                             }
                           />
-                        }
-                        label={category}
-                        sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
-                      />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {parentMeters.map((meter) => (
+                            <SelectItem key={meter.id} value={meter.id.toString()}>
+                              {meter.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  ))}
+                  )}
+                  {/* Meter Category Type */}
+                  <div className="mb-6">
+                    <div className="rounded-lg p-4 bg-[#f6f4ee]">
+                      <h3 className="font-medium mb-4 text-sm sm:text-base text-orange-700">METER DETAILS</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
+                        {getMeterCategoryOptions().map((option) => {
+                          const IconComponent = option.icon;
+                          return (
+                            <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                              <div className="flex items-center justify-center space-x-2">
+                                <input
+                                  type="radio"
+                                  id={option.value}
+                                  name="meterCategory"
+                                  value={option.value}
+                                  checked={meterCategoryType === option.value}
+                                  onChange={e => handleMeterCategoryChange(e.target.value)}
+                                  className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                  style={{ accentColor: '#C72030' }}
+                                />
+                                <IconComponent className="w-4 h-4 text-gray-600" />
+                                <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* Board Ratio Options */}
+                      {showBoardRatioOptions && (
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                          {getBoardRatioOptions().map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                <div className="flex items-center justify-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`board-${option.value}`}
+                                    name="boardRatioCategory"
+                                    value={option.value}
+                                    checked={subCategoryType === option.value}
+                                    onChange={e => setSubCategoryType(e.target.value)}
+                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                    style={{ accentColor: '#C72030' }}
+                                  />
+                                  <IconComponent className="w-4 h-4 text-gray-600" />
+                                  <label htmlFor={`board-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {/* Renewable Options */}
+                      {showRenewableOptions && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                          {getRenewableOptions().map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                <div className="flex items-center justify-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`renewable-${option.value}`}
+                                    name="renewableCategory"
+                                    value={option.value}
+                                    checked={subCategoryType === option.value}
+                                    onChange={e => setSubCategoryType(e.target.value)}
+                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                    style={{ accentColor: '#C72030' }}
+                                  />
+                                  <IconComponent className="w-4 h-4 text-gray-600" />
+                                  <label htmlFor={`renewable-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {/* Fresh Water Options */}
+                      {showFreshWaterOptions && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
+                          {getFreshWaterOptions().map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                <div className="flex items-center justify-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`fresh-water-${option.value}`}
+                                    name="freshWaterCategory"
+                                    value={option.value}
+                                    checked={subCategoryType === option.value}
+                                    onChange={e => handleSubCategoryChange(e.target.value)}
+                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                    style={{ accentColor: '#C72030' }}
+                                  />
+                                  <IconComponent className="w-4 h-4 text-gray-600" />
+                                  <label htmlFor={`fresh-water-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {/* Water Source Options (shown when Source is selected) */}
+                      {showWaterSourceOptions && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4 mt-4">
+                          {getWaterSourceOptions().map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                <div className="flex items-center justify-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`water-source-${option.value}`}
+                                    name="waterSourceCategory"
+                                    value={option.value}
+                                    checked={tertiaryCategory === option.value}
+                                    onChange={e => handleTertiaryCategoryChange(e.target.value)}
+                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                    style={{ accentColor: '#C72030' }}
+                                  />
+                                  <IconComponent className="w-4 h-4 text-gray-600" />
+                                  <label htmlFor={`water-source-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Water Distribution Options (shown when Water Distribution is selected) */}
+                      {showWaterDistributionOptions && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                          {getWaterDistributionOptions().map((option) => {
+                            const IconComponent = option.icon;
+                            return (
+                              <div
+                                key={option.value}
+                                className="p-3 sm:p-4 rounded-lg text-center bg-white border"
+                              >
+                                <div className="flex items-center justify-center space-x-2">
+                                  <input
+                                    type="radio"
+                                    id={`water-distribution-${option.value}`}
+                                    name="waterDistributionCategory"
+                                    value={option.value}
+                                    checked={subCategoryType === option.value}
+                                    onChange={(e) => {
+                                      handleSubCategoryChange(e.target.value);
+                                    }}
+                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                    style={{ accentColor: "#C72030" }}
+                                  />
+                                  <IconComponent className="w-4 h-4 text-gray-600" />
+                                  <label
+                                    htmlFor={`water-distribution-${option.value}`}
+                                    className="text-xs sm:text-sm cursor-pointer"
+                                  >
+                                    {option.label}
+                                  </label>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {/* Meter Measure Fields - Show based on meter type selection */}
+                  {meterType === 'ParentMeter' && (
+                    <>
+                      <MeterMeasureFields
+                        title="CONSUMPTION METER MEASURE"
+                        fields={consumptionMeasureFields}
+                        showCheckPreviousReading={true}
+                        onFieldChange={(id, field, value) => handleMeterMeasureFieldChange('consumption', id, field, value)}
+                        onAddField={() => addMeterMeasureField('consumption')}
+                        onRemoveField={id => removeMeterMeasureField('consumption', id)}
+                        unitTypes={meterUnitTypes}
+                        loadingUnitTypes={loadingUnitTypes}
+                      />
+                      <MeterMeasureFields
+                        title="NON CONSUMPTION METER MEASURE"
+                        fields={nonConsumptionMeasureFields}
+                        showCheckPreviousReading={false}
+                        onFieldChange={(id, field, value) => handleMeterMeasureFieldChange('nonConsumption', id, field, value)}
+                        onAddField={() => addMeterMeasureField('nonConsumption')}
+                        onRemoveField={id => removeMeterMeasureField('nonConsumption', id)}
+                        unitTypes={meterUnitTypes}
+                        loadingUnitTypes={loadingUnitTypes}
+                      />
+                    </>
+                  )}
+                  {meterType === 'SubMeter' && (
+                    <MeterMeasureFields
+                      title="NON CONSUMPTION METER MEASURE"
+                      fields={nonConsumptionMeasureFields}
+                      showCheckPreviousReading={false}
+                      onFieldChange={(id, field, value) => handleMeterMeasureFieldChange('nonConsumption', id, field, value)}
+                      onAddField={() => addMeterMeasureField('nonConsumption')}
+                      onRemoveField={id => removeMeterMeasureField('nonConsumption', id)}
+                      unitTypes={meterUnitTypes}
+                      loadingUnitTypes={loadingUnitTypes}
+                    />
+                  )}
                 </div>
-
-                {/* Board Sub-categories */}
-                {formData.selectedMeterCategory === 'Board' && (
-                  <div className="mt-6">
-                    <h4 className="text-sm font-medium mb-3">Board Sub-categories:</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {['HT', 'VCB', 'Transformer', 'LT'].map((subCategory) => (
-                        <div key={subCategory} className="flex items-center space-x-2 p-3 rounded" style={{ backgroundColor: '#f6f4ee' }}>
-                          <FormControlLabel
-                            control={
-                              <Radio
-                                checked={formData.boardSubCategory === subCategory}
-                                onChange={() => setFormData({ ...formData, boardSubCategory: subCategory })}
-                              />
-                            }
-                            label={subCategory}
-                            sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Renewable Sub-categories */}
-                {formData.selectedMeterCategory === 'Renewable' && (
-                  <div className="mt-6">
-                    <h4 className="text-sm font-medium mb-3">Renewable Sub-categories:</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {['Solar', 'Bio Methanol', 'Wind'].map((subCategory) => (
-                        <div key={subCategory} className="flex items-center space-x-2 p-3 rounded" style={{ backgroundColor: '#f6f4ee' }}>
-                          <FormControlLabel
-                            control={
-                              <Radio
-                                checked={formData.renewableSubCategory === subCategory}
-                                onChange={() => setFormData({ ...formData, renewableSubCategory: subCategory })}
-                              />
-                            }
-                            label={subCategory}
-                            sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Fresh Water Sub-categories */}
-                {formData.selectedMeterCategory === 'Fresh Water' && (
-                  <div className="mt-6">
-                    <h4 className="text-sm font-medium mb-3">Fresh Water Sub-categories:</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      {['Source (Input)', 'Destination (Output)'].map((subCategory) => (
-                        <div key={subCategory} className="flex items-center space-x-2 p-3 rounded" style={{ backgroundColor: '#f6f4ee' }}>
-                          <FormControlLabel
-                            control={
-                              <Radio
-                                checked={formData.freshWaterSubCategory === subCategory}
-                                onChange={() => setFormData({ ...formData, freshWaterSubCategory: subCategory })}
-                              />
-                            }
-                            label={subCategory}
-                            sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </CollapsibleContent>
           </Collapsible>
         </Card>
 
-        {/* Consumption Asset Measure */}
-        <Card>
-          <Collapsible open={consumptionOpen} onOpenChange={setConsumptionOpen}>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2 text-black">
-                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
-                    CONSUMPTION ASSET MEASURE
-                  </span>
-                  {consumptionOpen ? <ChevronUp /> : <ChevronDown />}
-                </CardTitle>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent>
-                {consumptionMeasures.map((measure, index) => (
-                  <div key={index} className="space-y-4 p-4 border rounded mb-4">
-                    <div className="flex justify-end">
-                      {index > 0 && (
-                        <Button variant="ghost" size="sm" onClick={() => removeConsumptionMeasure(index)}>
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                      <div>
-                        <TextField
-                          label="Name"
-                          placeholder="Enter Text"
-                          value={measure.name}
-                          onChange={(e) => {
-                            const newMeasures = [...consumptionMeasures];
-                            newMeasures[index].name = e.target.value;
-                            setConsumptionMeasures(newMeasures);
-                          }}
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
-                        />
-                      </div>
-                      <div>
-                        <FormControl fullWidth size="small">
-                          <InputLabel>Unit Type</InputLabel>
-                          <MuiSelect
-                            value={measure.unitType}
-                            label="Unit Type"
-                            onChange={(e) => {
-                              const newMeasures = [...consumptionMeasures];
-                              newMeasures[index].unitType = e.target.value;
-                              setConsumptionMeasures(newMeasures);
-                            }}
-                            sx={{ height: '45px' }}
-                          >
-                            <MenuItem value="kw">KW</MenuItem>
-                            <MenuItem value="kwh">KWH</MenuItem>
-                          </MuiSelect>
-                        </FormControl>
-                      </div>
-                      <div>
-                        <TextField
-                          label="Min"
-                          placeholder="Enter Number"
-                          value={measure.min}
-                          onChange={(e) => {
-                            const newMeasures = [...consumptionMeasures];
-                            newMeasures[index].min = e.target.value;
-                            setConsumptionMeasures(newMeasures);
-                          }}
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
-                        />
-                      </div>
-                      <div>
-                        <TextField
-                          label="Max"
-                          placeholder="Enter Number"
-                          value={measure.max}
-                          onChange={(e) => {
-                            const newMeasures = [...consumptionMeasures];
-                            newMeasures[index].max = e.target.value;
-                            setConsumptionMeasures(newMeasures);
-                          }}
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
-                        />
-                      </div>
-                      <div>
-                        <TextField
-                          label="Alert Below Val."
-                          placeholder="Enter Value"
-                          value={measure.alertBelowVal}
-                          onChange={(e) => {
-                            const newMeasures = [...consumptionMeasures];
-                            newMeasures[index].alertBelowVal = e.target.value;
-                            setConsumptionMeasures(newMeasures);
-                          }}
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <TextField
-                          label="Alert Above Val."
-                          placeholder="Enter Value"
-                          value={measure.alertAboveVal}
-                          onChange={(e) => {
-                            const newMeasures = [...consumptionMeasures];
-                            newMeasures[index].alertAboveVal = e.target.value;
-                            setConsumptionMeasures(newMeasures);
-                          }}
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
-                        />
-                      </div>
-                      <div>
-                        <TextField
-                          label="Multiplier Factor"
-                          placeholder="Enter Text"
-                          value={measure.multiplierFactor}
-                          onChange={(e) => {
-                            const newMeasures = [...consumptionMeasures];
-                            newMeasures[index].multiplierFactor = e.target.value;
-                            setConsumptionMeasures(newMeasures);
-                          }}
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <FormControlLabel
-                        control={
-                          <MuiCheckbox
-                            checked={measure.checkPreviousReading}
-                            onChange={(e) => {
-                              const newMeasures = [...consumptionMeasures];
-                              newMeasures[index].checkPreviousReading = e.target.checked;
-                              setConsumptionMeasures(newMeasures);
-                            }}
-                          />
-                        }
-                        label="Check Previous Reading"
-                      />
-                    </div>
-                  </div>
-                ))}
-                <Button
-                  variant="outline"
-                  onClick={addConsumptionMeasure}
-                  className="bg-purple-600 text-white hover:bg-purple-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add
-                </Button>
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-
-        {/* Non Consumption Asset Measure */}
-        <Card>
-          <Collapsible open={nonConsumptionOpen} onOpenChange={setNonConsumptionOpen}>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2 text-black">
-                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm">6</span>
-                    NON CONSUMPTION ASSET MEASURE
-                  </span>
-                  {nonConsumptionOpen ? <ChevronUp /> : <ChevronDown />}
-                </CardTitle>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent>
-                {nonConsumptionMeasures.map((measure, index) => (
-                  <div key={index} className="space-y-4 p-4 border rounded mb-4">
-                    <div className="flex justify-end">
-                      {index > 0 && (
-                        <Button variant="ghost" size="sm" onClick={() => removeNonConsumptionMeasure(index)}>
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                      <div>
-                        <TextField
-                          label="Name"
-                          placeholder="Name"
-                          value={measure.name}
-                          onChange={(e) => {
-                            const newMeasures = [...nonConsumptionMeasures];
-                            newMeasures[index].name = e.target.value;
-                            setNonConsumptionMeasures(newMeasures);
-                          }}
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
-                        />
-                      </div>
-                      <div>
-                        <FormControl fullWidth size="small">
-                          <InputLabel>Unit Type</InputLabel>
-                          <MuiSelect
-                            value={measure.unitType}
-                            label="Unit Type"
-                            onChange={(e) => {
-                              const newMeasures = [...nonConsumptionMeasures];
-                              newMeasures[index].unitType = e.target.value;
-                              setNonConsumptionMeasures(newMeasures);
-                            }}
-                            sx={{ height: '45px' }}
-                          >
-                            <MenuItem value="kw">KW</MenuItem>
-                            <MenuItem value="kwh">KWH</MenuItem>
-                          </MuiSelect>
-                        </FormControl>
-                      </div>
-                      <div>
-                        <TextField
-                          label="Min"
-                          placeholder="Min"
-                          value={measure.min}
-                          onChange={(e) => {
-                            const newMeasures = [...nonConsumptionMeasures];
-                            newMeasures[index].min = e.target.value;
-                            setNonConsumptionMeasures(newMeasures);
-                          }}
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
-                        />
-                      </div>
-                      <div>
-                        <TextField
-                          label="Max"
-                          placeholder="Max"
-                          value={measure.max}
-                          onChange={(e) => {
-                            const newMeasures = [...nonConsumptionMeasures];
-                            newMeasures[index].max = e.target.value;
-                            setNonConsumptionMeasures(newMeasures);
-                          }}
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
-                        />
-                      </div>
-                      <div>
-                        <TextField
-                          label="Alert Below Val."
-                          placeholder="Alert Below Value"
-                          value={measure.alertBelowVal}
-                          onChange={(e) => {
-                            const newMeasures = [...nonConsumptionMeasures];
-                            newMeasures[index].alertBelowVal = e.target.value;
-                            setNonConsumptionMeasures(newMeasures);
-                          }}
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <TextField
-                          label="Alert Above Val."
-                          placeholder="Alert Above Value"
-                          value={measure.alertAboveVal}
-                          onChange={(e) => {
-                            const newMeasures = [...nonConsumptionMeasures];
-                            newMeasures[index].alertAboveVal = e.target.value;
-                            setNonConsumptionMeasures(newMeasures);
-                          }}
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
-                        />
-                      </div>
-                      <div>
-                        <TextField
-                          label="Multiplier Factor"
-                          placeholder="Multiplier Factor"
-                          value={measure.multiplierFactor}
-                          onChange={(e) => {
-                            const newMeasures = [...nonConsumptionMeasures];
-                            newMeasures[index].multiplierFactor = e.target.value;
-                            setNonConsumptionMeasures(newMeasures);
-                          }}
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          sx={{ '& .MuiOutlinedInput-root': { height: '45px' } }}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <FormControlLabel
-                        control={
-                          <MuiCheckbox
-                            checked={measure.checkPreviousReading}
-                            onChange={(e) => {
-                              const newMeasures = [...nonConsumptionMeasures];
-                              newMeasures[index].checkPreviousReading = e.target.checked;
-                              setNonConsumptionMeasures(newMeasures);
-                            }}
-                          />
-                        }
-                        label="Check Previous Reading"
-                      />
-                    </div>
-                  </div>
-                ))}
-                <Button
-                  variant="outline"
-                  onClick={addNonConsumptionMeasure}
-                  className="bg-purple-600 text-white hover:bg-purple-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add
-                </Button>
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
 
         {/* Attachments */}
         <Card>
@@ -1421,66 +1830,198 @@ export const AddWaterAssetDashboard = () => {
             </CollapsibleTrigger>
             <CollapsibleContent>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <FormLabel className="mb-2 block">Manuals Upload</FormLabel>
-                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center" style={{ backgroundColor: '#f6f4ee' }}>
-                      <div className="text-orange-500 mb-2">Choose File</div>
-                      <div className="text-gray-500 text-sm">No file chosen</div>
-                      <Button variant="ghost" className="mt-2 text-orange-500">
-                        <X className="w-4 h-4" />
-                      </Button>
+                <div className="p-4 sm:p-6">
+                  {/* Category-specific Asset Image */}
+                  <div className="mb-6">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-4">
+                      Asset Image
+                    </h3>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      <input
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.gif"
+                        onChange={(e) =>
+                          handleFileUpload(
+                            `${selectedAssetCategory
+                              .toLowerCase()
+                              .replace(/\s+/g, "")
+                              .replace("&", "")}AssetImage`,
+                            e.target.files
+                          )
+                        }
+                        className="hidden"
+                        id="asset-image-upload"
+                        multiple={false}
+                      />
+                      <label
+                        htmlFor="asset-image-upload"
+                        className="cursor-pointer block"
+                      >
+                        <div className="flex items-center justify-center space-x-2 mb-2">
+                          <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+                            Choose Asset Image
+                          </span>
+                          <span className="text-gray-500 text-xs sm:text-sm">
+                            {(() => {
+                              const categoryKey = `${selectedAssetCategory
+                                .toLowerCase()
+                                .replace(/\s+/g, "")
+                                .replace("&", "")}AssetImage`;
+                              return attachments[categoryKey]?.length > 0
+                                ? `${attachments[categoryKey].length} image selected`
+                                : "No image chosen";
+                            })()}
+                          </span>
+                        </div>
+                      </label>
+                      {(() => {
+                        const categoryKey = `${selectedAssetCategory
+                          .toLowerCase()
+                          .replace(/\s+/g, "")
+                          .replace("&", "")}AssetImage`;
+                        return (
+                          attachments[categoryKey]?.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {attachments[categoryKey].map((file, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between bg-gray-100 p-2 rounded text-left"
+                                >
+                                  <span className="text-xs sm:text-sm truncate">
+                                    {file.name}
+                                  </span>
+                                  <button
+                                    onClick={() => removeFile(categoryKey, index)}
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )
+                        );
+                      })()}
                       <div className="mt-2">
-                        <Button variant="ghost" className="text-orange-500">
-                          <Plus className="w-4 h-4" />
-                        </Button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            document.getElementById("asset-image-upload")?.click()
+                          }
+                          className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+                        >
+                          <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                          Upload Asset Image
+                        </button>
                       </div>
                     </div>
                   </div>
-                  <div>
-                    <FormLabel className="mb-2 block">Insurance Details</FormLabel>
-                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center" style={{ backgroundColor: '#f6f4ee' }}>
-                      <div className="text-orange-500 mb-2">Choose File</div>
-                      <div className="text-gray-500 text-sm">No file chosen</div>
-                      <Button variant="ghost" className="mt-2 text-orange-500">
-                        <X className="w-4 h-4" />
-                      </Button>
-                      <div className="mt-2">
-                        <Button variant="ghost" className="text-orange-500">
-                          <Plus className="w-4 h-4" />
-                        </Button>
+
+                  {/* Common Document Sections for All Categories */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    {[
+                      {
+                        label: "Manuals Upload",
+                        id: "manuals-upload",
+                        category: `${selectedAssetCategory
+                          .toLowerCase()
+                          .replace(/\s+/g, "")
+                          .replace("&", "")}ManualsUpload`,
+                        accept: ".pdf,.doc,.docx,.txt",
+                      },
+                      {
+                        label: "Insurance Details",
+                        id: "insurance-upload",
+                        category: `${selectedAssetCategory
+                          .toLowerCase()
+                          .replace(/\s+/g, "")
+                          .replace("&", "")}InsuranceDetails`,
+                        accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
+                      },
+                      {
+                        label: "Purchase Invoice",
+                        id: "invoice-upload",
+                        category: `${selectedAssetCategory
+                          .toLowerCase()
+                          .replace(/\s+/g, "")
+                          .replace("&", "")}PurchaseInvoice`,
+                        accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
+                      },
+                      {
+                        label: "Other Documents",
+                        id: "other-upload",
+                        category: `${selectedAssetCategory
+                          .toLowerCase()
+                          .replace(/\s+/g, "")
+                          .replace("&", "")}OtherDocuments`,
+                        accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png",
+                      },
+                    ].map((field) => (
+                      <div key={field.id}>
+                        <label className="text-xs sm:text-sm font-medium text-gray-700 mb-2 block">
+                          {field.label}
+                        </label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                          <input
+                            type="file"
+                            multiple
+                            accept={field.accept}
+                            onChange={(e) =>
+                              handleFileUpload(field.category, e.target.files)
+                            }
+                            className="hidden"
+                            id={field.id}
+                          />
+                          <label
+                            htmlFor={field.id}
+                            className="cursor-pointer block"
+                          >
+                            <div className="flex items-center justify-center space-x-2 mb-2">
+                              <span className="text-[#C72030] font-medium text-xs sm:text-sm">
+                                Choose File
+                              </span>
+                              <span className="text-gray-500 text-xs sm:text-sm">
+                                {attachments[field.category]?.length > 0
+                                  ? `${attachments[field.category].length} file(s) selected`
+                                  : "No file chosen"}
+                              </span>
+                            </div>
+                          </label>
+                          {attachments[field.category]?.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              {attachments[field.category].map((file, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between bg-gray-100 p-2 rounded text-left"
+                                >
+                                  <span className="text-xs sm:text-sm truncate">
+                                    {file.name}
+                                  </span>
+                                  <button
+                                    onClick={() => removeFile(field.category, index)}
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="mt-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                document.getElementById(field.id)?.click()
+                              }
+                              className="text-xs sm:text-sm bg-[#f6f4ee] text-[#C72030] px-3 sm:px-4 py-1 sm:py-2 rounded-md hover:bg-[#f0ebe0] flex items-center mx-auto"
+                            >
+                              <Plus className="w-4 h-4 mr-1 sm:mr-2 text-[#C72030]" />
+                              Upload Files
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div>
-                    <FormLabel className="mb-2 block">Purchase Invoice</FormLabel>
-                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center" style={{ backgroundColor: '#f6f4ee' }}>
-                      <div className="text-orange-500 mb-2">Choose File</div>
-                      <div className="text-gray-500 text-sm">No file chosen</div>
-                      <Button variant="ghost" className="mt-2 text-orange-500">
-                        <X className="w-4 h-4" />
-                      </Button>
-                      <div className="mt-2">
-                        <Button variant="ghost" className="text-orange-500">
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <FormLabel className="mb-2 block">AMC</FormLabel>
-                    <div className="border-2 border-dashed border-orange-300 rounded-lg p-6 text-center" style={{ backgroundColor: '#f6f4ee' }}>
-                      <div className="text-orange-500 mb-2">Choose File</div>
-                      <div className="text-gray-500 text-sm">No file chosen</div>
-                      <Button variant="ghost" className="mt-2 text-orange-500">
-                        <X className="w-4 h-4" />
-                      </Button>
-                      <div className="mt-2">
-                        <Button variant="ghost" className="text-orange-500">
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </CardContent>
@@ -1489,14 +2030,7 @@ export const AddWaterAssetDashboard = () => {
         </Card>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-4">
-          <Button
-            variant="outline"
-            onClick={handleSave}
-            className="bg-purple-600 text-white hover:bg-purple-700 border-purple-600"
-          >
-            Save & Show Details
-          </Button>
+        <div className="flex justify-center gap-4">
           <Button
             onClick={handleSaveAndCreateNew}
             className="bg-purple-700 text-white hover:bg-purple-800"
@@ -1504,7 +2038,11 @@ export const AddWaterAssetDashboard = () => {
             Save & Create New Asset
           </Button>
         </div>
+
       </div>
     </div>
   );
-};
+}
+
+export default AddWaterAssetDashboard;
+export { AddWaterAssetDashboard };

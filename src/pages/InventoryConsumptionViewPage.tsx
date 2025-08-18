@@ -26,7 +26,7 @@ import {
   IconButton,
   CircularProgress,
 } from '@mui/material';
-import { createInventoryConsumption } from '@/store/slices/inventoryConsumptionSlice';
+import axios from 'axios';
 import { toast } from 'sonner';
 
 const InventoryConsumptionViewPage = () => {
@@ -87,25 +87,42 @@ const InventoryConsumptionViewPage = () => {
     if (!id || !isFormValid) return;
 
     setIsSubmitting(true);
+
+    // Ensure we have a valid date range (fallback: current month start -> today)
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const fallbackStart = `${yyyy}-${mm}-01`;
+    const fallbackEnd = `${yyyy}-${mm}-${dd}`;
+    const effectiveStart = startDate || fallbackStart;
+    const effectiveEnd = endDate || fallbackEnd;
+
     const payload = {
-      resource_id: Number(id),
+      resource_id: String(id),
       move_type: String(formData.moveType),
-      quantity: formData.quantity,
+      quantity: String(formData.quantity),
       comments: formData.comments,
     };
 
-    console.log('Payload:', payload);
+    console.log('Payload (POST direct):', payload);
 
     try {
-      await dispatch(
-        createInventoryConsumption({
-          baseUrl: localStorage.getItem('baseUrl'),
-          token: localStorage.getItem('token'),
-          data: payload,
-        })
-      ).unwrap();
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      if (!baseUrl || !token) throw new Error('Missing baseUrl/token');
 
-      dispatch(fetchInventoryConsumptionDetails(id));
+      await axios.post(`https://${baseUrl}/pms/inventories/new_inventory_consumption_addition.json`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        }
+      });
+
+      console.log('Refetching details with range:', { effectiveStart, effectiveEnd });
+      await dispatch(
+        fetchInventoryConsumptionDetails({ id, start_date: effectiveStart, end_date: effectiveEnd })
+      ).unwrap();
       toast.success('Successfully submitted');
       handleCloseModal();
     } catch (err: any) {
@@ -124,7 +141,7 @@ const InventoryConsumptionViewPage = () => {
           err.response?.data?.message || err.message || 'An unexpected error occurred. Please try again.'
         );
       }
-      handleCloseModal(); // Close modal on error
+      handleCloseModal();
     } finally {
       setIsSubmitting(false);
     }

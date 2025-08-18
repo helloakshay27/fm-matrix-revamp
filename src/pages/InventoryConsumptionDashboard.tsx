@@ -34,14 +34,24 @@ const InventoryConsumptionDashboard = () => {
         const response = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        // Map month number (1-12) to month name
-        const months = ['January', 'February', 'March', 'April', 'May', 'June',
+        const fullMonths = ['January', 'February', 'March', 'April', 'May', 'June',
           'July', 'August', 'September', 'October', 'November', 'December'];
+        const abbrevToFull: Record<string, string> = {
+          Jan: 'January', Feb: 'February', Mar: 'March', Apr: 'April', May: 'May', Jun: 'June',
+          Jul: 'July', Aug: 'August', Sep: 'September', Oct: 'October', Nov: 'November', Dec: 'December'
+        };
         const costs: Record<string, number> = {};
-        if (response.data && Array.isArray(response.data.monthly_costs)) {
-          response.data.monthly_costs.forEach((item: { month: number, total_cost: number }) => {
-            const monthName = months[item.month - 1];
-            costs[monthName] = item.total_cost;
+        const list = response.data?.monthly_costs || response.data || [];
+        if (Array.isArray(list)) {
+          list.forEach((item: any) => {
+            let fullName = '';
+            if (typeof item.month === 'number') {
+              fullName = fullMonths[item.month - 1];
+            } else if (typeof item.month === 'string') {
+              const key = item.month.slice(0, 3); // ensure first 3 letters
+              fullName = abbrevToFull[key] || item.month;
+            }
+            if (fullName) costs[fullName] = item.total_cost ?? 0;
           });
         }
         setMonthlyCosts(costs);
@@ -173,8 +183,8 @@ const InventoryConsumptionDashboard = () => {
     { key: 'action', label: 'Action', sortable: false, draggable: false },
     { key: 'name', label: 'Name', sortable: true, draggable: false },
     { key: 'quantity', label: 'Content Quantity', sortable: true, draggable: false },
-    { key: 'min_stock_level', label: 'Consumed', sortable: true, draggable: false },
-    { key: 'cost', label: 'Amount', sortable: true, draggable: false },
+    { key: 'consumption', label: 'Consumed', sortable: true, draggable: false, defaultVisible: true },
+    { key: 'total_cost', label: 'Amount', sortable: true, draggable: false },
   ];
 
   // Render cell content for expanded table

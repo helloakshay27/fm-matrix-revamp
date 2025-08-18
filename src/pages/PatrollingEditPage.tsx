@@ -1025,7 +1025,11 @@ export const PatrollingEditPage: React.FC = () => {
                                 </div>
                                 <div>
                                     <TextField
-                                        label="Task"
+                                        label={
+                                          <>
+                                            Task<span className="text-red-500">*</span>
+                                          </>
+                                        }
                                         placeholder="Enter Task"
                                         value={q.task}
                                         onChange={(e) => updateQuestion(idx, 'task', e.target.value)}
@@ -1038,11 +1042,11 @@ export const PatrollingEditPage: React.FC = () => {
                                 </div>
                                 <div>
                                     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                                        <InputLabel shrink>Input Type</InputLabel>
+                                        <InputLabel shrink>Input Type<span className="text-red-500">*</span></InputLabel>
                                         <MuiSelect
                                             value={q.inputType}
                                             onChange={(e) => updateQuestion(idx, 'inputType', String(e.target.value))}
-                                            label="Input Type"
+                                            label="Input Type*"
                                             notched
                                             displayEmpty
                                             disabled={isSubmitting}
@@ -1183,7 +1187,11 @@ export const PatrollingEditPage: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
                                     <TextField
-                                        label="Schedule Name"
+                                        label={
+                                          <>
+                                            Schedule Name<span className="text-red-500">*</span>
+                                          </>
+                                        }
                                         placeholder="Enter Schedule Name"
                                         value={s.name}
                                         onChange={(e) => updateShift(idx, 'name', e.target.value)}

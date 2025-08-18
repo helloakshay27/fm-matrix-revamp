@@ -67,6 +67,7 @@ export const IncidentSetupDashboard = () => {
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [subSubCategories, setSubSubCategories] = useState([]);
+  console.log(subSubCategories)
   const [subSubSubCategories, setSubSubSubCategories] = useState([{
     id: 1,
     category: 'risks',
@@ -78,9 +79,10 @@ export const IncidentSetupDashboard = () => {
   const [incidenceLevels, setIncidenceLevels] = useState([]);
   const [escalations, setEscalations] = useState([]);
   // Fetch Escalations from API
+  // Only use /pms/incidence_tags.json?q[tag_type_eq]=EscaltionMatrix for escalations GET
   const fetchEscalations = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/escalations.json`, {
+      const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=EscaltionMatrix`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -192,7 +194,9 @@ export const IncidentSetupDashboard = () => {
             return {
               id: item.id,
               category: parentCat ? parentCat.name : '',
+              categoryId: parentCat ? parentCat.id : '',
               subCategory: parentSub ? parentSub.name : '',
+              subCategoryId: parentSub ? parentSub.id : '',
               subSubCategory: item.name
             };
           });
@@ -439,7 +443,7 @@ export const IncidentSetupDashboard = () => {
 
 
   const handleSubmit = async () => {
-    if (!categoryName.trim()) return;
+    // if (!categoryName.trim()) return;
 
     const newId = Math.max(...(
       selectedCategory === 'Category' ? categories.map(c => c.id) :
@@ -637,8 +641,16 @@ export const IncidentSetupDashboard = () => {
             setEscalateToUsers('');
           } else {
             const errorText = await response.text();
-            console.error('Failed to add escalation:', response.status, errorText);
-            alert('Failed to add escalation. Please try again.');
+            // Enhanced error logging for debugging
+            console.error('Failed to add escalation:', {
+              status: response.status,
+              statusText: response.statusText,
+              url: response.url,
+              token,
+              payload,
+              errorText
+            });
+            alert(`Failed to add escalation. Status: ${response.status} - ${response.statusText}\n${errorText}`);
           }
         } catch (error) {
           console.error('Error adding escalation:', error);
@@ -1736,10 +1748,11 @@ export const IncidentSetupDashboard = () => {
                         <Select
                           value={escalateToUsers}
                           onValueChange={value => {
-                            const currentUsers = escalateToUsers ? escalateToUsers.split(', ').filter(u => u) : [];
-                            if (!currentUsers.includes(value)) {
-                              const newUsers = [...currentUsers, value].filter(u => u);
-                              setEscalateToUsers(newUsers.join(', '));
+                            // escalateToUsers is a comma-separated string of IDs
+                            const currentUserIds = escalateToUsers ? escalateToUsers.split(',').filter(u => u) : [];
+                            if (!currentUserIds.includes(value)) {
+                              const newUserIds = [...currentUserIds, value].filter(u => u);
+                              setEscalateToUsers(newUserIds.join(','));
                             }
                           }}
                         >
@@ -1748,27 +1761,30 @@ export const IncidentSetupDashboard = () => {
                           </SelectTrigger>
                           <SelectContent className="bg-white z-50">
                             {escalateToUsersList.map(user => (
-                              <SelectItem key={user.id} value={user.full_name}>
+                              <SelectItem key={user.id} value={String(user.id)}>
                                 {user.full_name}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                         <div className="flex flex-wrap gap-2 mt-2">
-                          {escalateToUsers.split(', ').filter(user => user.trim()).map((user, index) => (
-                            <div key={index} className="bg-gray-200 px-3 py-1 rounded-md flex items-center gap-2">
-                              <span className="text-sm">{user}</span>
-                              <button
-                                onClick={() => {
-                                  const userList = escalateToUsers.split(', ').filter(u => u !== user);
-                                  setEscalateToUsers(userList.join(', '));
-                                }}
-                                className="text-gray-500 hover:text-gray-700"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
+                          {escalateToUsers.split(',').filter(id => id.trim()).map((id, index) => {
+                            const user = escalateToUsersList.find(u => String(u.id) === id);
+                            return (
+                              <div key={index} className="bg-gray-200 px-3 py-1 rounded-md flex items-center gap-2">
+                                <span className="text-sm">{user ? user.full_name : id}</span>
+                                <button
+                                  onClick={() => {
+                                    const userList = escalateToUsers.split(',').filter(u => u !== id);
+                                    setEscalateToUsers(userList.join(','));
+                                  }}
+                                  className="text-gray-500 hover:text-gray-700"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </>
@@ -1959,7 +1975,7 @@ export const IncidentSetupDashboard = () => {
                           <SelectValue placeholder="Select Sub Sub Category" />
                         </SelectTrigger>
                         <SelectContent className="bg-white z-50">
-                          {subSubCategories.filter(subsub => subsub.category === selectedParentCategory && subsub.subCategory === selectedSubCategory).map(subSubCategory => (
+                          {subSubCategories.filter(subsub => subsub.categoryId === selectedParentCategory && subsub.subCategoryId === selectedSubCategory).map(subSubCategory => (
                             <SelectItem key={subSubCategory.id} value={subSubCategory.subSubCategory}>
                               {subSubCategory.subSubCategory}
                             </SelectItem>
