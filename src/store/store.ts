@@ -201,6 +201,7 @@ export const store = configureStore({
     fetchSupplierDetails: fetchSupplierDetailsReducer,
     fetchItemDetails: fetchItemDetailsReducer,
     createGRN: createGRNReducer,
+    getPurchaseOrdersList: getPurchaseOrdersReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

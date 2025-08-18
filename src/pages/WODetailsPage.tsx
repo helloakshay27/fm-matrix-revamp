@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Copy, Printer, Rss } from 'lucide-react';
@@ -12,6 +12,13 @@ export const WODetailsPage = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem('token');
   const baseUrl = localStorage.getItem('baseUrl');
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+
+  const levelId = searchParams.get("level_id");
+  const userId = searchParams.get("user_id");
+
+  const shouldShowButtons = Boolean(levelId && userId);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -108,6 +115,32 @@ export const WODetailsPage = () => {
         return 'bg-yellow-500 text-black';
       default:
         return 'bg-gray-500 text-white';
+    }
+  };
+
+  const handleApprove = async () => {
+    const payload = {
+      pms_purchase_order: {
+        id: Number(id),
+        pms_pr_inventories_attributes: workOrder.pms_po_inventories.map((item) => ({
+          id: item.id,
+          rate: item.rate,
+          total_value: item.total_value,
+          approved_qty: item.quantity,
+          transfer_qty: item.transfer_qty
+        })),
+      },
+      level_id: Number(levelId),
+      user_id: Number(userId),
+      approve: true
+    }
+    try {
+      // await dispatch(approvePO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      toast.success('PO approved successfully');
+      navigate(`/finance/pending-approvals`)
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
     }
   };
 
@@ -503,6 +536,15 @@ export const WODetailsPage = () => {
           </Table>
         </div>
       </div>
+
+      {
+        shouldShowButtons && (
+          <div className='flex items-center justify-center gap-4'>
+            <button className='bg-green-600 text-white py-2 px-4 rounded-md' onClick={handleApprove}>Approve</button>
+            <button className='bg-[#C72030] text-white py-2 px-4 rounded-md'>Reject</button>
+          </div>
+        )
+      }
     </div>
   );
 };
