@@ -77,7 +77,7 @@ const AddWasteGenerationPage = () => {
   };
 
   const handleBack = () => {
-    navigate('/maintenance/audit/waste/generation');
+    navigate('/maintenance/waste/generation');
   };
 
   return (
