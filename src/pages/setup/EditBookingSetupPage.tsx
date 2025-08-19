@@ -15,149 +15,6 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
 import axios from "axios";
 
-// Define interfaces for TypeScript
-interface Department {
-    id: number;
-    department_name: string;
-}
-
-interface TimeSlot {
-    hour: string;
-    minute: string;
-}
-
-interface FacilitySlot {
-    id?: number;
-    startTime: TimeSlot;
-    breakTimeStart: TimeSlot;
-    breakTimeEnd: TimeSlot;
-    endTime: TimeSlot;
-    concurrentSlots: string;
-    slotBy: number;
-    wrapTime: string;
-    dayofweek?: string;
-    _destroy?: boolean;
-}
-
-interface Amenity {
-    name: string;
-    selected: boolean;
-    tag_id: number | null;
-}
-
-interface TimeConfig {
-    d: string;
-    h: string;
-    m: string;
-}
-
-interface CancellationRule {
-    description: string;
-    time: {
-        type: string;
-        value: string;
-        day: string;
-    };
-    deduction: string;
-}
-
-interface BookingFile {
-    file: File | string;
-    id: number | null;
-}
-
-interface FormData {
-    facilityName: string;
-    isBookable: boolean;
-    isRequest: boolean;
-    department: string | number;
-    appKey: string;
-    postpaid: boolean;
-    prepaid: boolean;
-    payOnFacility: boolean;
-    complimentary: boolean;
-    gstPercentage: string;
-    sgstPercentage: string;
-    perSlotCharge: string;
-    bookingAllowedBefore: TimeConfig;
-    advanceBooking: TimeConfig;
-    canCancelBefore: TimeConfig;
-    allowMultipleSlots: boolean;
-    maximumSlots: string;
-    facilityBookedTimes: string;
-    description: string;
-    termsConditions: string;
-    cancellationText: string;
-    amenities: {
-        tv: Amenity;
-        whiteboard: Amenity;
-        casting: Amenity;
-        smartPenForTV: Amenity;
-        wirelessCharging: Amenity;
-        meetingRoomInventory: Amenity;
-    };
-    seaterInfo: string;
-    floorInfo: string;
-    sharedContentInfo: string;
-    slots: FacilitySlot[];
-}
-
-interface FacilitySetupResponse {
-    facility_setup: {
-        fac_name: string;
-        fac_type: string;
-        active: string;
-        department_id: number | null;
-        app_key: string;
-        postpaid: boolean;
-        prepaid: boolean;
-        pay_on_facility: boolean;
-        complementary: boolean;
-        gst: string;
-        sgst: string;
-        facility_charge?: { per_slot_charge: string };
-        bb_dhm: TimeConfig;
-        ab_dhm: TimeConfig;
-        cb_dhm: TimeConfig;
-        multi_slot: boolean;
-        max_slots: string;
-        booking_limit: string;
-        description: string;
-        terms: string;
-        cancellation_policy: string;
-        amenity_info: Amenity[];
-        seater_info: string;
-        location_info: string;
-        shared_content: string;
-        facility_slots: Array<{
-            facility_slot: {
-                id: number;
-                start_hour: string;
-                start_min: string;
-                break_start_hour: string;
-                break_start_min: string;
-                break_end_hour: string;
-                break_end_min: string;
-                end_hour: string;
-                end_min: string;
-                max_bookings: string;
-                breakminutes_label: number;
-                wrap_time: string;
-                dayofweek?: string;
-            };
-        }>;
-        cancellation_rules: Array<{
-            description: string;
-            hour: string;
-            min: string;
-            day: string;
-            deduction?: string;
-        }>;
-        cover_image?: { document: string };
-        documents: Array<{ document: { id: number; document: string } }>;
-    };
-}
-
 // Custom theme for MUI components
 const muiTheme = createTheme({
     components: {
@@ -221,26 +78,27 @@ const muiTheme = createTheme({
 
 export const EditBookingSetupPage = () => {
     const navigate = useNavigate();
-    const { id } = useParams<{ id: string }>();
-    const baseUrl = localStorage.getItem("baseUrl") || "";
-    const token = localStorage.getItem("token") || "";
+    const { id } = useParams();
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
 
-    const coverImageRef = useRef<HTMLInputElement>(null);
-    const bookingImageRef = useRef<HTMLInputElement>(null);
-    const [selectedFile, setSelectedFile] = useState<File | string | null>(null);
-    const [selectedBookingFiles, setSelectedBookingFiles] = useState<
-        BookingFile[]
-    >([]);
-    const [imageIdsToRemove, setImageIdsToRemove] = useState<number[]>([]);
-    const [additionalOpen, setAdditionalOpen] = useState<boolean>(false);
-    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-    const [departments, setDepartments] = useState<Department[]>([]);
-    const [loadingDepartments, setLoadingDepartments] = useState<boolean>(false);
+    const coverImageRef = useRef(null);
+    const bookingImageRef = useRef(null);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [selectedBookingFiles, setSelectedBookingFiles] = useState([]);
+    const [imageIdsToRemove, setImageIdsToRemove] = useState([]);
+    const [additionalOpen, setAdditionalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [departments, setDepartments] = useState([]);
+    const [loadingDepartments, setLoadingDepartments] = useState(false);
 
-    const [formData, setFormData] = useState<FormData>({
+    console.log(selectedBookingFiles)
+
+    const [formData, setFormData] = useState({
         facilityName: "",
         isBookable: true,
         isRequest: false,
+        active: "",
         department: "",
         appKey: "",
         postpaid: false,
@@ -295,9 +153,7 @@ export const EditBookingSetupPage = () => {
         ],
     });
 
-    const [cancellationRules, setCancellationRules] = useState<
-        CancellationRule[]
-    >([
+    const [cancellationRules, setCancellationRules] = useState([
         {
             description:
                 "If user cancels the booking selected hours/days prior to schedule, a percentage of the amount will be deducted",
@@ -329,7 +185,7 @@ export const EditBookingSetupPage = () => {
                 },
             });
             const data = await response.json();
-            let departmentsList: Department[] = [];
+            let departmentsList = [];
             if (Array.isArray(data)) {
                 departmentsList = data;
             } else if (data && Array.isArray(data.departments)) {
@@ -348,7 +204,7 @@ export const EditBookingSetupPage = () => {
 
     const fetchFacilityBookingDetails = async () => {
         try {
-            const response = await axios.get<FacilitySetupResponse>(
+            const response = await axios.get(
                 `https://${baseUrl}/pms/admin/facility_setups/${id}.json`,
                 {
                     headers: {
@@ -363,7 +219,8 @@ export const EditBookingSetupPage = () => {
                 facilityName: responseData.fac_name,
                 isBookable: responseData.fac_type === "bookable",
                 isRequest: responseData.fac_type === "request",
-                department: responseData.department_id ?? "", // Set to "" if department_id is null
+                active: responseData.active,
+                department: responseData.department_id || "",
                 appKey: responseData.app_key,
                 postpaid: responseData.postpaid,
                 prepaid: responseData.prepaid,
@@ -371,7 +228,7 @@ export const EditBookingSetupPage = () => {
                 complimentary: responseData.complementary,
                 gstPercentage: responseData.gst,
                 sgstPercentage: responseData.sgst,
-                perSlotCharge: responseData?.facility_charge?.per_slot_charge ?? "",
+                perSlotCharge: responseData?.facility_charge?.per_slot_charge,
                 bookingAllowedBefore: responseData.bb_dhm,
                 advanceBooking: responseData.ab_dhm,
                 canCancelBefore: responseData.cb_dhm,
@@ -384,33 +241,33 @@ export const EditBookingSetupPage = () => {
                 amenities: {
                     tv: {
                         name: "TV",
-                        selected: responseData.amenity_info[0]?.selected ?? false,
-                        tag_id: responseData.amenity_info[0]?.tag_id ?? null,
+                        selected: responseData.amenity_info[0].selected,
+                        tag_id: responseData.amenity_info[0].tag_id
                     },
                     whiteboard: {
                         name: "Whiteboard",
-                        selected: responseData.amenity_info[1]?.selected ?? false,
-                        tag_id: responseData.amenity_info[1]?.tag_id ?? null,
+                        selected: responseData.amenity_info[1].selected,
+                        tag_id: responseData.amenity_info[1].tag_id
                     },
                     casting: {
                         name: "Casting",
-                        selected: responseData.amenity_info[2]?.selected ?? false,
-                        tag_id: responseData.amenity_info[2]?.tag_id ?? null,
+                        selected: responseData.amenity_info[2].selected,
+                        tag_id: responseData.amenity_info[2].tag_id
                     },
                     smartPenForTV: {
                         name: "Smart Pen for TV",
-                        selected: responseData.amenity_info[3]?.selected ?? false,
-                        tag_id: responseData.amenity_info[3]?.tag_id ?? null,
+                        selected: responseData.amenity_info[3].selected,
+                        tag_id: responseData.amenity_info[3].tag_id
                     },
                     wirelessCharging: {
                         name: "Wireless Charging",
-                        selected: responseData.amenity_info[4]?.selected ?? false,
-                        tag_id: responseData.amenity_info[4]?.tag_id ?? null,
+                        selected: responseData.amenity_info[4].selected,
+                        tag_id: responseData.amenity_info[4].tag_id
                     },
                     meetingRoomInventory: {
                         name: "Meeting Room Inventory",
-                        selected: responseData.amenity_info[5]?.selected ?? false,
-                        tag_id: responseData.amenity_info[5]?.tag_id ?? null,
+                        selected: responseData.amenity_info[5].selected,
+                        tag_id: responseData.amenity_info[5].tag_id
                     },
                 },
                 seaterInfo: responseData.seater_info,
@@ -437,11 +294,10 @@ export const EditBookingSetupPage = () => {
                     concurrentSlots: slot.facility_slot.max_bookings,
                     slotBy: slot.facility_slot.breakminutes_label,
                     wrapTime: slot.facility_slot.wrap_time,
-                    dayofweek: slot.facility_slot.dayofweek ?? "",
+                    dayofweek: slot.facility_slot.dayofweek || "",
                     _destroy: false,
                 })),
             });
-
             const transformedRules = responseData.cancellation_rules.map((rule) => ({
                 description: rule.description,
                 time: {
@@ -449,17 +305,17 @@ export const EditBookingSetupPage = () => {
                     value: rule.min,
                     day: rule.day,
                 },
-                deduction: rule.deduction?.toString() ?? "",
+                deduction: rule.deduction?.toString() || "",
             }));
 
             setCancellationRules([...transformedRules]);
 
-            setSelectedFile(responseData?.cover_image?.document ?? null);
+            setSelectedFile(responseData?.cover_image?.document || null);
             setSelectedBookingFiles(
                 responseData?.documents.map((doc) => ({
                     file: doc.document.document,
-                    id: doc.document.id,
-                })) ?? []
+                    id: doc.document.id
+                })) || []
             );
         } catch (error) {
             console.error("Error fetching facility details:", error);
@@ -467,14 +323,14 @@ export const EditBookingSetupPage = () => {
         }
     };
 
+    console.log(formData);
+
     useEffect(() => {
         fetchDepartments();
-        if (id) {
-            fetchFacilityBookingDetails();
-        }
+        fetchFacilityBookingDetails();
     }, [id]);
 
-    const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleCoverImageChange = (e) => {
         const file = e.target.files?.[0] || null;
         if (file) {
             const maxSize = 5 * 1024 * 1024; // 5MB in bytes
@@ -490,15 +346,15 @@ export const EditBookingSetupPage = () => {
         setSelectedFile(file);
     };
 
-    const handleBookingImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []).map((file) => ({
+    const handleBookingImageChange = (e) => {
+        const files = Array.from(e.target.files || []).map(file => ({
             file,
-            id: null,
+            id: null
         }));
         setSelectedBookingFiles((prevFiles) => [...prevFiles, ...files]);
     };
 
-    const handleRemoveBookingImage = (index: number, imageId: number | null) => {
+    const handleRemoveBookingImage = (index, imageId) => {
         setSelectedBookingFiles((prevFiles) =>
             prevFiles.filter((_, i) => i !== index)
         );
@@ -506,6 +362,8 @@ export const EditBookingSetupPage = () => {
             setImageIdsToRemove((prevIds) => [...prevIds, imageId]);
         }
     };
+
+    console.log(imageIdsToRemove)
 
     const triggerFileSelect = () => {
         coverImageRef.current?.click();
@@ -519,9 +377,12 @@ export const EditBookingSetupPage = () => {
         setAdditionalOpen(!additionalOpen);
     };
 
-    const validateForm = (): boolean => {
+    const validateForm = () => {
         if (!formData.facilityName) {
             toast.error("Please enter Facility Name");
+            return false;
+        } else if (!formData.active) {
+            toast.error("Please select Active");
             return false;
         } else if (!formData.description) {
             toast.error("Please enter Description");
@@ -548,10 +409,11 @@ export const EditBookingSetupPage = () => {
                 formData.isBookable ? "bookable" : "request"
             );
             formDataToSend.append("facility_setup[fac_name]", formData.facilityName);
+            formDataToSend.append("facility_setup[active]", formData.active);
             if (formData.department) {
                 formDataToSend.append(
                     "facility_setup[department_id]",
-                    formData.department.toString()
+                    formData.department
                 );
             }
             formDataToSend.append("facility_setup[app_key]", formData.appKey);
@@ -579,13 +441,15 @@ export const EditBookingSetupPage = () => {
             );
             formDataToSend.append(
                 "facility_setup[multi_slot]",
-                formData.allowMultipleSlots ? "1" : "0"
-            );
-            formDataToSend.append("facility_setup[max_slots]", formData.maximumSlots);
+                formData.allowMultipleSlots
+            )
             formDataToSend.append(
-                "facility_setup[booking_limit]",
-                formData.facilityBookedTimes
-            );
+                "facility_setup[max_slots]",
+                formData.maximumSlots
+            )
+            formDataToSend.append(
+                "facility_setup[booking_limit]", formData.facilityBookedTimes
+            )
             formDataToSend.append(
                 "facility_setup[description]",
                 formData.description || ""
@@ -649,7 +513,7 @@ export const EditBookingSetupPage = () => {
             formDataToSend.append("facility_setup[book_by]", "slot");
             formDataToSend.append(
                 "facility_setup[create_by]",
-                JSON.parse(localStorage.getItem("user") || "{}").id?.toString() || ""
+                JSON.parse(localStorage.getItem("user")).id
             );
 
             // Append cover image (single file)
@@ -666,40 +530,22 @@ export const EditBookingSetupPage = () => {
 
             // Append image IDs to remove
             imageIdsToRemove.forEach((id) => {
-                formDataToSend.append(`image_remove[]`, id.toString());
+                formDataToSend.append(`image_remove[]`, id);
             });
 
             let index = 0;
             Object.keys(formData.amenities).forEach((key) => {
-                const amenity = formData.amenities[key as keyof FormData["amenities"]];
+                const amenity = formData.amenities[key];
                 if (amenity.tag_id && !amenity.selected) {
-                    formDataToSend.append(
-                        `facility_setup[generic_tags_attributes][${index}][id]`,
-                        amenity.tag_id.toString()
-                    );
-                    formDataToSend.append(
-                        `facility_setup[generic_tags_attributes][${index}][_destroy]`,
-                        "1"
-                    );
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][id]`, amenity.tag_id);
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][_destroy]`, "1");
                     index++;
                 } else if (amenity.selected) {
-                    formDataToSend.append(
-                        `facility_setup[generic_tags_attributes][${index}][tag_type]`,
-                        "amenity_things"
-                    );
-                    formDataToSend.append(
-                        `facility_setup[generic_tags_attributes][${index}][category_name]`,
-                        amenity.name
-                    );
-                    formDataToSend.append(
-                        `facility_setup[generic_tags_attributes][${index}][selected]`,
-                        "1"
-                    );
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][tag_type]`, "amenity_things");
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][category_name]`, amenity.name);
+                    formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][selected]`, "1");
                     if (amenity.tag_id) {
-                        formDataToSend.append(
-                            `facility_setup[generic_tags_attributes][${index}][id]`,
-                            amenity.tag_id.toString()
-                        );
+                        formDataToSend.append(`facility_setup[generic_tags_attributes][${index}][id]`, amenity.tag_id);
                     }
                     index++;
                 }
@@ -708,16 +554,13 @@ export const EditBookingSetupPage = () => {
             // Facility Slots
             formData.slots.forEach((slot, index) => {
                 if (slot.id) {
-                    formDataToSend.append(`facility_slots[][id]`, slot.id.toString());
+                    formDataToSend.append(`facility_slots[][id]`, slot.id);
                 }
                 formDataToSend.append(
                     `facility_slots[][slot_no]`,
                     (index + 1).toString()
                 );
-                formDataToSend.append(
-                    `facility_slots[][dayofweek]`,
-                    slot.dayofweek || ""
-                );
+                formDataToSend.append(`facility_slots[][dayofweek]`, "");
                 formDataToSend.append(
                     `facility_slots[][start_hour]`,
                     slot.startTime.hour
@@ -814,7 +657,7 @@ export const EditBookingSetupPage = () => {
     };
 
     const addSlot = () => {
-        const newSlot: FacilitySlot = {
+        const newSlot = {
             startTime: { hour: "00", minute: "00" },
             breakTimeStart: { hour: "00", minute: "00" },
             breakTimeEnd: { hour: "00", minute: "00" },
@@ -877,13 +720,16 @@ export const EditBookingSetupPage = () => {
                                             displayEmpty
                                         >
                                             <MenuItem value="">
-                                                {loadingDepartments ? "Loading..." : "All"}
+                                                {loadingDepartments
+                                                    ? "Loading..."
+                                                    : "All"}
                                             </MenuItem>
-                                            {departments.map((dept) => (
-                                                <MenuItem key={dept.id} value={dept.id}>
-                                                    {dept.department_name}
-                                                </MenuItem>
-                                            ))}
+                                            {Array.isArray(departments) &&
+                                                departments.map((dept, index) => (
+                                                    <MenuItem key={index} value={dept.id}>
+                                                        {dept.department_name}
+                                                    </MenuItem>
+                                                ))}
                                         </Select>
                                     </FormControl>
                                 </div>
@@ -925,7 +771,6 @@ export const EditBookingSetupPage = () => {
                                 </div>
                             </div>
                         </div>
-                        {/* Remaining JSX remains unchanged */}
                         <div className="border rounded-lg">
                             <div
                                 className="flex items-center gap-2 bg-[#F6F4EE] p-6"
@@ -965,16 +810,12 @@ export const EditBookingSetupPage = () => {
                                                     value={slot.startTime.hour}
                                                     onChange={(e) => {
                                                         const newSlots = [...formData.slots];
-                                                        newSlots[index].startTime.hour = e.target
-                                                            .value as string;
+                                                        newSlots[index].startTime.hour = e.target.value;
                                                         setFormData({ ...formData, slots: newSlots });
                                                     }}
                                                 >
                                                     {Array.from({ length: 24 }, (_, i) => (
-                                                        <MenuItem
-                                                            key={i}
-                                                            value={i.toString().padStart(2, "0")}
-                                                        >
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -985,16 +826,12 @@ export const EditBookingSetupPage = () => {
                                                     value={slot.startTime.minute}
                                                     onChange={(e) => {
                                                         const newSlots = [...formData.slots];
-                                                        newSlots[index].startTime.minute = e.target
-                                                            .value as string;
+                                                        newSlots[index].startTime.minute = e.target.value;
                                                         setFormData({ ...formData, slots: newSlots });
                                                     }}
                                                 >
                                                     {Array.from({ length: 60 }, (_, i) => (
-                                                        <MenuItem
-                                                            key={i}
-                                                            value={i.toString().padStart(2, "0")}
-                                                        >
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -1007,16 +844,13 @@ export const EditBookingSetupPage = () => {
                                                     value={slot.breakTimeStart.hour}
                                                     onChange={(e) => {
                                                         const newSlots = [...formData.slots];
-                                                        newSlots[index].breakTimeStart.hour = e.target
-                                                            .value as string;
+                                                        newSlots[index].breakTimeStart.hour =
+                                                            e.target.value;
                                                         setFormData({ ...formData, slots: newSlots });
                                                     }}
                                                 >
                                                     {Array.from({ length: 24 }, (_, i) => (
-                                                        <MenuItem
-                                                            key={i}
-                                                            value={i.toString().padStart(2, "0")}
-                                                        >
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -1027,16 +861,13 @@ export const EditBookingSetupPage = () => {
                                                     value={slot.breakTimeStart.minute}
                                                     onChange={(e) => {
                                                         const newSlots = [...formData.slots];
-                                                        newSlots[index].breakTimeStart.minute = e.target
-                                                            .value as string;
+                                                        newSlots[index].breakTimeStart.minute =
+                                                            e.target.value;
                                                         setFormData({ ...formData, slots: newSlots });
                                                     }}
                                                 >
                                                     {Array.from({ length: 60 }, (_, i) => (
-                                                        <MenuItem
-                                                            key={i}
-                                                            value={i.toString().padStart(2, "0")}
-                                                        >
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -1049,16 +880,12 @@ export const EditBookingSetupPage = () => {
                                                     value={slot.breakTimeEnd.hour}
                                                     onChange={(e) => {
                                                         const newSlots = [...formData.slots];
-                                                        newSlots[index].breakTimeEnd.hour = e.target
-                                                            .value as string;
+                                                        newSlots[index].breakTimeEnd.hour = e.target.value;
                                                         setFormData({ ...formData, slots: newSlots });
                                                     }}
                                                 >
                                                     {Array.from({ length: 24 }, (_, i) => (
-                                                        <MenuItem
-                                                            key={i}
-                                                            value={i.toString().padStart(2, "0")}
-                                                        >
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -1069,16 +896,13 @@ export const EditBookingSetupPage = () => {
                                                     value={slot.breakTimeEnd.minute}
                                                     onChange={(e) => {
                                                         const newSlots = [...formData.slots];
-                                                        newSlots[index].breakTimeEnd.minute = e.target
-                                                            .value as string;
+                                                        newSlots[index].breakTimeEnd.minute =
+                                                            e.target.value;
                                                         setFormData({ ...formData, slots: newSlots });
                                                     }}
                                                 >
                                                     {Array.from({ length: 60 }, (_, i) => (
-                                                        <MenuItem
-                                                            key={i}
-                                                            value={i.toString().padStart(2, "0")}
-                                                        >
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -1091,16 +915,12 @@ export const EditBookingSetupPage = () => {
                                                     value={slot.endTime.hour}
                                                     onChange={(e) => {
                                                         const newSlots = [...formData.slots];
-                                                        newSlots[index].endTime.hour = e.target
-                                                            .value as string;
+                                                        newSlots[index].endTime.hour = e.target.value;
                                                         setFormData({ ...formData, slots: newSlots });
                                                     }}
                                                 >
                                                     {Array.from({ length: 24 }, (_, i) => (
-                                                        <MenuItem
-                                                            key={i}
-                                                            value={i.toString().padStart(2, "0")}
-                                                        >
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -1111,16 +931,12 @@ export const EditBookingSetupPage = () => {
                                                     value={slot.endTime.minute}
                                                     onChange={(e) => {
                                                         const newSlots = [...formData.slots];
-                                                        newSlots[index].endTime.minute = e.target
-                                                            .value as string;
+                                                        newSlots[index].endTime.minute = e.target.value;
                                                         setFormData({ ...formData, slots: newSlots });
                                                     }}
                                                 >
                                                     {Array.from({ length: 60 }, (_, i) => (
-                                                        <MenuItem
-                                                            key={i}
-                                                            value={i.toString().padStart(2, "0")}
-                                                        >
+                                                        <MenuItem key={i} value={i.toString()}>
                                                             {i.toString().padStart(2, "0")}
                                                         </MenuItem>
                                                     ))}
@@ -1142,15 +958,17 @@ export const EditBookingSetupPage = () => {
                                                 value={slot.slotBy}
                                                 onChange={(e) => {
                                                     const newSlots = [...formData.slots];
-                                                    newSlots[index].slotBy = Number(e.target.value);
+                                                    newSlots[index].slotBy = e.target.value;
                                                     setFormData({ ...formData, slots: newSlots });
                                                 }}
                                             >
-                                                <MenuItem value={15}>15 Minutes</MenuItem>
-                                                <MenuItem value={30}>Half hour</MenuItem>
-                                                <MenuItem value={45}>45 Minutes</MenuItem>
-                                                <MenuItem value={60}>1 hour</MenuItem>
-                                                <MenuItem value={90}>1 and a half hours</MenuItem>
+                                                <MenuItem value={"15 Minutes"}>15 Minutes</MenuItem>
+                                                <MenuItem value={"30 Minutes"}>Half hour</MenuItem>
+                                                <MenuItem value={"45 Minutes"}>45 Minutes</MenuItem>
+                                                <MenuItem value={"60 Minutes"}>1 hour</MenuItem>
+                                                <MenuItem value={"90 Minutes"}>
+                                                    1 and a half hours
+                                                </MenuItem>
                                             </Select>
                                         </FormControl>
                                         <TextField
@@ -1578,9 +1396,7 @@ export const EditBookingSetupPage = () => {
                                             <span className="text-[#C72030] cursor-pointer">
                                                 Choose File
                                             </span>{" "}
-                                            {selectedBookingFiles.length > 0
-                                                ? "Files selected"
-                                                : "No file chosen"}
+                                            {selectedBookingFiles.length > 0 ? "Files selected" : "No file chosen"}
                                         </p>
                                         <p className="text-xs text-gray-500 mt-1">
                                             Accepted file formats: PNG/JPEG (height: 142px, width:
@@ -1756,8 +1572,7 @@ export const EditBookingSetupPage = () => {
                                                     value={rule.time.type}
                                                     onChange={(e) => {
                                                         const newRules = [...cancellationRules];
-                                                        newRules[index].time.type = e.target
-                                                            .value as string;
+                                                        newRules[index].time.type = e.target.value;
                                                         setCancellationRules(newRules);
                                                     }}
                                                 >
@@ -1774,12 +1589,11 @@ export const EditBookingSetupPage = () => {
                                                     value={rule.time.value}
                                                     onChange={(e) => {
                                                         const newRules = [...cancellationRules];
-                                                        newRules[index].time.value = e.target
-                                                            .value as string;
+                                                        newRules[index].time.value = e.target.value;
                                                         setCancellationRules(newRules);
                                                     }}
                                                 >
-                                                    {Array.from({ length: 60 }, (_, i) => (
+                                                    {Array.from({ length: 24 }, (_, i) => (
                                                         <MenuItem key={i} value={i.toString()}>
                                                             {i.toString()}
                                                         </MenuItem>
@@ -1811,9 +1625,7 @@ export const EditBookingSetupPage = () => {
                                 style={{ border: "1px solid #D9D9D9" }}
                             >
                                 <div className="flex items-center gap-2">
-                                    <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                                        10
-                                    </div>
+                                    <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold"></div>
                                     <h3 className="text-lg font-semibold text-[#C72030]">
                                         ADDITIONAL SETUP
                                     </h3>
@@ -1856,20 +1668,14 @@ export const EditBookingSetupPage = () => {
                                             <div key={key} className="flex items-center space-x-2">
                                                 <Checkbox
                                                     id={key}
-                                                    checked={
-                                                        formData.amenities[
-                                                            key as keyof FormData["amenities"]
-                                                        ].selected
-                                                    }
+                                                    checked={formData.amenities[key].selected}
                                                     onCheckedChange={(checked) =>
                                                         setFormData({
                                                             ...formData,
                                                             amenities: {
                                                                 ...formData.amenities,
                                                                 [key]: {
-                                                                    ...formData.amenities[
-                                                                    key as keyof FormData["amenities"]
-                                                                    ],
+                                                                    ...formData.amenities[key],
                                                                     selected: !!checked,
                                                                 },
                                                             },
@@ -1877,11 +1683,7 @@ export const EditBookingSetupPage = () => {
                                                     }
                                                 />
                                                 <label htmlFor={key}>
-                                                    {
-                                                        formData.amenities[
-                                                            key as keyof FormData["amenities"]
-                                                        ].name
-                                                    }
+                                                    {formData.amenities[key].name}
                                                 </label>
                                             </div>
                                         ))}
@@ -1911,7 +1713,7 @@ export const EditBookingSetupPage = () => {
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
-                                                        seaterInfo: e.target.value as string,
+                                                        seaterInfo: e.target.value,
                                                     })
                                                 }
                                                 label="Seater Info"
@@ -1919,11 +1721,21 @@ export const EditBookingSetupPage = () => {
                                                 <MenuItem value="Select a seater">
                                                     Select a seater
                                                 </MenuItem>
-                                                {Array.from({ length: 15 }, (_, i) => (
-                                                    <MenuItem key={i + 1} value={`${i + 1} Seater`}>
-                                                        {i + 1} Seater
-                                                    </MenuItem>
-                                                ))}
+                                                <MenuItem value="1 Seater">1 Seater</MenuItem>
+                                                <MenuItem value="2 Seater">2 Seater</MenuItem>
+                                                <MenuItem value="3 Seater">3 Seater</MenuItem>
+                                                <MenuItem value="4 Seater">4 Seater</MenuItem>
+                                                <MenuItem value="5 Seater">5 Seater</MenuItem>
+                                                <MenuItem value="6 Seater">6 Seater</MenuItem>
+                                                <MenuItem value="7 Seater">7 Seater</MenuItem>
+                                                <MenuItem value="8 Seater">8 Seater</MenuItem>
+                                                <MenuItem value="9 Seater">9 Seater</MenuItem>
+                                                <MenuItem value="10 Seater">10 Seater</MenuItem>
+                                                <MenuItem value="11 Seater">11 Seater</MenuItem>
+                                                <MenuItem value="12 Seater">12 Seater</MenuItem>
+                                                <MenuItem value="13 Seater">13 Seater</MenuItem>
+                                                <MenuItem value="14 Seater">14 Seater</MenuItem>
+                                                <MenuItem value="15 Seater">15 Seater</MenuItem>
                                             </Select>
                                         </FormControl>
                                     </div>
@@ -1952,7 +1764,7 @@ export const EditBookingSetupPage = () => {
                                                 onChange={(e) =>
                                                     setFormData({
                                                         ...formData,
-                                                        floorInfo: e.target.value as string,
+                                                        floorInfo: e.target.value,
                                                     })
                                                 }
                                                 label="Floor Info"
@@ -1960,11 +1772,21 @@ export const EditBookingSetupPage = () => {
                                                 <MenuItem value="Select a floor">
                                                     Select a floor
                                                 </MenuItem>
-                                                {Array.from({ length: 15 }, (_, i) => (
-                                                    <MenuItem key={i + 1} value={`${i + 1}th Floor`}>
-                                                        {i + 1}th Floor
-                                                    </MenuItem>
-                                                ))}
+                                                <MenuItem value="1st Floor">1st Floor</MenuItem>
+                                                <MenuItem value="2nd Floor">2nd Floor</MenuItem>
+                                                <MenuItem value="3rd Floor">3rd Floor</MenuItem>
+                                                <MenuItem value="4th Floor">4th Floor</MenuItem>
+                                                <MenuItem value="5th Floor">5th Floor</MenuItem>
+                                                <MenuItem value="6th Floor">6th Floor</MenuItem>
+                                                <MenuItem value="7th Floor">7th Floor</MenuItem>
+                                                <MenuItem value="8th Floor">8th Floor</MenuItem>
+                                                <MenuItem value="9th Floor">9th Floor</MenuItem>
+                                                <MenuItem value="10th Floor">10th Floor</MenuItem>
+                                                <MenuItem value="11th Floor">11th Floor</MenuItem>
+                                                <MenuItem value="12th Floor">12th Floor</MenuItem>
+                                                <MenuItem value="13th Floor">13th Floor</MenuItem>
+                                                <MenuItem value="14th Floor">14th Floor</MenuItem>
+                                                <MenuItem value="15th Floor">15th Floor</MenuItem>
                                             </Select>
                                         </FormControl>
                                     </div>
