@@ -141,6 +141,7 @@ export const AssetDetailsPage = () => {
             </div>
           </div>
 
+
           {activeTab === "asset-info" && (
             <div className="flex items-center gap-3">
               {/* <Button
