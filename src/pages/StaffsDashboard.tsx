@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Plus, Filter, Eye, Edit, FileText, QrCode, Search, Trash2 } from 'lucide-react';
 import { StaffsFilterModal } from '@/components/StaffsFilterModal';
 import { AddStaffModal } from '@/components/AddStaffModal';
@@ -397,147 +398,139 @@ export const StaffsDashboard = () => {
       )}
 
       {/* Tab Navigation */}
-      <div className="flex gap-1 bg-gray-200 p-1 rounded-lg w-fit mb-6">
-        <Button 
-          onClick={() => setActiveTab('history')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === 'history' 
-              ? 'text-white shadow-sm' 
-              : 'bg-transparent text-gray-600 hover:text-gray-900'
-          }`}
-          style={activeTab === 'history' ? { backgroundColor: '#C72030' } : {}}
-        >
-          History
-        </Button>
-        <Button 
-          onClick={() => setActiveTab('all')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === 'all' 
-              ? 'text-white shadow-sm' 
-              : 'bg-transparent text-gray-600 hover:text-gray-900'
-          }`}
-          style={activeTab === 'all' ? { backgroundColor: '#C72030' } : {}}
-        >
-          All
-        </Button>
-        <Button 
-          onClick={() => setActiveTab('in')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === 'in' 
-              ? 'text-white shadow-sm' 
-              : 'bg-transparent text-gray-600 hover:text-gray-900'
-          }`}
-          style={activeTab === 'in' ? { backgroundColor: '#C72030' } : {}}
-        >
-          In
-        </Button>
-        <Button 
-          onClick={() => setActiveTab('out')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === 'out' 
-              ? 'text-white shadow-sm' 
-              : 'bg-transparent text-gray-600 hover:text-gray-900'
-          }`}
-          style={activeTab === 'out' ? { backgroundColor: '#C72030' } : {}}
-        >
-          Out
-        </Button>
-      </div>
-
-      {/* Search Bar for In/Out tabs */}
-      {(activeTab === 'in' || activeTab === 'out') && (
-        <div className="flex gap-4 items-center mb-6">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search using staff's name or mobile number"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white h-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch();
-                }
-              }}
-            />
-          </div>
-          <Button 
-            onClick={handleSearch}
-            style={{ backgroundColor: '#C72030' }}
-            className="hover:bg-[#C72030]/90 text-white px-6 py-2 h-10 rounded-lg text-sm font-medium border-0"
-          >
-            Go!
-          </Button>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+        <div className="p-4 pb-0">
+          <TabsList className="grid w-full grid-cols-4 bg-white border border-gray-200">
+            <TabsTrigger
+              value="history"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              History
+            </TabsTrigger>
+            <TabsTrigger
+              value="all"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              All
+            </TabsTrigger>
+            <TabsTrigger
+              value="in"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              In
+            </TabsTrigger>
+            <TabsTrigger
+              value="out"
+              className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
+            >
+              Out
+            </TabsTrigger>
+          </TabsList>
         </div>
-      )}
 
-      {/* Content */}
-      {(activeTab === 'in' || activeTab === 'out') ? (
-        renderCardView()
-      ) : activeTab === 'history' ? (
-        <EnhancedTable
-          data={filteredData()}
-          columns={historyColumns}
-          renderRow={renderHistoryRow}
-          enableSearch={true}
-          enableSelection={false}
-          enableExport={true}
-          storageKey="staff-history-table"
-          emptyMessage="No history found"
-          exportFileName="staff-history"
-          searchPlaceholder="Search history by name or mobile"
-          hideTableExport={false}
-          hideColumnsButton={false}
-        />
-      ) : (
-        <EnhancedTable
-          data={filteredData()}
-          columns={columns}
-          renderRow={renderRow}
-          enableSearch={false}
-          enableSelection={true}
-          enableExport={true}
-          storageKey="staff-table"
-          emptyMessage="No staff found"
-          exportFileName="staff-records"
-          selectedItems={selectedStaffs}
-          getItemId={(staff) => staff.id}
-          onSelectItem={handleStaffSelection}
-          onSelectAll={handleSelectAll}
-          leftActions={
-            <div className="flex gap-3">
-              <Button 
-                onClick={() => setIsAddModalOpen(true)}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add
-              </Button>
-              <Button 
-                onClick={handlePrintQR}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-              >
-                <QrCode className="w-4 h-4 mr-2" />
-                Print QR
-              </Button>
-              <Button 
-                onClick={handlePrintAllQR}
-                style={{ backgroundColor: '#C72030' }}
-                className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                Print ALL QR
-              </Button>
+        {/* Search Bar for In/Out tabs */}
+        {(activeTab === 'in' || activeTab === 'out') && (
+          <div className="flex gap-4 items-center mb-6 px-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search using staff's name or mobile number"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-white h-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch();
+                  }
+                }}
+              />
             </div>
-          }
-          onFilterClick={() => setIsFilterModalOpen(true)}
-          searchPlaceholder="Search staff by name, ID, email or mobile"
-          hideTableExport={false}
-          hideColumnsButton={false}
-        />
-      )}
+            <Button 
+              onClick={handleSearch}
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white px-6 py-2 h-10 rounded-lg text-sm font-medium border-0"
+            >
+              Go!
+            </Button>
+          </div>
+        )}
+
+        {/* Tab Content */}
+        <TabsContent value="in" className="mt-0">
+          {renderCardView()}
+        </TabsContent>
+        
+        <TabsContent value="out" className="mt-0">
+          {renderCardView()}
+        </TabsContent>
+        
+        <TabsContent value="history" className="mt-0">
+          <EnhancedTable
+            data={filteredData()}
+            columns={historyColumns}
+            renderRow={renderHistoryRow}
+            enableSearch={true}
+            enableSelection={false}
+            enableExport={true}
+            storageKey="staff-history-table"
+            emptyMessage="No history found"
+            exportFileName="staff-history"
+            searchPlaceholder="Search history by name or mobile"
+            hideTableExport={false}
+            hideColumnsButton={false}
+          />
+        </TabsContent>
+        
+        <TabsContent value="all" className="mt-0">
+          <EnhancedTable
+            data={filteredData()}
+            columns={columns}
+            renderRow={renderRow}
+            enableSearch={false}
+            enableSelection={true}
+            enableExport={true}
+            storageKey="staff-table"
+            emptyMessage="No staff found"
+            exportFileName="staff-records"
+            selectedItems={selectedStaffs}
+            getItemId={(staff) => staff.id}
+            onSelectItem={handleStaffSelection}
+            onSelectAll={handleSelectAll}
+            leftActions={
+              <div className="flex gap-3">
+                <Button 
+                  onClick={() => setIsAddModalOpen(true)}
+                  style={{ backgroundColor: '#C72030' }}
+                  className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add
+                </Button>
+                <Button 
+                  onClick={handlePrintQR}
+                  style={{ backgroundColor: '#C72030' }}
+                  className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+                >
+                  <QrCode className="w-4 h-4 mr-2" />
+                  Print QR
+                </Button>
+                <Button 
+                  onClick={handlePrintAllQR}
+                  style={{ backgroundColor: '#C72030' }}
+                  className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Print ALL QR
+                </Button>
+              </div>
+            }
+            onFilterClick={() => setIsFilterModalOpen(true)}
+            searchPlaceholder="Search staff by name, ID, email or mobile"
+            hideTableExport={false}
+            hideColumnsButton={false}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Filter Modal */}
       <StaffsFilterModal 
