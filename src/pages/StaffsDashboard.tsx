@@ -359,44 +359,6 @@ export const StaffsDashboard = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Society Staffs</h1>
       
-      {/* Action Buttons - only show for History and All tabs */}
-      {(activeTab === 'history' || activeTab === 'all') && (
-        <div className="flex gap-3 mb-6">
-          <Button 
-            onClick={() => setIsAddModalOpen(true)}
-            style={{ backgroundColor: '#C72030' }}
-            className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
-          <Button 
-            onClick={() => setIsFilterModalOpen(true)}
-            style={{ backgroundColor: '#C72030' }}
-            className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-          </Button>
-          <Button 
-            onClick={handlePrintQR}
-            style={{ backgroundColor: '#C72030' }}
-            className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-          >
-            <QrCode className="w-4 h-4 mr-2" />
-            Print QR
-          </Button>
-          <Button 
-            onClick={handlePrintAllQR}
-            style={{ backgroundColor: '#C72030' }}
-            className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-          >
-            <FileText className="w-4 h-4 mr-2" />
-            Print ALL QR
-          </Button>
-        </div>
-      )}
-
       {/* Tab Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <div className="p-4 pb-0">
@@ -427,6 +389,44 @@ export const StaffsDashboard = () => {
             </TabsTrigger>
           </TabsList>
         </div>
+
+        {/* Action Buttons - show for History and All tabs */}
+        {(activeTab === 'history' || activeTab === 'all') && (
+          <div className="flex gap-3 mb-6 px-4">
+            <Button 
+              onClick={() => setIsAddModalOpen(true)}
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add
+            </Button>
+            <Button 
+              onClick={() => setIsFilterModalOpen(true)}
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
+            </Button>
+            <Button 
+              onClick={handlePrintQR}
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+            >
+              <QrCode className="w-4 h-4 mr-2" />
+              Print QR
+            </Button>
+            <Button 
+              onClick={handlePrintAllQR}
+              style={{ backgroundColor: '#C72030' }}
+              className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Print ALL QR
+            </Button>
+          </div>
+        )}
 
         {/* Search Bar for In/Out tabs */}
         {(activeTab === 'in' || activeTab === 'out') && (
