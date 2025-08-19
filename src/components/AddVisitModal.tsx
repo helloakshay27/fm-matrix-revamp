@@ -215,7 +215,7 @@ export const AddVisitModal = ({ isOpen, onClose, amcId }: AddVisitModalProps) =>
           />
 
           <TextField
-            label="Start Date"
+            label="Visit Date"
             type="date"
             name="startDate"
             value={formData.startDate}
