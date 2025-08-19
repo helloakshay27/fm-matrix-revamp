@@ -738,7 +738,9 @@ useEffect(() => {
               <>
                 {formData.details === 'Asset' ? (
                   <FormControl fullWidth variant="outlined" error={!!errors.asset_ids}>
-                    <InputLabel id="asset-select-label" shrink>Assets</InputLabel>
+                    <InputLabel id="asset-select-label" shrink>
+                      Assets <span style={{ color: '#C72030' }}>*</span>
+                    </InputLabel>
                     <MuiSelect
                       labelId="asset-select-label"
                       label="Assets"
@@ -780,7 +782,9 @@ useEffect(() => {
                   </FormControl>
                 ) : (
                   <FormControl fullWidth variant="outlined" error={!!errors.service}>
-                    <InputLabel id="service-select-label" shrink>Service</InputLabel>
+                    <InputLabel id="service-select-label" shrink>
+                      Service <span style={{ color: '#C72030' }}>*</span>
+                    </InputLabel>
                     <MuiSelect
                       labelId="service-select-label"
                       label="Service"
@@ -810,7 +814,9 @@ useEffect(() => {
 
                 <div>
                   <FormControl fullWidth variant="outlined" error={!!errors.vendor}>
-                    <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
+                    <InputLabel id="vendor-select-label" shrink>
+                      Supplier <span style={{ color: '#C72030' }}>*</span>
+                    </InputLabel>
                     <MuiSelect
                       labelId="vendor-select-label"
                       label="Supplier"
@@ -889,7 +895,9 @@ useEffect(() => {
                   {formData.details === 'Service' && (
                     <div>
                       <FormControl fullWidth variant="outlined" error={!!errors.service}>
-                        <InputLabel id="service-select-label" shrink>Service</InputLabel>
+                        <InputLabel id="service-select-label" shrink>
+                          Service <span style={{ color: '#C72030' }}>*</span>
+                        </InputLabel>
                         <MuiSelect
                           labelId="service-select-label"
                           label="Service"
@@ -922,7 +930,9 @@ useEffect(() => {
 
                   <div>
                     <FormControl fullWidth variant="outlined" error={!!errors.supplier}>
-                      <InputLabel id="group-supplier-select-label" shrink>Supplier</InputLabel>
+                      <InputLabel id="group-supplier-select-label" shrink>
+                        Supplier <span style={{ color: '#C72030' }}>*</span>
+                      </InputLabel>
                       <MuiSelect
                         labelId="group-supplier-select-label"
                         label="Supplier"
@@ -961,7 +971,7 @@ useEffect(() => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <TextField
-                  label="Cost*"
+                  label={<span>Cost<span style={{ color: '#C72030' }}>*</span></span>}
                   placeholder="Enter Cost"
                   name="cost"
                   type="number"
@@ -978,7 +988,7 @@ useEffect(() => {
 
               <div>
                 <TextField
-                  label="Contract Name*"
+                  label={<span>Contract Name<span style={{ color: '#C72030' }}>*</span></span>}
                   placeholder="Enter Contract Name"
                   name="contractName"
                   value={formData.contractName}
@@ -996,7 +1006,7 @@ useEffect(() => {
                 <TextField
                   fullWidth
                   type="date"
-                  label="Start Date*"
+                  label={<span>Start Date<span style={{ color: '#C72030' }}>*</span></span>}
                   value={formData.startDate}
                   onChange={(e) => handleInputChange('startDate', e.target.value)}
                   InputLabelProps={{ shrink: true }}
@@ -1011,7 +1021,7 @@ useEffect(() => {
                 <TextField
                   fullWidth
                   type="date"
-                  label="First Service Date*"
+                  label={<span>First Service Date<span style={{ color: '#C72030' }}>*</span></span>}
                   value={formData.firstService}
                   onChange={(e) => handleInputChange('firstService', e.target.value)}
                   InputLabelProps={{ shrink: true }}
@@ -1024,10 +1034,10 @@ useEffect(() => {
 
               <div>
                 <FormControl fullWidth variant="outlined" error={!!errors.paymentTerms}>
-                  <InputLabel id="payment-terms-select-label" shrink>Payment Terms*</InputLabel>
+                  <InputLabel id="payment-terms-select-label" shrink>Payment Terms <span style={{ color: '#C72030' }}>*</span></InputLabel>
                   <MuiSelect
                     labelId="payment-terms-select-label"
-                    label="Payment Terms*"
+                    label="Payment Terms"
                     displayEmpty
                     value={formData.paymentTerms}
                     onChange={e => handleInputChange('paymentTerms', e.target.value)}
@@ -1049,7 +1059,7 @@ useEffect(() => {
                 <TextField
                   fullWidth
                   type="date"
-                  label="End Date*"
+                  label={<span>End Date<span style={{ color: '#C72030' }}>*</span></span>}
                   value={formData.endDate}
                   onChange={(e) => handleInputChange('endDate', e.target.value)}
                   InputLabelProps={{ shrink: true }}
@@ -1063,7 +1073,7 @@ useEffect(() => {
 
               <div>
                 <TextField
-                  label="No. of Visits*"
+                  label={<span>No. of Visits<span style={{ color: '#C72030' }}>*</span></span>}
                   placeholder="Enter No. of Visits"
                   name="noOfVisits"
                   type="text"
