@@ -2,6 +2,8 @@
 import React, { useEffect } from 'react';
 import { TextField, MenuItem, ThemeProvider, createTheme } from '@mui/material';
 import { useLocationData } from '@/hooks/useLocationData';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchAllowedSites } from '@/store/slices/siteSlice';
 
 interface MovementToSectionProps {
   siteId: number | null;
@@ -103,8 +105,10 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
   roomId,
   setRoomId,
 }) => {
+  const dispatch = useAppDispatch();
+  const { sites, selectedSite, loading: siteLoading } = useAppSelector((state) => state.site);
+
   const {
-    sites,
     buildings,
     wings,
     areas,
@@ -117,6 +121,14 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
     fetchFloors,
     fetchRooms,
   } = useLocationData();
+
+  // Fetch allowed sites on component mount
+  useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      dispatch(fetchAllowedSites(Number(userId)));
+    }
+  }, [dispatch]);
 
   // Handle cascading dropdown changes
   useEffect(() => {
@@ -182,7 +194,7 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
             variant="outlined"
             size="small"
             placeholder="Select Site"
-            disabled={loading.sites}
+            disabled={siteLoading}
             InputLabelProps={{
               shrink: true,
             }}

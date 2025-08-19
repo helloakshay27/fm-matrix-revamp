@@ -64,7 +64,8 @@ export const EBOMTab: React.FC<EBOMTabProps> = ({ asset, isMobile = false }) => 
 
   // Add button click handler
   const handleAddClick = () => {
-    navigate('/maintenance/inventory/add');
+    // navigate('/maintenance/inventory/add');
+    navigate('/maintenance/inventory/add?asset_id=' + asset.id);
   };
 
   return (
