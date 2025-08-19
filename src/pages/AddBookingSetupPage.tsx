@@ -233,9 +233,6 @@ export const AddBookingSetupPage = () => {
     if (!formData.facilityName) {
       toast.error("Please enter Facility Name");
       return false;
-    } else if (!formData.description) {
-      toast.error("Please enter Description");
-      return false;
     } else if (!formData.termsConditions) {
       toast.error("Please enter Terms and Conditions");
       return false;
@@ -1358,7 +1355,7 @@ export const AddBookingSetupPage = () => {
                   6
                 </div>
                 <h3 className="text-lg font-semibold text-[#C72030]">
-                  DESCRIPTION*
+                  DESCRIPTION
                 </h3>
               </div>
               <div className="p-6 bg-[#F6F7F7]" style={{ border: "1px solid #D9D9D9" }}>
