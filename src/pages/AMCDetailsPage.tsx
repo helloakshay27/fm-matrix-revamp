@@ -720,8 +720,8 @@ export const AMCDetailsPage = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Action</TableHead>
-                          <TableHead>Name</TableHead>
                           <TableHead>Asset ID</TableHead>
+                          <TableHead>Name</TableHead>
                           <TableHead>Under Warranty</TableHead>
                           <TableHead>Status</TableHead>
                         </TableRow>
@@ -739,8 +739,8 @@ export const AMCDetailsPage = () => {
                                   <Eye className="w-4 h-4" />
                                 </a>
                               </TableCell>
-                              <TableCell>{asset.asset_name || '—'}</TableCell>
                               <TableCell>{asset.asset_id || '—'}</TableCell>
+                              <TableCell>{asset.asset_name || '—'}</TableCell>
                               <TableCell>
                                 {asset.warranty === true
                                   ? 'Yes'
