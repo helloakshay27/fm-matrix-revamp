@@ -24,7 +24,8 @@ export const EditExternalUserPage = () => {
     report_to_id: '',
     department_id: '',
     circle_id: '',
-  company_cluster_id: '',
+    company_cluster_id: '',
+    cluster_name: '',
     work_location: '', // added explicit work_location field to sync with dropdown storing name
     role_id: ''
   };
@@ -151,6 +152,7 @@ export const EditExternalUserPage = () => {
           department_id: data.lock_user_permission?.department_id || '',
           circle_id: data.lock_user_permission?.circle_id || data.circle_id || '',
           cluster_name: data.cluster_name || '',
+          company_cluster_id: data.company_cluster_id || data.lock_user_permission?.company_cluster_id || '',
           // if API returns an object, pick its name; else keep string
           work_location: (typeof data.work_location === 'object' && data.work_location !== null) ? (data.work_location.name || data.work_location.work_location_name || '') : (data.work_location || ''),
           role_id: data.lock_user_permission?.lock_role_id || data.lock_role_id || ''
@@ -417,10 +419,19 @@ export const EditExternalUserPage = () => {
             </FormControl>
             <FormControl fullWidth size="small">
               <InputLabel>Cluster</InputLabel>
-              <Select value={formData.cluster_name} label="Cluster" onChange={e => handleChange('company_cluster_id', e.target.value)}>
+              <Select
+                value={formData.company_cluster_id}
+                label="Cluster"
+                onChange={e => {
+                  const val = e.target.value;
+                  const selected = clusters.find((cl: any) => cl.id?.toString() === val?.toString());
+                  handleChange('company_cluster_id', val);
+                  handleChange('cluster_name', selected?.cluster_name || '');
+                }}
+              >
                 <MenuItem value="">Select</MenuItem>
                 {clusters.map((cl: any) => (
-                  <MenuItem key={cl.company_cluster_id} value={cl.company_cluster_id}>{cl.cluster_name || `Cluster ${cl.company_cluster_id}`}</MenuItem>
+                  <MenuItem key={cl.id} value={cl.id}>{cl.cluster_name || `Cluster ${cl.id}`}</MenuItem>
                 ))}
               </Select>
             </FormControl>
