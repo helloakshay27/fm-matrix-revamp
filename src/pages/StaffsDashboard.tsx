@@ -360,7 +360,7 @@ export const StaffsDashboard = () => {
       
       {/* Tab Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-        <div className="p-4 pb-0">
+        <div className="">
           <TabsList className="grid grid-cols-4 bg-white border border-gray-200 mb-4">
             <TabsTrigger
               value="history"
