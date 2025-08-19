@@ -579,7 +579,7 @@ export const RosterCreatePage: React.FC = () => {
           </div>
 
           <div>
-            <Label className="text-sm font-medium text-gray-700 mb-4 block">
+            <Label className="text-sm font-medium text-gray-700 mb-4 block mt-6">
               Working Days *
             </Label>
             
