@@ -357,7 +357,6 @@ export const StaffsDashboard = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Society Staffs</h1>
       
       {/* Tab Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
