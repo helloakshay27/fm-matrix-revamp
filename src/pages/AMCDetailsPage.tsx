@@ -15,6 +15,7 @@ import { Eye } from 'lucide-react';
 interface AMCDetailsData {
   id: number;
   asset_id: number | null;
+  service_id?: number | null; // added optional service_id to fix TS error when referencing amcDetails.service_id
   amc_vendor_name: string | null;
   amc_vendor_mobile: string | null;
   amc_vendor_email: string | null;
@@ -54,6 +55,13 @@ interface AmcVisitLog {
   updated_at: string;
   asset_period: string;
   technician: Technician | null;
+  // Added optional attachment to align with runtime usage (visit.attachment?.document / id)
+  attachment?: {
+    id?: number;
+    document?: string;          // image URL or file URL
+    document_url?: string;      // sometimes APIs use document_url
+    [key: string]: any;         // allow extra backend-provided fields
+  } | null;
 
 }
 
