@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCheck, Clock, Settings, Shield, Eye, Trash2, Plus, Filter, Download } from 'lucide-react';
+import { Users, UserCheck, Clock, Settings, Shield, Eye, Trash2, Plus, Filter, Download, RefreshCw } from 'lucide-react';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,92 +13,213 @@ import { KRCCFormFilterDialog } from '@/components/KRCCFormFilterDialog';
 import { toast } from 'sonner';
 import axios from 'axios';
 
+// Local debounce hook (kept here to avoid external dependency assumptions)
+function useDebounce<T>(value: T, delay: number) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
+  return debounced;
+}
+
 // Define KRCC Form interface
 interface KRCCForm {
   id: number;
-  user: string;
-  user_email: string;
+  user: string;           // mapped from user.fullname
+  user_email: string;     // mapped from user.email
   status: string;
-  created_date?: string;
-  updated_date?: string;
-  form_type?: string;
+  created_date?: string;  // created_at
+  form_type?: string;     // form_details.form_type
+}
+
+interface ApiKRCCFormRecord {
+  id: number;
+  status: string;
+  created_at: string;
+  form_details?: { form_type?: string } & Record<string, any>;
+  user?: { fullname?: string; email?: string };
+}
+
+interface KRCCApiResponse {
+  krcc_forms: ApiKRCCFormRecord[];
+  pagination?: { current_page: number; total_count: number; total_pages: number };
 }
 
 export const KRCCFormListDashboard = () => {
   const navigate = useNavigate();
 
-  // Dummy KRCC Form data (15 records) in state
-  const [krccForms, setKrccForms] = useState<KRCCForm[]>([
-    {
-      id: 1, user: 'SANJEEV KUMAR', user_email: 'skchauhaanabc@gmail.com', status: 'pending', created_date: '2024-01-15', form_type: 'KRCC-A'
-    },
-    {
-      id: 2, user: 'Rahul Kumar', user_email: 'rahulk5277263@gmail.com', status: 'pending', created_date: '2024-01-16', form_type: 'KRCC-B'
-    },
-    {
-      id: 3, user: 'Mukesh Kumar', user_email: 'mukesh.kumar70@vodafoneidea.com', status: 'pending', created_date: '2024-01-17', form_type: 'KRCC-A'
-    },
-    {
-      id: 4, user: 'Abhijth Debnath', user_email: 'debnathabhijij@gmail.com', status: 'approved', created_date: '2024-01-18', form_type: 'KRCC-C'
-    },
-    {
-      id: 5, user: 'Jay Chauhan', user_email: 'jay.chauhan@vodafoneidea.com', status: 'approved', created_date: '2024-01-19', form_type: 'KRCC-B'
-    },
-    {
-      id: 6, user: 'Amit Sharma', user_email: 'amit.sharma@example.com', status: 'rejected', created_date: '2024-01-20', form_type: 'KRCC-A'
-    },
-    {
-      id: 7, user: 'Priya Singh', user_email: 'priya.singh@example.com', status: 'pending', created_date: '2024-01-21', form_type: 'KRCC-C'
-    },
-    {
-      id: 8, user: 'Rajesh Gupta', user_email: 'rajesh.gupta@example.com', status: 'approved', created_date: '2024-01-22', form_type: 'KRCC-B'
-    },
-    {
-      id: 9, user: 'Neha Patel', user_email: 'neha.patel@example.com', status: 'pending', created_date: '2024-01-23', form_type: 'KRCC-A'
-    },
-    {
-      id: 10, user: 'Vikas Yadav', user_email: 'vikas.yadav@example.com', status: 'approved', created_date: '2024-01-24', form_type: 'KRCC-C'
-    },
-    {
-      id: 11, user: 'Sunita Verma', user_email: 'sunita.verma@example.com', status: 'rejected', created_date: '2024-01-25', form_type: 'KRCC-B'
-    },
-    {
-      id: 12, user: 'Manoj Tiwari', user_email: 'manoj.tiwari@example.com', status: 'pending', created_date: '2024-01-26', form_type: 'KRCC-A'
-    },
-    {
-      id: 13, user: 'Kavita Reddy', user_email: 'kavita.reddy@example.com', status: 'approved', created_date: '2024-01-27', form_type: 'KRCC-C'
-    },
-    {
-      id: 14, user: 'Deepak Singh', user_email: 'deepak.singh@example.com', status: 'pending', created_date: '2024-01-28', form_type: 'KRCC-B'
-    },
-    {
-      id: 15, user: 'Anita Joshi', user_email: 'anita.joshi@example.com', status: 'approved', created_date: '2024-01-29', form_type: 'KRCC-A'
-    },
-  ]);
-  
-  const loading = false;
+  // Remote data state
+  const [krccForms, setKrccForms] = useState<KRCCForm[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [statusFilter] = useState<string>('Pending'); // As per requirement always using Pending for now
+  const pageSize = 20; // API default (in sample it's 20 records)
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 500);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  // Filter values from modal (email/circle)
+  const [filterEmail, setFilterEmail] = useState<string>('');
+  const [filterCircle, setFilterCircle] = useState<string>('');
 
-  const cardData = [{
-    title: "Total Forms",
-    count: krccForms?.length || 15,
-    icon: Users
-  }, {
-    title: "Approved Forms",
-    count: krccForms?.filter(form => form.status === 'approved').length || 6,
-    icon: UserCheck
-  }, {
-    title: "Pending Forms",
-    count: krccForms?.filter(form => form.status === 'pending').length || 7,
-    icon: Clock
-  }, {
-    title: "Rejected Forms",
-    count: krccForms?.filter(form => form.status === 'rejected').length || 2,
-    icon: Shield
-  }];
+  // KPI cards (Approved/Pending/Rejected derived from current page; total forms from API pagination total_count)
+  const cardData = [
+    {
+      title: 'Total Forms',
+      count: totalCount || krccForms.length,
+      icon: Users
+    },
+    {
+      title: 'Approved (page)',
+      count: krccForms.filter(f => f.status?.toLowerCase() === 'approved').length,
+      icon: UserCheck
+    },
+    {
+      title: 'Pending (page)',
+      count: krccForms.filter(f => f.status?.toLowerCase() === 'pending').length,
+      icon: Clock
+    },
+    {
+      title: 'Rejected (page)',
+      count: krccForms.filter(f => f.status?.toLowerCase() === 'rejected').length,
+      icon: Shield
+    }
+  ];
+  // Fetch data from API
+  const fetchKRCCForms = useCallback(async (page: number, searchValue?: string) => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) {
+      setError('Missing base URL or token');
+      toast.error('Missing base URL or token');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const trimmed = (searchValue || '').trim();
+      const emailMatch = trimmed.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+      const cleanedSearch = emailMatch ? emailMatch[0] : trimmed;
+      const searchActive = !!cleanedSearch;
+
+      // Build base
+      let url = `https://${baseUrl}/krcc_forms.json?approval=yes&page=${page}`;
+
+      // Email param priority: explicit search box else filter email
+      const effectiveEmail = searchActive ? cleanedSearch : (filterEmail || '').trim();
+      const effectiveCircle = (filterCircle || '').trim();
+
+      if (effectiveEmail) {
+        url += `&q[user_email_cont]=${encodeURIComponent(effectiveEmail)}`;
+      }
+      if (effectiveCircle) {
+        url += `&q[user_lock_user_permissions_circle_name_cont]=${encodeURIComponent(effectiveCircle)}`;
+      }
+      if (!effectiveEmail && !effectiveCircle) {
+        url += `&status=${encodeURIComponent(statusFilter)}`; // default status filter only when no field filters
+      }
+
+      console.debug('[KRCC] Fetch URL:', url);
+
+      let res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+
+      // Fallback to legacy param for email if needed
+      if (searchActive && res.ok && effectiveEmail) {
+        const firstPayload = await res.clone().json();
+        if ((firstPayload.krcc_forms?.length ?? 0) === 0 && cleanedSearch.includes('@')) {
+          const fallbackUrl = `https://${baseUrl}/krcc_forms.json?approval=yes&q[email_cont]=${encodeURIComponent(cleanedSearch)}&page=1`;
+            res = await fetch(fallbackUrl, { headers: { Authorization: `Bearer ${token}` } });
+        }
+      }
+
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`);
+      }
+      const data: KRCCApiResponse = await res.json();
+      const mapped: KRCCForm[] = (data.krcc_forms || []).map(item => ({
+        id: item.id,
+        status: item.status,
+        user: item.user?.fullname || 'Unknown',
+        user_email: item.user?.email || '-',
+        created_date: item.created_at?.split('T')[0],
+        form_type: item.form_details?.form_type,
+      }));
+      setKrccForms(mapped);
+      if (data.pagination) {
+        setCurrentPage(data.pagination.current_page);
+        setTotalPages(data.pagination.total_pages);
+        setTotalCount(data.pagination.total_count);
+      } else {
+        setTotalPages(1);
+        setTotalCount(mapped.length);
+      }
+  if (searchActive && mapped.length === 0) {
+        toast.info('No results found');
+      }
+    } catch (e: any) {
+      console.error('KRCC fetch error', e);
+      setError(e.message || 'Failed to load KRCC forms');
+      toast.error('Failed to load KRCC forms');
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter, filterEmail, filterCircle]);
+
+  // Reset to first page when search changes (debounced)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    fetchKRCCForms(currentPage, debouncedSearch);
+  }, [fetchKRCCForms, currentPage, debouncedSearch]);
+
+  const handleRefresh = () => fetchKRCCForms(currentPage, debouncedSearch);
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    setCurrentPage(page);
+  };
+
+  // Build pagination items similar to M-Safe dashboard
+  const paginationItems = React.useMemo(() => {
+    const items: React.ReactNode[] = [];
+    if (totalPages <= 1) return items;
+    const pushPage = (p: number) => {
+      items.push(
+        <PaginationItem key={p}>
+          <PaginationLink className='cursor-pointer' isActive={currentPage === p} onClick={() => handlePageChange(p)}>
+            {p}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    };
+    const pushEllipsis = (key: string) => items.push(<PaginationItem key={key}><PaginationEllipsis /></PaginationItem>);
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pushPage(i);
+    } else {
+      pushPage(1);
+      if (currentPage <= 3) {
+        for (let i = 2; i <= 4; i++) pushPage(i);
+        pushEllipsis('e1');
+      } else if (currentPage >= totalPages - 2) {
+        pushEllipsis('e1');
+        for (let i = totalPages - 3; i < totalPages; i++) pushPage(i);
+      } else {
+        pushEllipsis('e1');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pushPage(i);
+        pushEllipsis('e2');
+      }
+      pushPage(totalPages);
+    }
+    return items;
+  }, [currentPage, totalPages]);
+
 
   const getStatusBadge = (status: string) => {
     if (!status) {
@@ -119,17 +241,17 @@ export const KRCCFormListDashboard = () => {
     key: 'action',
     label: 'Action',
     sortable: false,
-    hideable: false
+    hideable: true
   }, {
     key: 'user',
     label: 'User',
     sortable: true,
-    hideable: false
+    hideable: true
   }, {
     key: 'user_email',
     label: 'User Email',
     sortable: true,
-    hideable: false
+    hideable: true
   }, {
     key: 'status',
     label: 'Status',
@@ -139,7 +261,7 @@ export const KRCCFormListDashboard = () => {
     key: 'delete',
     label: 'Delete',
     sortable: false,
-    hideable: false
+    hideable: true
   }];
 
   const renderCell = (form: KRCCForm, columnKey: string): React.ReactNode => {
@@ -212,27 +334,21 @@ export const KRCCFormListDashboard = () => {
   };
 
   const handleExport = async () => {
-    try {
-      // Simulate export functionality
-      const selectedForms = selectedItems.length > 0 
-        ? krccForms.filter(form => selectedItems.includes(form.id.toString()))
-        : krccForms;
-      
-      console.log('Exporting KRCC forms:', selectedForms);
-      toast.success('KRCC forms exported successfully');
-    } catch (error) {
-      console.error('Export failed:', error);
-      toast.error('Failed to export KRCC forms');
-    }
+    console.log('Exporting selected KRCC forms:', selectedItems);
+    // Implement export logic here
   };
 
   const handleFiltersClick = () => {
     setIsFilterDialogOpen(true);
   };
 
-  const handleApplyFilters = (filters: { startDate?: Date; endDate?: Date; email?: string; circle?: string }) => {
-    console.log('Applied filters:', filters);
-    toast.success('Filters applied successfully');
+  const handleApplyFilters = (filters: { email?: string; circle?: string }) => {
+    setFilterEmail(filters.email || '');
+    setFilterCircle(filters.circle || '');
+    // Clear search so circle/email filters are visible in payload even if user previously searched
+    setSearchTerm('');
+    setCurrentPage(1);
+    toast.success('Filters applied');
   };
 
   return (
@@ -269,34 +385,57 @@ export const KRCCFormListDashboard = () => {
         )}
 
         <div className="rounded-lg">
-          <EnhancedTable 
-            data={krccForms || []} 
-            leftActions={
-              <Button
-                onClick={handleActionClick}
-                className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-              >
-                <Plus className="w-4 h-4" />
-                Action
-              </Button>
-            } 
-            columns={columns} 
+          {error && (
+            <div className="mb-4 p-3 border border-red-300 text-red-600 rounded bg-red-50 text-sm">{error}</div>
+          )}
+          <EnhancedTable
+            data={krccForms || []}
+            // leftActions={
+            //   <Button
+            //     onClick={handleActionClick}
+            //     className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+            //   >
+            //     <Plus className="w-4 h-4" />
+            //     Action
+            //   </Button>
+            // }
+            columns={columns}
             onFilterClick={handleFiltersClick}
-            renderCell={renderCell} 
-            onSelectAll={handleSelectAll} 
-            storageKey="krcc-forms" 
-            searchTerm={searchTerm} 
-            onSearchChange={setSearchTerm} 
-            searchPlaceholder="Search KRCC forms..." 
-            handleExport={handleExport} 
-            enableExport={true} 
-            exportFileName="krcc-forms" 
-            pagination={true} 
-            pageSize={10} 
-            loading={loading} 
-            enableSearch={true} 
-            onRowClick={form => console.log('Row clicked:', form)} 
+            renderCell={renderCell}
+            onSelectAll={handleSelectAll}
+            storageKey="krcc-forms"
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search..."
+            handleExport={handleExport}
+            enableExport={true}
+            exportFileName="krcc-forms"
+            pagination={false} // using server-side pagination below
+            loading={loading}
+            enableSearch={true}
+            onRowClick={form => console.log('Row clicked:', form)}
           />
+          {!loading && totalPages > 1 && (
+            <div className="flex flex-col items-center gap-2 mt-6">
+              <div className="text-sm text-gray-600">Page {currentPage} of {totalPages} | Total {totalCount}</div>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious className='cursor-pointer' onClick={() => handlePageChange(currentPage - 1)} />
+                  </PaginationItem>
+                  {paginationItems}
+                  <PaginationItem>
+                    <PaginationNext className='cursor-pointer' onClick={() => handlePageChange(currentPage + 1)} />
+                  </PaginationItem>
+                  {/* <PaginationItem>
+                    <Button variant="outline" size="sm" onClick={handleRefresh} title="Refresh" disabled={loading}>
+                      <RefreshCw className={"w-4 h-4" + (loading ? ' animate-spin' : '')} />
+                    </Button>
+                  </PaginationItem> */}
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </div>
 
         <KRCCFormFilterDialog

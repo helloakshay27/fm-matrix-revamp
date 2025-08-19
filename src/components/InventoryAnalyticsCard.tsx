@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LabelList } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LabelList, LineChart, Line, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { inventoryAnalyticsDownloadAPI } from '@/services/inventoryAnalyticsDownloadAPI';
@@ -94,18 +94,21 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
     }
   };
   if (!data) {
+    const showDownload = !['itemsStatus', 'categoryWise'].includes(type);
     return (
       <div className={`bg-white rounded-lg border border-gray-200 p-6 shadow-sm ${className}`}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownload}
-            disabled={downloadLoading || !dateRange}
-          >
-            <Download className="w-4 h-4" />
-          </Button>
+          {showDownload && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownload}
+              disabled={downloadLoading || !dateRange}
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+          )}
         </div>
         <div className="flex items-center justify-center h-32 text-gray-500">
           No data available
@@ -473,41 +476,98 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
         );
       }
 
-      case 'currentMinimumStockNonGreen':
-      case 'currentMinimumStockGreen': {
-        // Render table for minimum stock, using the provided API response
+      case 'currentMinimumStockNonGreen': {
         if (!data.response || !Array.isArray(data.response)) {
           return <div>No minimum stock data available</div>;
         }
-        // Each item in response is an object with a single key (product name)
-        const rows = data.response.map((item: any) => {
+        const chartRows = data.response.map((item: any) => {
           const product = Object.keys(item)[0];
           const stock = item[product];
-          return { product, ...stock };
+          return {
+            product,
+            current: Number(stock.Current_Stock) || 0,
+            minimum: Number(stock.Minimum_Stock) || 0
+          };
         });
-        // Scroll container: 5 rows (~44px each) + header ~48px => ~268px
+        const hasValues = chartRows.some(r => r.current || r.minimum);
+        const maxValNG = Math.max(0, ...chartRows.map(r => Math.max(r.current, r.minimum)));
+        const yDomainNG = [0, maxValNG === 0 ? 10 : Math.ceil(maxValNG * 1.1)];
+
+        const renderValueLabelNG = (props: any) => {
+          const { x, y, value } = props;
+          if (value == null) return null;
+          if (chartRows.length > 25) return null;
+            return <text x={x} y={y - 6} textAnchor="middle" fontSize={11} fontWeight={600} fill="#111">{value}</text>;
+        };
+
         return (
-          <div className="overflow-x-auto">
-            <div className="max-h-[270px] overflow-y-auto rounded border border-gray-200">
-              <table className="min-w-full table-auto">
-                <thead className="sticky top-0 bg-gray-50 z-10 shadow-sm">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Product</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Current Stock</th>
-                    <th className="px-4 py-2 text-left textsm font-medium text-gray-700">Minimum Stock</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row: any, index: number) => (
-                    <tr key={index} className="border-t hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.product}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.Current_Stock}</td>
-                      <td className="px-4 py-2 text-sm text-gray-600">{row.Minimum_Stock}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="w-full h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartRows} margin={{ top: 10, right: 30, left: 10, bottom: 50 }}>
+                <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+                <XAxis dataKey="product" angle={-30} textAnchor="end" interval={0} height={70} tick={{ fontSize: 12, fill: '#374151' }} />
+                <YAxis domain={yDomainNG} allowDecimals={false} tick={{ fontSize: 12, fill: '#374151' }} label={{ value: 'Stock', angle: -90, position: 'insideLeft', offset: 8, fill: '#374151', fontSize: 12 }} />
+                <Tooltip formatter={(v:number) => v} cursor={{ stroke: '#9ca3af', strokeDasharray: '4 4' }} />
+                <Legend verticalAlign="bottom" align="center" height={32} iconType="square" wrapperStyle={{ paddingTop: 12 }} />
+                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke="#C72030" strokeWidth={2} dot={{ r: 4, fill: '#C72030', stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabelNG} />
+                <Line type="monotone" dataKey="current" name="Current Stock" stroke="#000000" strokeWidth={2} dot={{ r: 5, fill: '#000000', stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 7 }} label={renderValueLabelNG} />
+              </LineChart>
+            </ResponsiveContainer>
+            {!hasValues && (
+              <div className="text-xs text-center text-gray-500 mt-2">All values are zero for the selected range.</div>
+            )}
+            {data.info?.info && (
+              <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
+            )}
+          </div>
+        );
+      }
+      case 'currentMinimumStockGreen': {
+        if (!data.response || !Array.isArray(data.response)) {
+          return <div>No minimum stock data available</div>;
+        }
+        // Transform into chart-friendly dataset
+        const chartRows = data.response.map((item: any) => {
+          const product = Object.keys(item)[0];
+          const stock = item[product];
+          return {
+            product,
+            current: Number(stock.Current_Stock) || 0,
+            minimum: Number(stock.Minimum_Stock) || 0
+          };
+        });
+        const hasValues = chartRows.some(r => r.current || r.minimum);
+        const maxVal = Math.max(0, ...chartRows.map(r => Math.max(r.current, r.minimum)));
+        const yDomain = [0, maxVal === 0 ? 10 : Math.ceil(maxVal * 1.1)];
+
+        // Custom label renderer (avoid clutter if many points)
+        const renderValueLabel = (props: any) => {
+          const { x, y, value, index } = props;
+          if (value == null) return null;
+            // Skip labels if too many points
+          if (chartRows.length > 25) return null;
+          return (
+            <text x={x} y={y - 6} textAnchor="middle" fontSize={11} fontWeight={600} fill="#111">{value}</text>
+          );
+        };
+
+        return (
+          <div className="w-full h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartRows} margin={{ top: 10, right: 30, left: 10, bottom: 50 }}>
+                <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+                <XAxis dataKey="product" angle={-30} textAnchor="end" interval={0} height={70} tick={{ fontSize: 12, fill: '#374151' }} />
+                <YAxis domain={yDomain} allowDecimals={false} tick={{ fontSize: 12, fill: '#374151' }} label={{ value: 'Stock', angle: -90, position: 'insideLeft', offset: 8, fill: '#374151', fontSize: 12 }} />
+                <Tooltip formatter={(v:number) => v} cursor={{ stroke: '#9ca3af', strokeDasharray: '4 4' }} />
+                <Legend verticalAlign="bottom" align="center" height={32} iconType="square" wrapperStyle={{ paddingTop: 12 }} />
+                <Line type="monotone" dataKey="minimum" name="Minimum Stock" stroke="#C72030" strokeWidth={2} dot={{ r: 4, fill: '#C72030', stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 6 }} strokeDasharray="4 2" label={renderValueLabel} />
+                {/* Match Non-Green UI: use black current line and larger dots */}
+                <Line type="monotone" dataKey="current" name="Current Stock" stroke="#000000" strokeWidth={2} dot={{ r: 5, fill: '#000000', stroke: '#ffffff', strokeWidth: 1 }} activeDot={{ r: 7 }} label={renderValueLabel} />
+              </LineChart>
+            </ResponsiveContainer>
+            {!hasValues && (
+              <div className="text-xs text-center text-gray-500 mt-2">All values are zero for the selected range.</div>
+            )}
             {data.info?.info && (
               <div className="mt-2 text-xs text-gray-500">{data.info.info}</div>
             )}
@@ -521,17 +581,19 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   };
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 p-4 shadow-sm h-[420px] flex flex-col ${className}`}>
+  <div className={`bg-white rounded-lg border border-gray-200 p-4 shadow-sm h-[420px] flex flex-col ${className}`}>
       <div className="flex items-center justify-between mb-4 shrink-0">
         <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleDownload}
-          disabled={downloadLoading || !dateRange}
-        >
-          <Download className="w-4 h-4" />
-        </Button>
+    {!['itemsStatus', 'categoryWise'].includes(type) && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            disabled={downloadLoading || !dateRange}
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+        )}
       </div>
       <div className="flex-1 min-h-0 overflow-hidden">
         <div className="h-full overflow-y-auto pr-1 custom-scrollbar">

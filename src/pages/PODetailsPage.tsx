@@ -7,6 +7,7 @@ import { useAppDispatch } from '@/store/hooks';
 import { getMaterialPRById } from '@/store/slices/materialPRSlice';
 import { numberToIndianCurrencyWords } from '@/utils/amountToText';
 import { approvePO } from '@/store/slices/purchaseOrderSlice';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 
 export const PODetailsPage = () => {
   const dispatch = useAppDispatch();
@@ -24,7 +25,28 @@ export const PODetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const [poDetails, setpoDetails] = useState({})
+  const [poDetails, setpoDetails] = useState({
+    all_level_approved: null,
+    billing_address: { phone: '', fax: '', email: '', gst_number: '', pan_number: '', address: '' },
+    plant_detail: { name: '' },
+    supplier: { address: '', email: '', pan_number: '', mobile1: '', company_name: '' },
+    pms_po_inventories: [],
+    pms_pr_inventories: [],
+    external_id: '',
+    po_date: '',
+    related_to: '',
+    retention: '',
+    quality_holding: '',
+    reference_number: '',
+    id: '',
+    payment_tenure: '',
+    tds: '',
+    advance_amount: '',
+    net_amount: '',
+    total_tax_amount: '',
+    taxes: '',
+    total_amount: '',
+  })
 
   useEffect(() => {
     const fetchData = async () => {
@@ -95,7 +117,7 @@ export const PODetailsPage = () => {
 
   return <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
     {/* Header */}
-    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+    <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
       <div className="flex flex-col">
         <h1 className="font-work-sans font-bold text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">
           PURCHASE ORDER DETAILS
@@ -103,7 +125,7 @@ export const PODetailsPage = () => {
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium text-gray-700">L1 Approval:</span>
           <span className="px-3 py-1 bg-green-500 text-white rounded text-xs font-medium">
-            {poDetails.all_level_approved ? "Approved" : poDetail.all_level_approved === false ? "Rejected" : "Pending"}
+            {poDetails.all_level_approved ? "Approved" : poDetails.all_level_approved === false ? "Rejected" : "Pending"}
           </span>
         </div>
       </div>
@@ -271,47 +293,48 @@ export const PODetailsPage = () => {
       </div>
     </div>
 
-    {/* Items Table Section */}
+    {/* Items Table Section with EnhancedTable */}
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300 min-w-[1200px]">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">S.No.</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Item</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Availability</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">SAC/HSN Code</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Expected Date</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Product Description</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Quantity</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Unit</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Moving Avg Rate</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Rate</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Amount</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Approved Qty</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Transfer Qty</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Wbs Code</th>
-            </tr>
-          </thead>
-          <tbody>
-            {poDetails.pms_pr_inventories?.map((item, index) => <tr key={item.sNo} className="hover:bg-gray-50">
-              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{index + 1}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.inventory?.name}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm"></td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.sacHsnCode}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.expected_date.split('T')[0]}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.prod_desc}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.quantity}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.unit}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.movingAvgRate}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.rate}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.total_value}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.approved_qty}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.transfer_qty}</td>
-              <td className="border border-gray-300 px-3 py-2 text-sm">{item.wbs_code}</td>
-            </tr>)}
-          </tbody>
-        </table>
+        <EnhancedTable
+          data={poDetails.pms_pr_inventories || []}
+          columns={[
+            { key: 'inventory_name', label: 'Item', sortable: true, draggable: true },
+            { key: 'availability', label: 'Availability', sortable: false, draggable: true },
+            { key: 'sacHsnCode', label: 'SAC/HSN Code', sortable: true, draggable: true },
+            { key: 'expected_date', label: 'Expected Date', sortable: true, draggable: true },
+            { key: 'prod_desc', label: 'Product Description', sortable: true, draggable: true },
+            { key: 'quantity', label: 'Quantity', sortable: true, draggable: true },
+            { key: 'unit', label: 'Unit', sortable: true, draggable: true },
+            { key: 'movingAvgRate', label: 'Moving Avg Rate', sortable: true, draggable: true },
+            { key: 'rate', label: 'Rate', sortable: true, draggable: true },
+            { key: 'total_value', label: 'Amount', sortable: true, draggable: true },
+            { key: 'approved_qty', label: 'Approved Qty', sortable: true, draggable: true },
+            { key: 'transfer_qty', label: 'Transfer Qty', sortable: true, draggable: true },
+            { key: 'wbs_code', label: 'Wbs Code', sortable: true, draggable: true },
+          ]}
+          storageKey="po-items-table"
+          hideColumnsButton={true}
+          hideTableExport={true}
+          hideTableSearch={true}
+          exportFileName="po-items-details"
+          pagination={true}
+          pageSize={10}
+          emptyMessage="No PO items available"
+          className="min-w-[1200px] h-max"
+          renderCell={(item, columnKey) => {
+            if (columnKey === 'inventory_name') {
+              return item.inventory?.name || '-';
+            }
+            if (columnKey === 'availability') {
+              return '-';
+            }
+            if (columnKey === 'expected_date') {
+              return item.expected_date ? item.expected_date.split('T')[0] : '-';
+            }
+            return item[columnKey] ?? '-';
+          }}
+        />
       </div>
 
       {/* Financial Summary */}
@@ -376,101 +399,103 @@ export const PODetailsPage = () => {
       </div>
     </div>
 
-    {/* GRN Details Table */}
+    {/* GRN Details Table with EnhancedTable */}
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">GRN Details</h3>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300 min-w-[1800px]">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Action</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">ID</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Inventory</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Supplier</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Invoice Number</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Total GRN Amount</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Payable Amount</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Retention Amount</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">TDS Amount</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">QC Amount</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Invoice Date</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Payment Mode</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Other Expense</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Loading Expense</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Adjustment Amount</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">QC Approval Status</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">HSE Approval Status</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Admin Approval Status</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Physical Invoice Sent to Accounts</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Empty rows for now */}
-            <tr>
-              <td className="border border-gray-300 px-3 py-2 text-sm text-center" colSpan={19}>
-                No data available
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <EnhancedTable
+          data={[]}
+          columns={[
+            { key: 'action', label: 'Action', sortable: false, draggable: false },
+            { key: 'id', label: 'ID', sortable: true, draggable: true },
+            { key: 'inventory', label: 'Inventory', sortable: true, draggable: true },
+            { key: 'supplier', label: 'Supplier', sortable: true, draggable: true },
+            { key: 'invoice_number', label: 'Invoice Number', sortable: true, draggable: true },
+            { key: 'total_grn_amount', label: 'Total GRN Amount', sortable: true, draggable: true },
+            { key: 'payable_amount', label: 'Payable Amount', sortable: true, draggable: true },
+            { key: 'retention_amount', label: 'Retention Amount', sortable: true, draggable: true },
+            { key: 'tds_amount', label: 'TDS Amount', sortable: true, draggable: true },
+            { key: 'qc_amount', label: 'QC Amount', sortable: true, draggable: true },
+            { key: 'invoice_date', label: 'Invoice Date', sortable: true, draggable: true },
+            { key: 'payment_mode', label: 'Payment Mode', sortable: true, draggable: true },
+            { key: 'other_expense', label: 'Other Expense', sortable: true, draggable: true },
+            { key: 'loading_expense', label: 'Loading Expense', sortable: true, draggable: true },
+            { key: 'adjustment_amount', label: 'Adjustment Amount', sortable: true, draggable: true },
+            { key: 'qc_approval_status', label: 'QC Approval Status', sortable: true, draggable: true },
+            { key: 'hse_approval_status', label: 'HSE Approval Status', sortable: true, draggable: true },
+            { key: 'admin_approval_status', label: 'Admin Approval Status', sortable: true, draggable: true },
+            { key: 'physical_invoice_sent', label: 'Physical Invoice Sent to Accounts', sortable: true, draggable: true },
+          ]}
+          storageKey="grn-table"
+          hideColumnsButton={true}
+          hideTableExport={true}
+          hideTableSearch={true}
+          exportFileName="grn-details"
+          pagination={true}
+          pageSize={10}
+          emptyMessage="No data available"
+          className="min-w-[1800px] h-max"
+        />
       </div>
     </div>
 
-    {/* Payment Details Table */}
+    {/* Payment Details Table with EnhancedTable */}
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Details</h3>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">GRN ID</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Amount</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Payment Mode</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Transaction Number</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Status</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Payment Date</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Note</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Date Of Entry</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className="border border-gray-300 px-3 py-2 text-sm text-center" colSpan={8}>
-                No data available
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <EnhancedTable
+          data={[]}
+          columns={[
+            { key: 'grn_id', label: 'GRN ID', sortable: true, draggable: true },
+            { key: 'amount', label: 'Amount', sortable: true, draggable: true },
+            { key: 'payment_mode', label: 'Payment Mode', sortable: true, draggable: true },
+            { key: 'transaction_number', label: 'Transaction Number', sortable: true, draggable: true },
+            { key: 'status', label: 'Status', sortable: true, draggable: true },
+            { key: 'payment_date', label: 'Payment Date', sortable: true, draggable: true },
+            { key: 'note', label: 'Note', sortable: true, draggable: true },
+            { key: 'date_of_entry', label: 'Date Of Entry', sortable: true, draggable: true },
+          ]}
+          storageKey="payment-table"
+          hideColumnsButton={true}
+          hideTableExport={true}
+          hideTableSearch={true}
+          exportFileName="payment-details"
+          pagination={true}
+          pageSize={10}
+          emptyMessage="No data available"
+          className="h-max"
+        />
       </div>
     </div>
 
-    {/* Debit/Credit Note Details Table */}
+    {/* Debit/Credit Note Details Table with EnhancedTable */}
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Debit/Credit Note Details</h3>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">ID</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Type</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Amount</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Description</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Approved</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Approved On</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Approved By</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Created On</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Created By</th>
-              <th className="border border-gray-300 px-3 py-2 text-sm text-left font-semibold">Attachment</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className="border border-gray-300 px-3 py-2 text-sm text-center" colSpan={10}>
-                No data available
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <EnhancedTable
+          data={[]}
+          columns={[
+            { key: 'id', label: 'ID', sortable: true, draggable: true },
+            { key: 'type', label: 'Type', sortable: true, draggable: true },
+            { key: 'amount', label: 'Amount', sortable: true, draggable: true },
+            { key: 'description', label: 'Description', sortable: true, draggable: true },
+            { key: 'approved', label: 'Approved', sortable: true, draggable: true },
+            { key: 'approved_on', label: 'Approved On', sortable: true, draggable: true },
+            { key: 'approved_by', label: 'Approved By', sortable: true, draggable: true },
+            { key: 'created_on', label: 'Created On', sortable: true, draggable: true },
+            { key: 'created_by', label: 'Created By', sortable: true, draggable: true },
+            { key: 'attachment', label: 'Attachment', sortable: true, draggable: true },
+          ]}
+          storageKey="debit-credit-table"
+          hideColumnsButton={true}
+          hideTableExport={true}
+          hideTableSearch={true}
+          exportFileName="debit-credit-details"
+          pagination={true}
+          pageSize={10}
+          emptyMessage="No data available"
+          className="h-max"
+        />
       </div>
     </div>
 

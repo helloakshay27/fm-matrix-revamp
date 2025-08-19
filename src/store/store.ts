@@ -51,7 +51,7 @@ import { changePlantDetailsReducer, createMaterialPRReducer, fetchWBSReducer, ge
 import { approvePOReducer, createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer } from './slices/purchaseOrderSlice'
 import { createServicePRReducer, getServicePrReducer, getServicesReducer } from './slices/servicePRSlice'
 import { fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
-import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer } from './slices/grnSlice'
+import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer } from './slices/grnSlice'
 
 export const store = configureStore({
   reducer: {
@@ -202,6 +202,8 @@ export const store = configureStore({
     fetchItemDetails: fetchItemDetailsReducer,
     createGRN: createGRNReducer,
     getPurchaseOrdersList: getPurchaseOrdersReducer,
+    fetchSingleGRN: fetchSingleGRNReducer,
+    approveGRN: approveGRNReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

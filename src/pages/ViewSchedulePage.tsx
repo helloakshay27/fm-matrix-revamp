@@ -1131,7 +1131,7 @@ export const ViewSchedulePage = () => {
                       <TableRow key={index}>
                         <TableCell>{service.service_name}</TableCell>
                         <TableCell>{service.service_code}</TableCell>
-                        <TableCell>{formatDateTime(assetTask.start_date)}</TableCell>
+                          <TableCell>{formatDateTime(service.created_at)}</TableCell>
                       </TableRow>
                     ))
                   ) : (
@@ -1212,14 +1212,8 @@ export const ViewSchedulePage = () => {
                       <TableCell>{rule.period_value || 'N/A'}</TableCell>
                       <TableCell>{rule.period_type || 'N/A'}</TableCell>
                       {/* <TableCell>{rule.created_on ? formatDateTime(rule.created_on) : 'N/A'}</TableCell> */}
-                      <TableCell>{
-                      Array.isArray(customForm?.supervisors) && customForm.supervisors.length > 0
-                        ? customForm.supervisors.map((id: any) => {
-                          const user = users.find(u => String(u.id) === String(rule.created_by));
-                          return user ? user.full_name : id;
-                        }).join(', ')
-                        : 'N/A'
-                    }</TableCell>
+                      <TableCell>
+                        {rule.created_by || 'N/A'}</TableCell>
                     </TableRow>
                   ))
                 ) : (

@@ -134,7 +134,7 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
                         Total: {getTotalValue().toLocaleString()}
                     </p>
                 </div>
-                <Button
+                {/* <Button
                     variant="outline"
                     size="sm"
                     onClick={onDownload}
@@ -142,7 +142,7 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
                 >
                     <Download className="w-4 h-4" />
                     Download
-                </Button>
+                </Button> */}
             </div>
 
             {hasValidData ? (

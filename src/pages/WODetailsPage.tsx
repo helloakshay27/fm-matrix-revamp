@@ -1,12 +1,34 @@
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Copy, Printer, Rss } from 'lucide-react';
 import { useAppDispatch } from '@/store/hooks';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { getWorkOrderById } from '@/store/slices/workOrderSlice';
 import { numberToIndianCurrencyWords } from '@/utils/amountToText';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+
+const boqColumns: ColumnConfig[] = [
+  { key: 'sno', label: 'S.No', sortable: true, draggable: true },
+  { key: 'boq_details', label: 'BOQ Details', sortable: true, draggable: true },
+  { key: 'quantity', label: 'Quantity', sortable: true, draggable: true },
+  { key: 'uom', label: 'UOM', sortable: true, draggable: true },
+  { key: 'expected_date', label: 'Expected Date', sortable: true, draggable: true },
+  { key: 'product_description', label: 'Product Description', sortable: true, draggable: true },
+  { key: 'rate', label: 'Rate', sortable: true, draggable: true },
+  { key: 'wbs_code', label: 'Wbs Code', sortable: true, draggable: true },
+  { key: 'cgst_rate', label: 'CGST Rate(%)', sortable: true, draggable: true },
+  { key: 'cgst_amount', label: 'CGST Amount', sortable: true, draggable: true },
+  { key: 'sgst_rate', label: 'SGST Rate(%)', sortable: true, draggable: true },
+  { key: 'sgst_amount', label: 'SGST Amount', sortable: true, draggable: true },
+  { key: 'igst_rate', label: 'IGST Rate(%)', sortable: true, draggable: true },
+  { key: 'igst_amount', label: 'IGST Amount', sortable: true, draggable: true },
+  { key: 'tcs_rate', label: 'TCS Rate(%)', sortable: true, draggable: true },
+  { key: 'tcs_amount', label: 'TCS Amount', sortable: true, draggable: true },
+  { key: 'tax_amount', label: 'Tax Amount', sortable: true, draggable: true },
+  { key: 'total_amount', label: 'Total Amount', sortable: true, draggable: true },
+];
 
 export const WODetailsPage = () => {
   const dispatch = useAppDispatch();
@@ -23,7 +45,20 @@ export const WODetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [workOrder, setWorkOrder] = useState({})
+  const [workOrder, setWorkOrder] = useState({
+    letter_of_indent: false,
+    plant_detail_id: null,
+    external_id: null,
+    all_level_approved: false,
+    lup: { has: { send_to_sap: { create: false } } },
+    id: id,
+    company: { site_name: '', phone: '', fax: '', email: '', gst: '', pan: '', address: '' },
+    work_order: { wo_status: '', number: '', wo_date: '', kind_attention: '', subject: '', related_to: '', advance_amount: '', description: '', reference_number: '', id: '', contractor: '', contractorAddress: '', supplier_details: { mobile1: '', email: '', gstin_number: '', pan_number: '' }, work_category: '' },
+    payment_terms: { payment_tenure: '', retention: '', tds: '', qc: '' },
+    inventories: [],
+    totals: { net_amount: '', total_taxable: '', taxes: '', total_value: '' },
+    pms_po_inventories: [],
+  })
 
   useEffect(() => {
     const fetchWorkOrder = async () => {
@@ -38,66 +73,6 @@ export const WODetailsPage = () => {
 
     fetchWorkOrder();
   }, [])
-
-  // Mock data - in real app, this would come from API
-  const woDetails = {
-    id: id,
-    status: 'Pending',
-    level1Approval: 'Pending',
-    // Contact/Vendor details
-    vendorName: 'jyoti',
-    phone: '7239013238',
-    email: 'xtylizzsamerxyz146@gmail.com',
-    pan: '86868779796',
-    fax: 't78788ugjyfr65r65',
-    gst: 'r7gfyy87176657',
-    address: 'demo world',
-    // Work Order details
-    woNumber: '',
-    woDate: '02-04-24',
-    kindAttention: '',
-    subject: '',
-    relatedTo: '',
-    paymentTenure: '',
-    retention: '',
-    tds: '',
-    qc: '',
-    advanceAmount: '',
-    description: '',
-    referenceNo: '10009',
-    woId: '9175',
-    contractor: 'MODWIN NETWORKS PVT.LTD',
-    contractorAddress: 'Mumbai Maharashtra - India',
-    contractorPhone: '9382875928',
-    contractorEmail: 'vinod@modwin.com',
-    contractorGst: 'NA',
-    contractorPan: 'NA',
-    workCategory: 'NA'
-  };
-
-  // Mock BOQ data
-  const boqData = [
-    {
-      sNo: 1,
-      boqDetails: '- Housekeeping',
-      quantity: 10.0,
-      uom: 'NA',
-      expectedDate: 'NA',
-      productDescription: 'Housekeeping',
-      rate: 100.00,
-      wbsCode: '',
-      cgstRate: 0.00,
-      cgstAmount: 0.00,
-      sgstRate: 0.00,
-      sgstAmount: 0.00,
-      igstRate: 0.00,
-      igstAmount: 0.00,
-      tcsRate: 0.00,
-      tcsAmount: 0.00,
-      taxAmount: 0.00,
-      totalAmount: 1000.000
-    }
-  ];
 
   // Mock invoice data
   const invoiceData = [];
@@ -147,24 +122,39 @@ export const WODetailsPage = () => {
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+      <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
         <div className="flex flex-col">
           <h1 className="font-work-sans font-bold text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">
             WORK ORDER DETAILS
           </h1>
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-gray-700">Level 1 Approval:</span>
-            <span className={`px-3 py-1 rounded text-xs font-medium ${getStatusColor(woDetails.level1Approval)}`}>
+            {/* <span className={`px-3 py-1 rounded text-xs font-medium ${getStatusColor(woDetails.level1Approval)}`}>
               {woDetails.level1Approval}
-            </span>
+            </span> */}
           </div>
         </div>
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
-          <span className={`px-4 py-2 rounded text-sm font-medium ${getStatusColor(woDetails.status)}`}>
+          {/* <span className={`px-4 py-2 rounded text-sm font-medium ${getStatusColor(woDetails.status)}`}>
             Status:- {woDetails.status}
-          </span>
+          </span> */}
           <div className="flex gap-2 flex-wrap">
+            {/* Conditional SAP and WBS buttons */}
+            {workOrder.letter_of_indent === true &&
+              workOrder.plant_detail_id &&
+              !workOrder.external_id &&
+              workOrder.all_level_approved &&
+              workOrder.lup?.has?.send_to_sap?.create && (
+                <>
+                  <Button size="sm" variant="outline" className="border-gray-300 bg-purple-600 text-white sap_button mr-2" onClick={() => navigate(`/pms/work_orders/${workOrder.id}?send_sap=yes`)}>
+                    Send To SAP Team
+                  </Button>
+                  <Button size="sm" variant="outline" className="border-gray-300 btn-primary mr-2" data-bs-toggle="modal" data-bs-target="#wbsBulkModal">
+                    Edit WBS Codes
+                  </Button>
+                </>
+              )}
             <Button size="sm" variant="outline" className="border-gray-300">
               <Edit className="w-4 h-4 mr-1" />
               Edit
@@ -331,54 +321,25 @@ export const WODetailsPage = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">BOQ Details</h3>
         <div className="overflow-x-auto">
-          <Table className="min-w-[1200px]">
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-xs">S.No</TableHead>
-                <TableHead className="font-semibold text-xs">BOQ Details</TableHead>
-                <TableHead className="font-semibold text-xs">Quantity</TableHead>
-                <TableHead className="font-semibold text-xs">UOM</TableHead>
-                <TableHead className="font-semibold text-xs">Expected Date</TableHead>
-                <TableHead className="font-semibold text-xs">Product Description</TableHead>
-                <TableHead className="font-semibold text-xs">Rate</TableHead>
-                <TableHead className="font-semibold text-xs">Wbs Code</TableHead>
-                <TableHead className="font-semibold text-xs">CGST Rate(%)</TableHead>
-                <TableHead className="font-semibold text-xs">CGST Amount</TableHead>
-                <TableHead className="font-semibold text-xs">SGST Rate(%)</TableHead>
-                <TableHead className="font-semibold text-xs">SGST Amount</TableHead>
-                <TableHead className="font-semibold text-xs">IGST Rate(%)</TableHead>
-                <TableHead className="font-semibold text-xs">IGST Amount</TableHead>
-                <TableHead className="font-semibold text-xs">TCS Rate(%)</TableHead>
-                <TableHead className="font-semibold text-xs">TCS Amount</TableHead>
-                <TableHead className="font-semibold text-xs">Tax Amount</TableHead>
-                <TableHead className="font-semibold text-xs">Total Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {workOrder.inventories?.map((item) => (
-                <TableRow key={item.sNo} className="hover:bg-gray-50">
-                  <TableCell className="text-sm">{item.sno}</TableCell>
-                  <TableCell className="text-sm">{item.boq_details}</TableCell>
-                  <TableCell className="text-sm">{item.quantity}</TableCell>
-                  <TableCell className="text-sm">{item.uom}</TableCell>
-                  <TableCell className="text-sm">{item.expected_date}</TableCell>
-                  <TableCell className="text-sm">{item.product_description}</TableCell>
-                  <TableCell className="text-sm">{item.rate}</TableCell>
-                  <TableCell className="text-sm">{item.wbs_code}</TableCell>
-                  <TableCell className="text-sm">{item.cgst_rate}</TableCell>
-                  <TableCell className="text-sm">{item.cgst_amount}</TableCell>
-                  <TableCell className="text-sm">{item.sgst_rate}</TableCell>
-                  <TableCell className="text-sm">{item.sgst_amount}</TableCell>
-                  <TableCell className="text-sm">{item.igst_rate}</TableCell>
-                  <TableCell className="text-sm">{item.igst_amount}</TableCell>
-                  <TableCell className="text-sm">{item.tcs_rate}</TableCell>
-                  <TableCell className="text-sm">{item.tcs_amount}</TableCell>
-                  <TableCell className="text-sm">{item.tax_amount}</TableCell>
-                  <TableCell className="text-sm font-medium">{item.total_amount}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <EnhancedTable
+            data={workOrder.inventories}
+            columns={boqColumns}
+            storageKey="boq-table"
+            hideColumnsButton={true}
+            hideTableExport={true}
+            hideTableSearch={true}
+            exportFileName="boq-details"
+            pagination={true}
+            pageSize={10}
+            emptyMessage="No BOQ data available"
+            className="min-w-[1200px] h-max"
+            renderCell={(item, columnKey) => {
+              if (columnKey === 'total_amount') {
+                return <span className="font-medium">{item[columnKey]}</span>;
+              }
+              return item[columnKey];
+            }}
+          />
         </div>
 
         {/* Summary Section */}
@@ -431,109 +392,96 @@ export const WODetailsPage = () => {
         <p className="text-gray-500">No attachments</p>
       </div>
 
-      {/* Invoices/SES Details Section */}
+      {/* Invoices/SES Details Section with EnhancedTable */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Invoices/SES Details</h3>
         <div className="overflow-x-auto">
-          <Table className="min-w-[1000px]">
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-xs">Actions</TableHead>
-                <TableHead className="font-semibold text-xs">ID</TableHead>
-                <TableHead className="font-semibold text-xs">Invoice Number</TableHead>
-                <TableHead className="font-semibold text-xs">Invoice Date</TableHead>
-                <TableHead className="font-semibold text-xs">Total Invoice Amount</TableHead>
-                <TableHead className="font-semibold text-xs">Payable Amount</TableHead>
-                <TableHead className="font-semibold text-xs">Retention Amount</TableHead>
-                <TableHead className="font-semibold text-xs">TDS Amount</TableHead>
-                <TableHead className="font-semibold text-xs">QC Amount</TableHead>
-                <TableHead className="font-semibold text-xs">W.O. Number</TableHead>
-                <TableHead className="font-semibold text-xs">Physical Invoice Sent to Accounts</TableHead>
-                <TableHead className="font-semibold text-xs">Physical Invoice Received</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoiceData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={12} className="text-center text-gray-500 py-8">
-                    No invoice data available
-                  </TableCell>
-                </TableRow>
-              ) : (
-                invoiceData.map((item, index) => (
-                  <TableRow key={index} className="hover:bg-gray-50">
-                    {/* Table rows would go here if there was data */}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <EnhancedTable
+            data={invoiceData}
+            columns={[
+              { key: 'actions', label: 'Actions', draggable: false },
+              { key: 'id', label: 'ID', sortable: true, draggable: true },
+              { key: 'invoice_number', label: 'Invoice Number', sortable: true, draggable: true },
+              { key: 'invoice_date', label: 'Invoice Date', sortable: true, draggable: true },
+              { key: 'total_invoice_amount', label: 'Total Invoice Amount', sortable: true, draggable: true },
+              { key: 'payable_amount', label: 'Payable Amount', sortable: true, draggable: true },
+              { key: 'retention_amount', label: 'Retention Amount', sortable: true, draggable: true },
+              { key: 'tds_amount', label: 'TDS Amount', sortable: true, draggable: true },
+              { key: 'qc_amount', label: 'QC Amount', sortable: true, draggable: true },
+              { key: 'wo_number', label: 'W.O. Number', sortable: true, draggable: true },
+              { key: 'physical_invoice_sent', label: 'Physical Invoice Sent to Accounts', sortable: true, draggable: true },
+              { key: 'physical_invoice_received', label: 'Physical Invoice Received', sortable: true, draggable: true },
+            ]}
+            storageKey="invoice-table"
+            hideColumnsButton={true}
+            hideTableExport={true}
+            hideTableSearch={true}
+            exportFileName="invoice-details"
+            pagination={true}
+            pageSize={10}
+            emptyMessage="No invoice data available"
+            className="min-w-[1000px] h-max"
+          />
         </div>
       </div>
 
-      {/* Payment Details Section */}
+      {/* Payment Details Section with EnhancedTable */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Details</h3>
         <div className="overflow-x-auto">
-          <Table className="min-w-[800px]">
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-xs">Invoice ID</TableHead>
-                <TableHead className="font-semibold text-xs">Amount</TableHead>
-                <TableHead className="font-semibold text-xs">Payment Mode</TableHead>
-                <TableHead className="font-semibold text-xs">Transaction Number</TableHead>
-                <TableHead className="font-semibold text-xs">Status</TableHead>
-                <TableHead className="font-semibold text-xs">Payment Date</TableHead>
-                <TableHead className="font-semibold text-xs">Note</TableHead>
-                <TableHead className="font-semibold text-xs">Date of Entry</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paymentData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center text-gray-500 py-8">
-                    No payment data available
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paymentData.map((item, index) => (
-                  <TableRow key={index} className="hover:bg-gray-50">
-                    {/* Table rows would go here if there was data */}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <EnhancedTable
+            data={paymentData}
+            columns={[
+              { key: 'invoice_id', label: 'Invoice ID', sortable: true, draggable: true },
+              { key: 'amount', label: 'Amount', sortable: true, draggable: true },
+              { key: 'payment_mode', label: 'Payment Mode', sortable: true, draggable: true },
+              { key: 'transaction_number', label: 'Transaction Number', sortable: true, draggable: true },
+              { key: 'status', label: 'Status', sortable: true, draggable: true },
+              { key: 'payment_date', label: 'Payment Date', sortable: true, draggable: true },
+              { key: 'note', label: 'Note', sortable: true, draggable: true },
+              { key: 'date_of_entry', label: 'Date of Entry', sortable: true, draggable: true },
+            ]}
+            storageKey="payment-table"
+            hideColumnsButton={true}
+            hideTableExport={true}
+            hideTableSearch={true}
+            exportFileName="payment-details"
+            pagination={true}
+            pageSize={10}
+            emptyMessage="No payment data available"
+            className="min-w-[800px] h-max"
+          />
         </div>
       </div>
 
-      {/* Debit/Credit Note Details Section */}
+      {/* Debit/Credit Note Details Section with EnhancedTable */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Debit/Credit Note Details</h3>
         <div className="overflow-x-auto">
-          <Table className="min-w-[1000px]">
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold text-xs">ID</TableHead>
-                <TableHead className="font-semibold text-xs">Type</TableHead>
-                <TableHead className="font-semibold text-xs">Amount</TableHead>
-                <TableHead className="font-semibold text-xs">Description</TableHead>
-                <TableHead className="font-semibold text-xs">Approved</TableHead>
-                <TableHead className="font-semibold text-xs">Approved On</TableHead>
-                <TableHead className="font-semibold text-xs">Approved By</TableHead>
-                <TableHead className="font-semibold text-xs">Created On</TableHead>
-                <TableHead className="font-semibold text-xs">Created By</TableHead>
-                <TableHead className="font-semibold text-xs">Attachments</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-gray-500">
-                  No data available
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          <EnhancedTable
+            data={[]}
+            columns={[
+              { key: 'id', label: 'ID', sortable: true, draggable: true },
+              { key: 'type', label: 'Type', sortable: true, draggable: true },
+              { key: 'amount', label: 'Amount', sortable: true, draggable: true },
+              { key: 'description', label: 'Description', sortable: true, draggable: true },
+              { key: 'approved', label: 'Approved', sortable: true, draggable: true },
+              { key: 'approved_on', label: 'Approved On', sortable: true, draggable: true },
+              { key: 'approved_by', label: 'Approved By', sortable: true, draggable: true },
+              { key: 'created_on', label: 'Created On', sortable: true, draggable: true },
+              { key: 'created_by', label: 'Created By', sortable: true, draggable: true },
+              { key: 'attachments', label: 'Attachments', sortable: true, draggable: true },
+            ]}
+            storageKey="debit-credit-table"
+            hideColumnsButton={true}
+            hideTableExport={true}
+            hideTableSearch={true}
+            exportFileName="debit-credit-details"
+            pagination={true}
+            pageSize={10}
+            emptyMessage="No data available"
+            className="min-w-[1000px] h-max"
+          />
         </div>
       </div>
 

@@ -24,9 +24,15 @@ export const EditExternalUserPage = () => {
     report_to_id: '',
     department_id: '',
     circle_id: '',
-  company_cluster_id: '',
+    company_cluster_id: '',
+    cluster_name: '',
     work_location: '', // added explicit work_location field to sync with dropdown storing name
-    role_id: ''
+    role_id: '',
+    // newly added editable fields
+    ext_company_name: '', // Company Name
+    org_user_id: '',      // Employer Code
+    birth_date: '',       // Birth Date (YYYY-MM-DD)
+    joining_date: ''      // Joining Date (YYYY-MM-DD)
   };
 
   const [formData, setFormData] = useState<any>(initialUser);
@@ -67,9 +73,9 @@ export const EditExternalUserPage = () => {
     if (!userId) return;
     setSaving(true);
     try {
-  const baseUrl = localStorage.getItem('baseUrl');
-  const token = localStorage.getItem('token');
-  if (!baseUrl || !token) throw new Error('Missing base URL or token');
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+      if (!baseUrl || !token) throw new Error('Missing base URL or token');
       const permission = originalUser?.lock_user_permission || {};
       const payload = {
         user: {
@@ -83,6 +89,12 @@ export const EditExternalUserPage = () => {
           role_id: formData.role_id || permission.lock_role_id || null,
           report_to_id: formData.report_to_id || selectedLineManager?.id || null,
           company_cluster_id: formData.company_cluster_id || null,
+          // newly added direct user fields
+          ext_company_name: formData.ext_company_name || null,
+          org_user_id: formData.org_user_id || null,
+          birth_date: formData.birth_date || null,
+          // keep a top-level joining_date for safety if API accepts it
+          // joining_date: formData.joining_date || null,
 
           lock_user_permissions_attributes: permission?.id ? [
             {
@@ -90,6 +102,8 @@ export const EditExternalUserPage = () => {
               department_id: formData.department_id || null,
               lock_role_id: formData.role_id || null,
               circle_id: formData.circle_id || null,
+              // include joining_date inside permission object (source of truth in listings)
+              joining_date: formData.joining_date || null,
 
             }
           ] : []
@@ -151,16 +165,22 @@ export const EditExternalUserPage = () => {
           department_id: data.lock_user_permission?.department_id || '',
           circle_id: data.lock_user_permission?.circle_id || data.circle_id || '',
           cluster_name: data.cluster_name || '',
+          company_cluster_id: data.company_cluster_id || data.lock_user_permission?.company_cluster_id || '',
           // if API returns an object, pick its name; else keep string
           work_location: (typeof data.work_location === 'object' && data.work_location !== null) ? (data.work_location.name || data.work_location.work_location_name || '') : (data.work_location || ''),
-          role_id: data.lock_user_permission?.lock_role_id || data.lock_role_id || ''
+          role_id: data.lock_user_permission?.lock_role_id || data.lock_role_id || '',
+          // new fields populate from either user or lock_user_permission where applicable
+          ext_company_name: data.ext_company_name || '',
+          org_user_id: data.org_user_id || data.lock_user_permission?.employee_id || '',
+          birth_date: (data.birth_date ? String(data.birth_date).slice(0, 10) : ''),
+          joining_date: (data.lock_user_permission?.joining_date || data.joining_date || '') ? String(data.lock_user_permission?.joining_date || data.joining_date).slice(0, 10) : ''
         }));
         setOriginalUser(data);
         // Inject existing line manager into Autocomplete options so it displays even before any search
         const existingManager = data.report_to || (data.report_to_id ? { id: data.report_to_id, email: data.report_to_email, name: data.report_to_name } : null);
         if (existingManager && existingManager.id) {
           setSelectedLineManager(existingManager);
-          setLmOptions(prev => prev.some(o=>o.id===existingManager.id) ? prev : [existingManager, ...prev]);
+          setLmOptions(prev => prev.some(o => o.id === existingManager.id) ? prev : [existingManager, ...prev]);
         }
       } catch (e: any) {
         console.error('Fetch external user (edit) error', e);
@@ -329,6 +349,8 @@ export const EditExternalUserPage = () => {
             <TextField label="Last Name" value={formData.lastname} onChange={e => handleChange('lastname', e.target.value)} size="small" fullWidth />
             <TextField label="Email" type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} size="small" fullWidth error={!!fieldErrors.email} helperText={fieldErrors.email || ''} />
             <TextField label="Mobile" type="number" value={formData.mobile} onChange={e => handleChange('mobile', e.target.value)} size="small" fullWidth />
+            <TextField label="Company Name" value={formData.ext_company_name} onChange={e => handleChange('ext_company_name', e.target.value)} size="small" fullWidth />
+            <TextField label="Employer Code" value={formData.org_user_id} onChange={e => handleChange('org_user_id', e.target.value)} size="small" fullWidth />
             <FormControl fullWidth size="small">
               <InputLabel>Gender</InputLabel>
               <Select value={formData.gender} label="Gender" onChange={e => handleChange('gender', e.target.value)}>
@@ -342,15 +364,15 @@ export const EditExternalUserPage = () => {
               size="small"
               loading={lmLoading}
               options={lmOptions}
-              isOptionEqualToValue={(option:any, value:any) => option.id === value.id}
+              isOptionEqualToValue={(option: any, value: any) => option.id === value.id}
               getOptionLabel={(option: any) => option?.email || ''}
-              value={selectedLineManager || (formData.report_to_id && lmOptions.find(o=>o.id===formData.report_to_id)) || null}
+              value={selectedLineManager || (formData.report_to_id && lmOptions.find(o => o.id === formData.report_to_id)) || null}
               onChange={(_, val: any) => {
                 setSelectedLineManager(val || null);
                 handleChange('report_to_id', val ? val.id : '');
                 if (val) {
                   setLmOptions(prev => {
-                    if (prev.some(p=>p.id===val.id)) return prev; return [val, ...prev];
+                    if (prev.some(p => p.id === val.id)) return prev; return [val, ...prev];
                   });
                 }
               }}
@@ -373,7 +395,7 @@ export const EditExternalUserPage = () => {
                   }}
                 />
               )}
-              renderOption={(props, option:any) => (
+              renderOption={(props, option: any) => (
                 <li {...props} key={option.id}>
                   <div className="flex flex-col">
                     <span className="text-sm font-medium">{option.email}</span>
@@ -417,10 +439,19 @@ export const EditExternalUserPage = () => {
             </FormControl>
             <FormControl fullWidth size="small">
               <InputLabel>Cluster</InputLabel>
-              <Select value={formData.cluster_name} label="Cluster" onChange={e => handleChange('company_cluster_id', e.target.value)}>
+              <Select
+                value={formData.company_cluster_id}
+                label="Cluster"
+                onChange={e => {
+                  const val = e.target.value;
+                  const selected = clusters.find((cl: any) => cl.id?.toString() === val?.toString());
+                  handleChange('company_cluster_id', val);
+                  handleChange('cluster_name', selected?.cluster_name || '');
+                }}
+              >
                 <MenuItem value="">Select</MenuItem>
                 {clusters.map((cl: any) => (
-                  <MenuItem key={cl.company_cluster_id} value={cl.company_cluster_id}>{cl.cluster_name || `Cluster ${cl.company_cluster_id}`}</MenuItem>
+                  <MenuItem key={cl.id} value={cl.id}>{cl.cluster_name || `Cluster ${cl.id}`}</MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -442,6 +473,8 @@ export const EditExternalUserPage = () => {
                 ))}
               </Select>
             </FormControl>
+            <TextField label="Birth Date" type="date" value={formData.birth_date} onChange={e => handleChange('birth_date', e.target.value)} size="small" fullWidth InputLabelProps={{ shrink: true }} />
+            <TextField label="Joining Date" type="date" value={formData.joining_date} onChange={e => handleChange('joining_date', e.target.value)} size="small" fullWidth InputLabelProps={{ shrink: true }} />
           </div>
         </CardContent>
       </Card>

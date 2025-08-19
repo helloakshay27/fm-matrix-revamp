@@ -513,15 +513,14 @@ export const PatrollingCreatePage: React.FC = () => {
 
     // Basic field validation
     const hasPatrolNameError = patrolName.trim() === '';
-    const hasDescriptionError = description.trim() === '';
     const hasEstimatedDurationError = estimatedDuration.trim() === '';
     const hasStartDateError = startDate === '';
     const hasEndDateError = endDate === '';
 
-    if (hasPatrolNameError || hasDescriptionError || hasEstimatedDurationError || hasStartDateError || hasEndDateError) {
+    if (hasPatrolNameError || hasEstimatedDurationError || hasStartDateError || hasEndDateError) {
       setErrors({
         patrolName: hasPatrolNameError,
-        description: hasDescriptionError,
+        description: false, // Description is now optional
         estimatedDuration: hasEstimatedDurationError,
         startDate: hasStartDateError,
         endDate: hasEndDateError,
@@ -529,7 +528,6 @@ export const PatrollingCreatePage: React.FC = () => {
 
       const errorFields = [];
       if (hasPatrolNameError) errorFields.push('Patrol Name');
-      if (hasDescriptionError) errorFields.push('Description');
       if (hasEstimatedDurationError) errorFields.push('Estimated Duration');
       if (hasStartDateError) errorFields.push('Start Date');
       if (hasEndDateError) errorFields.push('End Date');
@@ -640,16 +638,6 @@ export const PatrollingCreatePage: React.FC = () => {
     const validCheckpoints = checkpoints.filter(c => c.name.trim() !== '');
     if (validCheckpoints.length === 0) {
       toast.error('At least one checkpoint is required', {
-        duration: 5000,
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Validate checkpoint descriptions
-    const checkpointsWithoutDescription = validCheckpoints.filter(c => !c.description || c.description.trim() === '');
-    if (checkpointsWithoutDescription.length > 0) {
-      toast.error('All checkpoints must have a description', {
         duration: 5000,
       });
       setIsSubmitting(false);
@@ -872,11 +860,7 @@ export const PatrollingCreatePage: React.FC = () => {
             </div>
             <div>
               <TextField
-                label={
-                  <>
-                    Description<span className="text-red-500">*</span>
-                  </>
-                }
+                label="Description"
                 value={description}
                 onChange={(e) => handleDescriptionChange(e.target.value)}
                 fullWidth
@@ -1352,11 +1336,7 @@ export const PatrollingCreatePage: React.FC = () => {
                   </div>
                   <div>
                     <TextField
-                      label={
-                        <>
-                          Description<span className="text-red-500">*</span>
-                        </>
-                      }
+                      label="Description"
                       placeholder="Enter checkpoint description"
                       value={c.description}
                       onChange={(e) => updateCheckpoint(idx, 'description', e.target.value)}

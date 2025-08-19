@@ -169,12 +169,6 @@ export const BookingSetupDashboard = () => {
       draggable: true,
     },
     {
-      key: 'bookBy',
-      label: 'Book by',
-      sortable: true,
-      draggable: true,
-    },
-    {
       key: 'bookBefore',
       label: 'Book before',
       sortable: true,
@@ -215,7 +209,7 @@ export const BookingSetupDashboard = () => {
       case 'type':
         return item.type || '';
       case 'department':
-        return item.department || '';
+        return item.department || 'All';
       case 'bookBy':
         return item.bookBy || '';
       case 'bookBefore':

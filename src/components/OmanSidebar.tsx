@@ -28,7 +28,9 @@ const navigationStructure = {
                     { name: 'Language', href: '/settings/account/language' },
                     { name: 'Company Logo Upload', href: '/settings/account/company-logo-upload' },
                     { name: 'Report Setup', href: '/settings/account/report-setup' },
-                    { name: 'Notification Setup', href: '/settings/account/notification-setup' }
+                    { name: 'Notification Setup', href: '/settings/account/notification-setup' },
+                    { name: 'Shift', href: '/settings/account/shift' },
+                    { name: 'Roster', href: '/settings/account/roster' }
                 ]
             },
             {
