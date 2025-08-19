@@ -152,6 +152,14 @@ export const API_CONFIG = {
     PERFORMANCE_EXPORT: '/pms/custom_forms', // Base path, will append /{customFormCode}/export_performance
     // Patrolling endpoints
     PATROLLING_SETUP: '/patrolling/setup',
+    // Measurements endpoints
+    MEASUREMENTS: '/pms/measurements.json',
+    // Asset measurement export endpoint
+    ASSET_MEASUREMENT_EXPORT: '/pms/assets/asset_measurement_list.xlsx',
+    // Asset measurement import endpoint  
+    ASSET_MEASUREMENT_IMPORT: '/pms/assets/import',
+    // Asset measurement sample download endpoint
+    ASSET_MEASUREMENT_SAMPLE: '/assets/measurement.xlsx',
     
   },
 } as const

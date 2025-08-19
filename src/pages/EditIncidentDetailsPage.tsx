@@ -281,19 +281,17 @@ export const EditIncidentDetailsPage = () => {
           const allSeverityOptions = data.filter((item: any) => item.tag_type === 'Severity' || item.tag_type === 'IncidenceSeverity');
           if (allSeverityOptions.length > 0) {
             setSeverityOptions(allSeverityOptions.map((item: any) => ({ id: item.id, name: item.name })));
-            console.log('Loaded severity options from API:', allSeverityOptions.length, allSeverityOptions);
+            console.log('Loaded severity options from API:', allSeverityOptions.length);
           } else {
-            console.log('No severity options found in API, will use hardcoded values');
-            setSeverityOptions([]);
+            console.log('No severity options found in API, using fallback');
           }
 
           const allProbabilityOptions = data.filter((item: any) => item.tag_type === 'Probability' || item.tag_type === 'IncidenceProbability');
           if (allProbabilityOptions.length > 0) {
             setProbabilityOptions(allProbabilityOptions.map((item: any) => ({ id: item.id, name: item.name })));
-            console.log('Loaded probability options from API:', allProbabilityOptions.length, allProbabilityOptions);
+            console.log('Loaded probability options from API:', allProbabilityOptions.length);
           } else {
-            console.log('No probability options found in API, will use hardcoded values');
-            setProbabilityOptions([]);
+            console.log('No probability options found in API, using fallback');
           }
         }
       } catch { }
@@ -335,14 +333,6 @@ export const EditIncidentDetailsPage = () => {
 
   const populateFormData = (incident: Incident) => {
     console.log('Populating form data with incident:', incident);
-    console.log('Incident severity/probability debug:', {
-      severity: incident.severity,
-      severityType: typeof incident.severity,
-      probability: incident.probability,
-      probabilityType: typeof incident.probability,
-      severityOptionsLength: severityOptions.length,
-      probabilityOptionsLength: probabilityOptions.length
-    });
     console.log('Incident fields for categories:', {
       inc_sec_sub_sub_category_id: incident.inc_sec_sub_sub_category_id,
       inc_sec_sub_sub_sub_category_id: incident.inc_sec_sub_sub_sub_category_id,
@@ -371,44 +361,6 @@ export const EditIncidentDetailsPage = () => {
     // Parse the incident time
     const incTime = new Date(incident.inc_time);
 
-    // Handle severity and probability values properly
-    // Convert to string for dropdown comparison, handle both API options and hardcoded fallbacks
-    // Only set values if they exist in the available options
-    let severityValue = '';
-    let probabilityValue = '';
-
-    if (severityOptions.length > 0) {
-      // Use API options
-      severityValue = getValidOptionValue(incident.severity, severityOptions);
-    } else if (incident.severity) {
-      // Use hardcoded options - validate against hardcoded values 1-5
-      const severityNum = parseInt(incident.severity.toString());
-      if (severityNum >= 1 && severityNum <= 5) {
-        severityValue = severityNum.toString();
-      }
-    }
-
-    if (probabilityOptions.length > 0) {
-      // Use API options
-      probabilityValue = getValidOptionValue(incident.probability, probabilityOptions);
-    } else if (incident.probability) {
-      // Use hardcoded options - validate against hardcoded values 1-5
-      const probabilityNum = parseInt(incident.probability.toString());
-      if (probabilityNum >= 1 && probabilityNum <= 5) {
-        probabilityValue = probabilityNum.toString();
-      }
-    }
-
-    console.log('Computed severity/probability values:', {
-      originalSeverity: incident.severity,
-      computedSeverity: severityValue,
-      originalProbability: incident.probability,
-      computedProbability: probabilityValue,
-      usingApiOptions: severityOptions.length > 0 && probabilityOptions.length > 0,
-      severityValidation: severityOptions.length > 0 ? 'API' : 'Hardcoded',
-      probabilityValidation: probabilityOptions.length > 0 ? 'API' : 'Hardcoded'
-    });
-
     // Create the updated form data
     const updatedFormData = {
       year: incTime.getFullYear().toString(),
@@ -430,8 +382,8 @@ export const EditIncidentDetailsPage = () => {
       secondarySubSubCategory: getValidOptionValue(incident.inc_sec_sub_sub_category_id, secondarySubSubCategories),
       secondarySubSubSubCategory: getValidOptionValue(incident.inc_sec_sub_sub_sub_category_id, secondarySubSubSubCategories) ||
         getIdByName(incident.sec_sub_sub_sub_category_name || '', secondarySubSubSubCategories),
-      severity: severityValue,
-      probability: probabilityValue,
+      severity: severityOptions.length > 0 ? getValidOptionValue(incident.severity, severityOptions) : incident.severity || '',
+      probability: probabilityOptions.length > 0 ? getValidOptionValue(incident.probability, probabilityOptions) : incident.probability?.toString() || '',
       incidentLevel: getValidOptionValue(incident.inc_level_id, incidentLevels),
       description: incident.description || '',
       propertyDamageHappened: incident.property_damage === 'true' || String(incident.property_damage) === 'true' ? 'true' :
@@ -511,10 +463,6 @@ export const EditIncidentDetailsPage = () => {
     });
 
     console.log('Setting form data with:', updatedFormData);
-    console.log('Final severity/probability values being set:', {
-      severity: updatedFormData.severity,
-      probability: updatedFormData.probability
-    });
     setFormData(updatedFormData);
     setFormKey(prev => prev + 1); // Force re-render
     console.log('Form data set successfully');
@@ -606,16 +554,6 @@ export const EditIncidentDetailsPage = () => {
     );
   }
 
-  // Debug rendering values
-  console.log('Rendering EditIncidentDetailsPage with:', {
-    formDataSeverity: formData.severity,
-    formDataProbability: formData.probability,
-    severityOptionsLength: severityOptions.length,
-    probabilityOptionsLength: probabilityOptions.length,
-    dataLoaded,
-    incident: incident?.id
-  });
-
   return (
     <div className="p-6 bg-white min-h-screen">
       {/* Header */}
@@ -659,9 +597,14 @@ export const EditIncidentDetailsPage = () => {
                     onChange={e => handleInputChange('year', e.target.value)}
                     sx={fieldStyles}
                   >
-                    <MenuItem value="2023">2023</MenuItem>
-                    <MenuItem value="2024">2024</MenuItem>
-                    <MenuItem value="2025">2025</MenuItem>
+                    {Array.from({ length: new Date().getFullYear() + 50 - 2010 + 1 }, (_, i) => {
+                      const year = new Date().getFullYear() + 50 - i; // From current year + 50 down to 2010
+                      return (
+                        <MenuItem key={year} value={String(year)}>
+                          {year}
+                        </MenuItem>
+                      );
+                    })}
                   </MuiSelect>
                 </FormControl>
 
@@ -924,10 +867,7 @@ export const EditIncidentDetailsPage = () => {
                 <MuiSelect
                   label="Severity *"
                   value={formData.severity}
-                  onChange={e => {
-                    console.log('Severity changed to:', e.target.value);
-                    handleInputChange('severity', e.target.value);
-                  }}
+                  onChange={e => handleInputChange('severity', e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
                 >
@@ -955,10 +895,7 @@ export const EditIncidentDetailsPage = () => {
                 <MuiSelect
                   label="Probability *"
                   value={formData.probability}
-                  onChange={e => {
-                    console.log('Probability changed to:', e.target.value);
-                    handleInputChange('probability', e.target.value);
-                  }}
+                  onChange={e => handleInputChange('probability', e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
                 >

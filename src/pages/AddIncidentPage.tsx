@@ -423,9 +423,14 @@ export const AddIncidentPage = () => {
                   onChange={e => handleInputChange('year', e.target.value)}
                   sx={fieldStyles}
                 >
-                  <MenuItem value="2023">2023</MenuItem>
-                  <MenuItem value="2024">2024</MenuItem>
-                  <MenuItem value="2025">2025</MenuItem>
+                  {Array.from({ length: new Date().getFullYear() + 50 - 2010 + 1 }, (_, i) => {
+                    const year = new Date().getFullYear() + 50 - i; // From current year + 50 down to 2010
+                    return (
+                      <MenuItem key={year} value={String(year)}>
+                        {year}
+                      </MenuItem>
+                    );
+                  })}
                 </MuiSelect>
               </FormControl>
 
