@@ -391,7 +391,7 @@ export const StaffsDashboard = () => {
 
         {/* Action Buttons - show for History and All tabs */}
         {(activeTab === 'history' || activeTab === 'all') && (
-          <div className="flex gap-3 mb-6 px-6">
+          <div className="flex gap-3 mb-6 px-2">
             <Button 
               onClick={() => setIsAddModalOpen(true)}
               style={{ backgroundColor: '#C72030' }}
