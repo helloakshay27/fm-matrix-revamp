@@ -291,7 +291,23 @@ export const TicketDashboard = () => {
     
     try {
       const response = await ticketManagementAPI.getTickets(page, perPage, filters);
-      setTickets(response.complaints);
+      
+      // Sort tickets: flagged first, then golden tickets, then regular tickets
+      const sortedTickets = [...response.complaints].sort((a, b) => {
+        // Flagged tickets always come first
+        if (a.is_flagged && !b.is_flagged) return -1;
+        if (!a.is_flagged && b.is_flagged) return 1;
+        
+        // Among non-flagged tickets, golden tickets come first
+        if (!a.is_flagged && !b.is_flagged) {
+          if (a.is_golden_ticket && !b.is_golden_ticket) return -1;
+          if (!a.is_golden_ticket && b.is_golden_ticket) return 1;
+        }
+        
+        return 0; // Maintain original order for same priority
+      });
+      
+      setTickets(sortedTickets);
       if (response.pagination) {
         setTotalPages(response.pagination.total_pages);
         setTotalTickets(response.pagination.total_count);
@@ -578,12 +594,40 @@ export const TicketDashboard = () => {
     // console.log('TicketDashboard - Golden Ticket action for tickets:', selectedTickets);
     try {
       await ticketManagementAPI.markAsGoldenTicket(selectedTickets);
+      
+      // Update tickets locally and sort
+      setTickets(prevTickets => {
+        const updatedTickets = prevTickets.map(ticket =>
+          selectedTickets.includes(ticket.id)
+            ? { ...ticket, is_golden_ticket: true }
+            : ticket
+        );
+
+        // Sort tickets: flagged first, then golden tickets, then regular tickets
+        const sortedTickets = [...updatedTickets].sort((a, b) => {
+          // Flagged tickets always come first
+          if (a.is_flagged && !b.is_flagged) return -1;
+          if (!a.is_flagged && b.is_flagged) return 1;
+          
+          // Among non-flagged tickets, golden tickets come first
+          if (!a.is_flagged && !b.is_flagged) {
+            if (a.is_golden_ticket && !b.is_golden_ticket) return -1;
+            if (!a.is_golden_ticket && b.is_golden_ticket) return 1;
+          }
+          
+          return 0; // Maintain original order for same priority
+        });
+
+        return sortedTickets;
+      });
+      
       toast({
         title: "Success",
         description: "Tickets marked as Golden Ticket successfully"
       });
-      await fetchTickets(currentPage);
+      
       setSelectedTickets([]);
+      fetchTicketSummary();
     } catch (error) {
       console.error('Golden Ticket action failed:', error);
       toast({
@@ -606,43 +650,72 @@ export const TicketDashboard = () => {
 
     try {
       await ticketManagementAPI.markAsFlagged(selectedTickets);
+      
+      // Refresh from API to get proper positioning after flag toggle
+      await fetchTickets(currentPage);
+      
       toast({
         title: "Success",
-        description: `${selectedTickets.length} ticket(s) flagged successfully`
+        description: `${selectedTickets.length} ticket(s) flag status updated successfully`
       });
-      await fetchTickets(currentPage);
+      
       setSelectedTickets([]);
+      fetchTicketSummary();
     } catch (error) {
       console.error('Flag action failed:', error);
       toast({
         title: "Error",
-        description: "Failed to flag tickets",
+        description: "Failed to update flag status",
         variant: "destructive"
       });
     }
   };
+
+  // Unified refresh function for both tickets and summary
+  const refreshTicketsAndSummary = useCallback(async () => {
+    try {
+      // Refresh both ticket list and summary simultaneously
+      await Promise.all([
+        fetchTickets(currentPage),
+        fetchTicketSummary()
+      ]);
+    } catch (error) {
+      console.error('Error refreshing tickets and summary:', error);
+    }
+  }, [fetchTickets, fetchTicketSummary, currentPage]);
 
   const handleSingleTicketFlag = async (ticketId: number, currentFlagStatus: boolean) => {
     // console.log('TicketDashboard - Single flag action for ticket:', ticketId);
     try {
       const response = await ticketManagementAPI.markAsFlagged([ticketId]);
 
-      // Update the ticket locally without refetching
-      setTickets(prevTickets =>
-        prevTickets.map(ticket =>
-          ticket.id === ticketId
-            ? { ...ticket, is_flagged: !currentFlagStatus }
-            : ticket
-        )
-      );
+      // If flagging a ticket, update immediately for responsive UI
+      if (!currentFlagStatus) {
+        setTickets(prevTickets => {
+          const updatedTickets = prevTickets.map(ticket =>
+            ticket.id === ticketId
+              ? { ...ticket, is_flagged: true }
+              : ticket
+          );
+
+          // Find the newly flagged ticket and move it to the very top
+          const newlyFlaggedTicket = updatedTickets.find(ticket => ticket.id === ticketId);
+          const otherTickets = updatedTickets.filter(ticket => ticket.id !== ticketId);
+          
+          return [newlyFlaggedTicket, ...otherTickets];
+        });
+      } else {
+        // If unflagging, refresh from API to get proper positioning
+        await fetchTickets(currentPage);
+      }
 
       toast({
         title: "Success",
-        description: response.message || "Ticket(s) flagged successfully"
+        description: response.message || `Ticket ${!currentFlagStatus ? 'flagged' : 'unflagged'} successfully`
       });
 
-      // Refresh the page to update the data
-      window.location.reload();
+      // Refresh ticket summary to keep counts in sync
+      fetchTicketSummary();
     } catch (error) {
       console.error('Single flag action failed:', error);
       toast({
@@ -658,19 +731,50 @@ export const TicketDashboard = () => {
     try {
       const response = await ticketManagementAPI.markAsGoldenTicket([ticketId]);
 
-      // Update the ticket locally without refetching
-      setTickets(prevTickets =>
-        prevTickets.map(ticket =>
+      // Update the ticket locally and move newly golden tickets appropriately
+      setTickets(prevTickets => {
+        const updatedTickets = prevTickets.map(ticket =>
           ticket.id === ticketId
             ? { ...ticket, is_golden_ticket: !currentGoldenStatus }
             : ticket
-        )
-      );
+        );
+
+        // If marking as golden ticket, position it correctly
+        if (!currentGoldenStatus) {
+          const newlyGoldenTicket = updatedTickets.find(ticket => ticket.id === ticketId);
+          const otherTickets = updatedTickets.filter(ticket => ticket.id !== ticketId);
+          
+          // Find the position after all flagged tickets but before regular tickets
+          const flaggedTickets = otherTickets.filter(ticket => ticket.is_flagged);
+          const nonFlaggedTickets = otherTickets.filter(ticket => !ticket.is_flagged);
+          
+          // Put golden ticket at the top of non-flagged tickets
+          return [...flaggedTickets, newlyGoldenTicket, ...nonFlaggedTickets];
+        } else {
+          // If removing golden status, sort normally
+          return [...updatedTickets].sort((a, b) => {
+            // Flagged tickets always come first
+            if (a.is_flagged && !b.is_flagged) return -1;
+            if (!a.is_flagged && b.is_flagged) return 1;
+            
+            // Among non-flagged tickets, golden tickets come first
+            if (!a.is_flagged && !b.is_flagged) {
+              if (a.is_golden_ticket && !b.is_golden_ticket) return -1;
+              if (!a.is_golden_ticket && b.is_golden_ticket) return 1;
+            }
+            
+            return 0; // Maintain original order for same priority
+          });
+        }
+      });
 
       toast({
         title: "Success",
-        description: response.message || "Golden Ticket Flagged successfully!"
+        description: response.message || `Golden Ticket ${!currentGoldenStatus ? 'marked' : 'unmarked'} successfully!`
       });
+
+      // Optionally refresh ticket summary to keep counts in sync
+      fetchTicketSummary();
     } catch (error) {
       console.error('Single golden ticket action failed:', error);
       toast({
@@ -969,9 +1073,9 @@ export const TicketDashboard = () => {
               }}
             />
           </div> */}
-          <div title="Flag ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
+          <div title={`${item.is_flagged ? 'Unflag' : 'Flag'} ticket`} className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Flag
-              className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_flagged
+              className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:text-[#C72030] hover:scale-110 ${item.is_flagged
                 ? 'text-red-500 fill-red-500'
                 : 'text-gray-600'
                 }`}
@@ -981,9 +1085,9 @@ export const TicketDashboard = () => {
               }}
             />
           </div>
-          <div title="Star ticket" className="p-1 hover:bg-gray-100 rounded transition-colors">
+          <div title={`${item.is_golden_ticket ? 'Remove' : 'Mark as'} Golden Ticket`} className="p-1 hover:bg-gray-100 rounded transition-colors">
             <Star
-              className={`w-4 h-4 cursor-pointer hover:text-[#C72030] ${item.is_golden_ticket
+              className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:text-[#C72030] hover:scale-110 ${item.is_golden_ticket
                 ? 'text-yellow-500 fill-yellow-500'
                 : 'text-gray-600'
                 }`}
@@ -1225,7 +1329,7 @@ export const TicketDashboard = () => {
 
             {/* Right Sidebar - Recent Tickets */}
             <div className="xl:col-span-4 order-first xl:order-last">
-              <RecentTicketsSidebar />
+              <RecentTicketsSidebar onTicketUpdate={refreshTicketsAndSummary} />
             </div>
           </div>
         </TabsContent>
@@ -1319,7 +1423,37 @@ export const TicketDashboard = () => {
                   onSearchChange={handleSearch}
                   hideTableExport={false}
                   hideColumnsButton={false}
+                  className="transition-all duration-500 ease-in-out"
                 />
+
+                {/* Add custom CSS for smooth row transitions */}
+                <style>{`
+                  @keyframes slideInFromTop {
+                    from {
+                      opacity: 0;
+                      transform: translateY(-10px);
+                    }
+                    to {
+                      opacity: 1;
+                      transform: translateY(0);
+                    }
+                  }
+                  
+                  .table-row-transition {
+                    animation: slideInFromTop 0.4s ease-out;
+                    transition: all 0.3s ease-in-out;
+                  }
+                  
+                  .flagged-row {
+                    background-color: rgba(239, 68, 68, 0.05) !important;
+                    border-left: 3px solid #ef4444;
+                  }
+                  
+                  .golden-row {
+                    background-color: rgba(245, 158, 11, 0.05) !important;
+                    border-left: 3px solid #f59e0b;
+                  }
+                `}</style>
 
                 {/* Custom Pagination */}
                 <div className="flex items-center justify-center mt-6 px-4 py-3 bg-white border-t border-gray-200 animate-fade-in">
