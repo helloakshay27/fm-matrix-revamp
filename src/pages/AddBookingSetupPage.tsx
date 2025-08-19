@@ -94,7 +94,7 @@ export const AddBookingSetupPage = () => {
     facilityName: "",
     isBookable: true,
     isRequest: false,
-    active: "",
+    active: "1",
     department: "",
     appKey: "",
     postpaid: false,
@@ -232,9 +232,6 @@ export const AddBookingSetupPage = () => {
   const validateForm = () => {
     if (!formData.facilityName) {
       toast.error("Please enter Facility Name");
-      return false;
-    } else if (!formData.active) {
-      toast.error("Please select Active");
       return false;
     } else if (!formData.description) {
       toast.error("Please enter Description");
