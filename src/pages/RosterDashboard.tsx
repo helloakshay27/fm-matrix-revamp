@@ -417,8 +417,15 @@ export const RosterDashboard = () => {
     actions: (
       <div className="flex items-center gap-2">
         <button 
-          onClick={() => handleEdit(roster.id)} 
+          onClick={() => handleView(roster.id)} 
           className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
+          title="View"
+        >
+          <Eye className="w-4 h-4" />
+        </button>
+        <button 
+          onClick={() => handleEdit(roster.id)} 
+          className="p-1 text-green-600 hover:bg-green-50 rounded" 
           title="Edit"
         >
           <Edit className="w-4 h-4" />
@@ -454,10 +461,14 @@ export const RosterDashboard = () => {
     )
   });
 
+  const handleView = (id: number) => {
+    console.log('View roster:', id);
+    navigate(`/roster/detail/${id}`);
+  };
+
   const handleEdit = (id: number) => {
     console.log('Edit roster:', id);
-    // TODO: Implement edit functionality
-    toast.info('Edit functionality will be implemented');
+    navigate(`/roster/edit/${id}`);
   };
 
   const handleAdd = () => {
