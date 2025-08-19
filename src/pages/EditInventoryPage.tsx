@@ -132,7 +132,11 @@ export const EditInventoryPage = () => {
         maxStockLevel: fetchedInventory.max_stock_level?.toString() || '',
         minStockLevel: fetchedInventory.min_stock_level?.toString() || '',
         minOrderLevel: fetchedInventory.min_order_level?.toString() || '',
-        sacHsnCode: fetchedInventory.hsc_hsn_code || '',
+        // Prefer hsn_id (numeric) for dropdown value; fallback to hsc_hsn_code if API only returns code
+        sacHsnCode: ( (fetchedInventory as any)?.hsn_id != null
+          ? String((fetchedInventory as any).hsn_id)
+          : ((fetchedInventory as any).hsc_hsn_code ? String((fetchedInventory as any).hsc_hsn_code) : '')
+        ),
         sgstRate: fetchedInventory.sgst_rate?.toString() || '',
         cgstRate: fetchedInventory.cgst_rate?.toString() || '',
         igstRate: fetchedInventory.igst_rate?.toString() || ''
@@ -197,7 +201,7 @@ export const EditInventoryPage = () => {
     // Map criticality: 0 for Non-Critical, 1 for Critical
     const criticalityValue = criticality === 'critical' ? 1 : 0;
 
-    const inventoryData = {
+    const inventoryData: any = {
       asset_id: formData.assetName ? parseInt(formData.assetName) : null,
       name: formData.inventoryName || "",
       code: formData.inventoryCode || "",
@@ -207,14 +211,24 @@ export const EditInventoryPage = () => {
       max_stock_level: parseInt(formData.maxStockLevel) || 0,
       min_stock_level: formData.minStockLevel || "0",
       min_order_level: formData.minOrderLevel || "0",
-      rate_contract_vendor_code: formData.vendor || "",
+      // Use rate_contract_vendor_code to align with create endpoint (retain legacy key if backend still expects it)
+      rate_contract_vendor_code: formData.vendor ? parseInt(formData.vendor) : null,
       criticality: criticalityValue,
       expiry_date: formatExpiryDate(formData.expiryDate),
       unit: formData.unit || "",
-      hsn_id: formData.sacHsnCode ? parseInt(formData.sacHsnCode) : 1,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+
+    if (taxApplicable) {
+      inventoryData.hsn_id = formData.sacHsnCode ? parseInt(formData.sacHsnCode) : null;
+      inventoryData.sgst_rate = formData.sgstRate ? parseFloat(formData.sgstRate) : 0;
+      inventoryData.cgst_rate = formData.cgstRate ? parseFloat(formData.cgstRate) : 0;
+      inventoryData.igst_rate = formData.igstRate ? parseFloat(formData.igstRate) : 0;
+      inventoryData.tax_applicable = 1;
+    } else {
+      inventoryData.tax_applicable = 0;
+    }
 
     dispatch(updateInventory({ id, inventoryData }));
   };

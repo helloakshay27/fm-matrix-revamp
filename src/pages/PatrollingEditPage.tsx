@@ -576,16 +576,15 @@ export const PatrollingEditPage: React.FC = () => {
 
         // Basic field validation
         const hasPatrolNameError = patrolName.trim() === '';
-        const hasDescriptionError = description.trim() === '';
         const hasEstimatedDurationError = estimatedDuration.trim() === '';
         const hasStartDateError = startDate === '';
         const hasEndDateError = endDate === '';
         const hasGraceError = grace.trim() === '';
 
-        if (hasPatrolNameError || hasDescriptionError || hasEstimatedDurationError || hasStartDateError || hasEndDateError || hasGraceError) {
+        if (hasPatrolNameError || hasEstimatedDurationError || hasStartDateError || hasEndDateError || hasGraceError) {
             setErrors({
                 patrolName: hasPatrolNameError,
-                description: hasDescriptionError,
+                description: false, // Description is now optional
                 estimatedDuration: hasEstimatedDurationError,
                 startDate: hasStartDateError,
                 endDate: hasEndDateError,
@@ -593,7 +592,6 @@ export const PatrollingEditPage: React.FC = () => {
 
             const errorFields = [];
             if (hasPatrolNameError) errorFields.push('Patrol Name');
-            if (hasDescriptionError) errorFields.push('Description');
             if (hasEstimatedDurationError) errorFields.push('Grace Period');
             if (hasStartDateError) errorFields.push('Start Date');
             if (hasEndDateError) errorFields.push('End Date');
@@ -708,17 +706,6 @@ export const PatrollingEditPage: React.FC = () => {
             setIsSubmitting(false);
             return;
         }
-
-        // Validate checkpoint descriptions
-        const checkpointsWithoutDescription = validCheckpoints.filter(c => !c.description || c.description.trim() === '');
-        if (checkpointsWithoutDescription.length > 0) {
-            toast.error('All checkpoints must have a description', {
-                duration: 5000,
-            });
-            setIsSubmitting(false);
-            return;
-        }
-
 
         // Validate checkpoint schedule assignments
         const checkpointsWithoutSchedules = validCheckpoints.filter(c =>

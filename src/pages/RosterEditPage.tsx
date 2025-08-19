@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Calendar, MapPin, Building2, Clock, Users, Loader2, Save, X } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Building2, Clock, Users, Loader2, Save, X, Edit } from 'lucide-react';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField, Chip, Box, OutlinedInput, ListItemText, Checkbox, CircularProgress } from '@mui/material';
 import { toast } from 'sonner';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { departmentService, Department } from '@/services/departmentService';
 import { RootState } from '@/store/store';
 
-// Section component for consistent layout (matches PatrollingCreatePage)
+// Section component for consistent layout
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
   <section className="bg-card rounded-lg border border-border shadow-sm">
     <div className="px-6 py-4 border-b border-border flex items-center gap-3">
@@ -48,17 +48,19 @@ interface RosterFormData {
   shift: number | null;
   selectedEmployees: number[];
   rosterType: 'Permanent';
+  active: boolean;
 }
 
-export const RosterCreatePage: React.FC = () => {
+export const RosterEditPage: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
 
   // Redux state for site information
   const { selectedSite } = useSelector((state: RootState) => state.site);
 
   // Set document title
   useEffect(() => { 
-    document.title = 'Create Roster Template'; 
+    document.title = 'Edit Roster Template'; 
   }, []);
 
   // Form state
@@ -71,11 +73,13 @@ export const RosterCreatePage: React.FC = () => {
     departments: [],
     shift: null,
     selectedEmployees: [],
-    rosterType: 'Permanent'
+    rosterType: 'Permanent',
+    active: true
   });
 
   // Loading states
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [loadingFMUsers, setLoadingFMUsers] = useState(false);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
   const [loadingShifts, setLoadingShifts] = useState(false);
@@ -97,18 +101,7 @@ export const RosterCreatePage: React.FC = () => {
     selectedEmployees: false
   });
 
-  // Constants
-  const days = [
-    'Monday', 
-    'Tuesday', 
-    'Wednesday', 
-    'Thursday', 
-    'Friday', 
-    'Saturday', 
-    'Sunday'
-  ];
-
-  // MUI select styles to match PatrollingCreatePage
+  // MUI select styles
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
@@ -123,26 +116,61 @@ export const RosterCreatePage: React.FC = () => {
       borderColor: '#9ca3af',
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: '#8b5cf6',
+      borderColor: '#C72030',
       borderWidth: '2px',
     },
   };
 
   // Fetch data on component mount
   useEffect(() => {
-    fetchFMUsers();
-    fetchDepartments();
-    fetchShifts();
-    fetchCurrentLocation();
-  }, []);
-
-  // Update location when selectedSite changes
-  useEffect(() => {
-    if (selectedSite?.name) {
-      setCurrentLocation(selectedSite.name);
-      setFormData(prev => ({ ...prev, location: selectedSite.name }));
+    if (id) {
+      fetchRosterTemplate();
+      fetchFMUsers();
+      fetchDepartments();
+      fetchShifts();
+      fetchCurrentLocation();
     }
-  }, [selectedSite]);
+  }, [id]);
+
+  // Fetch existing roster template
+  const fetchRosterTemplate = async () => {
+    setIsLoading(true);
+    try {
+      // Mock data for demonstration - replace with actual API call
+      const mockTemplate = {
+        id: parseInt(id!),
+        name: 'Security Team Morning Shift',
+        working_days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+        day_type: 'Weekdays' as const,
+        week_selection: ['1st Week', '2nd Week', '3rd Week', '4th Week', 'All'],
+        location: 'Corporate Office - Tower A',
+        department_ids: [1, 2],
+        shift_id: 1,
+        employee_ids: [101, 102, 103],
+        roster_type: 'Permanent' as const,
+        active: true
+      };
+
+      setFormData({
+        templateName: mockTemplate.name,
+        selectedDays: mockTemplate.working_days,
+        dayType: mockTemplate.day_type,
+        weekSelection: mockTemplate.week_selection,
+        location: mockTemplate.location,
+        departments: mockTemplate.department_ids,
+        shift: mockTemplate.shift_id,
+        selectedEmployees: mockTemplate.employee_ids,
+        rosterType: mockTemplate.roster_type,
+        active: mockTemplate.active
+      });
+    } catch (error) {
+      console.error('Error fetching roster template:', error);
+      toast.error('Failed to load roster template');
+      navigate('/roster');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Fetch FM Users
   const fetchFMUsers = async () => {
@@ -163,7 +191,6 @@ export const RosterCreatePage: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log('FM Users API Response:', data);
       
       // Adapt the response to our expected format
       const users = data.fm_users || data.users || data || [];
@@ -197,13 +224,10 @@ export const RosterCreatePage: React.FC = () => {
     }
   };
 
-  // Fetch Shifts (mock data for now - replace with actual API when available)
+  // Fetch Shifts
   const fetchShifts = async () => {
     setLoadingShifts(true);
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       // Mock shift data - replace with actual API call
       const mockShifts = [
         { id: 1, name: 'Morning Shift', start_time: '09:00', end_time: '17:00' },
@@ -221,18 +245,14 @@ export const RosterCreatePage: React.FC = () => {
     }
   };
 
-  // Fetch Current Location (from site context)
+  // Fetch Current Location
   const fetchCurrentLocation = async () => {
     try {
-      // First try to get from Redux state
       if (selectedSite?.name) {
         setCurrentLocation(selectedSite.name);
-        setFormData(prev => ({ ...prev, location: selectedSite.name }));
         return;
       }
 
-      // Fallback to localStorage
-      const siteId = localStorage.getItem('selectedSiteId');
       const siteName = localStorage.getItem('selectedSiteName');
       const companyName = localStorage.getItem('selectedCompanyName');
       
@@ -244,39 +264,14 @@ export const RosterCreatePage: React.FC = () => {
         locationName = companyName;
       }
       
-      // Try to get from DOM if localStorage doesn't have it
-      if (locationName === 'Current Site') {
-        const headerSiteElement = document.querySelector('[data-site-name]');
-        if (headerSiteElement) {
-          locationName = headerSiteElement.textContent?.trim() || 'Current Site';
-        }
-      }
-      
       setCurrentLocation(locationName);
-      setFormData(prev => ({ ...prev, location: locationName }));
     } catch (error) {
       console.error('Error fetching current location:', error);
       setCurrentLocation('Current Site');
-      setFormData(prev => ({ ...prev, location: 'Current Site' }));
     }
   };
 
-  // Handle day selection
-  const handleDayToggle = (day: string) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedDays: prev.selectedDays.includes(day)
-        ? prev.selectedDays.filter(d => d !== day)
-        : [...prev.selectedDays, day]
-    }));
-    
-    // Clear day error when user selects a day
-    if (errors.selectedDays) {
-      setErrors(prev => ({ ...prev, selectedDays: false }));
-    }
-  };
-
-  // Handle day type selection (Weekdays, Weekends, Recurring)
+  // Handle day type selection
   const handleDayTypeChange = (type: 'Weekdays' | 'Weekends' | 'Recurring') => {
     setFormData(prev => ({ 
       ...prev, 
@@ -335,7 +330,6 @@ export const RosterCreatePage: React.FC = () => {
       
       // If any other option is selected and "All" was already selected, remove "All"
       if (week !== 'All' && prev.weekSelection.includes('All')) {
-        const filteredSelection = prev.weekSelection.filter(w => w !== 'All');
         return {
           ...prev,
           weekSelection: newWeekSelection.filter(w => w !== 'All')
@@ -399,7 +393,7 @@ export const RosterCreatePage: React.FC = () => {
     const newErrors = {
       templateName: !formData.templateName.trim(),
       selectedDays: !hasSelectedDays,
-      dayType: false, // dayType is always selected by default
+      dayType: false,
       location: !formData.location.trim(),
       departments: formData.departments.length === 0,
       shift: formData.shift === null,
@@ -441,6 +435,7 @@ export const RosterCreatePage: React.FC = () => {
       // Build payload structure
       const payload = {
         roster_template: {
+          id: parseInt(id!),
           name: formData.templateName,
           working_days: formData.selectedDays,
           day_type: formData.dayType,
@@ -450,51 +445,49 @@ export const RosterCreatePage: React.FC = () => {
           shift_id: formData.shift,
           employee_ids: formData.selectedEmployees,
           roster_type: formData.rosterType,
-          active: true,
-          created_at: new Date().toISOString()
+          active: formData.active,
+          updated_at: new Date().toISOString()
         }
       };
 
-      // Log payload to console as requested
-      console.log('🎯 Roster Template Payload:', JSON.stringify(payload, null, 2));
-      console.log('📊 Payload Summary:', {
-        templateName: payload.roster_template.name,
-        workingDaysCount: payload.roster_template.working_days.length,
-        departmentCount: payload.roster_template.department_ids.length,
-        employeeCount: payload.roster_template.employee_ids.length,
-        location: payload.roster_template.location,
-        shiftId: payload.roster_template.shift_id,
-        rosterType: payload.roster_template.roster_type
-      });
+      console.log('🎯 Update Roster Template Payload:', JSON.stringify(payload, null, 2));
 
-      // Here you would make the actual API call to create the roster
-      // For now, we'll just simulate success
+      // API call would go here
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      toast.success('Roster template created successfully!');
-      
-      // Navigate back to roster dashboard
-      navigate('/roster');
+      toast.success('Roster template updated successfully!');
+      navigate(`/roster/detail/${id}`);
       
     } catch (error) {
-      console.error('Error creating roster template:', error);
-      toast.error('Failed to create roster template. Please try again.');
+      console.error('Error updating roster template:', error);
+      toast.error('Failed to update roster template. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Handle cancel/back
+  // Handle cancel
   const handleCancel = () => {
-    navigate('/roster');
+    navigate(`/roster/detail/${id}`);
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading roster template...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 relative">
       {/* Loading overlay */}
       {isSubmitting && (
         <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
-          <Loader2 className="w-8 h-8 animate-spin text-[#8B5CF6]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
         </div>
       )}
 
@@ -505,16 +498,16 @@ export const RosterCreatePage: React.FC = () => {
             onClick={handleCancel}
             disabled={isSubmitting}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            title="Back to Roster Management"
+            title="Back to Roster Details"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#8B5CF6]/10 text-[#8B5CF6] flex items-center justify-center">
-              <Calendar className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+              <Edit className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-wide uppercase">Create Roster Template</h1>
+              <h1 className="text-xl font-bold tracking-wide uppercase">Edit Roster Template</h1>
               {(selectedSite?.name || currentLocation !== 'Current Site') && (
                 <div className="flex items-center gap-2 mt-1">
                   <Building2 className="w-4 h-4 text-gray-500" />
@@ -799,19 +792,22 @@ export const RosterCreatePage: React.FC = () => {
               <TextField
                 label="Location *"
                 value={formData.location}
-                disabled
-                placeholder="Current site location"
+                onChange={(e) => handleInputChange('location', e.target.value)}
+                placeholder="Enter location"
                 fullWidth
                 variant="outlined"
+                error={errors.location}
+                helperText={errors.location ? 'Location is required' : ''}
                 slotProps={{
                   inputLabel: {
                     shrink: true,
                   },
                 }}
                 InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: '#f5f5f5' },
+                  sx: fieldStyles,
                   startAdornment: <Building2 className="w-4 h-4 text-gray-400 mr-2" />
                 }}
+                disabled={isSubmitting}
               />
             </div>
 
@@ -960,6 +956,23 @@ export const RosterCreatePage: React.FC = () => {
             </div>
           </div>
         </Section>
+
+        {/* Status Section */}
+        <Section title="Status" icon={<Calendar className="w-4 h-4" />}>
+          <div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.active}
+                onChange={(e) => handleInputChange('active', e.target.checked)}
+                className="text-[#C72030] focus:ring-[#C72030] w-4 h-4"
+                disabled={isSubmitting}
+              />
+              <span className="font-medium text-gray-800">Active Template</span>
+              <span className="text-sm text-gray-500">(Template will be available for use)</span>
+            </label>
+          </div>
+        </Section>
       </div>
 
       {/* Footer Actions */}
@@ -973,19 +986,19 @@ export const RosterCreatePage: React.FC = () => {
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating...
+              Updating...
             </>
           ) : (
             <>
               <Save className="w-4 h-4 mr-2" />
-              Create Template
+              Update Template
             </>
           )}
         </Button>
         <Button
           variant="outline"
           className="px-8"
-          onClick={() => navigate('/roster')}
+          onClick={handleCancel}
           disabled={isSubmitting}
         >
           Cancel

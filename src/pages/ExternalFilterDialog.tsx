@@ -147,6 +147,18 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
     setRole('');
     setSelectedLineManager(null);
     setLmQuery('');
+    // Propagate cleared filters so the external users table resets
+    onApplyFilters({
+      firstname: '',
+      lastname: '',
+      email: '',
+      mobile: '',
+      cluster: '',
+      circle: '',
+      department: '',
+      role: '',
+      report_to_id: ''
+    });
   };
 
   return (

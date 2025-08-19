@@ -257,6 +257,8 @@ import { ShiftDashboard } from "./pages/setup/ShiftDashboard";
 import { ShiftDashboard as AccountShiftDashboard } from "./pages/ShiftDashboard";
 import { RosterDashboard as AccountRosterDashboard } from "./pages/RosterDashboard";
 import { RosterCreatePage } from "./pages/RosterCreatePage";
+import { RosterDetailPage } from "./pages/RosterDetailPage";
+import { RosterEditPage } from "./pages/RosterEditPage";
 
 // Import Setup User pages
 import { FMUserDashboard } from "./pages/setup/FMUserDashboard";
@@ -756,6 +758,8 @@ function App() {
                 <Route path="/settings/account/roster/create" element={<RosterCreatePage />} />
                 <Route path="/roster" element={<AccountRosterDashboard />} />
                 <Route path="/roster/create" element={<RosterCreatePage />} />
+                <Route path="/roster/detail/:id" element={<RosterDetailPage />} />
+                <Route path="/roster/edit/:id" element={<RosterEditPage />} />
                 <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
                 <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
                 <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />

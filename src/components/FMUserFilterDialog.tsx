@@ -125,6 +125,18 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
         setRole('');
         setSelectedLineManager(null);
         setLmQuery('');
+        // Propagate cleared filters so parent resets table data
+        onApplyFilters({
+            firstname: '',
+            lastname: '',
+            email: '',
+            mobile: '',
+            cluster: '',
+            circle: '',
+            department: '',
+            role: '',
+            report_to_id: ''
+        });
     };
 
     const handleSubmit = () => {

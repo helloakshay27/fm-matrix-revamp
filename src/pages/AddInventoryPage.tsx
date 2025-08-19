@@ -228,13 +228,14 @@ export const AddInventoryPage = () => {
         unit: formData.unit,
         expiry_date: formData.expiryDate ? `${formData.expiryDate}T00:00:00Z` : null,
         category: formData.category,
-        rate_contract_vendor_code: formData.vendor,
+        // Backend expects supplier_id (was previously sent as rate_contract_vendor_code per earlier implementation)
+        rate_contract_vendor_code: formData.vendor ? parseInt(formData.vendor) : null,
         max_stock_level: parseInt(formData.maxStockLevel) || 0,
         min_stock_level: formData.minStockLevel,
         min_order_level: formData.minOrderLevel,
         green_product: ecoFriendly ? 1 : 0,
         ...(taxApplicable && {
-          hsn_id: taxApplicable ? parseInt(formData.sacHsnCode) || null : null,
+          hsn_id: formData.sacHsnCode ? parseInt(String(formData.sacHsnCode), 10) : null,
           sgst_rate: parseFloat(formData.sgstRate) || 0,
           cgst_rate: parseFloat(formData.cgstRate) || 0,
           igst_rate: parseFloat(formData.igstRate) || 0,
