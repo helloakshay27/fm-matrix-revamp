@@ -13,6 +13,7 @@ import { VisitorFilterDialog, VisitorFilters } from '@/components/VisitorFilterD
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import { toast } from 'sonner';
 
 // API Service using apiConfig
 const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20) => {
@@ -794,14 +795,113 @@ default:
     // Handle delete visitor logic here
   };
 
-  const handleResendOTP = (visitorId: number) => {
-    console.log('Resending OTP for visitor:', visitorId);
-    // Handle resend OTP logic here
+  const handleResendOTP = async (visitorId: number) => {
+    try {
+      console.log('Resending OTP for visitor:', visitorId);
+      
+      // Show loading toast
+      toast.info('Resending OTP...');
+      
+      // Construct the API URL
+      const url = getFullUrl(`/pms/visitors/${visitorId}.json`);
+      const options = getAuthenticatedFetchOptions();
+      
+      // Set the request method to PUT and add the request body
+      const requestOptions = {
+        ...options,
+        method: 'PUT',
+        headers: {
+          ...options.headers,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gatekeeper: {
+            otp_verified: "1",
+            otp: "",
+            guest_entry_time: new Date().toISOString(),
+            entry_gate_id: ""
+          }
+        })
+      };
+      
+      console.log('🚀 Calling resend OTP API:', url);
+      console.log('📋 Request body:', requestOptions.body);
+      
+      const response = await fetch(url, requestOptions);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to resend OTP: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ OTP resent successfully:', data);
+      
+      // Show success toast
+      toast.success('OTP resent successfully!');
+      
+      // Optionally refresh the data
+      if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
+        fetchUnexpectedVisitors(pagination.currentPage);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error resending OTP:', error);
+      toast.error('Failed to resend OTP. Please try again.');
+    }
   };
 
-  const handleSkipApproval = (visitorId: number) => {
-    console.log('Skipping approval for visitor:', visitorId);
-    // Handle skip approval logic here
+  const handleSkipApproval = async (visitorId: number) => {
+    try {
+      console.log('Skipping approval for visitor:', visitorId);
+      
+      // Show loading toast
+      toast.info('Processing approval...');
+      
+      // Construct the API URL
+      const url = getFullUrl(`/pms/visitors/${visitorId}.json`);
+      const options = getAuthenticatedFetchOptions();
+      
+      // Set the request method to PUT and add the request body
+      const requestOptions = {
+        ...options,
+        method: 'PUT',
+        headers: {
+          ...options.headers,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: API_CONFIG.TOKEN,
+          approval: "true",
+          gatekeeper: {
+            approve: "1"
+          }
+        })
+      };
+      
+      console.log('🚀 Calling skip approval API:', url);
+      console.log('📋 Request body:', requestOptions.body);
+      
+      const response = await fetch(url, requestOptions);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to skip approval: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Approval skipped successfully:', data);
+      
+      // Show success toast
+      toast.success('Host approval skipped successfully!');
+      
+      // Optionally refresh the data
+      if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
+        fetchUnexpectedVisitors(pagination.currentPage);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error skipping approval:', error);
+      toast.error('Failed to skip approval. Please try again.');
+    }
   };
 
   const handleCheckIn = (visitorId: number) => {

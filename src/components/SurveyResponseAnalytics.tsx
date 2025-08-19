@@ -1,7 +1,9 @@
 // ...existing code...
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Filter } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Filter, Download } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { SurveyAnalyticsSelector } from '@/components/SurveyAnalyticsSelector';
 import { SurveyStatisticsSelector } from '@/components/SurveyStatisticsSelector';
 import { SurveyAnalyticsFilterDialog } from '@/components/SurveyAnalyticsFilterDialog';
@@ -889,25 +891,88 @@ export const SurveyResponseAnalytics: React.FC<SurveyAnalyticsProps> = ({
             // ),
             // Top Survey Bar Chart
             <SortableChartItem key="topSurvey" id="topSurvey">
-                <SurveyAnalyticsCard
-                    title="Top 3 Survey"
-                    type="typeWise"
-                    data={
-                        topSurveysLoading
-                            ? [{ name: 'Loading...', value: 1, color: '#e5e7eb' }]
-                            : topSurveysError
-                                ? [{ name: topSurveysError, value: 1, color: '#e5e7eb' }]
-                                : topSurveys.length === 0
-                                    ? [{ name: 'No data available', value: 1, color: '#e5e7eb' }]
-                                    : topSurveys.map((survey, idx) => ({
-                                        name: survey.name,
-                                        value: topSurveys.length - idx, // Higher rank = bigger bar
-                                        color: '#3b82f6',
-                                    }))
-                    }
-                    dateRange={{ startDate: analyticsDateRange.fromDate, endDate: analyticsDateRange.toDate }}
-                    onDownload={() => {}}
-                />
+                <Card className="shadow-sm hover:shadow-lg transition-all duration-200 bg-white border border-gray-200 rounded-lg">
+                    <CardHeader className="pb-4">
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="text-base sm:text-lg font-bold text-[#C72030]">Top 3 Survey</CardTitle>
+                            <Download
+                                className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer text-[#C72030] hover:text-[#A01829] transition-colors"
+                                onClick={() => {}}
+                            />
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="w-full overflow-x-auto">
+                            {topSurveysLoading ? (
+                                <div className="flex items-center justify-center h-[300px]">
+                                    <div className="text-center py-8 text-gray-500">
+                                        Loading...
+                                    </div>
+                                </div>
+                            ) : (
+                                <ResponsiveContainer width="100%" height={300} className="min-w-[400px]">
+                                    {topSurveysError ? (
+                                        <div className="flex items-center justify-center h-full">
+                                            <div className="text-center py-8 text-gray-500">
+                                                {topSurveysError}
+                                            </div>
+                                        </div>
+                                    ) : topSurveys.length === 0 ? (
+                                        <div className="flex items-center justify-center h-full">
+                                            <div className="text-center py-8 text-gray-500">
+                                                No data available
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <BarChart
+                                            data={topSurveys.map((survey, idx) => ({
+                                                name: survey.name,
+                                                value: topSurveys.length - idx, // Higher rank = bigger bar
+                                            }))}
+                                            margin={{ top: 20, right: 30, left: 20, bottom: 5 }} // Reduced bottom margin
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
+                                            <XAxis
+                                                dataKey="name"
+                                                angle={-45}
+                                                textAnchor="end"
+                                                height={80}
+                                                tick={{
+                                                    fill: '#374151',
+                                                    fontSize: 10
+                                                }}
+                                                className="text-xs"
+                                            />
+                                            <YAxis tick={{
+                                                fill: '#374151',
+                                                fontSize: 10
+                                            }} />
+                                            <Tooltip
+                                                content={({ active, payload, label }) => {
+                                                    if (active && payload && payload.length) {
+                                                        return (
+                                                            <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                                                                <p className="font-semibold text-gray-800 ">{label}</p>
+                                                                <div className="space-y-1">
+                                                                    <div className="flex justify-between items-center">
+                                                                        <span className="text-[#C72030] font-medium">Rank:</span>
+                                                                        <span className="text-gray-700">{payload[0]?.value || 0}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return null;
+                                                }}
+                                            />
+                                            <Bar dataKey="value" fill="#C72030" name="Rank" maxBarSize={70} /> // Added maxBarSize
+                                        </BarChart>
+                                    )}
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
             </SortableChartItem>,
             trendingSurveyCard,
             // Critical Survey Analysis Card
