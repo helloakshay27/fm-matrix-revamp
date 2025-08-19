@@ -623,7 +623,11 @@ export const AddAMCPage = () => {
                       <TextField
                         {...params}
                         variant="outlined"
-                        label="Assets"
+                        label={
+                          <span>
+                            Assets<span style={{ color: '#C72030' }}>*</span>
+                          </span>
+                        }
                         placeholder="Search Assets..."
                         fullWidth
                         size="small"
@@ -662,7 +666,9 @@ export const AddAMCPage = () => {
                   />
                 ) : (
                   <FormControl fullWidth variant="outlined" error={!!errors.service}>
-                    <InputLabel id="service-select-label" shrink>Service</InputLabel>
+                    <InputLabel id="service-select-label" shrink>
+                      Service <span style={{ color: '#C72030' }}>*</span>
+                    </InputLabel>
                     <MuiSelect
                       labelId="service-select-label"
                       label="Service"
@@ -685,7 +691,9 @@ export const AddAMCPage = () => {
 
                 <div>
                   <FormControl fullWidth variant="outlined" error={!!errors.supplier}>
-                    <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
+                    <InputLabel id="vendor-select-label" shrink>
+                      Supplier <span style={{ color: '#C72030' }}>*</span>
+                    </InputLabel>
                     <MuiSelect
                       labelId="vendor-select-label"
                       label="Supplier"
@@ -757,7 +765,9 @@ export const AddAMCPage = () => {
                   {formData.details === 'Service' && (
                     <div>
                       <FormControl fullWidth variant="outlined" error={!!errors.service}>
-                        <InputLabel id="group-service-select-label" shrink>Service</InputLabel>
+                        <InputLabel id="group-service-select-label" shrink>
+                          Service <span style={{ color: '#C72030' }}>*</span>
+                        </InputLabel>
                         <MuiSelect
                           labelId="group-service-select-label"
                           label="Service"
@@ -787,7 +797,9 @@ export const AddAMCPage = () => {
                   )}
                   <div>
                     <FormControl fullWidth variant="outlined" error={!!errors.supplier}>
-                      <InputLabel id="group-supplier-select-label" shrink>Supplier</InputLabel>
+                      <InputLabel id="group-supplier-select-label" shrink>
+                        Supplier <span style={{ color: '#C72030' }}>*</span>
+                      </InputLabel>
                       <MuiSelect
                         labelId="group-supplier-select-label"
                         label="Supplier"

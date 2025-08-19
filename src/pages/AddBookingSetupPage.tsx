@@ -544,7 +544,7 @@ export const AddBookingSetupPage = () => {
   return (
     <ThemeProvider theme={muiTheme}>
       <div className="px-5 bg-white min-h-screen">
-        <div className="bg-white rounded-lg max-w-6xl mx-auto">
+        <div className="bg-white rounded-lg mx-auto">
           <Button
             variant="ghost"
             onClick={() => navigate('/settings/vas/booking/setup')}
@@ -566,15 +566,22 @@ export const AddBookingSetupPage = () => {
               <div className="p-[31px] bg-[#F6F7F7] space-y-4" style={{ border: "1px solid #D9D9D9" }}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <TextField
-                    label="Facility Name*"
+                    label="Facility Name"
                     placeholder="Enter Facility Name"
                     value={formData.facilityName}
                     onChange={(e) =>
                       setFormData({ ...formData, facilityName: e.target.value })
                     }
                     variant="outlined"
+                    required
+                    InputLabelProps={{
+                      classes: {
+                        asterisk: "text-red-500", // Tailwind class for red color
+                      },
+                      shrink: true,
+                    }}
                   />
-                  <FormControl>
+                  {/* <FormControl>
                     <InputLabel className="bg-[#F6F7F7]">Active*</InputLabel>
                     <Select
                       value={formData.active}
@@ -588,7 +595,7 @@ export const AddBookingSetupPage = () => {
                       <MenuItem value="1">Yes</MenuItem>
                       <MenuItem value="0">No</MenuItem>
                     </Select>
-                  </FormControl>
+                  </FormControl> */}
                   <FormControl>
                     <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
                     <Select
@@ -598,10 +605,10 @@ export const AddBookingSetupPage = () => {
                       }
                       onFocus={fetchDepartments}
                       label="Department"
-                      defaultValue="Select Department"
+                      displayEmpty
                     >
-                      <MenuItem value="Select Department">
-                        {loadingDepartments ? "Loading..." : "Select Department"}
+                      <MenuItem value="">
+                        {loadingDepartments ? "Loading..." : "All"}
                       </MenuItem>
                       {Array.isArray(departments) &&
                         departments.map((dept, index) => (
@@ -1522,7 +1529,7 @@ export const AddBookingSetupPage = () => {
               </div>
             </div>
 
-            <div className={`border rounded-lg overflow-hidden ${additionalOpen ? 'h-auto' : 'h-[3.8rem]'}`}>
+            <div className={`border rounded-lg overflow-hidden ${additionalOpen ? 'h-auto' : 'h-[5rem]'}`}>
               <div className="flex justify-between p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold"></div>

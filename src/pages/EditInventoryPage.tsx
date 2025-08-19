@@ -117,6 +117,8 @@ export const EditInventoryPage = () => {
   useEffect(() => {
     if (fetchedInventory) {
       const normalizedExpiry = fetchedInventory.expiry_date ? formatDateForInput(fetchedInventory.expiry_date) : '';
+      // Prefer vendor name over id for display
+      const vendorName = (fetchedInventory as any)?.vendor_name || (fetchedInventory as any)?.vendor?.company_name || '';
       setFormData({
         assetName: fetchedInventory.asset_id?.toString() || '',
         inventoryName: fetchedInventory.name || '',
@@ -128,7 +130,8 @@ export const EditInventoryPage = () => {
         // Store only the date part (YYYY-MM-DD) for the date input field
         expiryDate: normalizedExpiry,
         category: fetchedInventory.category || '',
-        vendor: fetchedInventory.vendor_id?.toString() || '',
+        // Display vendor name if available; fallback to vendor_id (will be converted later when suppliers list loads)
+        vendor: vendorName || fetchedInventory.vendor_id?.toString() || '',
         maxStockLevel: fetchedInventory.max_stock_level?.toString() || '',
         minStockLevel: fetchedInventory.min_stock_level?.toString() || '',
         minOrderLevel: fetchedInventory.min_order_level?.toString() || '',
@@ -157,6 +160,17 @@ export const EditInventoryPage = () => {
       setEcoFriendly(fetchedInventory.eco_friendly || false);
     }
   }, [fetchedInventory]);
+
+  // Once suppliers list is loaded, if formData.vendor is still a numeric id string, convert it to the supplier name for display
+  useEffect(() => {
+    if (!formData.vendor) return;
+    if (/^\d+$/.test(formData.vendor) && suppliers.length > 0) {
+      const match = suppliers.find((s: any) => String(s.id) === formData.vendor);
+      if (match && match.company_name && formData.vendor !== match.company_name) {
+        setFormData(prev => ({ ...prev, vendor: match.company_name }));
+      }
+    }
+  }, [suppliers, formData.vendor]);
 
   // Handle errors
   useEffect(() => {
@@ -212,7 +226,13 @@ export const EditInventoryPage = () => {
       min_stock_level: formData.minStockLevel || "0",
       min_order_level: formData.minOrderLevel || "0",
       // Use rate_contract_vendor_code to align with create endpoint (retain legacy key if backend still expects it)
-      rate_contract_vendor_code: formData.vendor ? parseInt(formData.vendor) : null,
+      // Map vendor name back to id
+      rate_contract_vendor_code: (() => {
+        if (!formData.vendor) return null;
+        if (/^\d+$/.test(formData.vendor)) return parseInt(formData.vendor);
+        const found = suppliers.find((s: any) => s.company_name === formData.vendor);
+        return found ? found.id : null;
+      })(),
       criticality: criticalityValue,
       expiry_date: formatExpiryDate(formData.expiryDate),
       unit: formData.unit || "",
@@ -553,7 +573,11 @@ export const EditInventoryPage = () => {
                     <InputLabel shrink>Vendor</InputLabel>
                     <MuiSelect
                       value={formData.vendor}
-                      onChange={handleSelectChange('vendor')}
+                      // Store vendor name as value
+                      onChange={(e) => {
+                        const val = e.target.value as string;
+                        setFormData(prev => ({ ...prev, vendor: val }));
+                      }}
                       label="Vendor"
                       notched
                       displayEmpty
@@ -563,7 +587,7 @@ export const EditInventoryPage = () => {
                         {suppliersLoading ? 'Loading...' : 'Select Vendor'}
                       </MenuItem>
                       {suppliers.map((supplier: any) => (
-                        <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                        <MenuItem key={supplier.id} value={supplier.company_name}>
                           {supplier.company_name}
                         </MenuItem>
                       ))}
