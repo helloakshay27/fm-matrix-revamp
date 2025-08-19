@@ -94,18 +94,21 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
     }
   };
   if (!data) {
+    const showDownload = !['itemsStatus', 'categoryWise'].includes(type);
     return (
       <div className={`bg-white rounded-lg border border-gray-200 p-6 shadow-sm ${className}`}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownload}
-            disabled={downloadLoading || !dateRange}
-          >
-            <Download className="w-4 h-4" />
-          </Button>
+          {showDownload && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownload}
+              disabled={downloadLoading || !dateRange}
+            >
+              <Download className="w-4 h-4" />
+            </Button>
+          )}
         </div>
         <div className="flex items-center justify-center h-32 text-gray-500">
           No data available
@@ -578,17 +581,19 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   };
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 p-4 shadow-sm h-[420px] flex flex-col ${className}`}>
+  <div className={`bg-white rounded-lg border border-gray-200 p-4 shadow-sm h-[420px] flex flex-col ${className}`}>
       <div className="flex items-center justify-between mb-4 shrink-0">
         <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleDownload}
-          disabled={downloadLoading || !dateRange}
-        >
-          <Download className="w-4 h-4" />
-        </Button>
+    {!['itemsStatus', 'categoryWise'].includes(type) && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            disabled={downloadLoading || !dateRange}
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+        )}
       </div>
       <div className="flex-1 min-h-0 overflow-hidden">
         <div className="h-full overflow-y-auto pr-1 custom-scrollbar">
