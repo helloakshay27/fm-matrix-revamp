@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,23 +7,33 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Info, FileText, Users, Settings, AlertTriangle, Search } from 'lucide-react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Info, FileText, Users, Settings, AlertTriangle, Search, Loader2, Paperclip } from 'lucide-react';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField, Checkbox, FormControlLabel } from '@mui/material';
+import { incidentService, type Incident } from '@/services/incidentService';
 
 export const EditIncidentDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [incident, setIncident] = useState<Incident | null>(null);
+
+  // Determine if we're in Safety or Maintenance context
+  const isSafetyContext = location.pathname.startsWith('/safety');
+  const basePath = isSafetyContext ? '/safety' : '/maintenance';
 
   const [formData, setFormData] = useState({
-    year: '2025',
-    month: 'August',
-    day: '12',
-    hour: '12',
-    minute: '25',
-    incidentDate: '2025-01-29',
-    incidentTime: '15:21',
-    location: 'Building A, Floor 3',
+    year: '',
+    month: '',
+    day: '',
+    hour: '',
+    minute: '',
+    incidentDate: '',
+    incidentTime: '',
+    location: '',
     building: '',
     categoryForIncident: '',
     primaryCategory: '',
@@ -36,7 +46,7 @@ export const EditIncidentDetailsPage = () => {
     severity: '',
     probability: '',
     incidentLevel: '',
-    description: 'ygyuiyi',
+    description: '',
     propertyDamageHappened: '',
     propertyDamageCategory: '',
     damageCoveredInsurance: '',
@@ -45,19 +55,18 @@ export const EditIncidentDetailsPage = () => {
     rca: '',
     correctiveAction: '',
     preventiveAction: '',
-    incidentType: 'accident',
-    reportedBy: 'John Doe',
+    incidentType: '',
+    reportedBy: '',
     witnessName: '',
-    injuryOccurred: 'no',
-    propertyDamage: 'no',
-    immediateAction: 'Area secured and cleaned',
-    rootCause: 'Under investigation',
-    preventiveMeasures: 'To be determined',
-    status: 'open',
+    injuryOccurred: '',
+    propertyDamage: '',
+    immediateAction: '',
+    rootCause: '',
+    preventiveMeasures: '',
+    status: '',
     assignedTo: '',
-    priority: 'medium',
+    priority: '',
     witnesses: [
-      { name: '', mobile: '' },
       { name: '', mobile: '' }
     ],
     equipmentPropertyDamagedCost: '',
@@ -79,7 +88,437 @@ export const EditIncidentDetailsPage = () => {
     attachments: null
   });
 
-  const handleInputChange = (field: string, value: string | boolean | any[]) => {
+  const [formKey, setFormKey] = useState(0);
+
+  // State for buildings and categories (same as AddIncidentPage)
+  const [buildings, setBuildings] = useState<{ id: number; name: string }[]>([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  // Category hierarchy states
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [subCategories, setSubCategories] = useState<any[]>([]);
+  const [subSubCategories, setSubSubCategories] = useState<any[]>([]);
+  const [subSubSubCategories, setSubSubSubCategories] = useState<any[]>([]);
+  // Secondary hierarchy
+  const [secondaryCategories, setSecondaryCategories] = useState<{ id: number; name: string }[]>([]);
+  const [secondarySubCategories, setSecondarySubCategories] = useState<any[]>([]);
+  const [secondarySubSubCategories, setSecondarySubSubCategories] = useState<any[]>([]);
+  const [secondarySubSubSubCategories, setSecondarySubSubSubCategories] = useState<any[]>([]);
+  // Incident levels
+  const [incidentLevels, setIncidentLevels] = useState<{ id: number; name: string }[]>([]);
+  // Severity and Probability options (if available from API)
+  const [severityOptions, setSeverityOptions] = useState<{ id: number; name: string }[]>([]);
+  const [probabilityOptions, setProbabilityOptions] = useState<{ id: number; name: string }[]>([]);
+  // Attachments state
+  const [existingAttachments, setExistingAttachments] = useState<any[]>([]);
+  const [newAttachments, setNewAttachments] = useState<File[]>([]);
+
+  // Debug form data changes
+  useEffect(() => {
+    console.log('Form data state updated:', formData);
+  }, [formData]);
+
+  // Helper to calculate and set incident level based on risk score (same as AddIncidentPage)
+  const calculateAndSetIncidentLevel = (severity: string, probability: string) => {
+    const sev = parseInt(severity);
+    const prob = parseInt(probability);
+    if (!sev || !prob) {
+      setFormData(prev => ({ ...prev, incidentLevel: '' }));
+      return;
+    }
+    const riskScore = sev * prob;
+    let riskLevelText = '';
+
+    // Determine risk level text based on score
+    if (riskScore >= 1 && riskScore <= 6) {
+      riskLevelText = 'Low Risk';
+    } else if (riskScore >= 8 && riskScore <= 12) {
+      riskLevelText = 'Medium Risk';
+    } else if (riskScore >= 15 && riskScore <= 20) {
+      riskLevelText = 'High Risk';
+    } else if (riskScore > 20) {
+      riskLevelText = 'Extreme Risk';
+    }
+
+    // Find the incident level that matches the risk level text
+    const matchedLevel = incidentLevels.find(level => {
+      const levelName = level.name.toLowerCase();
+      const riskText = riskLevelText.toLowerCase();
+
+      // Try different matching strategies
+      return levelName.includes(riskText) ||
+        levelName.includes(riskText.replace(' ', '')) ||
+        (riskText === 'low risk' && (levelName.includes('level 1') || levelName.includes('1'))) ||
+        (riskText === 'medium risk' && (levelName.includes('level 2') || levelName.includes('2'))) ||
+        (riskText === 'high risk' && (levelName.includes('level 3') || levelName.includes('3'))) ||
+        (riskText === 'extreme risk' && (levelName.includes('level 4') || levelName.includes('4')));
+    });
+
+    // Set the incident level ID if found, otherwise use fallback based on risk score
+    let levelId = '';
+    if (matchedLevel) {
+      levelId = String(matchedLevel.id);
+    } else {
+      // Fallback: try to match by position in array if available
+      if (incidentLevels.length > 0) {
+        if (riskScore >= 1 && riskScore <= 6 && incidentLevels[0]) {
+          levelId = String(incidentLevels[0].id);
+        } else if (riskScore >= 8 && riskScore <= 12 && incidentLevels[1]) {
+          levelId = String(incidentLevels[1].id);
+        } else if (riskScore >= 15 && riskScore <= 20 && incidentLevels[2]) {
+          levelId = String(incidentLevels[2].id);
+        } else if (riskScore > 20 && incidentLevels[3]) {
+          levelId = String(incidentLevels[3].id);
+        } else {
+          // Use first available level as fallback
+          levelId = String(incidentLevels[0].id);
+        }
+      }
+    }
+
+    // Force update the incident level
+    setFormData(prev => ({
+      ...prev,
+      incidentLevel: levelId
+    }));
+  };
+
+  // Recalculate incident level whenever severity or probability changes
+  useEffect(() => {
+    if (formData.severity && formData.probability && incidentLevels.length > 0) {
+      calculateAndSetIncidentLevel(formData.severity, formData.probability);
+    }
+  }, [formData.severity, formData.probability, incidentLevels]);
+
+  // Fetch all tags and buildings on mount (same as AddIncidentPage)
+  useEffect(() => {
+    const fetchAll = async () => {
+      // Get baseUrl and token from localStorage, ensure baseUrl starts with https://
+      let baseUrl = localStorage.getItem('baseUrl') || '';
+      const token = localStorage.getItem('token') || '';
+      if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+        baseUrl = 'https://' + baseUrl.replace(/^\/\/+/, '');
+      }
+
+      // Fetch buildings
+      try {
+        const response = await fetch(`${baseUrl}/pms/buildings.json`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const result = await response.json();
+          setBuildings(Array.isArray(result.buildings) ? result.buildings.map((b: any) => ({ id: b.id, name: b.name })) : []);
+          console.log('Loaded buildings:', result.buildings?.length || 0);
+        } else {
+          setBuildings([]);
+        }
+      } catch {
+        setBuildings([]);
+      }
+
+      // Fetch incident levels
+      try {
+        const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const result = await response.json();
+          const levels = result.data
+            .filter((item: any) => item.tag_type === 'IncidenceLevel')
+            .map(({ id, name }: any) => ({ id, name }));
+          setIncidentLevels(levels);
+          console.log('Loaded incident levels:', levels.length);
+        } else {
+          setIncidentLevels([]);
+        }
+      } catch {
+        setIncidentLevels([]);
+      }
+
+      // Fetch all tags for categories
+      try {
+        const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const result = await response.json();
+          const data = result.data || [];
+          console.log('Loaded tag data:', data.length, 'items');
+
+          // Primary hierarchy
+          const allCategories = data.filter((item: any) => item.tag_type === 'IncidenceCategory' && item.parent_id === null);
+          setCategories(allCategories.map((item: any) => ({ id: item.id, name: item.name })));
+          console.log('Loaded categories:', allCategories.length);
+
+          const allSubCategories = data.filter((item: any) => item.tag_type === 'IncidenceSubCategory');
+          setSubCategories(allSubCategories.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
+          console.log('Loaded sub categories:', allSubCategories.length);
+
+          const allSubSubCategories = data.filter((item: any) => item.tag_type === 'IncidenceSubSubCategory');
+          setSubSubCategories(allSubSubCategories.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
+          console.log('Loaded sub sub categories:', allSubSubCategories.length);
+
+          const allSubSubSubCategories = data.filter((item: any) => item.tag_type === 'IncidenceSubSubSubCategory');
+          setSubSubSubCategories(allSubSubSubCategories.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
+          console.log('Loaded sub sub sub categories:', allSubSubSubCategories.length);
+          // Secondary hierarchy
+          const allSecondaryCategories = data.filter((item: any) => item.tag_type === 'IncidenceSecondaryCategory' && item.parent_id === null);
+          setSecondaryCategories(allSecondaryCategories.map((item: any) => ({ id: item.id, name: item.name })));
+          console.log('Loaded secondary categories:', allSecondaryCategories.length);
+
+          const allSecondarySubCategories = data.filter((item: any) => item.tag_type === 'IncidenceSecondarySubCategory');
+          setSecondarySubCategories(allSecondarySubCategories.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
+          console.log('Loaded secondary sub categories:', allSecondarySubCategories.length);
+
+          const allSecondarySubSubCategories = data.filter((item: any) => item.tag_type === 'IncidenceSecondarySubSubCategory');
+          setSecondarySubSubCategories(allSecondarySubSubCategories.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
+          console.log('Loaded secondary sub sub categories:', allSecondarySubSubCategories.length);
+
+          const allSecondarySubSubSubCategories = data.filter((item: any) => item.tag_type === 'IncidenceSecondarySubSubSubCategory');
+          setSecondarySubSubSubCategories(allSecondarySubSubSubCategories.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
+          console.log('Loaded secondary sub sub sub categories:', allSecondarySubSubSubCategories.length);
+
+          // Try to fetch severity and probability options if available from API
+          const allSeverityOptions = data.filter((item: any) => item.tag_type === 'Severity' || item.tag_type === 'IncidenceSeverity');
+          if (allSeverityOptions.length > 0) {
+            setSeverityOptions(allSeverityOptions.map((item: any) => ({ id: item.id, name: item.name })));
+            console.log('Loaded severity options from API:', allSeverityOptions.length, allSeverityOptions);
+          } else {
+            console.log('No severity options found in API, will use hardcoded values');
+            setSeverityOptions([]);
+          }
+
+          const allProbabilityOptions = data.filter((item: any) => item.tag_type === 'Probability' || item.tag_type === 'IncidenceProbability');
+          if (allProbabilityOptions.length > 0) {
+            setProbabilityOptions(allProbabilityOptions.map((item: any) => ({ id: item.id, name: item.name })));
+            console.log('Loaded probability options from API:', allProbabilityOptions.length, allProbabilityOptions);
+          } else {
+            console.log('No probability options found in API, will use hardcoded values');
+            setProbabilityOptions([]);
+          }
+        }
+      } catch { }
+
+      // Mark data as loaded
+      setDataLoaded(true);
+    };
+    fetchAll();
+  }, []);
+
+  // Fetch incident details after API data is loaded
+  useEffect(() => {
+    if (id && dataLoaded) {
+      fetchIncidentDetails();
+    }
+  }, [id, dataLoaded]);
+
+  const fetchIncidentDetails = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Fetching incident details for ID:', id);
+      const incidentData = await incidentService.getIncidentById(id!);
+      console.log('Received incident data:', JSON.stringify(incidentData, null, 2));
+
+      if (incidentData) {
+        setIncident(incidentData);
+        populateFormData(incidentData);
+      } else {
+        setError('Incident not found');
+      }
+    } catch (err) {
+      setError('Failed to fetch incident details');
+      console.error('Error fetching incident:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const populateFormData = (incident: Incident) => {
+    console.log('Populating form data with incident:', incident);
+    console.log('Incident severity/probability debug:', {
+      severity: incident.severity,
+      severityType: typeof incident.severity,
+      probability: incident.probability,
+      probabilityType: typeof incident.probability,
+      severityOptionsLength: severityOptions.length,
+      probabilityOptionsLength: probabilityOptions.length
+    });
+    console.log('Incident fields for categories:', {
+      inc_sec_sub_sub_category_id: incident.inc_sec_sub_sub_category_id,
+      inc_sec_sub_sub_sub_category_id: incident.inc_sec_sub_sub_sub_category_id,
+      inc_sub_sub_sub_category_id: incident.inc_sub_sub_sub_category_id,
+      sub_sub_sub_category_name: incident.sub_sub_sub_category_name,
+      sec_sub_sub_sub_category_name: incident.sec_sub_sub_sub_category_name
+    });
+
+    // Helper function to validate if a value exists in options
+    const getValidOptionValue = (value: any, options: any[]) => {
+      if (!value) return '';
+      const stringValue = value.toString();
+      const exists = options.some(option => option.id.toString() === stringValue);
+      console.log(`Validating ${stringValue} against ${options.length} options:`, exists);
+      return exists ? stringValue : '';
+    };
+
+    // Helper function to find ID by name when ID is missing
+    const getIdByName = (name: string, options: any[]) => {
+      if (!name) return '';
+      const found = options.find(option => option.name.toLowerCase() === name.toLowerCase());
+      console.log(`Finding ID by name "${name}" in ${options.length} options:`, found ? `Found ID ${found.id}` : 'Not found');
+      return found ? found.id.toString() : '';
+    };
+
+    // Parse the incident time
+    const incTime = new Date(incident.inc_time);
+
+    // Handle severity and probability values properly
+    // Convert to string for dropdown comparison, handle both API options and hardcoded fallbacks
+    // Only set values if they exist in the available options
+    let severityValue = '';
+    let probabilityValue = '';
+
+    if (severityOptions.length > 0) {
+      // Use API options
+      severityValue = getValidOptionValue(incident.severity, severityOptions);
+    } else if (incident.severity) {
+      // Use hardcoded options - validate against hardcoded values 1-5
+      const severityNum = parseInt(incident.severity.toString());
+      if (severityNum >= 1 && severityNum <= 5) {
+        severityValue = severityNum.toString();
+      }
+    }
+
+    if (probabilityOptions.length > 0) {
+      // Use API options
+      probabilityValue = getValidOptionValue(incident.probability, probabilityOptions);
+    } else if (incident.probability) {
+      // Use hardcoded options - validate against hardcoded values 1-5
+      const probabilityNum = parseInt(incident.probability.toString());
+      if (probabilityNum >= 1 && probabilityNum <= 5) {
+        probabilityValue = probabilityNum.toString();
+      }
+    }
+
+    console.log('Computed severity/probability values:', {
+      originalSeverity: incident.severity,
+      computedSeverity: severityValue,
+      originalProbability: incident.probability,
+      computedProbability: probabilityValue,
+      usingApiOptions: severityOptions.length > 0 && probabilityOptions.length > 0,
+      severityValidation: severityOptions.length > 0 ? 'API' : 'Hardcoded',
+      probabilityValidation: probabilityOptions.length > 0 ? 'API' : 'Hardcoded'
+    });
+
+    // Create the updated form data
+    const updatedFormData = {
+      year: incTime.getFullYear().toString(),
+      month: incTime.toLocaleString('default', { month: 'long' }),
+      day: incTime.getDate().toString(),
+      hour: incTime.getHours().toString(),
+      minute: incTime.getMinutes().toString(),
+      incidentDate: incident.inc_time,
+      incidentTime: incident.inc_time,
+      location: incident.building_name || '',
+      building: getValidOptionValue(incident.building_id, buildings),
+      categoryForIncident: getValidOptionValue(incident.inc_category_id, categories),
+      primaryCategory: getValidOptionValue(incident.inc_sub_category_id, subCategories),
+      subCategory: getValidOptionValue(incident.inc_sub_sub_category_id, subSubCategories),
+      subSubCategory: getValidOptionValue(incident.inc_sub_sub_sub_category_id, subSubSubCategories) ||
+        getIdByName(incident.sub_sub_sub_category_name || '', subSubSubCategories),
+      secondaryCategory: getValidOptionValue(incident.inc_sec_category_id, secondaryCategories),
+      secondarySubCategory: getValidOptionValue(incident.inc_sec_sub_category_id, secondarySubCategories),
+      secondarySubSubCategory: getValidOptionValue(incident.inc_sec_sub_sub_category_id, secondarySubSubCategories),
+      secondarySubSubSubCategory: getValidOptionValue(incident.inc_sec_sub_sub_sub_category_id, secondarySubSubSubCategories) ||
+        getIdByName(incident.sec_sub_sub_sub_category_name || '', secondarySubSubSubCategories),
+      severity: severityValue,
+      probability: probabilityValue,
+      incidentLevel: getValidOptionValue(incident.inc_level_id, incidentLevels),
+      description: incident.description || '',
+      propertyDamageHappened: incident.property_damage === 'true' || String(incident.property_damage) === 'true' ? 'true' :
+        incident.property_damage === 'false' || String(incident.property_damage) === 'false' ? 'false' :
+          incident.property_damage === null ? '' : String(incident.property_damage || ''),
+      propertyDamageCategory: incident.property_damage_category_name || '',
+      damageCoveredInsurance: incident.damage_covered_insurance === 'true' || String(incident.damage_covered_insurance) === 'true' ? 'true' :
+        incident.damage_covered_insurance === 'false' || String(incident.damage_covered_insurance) === 'false' ? 'false' :
+          incident.damage_covered_insurance === null ? '' : String(incident.damage_covered_insurance || ''),
+      insuredBy: incident.insured_by || '',
+      primaryRootCauseCategory: incident.rca_category || '',
+      rca: incident.rca || '',
+      correctiveAction: incident.corrective_action || '',
+      preventiveAction: incident.preventive_action || '',
+      incidentType: 'accident',
+      reportedBy: incident.created_by || '',
+      witnessName: '',
+      injuryOccurred: 'no',
+      propertyDamage: 'no',
+      immediateAction: '',
+      rootCause: incident.rca || '',
+      preventiveMeasures: incident.preventive_action || '',
+      status: incident.current_status || '',
+      assignedTo: incident.assigned_to_user_name || '',
+      priority: 'medium',
+      witnesses: incident.incident_witnesses && incident.incident_witnesses.length > 0
+        ? incident.incident_witnesses.map((w) => ({ name: w.name || '', mobile: w.mobile || '' }))
+        : [{ name: '', mobile: '' }],
+      equipmentPropertyDamagedCost: incident.equipment_property_damaged_cost?.toString() || '',
+      productionLoss: incident.production_loss?.toString() || '',
+      treatmentCost: incident.treatment_cost?.toString() || '',
+      absenteeismCost: incident.absenteeism_cost?.toString() || '',
+      otherCost: incident.other_cost?.toString() || '',
+      totalCost: incident.total_cost?.toString() || '0.00',
+      firstAidProvided: incident.first_aid_provided === 'Yes',
+      firstAidAttendants: incident.incident_detail?.name_first_aid_attendants || '',
+      medicalTreatment: incident.sent_for_medical_treatment === 'Yes',
+      treatmentFacility: incident.incident_detail?.name_and_address_treatment_facility || '',
+      attendingPhysician: incident.incident_detail?.name_and_address_attending_physician || '',
+      investigationTeam: incident.incident_investigations && incident.incident_investigations.length > 0
+        ? incident.incident_investigations.map((inv) => ({
+          name: inv.name || '',
+          mobile: inv.mobile || '',
+          designation: inv.designation || ''
+        }))
+        : [{ name: '', mobile: '', designation: '' }],
+      supportRequired: Boolean(incident.support_required),
+      factsCorrect: Boolean(incident.disclaimer),
+      attachments: null
+    };
+
+    // Handle existing attachments
+    if (incident.attachments && incident.attachments.length > 0) {
+      setExistingAttachments(incident.attachments);
+      console.log('Loaded existing attachments:', incident.attachments);
+    }
+
+    console.log('Available options for validation:', {
+      buildings: buildings.length,
+      categories: categories.length,
+      subCategories: subCategories.length,
+      subSubCategories: subSubCategories.length,
+      subSubSubCategories: subSubSubCategories.length,
+      secondaryCategories: secondaryCategories.length,
+      secondarySubCategories: secondarySubCategories.length,
+      secondarySubSubCategories: secondarySubSubCategories.length,
+      secondarySubSubSubCategories: secondarySubSubSubCategories.length,
+      incidentLevels: incidentLevels.length,
+      severityOptions: severityOptions.length,
+      probabilityOptions: probabilityOptions.length
+    });
+
+    console.log('Detailed category options:', {
+      subSubSubCategories: subSubSubCategories,
+      secondarySubSubCategories: secondarySubSubCategories,
+      secondarySubSubSubCategories: secondarySubSubSubCategories
+    });
+
+    console.log('Setting form data with:', updatedFormData);
+    console.log('Final severity/probability values being set:', {
+      severity: updatedFormData.severity,
+      probability: updatedFormData.probability
+    });
+    setFormData(updatedFormData);
+    setFormKey(prev => prev + 1); // Force re-render
+    console.log('Form data set successfully');
+  }; const handleInputChange = (field: string, value: string | boolean | any[]) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -102,17 +541,87 @@ export const EditIncidentDetailsPage = () => {
     }
   };
 
-  const handleUpdateDetails = () => {
-    console.log('Incident details updated:', formData);
-    navigate(`/maintenance/safety/incident/${id}`);
+  const handleUpdateDetails = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+
+      // Prepare the form data with new attachments
+      const updatedFormData = {
+        ...formData,
+        newAttachments: newAttachments, // Pass all new attachments
+        attachments: null // Clear this to avoid duplication
+      };
+
+      console.log('Updating incident with attachments:', {
+        existingAttachments: existingAttachments.length,
+        newAttachments: newAttachments.length
+      });
+
+      const updatedIncident = await incidentService.updateIncident(id!, updatedFormData);
+      console.log('Incident updated successfully:', updatedIncident);
+
+      // Navigate back to the details page
+      navigate(`${basePath}/incident/details/${id}`);
+    } catch (err) {
+      setError('Failed to update incident details');
+      console.error('Error updating incident:', err);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handleCancel = () => {
+    navigate(`${basePath}/incident/details/${id}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-white min-h-screen">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-6 h-6 animate-spin" />
+            <span>Loading incident details...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !incident) {
+    return (
+      <div className="p-6 bg-white min-h-screen">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error || 'Incident not found'}</p>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`${basePath}/incident`)}
+            >
+              Back to List
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Debug rendering values
+  console.log('Rendering EditIncidentDetailsPage with:', {
+    formDataSeverity: formData.severity,
+    formDataProbability: formData.probability,
+    severityOptionsLength: severityOptions.length,
+    probabilityOptionsLength: probabilityOptions.length,
+    dataLoaded,
+    incident: incident?.id
+  });
 
   return (
     <div className="p-6 bg-white min-h-screen">
       {/* Header */}
       <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
-          <span>Safety</span>
+          <span>{isSafetyContext ? 'Safety' : 'Maintenance'}</span>
           <span className="mx-2">{'>'}</span>
           <span>Incident</span>
           <span className="mx-2">{'>'}</span>
@@ -126,7 +635,7 @@ export const EditIncidentDetailsPage = () => {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-6" key={formKey}>
         {/* Basic Information */}
         <Card className="mb-6 border border-[#D9D9D9]">
           <CardHeader className="bg-[#F6F4EE] border-b border-[#D9D9D9]">
@@ -236,9 +745,11 @@ export const EditIncidentDetailsPage = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value=""><em>Select Building</em></MenuItem>
-                  <MenuItem value="1">Building A</MenuItem>
-                  <MenuItem value="2">Building B</MenuItem>
-                  <MenuItem value="3">Building C</MenuItem>
+                  {buildings.map((building) => (
+                    <MenuItem key={building.id} value={building.id.toString()}>
+                      {building.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
 
@@ -254,9 +765,11 @@ export const EditIncidentDetailsPage = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value=""><em>Select Primary Category</em></MenuItem>
-                  <MenuItem value="1">Safety</MenuItem>
-                  <MenuItem value="2">Security</MenuItem>
-                  <MenuItem value="3">Fire</MenuItem>
+                  {categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
 
@@ -271,9 +784,13 @@ export const EditIncidentDetailsPage = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value=""><em>Select Sub Category</em></MenuItem>
-                  <MenuItem value="1">Accident</MenuItem>
-                  <MenuItem value="2">Near Miss</MenuItem>
-                  <MenuItem value="3">Property Damage</MenuItem>
+                  {subCategories
+                    .filter(subCat => subCat.parent_id === parseInt(formData.categoryForIncident))
+                    .map((subCategory) => (
+                      <MenuItem key={subCategory.id} value={subCategory.id.toString()}>
+                        {subCategory.name}
+                      </MenuItem>
+                    ))}
                 </MuiSelect>
               </FormControl>
 
@@ -288,9 +805,13 @@ export const EditIncidentDetailsPage = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value=""><em>Select Sub Sub Category</em></MenuItem>
-                  <MenuItem value="1">Minor</MenuItem>
-                  <MenuItem value="2">Major</MenuItem>
-                  <MenuItem value="3">Critical</MenuItem>
+                  {subSubCategories
+                    .filter(subSubCat => subSubCat.parent_id === parseInt(formData.primaryCategory))
+                    .map((subSubCategory) => (
+                      <MenuItem key={subSubCategory.id} value={subSubCategory.id.toString()}>
+                        {subSubCategory.name}
+                      </MenuItem>
+                    ))}
                 </MuiSelect>
               </FormControl>
 
@@ -305,9 +826,13 @@ export const EditIncidentDetailsPage = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value=""><em>Select Sub Sub Sub Category</em></MenuItem>
-                  <MenuItem value="1">Type A</MenuItem>
-                  <MenuItem value="2">Type B</MenuItem>
-                  <MenuItem value="3">Type C</MenuItem>
+                  {subSubSubCategories
+                    .filter(subSubSubCat => subSubSubCat.parent_id === parseInt(formData.subCategory))
+                    .map((subSubSubCategory) => (
+                      <MenuItem key={subSubSubCategory.id} value={subSubSubCategory.id.toString()}>
+                        {subSubSubCategory.name}
+                      </MenuItem>
+                    ))}
                 </MuiSelect>
               </FormControl>
 
@@ -323,9 +848,11 @@ export const EditIncidentDetailsPage = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value=""><em>Select Secondary Category</em></MenuItem>
-                  <MenuItem value="1">Environmental</MenuItem>
-                  <MenuItem value="2">Health</MenuItem>
-                  <MenuItem value="3">Compliance</MenuItem>
+                  {secondaryCategories.map((category) => (
+                    <MenuItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
 
@@ -340,9 +867,13 @@ export const EditIncidentDetailsPage = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value=""><em>Select Secondary Sub Category</em></MenuItem>
-                  <MenuItem value="1">Air Quality</MenuItem>
-                  <MenuItem value="2">Water Quality</MenuItem>
-                  <MenuItem value="3">Noise</MenuItem>
+                  {secondarySubCategories
+                    .filter(subCat => subCat.parent_id === parseInt(formData.secondaryCategory))
+                    .map((subCategory) => (
+                      <MenuItem key={subCategory.id} value={subCategory.id.toString()}>
+                        {subCategory.name}
+                      </MenuItem>
+                    ))}
                 </MuiSelect>
               </FormControl>
 
@@ -357,9 +888,13 @@ export const EditIncidentDetailsPage = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value=""><em>Select Secondary Sub Sub Category</em></MenuItem>
-                  <MenuItem value="1">Indoor</MenuItem>
-                  <MenuItem value="2">Outdoor</MenuItem>
-                  <MenuItem value="3">Mixed</MenuItem>
+                  {secondarySubSubCategories
+                    .filter(subSubCat => subSubCat.parent_id === parseInt(formData.secondarySubCategory))
+                    .map((subSubCategory) => (
+                      <MenuItem key={subSubCategory.id} value={subSubCategory.id.toString()}>
+                        {subSubCategory.name}
+                      </MenuItem>
+                    ))}
                 </MuiSelect>
               </FormControl>
 
@@ -374,9 +909,13 @@ export const EditIncidentDetailsPage = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value=""><em>Select Secondary Sub Sub Sub Category</em></MenuItem>
-                  <MenuItem value="1">Low Impact</MenuItem>
-                  <MenuItem value="2">Medium Impact</MenuItem>
-                  <MenuItem value="3">High Impact</MenuItem>
+                  {secondarySubSubSubCategories
+                    .filter(subSubSubCat => subSubSubCat.parent_id === parseInt(formData.secondarySubSubCategory))
+                    .map((subSubSubCategory) => (
+                      <MenuItem key={subSubSubCategory.id} value={subSubSubCategory.id.toString()}>
+                        {subSubSubCategory.name}
+                      </MenuItem>
+                    ))}
                 </MuiSelect>
               </FormControl>
 
@@ -385,16 +924,29 @@ export const EditIncidentDetailsPage = () => {
                 <MuiSelect
                   label="Severity *"
                   value={formData.severity}
-                  onChange={e => handleInputChange('severity', e.target.value)}
+                  onChange={e => {
+                    console.log('Severity changed to:', e.target.value);
+                    handleInputChange('severity', e.target.value);
+                  }}
                   displayEmpty
                   sx={fieldStyles}
                 >
                   <MenuItem value=""><em>Select Severity</em></MenuItem>
-                  <MenuItem value="1">Insignificant</MenuItem>
-                  <MenuItem value="2">Minor</MenuItem>
-                  <MenuItem value="3">Moderate</MenuItem>
-                  <MenuItem value="4">Major</MenuItem>
-                  <MenuItem value="5">Catastrophic</MenuItem>
+                  {severityOptions.length > 0 ? (
+                    severityOptions.map((severity) => (
+                      <MenuItem key={severity.id} value={severity.id.toString()}>
+                        {severity.name}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <>
+                      <MenuItem value="1">Insignificant</MenuItem>
+                      <MenuItem value="2">Minor</MenuItem>
+                      <MenuItem value="3">Moderate</MenuItem>
+                      <MenuItem value="4">Major</MenuItem>
+                      <MenuItem value="5">Catastrophic</MenuItem>
+                    </>
+                  )}
                 </MuiSelect>
               </FormControl>
 
@@ -403,16 +955,29 @@ export const EditIncidentDetailsPage = () => {
                 <MuiSelect
                   label="Probability *"
                   value={formData.probability}
-                  onChange={e => handleInputChange('probability', e.target.value)}
+                  onChange={e => {
+                    console.log('Probability changed to:', e.target.value);
+                    handleInputChange('probability', e.target.value);
+                  }}
                   displayEmpty
                   sx={fieldStyles}
                 >
                   <MenuItem value=""><em>Select Probability</em></MenuItem>
-                  <MenuItem value="1">Rare</MenuItem>
-                  <MenuItem value="2">Possible</MenuItem>
-                  <MenuItem value="3">Likely</MenuItem>
-                  <MenuItem value="4">Often</MenuItem>
-                  <MenuItem value="5">Frequent/ Almost certain</MenuItem>
+                  {probabilityOptions.length > 0 ? (
+                    probabilityOptions.map((probability) => (
+                      <MenuItem key={probability.id} value={probability.id.toString()}>
+                        {probability.name}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <>
+                      <MenuItem value="1">Rare</MenuItem>
+                      <MenuItem value="2">Possible</MenuItem>
+                      <MenuItem value="3">Likely</MenuItem>
+                      <MenuItem value="4">Often</MenuItem>
+                      <MenuItem value="5">Frequent/ Almost certain</MenuItem>
+                    </>
+                  )}
                 </MuiSelect>
               </FormControl>
 
@@ -433,10 +998,11 @@ export const EditIncidentDetailsPage = () => {
                   }}
                 >
                   <MenuItem value=""><em>Select Level</em></MenuItem>
-                  <MenuItem value="1">Level 1 - Low Risk</MenuItem>
-                  <MenuItem value="2">Level 2 - Medium Risk</MenuItem>
-                  <MenuItem value="3">Level 3 - High Risk</MenuItem>
-                  <MenuItem value="4">Level 4 - Extreme Risk</MenuItem>
+                  {incidentLevels.map((level) => (
+                    <MenuItem key={level.id} value={level.id.toString()}>
+                      {level.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
                 {formData.severity && formData.probability && (
                   <div className="text-xs text-gray-600 mt-1">
@@ -1096,43 +1662,139 @@ export const EditIncidentDetailsPage = () => {
           <CardHeader className="bg-[#F6F4EE] border-b border-[#D9D9D9]">
             <CardTitle className="flex items-center gap-3 text-lg">
               <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center">
-                <span className="text-white text-sm">📎</span>
+                <Paperclip className="h-4 w-4" />
               </div>
-              <span className="text-[#1A1A1A] font-semibold uppercase">ATTACHMENTS</span>
+              <span className="text-[#1A1A1A] font-semibold uppercase">
+                ATTACHMENTS - {existingAttachments.length + newAttachments.length}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 bg-[#F6F7F7]">
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Existing Attachments */}
+              {existingAttachments.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium mb-3 text-gray-700">Current Attachments</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {existingAttachments.map((attachment, index) => (
+                      <div key={attachment.id} className="bg-white border rounded p-3">
+                        <div className="mb-2">
+                          <span className="text-sm text-gray-600 truncate">
+                            {attachment.doctype || 'File'}
+                          </span>
+                        </div>
+
+                        {/* Image Preview - using same logic as IncidentDetailsPage */}
+                        {attachment.doctype?.startsWith('image/') && (
+                          <img
+                            src={attachment.url}
+                            alt="Attachment"
+                            className="mt-2 w-full h-32 object-cover rounded"
+                          />
+                        )}
+
+                        <div className="flex gap-2 mt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(attachment.url, '_blank')}
+                            className="flex-1 text-xs"
+                          >
+                            View
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* New Attachments Upload */}
               <div>
-                <input
-                  type="file"
-                  onChange={(e) => handleInputChange('attachments', e.target.files ? e.target.files[0] : null)}
-                  className="hidden"
-                  id="file-upload"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                />
-                <label
-                  htmlFor="file-upload"
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 bg-white"
-                >
-                  Choose Files
-                </label>
-                <span className="ml-4 text-sm text-gray-500">
-                  {formData.attachments ? formData.attachments.name : 'No file chosen'}
-                </span>
+                <h4 className="text-sm font-medium mb-3 text-gray-700">Add New Attachments</h4>
+                <div>
+                  <input
+                    type="file"
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        const files = Array.from(e.target.files);
+                        setNewAttachments(prev => [...prev, ...files]);
+                        handleInputChange('attachments', e.target.files[0]);
+                      }
+                    }}
+                    className="hidden"
+                    id="file-upload"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp"
+                    multiple
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 bg-white"
+                  >
+                    Choose Files
+                  </label>
+                  <span className="ml-4 text-sm text-gray-500">
+                    {newAttachments.length > 0 ? `${newAttachments.length} file(s) selected` : 'No new files chosen'}
+                  </span>
+                </div>
+
+                {/* Preview New Attachments */}
+                {newAttachments.length > 0 && (
+                  <div className="mt-4">
+                    <h5 className="text-xs font-medium mb-2 text-gray-600">New Files to Upload:</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {newAttachments.map((file, index) => (
+                        <div key={index} className="bg-white border rounded p-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm text-gray-600 truncate" title={file.name}>
+                              {file.type || 'File'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNewAttachments(prev => prev.filter((_, i) => i !== index));
+                              }}
+                              className="text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50"
+                            >
+                              Remove
+                            </button>
+                          </div>
+
+                          {/* Preview for images - matching IncidentDetailsPage logic */}
+                          {file.type.startsWith('image/') && (
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                              className="mt-2 w-full h-32 object-cover rounded"
+                            />
+                          )}
+
+                          <div className="mt-2 text-xs text-gray-400">
+                            {file.name} • {(file.size / 1024).toFixed(1)} KB
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <Button
+                    style={{
+                      backgroundColor: '#C72030'
+                    }}
+                    className="text-white hover:opacity-90"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                  >
+                    Choose Files...
+                  </Button>
+                </div>
               </div>
 
-              <div>
-                <Button
-                  style={{
-                    backgroundColor: '#C72030'
-                  }}
-                  className="text-white hover:opacity-90"
-                  onClick={() => document.getElementById('file-upload')?.click()}
-                >
-                  Choose a file...
-                </Button>
-              </div>
+              {/* No attachments message */}
+              {existingAttachments.length === 0 && newAttachments.length === 0 && (
+                <p className="text-gray-600">No attachments available.</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -1141,19 +1803,34 @@ export const EditIncidentDetailsPage = () => {
         <div className="flex gap-3 pt-6">
           <Button
             variant="outline"
-            onClick={() => navigate(`/maintenance/safety/incident/${id}`)}
+            onClick={handleCancel}
+            disabled={saving}
             className="px-8"
           >
             Cancel
           </Button>
           <Button
             onClick={handleUpdateDetails}
-            style={{ backgroundColor: '#C72030' }}
+            disabled={saving}
+            style={{ backgroundColor: saving ? '#9CA3AF' : '#C72030' }}
             className="text-white hover:opacity-90 px-8"
           >
-            Update Details
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              'Update Details'
+            )}
           </Button>
         </div>
+
+        {error && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
       </div>
     </div>
   );

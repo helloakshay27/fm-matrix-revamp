@@ -336,7 +336,7 @@ export const AddIncidentPage = () => {
       if (incidentData.secondarySubSubSubCategory) form.append('incident[inc_sec_sub_sub_sub_category_id]', incidentData.secondarySubSubSubCategory);
 
       // Severity and Probability
-      form.append('incident[consequence_insignificant]', incidentData.severity);
+      form.append('incident[severity]', incidentData.severity);
       form.append('incident[probability]', incidentData.probability);
 
       // Incident Level (auto-calculated, if available)
