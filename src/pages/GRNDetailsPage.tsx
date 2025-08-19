@@ -69,7 +69,7 @@ export const GRNDetailsPage = () => {
 
   return <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
     {/* Header */}
-    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+    <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
       <div className="flex flex-col">
         <h1 className="font-work-sans font-bold text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">
           GRN DETAILS
@@ -84,6 +84,11 @@ export const GRNDetailsPage = () => {
 
       <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
         <div className="flex gap-2 flex-wrap">
+          {grnDetails.purchase_order?.plant_detail_id && !grnDetails.external_id && approvalStatus.all_level_approved && (
+            <Button size="sm" variant="outline" className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700">
+              Send to SAP
+            </Button>
+          )}
           <Button size="sm" variant="outline" className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700" onClick={handleFeeds}>
             <Rss className="w-4 h-4 mr-1" />
             Feeds
@@ -93,9 +98,6 @@ export const GRNDetailsPage = () => {
             Print
           </Button>
         </div>
-
-        {/* Logo placeholder */}
-
       </div>
     </div>
 
