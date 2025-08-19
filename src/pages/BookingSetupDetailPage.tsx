@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   ChevronDown,
   ChevronUp,
-  QrCode,
 } from "lucide-react";
 import {
   TextField,
@@ -15,10 +14,6 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Box,
-  Dialog,
-  DialogContent,
-  DialogActions,
 } from "@mui/material";
 import { useAppDispatch } from "@/store/hooks";
 import { facilityBookingSetupDetails } from "@/store/slices/facilityBookingsSlice";
@@ -102,8 +97,7 @@ export const BookingSetupDetailPage = () => {
     facilityName: "",
     isBookable: true,
     isRequest: false,
-    active: "Select",
-    department: "Select Department",
+    department: "",
     appKey: "",
     postpaid: false,
     prepaid: false,
@@ -243,8 +237,7 @@ export const BookingSetupDetailPage = () => {
         facilityName: response.fac_name,
         isBookable: response.fac_type === "bookable" ? true : false,
         isRequest: response.fac_type === "request" ? true : false,
-        active: response.active,
-        department: response.department_id,
+        department: response.department_id ?? "",
         appKey: response.app_key,
         postpaid: response.postpaid,
         prepaid: response.prepaid,
@@ -398,26 +391,15 @@ export const BookingSetupDetailPage = () => {
                     InputProps={{ readOnly: true }}
                   />
                   <FormControl>
-                    <InputLabel className="bg-[#F6F7F7]">Active*</InputLabel>
-                    <Select
-                      value={formData.active}
-                      label="Active*"
-                      disabled
-                    >
-                      <MenuItem value="Select">Select</MenuItem>
-                      <MenuItem value="1">Yes</MenuItem>
-                      <MenuItem value="0">No</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <FormControl>
                     <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
                     <Select
                       value={formData.department}
                       label="Department"
                       disabled
+                      displayEmpty
                     >
-                      <MenuItem value="Select Department">
-                        {loadingDepartments ? "Loading..." : "Select Department"}
+                      <MenuItem value="">
+                        {loadingDepartments ? "Loading..." : "All"}
                       </MenuItem>
                       {Array.isArray(departments) &&
                         departments.map((dept, index) => (
