@@ -400,7 +400,7 @@ export const StaffsDashboard = () => {
       {/* Tab Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
         <div className="p-4 pb-0">
-          <TabsList className="grid w-full grid-cols-4 bg-white border border-gray-200">
+          <TabsList className="grid grid-cols-4 bg-white border border-gray-200 mb-4">
             <TabsTrigger
               value="history"
               className="flex items-center gap-2 data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold"
