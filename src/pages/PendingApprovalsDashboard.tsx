@@ -100,7 +100,7 @@ export const PendingApprovalsDashboard = () => {
           : item.type === "WO"
             ? `finance/wo/details`
             : item.type === "GRN"
-              ? `finance/grn/details`
+              ? `finance/grn-srn/details`
               : `finance/invoice/details`;
       return (
         <Button

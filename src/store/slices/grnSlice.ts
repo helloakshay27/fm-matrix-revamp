@@ -88,14 +88,55 @@ export const createGRN = createAsyncThunk(
     }
 )
 
+// Fetch single GRN by ID
+export const fetchSingleGRN = createAsyncThunk(
+    'fetchSingleGRN',
+    async ({ id, baseUrl, token }: { id: number, baseUrl: string, token: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/pms/grns/${id}.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+            return response.data;
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to fetch GRN';
+            return rejectWithValue(message);
+        }
+    }
+);
+
+// Approve GRN
+export const approveGRN = createAsyncThunk(
+    'approveGRN',
+    async ({ id, baseUrl, token, data }: { id: number, baseUrl: string, token: string, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/pms/grns/${id}/update_approval.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+            return response.data;
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to approve GRN';
+            return rejectWithValue(message);
+        }
+    }
+);
+
 const getGRNSlice = createApiSlice("getGRN", getGRN);
 const getPurchaseOrdersListSlice = createApiSlice("getPurchaseOrdersList", getPurchaseOrdersList);
 const fetchSupplierDetailsSlice = createApiSlice("fetchSupplierDetails", fetchSupplierDetails);
 const fetchItemDetailsSlice = createApiSlice("fetchItemDetails", fetchItemDetails);
 const createGRNSlice = createApiSlice("createGRN", createGRN);
+const fetchSingleGRNSlice = createApiSlice("fetchSingleGRN", fetchSingleGRN);
+const approveGRNSlice = createApiSlice("approveGRN", approveGRN);
 
 export const getGRNReducer = getGRNSlice.reducer
 export const getPurchaseOrdersListReducer = getPurchaseOrdersListSlice.reducer
 export const fetchSupplierDetailsReducer = fetchSupplierDetailsSlice.reducer
 export const fetchItemDetailsReducer = fetchItemDetailsSlice.reducer
 export const createGRNReducer = createGRNSlice.reducer
+export const fetchSingleGRNReducer = fetchSingleGRNSlice.reducer
+export const approveGRNReducer = approveGRNSlice.reducer
