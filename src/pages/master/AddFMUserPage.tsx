@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLayout } from '@/contexts/LayoutContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import {
   TextField,
   Select,
@@ -211,7 +211,12 @@ export const AddFMUserPage = () => {
                     value={formData.firstName}
                     onChange={(e) => handleInputChange('firstName', e.target.value)}
                     required
-                    InputLabelProps={{ shrink: true }}
+                    InputLabelProps={{
+                      classes: {
+                        asterisk: "text-red-500", // Tailwind class for red color
+                      },
+                      shrink: true
+                    }}
                   />
                 </div>
                 <div>
@@ -222,7 +227,12 @@ export const AddFMUserPage = () => {
                     value={formData.lastName}
                     onChange={(e) => handleInputChange('lastName', e.target.value)}
                     required
-                    InputLabelProps={{ shrink: true }}
+                    InputLabelProps={{
+                      classes: {
+                        asterisk: "text-red-500", // Tailwind class for red color
+                      },
+                      shrink: true
+                    }}
                   />
                 </div>
                 <div>
@@ -233,7 +243,12 @@ export const AddFMUserPage = () => {
                     value={formData.mobileNumber}
                     onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
                     required
-                    InputLabelProps={{ shrink: true }}
+                    InputLabelProps={{
+                      classes: {
+                        asterisk: "text-red-500", // Tailwind class for red color
+                      },
+                      shrink: true
+                    }}
                   />
                 </div>
 
@@ -247,7 +262,12 @@ export const AddFMUserPage = () => {
                     value={formData.emailAddress}
                     onChange={(e) => handleInputChange('emailAddress', e.target.value)}
                     required
-                    InputLabelProps={{ shrink: true }}
+                    InputLabelProps={{
+                      classes: {
+                        asterisk: "text-red-500", // Tailwind class for red color
+                      },
+                      shrink: true
+                    }}
                   />
                 </div>
                 <div>
@@ -407,7 +427,7 @@ export const AddFMUserPage = () => {
                 </div>
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select User Type*</InputLabel>
+                    <InputLabel shrink>Select User Type<span className='text-red-500'>*</span></InputLabel>
                     <Select
                       value={formData.selectUserType}
                       onChange={(e) => handleInputChange('selectUserType', e.target.value)}
@@ -431,7 +451,7 @@ export const AddFMUserPage = () => {
                 </div>
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Role*</InputLabel>
+                    <InputLabel shrink>Select Role<span className='text-red-500'>*</span></InputLabel>
                     <Select
                       value={formData.selectRole}
                       onChange={(e) => handleInputChange('selectRole', e.target.value)}
@@ -454,7 +474,7 @@ export const AddFMUserPage = () => {
                 {/* Row 6 */}
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Access Level*</InputLabel>
+                    <InputLabel shrink>Select Access Level<span className='text-red-500'>*</span></InputLabel>
                     <Select
                       value={formData.selectAccessLevel}
                       onChange={(e) => {
@@ -490,7 +510,7 @@ export const AddFMUserPage = () => {
                           {...params}
                           label={
                             <span>
-                              Select Sites*
+                              Select Sites<span className='text-red-500'>*</span>
                             </span>
                           }
                           placeholder="Search and select sites..."
@@ -532,7 +552,7 @@ export const AddFMUserPage = () => {
                           {...params}
                           label={
                             <span>
-                              Select Companies*
+                              Select Companies<span className='text-red-500'>*</span>
                             </span>
                           }
                           placeholder="Search and select companies..."

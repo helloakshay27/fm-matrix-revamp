@@ -169,12 +169,6 @@ export const BookingSetupDashboard = () => {
       draggable: true,
     },
     {
-      key: 'bookBy',
-      label: 'Book by',
-      sortable: true,
-      draggable: true,
-    },
-    {
       key: 'bookBefore',
       label: 'Book before',
       sortable: true,

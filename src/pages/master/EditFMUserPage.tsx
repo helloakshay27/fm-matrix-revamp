@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useLayout } from '@/contexts/LayoutContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, ArrowLeft } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useLayout } from "@/contexts/LayoutContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 import {
   TextField,
   Select,
@@ -13,36 +13,215 @@ import {
   Box,
   Autocomplete,
   Chip,
-} from '@mui/material';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
-import { createFmUser, editFMUser, fetchRoles, fetchSuppliers, fetchUnits, getUserDetails } from '@/store/slices/fmUserSlice';
-import { fetchDepartmentData } from '@/store/slices/departmentSlice';
-import { fetchAllowedSites } from '@/store/slices/siteSlice';
-import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
-import { RootState } from '@/store/store';
-import { toast } from 'sonner';
-import { ticketManagementAPI } from '@/services/ticketManagementAPI';
+} from "@mui/material";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { Entity, fetchEntities } from "@/store/slices/entitiesSlice";
+import {
+  editFMUser,
+  fetchRoles,
+  fetchSuppliers,
+  fetchUnits,
+  getUserDetails,
+} from "@/store/slices/fmUserSlice";
+import { fetchDepartmentData } from "@/store/slices/departmentSlice";
+import { fetchAllowedSites } from "@/store/slices/siteSlice";
+import { fetchAllowedCompanies } from "@/store/slices/projectSlice";
+import { RootState } from "@/store/store";
+import { toast } from "sonner";
+import { ticketManagementAPI } from "@/services/ticketManagementAPI";
+
+// Define interfaces for data shapes
+interface UserAccount {
+  company_id?: number;
+}
+
+interface Site {
+  id: number;
+  name: string;
+}
+
+interface Company {
+  id: number;
+  name: string;
+}
+
+interface Supplier {
+  id: number;
+  name: string;
+}
+
+interface Unit {
+  id: number;
+  unit_name: string;
+  building?: { name: string };
+}
+
+interface Department {
+  id: number;
+  department_name: string;
+}
+
+interface Role {
+  id: number;
+  name: string;
+}
+
+interface LockUserPermission {
+  id?: number;
+  employee_id?: string;
+  designation?: string;
+  access_level?: string;
+  access_to?: string[];
+}
+
+interface UserData {
+  id?: number;
+  firstname?: string;
+  lastname?: string;
+  mobile?: string;
+  email?: string;
+  gender?: string;
+  entity_id?: number;
+  supplier_id?: number;
+  site_id?: number;
+  unit_id?: number;
+  department_id?: number;
+  user_type?: string;
+  role_id?: number;
+  urgency_email_enabled?: boolean;
+  lock_user_permission?: LockUserPermission;
+}
+
+interface FormData {
+  firstName: string;
+  lastName: string;
+  mobileNumber: string;
+  emailAddress: string;
+  gender: string;
+  selectEntity: string | number;
+  supplier: string | number;
+  employeeId: string;
+  baseSite: string | number;
+  selectBaseUnit: string | number;
+  selectDepartment: string | number;
+  designation: string;
+  selectUserType: string;
+  selectRole: string | number;
+  selectAccessLevel: string;
+  selectEmailPreference: string;
+  selectedSites: string[];
+  selectedCompanies: string[];
+}
+
+interface Payload {
+  user: {
+    site_id: string | number;
+    lock_user_permissions_attributes: {
+      id?: number;
+      account_id?: number;
+      employee_id: string;
+      designation: string;
+      unit_id: string | number;
+      department_id: string | number;
+      user_type: string;
+      lock_role_id: string | number;
+      access_level: string;
+      access_to: string[];
+      urgency_email_enabled: string;
+    }[];
+    firstname: string;
+    lastname: string;
+    mobile: string;
+    email: string;
+    gender: string;
+    entity_id: string | number;
+    supplier_id: string | number;
+  };
+  lock_user_permission?: number;
+}
 
 export const EditFMUserPage = () => {
-  const { id } = useParams()
+  const { id } = useParams<{ id: string }>(); // Explicitly type useParams
   const dispatch = useAppDispatch();
-  const baseUrl = localStorage.getItem('baseUrl');
-  const token = localStorage.getItem('token');
-
-  const { data: entitiesData, loading, error } = useAppSelector((state) => state.entities);
-  const { data: suppliers, loading: suppliersLoading, error: suppliersError } = useAppSelector((state) => state.fetchSuppliers);
-  const { data: units, loading: unitsLoading, error: unitsError } = useAppSelector((state) => state.fetchUnits);
-  const { data: department, loading: departmentLoading, error: departmentError } = useAppSelector((state) => state.department);
-  const { data: roles, loading: roleLoading, error: roleError } = useAppSelector((state) => state.fetchRoles);
-  const { sites } = useAppSelector((state) => state.site);
-  const { selectedCompany } = useAppSelector((state: RootState) => state.project);
-
-  const [userAccount, setUserAccount] = useState({})
-  const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
+  const { setCurrentSection } = useLayout();
+  const baseUrl = localStorage.getItem("baseUrl") || "";
+  const token = localStorage.getItem("token") || "";
+  const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id as
+    | number
+    | undefined;
 
-  const userId = JSON.parse(localStorage.getItem('user'))?.id;
+  // Type Redux state selectors
+  const {
+    data: entitiesData,
+    loading,
+    error,
+  } = useAppSelector((state: RootState) => state.entities);
+  const {
+    data: suppliers = [],
+    loading: suppliersLoading,
+    error: suppliersError,
+  } = useAppSelector((state: RootState) => state.fetchSuppliers) as {
+    data: Supplier[];
+    loading: boolean;
+    error: any;
+  };
+  const {
+    data: units = [],
+    loading: unitsLoading,
+    error: unitsError,
+  } = useAppSelector((state: RootState) => state.fetchUnits) as {
+    data: Unit[];
+    loading: boolean;
+    error: any;
+  };
+  const {
+    data: department = [],
+    loading: departmentLoading,
+    error: departmentError,
+  } = useAppSelector((state: RootState) => state.department) as {
+    data: Department[];
+    loading: boolean;
+    error: any;
+  };
+  const {
+    data: roles = [],
+    loading: roleLoading,
+    error: roleError,
+  } = useAppSelector((state: RootState) => state.fetchRoles) as {
+    data: Role[];
+    loading: boolean;
+    error: any;
+  };
+  const { sites } = useAppSelector((state: RootState) => state.site);
+  const { selectedCompany } = useAppSelector(
+    (state: RootState) => state.project
+  );
+
+  const [userAccount, setUserAccount] = useState<UserAccount>({});
+  const [lockId, setLockId] = useState<number | undefined>();
+  const [loadingSubmitting, setLoadingSubmitting] = useState<boolean>(false);
+  const [formData, setFormData] = useState<FormData>({
+    firstName: "",
+    lastName: "",
+    mobileNumber: "",
+    emailAddress: "",
+    gender: "",
+    selectEntity: "",
+    supplier: "",
+    employeeId: "",
+    baseSite: "",
+    selectBaseUnit: "",
+    selectDepartment: "",
+    designation: "",
+    selectUserType: "",
+    selectRole: "",
+    selectAccessLevel: "",
+    selectEmailPreference: "",
+    selectedSites: [],
+    selectedCompanies: [],
+  });
+  const [userData, setUserData] = useState<UserData>({});
 
   useEffect(() => {
     dispatch(fetchEntities());
@@ -50,139 +229,132 @@ export const EditFMUserPage = () => {
     dispatch(fetchUnits({ baseUrl, token }));
     dispatch(fetchDepartmentData());
     dispatch(fetchRoles({ baseUrl, token }));
-    dispatch(fetchAllowedSites(userId));
-    dispatch(fetchAllowedCompanies())
+    if (userId) {
+      dispatch(fetchAllowedSites(userId));
+    }
+    dispatch(fetchAllowedCompanies());
   }, [dispatch, baseUrl, token, userId]);
 
   useEffect(() => {
     const loadUserAccount = async () => {
       try {
-        const account = await ticketManagementAPI.getUserAccount();
+        const account =
+          (await ticketManagementAPI.getUserAccount()) as UserAccount;
         setUserAccount(account);
       } catch (error) {
-        console.error('Error loading user account:', error);
-        toast.error('Failed to load user account');
+        console.error("Error loading user account:", error);
+        toast.error("Failed to load user account");
       }
     };
 
     loadUserAccount();
-  }, [])
-
-  useEffect(() => {
-    setCurrentSection('Master');
-  }, [setCurrentSection]);
-
-  console.log(userAccount)
-
-  const [lockId, setLockId] = useState()
-  const [loadingSubmitting, setLoadingSubmitting] = useState(false)
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    mobileNumber: '',
-    emailAddress: '',
-    gender: '',
-    selectEntity: '',
-    supplier: '',
-    employeeId: '',
-    baseSite: '',
-    selectBaseUnit: '',
-    selectDepartment: '',
-    designation: '',
-    selectUserType: '',
-    selectRole: '',
-    selectAccessLevel: '',
-    selectEmailPreference: '',
-    selectedSites: [], // Store multiple selected site IDs
-    selectedCompanies: []
-  });
-
-  const [userData, setUserData] = useState({})
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await dispatch(getUserDetails({ baseUrl, token, id: Number(id) })).unwrap()
-        setUserData(response)
-      } catch (error) {
-        console.log(error)
-      }
-    }
-    fetchUser();
   }, []);
 
   useEffect(() => {
-    if (userData) {
-      console.log('userData:', userData);
-      setLockId(userData.lock_user_permission?.id)
+    setCurrentSection("Master");
+  }, [setCurrentSection]);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!id) return;
+      try {
+        const response = (await dispatch(
+          getUserDetails({ baseUrl, token, id: Number(id) })
+        ).unwrap()) as UserData;
+        setUserData(response);
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+      }
+    };
+    fetchUser();
+  }, [dispatch, baseUrl, token, id]);
+
+  useEffect(() => {
+    if (userData && Object.keys(userData).length > 0) {
+      setLockId(userData.lock_user_permission?.id);
       setFormData({
-        firstName: userData.firstname,
-        lastName: userData.lastname,
-        mobileNumber: userData.mobile,
-        emailAddress: userData.email,
-        gender: userData.gender,
-        selectEntity: userData.entity_id,
-        supplier: userData.supplier_id,
-        employeeId: userData.lock_user_permission?.employee_id,
-        baseSite: userData.site_id,
-        selectBaseUnit: userData.unit_id,
-        selectDepartment: userData.department_id,
-        designation: userData.lock_user_permission?.designation,
-        selectUserType: userData.user_type,
-        selectRole: userData.role_id,
-        selectAccessLevel: userData.lock_user_permission?.access_level,
-        selectEmailPreference: userData.urgency_email_enabled?.toString(),
-        selectedSites: userData.access_level === 'Site' ? userData.lock_user_permission?.access_to : [], // Store multiple selected site IDs
-        selectedCompanies: userData.access_level === 'Company' ? userData.lock_user_permission?.access_to : [],
-      })
+        firstName: userData.firstname || "",
+        lastName: userData.lastname || "",
+        mobileNumber: userData.mobile || "",
+        emailAddress: userData.email || "",
+        gender: userData.gender || "",
+        selectEntity: userData.entity_id || "",
+        supplier: userData.supplier_id || "",
+        employeeId: userData.lock_user_permission?.employee_id || "",
+        baseSite: userData.site_id || "",
+        selectBaseUnit: userData.unit_id || "",
+        selectDepartment: userData.department_id || "",
+        designation: userData.lock_user_permission?.designation || "",
+        selectUserType: userData.user_type || "",
+        selectRole: userData.role_id || "",
+        selectAccessLevel: userData.lock_user_permission?.access_level || "",
+        selectEmailPreference: userData.urgency_email_enabled?.toString() || "",
+        selectedSites:
+          userData.lock_user_permission?.access_level === "Site"
+            ? userData.lock_user_permission?.access_to || []
+            : [],
+        selectedCompanies:
+          userData.lock_user_permission?.access_level === "Company"
+            ? userData.lock_user_permission?.access_to || []
+            : [],
+      });
     } else {
-      console.log('userData not found for id:', id);
+      console.log("userData not found for id:", id);
     }
   }, [userData, id]);
 
-  const handleInputChange = (field: string, value: string | string[]) => {
+  const handleInputChange = (
+    field: keyof FormData,
+    value: string | string[]
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     if (!formData.firstName) {
-      toast.error('Please enter first name')
-      return false
+      toast.error("Please enter first name");
+      return false;
     } else if (!formData.lastName) {
-      toast.error('Please enter last name')
-      return false
+      toast.error("Please enter last name");
+      return false;
     } else if (!formData.mobileNumber) {
-      toast.error('Please enter mobile number')
-      return false
+      toast.error("Please enter mobile number");
+      return false;
     } else if (!formData.emailAddress) {
-      toast.error('Please enter email address')
-      return false
+      toast.error("Please enter email address");
+      return false;
     } else if (!formData.selectUserType) {
-      toast.error('Please select user type')
-      return false
+      toast.error("Please select user type");
+      return false;
     } else if (!formData.selectRole) {
-      toast.error('Please select role')
-      return false
+      toast.error("Please select role");
+      return false;
     } else if (!formData.selectAccessLevel) {
-      toast.error('Please select access level')
-      return false
-    } else if (formData.selectAccessLevel === 'Site' && formData.selectedSites.length === 0) {
-      toast.error('Please select at least one site')
-      return false
-    } else if (formData.selectAccessLevel === 'Company' && formData.selectedCompanies.length === 0) {
-      toast.error('Please select at least one company')
-      return false
+      toast.error("Please select access level");
+      return false;
+    } else if (
+      formData.selectAccessLevel === "Site" &&
+      formData.selectedSites.length === 0
+    ) {
+      toast.error("Please select at least one site");
+      return false;
+    } else if (
+      formData.selectAccessLevel === "Company" &&
+      formData.selectedCompanies.length === 0
+    ) {
+      toast.error("Please select at least one company");
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return
-    setLoadingSubmitting(true)
-    const payload = {
+    if (!validateForm()) return;
+    setLoadingSubmitting(true);
+    const payload: Payload = {
       user: {
         site_id: formData.baseSite,
         lock_user_permissions_attributes: [
@@ -196,7 +368,10 @@ export const EditFMUserPage = () => {
             user_type: formData.selectUserType,
             lock_role_id: formData.selectRole,
             access_level: formData.selectAccessLevel,
-            access_to: formData.selectAccessLevel === 'Site' ? formData.selectedSites : formData.selectedCompanies,
+            access_to:
+              formData.selectAccessLevel === "Site"
+                ? formData.selectedSites
+                : formData.selectedCompanies,
             urgency_email_enabled: formData.selectEmailPreference,
           },
         ],
@@ -211,19 +386,21 @@ export const EditFMUserPage = () => {
       lock_user_permission: lockId,
     };
     try {
-      await dispatch(editFMUser({ data: payload, baseUrl, token, id: Number(id) })).unwrap();
-      toast.success('User updated successfully');
-      navigate('/master/user/fm-users');
+      await dispatch(
+        editFMUser({ data: payload, baseUrl, token, id: Number(id) })
+      ).unwrap();
+      toast.success("User updated successfully");
+      navigate("/master/user/fm-users");
     } catch (error) {
-      console.log(error)
-      toast.error(error);
+      console.error("Error updating user:", error);
+      toast.error(String(error));
     } finally {
-      setLoadingSubmitting(false)
+      setLoadingSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    navigate('/master/user/fm-users');
+    navigate("/master/user/fm-users");
   };
 
   return (
@@ -233,7 +410,7 @@ export const EditFMUserPage = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate('/master/user/fm-users')}
+          onClick={() => navigate("/master/user/fm-users")}
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
@@ -256,9 +433,16 @@ export const EditFMUserPage = () => {
                     label="First Name"
                     variant="outlined"
                     value={formData.firstName}
-                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("firstName", e.target.value)
+                    }
                     required
-                    InputLabelProps={{ shrink: true }}
+                    InputLabelProps={{
+                      classes: {
+                        asterisk: "text-red-500", // Tailwind class for red color
+                      },
+                      shrink: true
+                    }}
                   />
                 </div>
                 <div>
@@ -267,9 +451,16 @@ export const EditFMUserPage = () => {
                     label="Last Name"
                     variant="outlined"
                     value={formData.lastName}
-                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("lastName", e.target.value)
+                    }
                     required
-                    InputLabelProps={{ shrink: true }}
+                    InputLabelProps={{
+                      classes: {
+                        asterisk: "text-red-500", // Tailwind class for red color
+                      },
+                      shrink: true
+                    }}
                   />
                 </div>
                 <div>
@@ -278,9 +469,16 @@ export const EditFMUserPage = () => {
                     label="Mobile Number"
                     variant="outlined"
                     value={formData.mobileNumber}
-                    onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("mobileNumber", e.target.value)
+                    }
                     required
-                    InputLabelProps={{ shrink: true }}
+                    InputLabelProps={{
+                      classes: {
+                        asterisk: "text-red-500", // Tailwind class for red color
+                      },
+                      shrink: true
+                    }}
                   />
                 </div>
 
@@ -292,9 +490,16 @@ export const EditFMUserPage = () => {
                     variant="outlined"
                     type="email"
                     value={formData.emailAddress}
-                    onChange={(e) => handleInputChange('emailAddress', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("emailAddress", e.target.value)
+                    }
                     required
-                    InputLabelProps={{ shrink: true }}
+                    InputLabelProps={{
+                      classes: {
+                        asterisk: "text-red-500", // Tailwind class for red color
+                      },
+                      shrink: true
+                    }}
                   />
                 </div>
                 <div>
@@ -302,7 +507,9 @@ export const EditFMUserPage = () => {
                     <InputLabel shrink>Gender</InputLabel>
                     <Select
                       value={formData.gender}
-                      onChange={(e) => handleInputChange('gender', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("gender", e.target.value as string)
+                      }
                       label="Gender"
                       displayEmpty
                     >
@@ -317,7 +524,12 @@ export const EditFMUserPage = () => {
                     <InputLabel shrink>Select Entity</InputLabel>
                     <Select
                       value={formData.selectEntity}
-                      onChange={(e) => handleInputChange('selectEntity', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "selectEntity",
+                          e.target.value as string
+                        )
+                      }
                       label="Select Entity"
                       displayEmpty
                     >
@@ -339,14 +551,20 @@ export const EditFMUserPage = () => {
                     <InputLabel shrink>Supplier</InputLabel>
                     <Select
                       value={formData.supplier}
-                      onChange={(e) => handleInputChange('supplier', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("supplier", e.target.value as string)
+                      }
                       label="Supplier"
                       displayEmpty
                     >
                       <MenuItem value="">Select Supplier</MenuItem>
-                      {suppliersLoading && <MenuItem disabled>Loading...</MenuItem>}
-                      {suppliersError && <MenuItem disabled>Error: {suppliersError}</MenuItem>}
-                      {suppliers?.map((supplier) => (
+                      {suppliersLoading && (
+                        <MenuItem disabled>Loading...</MenuItem>
+                      )}
+                      {suppliersError && (
+                        <MenuItem disabled>Error: {suppliersError}</MenuItem>
+                      )}
+                      {suppliers?.map((supplier: Supplier) => (
                         <MenuItem key={supplier.id} value={supplier.id}>
                           {supplier.name}
                         </MenuItem>
@@ -360,7 +578,9 @@ export const EditFMUserPage = () => {
                     label="Employee ID"
                     variant="outlined"
                     value={formData.employeeId}
-                    onChange={(e) => handleInputChange('employeeId', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("employeeId", e.target.value)
+                    }
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
@@ -369,12 +589,14 @@ export const EditFMUserPage = () => {
                     <InputLabel shrink>Base Site</InputLabel>
                     <Select
                       value={formData.baseSite}
-                      onChange={(e) => handleInputChange('baseSite', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("baseSite", e.target.value as string)
+                      }
                       label="Base Site"
                       displayEmpty
                     >
                       <MenuItem value="">Select Base Site</MenuItem>
-                      {sites?.map((site) => (
+                      {sites?.map((site: Site) => (
                         <MenuItem key={site.id} value={site.id}>
                           {site.name}
                         </MenuItem>
@@ -389,14 +611,21 @@ export const EditFMUserPage = () => {
                     <InputLabel shrink>Select Base Unit</InputLabel>
                     <Select
                       value={formData.selectBaseUnit}
-                      onChange={(e) => handleInputChange('selectBaseUnit', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "selectBaseUnit",
+                          e.target.value as string
+                        )
+                      }
                       label="Select Base Unit"
                       displayEmpty
                     >
                       <MenuItem value="">Select Base Unit</MenuItem>
                       {unitsLoading && <MenuItem disabled>Loading...</MenuItem>}
-                      {unitsError && <MenuItem disabled>Error: {unitsError}</MenuItem>}
-                      {units?.map((unit) => (
+                      {unitsError && (
+                        <MenuItem disabled>Error: {unitsError}</MenuItem>
+                      )}
+                      {units?.map((unit: Unit) => (
                         <MenuItem key={unit.id} value={unit.id}>
                           {unit?.building?.name} - {unit.unit_name}
                         </MenuItem>
@@ -409,14 +638,23 @@ export const EditFMUserPage = () => {
                     <InputLabel shrink>Select Department</InputLabel>
                     <Select
                       value={formData.selectDepartment}
-                      onChange={(e) => handleInputChange('selectDepartment', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "selectDepartment",
+                          e.target.value as string
+                        )
+                      }
                       label="Select Department"
                       displayEmpty
                     >
                       <MenuItem value="">Select Department</MenuItem>
-                      {departmentLoading && <MenuItem disabled>Loading...</MenuItem>}
-                      {departmentError && <MenuItem disabled>Error: {departmentError}</MenuItem>}
-                      {department?.map((dept) => (
+                      {departmentLoading && (
+                        <MenuItem disabled>Loading...</MenuItem>
+                      )}
+                      {departmentError && (
+                        <MenuItem disabled>Error: {departmentError}</MenuItem>
+                      )}
+                      {department?.map((dept: Department) => (
                         <MenuItem key={dept.id} value={dept.id}>
                           {dept.department_name}
                         </MenuItem>
@@ -429,7 +667,12 @@ export const EditFMUserPage = () => {
                     <InputLabel shrink>Select Email Preference</InputLabel>
                     <Select
                       value={formData.selectEmailPreference}
-                      onChange={(e) => handleInputChange('selectEmailPreference', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "selectEmailPreference",
+                          e.target.value as string
+                        )
+                      }
                       label="Select Email Preference"
                       displayEmpty
                     >
@@ -448,48 +691,68 @@ export const EditFMUserPage = () => {
                     label="Designation"
                     variant="outlined"
                     value={formData.designation}
-                    onChange={(e) => handleInputChange('designation', e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("designation", e.target.value)
+                    }
                     InputLabelProps={{ shrink: true }}
                   />
                 </div>
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select User Type*</InputLabel>
+                    <InputLabel shrink>Select User Type<span className="text-red-500">*</span></InputLabel>
                     <Select
                       value={formData.selectUserType}
-                      onChange={(e) => handleInputChange('selectUserType', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "selectUserType",
+                          e.target.value as string
+                        )
+                      }
                       label="Select User Type"
                       displayEmpty
                       required
                     >
                       <MenuItem value="">Select User Type</MenuItem>
                       <MenuItem value="pms_admin">Admin (Web & App)</MenuItem>
-                      <MenuItem value="pms_technician">Technician (App)</MenuItem>
+                      <MenuItem value="pms_technician">
+                        Technician (App)
+                      </MenuItem>
                       <MenuItem value="pms_hse">Head Site Engineer</MenuItem>
                       <MenuItem value="pms_se">Site Engineer</MenuItem>
-                      <MenuItem value="pms_occupant_admin">Customer Admin</MenuItem>
+                      <MenuItem value="pms_occupant_admin">
+                        Customer Admin
+                      </MenuItem>
                       <MenuItem value="pms_accounts">Accounts</MenuItem>
                       <MenuItem value="pms_po">Purchase Officer</MenuItem>
                       <MenuItem value="pms_qc">Quality Control</MenuItem>
                       <MenuItem value="pms_security">Security</MenuItem>
-                      <MenuItem value="pms_security_supervisor">Security Supervisor</MenuItem>
+                      <MenuItem value="pms_security_supervisor">
+                        Security Supervisor
+                      </MenuItem>
                     </Select>
                   </FormControl>
                 </div>
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Role*</InputLabel>
+                    <InputLabel shrink>Select Role<span className="text-red-500">*</span></InputLabel>
                     <Select
                       value={formData.selectRole}
-                      onChange={(e) => handleInputChange('selectRole', e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "selectRole",
+                          e.target.value as string
+                        )
+                      }
                       label="Select Role"
                       displayEmpty
                       required
                     >
                       <MenuItem value="">Select Role</MenuItem>
                       {roleLoading && <MenuItem disabled>Loading...</MenuItem>}
-                      {roleError && <MenuItem disabled>Error: {roleError}</MenuItem>}
-                      {roles?.map((role) => (
+                      {roleError && (
+                        <MenuItem disabled>Error: {roleError}</MenuItem>
+                      )}
+                      {roles?.map((role: Role) => (
                         <MenuItem key={role.id} value={role.id}>
                           {role.name}
                         </MenuItem>
@@ -501,13 +764,16 @@ export const EditFMUserPage = () => {
                 {/* Row 6 */}
                 <div>
                   <FormControl fullWidth variant="outlined">
-                    <InputLabel shrink>Select Access Level*</InputLabel>
+                    <InputLabel shrink>Select Access Level<span className="text-red-500">*</span></InputLabel>
                     <Select
                       value={formData.selectAccessLevel}
                       onChange={(e) => {
-                        handleInputChange('selectAccessLevel', e.target.value);
-                        if (e.target.value !== 'Site') {
-                          handleInputChange('selectedSites', []);
+                        handleInputChange(
+                          "selectAccessLevel",
+                          e.target.value as string
+                        );
+                        if (e.target.value !== "Site") {
+                          handleInputChange("selectedSites", []);
                         }
                       }}
                       label="Select Access Level"
@@ -522,82 +788,91 @@ export const EditFMUserPage = () => {
                 </div>
 
                 {/* Multiple Site Selection */}
-                {formData.selectAccessLevel === 'Site' && (
+                {formData.selectAccessLevel === "Site" && (
                   <div>
                     <Autocomplete
                       multiple
                       options={sites || []}
-                      getOptionLabel={(option) => option.name || option.full_name || ''}
-                      value={sites?.filter((site) => formData.selectedSites.includes(site.id.toString())) || []}
-                      onChange={(event, newValue) => {
-                        handleInputChange('selectedSites', newValue.map((site) => site.id.toString()));
+                      getOptionLabel={(option: Site) => option.name || ""}
+                      value={
+                        sites?.filter((site: Site) =>
+                          formData.selectedSites.includes(site.id.toString())
+                        ) || []
+                      }
+                      onChange={(event, newValue: Site[]) => {
+                        handleInputChange(
+                          "selectedSites",
+                          newValue.map((site) => site.id.toString())
+                        );
                       }}
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label={
-                            <span>
-                              Select Sites*
-                            </span>
-                          }
+                          label={<span>Select Sites<span className="text-red-500">*</span></span>}
                           placeholder="Search and select sites..."
                           variant="outlined"
                           InputLabelProps={{ shrink: true }}
                         />
                       )}
-                      renderTags={(tagValue, getTagProps) =>
+                      renderTags={(tagValue: Site[], getTagProps) =>
                         tagValue.map((option, index) => (
                           <Chip
                             key={option.id}
-                            label={option.name || option.full_name || ''}
+                            label={option.name}
                             size="small"
                             {...getTagProps({ index })}
                           />
                         ))
                       }
-                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      isOptionEqualToValue={(option: Site, value: Site) =>
+                        option.id === value.id
+                      }
                       filterSelectedOptions
                     />
                   </div>
                 )}
-                {formData.selectAccessLevel === 'Company' && (
+                {formData.selectAccessLevel === "Company" && (
                   <div>
                     <Autocomplete
                       multiple
-                      options={selectedCompany ? [selectedCompany] : []} // Wrap single selectedCompany in an array
-                      getOptionLabel={(option) => option.name || ''} // Display the company name
+                      options={selectedCompany ? [selectedCompany] : []}
+                      getOptionLabel={(option: Company) => option.name || ""}
                       value={
-                        selectedCompany && formData.selectedCompanies.includes(selectedCompany.id.toString())
+                        selectedCompany &&
+                          formData.selectedCompanies.includes(
+                            selectedCompany.id.toString()
+                          )
                           ? [selectedCompany]
                           : []
-                      } // Set the value to the selected company if its ID is in selectedCompanies
-                      onChange={(event, newValue) => {
-                        handleInputChange('selectedCompanies', newValue.map((company) => company.id.toString()));
+                      }
+                      onChange={(event, newValue: Company[]) => {
+                        handleInputChange(
+                          "selectedCompanies",
+                          newValue.map((company) => company.id.toString())
+                        );
                       }}
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label={
-                            <span>
-                              Select Companies*
-                            </span>
-                          }
+                          label={<span>Select Companies<span className="text-red-500">*</span></span>}
                           placeholder="Search and select companies..."
                           variant="outlined"
                           InputLabelProps={{ shrink: true }}
                         />
                       )}
-                      renderTags={(tagValue, getTagProps) =>
+                      renderTags={(tagValue: Company[], getTagProps) =>
                         tagValue.map((option, index) => (
                           <Chip
                             key={option.id}
-                            label={option.name || ''}
+                            label={option.name}
                             size="small"
                             {...getTagProps({ index })}
                           />
                         ))
                       }
-                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      isOptionEqualToValue={(option: Company, value: Company) =>
+                        option.id === value.id
+                      }
                       filterSelectedOptions
                     />
                   </div>
@@ -618,7 +893,7 @@ export const EditFMUserPage = () => {
                 onClick={handleSubmit}
                 className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-none px-8 py-3 text-base font-medium rounded-lg"
               >
-                Submit
+                Update
               </Button>
             </div>
           </CardContent>
