@@ -23,6 +23,7 @@ interface ExternalUser {
   mobile: string;
   email: string;
   company_name: string;
+  ext_company_name?: string; // added: external company name field
   entity_id: number;
   unit_id: number;
   designation: string;
@@ -257,7 +258,7 @@ export const ExternalUsersDashboard = () => {
       case 'work_location':
         return (user as any).work_location || '-';
       case 'company_name':
-        return user.company_name || '-';
+  return (user as any).ext_company_name || '-';
       case 'role_name':
         return (user as any).lock_user_permission?.role_name || (user as any).role_name || (user as any).lock_role?.name || (user as any).lock_role?.display_name || '-';
       case 'employee_type':
