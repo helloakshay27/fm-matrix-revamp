@@ -33,7 +33,7 @@ export const AddFacilityBookingPage = () => {
   const facilities = Array.isArray(facilitySetupsResponse?.facility_setups) ? facilitySetupsResponse.facility_setups :
     Array.isArray(facilitySetupsResponse) ? facilitySetupsResponse : [];
 
-  const [userType, setUserType] = useState('occupant');
+  const [userType, setUserType] = useState('fm');
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedFacility, setSelectedFacility] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
@@ -285,12 +285,12 @@ export const AddFacilityBookingPage = () => {
         <div>
           <RadioGroup value={userType} onValueChange={setUserType} className="flex gap-6">
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="occupant" id="occupant" />
-              <Label htmlFor="occupant">Occupant User</Label>
-            </div>
-            <div className="flex items-center space-x-2">
               <RadioGroupItem value="fm" id="fm" />
               <Label htmlFor="fm">FM User</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="occupant" id="occupant" />
+              <Label htmlFor="occupant">Occupant User</Label>
             </div>
           </RadioGroup>
         </div>
