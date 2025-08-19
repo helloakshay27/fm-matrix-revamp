@@ -39,13 +39,13 @@ const amcAnalyticsOptions = [
     endpoint: 'expiry_analysis',
     icon: AlertTriangle 
   },
-  { 
-    id: 'service_tracking', 
-    label: 'Service Tracking', 
-    checked: true, 
-    endpoint: 'service_tracking',
-    icon: Settings 
-  },
+  // { 
+  //   id: 'service_tracking', 
+  //   label: 'Service Tracking', 
+  //   checked: true, 
+  //   endpoint: 'service_tracking',
+  //   icon: Settings 
+  // },
   { 
     id: 'coverage_by_location', 
     label: 'Coverage by Location', 

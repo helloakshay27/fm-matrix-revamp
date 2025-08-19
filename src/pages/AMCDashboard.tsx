@@ -174,8 +174,10 @@ export const AMCDashboard = () => {
   const [amcUnitResourceData, setAmcUnitResourceData] = useState<AMCUnitResourceData[] | null>(null);
   const [amcServiceStatsData, setAmcServiceStatsData] = useState<AMCServiceStatsData[] | null>(null);
   const [amcCoverageData, setAmcCoverageData] = useState<AMCLocationCoverageNode[] | null>(null);
-  const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'service_tracking', 'coverage_by_location']);
-  const [analyticsChartOrder, setAnalyticsChartOrder] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'service_tracking', 'coverage_by_location']);
+  // const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'service_tracking', 'coverage_by_location']);
+    const [selectedAnalyticsOptions, setSelectedAnalyticsOptions] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'coverage_by_location']);
+
+  const [analyticsChartOrder, setAnalyticsChartOrder] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'coverage_by_location']);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
 
   const getDefaultDateRange = () => {
@@ -1122,7 +1124,7 @@ export const AMCDashboard = () => {
                   )}
                 </div>
 
-                {selectedAnalyticsOptions?.includes('service_tracking') && (
+                {/* {selectedAnalyticsOptions?.includes('service_tracking') && (
                   <div className="h-96">
                     <AMCServiceTrackingCard
                       data={amcServiceTracking}
@@ -1133,7 +1135,7 @@ export const AMCDashboard = () => {
                       }}
                     />
                   </div>
-                )}
+                )} */}
 
                 {selectedAnalyticsOptions?.includes('coverage_by_location') && (
                   <div className="h-full">
