@@ -87,7 +87,7 @@ interface RoomItem {
 
 export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, onClose }) => {
   const dispatch = useDispatch<AppDispatch>();
-  
+
   // Form state
   const [assetName, setAssetName] = useState('');
   const [assetId, setAssetId] = useState('');
@@ -109,7 +109,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
   const [areas, setAreas] = useState<AreaItem[]>([]);
   const [floors, setFloors] = useState<FloorItem[]>([]);
   const [rooms, setRooms] = useState<RoomItem[]>([]);
-  
+
   // Loading states
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [loadingSubgroups, setLoadingSubgroups] = useState(false);
@@ -124,13 +124,13 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
   useEffect(() => {
     const fetchGroups = async () => {
       if (!isOpen) return;
-      
+
       console.log('Fetching groups API call started...');
       setLoadingGroups(true);
       try {
         const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
         console.log('Groups API response:', response.data);
-        
+
         // Extract groups from the asset_groups property
         const groupsData = Array.isArray(response.data?.asset_groups) ? response.data.asset_groups : [];
         console.log('Setting groups data:', groupsData);
@@ -161,10 +161,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
       try {
         const response = await apiClient.get(`/pms/assets/get_asset_group_sub_group.json?group_id=${group}`);
         console.log('Subgroups API response:', response.data);
-        
+
         // Extract subgroups from the asset_groups property (same as groups API)
         const subgroupsData = Array.isArray(response.data?.asset_groups) ? response.data.asset_groups : [];
-        
+
         console.log('Setting subgroups data:', subgroupsData);
         console.log('Subgroups data length:', subgroupsData.length);
         setSubgroups(subgroupsData);
@@ -183,13 +183,13 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
   useEffect(() => {
     const fetchSites = async () => {
       if (!isOpen) return;
-      
+
       console.log('Fetching sites API call started...');
       setLoadingSites(true);
       try {
         const response = await apiClient.get('/pms/sites.json');
         console.log('Sites API response:', response.data);
-        
+
         const sitesData = Array.isArray(response.data?.sites) ? response.data.sites : [];
         console.log('Setting sites data:', sitesData);
         setSites(sitesData);
@@ -222,10 +222,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
       try {
         const response = await apiClient.get(`/pms/sites/${site}/buildings.json`);
         console.log('Buildings API response:', response.data);
-        
-        // Extract buildings from nested structure: buildings[].building
-        const buildingsData = Array.isArray(response.data?.buildings) 
-          ? response.data.buildings.map((item: any) => item.building).filter(Boolean)
+
+        // Extract buildings directly from the array
+        const buildingsData = Array.isArray(response.data?.buildings)
+          ? response.data.buildings
           : [];
         console.log('Setting buildings data:', buildingsData);
         setBuildings(buildingsData);
@@ -254,9 +254,9 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
       try {
         const response = await apiClient.get(`/pms/buildings/${building}/wings.json`);
         console.log('Wings API response:', response.data);
-        
+
         // Extract wings from nested structure: [].wings
-        const wingsData = Array.isArray(response.data) 
+        const wingsData = Array.isArray(response.data)
           ? response.data.map((item: any) => item.wings).filter(Boolean)
           : [];
         console.log('Setting wings data:', wingsData);
@@ -285,7 +285,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
       try {
         const response = await apiClient.get(`/pms/wings/${wing}/areas.json`);
         console.log('Areas API response:', response.data);
-        
+
         const areasData = Array.isArray(response.data?.areas) ? response.data.areas : [];
         console.log('Setting areas data:', areasData);
         setAreas(areasData);
@@ -315,7 +315,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
       try {
         const response = await apiClient.get(`/pms/areas/${area}/floors.json`);
         console.log('Floors API response:', response.data);
-        
+
         const floorsData = Array.isArray(response.data?.floors) ? response.data.floors : [];
         console.log('Setting floors data:', floorsData);
         setFloors(floorsData);
@@ -343,9 +343,9 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
       try {
         const response = await apiClient.get(`/pms/floors/${floor}/rooms.json`);
         console.log('Rooms API response:', response.data);
-        
+
         // Extract rooms from nested structure: [].rooms
-        const roomsData = Array.isArray(response.data) 
+        const roomsData = Array.isArray(response.data)
           ? response.data.map((item: any) => item.rooms).filter(Boolean)
           : [];
         console.log('Setting rooms data:', roomsData);
@@ -428,10 +428,10 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
       ) as AssetFilters;
 
       console.log('Applying asset filters:', cleanFilters);
-      
+
       // Dispatch Redux action to fetch filtered assets
       await dispatch(fetchAssetsData({ page: 1, filters: cleanFilters })).unwrap();
-      
+
       toast.success('Filters applied successfully');
       onClose();
     } catch (error) {
@@ -469,7 +469,7 @@ export const AssetFilterDialog: React.FC<AssetFilterDialogProps> = ({ isOpen, on
 
       // Dispatch Redux action to fetch all unfiltered assets
       await dispatch(fetchAssetsData({ page: 1, filters: {} })).unwrap();
-      
+
       toast.success('Filters reset successfully');
       onClose();
     } catch (error) {

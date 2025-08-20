@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CreditCard, X } from 'lucide-react';
 import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 
@@ -35,6 +36,7 @@ interface OwnershipCost {
 export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetData }) => {
   const [isInUse, setIsInUse] = useState(!(asset?.breakdown ?? true));
   const [showModal, setShowModal] = useState(false);
+  const [showAssetStatusModal, setShowAssetStatusModal] = useState(false);
   const totalCost = asset?.ownership_total_cost || 0;
 
   const [formData, setFormData] = useState({
@@ -42,6 +44,15 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
     cost: '',
     warranty: '',
     reason: ''
+  });
+
+  const [assetStatusFormData, setAssetStatusFormData] = useState({
+    status: 'repaired',
+    cost: '',
+    warranty: '',
+    warrantyType: '',
+    paymentStatus: '',
+    comments: ''
   });
 
   const handleToggle = async () => {
@@ -119,6 +130,34 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
     }
   };
 
+  const handleAssetStatusInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setAssetStatusFormData({ ...assetStatusFormData, [name]: value });
+  };
+
+  const handleWarrantyTypeChange = (value: string) => {
+    setAssetStatusFormData({ ...assetStatusFormData, warrantyType: value });
+  };
+
+  const handlePaymentStatusChange = (value: string) => {
+    setAssetStatusFormData({ ...assetStatusFormData, paymentStatus: value });
+  };
+
+  const handleAssetStatusSubmit = () => {
+    // For now, just close the modal - no integration
+    console.log('Asset Status Form Data:', assetStatusFormData);
+    setShowAssetStatusModal(false);
+    // Reset form
+    setAssetStatusFormData({
+      status: 'repaired',
+      cost: '',
+      warranty: '',
+      warrantyType: '',
+      paymentStatus: '',
+      comments: ''
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="w-full bg-white rounded-lg shadow-sm border mt-3">
@@ -140,6 +179,12 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
               checked={isInUse}
               onCheckedChange={handleToggle}
             />
+            <Button
+              onClick={() => setShowAssetStatusModal(true)}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2"
+            >
+              Update Status
+            </Button>
           </div>
         </div>
 
@@ -276,6 +321,125 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
             <div className="flex justify-end pt-4">
               <Button
                 onClick={handleSubmit}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Asset Status Update Modal */}
+      <Dialog open={showAssetStatusModal} onOpenChange={setShowAssetStatusModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              Asset Status Update
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAssetStatusModal(false)}
+                className="p-1"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium">Repaired / Replaced:</Label>
+              <div className="mt-2">
+                <span className="text-sm text-gray-700">Repaired</span>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="asset-cost" className="text-sm font-medium">
+                Cost (in OMR):
+              </Label>
+              <div className="relative mt-1">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                  OMR
+                </span>
+                <Input
+                  id="asset-cost"
+                  name="cost"
+                  type="number"
+                  value={assetStatusFormData.cost}
+                  onChange={handleAssetStatusInputChange}
+                  placeholder="Enter cost"
+                  className="pl-16"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="asset-warranty" className="text-sm font-medium">
+                Warranty (in Months):
+              </Label>
+              <Input
+                id="asset-warranty"
+                name="warranty"
+                type="number"
+                value={assetStatusFormData.warranty}
+                onChange={handleAssetStatusInputChange}
+                placeholder="Enter warranty period"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium">
+                Type of Warranty:
+              </Label>
+              <Select value={assetStatusFormData.warrantyType} onValueChange={handleWarrantyTypeChange}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select warranty type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fully">Fully</SelectItem>
+                  <SelectItem value="partially">Partially</SelectItem>
+                  <SelectItem value="no_claim">No Claim</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium">
+                Payment Status:
+              </Label>
+              <Select value={assetStatusFormData.paymentStatus} onValueChange={handlePaymentStatusChange}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select payment status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="not_paid">Not Paid</SelectItem>
+                  <SelectItem value="claimed">Claimed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="asset-comments" className="text-sm font-medium">
+                Comments:
+              </Label>
+              <Textarea
+                id="asset-comments"
+                name="comments"
+                value={assetStatusFormData.comments}
+                onChange={handleAssetStatusInputChange}
+                placeholder="Enter reason"
+                rows={3}
+                className="mt-1"
+              />
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <Button
+                onClick={handleAssetStatusSubmit}
                 className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
               >
                 Submit

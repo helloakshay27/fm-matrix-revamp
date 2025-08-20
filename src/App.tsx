@@ -87,6 +87,7 @@ import { AddAssetDashboard } from './pages/AddAssetDashboard';
 import { AddEnergyAssetDashboard } from './pages/AddEnergyAssetDashboard';
 import { UtilityWaterDashboard } from './pages/UtilityWaterDashboard';
 import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
+import { EditWaterAssetDashboard } from './pages/EditWaterAssetDashboard';
 import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
 import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
 import UtilityEVConsumptionDashboard from './pages/UtilityEVConsumptionDashboard';
@@ -1485,6 +1486,10 @@ function App() {
                 <Route
                   path="/utility/water/details/:id"
                   element={<WaterAssetDetailsPage />}
+                />
+                <Route
+                  path="/utility/water/edit/:id"
+                  element={<EditWaterAssetDashboard />}
                 />
 
                 {/* Security/Visitors Routes */}
