@@ -322,8 +322,8 @@ export const RecentTicketsSidebar: React.FC<RecentTicketsSidebarProps> = ({
                   <span className="text-sm text-gray-700">:</span>
                   <div className="flex items-center gap-2 text-sm">
                     <span className="italic text-gray-600">{ticket.status}</span>
-                    <ChevronRight className="h-3 w-3 text-gray-600" />
-                    <span className="italic text-gray-600">{ticket.nextStatus}</span>
+                    {/* <ChevronRight className="h-3 w-3 text-gray-600" /> */}
+                    {/* <span className="italic text-gray-600">{ticket.nextStatus}</span> */}
                   </div>
                 </div>
                 

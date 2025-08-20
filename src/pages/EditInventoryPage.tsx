@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
@@ -34,6 +34,12 @@ export const EditInventoryPage = () => {
   const [inventoryDetailsExpanded, setInventoryDetailsExpanded] = useState(true);
   const [taxDetailsExpanded, setTaxDetailsExpanded] = useState(true);
   const [sacList, setSacList] = useState([]);
+  // Inventory name suggestion state
+  const [nameSuggestions, setNameSuggestions] = useState<any[]>([]);
+  const [nameSuggestLoading, setNameSuggestLoading] = useState(false);
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+  const nameDebounceRef = useRef<number | null>(null);
+  const inventoryNameWrapperRef = useRef<HTMLDivElement | null>(null);
   const fetchSAC = async () => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
@@ -57,6 +63,44 @@ export const EditInventoryPage = () => {
   // Fetch SAC/HSN codes on mount
   useEffect(() => {
     fetchSAC();
+  }, []);
+
+  // Fetch inventory name suggestions (Edit page)
+  const fetchNameSuggestions = async (query: string) => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) return;
+    setNameSuggestLoading(true);
+    try {
+      const res = await fetch(`https://${baseUrl}/pms/inventories/suggestions.json?name=${encodeURIComponent(query)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed suggestions');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setNameSuggestions(data);
+        setShowNameSuggestions(true);
+      } else if (Array.isArray(data?.suggestions)) { // fallback shape
+        setNameSuggestions(data.suggestions);
+        setShowNameSuggestions(true);
+      } else {
+        setNameSuggestions([]); setShowNameSuggestions(false);
+      }
+    } catch (e) {
+      setNameSuggestions([]); setShowNameSuggestions(false);
+    } finally { setNameSuggestLoading(false); }
+  };
+
+  // Outside click to close suggestions
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (!inventoryNameWrapperRef.current) return;
+      if (!inventoryNameWrapperRef.current.contains(e.target as Node)) {
+        setShowNameSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   const [formData, setFormData] = useState({
@@ -421,16 +465,58 @@ export const EditInventoryPage = () => {
                 </div>
 
                 <div>
-                  <TextField
-                    label={<>Inventory Name<span style={{ color: '#C72030' }}>*</span></>}
-                    placeholder="Name"
-                    value={formData.inventoryName}
-                    onChange={(e) => handleInputChange('inventoryName', e.target.value)}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
+                  <div ref={inventoryNameWrapperRef} className="relative">
+                    <TextField
+                      label={<>Inventory Name<span style={{ color: '#C72030' }}>*</span></>}
+                      placeholder="Name"
+                      value={formData.inventoryName}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        handleInputChange('inventoryName', val);
+                        if (nameDebounceRef.current) window.clearTimeout(nameDebounceRef.current);
+                        if (val.trim().length < 2) {
+                          setNameSuggestions([]); setShowNameSuggestions(false); return;
+                        }
+                        nameDebounceRef.current = window.setTimeout(() => {
+                          fetchNameSuggestions(val.trim());
+                        }, 350);
+                      }}
+                      onFocus={() => {
+                        if (nameSuggestions.length > 0) setShowNameSuggestions(true);
+                      }}
+                      onBlur={() => {
+                        // Delay to allow click on option
+                        setTimeout(() => setShowNameSuggestions(false), 180);
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                    {showNameSuggestions && (
+                      <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-auto text-sm">
+                        {nameSuggestLoading && (
+                          <div className="px-3 py-2 text-gray-500">Loading...</div>
+                        )}
+                        {!nameSuggestLoading && nameSuggestions.length === 0 && (
+                          <div className="px-3 py-2 text-gray-500">No matches</div>
+                        )}
+                        {!nameSuggestLoading && nameSuggestions.map(s => (
+                          <button
+                            type="button"
+                            key={s.id}
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, inventoryName: s.name }));
+                              setShowNameSuggestions(false);
+                            }}
+                            className={`block w-full text-left px-3 py-2 hover:bg-red-50 ${s.name === formData.inventoryName ? 'bg-red-50' : ''}`}
+                          >
+                            {s.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>

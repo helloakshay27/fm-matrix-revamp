@@ -50,6 +50,8 @@ export const WODashboard = () => {
   };
 
   const renderCell = (item: any, columnKey: string) => {
+    const value = item[columnKey];
+
     switch (columnKey) {
       case "approved_status":
         return (
@@ -58,26 +60,28 @@ export const WODashboard = () => {
               item?.approved_status
             )}`}
           >
-            {item?.approved_status}
+            {item?.approved_status || "N/A"}
           </span>
         );
       case "reference_number":
         return (
           <span className="text-blue-600 hover:underline cursor-pointer">
-            {item.reference_number}
+            {value || "N/A"}
           </span>
         );
       case "active":
         return (
           <input
             type="checkbox"
-            checked={item.active}
+            checked={value || false}
             readOnly
             className="w-4 h-4"
           />
         );
+      case "debit_credit_note_raised":
+        return value === true ? "Yes" : "No";
       default:
-        return item[columnKey] || "";
+        return value !== undefined && value !== null ? value : "-";
     }
   };
 
