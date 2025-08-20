@@ -56,14 +56,20 @@ export const NewVisitorDialog: React.FC<NewVisitorDialogProps> = ({
             <label className="text-sm font-medium text-gray-700">
               Mobile Number
             </label>
-            <Input
-              type="tel"
-              placeholder="Enter Mobile Number"
-              value={mobileNumber}
-              onChange={(e) => setMobileNumber(e.target.value)}
-              className="w-full"
-              required
-            />
+           <Input
+  type="tel"
+  placeholder="Enter Mobile Number"
+  value={mobileNumber}
+  onChange={(e) => {
+    const value = e.target.value.replace(/\D/g, ""); // remove non-numeric chars
+    setMobileNumber(value);
+  }}
+  pattern="[0-9]{10}"
+  maxLength={10}
+  minLength={10}
+  className="w-full"
+  required
+/>
           </div>
 
           <Button
