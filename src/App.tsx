@@ -616,6 +616,12 @@ import CRMFMUserDashboard from "./pages/CRMFMUserDashboard";
 import CRMCustomersDashboard from "./pages/CRMCustomersDashboard";
 import { PatrollingDetailPage } from "./pages/PatrollingDetailPage";
 import { WorkOrderAddPage } from "./pages/WorkOrderAddPage";
+import LMCDashboard from "./pages/LMCDashboard";
+import LMCUserDetail from "./pages/LMCUserDetail";
+import TrainingDashboard from "./pages/TrainingDashboard";
+import TrainingDetailPage from "./pages/TrainingDetailPage";
+import SMTDashboard from "./pages/SMTDashboard";
+import SMTDetailPage from "./pages/SMTDetailPage";
 
 
 const queryClient = new QueryClient();
@@ -1782,6 +1788,12 @@ function App() {
                 <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
                 <Route path="/maintenance/krcc-list" element={<KRCCFormListDashboard />} />
                 <Route path="/maintenance/krcc-list/:id" element={<KRCCFormDetail />} />
+                <Route path="/maintenance/lmc" element={<LMCDashboard />} />
+                <Route path="/maintenance/lmc/:id" element={<LMCUserDetail />} />
+                <Route path="/maintenance/training-list" element={<TrainingDashboard />} />
+                <Route path="/maintenance/training-list/:id" element={<TrainingDetailPage />} />
+                <Route path="/maintenance/smt" element={<SMTDashboard />} />
+                <Route path="/maintenance/smt/:id" element={<SMTDetailPage />} />
 
                 {/* Market Place Routes */}
                 <Route
