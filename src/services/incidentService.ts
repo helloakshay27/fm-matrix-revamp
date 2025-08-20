@@ -7,6 +7,34 @@ export interface IncidentAttachment {
   doctype: string;
 }
 
+export interface IncidentWitness {
+  id?: number;
+  name: string;
+  mobile: string;
+  _destroy?: boolean;
+}
+
+export interface IncidentInvestigation {
+  id?: number;
+  name: string;
+  mobile: string;
+  designation: string;
+  _destroy?: boolean;
+}
+
+export interface IncidentDetail {
+  equipment_property_damaged_cost?: number;
+  production_loss?: number;
+  treatment_cost?: number;
+  absenteeism_cost?: number;
+  other_cost?: number;
+  first_aid_provided_employees?: boolean;
+  name_first_aid_attendants?: string;
+  sent_for_medical_treatment?: boolean;
+  name_and_address_treatment_facility?: string;
+  name_and_address_attending_physician?: string;
+}
+
 export interface Incident {
   id: number;
   society_id: number | null;
@@ -70,7 +98,7 @@ export interface Incident {
   production_loss: number | null;
   treatment_cost: number | null;
   absenteeism_cost: number | null;
-  incident_detail: string | null;
+  incident_detail: IncidentDetail | null;
   other_cost: number | null;
   total_cost: number;
   equipment_property_damaged_cost: number | null;
@@ -81,6 +109,11 @@ export interface Incident {
   attachments: IncidentAttachment[];
   injuries: any[];
   logs: any[];
+  incident_witnesses?: IncidentWitness[];
+  incident_investigations?: IncidentInvestigation[];
+  probability?: number;
+  inc_sub_sub_sub_category_id?: number;
+  inc_sec_sub_sub_sub_category_id?: number;
 }
 
 export interface IncidentResponse {
@@ -116,9 +149,146 @@ export const incidentService = {
   },
 
   async getIncidentById(id: string): Promise<Incident | null> {
-    // Get all incidents and find the one with matching ID
-    const response = await this.getIncidents();
-    const incident = response.data.incidents.find(inc => inc.id.toString() === id);
-    return incident || null;
+    // Get baseUrl and token from localStorage
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    }
+
+    const response = await fetch(`${baseUrl}/pms/incidents/${id}.json`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  },
+
+  async updateIncident(id: string, formData: any): Promise<Incident> {
+    // Get baseUrl and token from localStorage
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+    }
+
+    // Create FormData for the PUT request
+    const body = new FormData();
+    
+    // Time fields
+    if (formData.year) body.append('incident[inc_time(1i)]', formData.year);
+    if (formData.month) {
+      const monthNumber = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December']
+        .indexOf(formData.month) + 1;
+      body.append('incident[inc_time(2i)]', monthNumber.toString());
+    }
+    if (formData.day) body.append('incident[inc_time(3i)]', formData.day);
+    if (formData.hour) body.append('incident[inc_time(4i)]', formData.hour);
+    if (formData.minute) body.append('incident[inc_time(5i)]', formData.minute);
+    
+    // Basic fields
+    if (formData.building) body.append('incident[building_id]', formData.building);
+    if (formData.categoryForIncident) body.append('incident[inc_category_id]', formData.categoryForIncident);
+    if (formData.primaryCategory) body.append('incident[inc_sub_category_id]', formData.primaryCategory);
+    if (formData.subCategory) body.append('incident[inc_sub_sub_category_id]', formData.subCategory);
+    if (formData.subSubCategory) body.append('incident[inc_sub_sub_sub_category_id]', formData.subSubCategory);
+    if (formData.secondaryCategory) body.append('incident[inc_sec_category_id]', formData.secondaryCategory);
+    if (formData.secondarySubCategory) body.append('incident[inc_sec_sub_category_id]', formData.secondarySubCategory);
+    if (formData.secondarySubSubCategory) body.append('incident[inc_sec_sub_sub_category_id]', formData.secondarySubSubCategory);
+    if (formData.secondarySubSubSubCategory) body.append('incident[inc_sec_sub_sub_sub_category_id]', formData.secondarySubSubSubCategory);
+    if (formData.severity) body.append('incident[consequence_insignificant]', formData.severity);
+    if (formData.probability) body.append('incident[probability]', formData.probability);
+    if (formData.incidentLevel) body.append('incident[inc_level_id]', formData.incidentLevel);
+    if (formData.description) body.append('incident[description]', formData.description);
+    if (formData.rca) body.append('incident[rca]', formData.rca);
+    if (formData.primaryRootCauseCategory) body.append('incident[rca_category_id]', formData.primaryRootCauseCategory);
+    if (formData.correctiveAction) body.append('incident[corrective_action]', formData.correctiveAction);
+    if (formData.preventiveAction) body.append('incident[preventive_action]', formData.preventiveAction);
+    
+    // Witnesses
+    if (formData.witnesses && formData.witnesses.length > 0) {
+      formData.witnesses.forEach((witness: any, index: number) => {
+        if (witness.name) body.append(`incident[incident_witnesses_attributes][${index}][name]`, witness.name);
+        if (witness.mobile) body.append(`incident[incident_witnesses_attributes][${index}][mobile]`, witness.mobile);
+        body.append(`incident[incident_witnesses_attributes][${index}][_destroy]`, 'false');
+      });
+    }
+    
+    // Cost details - only send if there are actual values
+    const hasIncidentDetailData = 
+      formData.equipmentPropertyDamagedCost || 
+      formData.productionLoss || 
+      formData.treatmentCost || 
+      formData.absenteeismCost || 
+      formData.otherCost ||
+      formData.firstAidProvided ||
+      formData.firstAidAttendants ||
+      formData.medicalTreatment ||
+      formData.treatmentFacility ||
+      formData.attendingPhysician;
+
+    if (hasIncidentDetailData) {
+      if (formData.equipmentPropertyDamagedCost) body.append('incident[incident_detail_attributes][equipment_property_damaged_cost]', formData.equipmentPropertyDamagedCost);
+      if (formData.productionLoss) body.append('incident[incident_detail_attributes][production_loss]', formData.productionLoss);
+      if (formData.treatmentCost) body.append('incident[incident_detail_attributes][treatment_cost]', formData.treatmentCost);
+      if (formData.absenteeismCost) body.append('incident[incident_detail_attributes][absenteeism_cost]', formData.absenteeismCost);
+      if (formData.otherCost) body.append('incident[incident_detail_attributes][other_cost]', formData.otherCost);
+      
+      // First aid and medical treatment - only send if we're sending incident_detail_attributes
+      body.append('incident[incident_detail_attributes][first_aid_provided_employees]', formData.firstAidProvided ? '1' : '0');
+      if (formData.firstAidAttendants) body.append('incident[incident_detail_attributes][name_first_aid_attendants]', formData.firstAidAttendants);
+      body.append('incident[incident_detail_attributes][sent_for_medical_treatment]', formData.medicalTreatment ? '1' : '0');
+      if (formData.treatmentFacility) body.append('incident[incident_detail_attributes][name_and_address_treatment_facility]', formData.treatmentFacility);
+      if (formData.attendingPhysician) body.append('incident[incident_detail_attributes][name_and_address_attending_physician]', formData.attendingPhysician);
+    }
+    
+    // Investigation team
+    if (formData.investigationTeam && formData.investigationTeam.length > 0) {
+      formData.investigationTeam.forEach((member: any, index: number) => {
+        if (member.name) body.append(`incident[incident_investigations_attributes][${index}][name]`, member.name);
+        if (member.mobile) body.append(`incident[incident_investigations_attributes][${index}][mobile]`, member.mobile);
+        if (member.designation) body.append(`incident[incident_investigations_attributes][${index}][designation]`, member.designation);
+        body.append(`incident[incident_investigations_attributes][${index}][_destroy]`, 'false');
+      });
+    }
+    
+    // Support and disclaimer
+    body.append('incident[support_required]', formData.supportRequired ? '1' : '0');
+    body.append('incident[disclaimer]', formData.factsCorrect ? '1' : '0');
+    
+    // Attachments - handle new attachments only (avoid duplication)
+    if (formData.newAttachments && Array.isArray(formData.newAttachments) && formData.newAttachments.length > 0) {
+      formData.newAttachments.forEach((file: File) => {
+        body.append('noticeboard[files_attached][]', file);
+      });
+    } else if (formData.attachments) {
+      // Fallback: if no newAttachments array but single attachment exists
+      body.append('noticeboard[files_attached][]', formData.attachments);
+    }
+    
+    body.append('noticeboard[document]', '');
+    body.append('noticeboard[expire_time]', '');
+
+    const response = await fetch(`${baseUrl}/pms/incidents/${id}.json`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: body
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
   }
 };

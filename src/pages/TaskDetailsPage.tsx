@@ -59,9 +59,7 @@ export const TaskDetailsPage = () => {
   const [rescheduleData, setRescheduleData] = useState({
     scheduleDate: new Date().toISOString().split('T')[0], // "YYYY-MM-DD"
     scheduleTime: '10:30',
-    user_ids: [] as number[],
-    email: false,
-    sms: false
+    email: false
   });
 
   // File upload state (for attachments in submit form)
@@ -189,8 +187,7 @@ export const TaskDetailsPage = () => {
   const handleRescheduleSubmit = async () => {
     if (
       !rescheduleData.scheduleDate ||
-      !rescheduleData.scheduleTime ||
-      !rescheduleData.user_ids.length
+      !rescheduleData.scheduleTime
     ) {
       toast({
         title: 'Error',
@@ -203,9 +200,7 @@ export const TaskDetailsPage = () => {
     try {
       const payload = {
         start_date: getStartDateString(),
-        user_ids: rescheduleData.user_ids,
-        email: rescheduleData.email,
-        sms: rescheduleData.sms
+        email: rescheduleData.email
       };
 
       await taskService.rescheduleTask(id!, payload);
@@ -712,80 +707,22 @@ export const TaskDetailsPage = () => {
 
             <div>
               <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>
-                Assign to User
-              </h3>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Assign To</InputLabel>
-                <MuiSelect
-                  value={
-                    rescheduleData.user_ids.length
-                      ? String(rescheduleData.user_ids[0])
-                      : ''
-                  }
-                  onChange={e =>
-                    setRescheduleData(prev => ({
-                      ...prev,
-                      user_ids: e.target.value ? [parseInt(e.target.value as string)] : []
-                    }))
-                  }
-                  label="Assign To"
-                  displayEmpty
-                  MenuProps={selectMenuProps}
-                  sx={{
-                    ...fieldStyles,
-                    '& .MuiSelect-select': {
-                      zIndex: 1
-                    }
-                  }}
-                  tabIndex={0}
-                >
-                  <MenuItem value="">
-                    <em>Select User</em>
-                  </MenuItem>
-                  {users.map(user => (
-                    <MenuItem key={user.id} value={user.id}>
-                      {user.full_name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-            </div>
-
-            <div>
-              <h3 className="font-medium mb-4" style={{ color: '#C72030' }}>
                 Notification Preferences
               </h3>
-              <div className="flex gap-6">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="email"
-                    checked={rescheduleData.email}
-                    onCheckedChange={checked =>
-                      setRescheduleData(prev => ({
-                        ...prev,
-                        email: !!checked
-                      }))
-                    }
-                  />
-                  <label htmlFor="email" className="text-sm font-medium">
-                    Email Notification
-                  </label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="sms"
-                    checked={rescheduleData.sms}
-                    onCheckedChange={checked =>
-                      setRescheduleData(prev => ({
-                        ...prev,
-                        sms: !!checked
-                      }))
-                    }
-                  />
-                  <label htmlFor="sms" className="text-sm font-medium">
-                    SMS Notification
-                  </label>
-                </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="email"
+                  checked={rescheduleData.email}
+                  onCheckedChange={checked =>
+                    setRescheduleData(prev => ({
+                      ...prev,
+                      email: !!checked
+                    }))
+                  }
+                />
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email Notification
+                </label>
               </div>
             </div>
 

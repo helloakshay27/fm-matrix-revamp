@@ -19,6 +19,7 @@ export const IncidentDetailsPage = () => {
   const [showInjuryModal, setShowInjuryModal] = useState(false);
   const [incident, setIncident] = useState<Incident | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloadLoading, setDownloadLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [basicDetailsExpanded, setBasicDetailsExpanded] = useState(true);
   const [descriptionExpanded, setDescriptionExpanded] = useState(true);
@@ -57,32 +58,63 @@ export const IncidentDetailsPage = () => {
     navigate(`${basePath}/incident/edit/${id}`);
   };
 
-  const handleDownloadReport = () => {
+  const handleDownloadReport = async () => {
     if (!incident) return;
 
-    console.log('Downloading report for incident:', id);
-    // Create a simple text report
-    const reportContent = `
-INCIDENT REPORT
-================
-Incident ID: #${incident.id}
-Date: ${incident.inc_time ? new Date(incident.inc_time).toLocaleString() : 'N/A'}
-Location: ${incident.building_name || 'N/A'}
-Description: ${incident.description}
-Status: ${incident.current_status}
-Level: ${incident.inc_level_name || 'N/A'}
-Reported By: ${incident.created_by}
-    `;
+    try {
+      setDownloadLoading(true);
+      console.log('Downloading report for incident:', id);
 
-    const blob = new Blob([reportContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `incident-report-${id}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      // Get baseUrl and token from localStorage
+      let baseUrl = localStorage.getItem('baseUrl') || '';
+      const token = localStorage.getItem('token') || '';
+
+      if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+        baseUrl = 'https://' + baseUrl.replace(/^\/+/, '');
+      }
+
+      const response = await fetch(`${baseUrl}/pms/incidents/${id}/incident_report`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Get the response as blob for file download
+      const blob = await response.blob();
+
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+
+      // Try to get filename from Content-Disposition header
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `incident-report-${id}.pdf`; // Default filename
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      setError('Failed to download incident report');
+    } finally {
+      setDownloadLoading(false);
+    }
   };
 
   // Collapsible Section Component
@@ -201,11 +233,16 @@ Reported By: ${incident.created_by}
             </Button>
             <Button
               onClick={handleDownloadReport}
-              style={{ backgroundColor: '#C72030' }}
+              disabled={downloadLoading}
+              style={{ backgroundColor: downloadLoading ? '#666' : '#C72030' }}
               className="text-white hover:opacity-90"
             >
-              <Download className="w-4 h-4 mr-2" />
-              Download Report
+              {downloadLoading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              {downloadLoading ? 'Downloading...' : 'Download Report'}
             </Button>
           </div>
         </div>

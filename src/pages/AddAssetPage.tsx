@@ -467,7 +467,7 @@ const AddAssetPage = () => {
   const [showFreshWaterOptions, setShowFreshWaterOptions] = useState(false);
   const [showWaterSourceOptions, setShowWaterSourceOptions] = useState(false);
   const [showWaterDistributionOptions, setShowWaterDistributionOptions] = useState(false);
-  
+
   // Additional state for tracking the third level selection
   const [tertiaryCategory, setTertiaryCategory] = useState("");
   const [allocationBasedOn, setAllocationBasedOn] = useState("department");
@@ -1302,14 +1302,14 @@ const AddAssetPage = () => {
       },
       // DG category
       "dg": 1, // DG
-      
+
       // Renewable energy mappings
       "renewable": {
         "solar": 7,      // Solar Panel
         "bio-methanol": 10, // Bio Methanol
         "wind": 11,       // Wind
       },
-      
+
       // Fresh water mappings (three-level hierarchy)
       "fresh-water": {
         "source": {
@@ -1326,25 +1326,25 @@ const AddAssetPage = () => {
           "output": 18, // Domestic (as a placeholder for destination)
         }
       },
-      
+
       // Recycled water
       "recycled": 6, // Recycled Water
-      
+
       // Water distribution mappings
       "water-distribution": {
         "irrigation": 17,  // Irrigation
         "domestic": 18,    // Domestic
         "flushing": 19,    // Flushing
       },
-      
+
       // IEX-GDAM
       "iex-gdam": 21, // IEX GDAM
     };
 
     // Handle three-level hierarchy (for fresh-water with source/destination)
-    if (tertiaryCategory && meterTypeMapping[meterCategory] && 
-        meterTypeMapping[meterCategory][subCategory] && 
-        typeof meterTypeMapping[meterCategory][subCategory] === 'object') {
+    if (tertiaryCategory && meterTypeMapping[meterCategory] &&
+      meterTypeMapping[meterCategory][subCategory] &&
+      typeof meterTypeMapping[meterCategory][subCategory] === 'object') {
       return meterTypeMapping[meterCategory][subCategory][tertiaryCategory] || null;
     }
     // Handle two-level hierarchy - but make sure we don't return nested objects
@@ -1352,12 +1352,12 @@ const AddAssetPage = () => {
       const result = meterTypeMapping[meterCategory][subCategory];
       // If the result is still an object (nested structure), return null instead
       return (typeof result === 'number') ? result : null;
-    } 
+    }
     // Handle single-level
     else if (typeof meterTypeMapping[meterCategory] === 'number') {
       return meterTypeMapping[meterCategory];
     }
-    
+
     return null;
   };
 
@@ -1379,7 +1379,8 @@ const AddAssetPage = () => {
       setShowFreshWaterOptions(false);
       setShowWaterSourceOptions(false);
       setShowWaterDistributionOptions(false);
-    } else if (value === "renewable") {sp
+    } else if (value === "renewable") {
+      sp
       setShowRenewableOptions(true);
       setShowBoardRatioOptions(false);
       setShowFreshWaterOptions(false);
@@ -6679,7 +6680,7 @@ const AddAssetPage = () => {
                           />
                           <label
                             htmlFor="vehicle-warranty-yes"
-                            className="text-sm" 
+                            className="text-sm"
                           >
                             Yes
                           </label>
@@ -8201,10 +8202,10 @@ const AddAssetPage = () => {
                         defaultValue=""
                         onChange={(e) =>
                           handleExtraFieldChange(
-                            "building_use",
+                            "usage_and_compliance",
                             (e.target as HTMLInputElement).value,
                             "select",
-                            "buildingUsage",
+                            "usage_and_compliance",
                             "Building Use"
                           )
                         }
@@ -8233,7 +8234,7 @@ const AddAssetPage = () => {
                             "fire_safety_certification",
                             (e.target as HTMLInputElement).value,
                             "select",
-                            "buildingUsage",
+                            "usage_and_compliance",
                             "Fire Safety Certification"
                           )
                         }
@@ -8259,7 +8260,7 @@ const AddAssetPage = () => {
                           "occupancy_certificate_no",
                           (e.target as HTMLInputElement).value,
                           "text",
-                          "buildingUsage",
+                          "usage_and_compliance",
                           "Occupancy Certificate No."
                         )
                       }
@@ -8281,7 +8282,7 @@ const AddAssetPage = () => {
                             "structural_safety_certificate",
                             (e.target as HTMLInputElement).value,
                             "select",
-                            "buildingUsage",
+                            "usage_and_compliance",
                             "Structural Safety Certificate"
                           )
                         }
@@ -8311,7 +8312,7 @@ const AddAssetPage = () => {
                             "utility_connections",
                             (e.target as HTMLInputElement).value,
                             "select",
-                            "buildingUsage",
+                            "usage_and_compliance",
                             "Utility Connections"
                           )
                         }
@@ -9001,8 +9002,8 @@ const AddAssetPage = () => {
                       </div>
                     </div>
 
-                  
-                    
+
+
 
                     {/* Custom Fields for Asset Details */}
                     {(customFields.assetDetails || []).map((field) => (
