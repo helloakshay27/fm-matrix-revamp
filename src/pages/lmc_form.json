@@ -1,0 +1,285 @@
+{
+  "work_at_underground_form": {
+    "working_below_six_feet_work_at_underground": {
+      "question": "Are you working more than 1.8 meter below at any time?",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "working_on_aerial_cabling_work_at_underground": {
+      "question": "Are you working on aerial cabling?",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "ppe_standards_work_at_underground": {
+      "question": "Is the PPE used as per VIL standards?",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "non_metallic_ladder_work_at_underground": {
+      "question": "Do you have required PPE, Non Metallic ladder and undergone W@H training?",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "damage_in_ppe_work_at_underground": {
+      "question": "Is there any damage in PPE being used?",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "site_specific_risks_work_at_underground": {
+      "question": "Is the person aware of site specific risks and PPE?",
+      "answers": ["Yes", "No", "NA"]
+    }
+  },
+  "work_at_height_form": {
+    "safety_harness_work_at_height": {
+      "question": "Is the Safety Harness as per VIL Standards?",
+      "answers": ["Yes", "No"]
+    },
+    "safety_gear_work_at_height": {
+      "question": "Is there Safety shoes, helmet, gloves and reflective wear and in good condition?",
+      "answers": ["Yes", "No"]
+    },
+    "anchoring_awareness_work_at_height": {
+      "question": "Check the awareness on proper way of anchoring?",
+      "answers": ["Yes", "No"]
+    },
+    "anchoring_hooks_work_at_height": {
+      "question": "Is the right set of anchoring hooks available along with Safety Harness kit?",
+      "answers": ["Yes", "No"]
+    },
+    "lifting_rope_condition_work_at_height": {
+      "question": "Is the Material Lifting rope in good condition?",
+      "answers": ["Yes", "No"]
+    },
+    "site_specific_risks_work_at_height": {
+      "question": "Is the person aware of site specific risks?",
+      "answers": ["Yes", "No"]
+    },
+    "ptw_system_awareness_work_at_height": {
+      "question": "Is the person aware of PTW system and login credentials available?",
+      "answers": ["Yes", "No"]
+    }
+  },
+  "operate_mhe_form": {
+    "all_body_lights_operate_mhe": {
+      "question": "All body lights including brake, head, tail, indicators in working condition?",
+      "answers": ["Yes", "No"]
+    },
+    "reverse_horn_operate_mhe": {
+      "question": "Is the reverse horn in working condition?",
+      "answers": ["Yes", "No"]
+    },
+    "interlock_ignition_seat_belts_operate_mhe": {
+      "question": "Is the interlock between ignition and seat belts working?",
+      "answers": ["Yes", "No"]
+    },
+    "last_maintenance_operate_mhe": {
+      "question": "When was the last maintenance done?",
+      "answers": ["Date"]
+    }
+  },
+  "work_with_electrical_form": {
+    "lototo_process_electrical_work": {
+      "question": "Is he/she aware of LOTOTO (Lock out Tag out Try out) process?",
+      "answers": ["Yes", "No"]
+    },
+    "ppe_vil_standards_electrical_work": {
+      "question": "Is the PPE used as per VIL standards?",
+      "answers": ["Yes", "No"]
+    },
+    "ppe_damage_electrical_work": {
+      "question": "Is there any damage in PPE being used?",
+      "answers": ["Yes", "No"]
+    },
+    "ptw_system_electrical_work": {
+      "question": "Is the person aware of PTW system and login credentials available?",
+      "answers": ["Yes", "No"]
+    },
+    "site_specific_risks_electrical_work": {
+      "question": "Is the person aware of site-specific risks?",
+      "answers": ["Yes", "No"]
+    }
+  },
+  "lmc_bicycle_form": {
+    "reflective_jacket_bicycle": {
+      "question": "Does he/she have reflective jackets?",
+      "answers": ["Yes", "No"]
+    },
+    "sticker_bicycle": {
+      "question": "Is there reflective stickers on bicycles?",
+      "answers": ["Yes", "No"]
+    },
+    "change_transport_bicycle": {
+      "question": "Are you planning to change your mode of transport anytime?",
+      "answers": ["Yes", "No"]
+    },
+    "transport_mode_bicycle": {
+      "question": "Select Mode Of Transport (If yes then this option will appear)",
+      "answers": [
+        "Cycle to 2 wheeler",
+        "2 wheeler to 4 wheeler",
+        "Change in 4 wheeler to 2 wheeler",
+        "Public Transport to 2 wheeler",
+        "Public Transport to 4 wheeler"
+      ]
+    },
+    "driving_license_bicycle": {
+      "question": "Have you received a Driving License?",
+      "answers": ["Yes", "No"]
+    }
+  },
+  "riding_4wheeler_form": {
+    "seat_belts_4wheeler": {
+      "question": "Are all seats (front & rear) having Retractable seat belts?",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "gps_4wheeler": {
+      "question": "Is the GPS available in the vehicle?",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "body_lights_4wheeler": {
+      "question": "Visible check if all body lights including brake, head, tail, indicators in working condition",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "tire_wear_4wheeler": {
+      "question": "Are there any visible wear and tear of tires?",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "driving_restriction_4wheeler": {
+      "question": "Is he/she aware that driving for business purposes between 22:00 to 05:00 hours on highways is restricted?",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "driving_break_4wheeler": {
+      "question": "Is he/she aware that Driver/rider should take a 20-minute break after 3 hours of continuous driving?",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "maintenance_date_4wheeler": {
+      "question": "When was the last maintenance of 4 W?",
+      "answers": ["Date field"]
+    },
+    "transport_4wheeler": {
+      "question": "Are you planning to change your Mode of transport any time?",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "transport_mode": {
+      "question": "Select Mode Of Transport",
+      "answers": [
+        "Cycle to 2 wheeler",
+        "2 wheeler to 4 wheeler",
+        "Change in 2 wheeler to 4 wheeler",
+        "Public Transport to 2 wheeler",
+        "Public Transport to 4 wheeler"
+      ]
+    }
+  },
+  "riding_2wheeler_form": {
+    "helmet_2wheeler": {
+      "question": "Usage/condition of Full Faced ISI helmet",
+      "answers": ["ok", "Not ok", "NA"]
+    },
+    "jacket_2wheeler": {
+      "question": "Usage and condition of Reflective jacket",
+      "answers": ["ok", "Not ok", "NA"]
+    },
+    "sticker_2wheeler": {
+      "question": "Is Reflective sticker on Bike and Helmet",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "travel_2wheeler": {
+      "question": "Do the rider need to travel more than 120 kilometers (kms) in a day for work",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "break_2wheeler": {
+      "question": "Is he/she aware that rider should take 20 minutes break after 3 hours of continuous driving",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "mirrors_2wheeler": {
+      "question": "Are the rear view Mirrors available and properly fixed",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "tires_2wheeler": {
+      "question": "Are there any visible wear and tear of tires",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "maintenance_2wheeler": {
+      "question": "When was the last maintenance of 2 W?",
+      "answers": ["Date field"]
+    },
+    "change_mode_of_transport": {
+      "question": "Are you planning to change mode of transport?",
+      "answers": ["Yes", "No", "NA"]
+    },
+    "transport_mode_2wheeler": {
+      "question": "Choose your new mode of transport",
+      "answers": [
+        "Cycle to 2 wheeler",
+        "2 wheeler to 4 wheeler",
+        "4 wheeler to 2 wheeler",
+        "Public Transport to 2 wheeler",
+        "Public Transport to 4 wheeler"
+      ]
+    }
+  },
+  "final_page_form": {
+    "received_driving_license_final": {
+      "question": "Have you received Driving License?",
+      "answers": ["Yes", "No"]
+    },
+    "training_requirements_final": {
+      "question": "Is there any Training requirements/refresher required?",
+      "answers": ["Yes", "No"]
+    },
+    "training_final": {
+      "question": "Select Training",
+      "answers": [
+        "HSW Induction",
+        "Defensive Driving",
+        "Work and Height",
+        "Electrical",
+        "Material Lifting",
+        "OFC",
+        "ERT",
+        "Fire Safety Training",
+        "First Aid Training",
+        "PGI",
+        "PTW",
+        "Incident Investigation",
+        "Risk Assessment",
+        "ASR & CMM"
+      ]
+    },
+    "observation_final": {
+      "question": "Any Positive/improvement observation on Safe behavior you want to comment.",
+      "answers": ["Text area"]
+    },
+    "action_taken_final": {
+      "question": "Action Taken On Observation",
+      "answers": ["Text area"]
+    }
+  },
+  "form": {
+    "challenges": {
+      "question": "Do you face any challenges in your workplace/field work with regards to Health Safety and Wellbeing?",
+      "answers": ["Yes", "No"]
+    },
+    "describe_challenges": {
+      "question": "Describe Challenges in a few words",
+      "answers": ["Text field"]
+    },
+    "treatment": {
+      "question": "Did you undergo any major medical treatment in the past year?",
+      "answers": ["Yes", "No"]
+    },
+    "asr": {
+      "question": "Are you clear about Absolute Safety Rules (ASR) & Consequence Management Matrix (CMM)?",
+      "answers": ["Yes", "No"]
+    },
+    "report": {
+      "question": "Do you know that you must report unsafe acts and Unsafe conditions?",
+      "answers": ["Yes", "No"]
+    },
+    "risks": {
+      "question": "Are you familiar with Job Specific risks and control measures?",
+      "answers": ["Yes", "No"]
+    },
+    "assessment": {
+      "question": "Are you familiar with risk assessment and Permit to Work System?",
+      "answers": ["Yes", "No", "NA"]
+    }
+  }
+}
