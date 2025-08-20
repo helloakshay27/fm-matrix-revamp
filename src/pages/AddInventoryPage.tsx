@@ -105,7 +105,7 @@ export const AddInventoryPage = () => {
   // Pre-select asset if asset_id query param is present (coming from asset details / E-BOM add flow)
   const location = useLocation();
   const [assetIdParam, setAssetIdParam] = useState<string | null>(null);
-  const [fetchedSingleAsset, setFetchedSingleAsset] = useState<any | null>(null);
+  // We avoid extra single-asset API calls; only preselect if the asset appears in the loaded list
 
   // Parse query param once
   useEffect(() => {
@@ -114,36 +114,16 @@ export const AddInventoryPage = () => {
     setAssetIdParam(id);
   }, [location.search]);
 
-  // Apply preselection when assets list arrives
+  // Preselect only if the asset id exists in the loaded assets list
   useEffect(() => {
     if (!assetIdParam) return;
-    if (formData.assetName) return; // already set manually
-    if (assets && assets.length > 0) {
-      const match = assets.find((a: any) => String(a.id) === assetIdParam);
-      if (match) {
-        setFormData(prev => ({ ...prev, assetName: String(match.id) }));
-        return;
-      }
+    if (!assets || assets.length === 0) return;
+    if (formData.assetName) return; // already selected
+    const exists = assets.some(a => String(a.id) === assetIdParam);
+    if (exists) {
+      setFormData(prev => ({ ...prev, assetName: assetIdParam }));
     }
-    // If not found in list (maybe API is limited), attempt fetching single asset once
-    const fetchSingle = async () => {
-      try {
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
-        if (!baseUrl || !token) return;
-        const res = await fetch(`https://${baseUrl}/pms/assets/${assetIdParam}.json`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!res.ok) return; // silently ignore
-        const data = await res.json();
-        setFetchedSingleAsset(data);
-        setFormData(prev => ({ ...prev, assetName: String(data.id) }));
-      } catch (e) {
-        // ignore
-      }
-    };
-    if (!fetchedSingleAsset) fetchSingle();
-  }, [assetIdParam, assets, formData.assetName, fetchedSingleAsset]);
+  }, [assetIdParam, assets, formData.assetName]);
 
   // Validation function
   const validateField = (field: string, value: string) => {
@@ -615,12 +595,7 @@ export const AddInventoryPage = () => {
                           {asset.name}
                         </MenuItem>
                       ))}
-                      {/* If asset id param not in loaded list but fetched individually, show it */}
-                      {assetIdParam && formData.assetName === assetIdParam && !assets.find(a => String(a.id) === assetIdParam) && fetchedSingleAsset && (
-                        <MenuItem key={assetIdParam} value={assetIdParam}>
-                          {fetchedSingleAsset.name || `Asset #${assetIdParam}`}
-                        </MenuItem>
-                      )}
+                      {/* No fallback item; only select if present in list */}
                     </MuiSelect>
                   </FormControl>
                 </div>
