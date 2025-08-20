@@ -138,7 +138,7 @@ export const BookingDetailsPage = () => {
               <div className="space-y-4">
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">Schedule Slot</span>
-                  <span className="font-medium text-16">
+                  <span className="font-medium text-16 truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings.show_schedule_24_hour}>
                     {" "}
                     {bookings.show_schedule_24_hour}
                   </span>
