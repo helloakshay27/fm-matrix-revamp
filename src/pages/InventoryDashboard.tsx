@@ -199,6 +199,11 @@ export const InventoryDashboard = () => {
     'items_status',
     'category_wise',
     'green_consumption',
+    'consumption_report_green',
+    'consumption_report_non_green',
+    'current_minimum_stock_green',
+    'current_minimum_stock_non_green',
+    'inventory_cost_over_month',
   ]);
   // Maintain explicit draggable order for analytics cards
   const [analyticsCardOrder, setAnalyticsCardOrder] = useState<string[]>([]);

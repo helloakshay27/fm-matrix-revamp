@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
 import { fetchInventoryAssets } from '@/store/slices/inventoryAssetsSlice';
@@ -12,6 +12,26 @@ import { useToast } from '@/hooks/use-toast';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { getUser } from '@/utils/auth';
 import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
+import { toast } from 'sonner';
+
+// Helper: strip HTML tags / stray wrappers returned by backend so toast doesn't show raw tags
+const sanitizeErrorMessage = (msg: string): string => {
+  if (!msg) return msg;
+  // Remove any HTML tags
+  let cleaned = msg.replace(/<[^>]+>/g, ' ');
+  // Decode basic HTML entities if present
+  cleaned = cleaned
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
+  // Collapse whitespace
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+  // Sometimes backend prefixes redundant field name like "Name Inventory name" -> dedupe first word if duplicated
+  cleaned = cleaned.replace(/^(Name\s+)?(Inventory name)/i, 'Inventory name');
+  return cleaned;
+};
 
 // Validation rules
 interface FormErrors {
@@ -33,7 +53,7 @@ interface FormErrors {
 
 export const AddInventoryPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  // const { toast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
   const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
   const { assets = [], loading = false } = inventoryAssetsState || {};
@@ -69,11 +89,61 @@ export const AddInventoryPage = () => {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [sacList, setSacList] = useState([])
+  const [submitting, setSubmitting] = useState(false);
+  // Suggestions state for inventory name
+  const [nameSuggestions, setNameSuggestions] = useState<{id:number; name:string}[]>([]);
+  const [nameSuggestLoading, setNameSuggestLoading] = useState(false);
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+  const nameDebounceRef = useRef<number | null>(null);
+  const inventoryNameWrapperRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     dispatch(fetchInventoryAssets());
     dispatch(fetchSuppliersData());
   }, [dispatch]);
+
+  // Pre-select asset if asset_id query param is present (coming from asset details / E-BOM add flow)
+  const location = useLocation();
+  const [assetIdParam, setAssetIdParam] = useState<string | null>(null);
+  const [fetchedSingleAsset, setFetchedSingleAsset] = useState<any | null>(null);
+
+  // Parse query param once
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('asset_id');
+    setAssetIdParam(id);
+  }, [location.search]);
+
+  // Apply preselection when assets list arrives
+  useEffect(() => {
+    if (!assetIdParam) return;
+    if (formData.assetName) return; // already set manually
+    if (assets && assets.length > 0) {
+      const match = assets.find((a: any) => String(a.id) === assetIdParam);
+      if (match) {
+        setFormData(prev => ({ ...prev, assetName: String(match.id) }));
+        return;
+      }
+    }
+    // If not found in list (maybe API is limited), attempt fetching single asset once
+    const fetchSingle = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const res = await fetch(`https://${baseUrl}/pms/assets/${assetIdParam}.json`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) return; // silently ignore
+        const data = await res.json();
+        setFetchedSingleAsset(data);
+        setFormData(prev => ({ ...prev, assetName: String(data.id) }));
+      } catch (e) {
+        // ignore
+      }
+    };
+    if (!fetchedSingleAsset) fetchSingle();
+  }, [assetIdParam, assets, formData.assetName, fetchedSingleAsset]);
 
   // Validation function
   const validateField = (field: string, value: string) => {
@@ -205,13 +275,12 @@ export const AddInventoryPage = () => {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill all required fields correctly.",
-        variant: "destructive",
-      });
+      toast("Please fill all required fields correctly.");
       return;
     }
+
+  if (submitting) return; // guard against double click
+  setSubmitting(true);
 
     const user = getUser();
     const payload = {
@@ -256,35 +325,43 @@ export const AddInventoryPage = () => {
         body: JSON.stringify(payload),
       });
 
-      if (response.ok) {
+  if (response.ok) {
         const result = await response.json();
         console.log('Inventory created successfully:', result);
-
-        toast({
-          title: "Inventory Created",
-          description: "Inventory has been successfully created.",
-        });
-
+        toast("Inventory has been successfully created.");
         navigate(-1);
       } else {
         console.error('Failed to create inventory:', response.status, response.statusText);
-        const errorData = await response.text();
-        console.error('Error response:', errorData);
-
-        toast({
-          title: "Error",
-          description: "Failed to create inventory. Please try again.",
-          variant: "destructive",
-        });
+        const raw = await response.text();
+        console.error('Error response raw:', raw);
+        let message = 'Failed to create inventory. Please try again.';
+        // Try JSON parse first
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed) {
+            if (parsed.errors) {
+              if (Array.isArray(parsed.errors)) message = parsed.errors.join(', ');
+              else if (typeof parsed.errors === 'object') {
+                try {
+                  message = Object.values(parsed.errors).flat().join(', ');
+                } catch { message = JSON.stringify(parsed.errors); }
+              } else if (typeof parsed.errors === 'string') message = parsed.errors;
+            } else if (parsed.error) message = parsed.error;
+            else if (parsed.message) message = parsed.message;
+          }
+        } catch {
+          // Fallback: extract Rails validation failure line
+          const match = raw.match(/Validation failed:?\s*(.+)/i);
+          if (match && match[1]) message = match[1].trim();
+          else if (raw.trim()) message = raw.trim().slice(0, 400);
+        }
+        toast(sanitizeErrorMessage(message));
       }
     } catch (error) {
       console.error('Error creating inventory:', error);
-
-      toast({
-        title: "Error",
-        description: "Failed to create inventory. Please try again.",
-        variant: "destructive",
-      });
+      toast(sanitizeErrorMessage('Failed to create inventory. Please try again.'));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -370,6 +447,44 @@ export const AddInventoryPage = () => {
 
   useEffect(() => {
     fetchSAC();
+  }, []);
+
+  // Fetch inventory name suggestions
+  const fetchNameSuggestions = async (query: string) => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) return;
+    setNameSuggestLoading(true);
+    try {
+      const res = await fetch(`https://${baseUrl}/pms/inventories/suggestions.json?name=${encodeURIComponent(query)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed suggestions');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setNameSuggestions(data);
+        setShowNameSuggestions(true);
+      } else if (Array.isArray(data?.suggestions)) { // fallback shape
+        setNameSuggestions(data.suggestions);
+        setShowNameSuggestions(true);
+      } else {
+        setNameSuggestions([]); setShowNameSuggestions(false);
+      }
+    } catch (e) {
+      setNameSuggestions([]); setShowNameSuggestions(false);
+    } finally { setNameSuggestLoading(false); }
+  };
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (!inventoryNameWrapperRef.current) return;
+      if (!inventoryNameWrapperRef.current.contains(e.target as Node)) {
+        setShowNameSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
 
@@ -500,16 +615,39 @@ export const AddInventoryPage = () => {
                           {asset.name}
                         </MenuItem>
                       ))}
+                      {/* If asset id param not in loaded list but fetched individually, show it */}
+                      {assetIdParam && formData.assetName === assetIdParam && !assets.find(a => String(a.id) === assetIdParam) && fetchedSingleAsset && (
+                        <MenuItem key={assetIdParam} value={assetIdParam}>
+                          {fetchedSingleAsset.name || `Asset #${assetIdParam}`}
+                        </MenuItem>
+                      )}
                     </MuiSelect>
                   </FormControl>
                 </div>
 
-                <div>
+                <div ref={inventoryNameWrapperRef} className="relative">
                   <TextField
                     label={<>Inventory Name<span style={{ color: '#C72030' }}>*</span></>}
                     placeholder="Name"
                     value={formData.inventoryName}
-                    onChange={(e) => handleInputChange('inventoryName', e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleInputChange('inventoryName', val);
+                      if (nameDebounceRef.current) window.clearTimeout(nameDebounceRef.current);
+                      if (val.trim().length < 2) {
+                        setNameSuggestions([]); setShowNameSuggestions(false); return;
+                      }
+                      nameDebounceRef.current = window.setTimeout(() => {
+                        fetchNameSuggestions(val.trim());
+                      }, 350);
+                    }}
+                    onFocus={() => {
+                      if (nameSuggestions.length > 0) setShowNameSuggestions(true);
+                    }}
+                    onBlur={(e) => {
+                      // Delay hiding to allow click
+                      setTimeout(() => setShowNameSuggestions(false), 180);
+                    }}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -517,6 +655,30 @@ export const AddInventoryPage = () => {
                     error={!!errors.inventoryName}
                     helperText={errors.inventoryName}
                   />
+                  {showNameSuggestions && (nameSuggestLoading || nameSuggestions.length > 0) && (
+                    <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-auto text-sm">
+                      {nameSuggestLoading && (
+                        <div className="px-3 py-2 text-gray-500">Loading...</div>
+                      )}
+                      {!nameSuggestLoading && nameSuggestions.length === 0 && (
+                        <div className="px-3 py-2 text-gray-500">No matches</div>
+                      )}
+                      {!nameSuggestLoading && nameSuggestions.map(s => (
+                        <button
+                          type="button"
+                          key={s.id}
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, inventoryName: s.name }));
+                            setShowNameSuggestions(false);
+                            validateField('inventoryName', s.name);
+                          }}
+                          className={`block w-full text-left px-3 py-2 hover:bg-red-50 ${s.name === formData.inventoryName ? 'bg-red-50' : ''}`}
+                        >
+                          {s.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -865,9 +1027,32 @@ export const AddInventoryPage = () => {
         <div className="p-6 border-b border-[#D9D9D9] bg-[#F6F7F7]">
           <Button
             onClick={handleSubmit}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
+            disabled={submitting}
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Submit
+            {submitting && (
+              <svg
+                className="animate-spin h-4 w-4 mr-2 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                />
+              </svg>
+            )}
+            {submitting ? 'Submitting...' : 'Submit'}
           </Button>
         </div>
       </div>

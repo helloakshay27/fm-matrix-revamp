@@ -7,11 +7,10 @@ const inventoryAnalyticsOptions = [
   // {
   //   id: 'inventory_consumption_over_site',
   //   label: 'Inventory Consumption Over Site',
-  //   checked: false,
+  //   checked: true,
   //   endpoint: 'inventory_consumption_over_site.json',
   //   icon: BarChart
   // },
-
   { 
     id: 'items_status', 
     label: 'Items Status', 
@@ -36,35 +35,35 @@ const inventoryAnalyticsOptions = [
   { 
     id: 'consumption_report_green', 
     label: 'Consumption Report Green', 
-    checked: false, 
+    checked: true, 
     endpoint: 'consumption_report_green.json',
     icon: Activity 
   },
   { 
     id: 'consumption_report_non_green', 
     label: 'Consumption Report Non-Green', 
-    checked: false, 
+    checked: true, 
     endpoint: 'consumption_report_non_green.json',
     icon: FileText 
   },
   { 
     id: 'current_minimum_stock_non_green', 
     label: 'Current Minimum Stock Non-Green', 
-    checked: false, 
+    checked: true, 
     endpoint: 'current_minimum_stock_non_green.json',
     icon: AlertTriangle 
   },
   { 
     id: 'current_minimum_stock_green', 
     label: 'Current Minimum Stock Green', 
-    checked: false, 
+    checked: true, 
     endpoint: 'current_minimum_stock_green.json',
     icon: Database 
   },
-    {
+  {
     id: 'inventory_cost_over_month',
     label: 'Inventory Cost Over Month',
-    checked: false,
+    checked: true,
     endpoint: 'card_inventory_cost_over_month.json',
     icon: BarChart
   },

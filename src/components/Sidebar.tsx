@@ -12,7 +12,9 @@ import {
   ChevronRight, ChevronLeft, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
   Archive, TreePine, FlaskConical, Mail, ClipboardList,
-  Currency
+  Currency,
+  User,
+  BarChart
 } from 'lucide-react';
 
 const navigationStructure = {
@@ -318,9 +320,9 @@ const modulesByPackage = {
         { name: 'Response', href: '/maintenance/survey/response', color: 'text-[#1a1a1a]' }
       ]
     },
-    {
-      name: 'M Safe',
-      icon: Shield,
+   {
+      name: 'MSafe User',
+      icon: User,
       href: '/maintenance/m-safe',
       subItems: [
         { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]' },
@@ -328,6 +330,9 @@ const modulesByPackage = {
       ]
     },
     { name: 'Krcc List', icon: ClipboardList, href: '/maintenance/krcc-list' },
+    { name: 'LMC', icon: BarChart, href: '/maintenance/lmc' },
+    { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
+    { name: 'Training List', icon: BookOpen, href: '/maintenance/training-list' },
     // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
   ],
   'Safety': [

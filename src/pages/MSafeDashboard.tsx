@@ -393,6 +393,10 @@ export const MSafeDashboard = () => {
       role: newFilters.role || '',
       report_to_id: newFilters.report_to_id ? String(newFilters.report_to_id) : ''
     });
+    // If all filters are cleared, also clear search to truly reset table
+    if (!(newFilters.firstname || newFilters.lastname || newFilters.email || newFilters.mobile || newFilters.cluster || newFilters.circle || newFilters.department || newFilters.role || newFilters.report_to_id)) {
+      setSearchTerm('');
+    }
   };
 
 
