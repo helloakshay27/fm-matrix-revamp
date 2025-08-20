@@ -52,6 +52,10 @@ interface RosterFormData {
 }
 
 export const RosterEditPage: React.FC = () => {
+  // Arrays for select period dropdowns
+  const daysArr = Array.from({ length: 31 }, (_, i) => i + 1);
+  const monthsArr = Array.from({ length: 12 }, (_, i) => i + 1);
+  const yearsArr = Array.from({ length: 5 }, (_, i) => 2023 + i);
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
@@ -59,8 +63,8 @@ export const RosterEditPage: React.FC = () => {
   const { selectedSite } = useSelector((state: RootState) => state.site);
 
   // Set document title
-  useEffect(() => { 
-    document.title = 'Edit Roster Template'; 
+  useEffect(() => {
+    document.title = 'Edit Roster Template';
   }, []);
 
   // Form state
@@ -75,6 +79,16 @@ export const RosterEditPage: React.FC = () => {
     selectedEmployees: [],
     rosterType: 'Permanent',
     active: true
+  });
+
+  // Period selection state
+  const [period, setPeriod] = useState({
+    fromDay: 19,
+    fromMonth: 8,
+    fromYear: 2025,
+    toDay: 18,
+    toMonth: 9,
+    toYear: 2025
   });
 
   // Loading states
@@ -132,41 +146,47 @@ export const RosterEditPage: React.FC = () => {
     }
   }, [id]);
 
+  
+
   // Fetch existing roster template
   const fetchRosterTemplate = async () => {
     setIsLoading(true);
     try {
-      // Mock data for demonstration - replace with actual API call
-      const mockTemplate = {
-        id: parseInt(id!),
-        name: 'Security Team Morning Shift',
-        working_days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-        day_type: 'Weekdays' as const,
-        week_selection: ['1st Week', '2nd Week', '3rd Week', '4th Week', 'All'],
-        location: 'Corporate Office - Tower A',
-        department_ids: [1, 2],
-        shift_id: 1,
-        employee_ids: [101, 102, 103],
-        roster_type: 'Permanent' as const,
-        active: true
-      };
-
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_roasters/${id}.json`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch roster template');
+      const data = await response.json();
+      const r = data.user_roaster || data;
       setFormData({
-        templateName: mockTemplate.name,
-        selectedDays: mockTemplate.working_days,
-        dayType: mockTemplate.day_type,
-        weekSelection: mockTemplate.week_selection,
-        location: mockTemplate.location,
-        departments: mockTemplate.department_ids,
-        shift: mockTemplate.shift_id,
-        selectedEmployees: mockTemplate.employee_ids,
-        rosterType: mockTemplate.roster_type,
-        active: mockTemplate.active
+        templateName: r.name || '',
+        selectedDays: r.working_days || [],
+        dayType: r.roaster_type || 'Weekdays',
+        weekSelection: r.week_selection || [],
+        location: r.location || '',
+        departments: r.department_id ? r.department_id.map(Number) : [],
+        shift: r.user_shift_id ? Number(r.user_shift_id) : null,
+        selectedEmployees: r.resource_id ? [Number(r.resource_id)] : [],
+        rosterType: r.allocation_type || 'Permanent',
+        active: r.active !== undefined ? r.active : true
+      });
+      setPeriod({
+        fromDay: Number(r['start_date(3i)']) || 19,
+        fromMonth: Number(r['start_date(2i)']) || 8,
+        fromYear: Number(r['start_date(1i)']) || 2025,
+        toDay: Number(r['end_date(3i)']) || 18,
+        toMonth: Number(r['end_date(2i)']) || 9,
+        toYear: Number(r['end_date(1i)']) || 2025
       });
     } catch (error) {
       console.error('Error fetching roster template:', error);
       toast.error('Failed to load roster template');
-      navigate('/roster');
+      // navigate('/roster');
     } finally {
       setIsLoading(false);
     }
@@ -191,7 +211,7 @@ export const RosterEditPage: React.FC = () => {
       }
 
       const data = await response.json();
-      
+
       // Adapt the response to our expected format
       const users = data.fm_users || data.users || data || [];
       setFMUsers(users.map((user: any) => ({
@@ -255,15 +275,15 @@ export const RosterEditPage: React.FC = () => {
 
       const siteName = localStorage.getItem('selectedSiteName');
       const companyName = localStorage.getItem('selectedCompanyName');
-      
+
       let locationName = 'Current Site';
-      
+
       if (siteName && siteName !== 'null' && siteName !== '') {
         locationName = siteName;
       } else if (companyName && companyName !== 'null' && companyName !== '') {
         locationName = companyName;
       }
-      
+
       setCurrentLocation(locationName);
     } catch (error) {
       console.error('Error fetching current location:', error);
@@ -273,26 +293,26 @@ export const RosterEditPage: React.FC = () => {
 
   // Handle day type selection
   const handleDayTypeChange = (type: 'Weekdays' | 'Weekends' | 'Recurring') => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       dayType: type,
       selectedDays: [],
       weekSelection: []
     }));
-    
+
     // Auto-select days based on type
     if (type === 'Weekdays') {
-      setFormData(prev => ({ 
-        ...prev, 
-        selectedDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] 
+      setFormData(prev => ({
+        ...prev,
+        selectedDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
       }));
     } else if (type === 'Weekends') {
-      setFormData(prev => ({ 
-        ...prev, 
-        selectedDays: ['Saturday', 'Sunday'] 
+      setFormData(prev => ({
+        ...prev,
+        selectedDays: ['Saturday', 'Sunday']
       }));
     }
-    
+
     if (errors.selectedDays) {
       setErrors(prev => ({ ...prev, selectedDays: false }));
     }
@@ -319,7 +339,7 @@ export const RosterEditPage: React.FC = () => {
           };
         }
       }
-      
+
       // If "All" is deselected, deselect all other options
       if (week === 'All' && prev.weekSelection.includes('All')) {
         return {
@@ -327,7 +347,7 @@ export const RosterEditPage: React.FC = () => {
           weekSelection: []
         };
       }
-      
+
       // If any other option is selected and "All" was already selected, remove "All"
       if (week !== 'All' && prev.weekSelection.includes('All')) {
         return {
@@ -337,11 +357,11 @@ export const RosterEditPage: React.FC = () => {
       }
 
       // Check if all individual options are selected (except "All"), then auto-select "All"
-      const allOptions = prev.dayType === 'Weekdays' 
+      const allOptions = prev.dayType === 'Weekdays'
         ? ['1st Week', '2nd Week', '3rd Week', '4th Week', '5th Week']
         : ['1st Weekend', '2nd Weekend', '3rd Weekend', '4th Weekend', '5th Weekend'];
-      
-      const hasAllIndividualOptions = allOptions.every(option => 
+
+      const hasAllIndividualOptions = allOptions.every(option =>
         newWeekSelection.includes(option)
       );
 
@@ -368,7 +388,7 @@ export const RosterEditPage: React.FC = () => {
         ? prev.selectedDays.filter(d => d !== dayKey)
         : [...prev.selectedDays, dayKey]
     }));
-    
+
     if (errors.selectedDays) {
       setErrors(prev => ({ ...prev, selectedDays: false }));
     }
@@ -377,7 +397,7 @@ export const RosterEditPage: React.FC = () => {
   // Handle input changes
   const handleInputChange = (field: keyof RosterFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear field error when user starts typing/selecting
     if (errors[field as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [field]: false }));
@@ -386,10 +406,10 @@ export const RosterEditPage: React.FC = () => {
 
   // Validation
   const validateForm = (): boolean => {
-    const hasSelectedDays = formData.dayType === 'Recurring' 
-      ? formData.selectedDays.length > 0 
+    const hasSelectedDays = formData.dayType === 'Recurring'
+      ? formData.selectedDays.length > 0
       : formData.selectedDays.length > 0;
-      
+
     const newErrors = {
       templateName: !formData.templateName.trim(),
       selectedDays: !hasSelectedDays,
@@ -403,7 +423,7 @@ export const RosterEditPage: React.FC = () => {
     setErrors(newErrors);
 
     const hasErrors = Object.values(newErrors).some(error => error);
-    
+
     if (hasErrors) {
       const errorFields = [];
       if (newErrors.templateName) errorFields.push('Template Name');
@@ -424,7 +444,7 @@ export const RosterEditPage: React.FC = () => {
   // Handle form submission
   const handleSubmit = async () => {
     if (isSubmitting) return;
-    
+
     if (!validateForm()) {
       return;
     }
@@ -432,32 +452,91 @@ export const RosterEditPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Build payload structure
-      const payload = {
-        roster_template: {
-          id: parseInt(id!),
-          name: formData.templateName,
-          working_days: formData.selectedDays,
-          day_type: formData.dayType,
-          week_selection: formData.weekSelection,
-          location: formData.location,
-          department_ids: formData.departments,
-          shift_id: formData.shift,
-          employee_ids: formData.selectedEmployees,
-          roster_type: formData.rosterType,
-          active: formData.active,
-          updated_at: new Date().toISOString()
-        }
+      // Build PATCH payload for API
+      let payload: any = {};
+      const baseUserRoaster = {
+        name: formData.templateName,
+        resource_id: formData.selectedEmployees[0]?.toString() || '',
+        user_shift_id: formData.shift?.toString() || '',
+        seat_category_id: '1',
+        'start_date(3i)': period.fromDay.toString(),
+        'start_date(2i)': period.fromMonth.toString(),
+        'start_date(1i)': period.fromYear.toString(),
+        'end_date(3i)': period.toDay.toString(),
+        'end_date(2i)': period.toMonth.toString(),
+        'end_date(1i)': period.toYear.toString(),
+        allocation_type: formData.rosterType,
+        roaster_type: formData.dayType
       };
 
-      console.log('🎯 Update Roster Template Payload:', JSON.stringify(payload, null, 2));
+      // Example logic for weekdays/weekends/recurring
+      if (formData.dayType === 'Recurring') {
+        // Recurring payload
+        // Example: { "1": ["1", "4"], ... } for weekNum: [dayNums]
+        const recurring = [{}];
+        for (let weekNum = 1; weekNum <= 5; weekNum++) {
+          const daysForWeek = formData.selectedDays
+            .filter(d => d.startsWith(`Week${weekNum}-`))
+            .map(d => {
+              const dayShort = d.split('-')[1];
+              // Map short day to number (Mon=1, Tue=2, ... Sun=7)
+              return (
+                ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].indexOf(dayShort) + 1
+              ).toString();
+            });
+          if (daysForWeek.length > 0) {
+            recurring[0][weekNum.toString()] = daysForWeek;
+          }
+        }
+        payload = {
+          user_roaster: {
+            ...baseUserRoaster
+          },
+          department_id: formData.departments.map(String),
+          no_of_days: '',
+          recurring
+        };
+      } else if (formData.dayType === 'Weekends') {
+        // Weekends payload
+        // weekends: [weekendNum]
+        // For demo, use weekSelection as weekend numbers (1-5)
+        const weekends = formData.weekSelection
+          .filter(w => w.match(/^[1-5]/))
+          .map(w => w[0]);
+        payload = {
+          user_roaster: {
+            ...baseUserRoaster
+          },
+          department_id: formData.departments.map(String),
+          weekends
+        };
+      } else {
+        // Weekdays or other types (default)
+        payload = {
+          user_roaster: {
+            ...baseUserRoaster
+          },
+          department_id: formData.departments.map(String)
+        };
+      }
 
-      // API call would go here
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('🎯 PATCH Roster Template Payload:', JSON.stringify(payload, null, 2));
+
+      // PATCH API call
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_roasters/${id}.json`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader(),
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error('API error');
 
       toast.success('Roster template updated successfully!');
       navigate(`/roster/detail/${id}`);
-      
+
     } catch (error) {
       console.error('Error updating roster template:', error);
       toast.error('Failed to update roster template. Please try again.');
@@ -575,7 +654,7 @@ export const RosterEditPage: React.FC = () => {
             <Label className="text-sm font-medium text-gray-700 mb-4 block mt-6">
               Working Days *
             </Label>
-            
+
             {/* Day Type Selection - Compact inline */}
             <div className="mb-4">
               <div className="flex flex-wrap gap-6">
@@ -631,12 +710,12 @@ export const RosterEditPage: React.FC = () => {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {['1st Week', '2nd Week', '3rd Week', '4th Week', '5th Week', 'All'].map((week) => (
-                    <label 
-                      key={week} 
+                    <label
+                      key={week}
                       className={`
                         flex items-center gap-2 px-3 py-1 rounded-md border-2 cursor-pointer transition-all duration-200
                         ${formData.weekSelection.includes(week)
-                          ? 'border-[#C72030] bg-[#C72030] text-white' 
+                          ? 'border-[#C72030] bg-[#C72030] text-white'
                           : 'border-[#D5DbDB] bg-white text-[#1a1a1a] hover:border-[#C72030]'
                         }
                         ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}
@@ -669,12 +748,12 @@ export const RosterEditPage: React.FC = () => {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {['1st Weekend', '2nd Weekend', '3rd Weekend', '4th Weekend', '5th Weekend', 'All'].map((weekend) => (
-                    <label 
-                      key={weekend} 
+                    <label
+                      key={weekend}
                       className={`
                         flex items-center gap-2 px-3 py-1 rounded-md border-2 cursor-pointer transition-all duration-200
                         ${formData.weekSelection.includes(weekend)
-                          ? 'border-[#C72030] bg-[#C72030] text-white' 
+                          ? 'border-[#C72030] bg-[#C72030] text-white'
                           : 'border-[#D5DbDB] bg-white text-[#1a1a1a] hover:border-[#C72030]'
                         }
                         ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}
@@ -703,7 +782,7 @@ export const RosterEditPage: React.FC = () => {
             {formData.dayType === 'Recurring' && (
               <div className="space-y-4 p-4 bg-[#f6f4ee] border border-[#D5DbDB] rounded-lg">
                 <div className="text-sm font-medium text-[#C72030] mb-3">Custom Weekly Pattern</div>
-                
+
                 {[1, 2, 3, 4, 5].map((weekNum) => (
                   <div key={weekNum} className="bg-white border border-[#D5DbDB] rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
@@ -713,10 +792,10 @@ export const RosterEditPage: React.FC = () => {
                         onClick={() => {
                           const allDaysForWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => `Week${weekNum}-${day}`);
                           const hasAllDays = allDaysForWeek.every(dayKey => formData.selectedDays.includes(dayKey));
-                          
+
                           setFormData(prev => ({
                             ...prev,
-                            selectedDays: hasAllDays 
+                            selectedDays: hasAllDays
                               ? prev.selectedDays.filter(d => !allDaysForWeek.includes(d))
                               : [...prev.selectedDays, ...allDaysForWeek.filter(d => !prev.selectedDays.includes(d))]
                           }));
@@ -724,10 +803,10 @@ export const RosterEditPage: React.FC = () => {
                         disabled={isSubmitting}
                         className={`
                           px-2 py-1 text-xs rounded transition-all duration-200
-                          ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].every(day => 
-                            formData.selectedDays.includes(`Week${weekNum}-${day}`)
-                          )
-                            ? 'bg-[#C72030] text-white' 
+                          ${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].every(day =>
+                          formData.selectedDays.includes(`Week${weekNum}-${day}`)
+                        )
+                            ? 'bg-[#C72030] text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-[#C72030] hover:text-white'
                           }
                         `}
@@ -735,7 +814,7 @@ export const RosterEditPage: React.FC = () => {
                         All
                       </button>
                     </div>
-                    
+
                     <div className="grid grid-cols-7 gap-1">
                       {[
                         { short: 'Mon', full: 'Monday' },
@@ -769,9 +848,9 @@ export const RosterEditPage: React.FC = () => {
                     </div>
                   </div>
                 ))}
-                
+
                 <div className="text-xs text-[#1a1a1a] opacity-70">
-                  {formData.selectedDays.length > 0 
+                  {formData.selectedDays.length > 0
                     ? `${formData.selectedDays.length} days selected across all weeks`
                     : 'No days selected yet'
                   }
@@ -824,10 +903,10 @@ export const RosterEditPage: React.FC = () => {
                       {(selected as number[]).map((value) => {
                         const dept = departments.find(d => d.id === value);
                         return (
-                          <Chip 
-                            key={value} 
-                            label={dept?.department_name || `ID: ${value}`} 
-                            size="small" 
+                          <Chip
+                            key={value}
+                            label={dept?.department_name || `ID: ${value}`}
+                            size="small"
                             sx={{ backgroundColor: '#C72030', color: 'white' }}
                           />
                         );
@@ -840,7 +919,7 @@ export const RosterEditPage: React.FC = () => {
                 >
                   {departments.map((dept) => (
                     <MenuItem key={dept.id} value={dept.id}>
-                      <Checkbox 
+                      <Checkbox
                         checked={formData.departments.indexOf(dept.id!) > -1}
                         sx={{
                           color: '#D5DbDB',
@@ -912,10 +991,10 @@ export const RosterEditPage: React.FC = () => {
                       {(selected as number[]).map((value) => {
                         const user = fmUsers.find(u => u.id === value);
                         return (
-                          <Chip 
-                            key={value} 
-                            label={user?.email || `User ${value}`} 
-                            size="small" 
+                          <Chip
+                            key={value}
+                            label={user?.email || `User ${value}`}
+                            size="small"
                             sx={{ backgroundColor: '#C72030', color: 'white' }}
                           />
                         );
@@ -928,7 +1007,7 @@ export const RosterEditPage: React.FC = () => {
                 >
                   {fmUsers.map((user) => (
                     <MenuItem key={user.id} value={user.id}>
-                      <Checkbox 
+                      <Checkbox
                         checked={formData.selectedEmployees.indexOf(user.id) > -1}
                         sx={{
                           color: '#D5DbDB',
@@ -937,7 +1016,7 @@ export const RosterEditPage: React.FC = () => {
                           },
                         }}
                       />
-                      <ListItemText 
+                      <ListItemText
                         primary={user.email || 'No email available'}
                         secondary={user.name}
                       />
@@ -953,6 +1032,75 @@ export const RosterEditPage: React.FC = () => {
               {errors.selectedEmployees && (
                 <p className="text-red-500 text-sm mt-1">Please select at least one employee</p>
               )}
+            </div>
+          </div>
+        </Section>
+        <Section title="Select Period" icon={<Calendar className="w-4 h-4" />}>
+          <div className="flex flex-col gap-2 mb-4">
+            <div className="font-semibold text-lg">Select Period</div>
+            <div className="flex items-center gap-4">
+              <span className="font-medium">From</span>
+              <select
+                value={period.fromDay}
+                onChange={e => setPeriod(prev => ({ ...prev, fromDay: Number(e.target.value) }))}
+                className="border rounded px-2 py-1"
+                disabled={isSubmitting}
+              >
+                {daysArr.map(day => (
+                  <option key={day} value={day}>{day}</option>
+                ))}
+              </select>
+              <select
+                value={period.fromMonth}
+                onChange={e => setPeriod(prev => ({ ...prev, fromMonth: Number(e.target.value) }))}
+                className="border rounded px-2 py-1"
+                disabled={isSubmitting}
+              >
+                {monthsArr.map(month => (
+                  <option key={month} value={month}>{month}</option>
+                ))}
+              </select>
+              <select
+                value={period.fromYear}
+                onChange={e => setPeriod(prev => ({ ...prev, fromYear: Number(e.target.value) }))}
+                className="border rounded px-2 py-1"
+                disabled={isSubmitting}
+              >
+                {yearsArr.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <span className="mx-2 font-semibold">To</span>
+              <select
+                value={period.toDay}
+                onChange={e => setPeriod(prev => ({ ...prev, toDay: Number(e.target.value) }))}
+                className="border rounded px-2 py-1"
+                disabled={isSubmitting}
+              >
+                {daysArr.map(day => (
+                  <option key={day} value={day}>{day}</option>
+                ))}
+              </select>
+              <select
+                value={period.toMonth}
+                onChange={e => setPeriod(prev => ({ ...prev, toMonth: Number(e.target.value) }))}
+                className="border rounded px-2 py-1"
+                disabled={isSubmitting}
+              >
+                {monthsArr.map(month => (
+                  <option key={month} value={month}>{month}</option>
+                ))}
+              </select>
+              <select
+                value={period.toYear}
+                onChange={e => setPeriod(prev => ({ ...prev, toYear: Number(e.target.value) }))}
+                className="border rounded px-2 py-1"
+                disabled={isSubmitting}
+              >
+                {yearsArr.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
             </div>
           </div>
         </Section>

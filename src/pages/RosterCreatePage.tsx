@@ -74,6 +74,20 @@ export const RosterCreatePage: React.FC = () => {
     rosterType: 'Permanent'
   });
 
+  // Period selection state
+  const [period, setPeriod] = useState({
+    fromDay: 21,
+    fromMonth: 8,
+    fromYear: 2025,
+    toDay: 19,
+    toMonth: 9,
+    toYear: 2025
+  });
+
+  const daysArr = Array.from({ length: 31 }, (_, i) => i + 1);
+  const monthsArr = Array.from({ length: 12 }, (_, i) => i + 1);
+  const yearsArr = Array.from({ length: 5 }, (_, i) => 2023 + i);
+
   // Loading states
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingFMUsers, setLoadingFMUsers] = useState(false);
@@ -85,6 +99,10 @@ export const RosterCreatePage: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [currentLocation, setCurrentLocation] = useState<string>('');
+
+  // Filtered FM Users based on department selection
+  const [filteredFMUsers, setFilteredFMUsers] = useState<FMUser[]>([]);
+  const [loadingFilteredFMUsers, setLoadingFilteredFMUsers] = useState(false);
 
   // Error states
   const [errors, setErrors] = useState({
@@ -179,6 +197,45 @@ export const RosterCreatePage: React.FC = () => {
       setFMUsers([]);
     } finally {
       setLoadingFMUsers(false);
+    }
+  };
+
+  // Fetch FM Users for selected departments
+  const fetchFilteredFMUsers = async (departmentIds: number[]) => {
+    if (!departmentIds || departmentIds.length === 0) {
+      setFilteredFMUsers([]);
+      return;
+    }
+    setLoadingFilteredFMUsers(true);
+    try {
+      const idsParam = departmentIds.join(',');
+      const apiUrl = `${API_CONFIG.BASE_URL}/pms/admin/user_roasters/department_roasters.json?department_id=${idsParam}`;
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      // Adapt response to FMUser[]
+      const users = data.fm_users || data.users || data || [];
+      setFilteredFMUsers(users.map((user: any) => ({
+        id: user.id,
+        name: user.name || user.full_name || `${user.firstname || ''} ${user.lastname || ''}`.trim(),
+        email: user.email,
+        department: user.department ? user.department.department_name : undefined
+      })));
+    } catch (error) {
+      console.error('Error fetching filtered FM users:', error);
+      toast.error('Failed to load employees for selected departments');
+      setFilteredFMUsers([]);
+    } finally {
+      setLoadingFilteredFMUsers(false);
     }
   };
 
@@ -388,6 +445,18 @@ export const RosterCreatePage: React.FC = () => {
     if (errors[field as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [field]: false }));
     }
+
+    // If department selection changes, fetch filtered employees
+    if (field === 'departments') {
+      fetchFilteredFMUsers(value as number[]);
+      // Clear selected employees if not present in new filtered list
+      setFormData(prev => ({
+        ...prev,
+        selectedEmployees: prev.selectedEmployees.filter(empId =>
+          filteredFMUsers.some(user => user.id === empId)
+        )
+      }));
+    }
   };
 
   // Validation
@@ -438,44 +507,103 @@ export const RosterCreatePage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Build payload structure
-      const payload = {
-        roster_template: {
-          name: formData.templateName,
-          working_days: formData.selectedDays,
-          day_type: formData.dayType,
-          week_selection: formData.weekSelection,
-          location: formData.location,
-          department_ids: formData.departments,
-          shift_id: formData.shift,
-          employee_ids: formData.selectedEmployees,
-          roster_type: formData.rosterType,
-          active: true,
-          created_at: new Date().toISOString()
-        }
+      // Build payload for API
+      let payload;
+      const baseUserRoaster = {
+        name: formData.templateName,
+        // resource_id: formData.selectedEmployees[0] || '',
+        // user_shift_id: formData.shift || '',
+        allocation_type: formData.rosterType,
+        roaster_type: formData.dayType
       };
 
-      // Log payload to console as requested
-      console.log('🎯 Roster Template Payload:', JSON.stringify(payload, null, 2));
-      console.log('📊 Payload Summary:', {
-        templateName: payload.roster_template.name,
-        workingDaysCount: payload.roster_template.working_days.length,
-        departmentCount: payload.roster_template.department_ids.length,
-        employeeCount: payload.roster_template.employee_ids.length,
-        location: payload.roster_template.location,
-        shiftId: payload.roster_template.shift_id,
-        rosterType: payload.roster_template.roster_type
+      // Dates for recurring (Rails style)
+      const startDate = {
+        'start_date(3i)': period.fromDay.toString(),
+        'start_date(2i)': period.fromMonth.toString(),
+        'start_date(1i)': period.fromYear.toString()
+      };
+      const endDate = {
+        'end_date(3i)': period.toDay.toString(),
+        'end_date(2i)': period.toMonth.toString(),
+        'end_date(1i)': period.toYear.toString()
+      };
+
+      if (formData.dayType === 'Recurring') {
+        // Recurring payload
+        // Example: { "1": ["1", "4"], ... } for weekNum: [dayNums]
+        const recurring = [{}];
+        for (let weekNum = 1; weekNum <= 5; weekNum++) {
+          const daysForWeek = formData.selectedDays
+            .filter(d => d.startsWith(`Week${weekNum}-`))
+            .map(d => {
+              const dayShort = d.split('-')[1];
+              // Map short day to number (Mon=1, Tue=2, ... Sun=7)
+              return (
+                ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].indexOf(dayShort) + 1
+              ).toString();
+            });
+          if (daysForWeek.length > 0) {
+            recurring[0][weekNum.toString()] = daysForWeek;
+          }
+        }
+        payload = {
+          user_roaster: {
+            ...baseUserRoaster,
+            ...startDate,
+            ...endDate
+          },
+          department_id: formData.departments.map(String),
+          no_of_days: '',
+          recurring
+        };
+      } else if (formData.dayType === 'Weekends') {
+        // Weekends payload
+        // weekends: [weekendNum]
+        // For demo, use weekSelection as weekend numbers (1-5)
+        const weekends = formData.weekSelection
+          .filter(w => w.match(/^[1-5]/))
+          .map(w => w[0]);
+        payload = {
+          user_roaster: {
+            ...baseUserRoaster,
+            start_date: `${period.fromYear}-${String(period.fromMonth).padStart(2,'0')}-${String(period.fromDay).padStart(2,'0')}`,
+            end_date: `${period.toYear}-${String(period.toMonth).padStart(2,'0')}-${String(period.toDay).padStart(2,'0')}`,
+            // seat_category_id: 1 // demo value
+          },
+          department_id: formData.departments,
+          weekends
+        };
+      } else {
+        // Weekdays or other types (default)
+        payload = {
+          user_roaster: {
+            ...baseUserRoaster,
+            start_date: `${period.fromYear}-${String(period.fromMonth).padStart(2,'0')}-${String(period.fromDay).padStart(2,'0')}`,
+            end_date: `${period.toYear}-${String(period.toMonth).padStart(2,'0')}-${String(period.toDay).padStart(2,'0')}`,
+            // seat_category_id: 1 // demo value
+          },
+          department_id: formData.departments
+        };
+      }
+
+      // Log payload to console
+      console.log('🎯 API Payload:', JSON.stringify(payload, null, 2));
+
+      // Make API call
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_roasters.json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader(),
+        },
+        body: JSON.stringify(payload)
       });
 
-      // Here you would make the actual API call to create the roster
-      // For now, we'll just simulate success
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!response.ok) throw new Error('API error');
 
       toast.success('Roster template created successfully!');
-      
-      // Navigate back to roster dashboard
       navigate('/roster');
-      
     } catch (error) {
       console.error('Error creating roster template:', error);
       toast.error('Failed to create roster template. Please try again.');
@@ -491,6 +619,8 @@ export const RosterCreatePage: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6 relative">
+      {/* Select Period Section */}
+      
       {/* Loading overlay */}
       {isSubmitting && (
         <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
@@ -914,7 +1044,7 @@ export const RosterCreatePage: React.FC = () => {
                   renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {(selected as number[]).map((value) => {
-                        const user = fmUsers.find(u => u.id === value);
+                        const user = filteredFMUsers.find(u => u.id === value);
                         return (
                           <Chip 
                             key={value} 
@@ -927,10 +1057,10 @@ export const RosterCreatePage: React.FC = () => {
                     </Box>
                   )}
                   displayEmpty
-                  disabled={loadingFMUsers || isSubmitting}
+                  disabled={loadingFilteredFMUsers || isSubmitting}
                   error={errors.selectedEmployees}
                 >
-                  {fmUsers.map((user) => (
+                  {filteredFMUsers.map((user) => (
                     <MenuItem key={user.id} value={user.id}>
                       <Checkbox 
                         checked={formData.selectedEmployees.indexOf(user.id) > -1}
@@ -942,13 +1072,13 @@ export const RosterCreatePage: React.FC = () => {
                         }}
                       />
                       <ListItemText 
-                        primary={user.email || 'No email available'}
-                        secondary={user.name}
+                        primary={user.name || 'No email available'}
+                        // secondary={user.name}
                       />
                     </MenuItem>
                   ))}
                 </MuiSelect>
-                {loadingFMUsers && (
+                {loadingFilteredFMUsers && (
                   <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
                     <CircularProgress size={16} />
                   </div>
@@ -960,6 +1090,76 @@ export const RosterCreatePage: React.FC = () => {
             </div>
           </div>
         </Section>
+
+        <Section title="Select Period" icon={<Calendar className="w-4 h-4" />}>
+        <div className="flex flex-col gap-2 mb-4">
+          <div className="font-semibold text-lg">Select Period</div>
+          <div className="flex items-center gap-4">
+            <span className="font-medium">From</span>
+            <select
+              value={period.fromDay}
+              onChange={e => setPeriod(prev => ({ ...prev, fromDay: Number(e.target.value) }))}
+              className="border rounded px-2 py-1"
+              disabled={isSubmitting}
+            >
+              {daysArr.map(day => (
+                <option key={day} value={day}>{day}</option>
+              ))}
+            </select>
+            <select
+              value={period.fromMonth}
+              onChange={e => setPeriod(prev => ({ ...prev, fromMonth: Number(e.target.value) }))}
+              className="border rounded px-2 py-1"
+              disabled={isSubmitting}
+            >
+              {monthsArr.map(month => (
+                <option key={month} value={month}>{month}</option>
+              ))}
+            </select>
+            <select
+              value={period.fromYear}
+              onChange={e => setPeriod(prev => ({ ...prev, fromYear: Number(e.target.value) }))}
+              className="border rounded px-2 py-1"
+              disabled={isSubmitting}
+            >
+              {yearsArr.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            <span className="mx-2 font-semibold">To</span>
+            <select
+              value={period.toDay}
+              onChange={e => setPeriod(prev => ({ ...prev, toDay: Number(e.target.value) }))}
+              className="border rounded px-2 py-1"
+              disabled={isSubmitting}
+            >
+              {daysArr.map(day => (
+                <option key={day} value={day}>{day}</option>
+              ))}
+            </select>
+            <select
+              value={period.toMonth}
+              onChange={e => setPeriod(prev => ({ ...prev, toMonth: Number(e.target.value) }))}
+              className="border rounded px-2 py-1"
+              disabled={isSubmitting}
+            >
+              {monthsArr.map(month => (
+                <option key={month} value={month}>{month}</option>
+              ))}
+            </select>
+            <select
+              value={period.toYear}
+              onChange={e => setPeriod(prev => ({ ...prev, toYear: Number(e.target.value) }))}
+              className="border rounded px-2 py-1"
+              disabled={isSubmitting}
+            >
+              {yearsArr.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </Section>
       </div>
 
       {/* Footer Actions */}

@@ -19,85 +19,40 @@ interface RoasterData {
 
 export const UserRoastersDashboard = () => {
   const navigate = useNavigate();
-  const [roasters] = useState<RoasterData[]>([
-    {
-      id: 1,
-      template: "Mon, Tue, Wed",
-      location: "Lockated",
-      department: "Tech",
-      shift: "10:00 AM to 08:00 PM",
-      seatType: "Angular Ws",
-      roasterType: "Permanent",
-      createdOn: "18/04/2023",
-      createdBy: "Robert Day2"
-    },
-    {
-      id: 2,
-      template: "MON,TUE,WED",
-      location: "Lockated",
-      department: "Tech",
-      shift: "10:00 AM to 08:00 PM",
-      seatType: "Cubical",
-      roasterType: "Permanent",
-      createdOn: "13/03/2023",
-      createdBy: "Robert Day2"
-    },
-    {
-      id: 3,
-      template: "Operations",
-      location: "Lockated",
-      department: "Operations",
-      shift: "10:00 AM to 08:00 PM",
-      seatType: "Angular Ws",
-      roasterType: "Permanent",
-      createdOn: "09/02/2023",
-      createdBy: "Robert Day2"
-    },
-    {
-      id: 4,
-      template: "2023",
-      location: "Lockated",
-      department: "Operations",
-      shift: "10:00 AM to 08:00 PM",
-      seatType: "Angular Ws",
-      roasterType: "Permanent",
-      createdOn: "09/02/2023",
-      createdBy: "Robert Day2"
-    },
-    {
-      id: 5,
-      template: "Monday,Wednesday,Friday",
-      location: "Lockated",
-      department: "Operations",
-      shift: "10:00 AM to 07:00 PM",
-      seatType: "Rectangle",
-      roasterType: "Permanent",
-      createdOn: "29/11/2022",
-      createdBy: ""
-    },
-    {
-      id: 6,
-      template: "Mon,Wed,Fri",
-      location: "Lockated",
-      department: "Operations",
-      shift: "10:30 AM to 06:30 PM",
-      seatType: "circular",
-      roasterType: "Permanent",
-      createdOn: "28/11/2022",
-      createdBy: "Robert Day2"
-    },
-    {
-      id: 7,
-      template: "operations",
-      location: "Lockated",
-      department: "Operations",
-      shift: "09:00 AM to 06:00 PM",
-      seatType: "Rectangle",
-      roasterType: "Permanent",
-      createdOn: "28/11/2022",
-      createdBy: ""
-    }
-  ]);
+  const [roasters, setRoasters] = useState<RoasterData[]>([]);
+
+  React.useEffect(() => {
+    // Fetch roster data from API
+    const fetchRoasters = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || ''}/pms/admin/user_roasters.json`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          }
+        });
+        if (!response.ok) throw new Error('Failed to fetch roasters');
+        const data = await response.json();
+        // Adapt API response to RoasterData[]
+        const apiRoasters = Array.isArray(data) ? data : (data.user_roasters || []);
+        setRoasters(apiRoasters.map((r: any) => ({
+          id: r.id,
+          template: r.name,
+          location: r.location,
+          department: r.departments || '',
+          shift: r.shift,
+          seatType: r.seat_type,
+          roasterType: r.roaster_type,
+          createdOn: r.created_on,
+          createdBy: r.created_by
+        })));
+      } catch (err) {
+        setRoasters([]);
+      }
+    };
+    fetchRoasters();
+  }, []);
 
   const handleAddClick = () => {
     navigate('/vas/space-management/setup/roster/create');
