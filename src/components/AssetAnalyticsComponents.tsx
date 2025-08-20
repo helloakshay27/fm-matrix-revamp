@@ -375,7 +375,7 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
             },
              {
                 name: 'In Store',
-                value: assetStatus?.info?.total_assets_in_store || assetStatistics.assets_in_breakdown || 0,
+                value: assetStatus?.info?.total_assets_in_store || 0,
                 color: '#C72030',
             },
         ];
