@@ -556,3 +556,60 @@
   color: hsl(var(--primary));
   text-decoration: underline;
 }
+
+
+.timeline {
+  position: relative;
+  padding-left: 40px;
+  border-left: 2px solid #dc3545;
+  margin-left: 10px;
+}
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  margin: 30px 0 0 0;
+  flex-wrap: wrap;
+}
+
+.timeline-icon {
+  width: 12px;
+  height: 12px;
+  background-color: #dc3545;
+  border-radius: 50%;
+  position: absolute;
+  left: -7px;
+  margin-top: 2px;
+
+  @media screen and (max-width: 942px) {}
+}
+
+.year-change .timeline-icon {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #dc3545;
+  background-color: white;
+  margin-left: -3.5px;
+  margin-top: 0 !important;
+}
+
+.year-change .timeline-content {
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.timeline-content {
+  margin-left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5rem;
+  flex-wrap: wrap;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.timeline-content p {
+  font-size: 14px;
+  font-weight: 400;
+}

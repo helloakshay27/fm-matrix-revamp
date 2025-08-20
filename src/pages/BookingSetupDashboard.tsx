@@ -207,7 +207,7 @@ export const BookingSetupDashboard = () => {
       case 'name':
         return item.name || '';
       case 'type':
-        return item.type || '';
+        return item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : '';
       case 'department':
         return item.department || 'All';
       case 'bookBy':

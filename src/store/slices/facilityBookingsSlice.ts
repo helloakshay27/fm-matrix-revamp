@@ -203,6 +203,29 @@ export const fetchFacilitySetupBooking = createAsyncThunk(
   }
 )
 
+export const getLogs = createAsyncThunk(
+  "getLogs",
+  async ({ baseUrl, token, id }: FetchBookingDetails, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/facility_booking_logs.json?booking_id=${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      const message =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch booking details";
+      return rejectWithValue(message);
+    }
+  }
+)
+
 // Create slice using the createApiSlice utility
 export const facilityBookingsSlice = createApiSlice<BookingData[]>(
   "facilityBookings",
@@ -225,6 +248,14 @@ export const filterBookingsSlice = createApiSlice(
   "filterBookings",
   filterBookings
 );
+export const fetchFacilitySetupBookingSlice = createApiSlice(
+  "fetchFacilitySetupBooking",
+  fetchFacilitySetupBooking
+)
+export const getLogsSlice = createApiSlice(
+  "getLogs",
+  getLogs
+)
 
 // Export reducer
 export const facilityBookingsReducer = facilityBookingsSlice.reducer;
@@ -235,3 +266,5 @@ export const facilityBookingSetupDetailsReducer =
 export const editFacilityBookingSetupReducer =
   editFacilityBookingSetupSlice.reducer;
 export const filterBookingsReducer = filterBookingsSlice.reducer;
+export const fetchFacilitySetupBookingReducer = fetchFacilitySetupBookingSlice.reducer
+export const getLogsReducer = getLogsSlice.reducer
