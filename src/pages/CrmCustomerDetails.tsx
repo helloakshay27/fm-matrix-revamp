@@ -6,38 +6,81 @@ import { ArrowLeft, Edit2, X } from 'lucide-react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton } from '@mui/material';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { useAppDispatch } from '@/store/hooks';
+import { toast } from 'sonner';
+import { getCustomerById } from '@/store/slices/cusomerSlice';
+
+interface Customer {
+    id?: number;
+    name: string;
+    email: string;
+    company_code: string;
+    color_code: string;
+    mobile: string;
+    organization_code: string;
+    customer_code: string;
+}
+
+interface Lease {
+    id: number;
+    lease_start_date: string;
+    lease_end_date: string;
+    free_parking: string | boolean;
+    paid_parking: string | boolean;
+}
+
+interface WalletTransaction {
+    transactionId: string;
+    bookingId: string;
+    facilityName: string;
+    personName: string;
+    transactionDate: string;
+    transactionTime: string;
+    amount: string;
+    transactionType: 'Credit' | 'Debit';
+    ccAvenueId: string;
+}
+
+interface CustomerResponse {
+    entity: Customer;
+    customer_leases: Lease[];
+}
+
+interface LayoutContextType {
+    setCurrentSection: (section: string) => void;
+}
 
 const leaseColumns: ColumnConfig[] = [
     {
-        key: 'leaseId',
+        key: 'id',
         label: 'Lease Id',
         sortable: true,
         draggable: true,
         defaultVisible: true
     },
     {
-        key: 'leaseStartDate',
+        key: 'lease_start_date',
         label: 'Lease Start Date',
         sortable: true,
         draggable: true,
         defaultVisible: true
     },
     {
-        key: 'leaseEndDate',
+        key: 'lease_end_date',
         label: 'Lease End Date',
         sortable: true,
         draggable: true,
         defaultVisible: true
     },
     {
-        key: 'freeParking',
+        key: 'free_parking',
         label: 'Free Parking',
         sortable: true,
         draggable: true,
         defaultVisible: true
     },
     {
-        key: 'paidParking',
+        key: 'paid_parking',
         label: 'Paid Parking',
         sortable: true,
         draggable: true,
@@ -112,11 +155,35 @@ const transactionColumns: ColumnConfig[] = [
 ];
 
 export const CrmCustomerDetails = () => {
-    const { id } = useParams();
     const navigate = useNavigate();
-    const { setCurrentSection } = useLayout();
+    const dispatch = useAppDispatch();
+
+    const { id } = useParams<{ id: string }>();
+    const token = localStorage.getItem('token') || '';
+    const baseUrl = localStorage.getItem('baseUrl') || '';
+
+    const { setCurrentSection } = useLayout() as LayoutContextType;
+
     const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
     const [topUpAmount, setTopUpAmount] = useState('');
+    const [customer, setCustomer] = useState<Customer | null>(null);
+    const [lease, setLease] = useState<Lease[]>([]);
+
+    useEffect(() => {
+        const fetchCustomer = async () => {
+            try {
+                const response = await dispatch(getCustomerById({ id: Number(id), baseUrl, token })).unwrap() as CustomerResponse;
+                setCustomer(response.entity);
+                setLease(response.customer_leases);
+            } catch (error: unknown) {
+                const errorMessage = error instanceof Error ? error.message : 'Failed to fetch customer';
+                console.error(errorMessage);
+                toast.error(errorMessage);
+            }
+        };
+
+        fetchCustomer();
+    }, []);
 
     useEffect(() => {
         setCurrentSection('CRM');
@@ -132,31 +199,10 @@ export const CrmCustomerDetails = () => {
     };
 
     const handleTopUpSubmit = () => {
-        console.log('Top-up amount:', topUpAmount);
         handleTopUpClose();
     };
 
-    const customerData = {
-        customerName: 'HSBC',
-        customerEmail: 'hsbc@gmail.com',
-        companyCode: '',
-        colorCode: '#FFD700',
-        mobileNumber: '1234561231',
-        organizationCode: '',
-        customerCode: ''
-    };
-
-    const leaseData = [
-        {
-            leaseId: '85',
-            leaseStartDate: '2024-07-01',
-            leaseEndDate: '2024-09-29',
-            freeParking: '10',
-            paidParking: '20'
-        }
-    ];
-
-    const walletTransactions = [
+    const walletTransactions: WalletTransaction[] = [
         {
             transactionId: '1220',
             bookingId: '',
@@ -166,76 +212,27 @@ export const CrmCustomerDetails = () => {
             transactionTime: '23:50:23',
             amount: '100.0',
             transactionType: 'Debit',
-            ccAvenueId: ''
+            ccAvenueId: '',
         },
-        {
-            transactionId: '1212',
-            bookingId: '',
-            facilityName: '',
-            personName: 'Vinayak Mane',
-            transactionDate: 'June 04, 2025',
-            transactionTime: '11:43:53',
-            amount: '100.0',
-            transactionType: 'Credit',
-            ccAvenueId: ''
-        },
-        {
-            transactionId: '1203',
-            bookingId: '',
-            facilityName: '',
-            personName: '',
-            transactionDate: 'June 03, 2025',
-            transactionTime: '23:50:22',
-            amount: '101.02',
-            transactionType: 'Debit',
-            ccAvenueId: ''
-        },
-        {
-            transactionId: '1201',
-            bookingId: '',
-            facilityName: '',
-            personName: 'Vinayak Mane',
-            transactionDate: 'June 03, 2025',
-            transactionTime: '17:35:31',
-            amount: '100.0',
-            transactionType: 'Credit',
-            ccAvenueId: ''
-        },
-        {
-            transactionId: '1199',
-            bookingId: '',
-            facilityName: '',
-            personName: 'Vinayak testwallet guest',
-            transactionDate: 'June 03, 2025',
-            transactionTime: '14:54:09',
-            amount: '1.02',
-            transactionType: 'Credit',
-            ccAvenueId: '11379116850'
-        }
     ];
 
-    const renderTransactionCell = (item, columnKey) => {
+    const renderTransactionCell = (item: WalletTransaction, columnKey: keyof WalletTransaction) => {
         if (columnKey === 'transactionType') {
             return (
                 <span
-                    className={`px-2 py-1 rounded text-xs ${item.transactionType === 'Credit'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
+                    className={`px-2 py-1 rounded text-xs ${item.transactionType === 'Credit' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }`}
                 >
                     {item.transactionType}
                 </span>
             );
         }
-        return item[columnKey];
+        return item[columnKey] || '-';
     };
 
-    const renderCell = (item, columnKey) => {
-        switch (columnKey) {
-            default:
-                return item[columnKey];
-        }
-    }
+    const renderCell = (item: Lease, columnKey: keyof Lease) => {
+        return item[columnKey] || '-';
+    };
 
     return (
         <div className="p-6 min-h-screen bg-gray-50">
@@ -261,36 +258,37 @@ export const CrmCustomerDetails = () => {
                         size="sm"
                         className="p-2"
                         onClick={() => navigate(`/crm/customers/edit/${id}`)}
+                        disabled={!id}
                     >
                         <Edit2 className="w-4 h-4" />
                     </Button>
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg p-6 mb-6">
+            <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
                 <div className="grid grid-cols-2 gap-8">
                     <div className="space-y-4">
                         <div className="flex items-center gap-4">
                             <label className="w-32 text-sm font-medium text-gray-700">Customer Name</label>
                             <span className="text-sm">:</span>
-                            <span className="text-sm text-gray-900">{customerData.customerName}</span>
+                            <span className="text-sm text-gray-900">{customer?.name}</span>
                         </div>
                         <div className="flex items-center gap-4">
                             <label className="w-32 text-sm font-medium text-gray-700">Customer Email</label>
                             <span className="text-sm">:</span>
-                            <span className="text-sm text-gray-900">{customerData.customerEmail}</span>
+                            <span className="text-sm text-gray-900">{customer?.email}</span>
                         </div>
                         <div className="flex items-center gap-4">
                             <label className="w-32 text-sm font-medium text-gray-700">Company Code</label>
                             <span className="text-sm">:</span>
-                            <span className="text-sm text-gray-900">{customerData.companyCode}</span>
+                            <span className="text-sm text-gray-900">{customer?.company_code}</span>
                         </div>
                         <div className="flex items-center gap-4">
                             <label className="w-32 text-sm font-medium text-gray-700">Color Code</label>
                             <span className="text-sm">:</span>
                             <div
                                 className="w-6 h-6 rounded border border-gray-300"
-                                style={{ backgroundColor: customerData.colorCode }}
+                                style={{ backgroundColor: customer?.color_code || '#ffffff' }}
                             ></div>
                         </div>
                     </div>
@@ -299,27 +297,26 @@ export const CrmCustomerDetails = () => {
                         <div className="flex items-center gap-4">
                             <label className="w-32 text-sm font-medium text-gray-700">Mobile Number</label>
                             <span className="text-sm">:</span>
-                            <span className="text-sm text-gray-900">{customerData.mobileNumber}</span>
+                            <span className="text-sm text-gray-900">{customer?.mobile}</span>
                         </div>
                         <div className="flex items-center gap-4">
                             <label className="w-32 text-sm font-medium text-gray-700">Organization Code</label>
                             <span className="text-sm">:</span>
-                            <span className="text-sm text-gray-900">{customerData.organizationCode}</span>
+                            <span className="text-sm text-gray-900">{customer?.organization_code}</span>
                         </div>
                         <div className="flex items-center gap-4">
                             <label className="w-32 text-sm font-medium text-gray-700">Customer Code</label>
                             <span className="text-sm">:</span>
-                            <span className="text-sm text-gray-900">{customerData.customerCode}</span>
+                            <span className="text-sm text-gray-900">{customer?.customer_code}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Lease Information Table with EnhancedTable */}
-            <div className="bg-white rounded-lg p-6 mb-6">
+            <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Lease Information</h3>
                 <EnhancedTable
-                    data={leaseData}
+                    data={lease}
                     columns={leaseColumns}
                     renderCell={renderCell}
                     pagination={true}
@@ -329,7 +326,7 @@ export const CrmCustomerDetails = () => {
                 />
             </div>
 
-            <div className="bg-white rounded-lg p-6">
+            <div className="bg-white rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Wallet Transactions</h3>
                 <EnhancedTable
                     data={walletTransactions}
@@ -350,8 +347,8 @@ export const CrmCustomerDetails = () => {
                 PaperProps={{
                     style: {
                         borderRadius: '12px',
-                        padding: '8px'
-                    }
+                        padding: '8px',
+                    },
                 }}
             >
                 <DialogTitle
@@ -361,7 +358,7 @@ export const CrmCustomerDetails = () => {
                         alignItems: 'center',
                         fontSize: '1.5rem',
                         fontWeight: 600,
-                        pb: 2
+                        pb: 2,
                     }}
                 >
                     Top-Up Wallet
@@ -369,7 +366,7 @@ export const CrmCustomerDetails = () => {
                         onClick={handleTopUpClose}
                         sx={{
                             color: 'gray',
-                            '&:hover': { backgroundColor: 'rgba(0,0,0,0.1)' }
+                            '&:hover': { backgroundColor: 'rgba(0,0,0,0.1)' },
                         }}
                     >
                         <X size={20} />
@@ -386,18 +383,14 @@ export const CrmCustomerDetails = () => {
                         type="number"
                         sx={{
                             '& .MuiOutlinedInput-root': {
-                                borderRadius: '8px'
-                            }
+                                borderRadius: '8px',
+                            },
                         }}
                     />
                 </DialogContent>
 
                 <DialogActions sx={{ px: 3, pb: 3, gap: 2 }}>
-                    <Button
-                        variant="outline"
-                        onClick={handleTopUpClose}
-                        className="px-6 py-2"
-                    >
+                    <Button variant="outline" onClick={handleTopUpClose} className="px-6 py-2">
                         Close
                     </Button>
                     <Button
