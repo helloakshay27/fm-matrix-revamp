@@ -169,6 +169,7 @@ export const InventoryDashboard = () => {
   ]);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [panelManuallyClosed, setPanelManuallyClosed] = useState(false);
+  const [keepOpenWithoutSelection, setKeepOpenWithoutSelection] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([
     "statusChart",
     "criticalityChart",
@@ -177,9 +178,9 @@ export const InventoryDashboard = () => {
   const [activeTab, setActiveTab] = useState<string>("list");
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [dateRange, setDateRange] = useState({
-  // Updated default range per request: 01/07/2025 - 15/08/2025 (DD/MM/YYYY)
-  startDate: new Date(2025, 6, 1), // 01 July 2025
-  endDate: new Date(2025, 7, 15), // 15 August 2025
+    // Updated default range per request: 01/07/2025 - 15/08/2025 (DD/MM/YYYY)
+    startDate: new Date(2025, 6, 1), // 01 July 2025
+    endDate: new Date(2025, 7, 15), // 15 August 2025
   });
   const [inventory, setInventory] = useState([]);
   const [downloadingQR, setDownloadingQR] = useState(false);
@@ -189,9 +190,9 @@ export const InventoryDashboard = () => {
   // Analytics state
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsDateRange, setAnalyticsDateRange] = useState({
-  // String form (DD/MM/YYYY) aligned with new default dateRange
-  startDate: '01/07/2025',
-  endDate: '15/08/2025',
+    // String form (DD/MM/YYYY) aligned with new default dateRange
+    startDate: '01/07/2025',
+    endDate: '15/08/2025',
   });
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<any>({
@@ -395,18 +396,24 @@ export const InventoryDashboard = () => {
   // User will open the panel manually via the Action button after selecting rows.
   // Re-enable auto open, but adjust onClearSelection so we don't lose selections; outside click will only hide panel.
   useEffect(() => {
-    // Auto open only if user hasn't manually closed
+    // Auto open when first item selected (if not manually closed earlier)
     if (selectedItems.length > 0 && !showActionPanel && !panelManuallyClosed) {
       setShowActionPanel(true);
     }
-    // If selection cleared, allow panel to auto open again next time
-    if (selectedItems.length === 0 && panelManuallyClosed) {
-      setPanelManuallyClosed(false);
+    // Auto-hide only if no selection AND panel was not opened explicitly for Add/Import
+    if (selectedItems.length === 0 && showActionPanel && !keepOpenWithoutSelection) {
+      setShowActionPanel(false);
+      if (panelManuallyClosed) setPanelManuallyClosed(false);
     }
-  }, [selectedItems, showActionPanel, panelManuallyClosed]);
+    // If we now have a selection, no need to keep the empty-open flag
+    if (selectedItems.length > 0 && keepOpenWithoutSelection) {
+      setKeepOpenWithoutSelection(false);
+    }
+  }, [selectedItems, showActionPanel, panelManuallyClosed, keepOpenWithoutSelection]);
 
   // Explicit action button to manually open panel (even if no selection yet)
   const handleActionClick = () => {
+    setKeepOpenWithoutSelection(true); // allow panel to stay open with zero selection
     setShowActionPanel(true);
   };
 
@@ -572,7 +579,7 @@ export const InventoryDashboard = () => {
     if (columnKey === "actions") {
       const itemId = typeof item.id === "string" ? item.id : String(item.id || "");
       return (
-        <div className="flex items-center justify-center w-full gap-2" onClick={(e)=>e.stopPropagation()}>
+        <div className="flex items-center justify-center w-full gap-2" onClick={(e) => e.stopPropagation()}>
           <Button
             variant="ghost"
             size="sm"
@@ -608,8 +615,8 @@ export const InventoryDashboard = () => {
       return (
         <span
           className={`px-2 py-1 rounded text-xs ${item.criticality === "Critical"
-              ? "bg-red-100 text-red-700"
-              : "bg-gray-100 text-gray-700"
+            ? "bg-red-100 text-red-700"
+            : "bg-gray-100 text-gray-700"
             }`}
         >
           {item.criticality}
@@ -827,7 +834,7 @@ export const InventoryDashboard = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(dlUrl);
       toast.success('QR code PDF downloaded');
-    } catch (e:any) {
+    } catch (e: any) {
       console.error('QR download error', e);
       toast.error(e.message || 'Failed to download QR codes');
     } finally {
@@ -989,16 +996,16 @@ export const InventoryDashboard = () => {
 
   const resetFilters = () => {
     setDateRange({
-  // Reset to updated default range
-  startDate: new Date(2025, 6, 1),
-  endDate: new Date(2025, 7, 15),
+      // Reset to updated default range
+      startDate: new Date(2025, 6, 1),
+      endDate: new Date(2025, 7, 15),
     });
     setSelectedItems([]);
     setShowFilter(false);
     setShowDateFilter(false);
-  setActiveFilters({});
-  setLocalCurrentPage(1);
-  dispatch(fetchInventoryData({ page: 1, pageSize }));
+    setActiveFilters({});
+    setLocalCurrentPage(1);
+    dispatch(fetchInventoryData({ page: 1, pageSize }));
   };
 
   return (
@@ -1190,7 +1197,7 @@ export const InventoryDashboard = () => {
                 </div>
               </div>
             </div>
-      {showActionPanel && (
+            {showActionPanel && (
               <InventorySelectionPanel
                 selectedIds={selectedItems}
                 printing={downloadingQR}
@@ -1206,13 +1213,14 @@ export const InventoryDashboard = () => {
                   const endDateStr = `${year}-${month}-${day}`;
                   navigate(`/maintenance/inventory-consumption/view/${firstId}?start_date=${startDateStr}&end_date=${endDateStr}`);
                 }}
-        onAdd={handleAddInventory}
-        onImport={handleImportClick}
+                onAdd={handleAddInventory}
+                onImport={handleImportClick}
                 onClose={() => {
                   // Close panel and clear selection as requested
                   setShowActionPanel(false);
                   setSelectedItems([]); // unselect all checkboxes
-                  setPanelManuallyClosed(false); // reset so future selections auto-open
+                  setPanelManuallyClosed(false);
+                  setKeepOpenWithoutSelection(false); // reset manual open state
                 }}
               />
             )}
