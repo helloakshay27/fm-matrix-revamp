@@ -105,29 +105,31 @@ export const AddSlotConfigurationPage = () => {
 
         {/* Parking Configuration */}
         <div className="mb-8">
-          <div className="text-sm text-red-600 mb-6 border-b border-red-600 pb-1 inline-block">Parking Configuration</div>
+          <div className="text-sm text-red-600 mb-6">Parking Configuration</div>
           
           {/* 2 Wheeler Section */}
           <div className="bg-pink-50 rounded-lg p-6 mb-6">
             <h3 className="text-lg font-semibold mb-6">2 Wheeler</h3>
             <div className="grid grid-cols-3 gap-8">
               {/* Non Stack Parking */}
-              <div className="text-center">
+              <div>
                 <h4 className="font-medium mb-4">Non Stack Parking</h4>
-                <div className="flex justify-center mb-4">
-                  <div className="relative w-8 h-48 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="absolute bottom-0 w-full bg-gray-400 rounded-full transition-all duration-300"
-                      style={{ height: `${(formData.twoWheeler.nonStack / 200) * 100}%` }}
-                    ></div>
-                  </div>
+                <div className="mb-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="200"
+                    value={formData.twoWheeler.nonStack}
+                    onChange={(e) => handleSliderChange('twoWheeler', 'nonStack', parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2">
                   <span className="text-sm">No. of Parking</span>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="!bg-purple-600 !text-white !border-purple-600 hover:!bg-purple-700 px-3 py-1"
+                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
                   >
                     Add
                   </Button>
@@ -136,29 +138,29 @@ export const AddSlotConfigurationPage = () => {
                     value={formData.twoWheeler.nonStack}
                     onChange={(e) => handleSliderChange('twoWheeler', 'nonStack', parseInt(e.target.value) || 0)}
                     className="w-16 h-8 text-center"
-                    min="0"
-                    max="200"
                   />
                 </div>
               </div>
 
               {/* Stack Parking */}
-              <div className="text-center">
+              <div>
                 <h4 className="font-medium mb-4">Stack Parking</h4>
-                <div className="flex justify-center mb-4">
-                  <div className="relative w-8 h-48 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="absolute bottom-0 w-full bg-gray-400 rounded-full transition-all duration-300"
-                      style={{ height: `${(formData.twoWheeler.stack / 200) * 100}%` }}
-                    ></div>
-                  </div>
+                <div className="mb-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="200"
+                    value={formData.twoWheeler.stack}
+                    onChange={(e) => handleSliderChange('twoWheeler', 'stack', parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2">
                   <span className="text-sm">No. of Parking</span>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="!bg-purple-600 !text-white !border-purple-600 hover:!bg-purple-700 px-3 py-1"
+                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
                   >
                     Add
                   </Button>
@@ -167,29 +169,29 @@ export const AddSlotConfigurationPage = () => {
                     value={formData.twoWheeler.stack}
                     onChange={(e) => handleSliderChange('twoWheeler', 'stack', parseInt(e.target.value) || 0)}
                     className="w-16 h-8 text-center"
-                    min="0"
-                    max="200"
                   />
                 </div>
               </div>
 
               {/* Reserved Parkings */}
-              <div className="text-center">
+              <div>
                 <h4 className="font-medium mb-4">Reserved Parkings</h4>
-                <div className="flex justify-center mb-4">
-                  <div className="relative w-8 h-48 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="absolute bottom-0 w-full bg-gray-400 rounded-full transition-all duration-300"
-                      style={{ height: `${(formData.twoWheeler.reserved / 200) * 100}%` }}
-                    ></div>
-                  </div>
+                <div className="mb-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="200"
+                    value={formData.twoWheeler.reserved}
+                    onChange={(e) => handleSliderChange('twoWheeler', 'reserved', parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2">
                   <span className="text-sm">No. of Parking</span>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="!bg-purple-600 !text-white !border-purple-600 hover:!bg-purple-700 px-3 py-1"
+                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
                   >
                     Add
                   </Button>
@@ -198,8 +200,6 @@ export const AddSlotConfigurationPage = () => {
                     value={formData.twoWheeler.reserved}
                     onChange={(e) => handleSliderChange('twoWheeler', 'reserved', parseInt(e.target.value) || 0)}
                     className="w-16 h-8 text-center"
-                    min="0"
-                    max="200"
                   />
                 </div>
               </div>
@@ -211,22 +211,24 @@ export const AddSlotConfigurationPage = () => {
             <h3 className="text-lg font-semibold mb-6">4 Wheeler</h3>
             <div className="grid grid-cols-3 gap-8">
               {/* Non Stack Parking */}
-              <div className="text-center">
+              <div>
                 <h4 className="font-medium mb-4">Non Stack Parking</h4>
-                <div className="flex justify-center mb-4">
-                  <div className="relative w-8 h-48 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="absolute bottom-0 w-full bg-gray-400 rounded-full transition-all duration-300"
-                      style={{ height: `${(formData.fourWheeler.nonStack / 200) * 100}%` }}
-                    ></div>
-                  </div>
+                <div className="mb-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="200"
+                    value={formData.fourWheeler.nonStack}
+                    onChange={(e) => handleSliderChange('fourWheeler', 'nonStack', parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2">
                   <span className="text-sm">No. of Parking</span>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="!bg-purple-600 !text-white !border-purple-600 hover:!bg-purple-700 px-3 py-1"
+                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
                   >
                     Add
                   </Button>
@@ -235,29 +237,29 @@ export const AddSlotConfigurationPage = () => {
                     value={formData.fourWheeler.nonStack}
                     onChange={(e) => handleSliderChange('fourWheeler', 'nonStack', parseInt(e.target.value) || 0)}
                     className="w-16 h-8 text-center"
-                    min="0"
-                    max="200"
                   />
                 </div>
               </div>
 
               {/* Stack Parking */}
-              <div className="text-center">
+              <div>
                 <h4 className="font-medium mb-4">Stack Parking</h4>
-                <div className="flex justify-center mb-4">
-                  <div className="relative w-8 h-48 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="absolute bottom-0 w-full bg-gray-400 rounded-full transition-all duration-300"
-                      style={{ height: `${(formData.fourWheeler.stack / 200) * 100}%` }}
-                    ></div>
-                  </div>
+                <div className="mb-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="200"
+                    value={formData.fourWheeler.stack}
+                    onChange={(e) => handleSliderChange('fourWheeler', 'stack', parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2">
                   <span className="text-sm">No. of Parking</span>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="!bg-purple-600 !text-white !border-purple-600 hover:!bg-purple-700 px-3 py-1"
+                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
                   >
                     Add
                   </Button>
@@ -266,29 +268,29 @@ export const AddSlotConfigurationPage = () => {
                     value={formData.fourWheeler.stack}
                     onChange={(e) => handleSliderChange('fourWheeler', 'stack', parseInt(e.target.value) || 0)}
                     className="w-16 h-8 text-center"
-                    min="0"
-                    max="200"
                   />
                 </div>
               </div>
 
               {/* Reserved Parkings */}
-              <div className="text-center">
+              <div>
                 <h4 className="font-medium mb-4">Reserved Parkings</h4>
-                <div className="flex justify-center mb-4">
-                  <div className="relative w-8 h-48 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="absolute bottom-0 w-full bg-gray-400 rounded-full transition-all duration-300"
-                      style={{ height: `${(formData.fourWheeler.reserved / 200) * 100}%` }}
-                    ></div>
-                  </div>
+                <div className="mb-4">
+                  <input
+                    type="range"
+                    min="0"
+                    max="200"
+                    value={formData.fourWheeler.reserved}
+                    onChange={(e) => handleSliderChange('fourWheeler', 'reserved', parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                  />
                 </div>
-                <div className="flex flex-col items-center gap-2">
+                <div className="flex items-center gap-2">
                   <span className="text-sm">No. of Parking</span>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="!bg-purple-600 !text-white !border-purple-600 hover:!bg-purple-700 px-3 py-1"
+                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
                   >
                     Add
                   </Button>
@@ -297,8 +299,6 @@ export const AddSlotConfigurationPage = () => {
                     value={formData.fourWheeler.reserved}
                     onChange={(e) => handleSliderChange('fourWheeler', 'reserved', parseInt(e.target.value) || 0)}
                     className="w-16 h-8 text-center"
-                    min="0"
-                    max="200"
                   />
                 </div>
               </div>
