@@ -117,18 +117,18 @@ export const AddSlotConfigurationPage = () => {
                 <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-4 gap-2">
                     {Array.from({ length: formData.twoWheeler.nonStack }, (_, index) => (
-                      <div key={index} className="relative">
+                      <div key={index} className="relative bg-gray-50 rounded-lg border border-gray-200">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-14 h-8 text-xs bg-white border-gray-300 hover:bg-gray-50 rounded-md font-medium"
+                          className="w-14 h-8 text-xs bg-white border-gray-200 hover:bg-gray-50 rounded-lg font-medium relative"
                         >
                           P{index + 1}
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
+                          className="absolute top-0 right-0 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
                           onClick={() => handleSliderChange('twoWheeler', 'nonStack', formData.twoWheeler.nonStack - 1)}
                         >
                           ×
@@ -163,18 +163,18 @@ export const AddSlotConfigurationPage = () => {
                 <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-4 gap-2">
                     {Array.from({ length: formData.twoWheeler.stack }, (_, index) => (
-                      <div key={index} className="relative">
+                      <div key={index} className="relative bg-gray-50 rounded-lg border border-gray-200">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-14 h-8 text-xs bg-white border-gray-300 hover:bg-gray-50 rounded-md font-medium"
+                          className="w-14 h-8 text-xs bg-white border-gray-200 hover:bg-gray-50 rounded-lg font-medium relative"
                         >
                           P{index + 11}C
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
+                          className="absolute top-0 right-0 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
                           onClick={() => handleSliderChange('twoWheeler', 'stack', formData.twoWheeler.stack - 1)}
                         >
                           ×
@@ -209,18 +209,18 @@ export const AddSlotConfigurationPage = () => {
                 <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-4 gap-2">
                     {Array.from({ length: formData.twoWheeler.reserved }, (_, index) => (
-                      <div key={index} className="relative">
+                      <div key={index} className="relative bg-gray-50 rounded-lg border border-gray-200">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-14 h-8 text-xs bg-white border-gray-300 hover:bg-gray-50 rounded-md font-medium"
+                          className="w-14 h-8 text-xs bg-white border-gray-200 hover:bg-gray-50 rounded-lg font-medium relative"
                         >
                           P{index + 11}H
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
+                          className="absolute top-0 right-0 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
                           onClick={() => handleSliderChange('twoWheeler', 'reserved', formData.twoWheeler.reserved - 1)}
                         >
                           ×
@@ -261,18 +261,18 @@ export const AddSlotConfigurationPage = () => {
                 <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-3 gap-2">
                     {Array.from({ length: formData.fourWheeler.nonStack }, (_, index) => (
-                      <div key={index} className="relative">
+                      <div key={index} className="relative bg-gray-50 rounded-lg border border-gray-200">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-14 h-8 text-xs bg-white border-gray-300 hover:bg-gray-50 rounded-md font-medium"
+                          className="w-14 h-8 text-xs bg-white border-gray-200 hover:bg-gray-50 rounded-lg font-medium relative"
                         >
                           P{index + 1}
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
+                          className="absolute top-0 right-0 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
                           onClick={() => handleSliderChange('fourWheeler', 'nonStack', formData.fourWheeler.nonStack - 1)}
                         >
                           ×
@@ -307,18 +307,18 @@ export const AddSlotConfigurationPage = () => {
                 <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-4 gap-2">
                     {Array.from({ length: formData.fourWheeler.stack }, (_, index) => (
-                      <div key={index} className="relative">
+                      <div key={index} className="relative bg-gray-50 rounded-lg border border-gray-200">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-14 h-8 text-xs bg-white border-gray-300 hover:bg-gray-50 rounded-md font-medium"
+                          className="w-14 h-8 text-xs bg-white border-gray-200 hover:bg-gray-50 rounded-lg font-medium relative"
                         >
                           P{index + 4}A
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
+                          className="absolute top-0 right-0 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
                           onClick={() => handleSliderChange('fourWheeler', 'stack', formData.fourWheeler.stack - 1)}
                         >
                           ×
@@ -353,18 +353,18 @@ export const AddSlotConfigurationPage = () => {
                 <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-4 gap-2">
                     {Array.from({ length: formData.fourWheeler.reserved }, (_, index) => (
-                      <div key={index} className="relative">
+                      <div key={index} className="relative bg-gray-50 rounded-lg border border-gray-200">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-14 h-8 text-xs bg-white border-gray-300 hover:bg-gray-50 rounded-md font-medium"
+                          className="w-14 h-8 text-xs bg-white border-gray-200 hover:bg-gray-50 rounded-lg font-medium relative"
                         >
                           P{index + 9}
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
+                          className="absolute top-0 right-0 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
                           onClick={() => handleSliderChange('fourWheeler', 'reserved', formData.fourWheeler.reserved - 1)}
                         >
                           ×
