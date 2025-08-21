@@ -22,6 +22,7 @@ import { editFacilityBookingSetupReducer, exportReportReducer, facilityBookingSe
 import entitiesReducer from './slices/entitiesSlice'
 import facilitySetupsReducer, { fetchActiveFacilitiesReducer, fetchFacilitySetupReducer } from './slices/facilitySetupsSlice'
 import { assetsReducer } from './slices/assetsSlice'
+import { waterAssetsReducer } from './slices/waterAssetsSlice'
 import { suppliersReducer } from './slices/suppliersSlice'
 import { amcCreateReducer } from './slices/amcCreateSlice'
 import { inventoryReducer } from './slices/inventorySlice'
@@ -52,6 +53,7 @@ import { approvePOReducer, createPurchaseOrderReducer, getPurchaseOrdersReducer,
 import { createServicePRReducer, getServicePrReducer, getServicesReducer } from './slices/servicePRSlice'
 import { fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
 import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer } from './slices/grnSlice'
+import { getCustomerListReducer } from './slices/cusomerSlice'
 
 export const store = configureStore({
   reducer: {
@@ -78,6 +80,7 @@ export const store = configureStore({
     entities: entitiesReducer,
     facilitySetups: facilitySetupsReducer,
     assets: assetsReducer,
+    waterAssets: waterAssetsReducer,
     suppliers: suppliersReducer,
     amcCreate: amcCreateReducer,
     inventory: inventoryReducer,
@@ -206,6 +209,9 @@ export const store = configureStore({
     getPurchaseOrdersList: getPurchaseOrdersReducer,
     fetchSingleGRN: fetchSingleGRNReducer,
     approveGRN: approveGRNReducer,
+
+    // Customer List
+    getCustomerList: getCustomerListReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

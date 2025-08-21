@@ -204,17 +204,22 @@ import { StaffDetailsPage } from "./pages/StaffDetailsPage";
 // Import Edit Staff page
 import { EditStaffPage } from "./pages/EditStaffPage";
 
-// Import Value Added Services pages
-import { FnBRestaurantDashboard } from "./pages/FnBRestaurantDashboard";
-import { FnBRestaurantDetailsPage } from "./pages/FnBRestaurantDetailsPage";
-import { ProductSetupDetailPage } from "./pages/ProductSetupDetailPage";
-import { ProductEditPage } from "./pages/ProductEditPage";
-import { RestaurantOrderDetailPage } from "./pages/RestaurantOrderDetailPage";
-import { FnBDiscountsPage } from "./pages/FnBDiscountsPage";
-import { AddRestaurantPage } from "./pages/AddRestaurantPage";
-import ParkingDashboard from "./pages/ParkingDashboard";
-import ParkingDetailsPage from "./pages/ParkingDetailsPage";
-import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
+
+import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
+import { FnBRestaurantDetailsPage } from './pages/FnBRestaurantDetailsPage';
+import { ProductSetupDetailPage } from './pages/ProductSetupDetailPage';
+import { ProductEditPage } from './pages/ProductEditPage';
+import { RestaurantOrderDetailPage } from './pages/RestaurantOrderDetailPage';
+import { FnBDiscountsPage } from './pages/FnBDiscountsPage';
+import { AddRestaurantPage } from './pages/AddRestaurantPage';
+import ParkingDashboard from './pages/ParkingDashboard';
+import ParkingDetailsPage from './pages/ParkingDetailsPage';
+import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
+import { ParkingCategoryPage } from './pages/ParkingCategoryPage';
+import { SlotConfigurationPage } from './pages/SlotConfigurationPage';
+import { AddSlotConfigurationPage } from './pages/AddSlotConfigurationPage';
+import { EditSlotConfigurationPage } from './pages/EditSlotConfigurationPage';
+import { TimeSlotSetupPage } from './pages/TimeSlotSetupPage';
 
 // Import Design Insights pages
 import { DesignInsightsDashboard } from './pages/DesignInsightsDashboard';
@@ -629,6 +634,8 @@ import LockFunctionList from './pages/LockFunctionList';
 import LockFunctionCreate from './pages/LockFunctionCreate';
 import LockSubFunctionList from './pages/LockSubFunctionList';
 import LockSubFunctionCreate from './pages/LockSubFunctionCreate';
+import { CrmCustomerDetails } from "./pages/CrmCustomerDetails";
+import { EditCrmCustomer } from "./pages/EditCrmCustomer";
 
 
 const queryClient = new QueryClient();
@@ -884,6 +891,8 @@ function App() {
                 <Route path="/crm/groups/details/:id" element={<CRMGroupDetailsPage />} />
                 <Route path="/crm/occupant-users/:id" element={<CRMOccupantUserDetailPage />} />
                 <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
+                <Route path="/crm/customers/:id" element={<CrmCustomerDetails />} />
+                <Route path="/crm/customers/edit/:id" element={<EditCrmCustomer />} />
 
                 {/* Snagging Routes */}
                 <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
@@ -1956,6 +1965,11 @@ function App() {
                 <Route path="/settings/vas/booking/setup/add" element={<AddBookingSetupPage />} />
                 <Route path="/settings/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
                 <Route path="/settings/vas/booking/setup/edit/:id" element={<EditBookingSetupPage />} />
+                <Route path="/settings/vas/parking-management/parking-category" element={<ParkingCategoryPage />} />
+                <Route path="/settings/vas/parking-management/slot-configuration" element={<SlotConfigurationPage />} />
+                <Route path="/settings/vas/parking-management/slot-configuration/add" element={<AddSlotConfigurationPage />} />
+                <Route path="/settings/vas/parking-management/slot-configuration/edit/:id" element={<EditSlotConfigurationPage />} />
+                <Route path="/settings/vas/parking-management/time-slot-setup" element={<TimeSlotSetupPage />} />
                 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
                 <Route path="/settings/role-config/list" element={<RoleConfigList />} />
                 <Route path="/settings/role-config/create" element={<RoleConfigCreate />} />

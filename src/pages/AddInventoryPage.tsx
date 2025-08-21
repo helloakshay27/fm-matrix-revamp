@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
@@ -436,24 +436,33 @@ export const AddInventoryPage = () => {
     if (!baseUrl || !token) return;
     setNameSuggestLoading(true);
     try {
-      const res = await fetch(`https://${baseUrl}/pms/inventories/suggestions.json?name=${encodeURIComponent(query)}`, {
+      const res = await fetch(`https://${baseUrl}/pms/inventories/suggestions.json?q=${encodeURIComponent(query)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed suggestions');
       const data = await res.json();
-      if (Array.isArray(data)) {
-        setNameSuggestions(data);
-        setShowNameSuggestions(true);
-      } else if (Array.isArray(data?.suggestions)) { // fallback shape
-        setNameSuggestions(data.suggestions);
-        setShowNameSuggestions(true);
-      } else {
-        setNameSuggestions([]); setShowNameSuggestions(false);
-      }
+      let arr: any[] = [];
+      if (Array.isArray(data)) arr = data;
+      else if (Array.isArray(data?.suggestions)) arr = data.suggestions;
+      // Store raw list; actual filtering happens via useMemo against current input to avoid stale display
+      setNameSuggestions(arr);
     } catch (e) {
       setNameSuggestions([]); setShowNameSuggestions(false);
     } finally { setNameSuggestLoading(false); }
   };
+
+  // Filter suggestions based on current text (case-insensitive substring OR startsWith)
+  const filteredNameSuggestions = useMemo(() => {
+    const q = formData.inventoryName.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return nameSuggestions.filter(s => s.name && s.name.toLowerCase().includes(q));
+  }, [nameSuggestions, formData.inventoryName]);
+
+  // Control visibility: only show if filtered suggestions exist AND input not empty
+  useEffect(() => {
+    if (nameSuggestLoading) return; // wait until loading finished
+    setShowNameSuggestions(filteredNameSuggestions.length > 0);
+  }, [filteredNameSuggestions, nameSuggestLoading]);
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -617,7 +626,7 @@ export const AddInventoryPage = () => {
                       }, 350);
                     }}
                     onFocus={() => {
-                      if (nameSuggestions.length > 0) setShowNameSuggestions(true);
+                      if (filteredNameSuggestions.length > 0) setShowNameSuggestions(true);
                     }}
                     onBlur={(e) => {
                       // Delay hiding to allow click
@@ -630,15 +639,9 @@ export const AddInventoryPage = () => {
                     error={!!errors.inventoryName}
                     helperText={errors.inventoryName}
                   />
-                  {showNameSuggestions && (nameSuggestLoading || nameSuggestions.length > 0) && (
+          {showNameSuggestions && filteredNameSuggestions.length > 0 && (
                     <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-auto text-sm">
-                      {nameSuggestLoading && (
-                        <div className="px-3 py-2 text-gray-500">Loading...</div>
-                      )}
-                      {!nameSuggestLoading && nameSuggestions.length === 0 && (
-                        <div className="px-3 py-2 text-gray-500">No matches</div>
-                      )}
-                      {!nameSuggestLoading && nameSuggestions.map(s => (
+            {filteredNameSuggestions.map(s => (
                         <button
                           type="button"
                           key={s.id}

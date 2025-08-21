@@ -1,241 +1,213 @@
-
-import React, { useState } from 'react';
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Eye, Download, Search } from 'lucide-react';
+import { Eye } from "lucide-react";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { toast } from "sonner";
+import { useAppDispatch } from "@/store/hooks";
+import { getCustomerList } from "@/store/slices/cusomerSlice";
+import { useNavigate } from "react-router-dom";
 
-// Sample customer data based on the screenshot
-const customers = [
+const columns: ColumnConfig[] = [
   {
-    id: 1,
-    actionId: 1796,
-    name: "HSBC",
-    customerCode: "",
-    customerType: "",
-    email: "hsbc@gmail.com",
-    mobile: "1234561231",
-    plantCode: "",
-    companyCode: "",
-    leaseStartDate: "",
-    leaseEndDate: "",
-    freeParking: "",
-    paidParking: "",
-    createdAt: "",
-    updatedAt: "2025-05-12 17:42:08 +0530",
-    colorCode: "#FFD700"
+    key: "id",
+    label: "ID",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
   },
   {
-    id: 2,
-    actionId: 1846,
-    name: "lockated",
-    customerCode: "",
-    customerType: "",
-    email: "lockated@gmail.com",
-    mobile: "11111111111",
-    plantCode: "",
-    companyCode: "",
-    leaseStartDate: "",
-    leaseEndDate: "",
-    freeParking: "",
-    paidParking: "",
-    createdAt: "",
-    updatedAt: "",
-    colorCode: "#FF0000"
+    key: "name",
+    label: "Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
   },
   {
-    id: 3,
-    actionId: 1848,
-    name: "demo",
-    customerCode: "",
-    customerType: "",
-    email: "shreya@12.com",
-    mobile: "",
-    plantCode: "",
-    companyCode: "",
-    leaseStartDate: "",
-    leaseEndDate: "",
-    freeParking: "",
-    paidParking: "",
-    createdAt: "",
-    updatedAt: "",
-    colorCode: "#00FF00"
+    key: "cusomer_code",
+    label: "Customer Code",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
   },
   {
-    id: 4,
-    actionId: 1858,
-    name: "Sohail Ansari",
-    customerCode: "",
-    customerType: "",
-    email: "demo2@gmail.com",
-    mobile: "11111111111",
-    plantCode: "",
-    companyCode: "",
-    leaseStartDate: "",
-    leaseEndDate: "",
-    freeParking: "",
-    paidParking: "",
-    createdAt: "",
-    updatedAt: "",
-    colorCode: "#FF00FF"
+    key: "customer_type",
+    label: "Customer Type",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
   },
   {
-    id: 5,
-    actionId: 1873,
-    name: "Devesh Jain",
-    customerCode: "",
-    customerType: "",
-    email: "test1@gmail.com",
-    mobile: "3333333333",
-    plantCode: "",
-    companyCode: "",
-    leaseStartDate: "",
-    leaseEndDate: "",
-    freeParking: "",
-    paidParking: "",
-    createdAt: "",
-    updatedAt: "",
-    colorCode: "#0000FF"
+    key: "email",
+    label: "Email",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
   },
   {
-    id: 6,
-    actionId: 1880,
-    name: "Mahendra Lungare",
-    customerCode: "",
-    customerType: "",
-    email: "test1@gmail.com",
-    mobile: "2222222222",
-    plantCode: "",
-    companyCode: "",
-    leaseStartDate: "",
-    leaseEndDate: "",
-    freeParking: "",
-    paidParking: "",
-    createdAt: "",
-    updatedAt: "",
-    colorCode: "#800080"
+    key: "mobile",
+    label: "Mobile",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
   },
   {
-    id: 7,
-    actionId: 1881,
-    name: "Rajnish Patil",
-    customerCode: "",
-    customerType: "",
-    email: "demonstration@12.com",
-    mobile: "222222222",
-    plantCode: "",
-    companyCode: "",
-    leaseStartDate: "",
-    leaseEndDate: "",
-    freeParking: "",
-    paidParking: "",
-    createdAt: "",
-    updatedAt: "",
-    colorCode: "#00FFFF"
-  }
+    key: "plant_code",
+    label: "Plant Code",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "company_code",
+    label: "Company Code",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "lease_start_date",
+    label: "Lease Start Date",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "lease_end_date",
+    label: "Lease End Date",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "free_parking",
+    label: "Free Parking",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "paid_parking",
+    label: "Paid Parking",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "created_at",
+    label: "Created At",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "updated_at",
+    label: "Updated At",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "color_code",
+    label: "Color Code",
+    sortable: false,
+    draggable: true,
+    defaultVisible: true,
+  },
 ];
 
 const CRMCustomersDashboard = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.mobile.includes(searchTerm)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [customers, setCustomers] = useState([]);
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const response = await dispatch(
+          getCustomerList({ baseUrl, token })
+        ).unwrap();
+        const transformedData = response.entities.map((item: any) => {
+          const lease = item.customer_leases?.[0];
+          return {
+            id: item.id,
+            name: item.name,
+            cusomer_code: item.cusomer_code,
+            customer_type: item.customer_type,
+            email: item.email,
+            mobile: item.mobile,
+            plant_code: item.plant_code,
+            company_code: item.company_code,
+            lease_start_date: lease?.lease_start_date,
+            lease_end_date: lease?.lease_end_date,
+            free_parking: lease?.free_parking,
+            paid_parking: lease?.paid_parking,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            color_code: item.color_code,
+          }
+        })
+        setCustomers(transformedData);
+      } catch (error) {
+        console.log(error);
+        toast.error(error);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
+
+  console.log(customers)
+
+  const handleExport = () => {
+    alert("Exporting customer data...");
+  };
+
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case "colorCode":
+        return (
+          <div className="flex items-center justify-center">
+            <div
+              className="w-5 h-5 rounded-md border border-gray-300"
+              style={{ backgroundColor: item[columnKey] }}
+            />
+          </div>
+        );
+
+      default:
+        return item[columnKey] || "-";
+    }
+  };
+
+  const renderActions = (item: any) => (
+    <Button variant="ghost" size="sm" onClick={() => navigate(`/crm/customers/${item.id}`)}>
+      <Eye className="w-4 h-4" />
+    </Button>
   );
 
   return (
     <div className="p-6 space-y-6">
-      {/* Breadcrumb - Updated to show CRM instead of Customer */}
-      <div className="text-sm text-gray-600">
-        Customer &gt; Customer List
-      </div>
-
-      {/* Page Title */}
-      <h1 className="text-2xl font-semibold text-gray-900">Customer List</h1>
-
-      {/* Action Bar */}
-      <div className="flex items-center justify-between">
-        <Button className="bg-purple-700 hover:bg-purple-800 text-white">
-          <Download className="w-4 h-4 mr-2" />
-          Export
-        </Button>
-
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-80 pr-10"
-            />
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          </div>
-          <Button className="bg-purple-700 hover:bg-purple-800 text-white">
-            Go!
-          </Button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="w-16">Sr. No.</TableHead>
-              <TableHead className="w-20">Action</TableHead>
-              <TableHead className="w-20">ID</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Customer Code</TableHead>
-              <TableHead>Customer Type</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Mobile</TableHead>
-              <TableHead>Plant Code</TableHead>
-              <TableHead>Company Code</TableHead>
-              <TableHead>Lease Start Date</TableHead>
-              <TableHead>Lease End Date</TableHead>
-              <TableHead>Free Parking</TableHead>
-              <TableHead>Paid Parking</TableHead>
-              <TableHead>Created At</TableHead>
-              <TableHead>Updated At</TableHead>
-              <TableHead>Color Code</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredCustomers.map((customer, index) => (
-              <TableRow key={customer.id} className="hover:bg-gray-50">
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm">
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-                <TableCell>{customer.actionId}</TableCell>
-                <TableCell className="font-medium">{customer.name}</TableCell>
-                <TableCell>{customer.customerCode}</TableCell>
-                <TableCell>{customer.customerType}</TableCell>
-                <TableCell>{customer.email}</TableCell>
-                <TableCell>{customer.mobile}</TableCell>
-                <TableCell>{customer.plantCode}</TableCell>
-                <TableCell>{customer.companyCode}</TableCell>
-                <TableCell>{customer.leaseStartDate}</TableCell>
-                <TableCell>{customer.leaseEndDate}</TableCell>
-                <TableCell>{customer.freeParking}</TableCell>
-                <TableCell>{customer.paidParking}</TableCell>
-                <TableCell>{customer.createdAt}</TableCell>
-                <TableCell>{customer.updatedAt}</TableCell>
-                <TableCell>
-                  <div 
-                    className="w-6 h-6 rounded border"
-                    style={{ backgroundColor: customer.colorCode }}
-                  ></div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <EnhancedTable
+        data={customers}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        storageKey="crm-customers-table"
+        selectAllLabel="Select all customers"
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search customers..."
+        enableExport={true}
+        exportFileName="customers"
+        handleExport={handleExport}
+        pagination={true}
+        pageSize={5}
+      />
     </div>
   );
 };
