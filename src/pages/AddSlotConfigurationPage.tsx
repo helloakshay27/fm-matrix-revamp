@@ -128,7 +128,7 @@ export const AddSlotConfigurationPage = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
+                          className="absolute -top-0.5 -right-0.5 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
                           onClick={() => handleSliderChange('twoWheeler', 'nonStack', formData.twoWheeler.nonStack - 1)}
                         >
                           ×
@@ -174,7 +174,7 @@ export const AddSlotConfigurationPage = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
+                          className="absolute -top-0.5 -right-0.5 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
                           onClick={() => handleSliderChange('twoWheeler', 'stack', formData.twoWheeler.stack - 1)}
                         >
                           ×
@@ -220,7 +220,7 @@ export const AddSlotConfigurationPage = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
+                          className="absolute -top-0.5 -right-0.5 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
                           onClick={() => handleSliderChange('twoWheeler', 'reserved', formData.twoWheeler.reserved - 1)}
                         >
                           ×
@@ -272,7 +272,7 @@ export const AddSlotConfigurationPage = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
+                          className="absolute -top-0.5 -right-0.5 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
                           onClick={() => handleSliderChange('fourWheeler', 'nonStack', formData.fourWheeler.nonStack - 1)}
                         >
                           ×
@@ -318,7 +318,7 @@ export const AddSlotConfigurationPage = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
+                          className="absolute -top-0.5 -right-0.5 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
                           onClick={() => handleSliderChange('fourWheeler', 'stack', formData.fourWheeler.stack - 1)}
                         >
                           ×
@@ -364,7 +364,7 @@ export const AddSlotConfigurationPage = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
+                          className="absolute -top-0.5 -right-0.5 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
                           onClick={() => handleSliderChange('fourWheeler', 'reserved', formData.fourWheeler.reserved - 1)}
                         >
                           ×
