@@ -8928,7 +8928,9 @@ const AddAssetPage = () => {
                                   accentColor: "#C72030",
                                 }}
                                 onChange={(e) =>
-                                  handleFieldChange("breakdown", e.target.value)
+                                  {handleFieldChange("breakdown", e.target.value)
+                                  handleFieldChange("status", "in_use")
+                                  }
                                 }
                               />
                               <label htmlFor="status-inuse" className="text-sm">
@@ -8946,7 +8948,9 @@ const AddAssetPage = () => {
                                   accentColor: "#C72030",
                                 }}
                                 onChange={(e) =>
-                                  handleFieldChange("breakdown", e.target.value)
+                                 {handleFieldChange("breakdown", e.target.value)
+                                  handleFieldChange("status", "breakdown")
+                                  }
                                 }
                               />
                               <label htmlFor="status-breakdown" className="text-sm">
