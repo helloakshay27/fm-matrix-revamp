@@ -30,8 +30,12 @@ export const ParkingCategoryPage = () => {
     createdOn: true
   });
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<ParkingCategoryData | null>(null);
   const [categoryName, setCategoryName] = useState('');
+  const [editCategoryName, setEditCategoryName] = useState('');
   const [categoryImage, setCategoryImage] = useState<File | null>(null);
+  const [editCategoryImage, setEditCategoryImage] = useState<File | null>(null);
 
   useEffect(() => {
     setCurrentSection('Settings');
@@ -85,7 +89,13 @@ export const ParkingCategoryPage = () => {
   };
 
   const handleEdit = (id: number) => {
-    navigate(`/settings/vas/parking-management/parking-category/edit/${id}`);
+    const categoryToEdit = parkingCategoryData.find(item => item.id === id);
+    if (categoryToEdit) {
+      setEditingCategory(categoryToEdit);
+      setEditCategoryName(categoryToEdit.name);
+      setEditCategoryImage(null);
+      setIsEditModalOpen(true);
+    }
   };
 
   const handleDelete = (id: number) => {
@@ -119,10 +129,40 @@ export const ParkingCategoryPage = () => {
     setIsCreateModalOpen(false);
   };
 
+  const handleUpdateCategory = () => {
+    if (!editCategoryName || !editingCategory) {
+      toast.error('Please enter category name');
+      return;
+    }
+    
+    setParkingCategoryData(prevData => 
+      prevData.map(item => 
+        item.id === editingCategory.id 
+          ? { ...item, name: editCategoryName }
+          : item
+      )
+    );
+    
+    toast.success('Category updated successfully');
+    
+    // Reset form
+    setEditingCategory(null);
+    setEditCategoryName('');
+    setEditCategoryImage(null);
+    setIsEditModalOpen(false);
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setCategoryImage(file);
+    }
+  };
+
+  const handleEditFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setEditCategoryImage(file);
     }
   };
 
@@ -276,6 +316,89 @@ export const ParkingCategoryPage = () => {
             <div className="flex justify-end pt-4">
               <Button
                 onClick={handleCreateCategory}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Category Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <DialogTitle className="text-lg font-semibold">Edit Category</DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditModalOpen(false)}
+              className="h-6 w-6 p-0 hover:bg-gray-100"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Category Name */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-900">Category Name</label>
+              <Select value={editCategoryName} onValueChange={setEditCategoryName}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2 Wheeler">2 Wheeler</SelectItem>
+                  <SelectItem value="4 Wheeler">4 Wheeler</SelectItem>
+                  <SelectItem value="Heavy Vehicle">Heavy Vehicle</SelectItem>
+                  <SelectItem value="Bicycle">Bicycle</SelectItem>
+                  <SelectItem value="Electric Vehicle">Electric Vehicle</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Category Image */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-900">Category Image</label>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                  onClick={() => document.getElementById('edit-file-input')?.click()}
+                >
+                  Choose File
+                </Button>
+                <span className="text-sm text-gray-500">
+                  {editCategoryImage ? editCategoryImage.name : 'No file chosen'}
+                </span>
+                <input
+                  id="edit-file-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleEditFileChange}
+                  className="hidden"
+                />
+              </div>
+              
+              {/* Show existing image preview for categories with images */}
+              {editingCategory?.name === '2 Wheeler' && !editCategoryImage && (
+                <div className="mt-2">
+                  <div className="w-16 h-16 bg-blue-100 rounded border flex items-center justify-center">
+                    <div className="text-xs text-center">
+                      <div className="text-blue-600 font-semibold">🏍️</div>
+                      <div className="text-blue-600 text-[8px]">MOTORCYCLE<br/>PARKING</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end pt-4">
+              <Button
+                onClick={handleUpdateCategory}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-6"
               >
                 Submit
