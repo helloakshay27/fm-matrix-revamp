@@ -156,6 +156,7 @@ import ParkingDetailsPage from './pages/ParkingDetailsPage';
 import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
 import { ParkingCategoryPage } from './pages/ParkingCategoryPage';
 import { SlotConfigurationPage } from './pages/SlotConfigurationPage';
+import { AddSlotConfigurationPage } from './pages/AddSlotConfigurationPage';
 
 // Import Design Insights pages
 import { DesignInsightsDashboard } from './pages/DesignInsightsDashboard';
@@ -1011,6 +1012,7 @@ function App() {
                 <Route path="/settings/vas/booking/setup/add" element={<AddBookingSetupPage />} />
                 <Route path="/settings/vas/parking-management/parking-category" element={<ParkingCategoryPage />} />
                 <Route path="/settings/vas/parking-management/slot-configuration" element={<SlotConfigurationPage />} />
+                <Route path="/settings/vas/parking-management/slot-configuration/add" element={<AddSlotConfigurationPage />} />
                 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
               </Route>
 
